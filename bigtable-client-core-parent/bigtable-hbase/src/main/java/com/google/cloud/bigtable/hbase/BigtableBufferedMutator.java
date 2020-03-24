@@ -19,10 +19,9 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
-import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -65,18 +64,16 @@ public class BigtableBufferedMutator implements BufferedMutator {
    * Constructor for BigtableBufferedMutator.
    *
    * @param adapter Converts HBase objects to Bigtable protos
-   * @param settings For bigtable settings
+   * @param bigtableApi For bigtable settings and data client
    * @param listener Handles exceptions. By default, it just throws the exception.
-   * @param session a {@link BigtableSession} object.
    */
   public BigtableBufferedMutator(
       HBaseRequestAdapter adapter,
-      BigtableHBaseSettings settings,
-      BigtableSession session,
+      BigtableApi bigtableApi,
       BufferedMutator.ExceptionListener listener) {
-    helper = new BigtableBufferedMutatorHelper(adapter, settings, session);
+    helper = new BigtableBufferedMutatorHelper(adapter, bigtableApi);
     this.listener = listener;
-    this.host = settings.getDataHost();
+    this.host = bigtableApi.getBigtableHBaseSettings().getDataHost();
   }
 
   /** {@inheritDoc} */

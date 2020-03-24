@@ -20,10 +20,7 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.api.core.SettableApiFuture;
-import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
-import com.google.cloud.bigtable.grpc.scanner.FlatRow;
-import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
@@ -97,15 +94,8 @@ public class BatchExecutor {
     @Override
     public final void onSuccess(Object message) {
       Result result = Result.EMPTY_RESULT;
-
       try {
-        if (message instanceof FlatRow) {
-          result = Adapters.FLAT_ROW_ADAPTER.adaptResponse((FlatRow) message);
-        } else if (message instanceof com.google.cloud.bigtable.data.v2.models.Row) {
-          result =
-              Adapters.ROW_ADAPTER.adaptResponse(
-                  (com.google.cloud.bigtable.data.v2.models.Row) message);
-        } else if (message instanceof Result) {
+        if (message instanceof Result) {
           result = (Result) message;
         }
       } catch (Throwable throwable) {
@@ -142,22 +132,17 @@ public class BatchExecutor {
   /**
    * Constructor for BatchExecutor.
    *
-   * @param session a {@link com.google.cloud.bigtable.grpc.BigtableSession} object.
-   * @param requestAdapter a {@link com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter}
-   *     object.
+   * @param bigtableApi a {@link BigtableApi} object.
+   * @param requestAdapter a {@link HBaseRequestAdapter} object.
    */
-  // TODO(rahulkql): This is an intermediate state, we will migrate BigtableBufferedMutatorHelper in
-  // follow up PR and that would help us to remove BigtableSession.
-  public BatchExecutor(
-      BigtableSession session, BigtableApi bigtableApi, HBaseRequestAdapter requestAdapter) {
+  public BatchExecutor(BigtableApi bigtableApi, HBaseRequestAdapter requestAdapter) {
     this.requestAdapter = requestAdapter;
     this.settings = bigtableApi.getBigtableHBaseSettings();
     this.bulkRead =
         bigtableApi
             .getDataClient()
             .createBulkRead(requestAdapter.getBigtableTableName().getTableId());
-    this.bufferedMutatorHelper =
-        new BigtableBufferedMutatorHelper(requestAdapter, settings, session);
+    this.bufferedMutatorHelper = new BigtableBufferedMutatorHelper(requestAdapter, bigtableApi);
   }
 
   /**

@@ -18,14 +18,14 @@ package com.google.cloud.bigtable.hbase;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.core.IBigtableDataClient;
-import com.google.cloud.bigtable.core.IBulkMutation;
-import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.util.OperationAccountant;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
+import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
+import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import com.google.cloud.bigtable.util.ApiFutureUtil;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -65,8 +65,8 @@ public class BigtableBufferedMutatorHelper {
   private boolean closed = false;
 
   private final HBaseRequestAdapter adapter;
-  private final IBulkMutation bulkMutation;
-  private final IBigtableDataClient dataClient;
+  private final BulkMutationWrapper bulkMutation;
+  private final DataClientWrapper dataClient;
   private final BigtableHBaseSettings settings;
   private final OperationAccountant operationAccountant;
 
@@ -74,16 +74,14 @@ public class BigtableBufferedMutatorHelper {
    * Constructor for BigtableBufferedMutator.
    *
    * @param adapter Converts HBase objects to Bigtable protos
-   * @param settings For bigtable settings
-   * @param session a {@link BigtableSession} object.
+   * @param bigtableApi For bigtable settings and data client
    */
-  public BigtableBufferedMutatorHelper(
-      HBaseRequestAdapter adapter, BigtableHBaseSettings settings, BigtableSession session) {
+  public BigtableBufferedMutatorHelper(HBaseRequestAdapter adapter, BigtableApi bigtableApi) {
     this.adapter = adapter;
-    this.settings = settings;
+    this.settings = bigtableApi.getBigtableHBaseSettings();
     BigtableTableName tableName = this.adapter.getBigtableTableName();
-    this.bulkMutation = session.createBulkMutationWrapper(tableName);
-    this.dataClient = session.getDataClientWrapper();
+    this.dataClient = bigtableApi.getDataClient();
+    this.bulkMutation = dataClient.createBulkMutation(tableName.getTableId());
     this.operationAccountant = new OperationAccountant();
   }
 

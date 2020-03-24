@@ -241,7 +241,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
       @Override
       public AsyncBufferedMutator build() {
-        return new BigtableAsyncBufferedMutator(createAdapter(tableName), settings, session);
+        return new BigtableAsyncBufferedMutator(createAdapter(tableName), bigtableApi);
       }
     };
   }

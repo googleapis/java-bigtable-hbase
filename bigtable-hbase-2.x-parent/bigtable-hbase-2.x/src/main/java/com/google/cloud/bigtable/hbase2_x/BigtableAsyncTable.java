@@ -91,8 +91,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
   protected synchronized BatchExecutor getBatchExecutor() {
     if (batchExecutor == null) {
-      batchExecutor =
-          new BatchExecutor(connection.getSession(), connection.getBigtableApi(), hbaseAdapter);
+      batchExecutor = new BatchExecutor(connection.getBigtableApi(), hbaseAdapter);
     }
     return batchExecutor;
   }
