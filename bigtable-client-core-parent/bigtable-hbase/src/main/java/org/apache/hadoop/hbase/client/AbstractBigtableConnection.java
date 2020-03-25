@@ -149,7 +149,7 @@ public abstract class AbstractBigtableConnection
 
     HBaseRequestAdapter adapter = createAdapter(tableName);
     ExceptionListener listener = params.getListener();
-    return new BigtableBufferedMutator(adapter, bigtableApi, listener);
+    return new BigtableBufferedMutator(bigtableApi, settings, adapter, listener);
   }
 
   public HBaseRequestAdapter createAdapter(TableName tableName) {

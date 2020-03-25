@@ -131,17 +131,17 @@ public class BatchExecutor {
   /**
    * Constructor for BatchExecutor.
    *
-   * @param bigtableApi a {@link BigtableApi} object.
-   * @param requestAdapter a {@link HBaseRequestAdapter} object.
+   * @param bigtableApi a {@link BigtableApi} object to access bigtable data client.
+   * @param settings a {@link BigtableHBaseSettings} object for bigtable settings.
+   * @param adapter a {@link HBaseRequestAdapter} object to convert HBase object to Bigtable protos.
    */
-  public BatchExecutor(BigtableApi bigtableApi, HBaseRequestAdapter requestAdapter) {
-    this.requestAdapter = requestAdapter;
-    this.settings = bigtableApi.getBigtableHBaseSettings();
+  public BatchExecutor(
+      BigtableApi bigtableApi, BigtableHBaseSettings settings, HBaseRequestAdapter adapter) {
+    this.requestAdapter = adapter;
+    this.settings = settings;
     this.bulkRead =
-        bigtableApi
-            .getDataClient()
-            .createBulkRead(requestAdapter.getBigtableTableName().getTableId());
-    this.bufferedMutatorHelper = new BigtableBufferedMutatorHelper(requestAdapter, bigtableApi);
+        bigtableApi.getDataClient().createBulkRead(adapter.getBigtableTableName().getTableId());
+    this.bufferedMutatorHelper = new BigtableBufferedMutatorHelper(bigtableApi, settings, adapter);
   }
 
   /**

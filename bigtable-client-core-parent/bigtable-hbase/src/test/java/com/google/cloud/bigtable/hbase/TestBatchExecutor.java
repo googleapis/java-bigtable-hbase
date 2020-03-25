@@ -125,6 +125,7 @@ public class TestBatchExecutor {
 
   @Mock private ApiFuture mockFuture;
 
+  private BigtableHBaseSettings settings;
   private HBaseRequestAdapter requestAdapter;
 
   @Before
@@ -132,10 +133,9 @@ public class TestBatchExecutor {
     Configuration configuration = new Configuration(false);
     configuration.set(PROJECT_ID_KEY, "projectId");
     configuration.set(INSTANCE_ID_KEY, "instanceId");
-    BigtableHBaseSettings settings = BigtableHBaseSettings.create(configuration);
+    settings = BigtableHBaseSettings.create(configuration);
 
     requestAdapter = new HBaseRequestAdapter(settings, TableName.valueOf("table"));
-    when(mockBigtableApi.getBigtableHBaseSettings()).thenReturn(settings);
     when(mockBigtableApi.getDataClient()).thenReturn(mockDataClientWrapper);
     when(mockDataClientWrapper.createBulkRead("table")).thenReturn(mockBulkRead);
     when(mockDataClientWrapper.createBulkMutation(any(String.class))).thenReturn(mockBulkMutation);
@@ -353,7 +353,7 @@ public class TestBatchExecutor {
   }
 
   private BatchExecutor createExecutor() {
-    return new BatchExecutor(mockBigtableApi, requestAdapter);
+    return new BatchExecutor(mockBigtableApi, settings, requestAdapter);
   }
 
   private Result[] batch(final List<? extends org.apache.hadoop.hbase.client.Row> actions)

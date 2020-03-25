@@ -21,6 +21,7 @@ import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutatorHelper;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -42,11 +43,13 @@ public class BigtableAsyncBufferedMutator implements AsyncBufferedMutator {
   /**
    * Constructor for BigtableBufferedMutator.
    *
-   * @param adapter Converts HBase objects to Bigtable protos
-   * @param bigtableApi For bigtable settings and data client.
+   * @param bigtableApi a {@link BigtableApi} object to access bigtable data client.
+   * @param settings a {@link BigtableHBaseSettings} object for bigtable settings.
+   * @param adapter a {@link HBaseRequestAdapter} object to convert HBase object to Bigtable protos.
    */
-  public BigtableAsyncBufferedMutator(HBaseRequestAdapter adapter, BigtableApi bigtableApi) {
-    helper = new BigtableBufferedMutatorHelper(adapter, bigtableApi);
+  public BigtableAsyncBufferedMutator(
+      BigtableApi bigtableApi, BigtableHBaseSettings settings, HBaseRequestAdapter adapter) {
+    helper = new BigtableBufferedMutatorHelper(bigtableApi, settings, adapter);
   }
 
   /** {@inheritDoc} */

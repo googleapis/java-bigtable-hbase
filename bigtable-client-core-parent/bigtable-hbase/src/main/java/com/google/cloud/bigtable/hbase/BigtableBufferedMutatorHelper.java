@@ -71,14 +71,16 @@ public class BigtableBufferedMutatorHelper {
   private final OperationAccountant operationAccountant;
 
   /**
-   * Constructor for BigtableBufferedMutator.
+   * Constructor for BigtableBufferedMutatorHelper.
    *
-   * @param adapter Converts HBase objects to Bigtable protos
-   * @param bigtableApi For bigtable settings and data client
+   * @param bigtableApi a {@link BigtableApi} object to access bigtable data client.
+   * @param settings a {@link BigtableHBaseSettings} object for bigtable settings
+   * @param adapter a {@link HBaseRequestAdapter} object to convert HBase objects to Bigtable protos
    */
-  public BigtableBufferedMutatorHelper(HBaseRequestAdapter adapter, BigtableApi bigtableApi) {
+  public BigtableBufferedMutatorHelper(
+      BigtableApi bigtableApi, BigtableHBaseSettings settings, HBaseRequestAdapter adapter) {
     this.adapter = adapter;
-    this.settings = bigtableApi.getBigtableHBaseSettings();
+    this.settings = settings;
     BigtableTableName tableName = this.adapter.getBigtableTableName();
     this.dataClient = bigtableApi.getDataClient();
     this.bulkMutation = dataClient.createBulkMutation(tableName.getTableId());

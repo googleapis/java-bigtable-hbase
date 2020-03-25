@@ -95,11 +95,10 @@ public class TestBigtableBufferedMutator {
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, "instance");
 
     BigtableHBaseSettings settings = BigtableHBaseSettings.create(configuration);
-    when(mockBigtableApi.getBigtableHBaseSettings()).thenReturn(settings);
     HBaseRequestAdapter adapter = new HBaseRequestAdapter(settings, TableName.valueOf("TABLE"));
 
     executorService = Executors.newCachedThreadPool();
-    return new BigtableBufferedMutator(adapter, mockBigtableApi, listener);
+    return new BigtableBufferedMutator(mockBigtableApi, settings, adapter, listener);
   }
 
   @Test
