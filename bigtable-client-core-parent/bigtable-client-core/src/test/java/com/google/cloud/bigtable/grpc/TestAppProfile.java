@@ -51,8 +51,10 @@ import java.net.ServerSocket;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -61,27 +63,36 @@ import org.junit.runners.JUnit4;
 public class TestAppProfile {
   private static final String TABLE_ID = "fake-table";
 
-  private FakeDataService fakeDataService;
-  private Server server;
+  private static FakeDataService fakeDataService = new FakeDataService();
+  private static Server server;
+  private static int port;
 
   private BigtableSession defaultSession;
   private BigtableSession profileSession;
 
-  @Before
-  public void setUp() throws IOException {
-    fakeDataService = new FakeDataService();
-
-    final int port;
+  @BeforeClass
+  public static void setUpServer() throws IOException {
     try (ServerSocket s = new ServerSocket(0)) {
       port = s.getLocalPort();
     }
     server = ServerBuilder.forPort(port).addService(fakeDataService).build();
     server.start();
+  }
 
+  @AfterClass
+  public static void tearDownServer() throws Exception {
+    if (server != null) {
+      server.shutdownNow();
+      server.awaitTermination();
+    }
+  }
+
+  @Before
+  public void setUp() throws IOException {
     BigtableOptions opts =
         BigtableOptions.builder()
             .setDataHost("localhost")
-            .setAdminHost("locahost")
+            .setAdminHost("localhost")
             .setPort(port)
             .setProjectId("fake-project")
             .setInstanceId("fake-instance")
@@ -104,11 +115,6 @@ public class TestAppProfile {
 
     if (profileSession != null) {
       profileSession.close();
-    }
-
-    if (server != null) {
-      server.shutdownNow();
-      server.awaitTermination();
     }
   }
 

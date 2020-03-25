@@ -71,10 +71,8 @@ public class TestRetryingUnaryOperation {
   public void setup() {
     when(readAsync.getRpcMetrics()).thenReturn(metrics);
     when(readAsync.getMethodDescriptor()).thenReturn(BigtableGrpc.getReadRowsMethod());
-    when(readAsync.isRetryable(any(ReadRowsRequest.class))).thenReturn(true);
 
     clock = new OperationClock();
-    clock.initializeMockSchedule(executorService, null);
   }
 
   @Test
@@ -109,13 +107,15 @@ public class TestRetryingUnaryOperation {
 
   @Test
   public void testRecoveredFailure() throws Exception {
+    when(readAsync.isRetryable(any(ReadRowsRequest.class))).thenReturn(true);
+    clock.initializeMockSchedule(executorService, null);
     final ReadRowsResponse result = ReadRowsResponse.getDefaultInstance();
     final Status errorStatus = Status.UNAVAILABLE;
     final AtomicInteger counter = new AtomicInteger(0);
     Answer<Void> answer =
         new Answer<Void>() {
           @Override
-          public Void answer(InvocationOnMock invocation) throws Throwable {
+          public Void answer(InvocationOnMock invocation) {
             Listener listener = invocation.getArgument(1);
             if (counter.incrementAndGet() < 5) {
               listener.onClose(errorStatus, null);
@@ -152,6 +152,8 @@ public class TestRetryingUnaryOperation {
 
   private void testTimeout(long expectedTimeoutMs, CallOptions options)
       throws InterruptedException, java.util.concurrent.TimeoutException {
+    when(readAsync.isRetryable(any(ReadRowsRequest.class))).thenReturn(true);
+    clock.initializeMockSchedule(executorService, null);
     final Status errorStatus = Status.UNAVAILABLE;
     Answer<Void> answer =
         new Answer<Void>() {

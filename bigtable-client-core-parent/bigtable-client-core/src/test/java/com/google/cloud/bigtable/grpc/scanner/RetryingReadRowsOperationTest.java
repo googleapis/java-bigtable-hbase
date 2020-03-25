@@ -130,24 +130,24 @@ public class RetryingReadRowsOperationTest {
     when(mockRetryableRpc.newCall(any(CallOptions.class))).thenReturn(mockClientCall);
     when(mockRetryableRpc.getRpcMetrics()).thenReturn(mockRpcMetrics);
     when(mockRetryableRpc.getMethodDescriptor()).thenReturn(BigtableGrpc.getReadRowsMethod());
-    when(mockRetryableRpc.isRetryable(any(ReadRowsRequest.class))).thenReturn(true);
     when(mockRpcMetrics.timeOperation()).thenReturn(mockOperationTimerContext);
     when(mockRpcMetrics.timeRpc()).thenReturn(mockRpcTimerContext);
 
     clock = new OperationClock();
-
-    clock.initializeMockSchedule(mockRetryExecutorService, scheduledFuture);
   }
 
-  protected RetryingReadRowsOperation createOperation() {
-    return createOperation(CallOptions.DEFAULT, mockFlatRowObserver);
+  private RetryingReadRowsOperation createOperation() {
+    return createOperation(CallOptions.DEFAULT, false);
   }
 
-  protected RetryingReadRowsOperation createOperation(
-      CallOptions options, StreamObserver<FlatRow> observer) {
+  private RetryingReadRowsOperation createOperation(
+      CallOptions options, boolean shouldSchedulerMocked) {
+    if (shouldSchedulerMocked) {
+      clock.initializeMockSchedule(mockRetryExecutorService, scheduledFuture);
+    }
     RetryingReadRowsOperation operation =
         new RetryingReadRowsOperation(
-            observer,
+            mockFlatRowObserver,
             RETRY_OPTIONS,
             READ_ENTIRE_TABLE_REQUEST,
             mockRetryableRpc,
@@ -245,11 +245,11 @@ public class RetryingReadRowsOperationTest {
         .when(mockRetryableRpc)
         .start(
             any(ReadRowsRequest.class),
-            any(ClientCall.Listener.class),
+            Mockito.<ClientCall.Listener<ReadRowsResponse>>any(),
             any(Metadata.class),
-            any(ClientCall.class));
+            Mockito.<ClientCall<ReadRowsRequest, ReadRowsResponse>>any());
 
-    RetryingReadRowsOperation underTest = createOperation(options, mockFlatRowObserver);
+    RetryingReadRowsOperation underTest = createOperation(options, true);
     try {
       underTest.getAsyncResult().get(100, TimeUnit.MILLISECONDS);
     } catch (ExecutionException e) {
@@ -264,7 +264,7 @@ public class RetryingReadRowsOperationTest {
 
   @Test
   public void testMultipleResponsesWithException() throws UnsupportedEncodingException {
-    RetryingReadRowsOperation underTest = createOperation();
+    RetryingReadRowsOperation underTest = createOperation(CallOptions.DEFAULT, true);
     start(underTest);
 
     ByteString key1 = ByteString.copyFrom("SomeKey1", "UTF-8");
@@ -282,7 +282,7 @@ public class RetryingReadRowsOperationTest {
 
   @Test
   public void testScanTimeoutSucceed() throws UnsupportedEncodingException {
-    RetryingReadRowsOperation underTest = createOperation();
+    RetryingReadRowsOperation underTest = createOperation(CallOptions.DEFAULT, true);
     start(underTest);
 
     ByteString key0 = ByteString.copyFrom("SomeKey0", "UTF-8");
@@ -341,7 +341,7 @@ public class RetryingReadRowsOperationTest {
 
   @Test
   public void testScanTimeoutFail() throws UnsupportedEncodingException {
-    RetryingReadRowsOperation underTest = createOperation();
+    RetryingReadRowsOperation underTest = createOperation(CallOptions.DEFAULT, true);
     start(underTest);
 
     ByteString key = ByteString.copyFrom("SomeKey1", "UTF-8");
@@ -361,7 +361,7 @@ public class RetryingReadRowsOperationTest {
 
   @Test
   public void testScanIdleContinue() throws UnsupportedEncodingException {
-    RetryingReadRowsOperation underTest = createOperation();
+    RetryingReadRowsOperation underTest = createOperation(CallOptions.DEFAULT, true);
     start(underTest);
 
     ByteString key = ByteString.copyFrom("SomeKey1", "UTF-8");
@@ -384,7 +384,7 @@ public class RetryingReadRowsOperationTest {
 
   @Test
   public void testMixScanTimeoutAndStatusExceptions() throws UnsupportedEncodingException {
-    RetryingReadRowsOperation underTest = createOperation();
+    RetryingReadRowsOperation underTest = createOperation(CallOptions.DEFAULT, true);
     start(underTest);
 
     int expectedRetryCount = 0;
@@ -429,7 +429,7 @@ public class RetryingReadRowsOperationTest {
     Mockito.doAnswer(
             new Answer<Void>() {
               @Override
-              public Void answer(InvocationOnMock invocation) throws Throwable {
+              public Void answer(InvocationOnMock invocation) {
                 invocation
                     .getArgument(1, ClientCall.Listener.class)
                     .onClose(Status.OK, new Metadata());
@@ -452,7 +452,7 @@ public class RetryingReadRowsOperationTest {
     Assert.assertTrue(underTest.getRowMerger().isComplete());
   }
 
-  protected void performTimeout(RetryingReadRowsOperation underTest) {
+  private void performTimeout(RetryingReadRowsOperation underTest) {
     underTest.onClose(
         Status.CANCELLED.withCause(
             new StreamWaitTimeoutException(
@@ -460,7 +460,7 @@ public class RetryingReadRowsOperationTest {
         new Metadata());
   }
 
-  protected void performIdle(RetryingReadRowsOperation underTest) {
+  private void performIdle(RetryingReadRowsOperation underTest) {
     underTest.onClose(
         Status.CANCELLED.withCause(
             new StreamWaitTimeoutException(

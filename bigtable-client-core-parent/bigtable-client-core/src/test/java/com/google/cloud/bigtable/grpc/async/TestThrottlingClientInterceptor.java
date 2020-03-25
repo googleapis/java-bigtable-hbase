@@ -62,16 +62,15 @@ public class TestThrottlingClientInterceptor {
 
   @Mock Channel mockChannel;
   @Mock ResourceLimiter mockResourceLimiter;
-  MethodDescriptor methodDescriptor = BigtableGrpc.getReadRowsMethod();
   @Mock ClientCall.Listener mockListener;
   @Mock ClientCall mockClientCall;
-  ExecutorService executorService;
+
+  private MethodDescriptor methodDescriptor = BigtableGrpc.getReadRowsMethod();
+  private ExecutorService executorService;
 
   @Before
   public void setup() {
     executorService = Executors.newCachedThreadPool();
-    when(mockChannel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
-        .thenReturn(mockClientCall);
   }
 
   @After
@@ -83,7 +82,7 @@ public class TestThrottlingClientInterceptor {
   public void testThrottled() throws Exception {
     final SettableFuture registerInvoked = SettableFuture.create();
     final SettableFuture registerWaiter = SettableFuture.create();
-    final long id = 1l;
+    final long id = 1L;
     when(mockResourceLimiter.registerOperationWithHeapSize(anyLong()))
         .then(
             new Answer<Long>() {
@@ -94,8 +93,7 @@ public class TestThrottlingClientInterceptor {
                 return id;
               }
             });
-    final ThrottlingClientInterceptor underTest =
-        new ThrottlingClientInterceptor(mockResourceLimiter);
+    final ThrottlingClientInterceptor underTest = createClientInterceptor(true);
     final int numMessages = 5;
     Future<?> future =
         executorService.submit(
@@ -136,8 +134,7 @@ public class TestThrottlingClientInterceptor {
     when(mockResourceLimiter.registerOperationWithHeapSize(anyLong()))
         .thenThrow(new InterruptedException("Fake interrupted error"));
 
-    final ThrottlingClientInterceptor underTest =
-        new ThrottlingClientInterceptor(mockResourceLimiter);
+    final ThrottlingClientInterceptor underTest = createClientInterceptor(false);
 
     ClientCall call = underTest.interceptCall(methodDescriptor, CallOptions.DEFAULT, mockChannel);
 
@@ -154,8 +151,7 @@ public class TestThrottlingClientInterceptor {
 
   @Test
   public void testCallProxy() {
-    final ThrottlingClientInterceptor underTest =
-        new ThrottlingClientInterceptor(mockResourceLimiter);
+    final ThrottlingClientInterceptor underTest = createClientInterceptor(true);
 
     ClientCall call = underTest.interceptCall(methodDescriptor, CallOptions.DEFAULT, mockChannel);
 
@@ -171,9 +167,8 @@ public class TestThrottlingClientInterceptor {
   }
 
   @Test
-  public void testCancel() throws Exception {
-    final ThrottlingClientInterceptor underTest =
-        new ThrottlingClientInterceptor(mockResourceLimiter);
+  public void testCancel() {
+    final ThrottlingClientInterceptor underTest = createClientInterceptor(true);
 
     ClientCall call = underTest.interceptCall(methodDescriptor, CallOptions.DEFAULT, mockChannel);
 
@@ -185,9 +180,8 @@ public class TestThrottlingClientInterceptor {
   }
 
   @Test
-  public void testEarlyCancel() throws Exception {
-    final ThrottlingClientInterceptor underTest =
-        new ThrottlingClientInterceptor(mockResourceLimiter);
+  public void testEarlyCancel() {
+    final ThrottlingClientInterceptor underTest = createClientInterceptor(false);
 
     ClientCall call = underTest.interceptCall(methodDescriptor, CallOptions.DEFAULT, mockChannel);
 
@@ -198,5 +192,13 @@ public class TestThrottlingClientInterceptor {
 
     verify(mockListener, times(1)).onClose(statusCaptor.capture(), any(Metadata.class));
     Assert.assertEquals(statusCaptor.getValue().getCode(), Code.CANCELLED);
+  }
+
+  private ThrottlingClientInterceptor createClientInterceptor(boolean shouldChannelCallMocked) {
+    if (shouldChannelCallMocked) {
+      when(mockChannel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
+          .thenReturn(mockClientCall);
+    }
+    return new ThrottlingClientInterceptor(mockResourceLimiter);
   }
 }

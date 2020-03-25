@@ -47,6 +47,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
@@ -123,10 +124,8 @@ public class TestRetryingMutateRowsOperation {
   @Before
   public void setup() {
     when(mutateRows.getRpcMetrics()).thenReturn(metrics);
-    when(mutateRows.isRetryable(any(MutateRowsRequest.class))).thenReturn(true);
     when(mutateRows.getMethodDescriptor()).thenReturn(BigtableGrpc.getMutateRowsMethod());
     clock = new OperationClock();
-    clock.initializeMockSchedule(executorService, null);
   }
 
   @Test
@@ -140,6 +139,7 @@ public class TestRetryingMutateRowsOperation {
 
   @Test
   public void testRetry() throws Exception {
+    clock.initializeMockSchedule(executorService, null);
     MutateRowsRequest request = createRequest(2);
     RetryingMutateRowsOperation underTest = createOperation(request);
     ListenableFuture<?> future = underTest.getAsyncResult();
@@ -161,6 +161,7 @@ public class TestRetryingMutateRowsOperation {
 
   @Test
   public void testRetryExhausted() throws Exception {
+    clock.initializeMockSchedule(executorService, null);
     MutateRowsRequest request = createRequest(2);
     RetryingMutateRowsOperation underTest = createOperation(request);
     ListenableFuture<?> future = underTest.getAsyncResult();
@@ -183,6 +184,8 @@ public class TestRetryingMutateRowsOperation {
 
   @Test
   public void testCompleteFailure() throws InterruptedException, TimeoutException {
+    clock.initializeMockSchedule(executorService, null);
+    when(mutateRows.isRetryable(any(MutateRowsRequest.class))).thenReturn(true);
     MutateRowsRequest request = createRequest(2);
     final RetryingMutateRowsOperation underTest = createOperation(request);
 
@@ -198,9 +201,9 @@ public class TestRetryingMutateRowsOperation {
         .when(mutateRows)
         .start(
             any(MutateRowsRequest.class),
-            (ClientCall.Listener) any(),
+            Mockito.<ClientCall.Listener<MutateRowsResponse>>any(),
             (Metadata) any(),
-            (ClientCall) any());
+            Mockito.<ClientCall<MutateRowsRequest, MutateRowsResponse>>any());
 
     try {
       underTest.getAsyncResult().get(1, TimeUnit.MINUTES);
@@ -217,6 +220,7 @@ public class TestRetryingMutateRowsOperation {
 
   @Test
   public void testResponseOutOfOrder() throws Exception {
+    clock.initializeMockSchedule(executorService, null);
     MutateRowsRequest request = createRequest(2);
     RetryingMutateRowsOperation underTest = createOperation(request);
     ListenableFuture<?> future = underTest.getAsyncResult();

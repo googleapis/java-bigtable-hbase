@@ -25,11 +25,13 @@ import com.google.api.client.util.NanoClock;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.MutateRowsResponse;
+import com.google.bigtable.v2.Mutation;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.protobuf.ByteString;
 import com.google.rpc.Status;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -282,7 +284,7 @@ public class TestBulkMutationAwaitCompletion {
    * @throws InterruptedException
    */
   private void runOneBulkMutation() throws InterruptedException {
-    MutateRowsRequest.Entry entry = TestBulkMutation.createRequestEntry();
+    MutateRowsRequest.Entry entry = createRequestEntry();
     OperationAccountant accountant = createOperationAccountant();
     BulkMutation bulkMutation = createBulkMutation(accountant);
     for (int i = 0; i < OPERATIONS_PER_MUTATOR; i++) {
@@ -290,6 +292,19 @@ public class TestBulkMutationAwaitCompletion {
     }
     bulkMutation.flush();
     accountants.add(accountant);
+  }
+
+  private MutateRowsRequest.Entry createRequestEntry() {
+    Mutation.SetCell setCell =
+        Mutation.SetCell.newBuilder()
+            .setFamilyName("cf1")
+            .setColumnQualifier(ByteString.copyFromUtf8("qual"))
+            .build();
+    ByteString rowKey = ByteString.copyFrom("SomeKey".getBytes());
+    return MutateRowsRequest.Entry.newBuilder()
+        .setRowKey(rowKey)
+        .addMutations(Mutation.newBuilder().setSetCell(setCell))
+        .build();
   }
 
   private OperationAccountant createOperationAccountant() {

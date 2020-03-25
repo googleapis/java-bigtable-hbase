@@ -30,7 +30,6 @@ import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.cloud.bigtable.config.BulkOptions;
-import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
@@ -79,19 +78,9 @@ public class TestBulkMutation {
           .setAutoflushMs(0)
           .build();
 
-  static MutateRowsRequest.Entry createEntry() {
-    SetCell setCell =
-        SetCell.newBuilder().setFamilyName("cf1").setColumnQualifier(QUALIFIER).build();
-    return MutateRowsRequest.Entry.newBuilder()
-        .setRowKey(ByteString.copyFrom("SomeKey".getBytes()))
-        .addMutations(Mutation.newBuilder().setSetCell(setCell))
-        .build();
-  }
-
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Mock private BigtableDataClient client;
-  @Mock private IBigtableDataClient clientWrapper;
   @Mock private ScheduledExecutorService retryExecutorService;
   @Mock private ScheduledFuture mockScheduledFuture;
 
@@ -114,7 +103,6 @@ public class TestBulkMutation {
         };
 
     future = SettableFuture.create();
-    when(client.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(future);
     operationAccountant =
         new OperationAccountant(clock, OperationAccountant.DEFAULT_FINISH_WAIT_MILLIS);
     underTest = createBulkMutation();
@@ -123,7 +111,7 @@ public class TestBulkMutation {
 
   @Test
   public void testIsStale() {
-    underTest.add(createEntry());
+    underTest.add(createRequestEntry(false));
     underTest.currentBatch.lastRpcSentTimeNanos = time.get();
     Assert.assertFalse(underTest.currentBatch.isStale());
     time.addAndGet(BulkMutation.MAX_RPC_WAIT_TIME_NANOS);
@@ -144,12 +132,18 @@ public class TestBulkMutation {
     verify(client, times(1)).mutateRowsAsync(eq(expected));
   }
 
-  public static MutateRowsRequest.Entry createRequestEntry() {
+  private MutateRowsRequest.Entry createRequestEntry() {
+    return createRequestEntry(true);
+  }
+
+  private MutateRowsRequest.Entry createRequestEntry(boolean shouldMutationMocked) {
+    if (shouldMutationMocked) {
+      when(client.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(future);
+    }
     SetCell setCell =
         SetCell.newBuilder().setFamilyName("cf1").setColumnQualifier(QUALIFIER).build();
-    ByteString rowKey = ByteString.copyFrom("SomeKey".getBytes());
     return MutateRowsRequest.Entry.newBuilder()
-        .setRowKey(rowKey)
+        .setRowKey(ByteString.copyFrom("SomeKey".getBytes()))
         .addMutations(Mutation.newBuilder().setSetCell(setCell))
         .build();
   }
@@ -183,7 +177,7 @@ public class TestBulkMutation {
   @Test
   public void testCallableTooFewStatuses() throws Exception {
     ListenableFuture<MutateRowResponse> rowFuture1 = underTest.add(createRequestEntry());
-    ListenableFuture<MutateRowResponse> rowFuture2 = underTest.add(createRequestEntry());
+    ListenableFuture<MutateRowResponse> rowFuture2 = underTest.add(createRequestEntry(false));
     Batch batch = underTest.currentBatch;
     Assert.assertFalse(rowFuture1.isDone());
     Assert.assertFalse(rowFuture2.isDone());
@@ -235,7 +229,7 @@ public class TestBulkMutation {
 
   @Test
   public void testRequestTimer() {
-    underTest.add(createEntry());
+    underTest.add(createRequestEntry(false));
     Assert.assertFalse(underTest.currentBatch.wasSent());
     underTest.currentBatch.lastRpcSentTimeNanos = time.get();
     Assert.assertFalse(underTest.currentBatch.isStale());
@@ -247,6 +241,7 @@ public class TestBulkMutation {
 
   @Test
   public void testConcurrentBatches() throws Exception {
+    when(client.mutateRowsAsync(any(MutateRowsRequest.class))).thenReturn(future);
     final List<ListenableFuture<MutateRowResponse>> futures =
         Collections.synchronizedList(new ArrayList<ListenableFuture<MutateRowResponse>>());
     final int batchCount = 10;
@@ -267,7 +262,7 @@ public class TestBulkMutation {
           public void run() {
             BulkMutation bulkMutation = createBulkMutation();
             for (int i = 0; i < batchCount * MAX_ROW_COUNT; i++) {
-              futures.add(bulkMutation.add(createRequestEntry()));
+              futures.add(bulkMutation.add(createRequestEntry(false)));
             }
             bulkMutation.sendUnsent();
           }
@@ -290,7 +285,7 @@ public class TestBulkMutation {
   @Test
   public void testAutoflushDisabled() {
     // buffer a request, with a mocked success
-    underTest.add(createRequestEntry());
+    underTest.add(createRequestEntry(false));
     verify(retryExecutorService, never())
         .schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
   }
@@ -356,7 +351,7 @@ public class TestBulkMutation {
   @Test
   public void testLotsOfMutations() throws Exception {
     MutateRowsRequest.Entry smallRequest = createRequestEntry();
-    MutateRowsRequest.Entry.Builder bigRequest = createRequestEntry().toBuilder();
+    MutateRowsRequest.Entry.Builder bigRequest = createRequestEntry(false).toBuilder();
     bigRequest.addAllMutations(Collections.nCopies(20_000, bigRequest.getMutations(0)));
     MutateRowsRequest.Entry lastRequest =
         bigRequest.clone().setRowKey(ByteString.copyFrom("SomeOtherKey".getBytes())).build();
@@ -375,7 +370,7 @@ public class TestBulkMutation {
 
   @Test(expected = IllegalArgumentException.class)
   public void testTooManyMutations() {
-    MutateRowsRequest.Entry.Builder bigRequest = createRequestEntry().toBuilder();
+    MutateRowsRequest.Entry.Builder bigRequest = createRequestEntry(false).toBuilder();
     bigRequest.addAllMutations(
         Collections.nCopies(
             (int) BulkMutation.MAX_NUMBER_OF_MUTATIONS, bigRequest.getMutations(0)));

@@ -55,7 +55,6 @@ import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -79,46 +78,54 @@ public class TestBigtableDataGrpcClient {
 
   @Mock ClientCall mockClientCall;
 
-  @Mock ScheduledExecutorService mochScheduler;
+  @Mock ScheduledExecutorService mockScheduler;
 
-  BigtableDataGrpcClient defaultClient;
-
-  @Before
-  public void setup() {
-    when(mockChannel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
-        .thenReturn(mockClientCall);
-    defaultClient = createClient(false);
+  private BigtableDataGrpcClient createClient(boolean shouldChannelCallMocked) {
+    return createClient(false, true, shouldChannelCallMocked);
   }
 
-  protected BigtableDataGrpcClient createClient(boolean allowRetriesWithoutTimestamp) {
+  private BigtableDataGrpcClient createClient(
+      boolean allowRetriesWithoutTimestamp,
+      boolean shouldChannelCallMocked,
+      boolean shouldClientCallMocked) {
+
     RetryOptions retryOptions =
         RetryOptions.builder()
             .setAllowRetriesWithoutTimestamp(allowRetriesWithoutTimestamp)
             .build();
     BigtableOptions options = BigtableOptions.builder().setRetryOptions(retryOptions).build();
-    doAnswer(
-            new Answer<Void>() {
-              @Override
-              public Void answer(InvocationOnMock invocation) throws Throwable {
-                checkHeader(invocation.getArgument(1, Metadata.class));
-                return null;
-              }
-            })
-        .when(mockClientCall)
-        .start(any(ClientCall.Listener.class), any(Metadata.class));
-    return new BigtableDataGrpcClient(mockChannel, mochScheduler, options);
+    if (shouldChannelCallMocked) {
+      when(mockChannel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
+          .thenReturn(mockClientCall);
+    }
+    if (shouldClientCallMocked) {
+      doAnswer(
+              new Answer<Void>() {
+                @Override
+                public Void answer(InvocationOnMock invocation) {
+                  checkHeader(invocation.getArgument(1, Metadata.class));
+                  return null;
+                }
+              })
+          .when(mockClientCall)
+          .start(any(ClientCall.Listener.class), any(Metadata.class));
+    }
+
+    return new BigtableDataGrpcClient(mockChannel, mockScheduler, options);
   }
 
   @Test
   public void testRetryableMutateRow() {
+    BigtableDataGrpcClient underTest = createClient(false);
     MutateRowRequest request = MutateRowRequest.newBuilder().setTableName(TABLE_NAME).build();
     setResponse(MutateRowResponse.getDefaultInstance());
-    defaultClient.mutateRow(request);
+    underTest.mutateRow(request);
     verifyRequestCalled(request);
   }
 
   @Test
   public void testRetryableMutateRowAsync() {
+    BigtableDataGrpcClient defaultClient = createClient(false);
     MutateRowRequest request = MutateRowRequest.newBuilder().setTableName(TABLE_NAME).build();
     defaultClient.mutateRowAsync(request);
     verifyRequestCalled(request);
@@ -126,6 +133,7 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testRetryableCheckAndMutateRow() {
+    BigtableDataGrpcClient defaultClient = createClient(false);
     CheckAndMutateRowRequest request =
         CheckAndMutateRowRequest.newBuilder().setTableName(TABLE_NAME).build();
     setResponse(CheckAndMutateRowResponse.getDefaultInstance());
@@ -135,14 +143,16 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testRetryableCheckAndMutateRowAsync() {
+    BigtableDataClient underTest = createClient(false);
     CheckAndMutateRowRequest request =
         CheckAndMutateRowRequest.newBuilder().setTableName(TABLE_NAME).build();
-    defaultClient.checkAndMutateRowAsync(request);
+    underTest.checkAndMutateRowAsync(request);
     verifyRequestCalled(request);
   }
 
   @Test
   public void testMutateRowPredicate() {
+    BigtableDataGrpcClient defaultClient = createClient(false, false, false);
     assertFalse(defaultClient.mutateRowRpc.isRetryable(null));
 
     MutateRowRequest noDataRequest = MutateRowRequest.getDefaultInstance();
@@ -154,11 +164,12 @@ public class TestBigtableDataGrpcClient {
                 Mutation.newBuilder().setSetCell(SetCell.newBuilder().setTimestampMicros(-1)))
             .build();
     assertFalse(defaultClient.mutateRowRpc.isRetryable(requestWithCells));
-    assertTrue(createClient(true).mutateRowRpc.isRetryable(requestWithCells));
+    assertTrue(createClient(true, false, false).mutateRowRpc.isRetryable(requestWithCells));
   }
 
   @Test
   public void testMutateRowsPredicate() {
+    BigtableDataGrpcClient defaultClient = createClient(false, false, false);
     assertFalse(defaultClient.mutateRowsRpc.isRetryable(null));
 
     MutateRowsRequest.Builder request = MutateRowsRequest.newBuilder();
@@ -173,6 +184,7 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testCheckAndMutateRowPredicate() {
+    BigtableDataGrpcClient defaultClient = createClient(false, false, false);
     assertFalse(defaultClient.checkAndMutateRpc.isRetryable(null));
 
     CheckAndMutateRowRequest.Builder request = CheckAndMutateRowRequest.newBuilder();
@@ -190,6 +202,7 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testSingleRowRead() {
+    BigtableDataGrpcClient defaultClient = createClient(true);
     ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
     requestBuilder.getRowsBuilder().addRowKeys(ByteString.EMPTY);
     defaultClient.readRows(requestBuilder.build());
@@ -198,6 +211,7 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testMultiRowRead() {
+    BigtableDataGrpcClient defaultClient = createClient(true);
     ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
     requestBuilder.getRowsBuilder().addRowRanges(RowRange.getDefaultInstance());
     defaultClient.readRows(requestBuilder.build());
@@ -206,6 +220,7 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testListReadRows() {
+    BigtableDataGrpcClient defaultClient = createClient(false);
     ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
     requestBuilder.getRowsBuilder().addRowKeys(ByteString.EMPTY);
     setResponse(ReadRowsResponse.getDefaultInstance());
@@ -215,6 +230,7 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testScanner() throws IOException {
+    BigtableDataGrpcClient defaultClient = createClient(true);
     ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
     requestBuilder.getRowsBuilder().addRowKeys(ByteString.EMPTY);
     ResultScanner<FlatRow> scanner = defaultClient.readFlatRows(requestBuilder.build());
@@ -236,6 +252,7 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testScannerIdle() throws IOException {
+    BigtableDataGrpcClient defaultClient = createClient(true);
     ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
     requestBuilder.getRowsBuilder().addRowKeys(ByteString.EMPTY);
     ResultScanner<FlatRow> scanner = defaultClient.readFlatRows(requestBuilder.build());
@@ -262,14 +279,14 @@ public class TestBigtableDataGrpcClient {
 
     Assert.assertEquals(key3, scanner.next().getRowKey());
     // There was a retry based on the idle
-    verify(mochScheduler, times(1)).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
+    verify(mockScheduler, times(1)).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
   }
 
   private void setResponse(final Object response) {
     Answer<Void> answer =
         new Answer<Void>() {
           @Override
-          public Void answer(final InvocationOnMock invocation) throws Throwable {
+          public Void answer(final InvocationOnMock invocation) {
             checkHeader(invocation.getArgument(1, Metadata.class));
             ClientCall.Listener listener = invocation.getArgument(0, ClientCall.Listener.class);
             listener.onMessage(response);
