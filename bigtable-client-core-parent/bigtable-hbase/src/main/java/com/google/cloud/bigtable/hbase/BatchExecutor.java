@@ -20,7 +20,6 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.api.core.SettableApiFuture;
-import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
@@ -50,7 +49,7 @@ import org.apache.hadoop.hbase.util.Bytes;
  * org.apache.hadoop.hbase.client.Table#batch(List, Object[])}. {@link
  * org.apache.hadoop.hbase.client.Table#put(List)} and {@link
  * org.apache.hadoop.hbase.client.Table#get(List)}. This class relies on implementations found in
- * {@link BulkRead} and in {@link BigtableBufferedMutatorHelper}.
+ * {@link BulkReadWrapper} and in {@link BigtableBufferedMutatorHelper}.
  *
  * <p>For internal use only - public for technical reasons.
  */
