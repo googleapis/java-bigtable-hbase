@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.INSTANCE_ID_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.PROJECT_ID_KEY;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -35,13 +36,15 @@ import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
-import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
-import com.google.cloud.bigtable.grpc.scanner.FlatRow.Cell;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.cloud.bigtable.hbase.adapters.read.RowCell;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
+import com.google.cloud.bigtable.hbase.wrappers.BulkReadWrapper;
+import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
@@ -116,33 +119,38 @@ public class TestBatchExecutor {
 
   @Mock private BigtableSession mockBigtableSession;
 
-  @Mock private BulkRead mockBulkRead;
+  @Mock private BulkReadWrapper mockBulkRead;
 
   @Mock private IBulkMutation mockBulkMutation;
 
   @Mock private IBigtableDataClient mockDataClient;
 
+  @Mock private DataClientWrapper mockDataClientWrapper;
+
+  @Mock private BigtableApi mockBigtableApi;
+
   @Mock private ApiFuture mockFuture;
 
   private HBaseRequestAdapter requestAdapter;
-
-  private BigtableHBaseSettings settings;
 
   @Before
   public void setup() throws IOException {
     Configuration configuration = new Configuration(false);
     configuration.set(PROJECT_ID_KEY, "projectId");
     configuration.set(INSTANCE_ID_KEY, "instanceId");
-    settings = BigtableHBaseSettings.create(configuration);
+    BigtableHBaseSettings settings = BigtableHBaseSettings.create(configuration);
 
     requestAdapter = new HBaseRequestAdapter(settings, TableName.valueOf("table"));
-    when(mockBulkMutation.add(any(RowMutationEntry.class))).thenReturn(mockFuture);
+    when(mockBigtableApi.getBigtableHBaseSettings()).thenReturn(settings);
+    when(mockBigtableApi.getDataClient()).thenReturn(mockDataClientWrapper);
+    when(mockDataClientWrapper.createBulkRead("table")).thenReturn(mockBulkRead);
     when(mockBigtableSession.getDataClientWrapper()).thenReturn(mockDataClient);
-    when(mockDataClient.readModifyWriteRowAsync(any(ReadModifyWriteRow.class)))
-        .thenReturn(mockFuture);
     when(mockBigtableSession.createBulkMutationWrapper(any(BigtableTableName.class)))
         .thenReturn(mockBulkMutation);
-    when(mockBigtableSession.createBulkRead(any(BigtableTableName.class))).thenReturn(mockBulkRead);
+
+    when(mockBulkMutation.add(any(RowMutationEntry.class))).thenReturn(mockFuture);
+    when(mockDataClient.readModifyWriteRowAsync(any(ReadModifyWriteRow.class)))
+        .thenReturn(mockFuture);
     doAnswer(
             new Answer<Void>() {
               @Override
@@ -218,24 +226,24 @@ public class TestBatchExecutor {
 
   @Test
   public void testPartialResults() throws Exception {
+    when(mockBigtableApi.getDataClient()).thenReturn(mockDataClientWrapper);
+    when(mockDataClientWrapper.createBulkRead(isA(String.class))).thenReturn(mockBulkRead);
     byte[] key1 = randomBytes(8);
     byte[] key2 = randomBytes(8);
-    FlatRow response1 =
-        FlatRow.newBuilder()
-            .withRowKey(ByteString.copyFrom(key1))
-            .addCell(
-                new Cell(
-                    "cf",
-                    ByteString.EMPTY,
+    Result result =
+        Result.create(
+            ImmutableList.<org.apache.hadoop.hbase.Cell>of(
+                new RowCell(
+                    key1,
+                    "cf".getBytes(),
+                    "".getBytes(),
                     10,
-                    ByteString.copyFromUtf8("hi!"),
-                    new ArrayList<String>()))
-            .build();
-
+                    "hi!".getBytes(),
+                    ImmutableList.<String>of())));
     RuntimeException exception = new RuntimeException("Something bad happened");
     when(mockBulkRead.add(any(Query.class)))
-        .thenReturn(ApiFutures.immediateFuture(response1))
-        .thenReturn(ApiFutures.<FlatRow>immediateFailedFuture(exception));
+        .thenReturn(ApiFutures.immediateFuture(result))
+        .thenReturn(ApiFutures.<Result>immediateFailedFuture(exception));
 
     List<Get> gets = Arrays.asList(new Get(key1), new Get(key2));
     Object[] results = new Object[2];
@@ -245,7 +253,7 @@ public class TestBatchExecutor {
     } catch (RetriesExhaustedWithDetailsException ignored) {
     }
     Assert.assertTrue("first result is a result", results[0] instanceof Result);
-    Assert.assertTrue(Bytes.equals(((Result) results[0]).getRow(), key1));
+    Assert.assertArrayEquals(key1, ((Result) results[0]).getRow());
     Assert.assertEquals(exception, results[1]);
   }
 
@@ -334,7 +342,7 @@ public class TestBatchExecutor {
   }
 
   private BatchExecutor createExecutor() {
-    return new BatchExecutor(mockBigtableSession, settings, requestAdapter);
+    return new BatchExecutor(mockBigtableSession, mockBigtableApi, requestAdapter);
   }
 
   private Result[] batch(final List<? extends org.apache.hadoop.hbase.client.Row> actions)
