@@ -92,14 +92,14 @@ public class BatchExecutor {
     @SuppressWarnings("unchecked")
     @Override
     public final void onSuccess(Object message) {
-      Result result = Result.EMPTY_RESULT;
-      try {
-        if (message instanceof Result) {
-          result = (Result) message;
-        }
-      } catch (Throwable throwable) {
-        onFailure(throwable);
-        return;
+      final Result result;
+
+      if (message instanceof Result) {
+        // Handle the completion of Gets
+        result = (Result) message;
+      } else {
+        // Handles the completion of other operations like Deletes & Puts that don't return anything
+        result = Result.EMPTY_RESULT;
       }
 
       resultsArray[index] = result;
