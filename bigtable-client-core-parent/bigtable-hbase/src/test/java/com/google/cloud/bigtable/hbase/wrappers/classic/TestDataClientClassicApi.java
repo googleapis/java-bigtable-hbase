@@ -350,7 +350,9 @@ public class TestDataClientClassicApi {
         .thenReturn(Futures.immediateFuture(Collections.<FlatRow>emptyList()));
 
     Result result =
-        dataClientWrapper.readRowAsync(TABLE_ID, ByteString.copyFromUtf8("non-existent-key")).get();
+        dataClientWrapper
+            .readRowAsync(TABLE_ID, ByteString.copyFromUtf8("non-existent-key"), null)
+            .get();
     assertEquals(Result.EMPTY_RESULT, result);
 
     Filters.Filter filter = Filters.FILTERS.family().exactMatch("cf");

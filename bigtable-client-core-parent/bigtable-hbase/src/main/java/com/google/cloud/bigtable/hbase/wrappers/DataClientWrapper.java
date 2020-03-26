@@ -59,9 +59,6 @@ public interface DataClientWrapper extends AutoCloseable {
    */
   ApiFuture<List<KeyOffset>> sampleRowKeysAsync(String tableId);
 
-  /** Reads a single row, if the row not found then returns an empty {@link Result}. */
-  ApiFuture<Result> readRowAsync(String tableId, ByteString rowKey);
-
   /** Reads a single row based on filter, If row not found then returns an empty {@link Result}. */
   ApiFuture<Result> readRowAsync(
       String tableId, ByteString rowKey, @Nullable Filters.Filter filter);

@@ -165,11 +165,6 @@ public class DataClientClassicApi implements DataClientWrapper {
   }
 
   @Override
-  public ApiFuture<Result> readRowAsync(String tableId, ByteString rowKey) {
-    return readRowAsync(tableId, rowKey, null);
-  }
-
-  @Override
   public ApiFuture<Result> readRowAsync(String tableId, ByteString rowKey, Filters.Filter filter) {
     Query request = Query.create(tableId).rowKey(rowKey).limit(1L);
     if (filter != null) {
