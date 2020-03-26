@@ -212,8 +212,7 @@ public class CheckAndMutateUtil {
           "condition is null. You need to specify the condition by"
               + " calling ifNotExists/ifEquals/ifMatches before executing the request");
       ConditionalRowMutation conditionalRowMutation =
-          ConditionalRowMutation.create(
-              hbaseAdapter.getBigtableTableName().getTableId(), ByteString.copyFrom(row));
+          ConditionalRowMutation.create(hbaseAdapter.getTableId(), ByteString.copyFrom(row));
       Scan scan = new Scan();
       scan.setMaxVersions(1);
       scan.addColumn(family, qualifier);

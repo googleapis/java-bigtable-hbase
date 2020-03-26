@@ -22,7 +22,6 @@ import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
@@ -53,19 +52,16 @@ public abstract class AbstractBigtableRegionLocator {
   private ApiFuture<List<HRegionLocation>> regionsFuture;
   private final DataClientWrapper client;
   private final SampledRowKeysAdapter adapter;
-  private final BigtableTableName bigtableTableName;
+  private final String fullTableName;
   private long regionsFetchTimeMillis;
 
   public AbstractBigtableRegionLocator(
       TableName tableName, BigtableHBaseSettings settings, DataClientWrapper client) {
     this.tableName = tableName;
     this.client = client;
-    this.bigtableTableName =
-        new BigtableTableName(
-            NameUtil.formatTableName(
-                settings.getProjectId(),
-                settings.getInstanceId(),
-                tableName.getQualifierAsString()));
+    this.fullTableName =
+        NameUtil.formatTableName(
+            settings.getProjectId(), settings.getInstanceId(), tableName.getQualifierAsString());
     ServerName serverName = ServerName.valueOf(settings.getDataHost(), settings.getPort(), 0);
     this.adapter = getSampledRowKeysAdapter(tableName, serverName);
   }
@@ -87,10 +83,10 @@ public abstract class AbstractBigtableRegionLocator {
       return this.regionsFuture;
     }
 
-    LOG.debug("Sampling rowkeys for table %s", bigtableTableName.toString());
+    LOG.debug("Sampling rowkeys for table %s", fullTableName);
 
     try {
-      ApiFuture<List<KeyOffset>> future = client.sampleRowKeysAsync(bigtableTableName.getTableId());
+      ApiFuture<List<KeyOffset>> future = client.sampleRowKeysAsync(tableName.getNameAsString());
       this.regionsFuture =
           ApiFutures.transform(
               future,

@@ -19,8 +19,8 @@ import com.google.api.core.InternalApi;
 import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsResponse;
 import com.google.bigtable.admin.v2.Snapshot;
+import com.google.cloud.bigtable.admin.v2.internal.NameUtil;
 import com.google.cloud.bigtable.grpc.BigtableSnapshotName;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
@@ -150,11 +150,11 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
     for (Snapshot snapshot : snapshotList.getSnapshotsList()) {
       BigtableSnapshotName snapshotName = new BigtableSnapshotName(snapshot.getName());
-      BigtableTableName tableName = new BigtableTableName(snapshot.getSourceTable().getName());
+      String tableName = snapshot.getSourceTable().getName();
       response.add(
           HBaseProtos.SnapshotDescription.newBuilder()
               .setName(snapshotName.getSnapshotId())
-              .setTable(tableName.getTableId())
+              .setTable(NameUtil.extractTableIdFromTableName(tableName))
               .setCreationTime(TimeUnit.SECONDS.toMillis(snapshot.getCreateTime().getSeconds()))
               .build());
     }

@@ -22,8 +22,6 @@ import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.Filters;
-import com.google.cloud.bigtable.grpc.BigtableInstanceName;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -49,8 +47,6 @@ public class TestCheckAndMutateUtil {
   private static final String PROJECT_ID = "project";
   private static final String INSTANCE_ID = "instance";
   private static final TableName TABLE_NAME = TableName.valueOf("SomeTable");
-  private static final BigtableTableName BT_TABLE_NAME =
-      new BigtableInstanceName(PROJECT_ID, INSTANCE_ID).toTableName(TABLE_NAME.getNameAsString());
   private static final RequestContext REQUEST_CONTEXT =
       RequestContext.create(PROJECT_ID, INSTANCE_ID, "SomeAppProfileId");
   private static final byte[] rowKey = Bytes.toBytes("rowKey");
@@ -72,7 +68,7 @@ public class TestCheckAndMutateUtil {
     PutAdapter putAdapter = new PutAdapter(100, true);
     HBaseRequestAdapter.MutationAdapters mutationAdapters =
         new HBaseRequestAdapter.MutationAdapters(putAdapter);
-    requestAdapter = new HBaseRequestAdapter(TABLE_NAME, BT_TABLE_NAME, mutationAdapters);
+    requestAdapter = new HBaseRequestAdapter(TABLE_NAME, mutationAdapters);
   }
 
   private static void checkPredicate(CheckAndMutateRowRequest result) {
