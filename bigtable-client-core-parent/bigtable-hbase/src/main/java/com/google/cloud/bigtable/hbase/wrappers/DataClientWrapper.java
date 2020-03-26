@@ -18,12 +18,15 @@ package com.google.cloud.bigtable.hbase.wrappers;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
+import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 import java.util.List;
+import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 
@@ -55,6 +58,10 @@ public interface DataClientWrapper extends AutoCloseable {
    * completed.
    */
   ApiFuture<List<KeyOffset>> sampleRowKeysAsync(String tableId);
+
+  /** Reads a single row based on filter, If row not found then returns an empty {@link Result}. */
+  ApiFuture<Result> readRowAsync(
+      String tableId, ByteString rowKey, @Nullable Filters.Filter filter);
 
   /** Perform a scan over {@link Result}s, in key order. */
   ResultScanner readRows(Query request);
