@@ -32,6 +32,7 @@ import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
@@ -53,6 +54,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -158,6 +160,31 @@ public class DataClientClassicApi implements DataClientWrapper {
             }
 
             return keyOffsetBuilder.build();
+          }
+        });
+  }
+
+  @Override
+  public ApiFuture<Result> readRowAsync(String tableId, ByteString rowKey) {
+    return readRowAsync(tableId, rowKey, null);
+  }
+
+  @Override
+  public ApiFuture<Result> readRowAsync(String tableId, ByteString rowKey, Filters.Filter filter) {
+    Query request = Query.create(tableId).rowKey(rowKey).limit(1L);
+    if (filter != null) {
+      request.filter(filter);
+    }
+
+    return ApiFutureUtil.transformAndAdapt(
+        delegate.readFlatRowsAsync(request.toProto(requestContext)),
+        new Function<List<FlatRow>, Result>() {
+          @Override
+          public Result apply(List<FlatRow> flatRows) {
+            if (flatRows.isEmpty()) {
+              return Result.EMPTY_RESULT;
+            }
+            return Adapters.FLAT_ROW_ADAPTER.adaptResponse(flatRows.get(0));
           }
         });
   }

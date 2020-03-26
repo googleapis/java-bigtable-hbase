@@ -42,6 +42,7 @@ import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.data.v2.models.Mutation;
 import com.google.cloud.bigtable.data.v2.models.Query;
@@ -340,6 +341,29 @@ public class TestDataClientClassicApi {
     assertEquals(keyOffsetList.get(1).getKey(), ROW_KEY_2);
     assertEquals(keyOffsetList.get(2).getKey(), ROW_KEY_3);
     verify(delegate).sampleRowKeysAsync(requestProto);
+  }
+
+  @Test
+  public void testReadRowAsync() throws Exception {
+    Query query = Query.create(TABLE_ID).rowKey("non-existent-key").limit(1L);
+    when(delegate.readFlatRowsAsync(query.toProto(REQUEST_CONTEXT)))
+        .thenReturn(Futures.immediateFuture(Collections.<FlatRow>emptyList()));
+
+    Result result =
+        dataClientWrapper.readRowAsync(TABLE_ID, ByteString.copyFromUtf8("non-existent-key")).get();
+    assertEquals(Result.EMPTY_RESULT, result);
+
+    Filters.Filter filter = Filters.FILTERS.family().exactMatch("cf");
+    Query queryWithFilter = Query.create(TABLE_ID).rowKey(ROW_KEY).filter(filter).limit(1L);
+    when(delegate.readFlatRowsAsync(queryWithFilter.toProto(REQUEST_CONTEXT)))
+        .thenReturn(Futures.immediateFuture(Collections.singletonList(SAMPLE_FLAT_ROW)));
+
+    Result actualResult = dataClientWrapper.readRowAsync(TABLE_ID, ROW_KEY, filter).get();
+    assertArrayEquals(
+        FLAT_ROW_ADAPTER.adaptResponse(SAMPLE_FLAT_ROW).rawCells(), actualResult.rawCells());
+
+    verify(delegate).readFlatRowsAsync(query.toProto(REQUEST_CONTEXT));
+    verify(delegate).readFlatRowsAsync(queryWithFilter.toProto(REQUEST_CONTEXT));
   }
 
   @Test
