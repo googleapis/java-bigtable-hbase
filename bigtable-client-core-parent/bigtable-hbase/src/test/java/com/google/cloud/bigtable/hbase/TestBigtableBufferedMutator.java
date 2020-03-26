@@ -24,14 +24,13 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.core.ApiFutures;
 import com.google.api.core.SettableApiFuture;
-import com.google.cloud.bigtable.core.IBigtableDataClient;
-import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
-import com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
+import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
+import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -50,6 +49,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
@@ -63,11 +63,11 @@ public class TestBigtableBufferedMutator {
   private static final Put SIMPLE_PUT =
       new Put(EMPTY_BYTES).addColumn(EMPTY_BYTES, EMPTY_BYTES, EMPTY_BYTES);
 
-  @Mock private BigtableSession mockSession;
+  @Mock private BigtableApi mockBigtableApi;
 
-  @Mock private IBulkMutation mockBulkMutation;
+  @Mock private BulkMutationWrapper mockBulkMutation;
 
-  @Mock private IBigtableDataClient mockDataClient;
+  @Mock private DataClientWrapper mockDataClient;
 
   @SuppressWarnings("rawtypes")
   private SettableApiFuture future = SettableApiFuture.create();
@@ -78,9 +78,8 @@ public class TestBigtableBufferedMutator {
 
   @Before
   public void setUp() {
-    when(mockSession.createBulkMutationWrapper(any(BigtableTableName.class)))
-        .thenReturn(mockBulkMutation);
-    when(mockSession.getDataClientWrapper()).thenReturn(mockDataClient);
+    when(mockBigtableApi.getDataClient()).thenReturn(mockDataClient);
+    when(mockDataClient.createBulkMutation(Mockito.anyString())).thenReturn(mockBulkMutation);
   }
 
   @After
@@ -99,7 +98,7 @@ public class TestBigtableBufferedMutator {
     HBaseRequestAdapter adapter = new HBaseRequestAdapter(settings, TableName.valueOf("TABLE"));
 
     executorService = Executors.newCachedThreadPool();
-    return new BigtableBufferedMutator(adapter, settings, mockSession, listener);
+    return new BigtableBufferedMutator(mockBigtableApi, settings, adapter, listener);
   }
 
   @Test

@@ -20,10 +20,6 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.api.core.SettableApiFuture;
-import com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.cloud.bigtable.grpc.async.BulkRead;
-import com.google.cloud.bigtable.grpc.scanner.FlatRow;
-import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
@@ -53,7 +49,7 @@ import org.apache.hadoop.hbase.util.Bytes;
  * org.apache.hadoop.hbase.client.Table#batch(List, Object[])}. {@link
  * org.apache.hadoop.hbase.client.Table#put(List)} and {@link
  * org.apache.hadoop.hbase.client.Table#get(List)}. This class relies on implementations found in
- * {@link BulkRead} and in {@link BigtableBufferedMutatorHelper}.
+ * {@link BulkReadWrapper} and in {@link BigtableBufferedMutatorHelper}.
  *
  * <p>For internal use only - public for technical reasons.
  */
@@ -96,21 +92,14 @@ public class BatchExecutor {
     @SuppressWarnings("unchecked")
     @Override
     public final void onSuccess(Object message) {
-      Result result = Result.EMPTY_RESULT;
+      final Result result;
 
-      try {
-        if (message instanceof FlatRow) {
-          result = Adapters.FLAT_ROW_ADAPTER.adaptResponse((FlatRow) message);
-        } else if (message instanceof com.google.cloud.bigtable.data.v2.models.Row) {
-          result =
-              Adapters.ROW_ADAPTER.adaptResponse(
-                  (com.google.cloud.bigtable.data.v2.models.Row) message);
-        } else if (message instanceof Result) {
-          result = (Result) message;
-        }
-      } catch (Throwable throwable) {
-        onFailure(throwable);
-        return;
+      if (message instanceof Result) {
+        // Handle the completion of Gets
+        result = (Result) message;
+      } else {
+        // Handles the completion of other operations like Deletes & Puts that don't return anything
+        result = Result.EMPTY_RESULT;
       }
 
       resultsArray[index] = result;
@@ -142,22 +131,17 @@ public class BatchExecutor {
   /**
    * Constructor for BatchExecutor.
    *
-   * @param session a {@link com.google.cloud.bigtable.grpc.BigtableSession} object.
-   * @param requestAdapter a {@link com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter}
-   *     object.
+   * @param bigtableApi a {@link BigtableApi} object to access bigtable data client.
+   * @param settings a {@link BigtableHBaseSettings} object for bigtable settings.
+   * @param adapter a {@link HBaseRequestAdapter} object to convert HBase object to Bigtable protos.
    */
-  // TODO(rahulkql): This is an intermediate state, we will migrate BigtableBufferedMutatorHelper in
-  // follow up PR and that would help us to remove BigtableSession.
   public BatchExecutor(
-      BigtableSession session, BigtableApi bigtableApi, HBaseRequestAdapter requestAdapter) {
-    this.requestAdapter = requestAdapter;
-    this.settings = bigtableApi.getBigtableHBaseSettings();
+      BigtableApi bigtableApi, BigtableHBaseSettings settings, HBaseRequestAdapter adapter) {
+    this.requestAdapter = adapter;
+    this.settings = settings;
     this.bulkRead =
-        bigtableApi
-            .getDataClient()
-            .createBulkRead(requestAdapter.getBigtableTableName().getTableId());
-    this.bufferedMutatorHelper =
-        new BigtableBufferedMutatorHelper(requestAdapter, settings, session);
+        bigtableApi.getDataClient().createBulkRead(adapter.getBigtableTableName().getTableId());
+    this.bufferedMutatorHelper = new BigtableBufferedMutatorHelper(bigtableApi, settings, adapter);
   }
 
   /**

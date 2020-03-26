@@ -695,8 +695,7 @@ public abstract class AbstractBigtableTable implements Table {
   protected synchronized BatchExecutor getBatchExecutor() {
     if (batchExecutor == null) {
       batchExecutor =
-          new BatchExecutor(
-              bigtableConnection.getSession(), bigtableConnection.getBigtableApi(), hbaseAdapter);
+          new BatchExecutor(bigtableConnection.getBigtableApi(), settings, hbaseAdapter);
     }
     return batchExecutor;
   }
