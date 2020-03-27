@@ -36,11 +36,8 @@ import org.apache.hadoop.hbase.TableName;
 @InternalApi("For internal usage only")
 public interface CommonConnection extends Closeable {
 
-  /**
-   * Get a {@link BigtableSession} on which operations can be performed.
-   *
-   * @return a {@link BigtableSession} object.
-   */
+  /** @deprecated Please use {@link #getBigtableApi()}. */
+  @Deprecated
   BigtableSession getSession();
 
   /** Returns {@link BigtableApi} object to access bigtable data and admin client APIs. */
@@ -54,11 +51,8 @@ public interface CommonConnection extends Closeable {
    */
   Configuration getConfiguration();
 
-  /**
-   * Getter for the field <code>options</code>.
-   *
-   * @return a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
-   */
+  /** @deprecated Please use {@link #getBigtableHBaseSettings()}. */
+  @Deprecated
   BigtableOptions getOptions();
 
   /**
