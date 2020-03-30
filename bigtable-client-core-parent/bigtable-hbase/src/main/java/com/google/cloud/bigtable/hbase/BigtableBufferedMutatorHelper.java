@@ -25,7 +25,6 @@ import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
-import com.google.cloud.bigtable.util.ApiFutureUtil;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -202,10 +201,10 @@ public class BigtableBufferedMutatorHelper {
         future = bulkMutation.add(adapter.adaptEntry((Delete) mutation));
       } else if (mutation instanceof Increment) {
         future = dataClient.readModifyWriteRowAsync(adapter.adapt((Increment) mutation));
-        operationAccountant.registerOperation(ApiFutureUtil.adapt(future));
+        operationAccountant.registerOperation(future);
       } else if (mutation instanceof Append) {
         future = dataClient.readModifyWriteRowAsync(adapter.adapt((Append) mutation));
-        operationAccountant.registerOperation(ApiFutureUtil.adapt(future));
+        operationAccountant.registerOperation(future);
       } else {
         future =
             ApiFutures.immediateFailedFuture(

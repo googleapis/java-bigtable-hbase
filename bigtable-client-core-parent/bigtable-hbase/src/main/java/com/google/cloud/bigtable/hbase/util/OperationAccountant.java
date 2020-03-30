@@ -16,11 +16,11 @@
 package com.google.cloud.bigtable.hbase.util;
 
 import com.google.api.client.util.NanoClock;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutureCallback;
+import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,9 +33,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 @InternalApi("For internal usage only")
 public class OperationAccountant {
   /** Constant <code>LOG</code> */
-  @VisibleForTesting static Logger LOG = new Logger(OperationAccountant.class);
+  private static Logger LOG = new Logger(OperationAccountant.class);
 
-  @VisibleForTesting static final long DEFAULT_FINISH_WAIT_MILLIS = 250;
+  private static final long DEFAULT_FINISH_WAIT_MILLIS = 250;
 
   // In awaitCompletion, wait up to this number of nanoseconds without any operations completing.
   // If this amount of time goes by without any updates, awaitCompletion will log a warning.
@@ -67,11 +67,11 @@ public class OperationAccountant {
    * Register a new RPC operation. Blocks until the requested resources are available. This method
    * must be paired with a call to {@link #onOperationCompletion()}.
    */
-  public void registerOperation(final ListenableFuture<?> future) {
+  public void registerOperation(final ApiFuture<?> future) {
     count.incrementAndGet();
-    Futures.addCallback(
+    ApiFutures.addCallback(
         future,
-        new FutureCallback<Object>() {
+        new ApiFutureCallback<Object>() {
           @Override
           public void onSuccess(Object result) {
             onOperationCompletion();
