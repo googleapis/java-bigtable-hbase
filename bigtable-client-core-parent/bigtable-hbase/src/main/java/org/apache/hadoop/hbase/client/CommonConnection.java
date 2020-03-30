@@ -51,7 +51,7 @@ public interface CommonConnection extends Closeable {
    */
   Configuration getConfiguration();
 
-  /** @deprecated Please use {@link #getBigtableHBaseSettings()}. */
+  /** @deprecated Please use {@link #getBigtableSettings()}. */
   @Deprecated
   BigtableOptions getOptions();
 
