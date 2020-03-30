@@ -139,8 +139,7 @@ public class BatchExecutor {
       BigtableApi bigtableApi, BigtableHBaseSettings settings, HBaseRequestAdapter adapter) {
     this.requestAdapter = adapter;
     this.settings = settings;
-    this.bulkRead =
-        bigtableApi.getDataClient().createBulkRead(adapter.getBigtableTableName().getTableId());
+    this.bulkRead = bigtableApi.getDataClient().createBulkRead(adapter.getTableId());
     this.bufferedMutatorHelper = new BigtableBufferedMutatorHelper(bigtableApi, settings, adapter);
   }
 

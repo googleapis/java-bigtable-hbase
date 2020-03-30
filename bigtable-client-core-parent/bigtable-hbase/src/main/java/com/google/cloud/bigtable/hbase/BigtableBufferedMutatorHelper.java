@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.hbase;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.util.OperationAccountant;
@@ -81,9 +80,8 @@ public class BigtableBufferedMutatorHelper {
       BigtableApi bigtableApi, BigtableHBaseSettings settings, HBaseRequestAdapter adapter) {
     this.adapter = adapter;
     this.settings = settings;
-    BigtableTableName tableName = this.adapter.getBigtableTableName();
     this.dataClient = bigtableApi.getDataClient();
-    this.bulkMutation = dataClient.createBulkMutation(tableName.getTableId());
+    this.bulkMutation = dataClient.createBulkMutation(this.adapter.getTableId());
     this.operationAccountant = new OperationAccountant();
   }
 
