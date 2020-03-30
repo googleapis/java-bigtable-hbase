@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.util.NanoClock;
-import com.google.common.util.concurrent.SettableFuture;
+import com.google.api.core.SettableApiFuture;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -47,7 +47,7 @@ public class TestOperationAccountant {
   @Test
   public void testOnOperationCompletion() {
     OperationAccountant underTest = new OperationAccountant();
-    SettableFuture<String> future = SettableFuture.create();
+    SettableApiFuture<String> future = SettableApiFuture.create();
     underTest.registerOperation(future);
     assertTrue(underTest.hasInflightOperations());
     future.set("");
@@ -60,7 +60,7 @@ public class TestOperationAccountant {
     ExecutorService pool = Executors.newCachedThreadPool();
     try {
       final OperationAccountant underTest = new OperationAccountant();
-      final LinkedBlockingQueue<SettableFuture<String>> registeredEvents =
+      final LinkedBlockingQueue<SettableApiFuture<String>> registeredEvents =
           new LinkedBlockingQueue<>();
       Future<Boolean> writeFuture =
           pool.submit(
@@ -68,7 +68,7 @@ public class TestOperationAccountant {
                 @Override
                 public Boolean call() throws InterruptedException {
                   for (long i = 0; i < registerCount; i++) {
-                    SettableFuture<String> completionFuture = SettableFuture.create();
+                    SettableApiFuture<String> completionFuture = SettableApiFuture.create();
                     underTest.registerOperation(completionFuture);
                     registeredEvents.offer(completionFuture);
                   }
@@ -82,7 +82,7 @@ public class TestOperationAccountant {
                 @Override
                 public Void call() throws Exception {
                   for (int i = 0; i < registerCount; i++) {
-                    SettableFuture<String> future = registeredEvents.poll(1, TimeUnit.SECONDS);
+                    SettableApiFuture<String> future = registeredEvents.poll(1, TimeUnit.SECONDS);
                     if (future != null) {
                       future.set("");
                     }
@@ -120,7 +120,7 @@ public class TestOperationAccountant {
     long finishWaitTime = 100;
     final OperationAccountant underTest = new OperationAccountant(clock, finishWaitTime);
 
-    SettableFuture<String> operation = SettableFuture.create();
+    SettableApiFuture<String> operation = SettableApiFuture.create();
     underTest.registerOperation(operation);
     final int iterations = 4;
 
