@@ -114,7 +114,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public AbstractBigtableAdmin(CommonConnection connection) throws IOException {
     LOG.debug("Creating BigtableAdmin");
     configuration = connection.getConfiguration();
-    settings = connection.getBigtableHBaseSettings();
+    settings = connection.getBigtableSettings();
     this.connection = connection;
     disabledTables = connection.getDisabledTables();
     bigtableInstanceName =

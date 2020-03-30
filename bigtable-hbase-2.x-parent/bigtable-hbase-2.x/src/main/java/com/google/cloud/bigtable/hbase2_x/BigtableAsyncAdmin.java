@@ -105,7 +105,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   public BigtableAsyncAdmin(CommonConnection asyncConnection) throws IOException {
     LOG.debug("Creating BigtableAsyncAdmin");
-    BigtableHBaseSettings settings = asyncConnection.getBigtableHBaseSettings();
+    BigtableHBaseSettings settings = asyncConnection.getBigtableSettings();
     this.bigtableTableAdminClient = asyncConnection.getSession().getTableAdminClientWrapper();
     this.disabledTables = asyncConnection.getDisabledTables();
     this.bigtableInstanceName =

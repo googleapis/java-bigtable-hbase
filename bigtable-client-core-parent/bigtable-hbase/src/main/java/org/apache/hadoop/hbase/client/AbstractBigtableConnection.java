@@ -316,7 +316,7 @@ public abstract class AbstractBigtableConnection
   }
 
   @Override
-  public BigtableHBaseSettings getBigtableHBaseSettings() {
+  public BigtableHBaseSettings getBigtableSettings() {
     return this.settings;
   }
 

@@ -123,7 +123,7 @@ public abstract class AbstractBigtableTable implements Table {
   public AbstractBigtableTable(
       AbstractBigtableConnection bigtableConnection, HBaseRequestAdapter hbaseAdapter) {
     this.bigtableConnection = bigtableConnection;
-    this.settings = bigtableConnection.getBigtableHBaseSettings();
+    this.settings = bigtableConnection.getBigtableSettings();
     BigtableApi bigtableApi = bigtableConnection.getBigtableApi();
     this.clientWrapper = bigtableApi.getDataClient();
     this.hbaseAdapter = hbaseAdapter;

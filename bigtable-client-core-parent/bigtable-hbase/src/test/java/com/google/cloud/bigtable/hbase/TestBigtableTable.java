@@ -114,7 +114,7 @@ public class TestBigtableTable {
     HBaseRequestAdapter hbaseAdapter = new HBaseRequestAdapter(settings, tableName);
     when(mockConnection.getConfiguration()).thenReturn(config);
     when(mockConnection.getBigtableApi()).thenReturn(mockBigtableApi);
-    when(mockConnection.getBigtableHBaseSettings()).thenReturn(settings);
+    when(mockConnection.getBigtableSettings()).thenReturn(settings);
     when(mockBigtableApi.getDataClient()).thenReturn(mockBigtableDataClient);
     when(mockBigtableDataClient.readRows(isA(Query.class))).thenReturn(mockResultScanner);
     table = new AbstractBigtableTable(mockConnection, hbaseAdapter) {};

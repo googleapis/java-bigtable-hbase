@@ -66,7 +66,7 @@ public interface CommonConnection extends Closeable {
    *
    * @return a {@link BigtableHBaseSettings} instance.
    */
-  BigtableHBaseSettings getBigtableHBaseSettings();
+  BigtableHBaseSettings getBigtableSettings();
 
   /**
    * Getter for the field <code>disabledTables</code>.
