@@ -21,10 +21,10 @@ import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
-import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
+import com.google.cloud.bigtable.hbase.wrappers.AdminClientWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.base.Preconditions;
@@ -88,14 +88,14 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   private final Logger LOG = new Logger(getClass());
 
   private final Set<TableName> disabledTables;
-  private final IBigtableTableAdminClient bigtableTableAdminClient;
+  private final AdminClientWrapper bigtableTableAdminClient;
   private final BigtableInstanceName bigtableInstanceName;
   private final CommonConnection asyncConnection;
 
   public BigtableAsyncAdmin(CommonConnection asyncConnection) throws IOException {
     LOG.debug("Creating BigtableAsyncAdmin");
     BigtableHBaseSettings settings = asyncConnection.getBigtableSettings();
-    this.bigtableTableAdminClient = asyncConnection.getSession().getTableAdminClientWrapper();
+    this.bigtableTableAdminClient = asyncConnection.getBigtableApi().getAdminClient();
     this.disabledTables = asyncConnection.getDisabledTables();
     this.bigtableInstanceName =
         new BigtableInstanceName(settings.getProjectId(), settings.getInstanceId());
