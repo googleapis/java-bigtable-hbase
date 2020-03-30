@@ -127,7 +127,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
   }
 
   @Override
-  public BigtableHBaseSettings getBigtableHBaseSettings() {
+  public BigtableHBaseSettings getBigtableSettings() {
     return this.settings;
   }
 
