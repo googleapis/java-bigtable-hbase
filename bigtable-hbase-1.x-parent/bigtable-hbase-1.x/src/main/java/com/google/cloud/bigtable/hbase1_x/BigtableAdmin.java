@@ -16,18 +16,9 @@
 package com.google.cloud.bigtable.hbase1_x;
 
 import com.google.api.core.InternalApi;
-import com.google.bigtable.admin.v2.ListSnapshotsRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsResponse;
-import com.google.bigtable.admin.v2.Snapshot;
-import com.google.cloud.bigtable.admin.v2.internal.NameUtil;
-import com.google.cloud.bigtable.grpc.BigtableSnapshotName;
-import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import org.apache.hadoop.hbase.ProcedureInfo;
 import org.apache.hadoop.hbase.ServerName;
@@ -66,13 +57,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public MasterProtos.SnapshotResponse takeSnapshotAsync(HBaseProtos.SnapshotDescription snapshot)
       throws IOException, SnapshotCreationException {
-    snapshotTable(snapshot.getName(), TableName.valueOf(snapshot.getTable()));
-    LOG.warn(
-        "isSnapshotFinished() is not currently supported by BigtableAdmin.\n"
-            + "You may poll for existence of the snapshot with listSnapshots(snapshotName)");
-    return MasterProtos.SnapshotResponse.newBuilder()
-        .setExpectedTimeout(TimeUnit.MINUTES.toMillis(5))
-        .build();
+    throw new UnsupportedOperationException("takeSnapshotAsync");
   }
 
   /** {@inheritDoc} */
@@ -112,14 +97,14 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public void snapshot(
       String snapshotName, TableName tableName, HBaseProtos.SnapshotDescription.Type type)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
-    snapshot(snapshotName, tableName);
+    throw new UnsupportedOperationException("snapshot");
   }
 
   /** {@inheritDoc} */
   @Override
   public void snapshot(HBaseProtos.SnapshotDescription snapshot)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
-    snapshot(snapshot.getName(), TableName.valueOf(snapshot.getTable()));
+    throw new UnsupportedOperationException("snapshot");
   }
 
   /** {@inheritDoc} */
@@ -140,69 +125,31 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   /** {@inheritDoc} */
   @Override
   public List<HBaseProtos.SnapshotDescription> listSnapshots() throws IOException {
-    ListSnapshotsRequest request =
-        ListSnapshotsRequest.newBuilder().setParent(getSnapshotClusterName().toString()).build();
-
-    ListSnapshotsResponse snapshotList =
-        Futures.getChecked(tableAdminClientWrapper.listSnapshotsAsync(request), IOException.class);
-
-    List<HBaseProtos.SnapshotDescription> response = new ArrayList<>();
-
-    for (Snapshot snapshot : snapshotList.getSnapshotsList()) {
-      BigtableSnapshotName snapshotName = new BigtableSnapshotName(snapshot.getName());
-      String tableName = snapshot.getSourceTable().getName();
-      response.add(
-          HBaseProtos.SnapshotDescription.newBuilder()
-              .setName(snapshotName.getSnapshotId())
-              .setTable(NameUtil.extractTableIdFromTableName(tableName))
-              .setCreationTime(TimeUnit.SECONDS.toMillis(snapshot.getCreateTime().getSeconds()))
-              .build());
-    }
-    return response;
+    throw new UnsupportedOperationException("listSnapshots");
   }
 
   /** {@inheritDoc} */
   @Override
   public List<HBaseProtos.SnapshotDescription> listSnapshots(String regex) throws IOException {
-    return listSnapshots(Pattern.compile(regex));
+    throw new UnsupportedOperationException("listSnapshots");
   }
 
   /** {@inheritDoc} */
   @Override
   public List<HBaseProtos.SnapshotDescription> listSnapshots(Pattern pattern) throws IOException {
-    if (pattern == null || pattern.matcher("").matches()) {
-      return ImmutableList.of();
-    }
-
-    List<HBaseProtos.SnapshotDescription> response = new ArrayList<>();
-    for (HBaseProtos.SnapshotDescription description : listSnapshots()) {
-      if (pattern.matcher(description.getName()).matches()) {
-        response.add(description);
-      }
-    }
-    return response;
+    throw new UnsupportedOperationException("listSnapshots");
   }
 
   @Override
   public List<SnapshotDescription> listTableSnapshots(
       String tableNameRegex, String snapshotNameRegex) throws IOException {
-    return listTableSnapshots(Pattern.compile(tableNameRegex), Pattern.compile(snapshotNameRegex));
+    throw new UnsupportedOperationException("listTableSnapshots");
   }
 
   @Override
   public List<SnapshotDescription> listTableSnapshots(
       Pattern tableNamePattern, Pattern snapshotNamePattern) throws IOException {
-    if (tableNamePattern == null || tableNamePattern.matcher("").matches()) {
-      return ImmutableList.of();
-    }
-
-    List<SnapshotDescription> response = new ArrayList<>();
-    for (SnapshotDescription snapshotDescription : listSnapshots(snapshotNamePattern)) {
-      if (tableNamePattern.matcher(snapshotDescription.getTable()).matches()) {
-        response.add(snapshotDescription);
-      }
-    }
-    return response;
+    throw new UnsupportedOperationException("listTableSnapshots");
   }
 
   @Override
