@@ -29,6 +29,7 @@ import org.apache.hadoop.hbase.client.ResultScanner;
  *
  * <p>For internal use only - public for technical reasons.
  */
+// TODO: To be removed as not referenced anymore
 @InternalApi("For internal usage only")
 public class BigtableResultScannerAdapter<T> {
 
