@@ -18,12 +18,14 @@ package com.google.cloud.bigtable.hbase;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiExceptions;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.CheckAndMutateUtil;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
+import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
@@ -154,9 +156,16 @@ public abstract class AbstractBigtableTable implements Table {
   /** {@inheritDoc} */
   @Override
   public boolean exists(Get get) throws IOException {
-    try (Scope scope = TRACER.spanBuilder("BigtableTable.exists").startScopedSpan()) {
+    try (Scope scope = TRACER.spanBuilder("BigtableTable.exists").startScopedSpan();
+        Timer.Context ignored = metrics.getTimer.time()) {
       LOG.trace("exists(Get)");
-      return !getResults(GetAdapter.setCheckExistenceOnly(get), "exists").isEmpty();
+      Filters.Filter filter =
+          Adapters.GET_ADAPTER.buildFilter(GetAdapter.setCheckExistenceOnly(get));
+
+      return !ApiExceptions.callAndTranslateApiException(
+              clientWrapper.readRowAsync(
+                  tableName.getNameAsString(), ByteStringer.wrap(get.getRow()), filter))
+          .isEmpty();
     }
   }
 
@@ -253,24 +262,13 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public Result get(Get get) throws IOException {
     LOG.trace("get(Get)");
-    try (Scope scope = TRACER.spanBuilder("BigtableTable.get").startScopedSpan()) {
-      return getResults(get, "get");
-    }
-  }
+    try (Scope scope = TRACER.spanBuilder("BigtableTable.get").startScopedSpan();
+        Timer.Context ignored = metrics.getTimer.time()) {
 
-  private Result getResults(Get get, String method) {
-    try (Timer.Context ignored = metrics.getTimer.time()) {
-      List<Result> list =
-          ApiExceptions.callAndTranslateApiException(
-              clientWrapper.readRowsAsync(hbaseAdapter.adapt(get)));
-      switch (list.size()) {
-        case 0:
-          return Result.EMPTY_RESULT;
-        case 1:
-          return list.get(0);
-        default:
-          throw new IllegalStateException("Multiple responses found for " + method);
-      }
+      Filters.Filter filter = Adapters.GET_ADAPTER.buildFilter(get);
+      return ApiExceptions.callAndTranslateApiException(
+          clientWrapper.readRowAsync(
+              tableName.getNameAsString(), ByteStringer.wrap(get.getRow()), filter));
     }
   }
 
