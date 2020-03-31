@@ -23,6 +23,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.core.ApiFutures;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
@@ -54,14 +55,27 @@ public class TestBulkReadClassicApi {
   @Before
   public void setUp() {
     delegate = Mockito.mock(BulkRead.class);
-    bulkReadWrapper = new BulkReadClassicApi(delegate);
+    bulkReadWrapper = new BulkReadClassicApi(delegate, TABLE_ID);
   }
 
   @Test
   public void testAdd() throws ExecutionException, InterruptedException {
-    Query query = Query.create(TABLE_ID).rowKey("row-key");
+    when(delegate.add(Query.create(TABLE_ID).rowKey("row-key")))
+        .thenReturn(ApiFutures.immediateFuture(FLAT_ROW));
+    Result result = bulkReadWrapper.add(ByteString.copyFromUtf8("row-key"), null).get();
+    assertArrayEquals(FLAT_ROW.getRowKey().toByteArray(), result.getRow());
+    assertArrayEquals(FLAT_ROW_ADAPTER.adaptResponse(FLAT_ROW).rawCells(), result.rawCells());
+    verify(delegate).add(Query.create(TABLE_ID).rowKey("row-key"));
+  }
+
+  @Test
+  public void testAddWithFilter() throws ExecutionException, InterruptedException {
+    Filters.Filter filter = Filters.FILTERS.family().regex("cf");
+    Query query = Query.create(TABLE_ID).rowKey("row-key").filter(filter);
+
     when(delegate.add(query)).thenReturn(ApiFutures.immediateFuture(FLAT_ROW));
-    Result result = bulkReadWrapper.add(query).get();
+    Result result = bulkReadWrapper.add(ByteString.copyFromUtf8("row-key"), filter).get();
+
     assertArrayEquals(FLAT_ROW.getRowKey().toByteArray(), result.getRow());
     assertArrayEquals(FLAT_ROW_ADAPTER.adaptResponse(FLAT_ROW).rawCells(), result.rawCells());
     verify(delegate).add(query);
@@ -78,7 +92,7 @@ public class TestBulkReadClassicApi {
   public void testClose() throws IOException {
     bulkReadWrapper.close();
     try {
-      bulkReadWrapper.add(Query.create(TABLE_ID).rowKey("row-key-2"));
+      bulkReadWrapper.add(ByteString.copyFromUtf8("row-key-2"), null);
       Assert.fail("Bulk read should be closed");
     } catch (IllegalStateException actualException) {
       assertEquals("can't add request when the bulk read is closed.", actualException.getMessage());

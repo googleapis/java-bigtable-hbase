@@ -19,6 +19,7 @@ import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
@@ -26,6 +27,7 @@ import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.wrappers.BulkReadWrapper;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.protobuf.ByteString;
 import javax.annotation.Nonnull;
 import org.apache.hadoop.hbase.client.Result;
 
@@ -34,15 +36,21 @@ import org.apache.hadoop.hbase.client.Result;
 public class BulkReadClassicApi implements BulkReadWrapper {
 
   private final BulkRead delegate;
+  private final String tableId;
   private boolean isClosed = false;
 
-  BulkReadClassicApi(@Nonnull BulkRead delegate) {
+  BulkReadClassicApi(@Nonnull BulkRead delegate, @Nonnull String tableId) {
     this.delegate = delegate;
+    this.tableId = tableId;
   }
 
   @Override
-  public ApiFuture<Result> add(Query query) {
+  public ApiFuture<Result> add(ByteString rowKey, Filters.Filter filter) {
     Preconditions.checkState(!isClosed, "can't add request when the bulk read is closed.");
+    Query query = Query.create(tableId).rowKey(rowKey);
+    if (filter != null) {
+      query.filter(filter);
+    }
     return ApiFutures.transform(
         delegate.add(query),
         new ApiFunction<FlatRow, Result>() {

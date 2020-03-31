@@ -17,8 +17,10 @@ package com.google.cloud.bigtable.hbase.wrappers;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.data.v2.models.Query;
+import com.google.cloud.bigtable.data.v2.models.Filters;
+import com.google.protobuf.ByteString;
 import java.io.IOException;
+import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.client.Result;
 
 /**
@@ -30,10 +32,10 @@ import org.apache.hadoop.hbase.client.Result;
 public interface BulkReadWrapper extends AutoCloseable {
 
   /**
-   * Adds the key in the request to a batch read. The future will be resolved when the batch
-   * response is received.
+   * Adds a {@code rowKey} to a batch read row request with an optional {@link Filters.Filter}. The
+   * returned future will be resolved when the batch response is received.
    */
-  ApiFuture<Result> add(Query query);
+  ApiFuture<Result> add(ByteString rowKey, @Nullable Filters.Filter filter);
 
   /**
    * Sends all remaining requests to the server. This method does not wait for the method to

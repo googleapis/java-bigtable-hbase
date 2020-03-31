@@ -20,7 +20,9 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.api.core.SettableApiFuture;
+import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
@@ -169,7 +171,8 @@ public class BatchExecutor {
   private ApiFuture<?> issueAsyncRequest(Row row) {
     try {
       if (row instanceof Get) {
-        return bulkRead.add(requestAdapter.adapt((Get) row));
+        return bulkRead.add(
+            ByteStringer.wrap(row.getRow()), Adapters.GET_ADAPTER.buildFilter((Get) row));
       } else if (row instanceof Mutation) {
         return bufferedMutatorHelper.mutate((Mutation) row);
       } else if (row instanceof RowMutations) {

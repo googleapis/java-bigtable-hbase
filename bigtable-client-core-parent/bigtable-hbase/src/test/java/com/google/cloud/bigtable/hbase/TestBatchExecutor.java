@@ -30,7 +30,7 @@ import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.cloud.bigtable.data.v2.models.Query;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
@@ -158,7 +158,7 @@ public class TestBatchExecutor {
 
   @Test
   public void testGet() throws Exception {
-    when(mockBulkRead.add(any(Query.class))).thenReturn(mockFuture);
+    when(mockBulkRead.add(any(ByteString.class), any(Filters.Filter.class))).thenReturn(mockFuture);
     final byte[] key = randomBytes(8);
     Result response =
         Result.create(
@@ -240,7 +240,7 @@ public class TestBatchExecutor {
                     Bytes.toBytes("hi!"),
                     ImmutableList.<String>of())));
     RuntimeException exception = new RuntimeException("Something bad happened");
-    when(mockBulkRead.add(any(Query.class)))
+    when(mockBulkRead.add(any(ByteString.class), any(Filters.Filter.class)))
         .thenReturn(ApiFutures.immediateFuture(expected))
         .thenReturn(ApiFutures.<Result>immediateFailedFuture(exception));
 
@@ -258,7 +258,7 @@ public class TestBatchExecutor {
 
   @Test
   public void testGetCallback() throws Exception {
-    when(mockBulkRead.add(any(Query.class))).thenReturn(mockFuture);
+    when(mockBulkRead.add(any(ByteString.class), any(Filters.Filter.class))).thenReturn(mockFuture);
     byte[] key = randomBytes(8);
     Result response =
         Result.create(
@@ -302,7 +302,7 @@ public class TestBatchExecutor {
     }
 
     // Test 10 gets, but return only 9 to test the row not found case.
-    when(mockBulkRead.add(any(Query.class)))
+    when(mockBulkRead.add(any(ByteString.class), any(Filters.Filter.class)))
         .then(
             new Answer<ApiFuture<Result>>() {
               final AtomicInteger counter = new AtomicInteger();
@@ -326,7 +326,7 @@ public class TestBatchExecutor {
     when(mockFuture.get()).thenReturn(row);
 
     Result[] results = createExecutor().batch(gets);
-    verify(mockBulkRead, times(10)).add(any(Query.class));
+    verify(mockBulkRead, times(10)).add(any(ByteString.class), any(Filters.Filter.class));
     verify(mockBulkRead, times(1)).flush();
     assertTrue(matchesRow(Result.EMPTY_RESULT).matches(results[0]));
     for (int i = 1; i < results.length; i++) {
