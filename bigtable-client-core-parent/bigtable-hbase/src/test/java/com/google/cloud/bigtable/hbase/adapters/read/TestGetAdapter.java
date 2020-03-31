@@ -27,7 +27,10 @@ import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.FamilyFilter;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
+import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
@@ -169,5 +172,22 @@ public class TestGetAdapter {
     Assert.assertEquals(
         FILTERS.chain().filter(filterOne).filter(filterTwo).toProto(),
         query.toProto(requestContext).getFilter());
+  }
+
+  @Test
+  public void testBuildFilter() throws IOException {
+    Get get = makeValidGet(dataHelper.randomData(PREFIX_DATA));
+    get.setFilter(new FamilyFilter(CompareFilter.CompareOp.EQUAL, new RegexStringComparator("a")));
+    get.setMaxVersions(5);
+
+    Filters.Filter actualFilter = getAdapter.buildFilter(get);
+
+    Assert.assertEquals(
+        FILTERS
+            .chain()
+            .filter(FILTERS.limit().cellsPerColumn(5))
+            .filter(FILTERS.family().regex("a"))
+            .toProto(),
+        actualFilter.toProto());
   }
 }

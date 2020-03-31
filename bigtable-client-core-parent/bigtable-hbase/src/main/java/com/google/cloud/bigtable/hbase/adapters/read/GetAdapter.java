@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters.read;
 
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.protobuf.ByteString;
 import org.apache.hadoop.hbase.client.Get;
@@ -61,6 +62,19 @@ public class GetAdapter implements ReadOperationAdapter<Get> {
     query
         .filter(scanAdapter.buildFilter(operationAsScan, readHooks))
         .rowKey(ByteString.copyFrom(operation.getRow()));
+  }
+
+  /**
+   * creates filter based on user provided conditions in {@link Get} request.
+   *
+   * @param operation a {@link Get} object.
+   * @return a {@link Filters.Filter} object.
+   */
+  public Filters.Filter buildFilter(Get operation) {
+    Scan operationAsScan = new Scan(addKeyOnlyFilter(operation));
+    scanAdapter.throwIfUnsupportedScan(operationAsScan);
+
+    return scanAdapter.buildFilter(operationAsScan, new DefaultReadHooks());
   }
 
   private Get addKeyOnlyFilter(Get get) {

@@ -92,7 +92,7 @@ public class DataClientClassicApi implements DataClientWrapper {
         new BigtableTableName(
             NameUtil.formatTableName(
                 requestContext.getProjectId(), requestContext.getInstanceId(), tableId));
-    return new BulkReadClassicApi(session.createBulkRead(tableName));
+    return new BulkReadClassicApi(session.createBulkRead(tableName), tableId);
   }
 
   @Override
