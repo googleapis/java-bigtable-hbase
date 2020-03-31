@@ -22,6 +22,7 @@ import com.google.api.core.InternalApi;
 import com.google.api.core.SettableApiFuture;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
+import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
@@ -31,7 +32,6 @@ import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -172,7 +172,7 @@ public class BatchExecutor {
     try {
       if (row instanceof Get) {
         return bulkRead.add(
-            ByteString.copyFrom(row.getRow()), Adapters.GET_ADAPTER.buildFilter((Get) row));
+            ByteStringer.wrap(row.getRow()), Adapters.GET_ADAPTER.buildFilter((Get) row));
       } else if (row instanceof Mutation) {
         return bufferedMutatorHelper.mutate((Mutation) row);
       } else if (row instanceof RowMutations) {
