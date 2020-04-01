@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase.wrappers.classic;
 
 import static com.google.cloud.bigtable.hbase.adapters.Adapters.FLAT_ROW_ADAPTER;
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,10 +28,8 @@ import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.hbase.wrappers.BulkReadWrapper;
 import com.google.protobuf.ByteString;
-import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import org.apache.hadoop.hbase.client.Result;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -86,16 +83,5 @@ public class TestBulkReadClassicApi {
     doNothing().when(delegate).flush();
     bulkReadWrapper.flush();
     verify(delegate).flush();
-  }
-
-  @Test
-  public void testClose() throws IOException {
-    bulkReadWrapper.close();
-    try {
-      bulkReadWrapper.add(ByteString.copyFromUtf8("row-key-2"), null);
-      Assert.fail("Bulk read should be closed");
-    } catch (IllegalStateException actualException) {
-      assertEquals("can't add request when the bulk read is closed.", actualException.getMessage());
-    }
   }
 }

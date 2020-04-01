@@ -66,10 +66,4 @@ public class BulkReadClassicApi implements BulkReadWrapper {
   public void flush() {
     delegate.flush();
   }
-
-  @Override
-  public void close() {
-    isClosed = true;
-    flush();
-  }
 }
