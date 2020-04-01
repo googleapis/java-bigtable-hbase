@@ -4,8 +4,8 @@ This project supports importing and exporting HBase Sequence Files to Google Clo
 Cloud Dataflow.
 
 ## Instructions
-
-Download [the import/export jar](http://search.maven.org/remotecontent?filepath=com/google/cloud/bigtable/bigtable-beam-import/1.1.0/bigtable-beam-import-1.1.0-shaded.jar), which is an aggregation of all required jars.
+[//]: # ({x-version-update-start:bigtable-dataflow-parent:released})
+Download [the import/export jar](http://search.maven.org/remotecontent?filepath=com/google/cloud/bigtable/bigtable-beam-import/1.14.0/bigtable-beam-import-1.14.0-shaded.jar), which is an aggregation of all required jars.
 
 Please pay attention to the Cluster CPU usage and adjust the number of Dataflow workers accordingly.
 
@@ -14,7 +14,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
 On the command line:
 
 ```
-java -jar bigtable-beam-import-1.1.0-shaded.jar export \
+java -jar bigtable-beam-import-1.14.0-shaded.jar export \
     --runner=dataflow \
     --project=[your_project_id] \
     --bigtableInstanceId=[your_instance_id] \
@@ -32,7 +32,7 @@ Create the table in your cluster.
 On the command line:
 
 ```
-java -jar bigtable-beam-import-1.1.0-shaded.jar import \
+java -jar bigtable-beam-import-1.14.0-shaded.jar import \
     --runner=dataflow \
     --project=[your_project_id] \
     --bigtableInstanceId=[your_instance_id] \
@@ -42,3 +42,4 @@ java -jar bigtable-beam-import-1.1.0-shaded.jar import \
     --maxNumWorkers=[3x number of nodes] \
     --zone=[zone of your cluster]
 ```
+[//]: # ({x-version-update-end})
