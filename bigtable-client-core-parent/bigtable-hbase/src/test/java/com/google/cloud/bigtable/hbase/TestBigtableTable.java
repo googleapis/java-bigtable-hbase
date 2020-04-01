@@ -321,6 +321,31 @@ public class TestBigtableTable {
   }
 
   @Test
+  public void testExists() throws IOException {
+    Result expected =
+        Result.create(
+            ImmutableList.<Cell>of(
+                new RowCell(
+                    Bytes.toBytes("row_key"),
+                    Bytes.toBytes("family_name"),
+                    Bytes.toBytes("q_name"),
+                    0,
+                    ByteString.EMPTY.toByteArray())));
+    when(mockBigtableDataClient.readRowAsync(
+            isA(String.class), isA(ByteString.class), isA(Filters.Filter.class)))
+        .thenReturn(ApiFutures.immediateFuture(Result.EMPTY_RESULT))
+        .thenReturn(ApiFutures.immediateFuture(expected));
+
+    assertFalse(table.exists(new Get(Bytes.toBytes("empty_row"))));
+
+    // second call is suppose to be present
+    assertTrue(table.exists(new Get(Bytes.toBytes("row_key"))));
+
+    verify(mockBigtableDataClient, times(2))
+        .readRowAsync(isA(String.class), isA(ByteString.class), isA(Filters.Filter.class));
+  }
+
+  @Test
   public void testToString() {
     String abstractTableToStr = table.toString();
     assertThat(abstractTableToStr, containsString("project=" + TEST_PROJECT));
