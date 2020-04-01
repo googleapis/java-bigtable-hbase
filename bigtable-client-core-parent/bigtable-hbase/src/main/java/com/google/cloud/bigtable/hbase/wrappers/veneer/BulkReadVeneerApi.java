@@ -103,13 +103,9 @@ public class BulkReadVeneerApi implements BulkReadWrapper {
     batchers.clear();
   }
 
-  /*
-   * If autoflush is off, elementThreshold is 100, and size is 20MB, Now
-   *  -> user calls Table#batch with 10 entries
-   *     -> none of
-   */
   @Override
   public void flush() {
+    // we should send batch in case autoFlush is either switch off or very large
     for (Batcher<ByteString, Row> batcher : batchers.values()) {
       batcher.sendOutstanding();
     }
