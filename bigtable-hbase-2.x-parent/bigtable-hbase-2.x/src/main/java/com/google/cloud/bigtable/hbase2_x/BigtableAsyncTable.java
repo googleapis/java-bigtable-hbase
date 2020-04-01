@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.toList;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
 import com.google.cloud.bigtable.hbase.BatchExecutor;
@@ -27,6 +28,7 @@ import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.CheckAndMutateUtil;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
+import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import com.google.common.base.Preconditions;
@@ -226,25 +228,16 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   /** {@inheritDoc} */
   @Override
   public CompletableFuture<Result> get(Get get) {
-    return toCompletableFuture(clientWrapper.readRowsAsync(hbaseAdapter.adapt(get)))
-        .thenApply(BigtableAsyncTable::getSingleResult);
+    Filters.Filter filter = Adapters.GET_ADAPTER.buildFilter(get);
+    return toCompletableFuture(
+        clientWrapper.readRowAsync(
+            tableName.getNameAsString(), ByteStringer.wrap(get.getRow()), filter));
   }
 
   /** {@inheritDoc} */
   @Override
   public CompletableFuture<Boolean> exists(Get get) {
     return get(GetAdapter.setCheckExistenceOnly(get)).thenApply(r -> !r.isEmpty());
-  }
-
-  private static Result getSingleResult(List<Result> list) {
-    switch (list.size()) {
-      case 0:
-        return Result.EMPTY_RESULT;
-      case 1:
-        return list.get(0);
-      default:
-        throw new IllegalStateException("Multiple responses found for Get");
-    }
   }
 
   /** {@inheritDoc} */

@@ -30,8 +30,8 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
+import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
@@ -112,7 +112,6 @@ public class TestBigtableTable {
 
     TableName tableName = TableName.valueOf(TEST_TABLE);
     HBaseRequestAdapter hbaseAdapter = new HBaseRequestAdapter(settings, tableName);
-    when(mockConnection.getConfiguration()).thenReturn(config);
     when(mockConnection.getBigtableApi()).thenReturn(mockBigtableApi);
     when(mockConnection.getBigtableSettings()).thenReturn(settings);
     when(mockBigtableApi.getDataClient()).thenReturn(mockBigtableDataClient);
@@ -143,22 +142,20 @@ public class TestBigtableTable {
 
   @Test
   public void getRequestsAreFullyPopulated() throws Exception {
-    when(mockBigtableDataClient.readRowsAsync(isA(Query.class)))
-        .thenReturn(ApiFutures.immediateFuture(Collections.singletonList(Result.EMPTY_RESULT)));
+    when(mockBigtableDataClient.readRowAsync(
+            isA(String.class), isA(ByteString.class), isA(Filters.Filter.class)))
+        .thenReturn(ApiFutures.immediateFuture(Result.EMPTY_RESULT));
     table.get(
         new Get(Bytes.toBytes("rowKey1"))
             .addColumn(Bytes.toBytes("family"), Bytes.toBytes("qualifier")));
 
-    ArgumentCaptor<Query> argument = ArgumentCaptor.forClass(Query.class);
+    ArgumentCaptor<ByteString> rowKeyCaptor = ArgumentCaptor.forClass(ByteString.class);
+    ArgumentCaptor<Filters.Filter> filterCaptor = ArgumentCaptor.forClass(Filters.Filter.class);
 
-    verify(mockBigtableDataClient).readRowsAsync(argument.capture());
+    verify(mockBigtableDataClient)
+        .readRowAsync(isA(String.class), rowKeyCaptor.capture(), filterCaptor.capture());
 
-    ReadRowsRequest actualRequest = argument.getValue().toProto(REQUEST_CONTEXT);
-
-    Assert.assertEquals(
-        "projects/testproject/instances/testinstance/tables/testtable",
-        actualRequest.getTableName());
-
+    Assert.assertEquals("rowKey1", rowKeyCaptor.getValue().toStringUtf8());
     Assert.assertEquals(
         FILTERS
             .chain()
@@ -169,7 +166,7 @@ public class TestBigtableTable {
                     .filter(FILTERS.qualifier().regex("qualifier")))
             .filter(FILTERS.limit().cellsPerColumn(1))
             .toProto(),
-        actualRequest.getFilter());
+        filterCaptor.getValue().toProto());
   }
 
   @Test
@@ -321,6 +318,31 @@ public class TestBigtableTable {
         .mutateRowAsync(Mockito.<RowMutation>any());
     table.mutateRow(rowMutations);
     verify(mockBigtableDataClient).mutateRowAsync(Mockito.<RowMutation>any());
+  }
+
+  @Test
+  public void testExists() throws IOException {
+    Result expected =
+        Result.create(
+            ImmutableList.<Cell>of(
+                new RowCell(
+                    Bytes.toBytes("row_key"),
+                    Bytes.toBytes("family_name"),
+                    Bytes.toBytes("q_name"),
+                    0,
+                    ByteString.EMPTY.toByteArray())));
+    when(mockBigtableDataClient.readRowAsync(
+            isA(String.class), isA(ByteString.class), isA(Filters.Filter.class)))
+        .thenReturn(ApiFutures.immediateFuture(Result.EMPTY_RESULT))
+        .thenReturn(ApiFutures.immediateFuture(expected));
+
+    assertFalse(table.exists(new Get(Bytes.toBytes("empty_row"))));
+
+    // second call is suppose to be present
+    assertTrue(table.exists(new Get(Bytes.toBytes("row_key"))));
+
+    verify(mockBigtableDataClient, times(2))
+        .readRowAsync(isA(String.class), isA(ByteString.class), isA(Filters.Filter.class));
   }
 
   @Test
