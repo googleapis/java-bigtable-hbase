@@ -81,7 +81,7 @@ public class TestBulkReadClassicApi {
   @Test
   public void testFlush() {
     doNothing().when(delegate).flush();
-    bulkReadWrapper.flush();
+    bulkReadWrapper.sendAsync();
     verify(delegate).flush();
   }
 }

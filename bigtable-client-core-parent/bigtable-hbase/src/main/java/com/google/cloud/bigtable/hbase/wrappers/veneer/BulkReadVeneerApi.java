@@ -48,6 +48,7 @@ public class BulkReadVeneerApi implements BulkReadWrapper {
   private final Map<RowFilter, Batcher<ByteString, Row>> batchers;
 
   // TODO: remove this once gax-java's Batcher supports asyncClose(). This will eliminate the need
+  //  to track individual entries
   private final AtomicLong cleanupBarrier;
 
   BulkReadVeneerApi(BigtableDataClient client, String tableId) {
@@ -57,7 +58,7 @@ public class BulkReadVeneerApi implements BulkReadWrapper {
     this.batchers = new HashMap<>();
     this.cleanupBarrier = new AtomicLong();
     this.cleanupBarrier
-        .incrementAndGet(); // wait for flush to signal before cleaning up the batcher map
+        .incrementAndGet(); // wait for sendAsync to signal before cleaning up the batcher map
   }
 
   @Override
@@ -104,8 +105,7 @@ public class BulkReadVeneerApi implements BulkReadWrapper {
   }
 
   @Override
-  public void flush() {
-    // we should send batch in case autoFlush is either switch off or very large
+  public void sendAsync() {
     for (Batcher<ByteString, Row> batcher : batchers.values()) {
       batcher.sendOutstanding();
     }

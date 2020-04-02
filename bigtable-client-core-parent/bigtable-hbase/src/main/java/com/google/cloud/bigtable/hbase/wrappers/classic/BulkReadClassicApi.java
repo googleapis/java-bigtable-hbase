@@ -63,7 +63,7 @@ public class BulkReadClassicApi implements BulkReadWrapper {
   }
 
   @Override
-  public void flush() {
+  public void sendAsync() {
     delegate.flush();
   }
 }
