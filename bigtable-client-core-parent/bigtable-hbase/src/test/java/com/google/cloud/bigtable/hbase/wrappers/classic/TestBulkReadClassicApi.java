@@ -79,7 +79,7 @@ public class TestBulkReadClassicApi {
   }
 
   @Test
-  public void testFlush() {
+  public void testSendOutstanding() {
     doNothing().when(delegate).flush();
     bulkReadWrapper.sendOutstanding();
     verify(delegate).flush();

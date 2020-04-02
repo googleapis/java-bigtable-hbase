@@ -86,7 +86,7 @@ public class TestBulkReadVeneerApi {
   }
 
   @Test
-  public void testFlush() throws Exception {
+  public void testSendOutstanding() throws Exception {
     Duration autoFlushTime = Duration.ofSeconds(30);
     settingsBuilder
         .stubSettings()
