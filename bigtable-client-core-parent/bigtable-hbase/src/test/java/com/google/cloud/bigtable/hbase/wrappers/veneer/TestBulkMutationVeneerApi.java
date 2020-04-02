@@ -70,7 +70,7 @@ public class TestBulkMutationVeneerApi {
   }
 
   @Test
-  public void testAddFailure() throws Exception {
+  public void testAddFailure() {
     RuntimeException exception = new RuntimeException("can not perform mutation");
     SettableApiFuture<Void> future = SettableApiFuture.create();
     when(batcher.add(rowMutation)).thenReturn(future);
@@ -86,14 +86,14 @@ public class TestBulkMutationVeneerApi {
 
   @Test
   public void testFlush() throws Exception {
-    final SettableApiFuture<Void> future = SettableApiFuture.create();
+    final SettableApiFuture<Void> future1 = SettableApiFuture.create();
     final SettableApiFuture<Void> future2 = SettableApiFuture.create();
-    when(batcher.add(rowMutation)).thenReturn(future).thenReturn(future2);
+    when(batcher.add(rowMutation)).thenReturn(future1).thenReturn(future2);
     doAnswer(
             new Answer() {
               @Override
               public Object answer(InvocationOnMock invocationOnMock) {
-                future.set(null);
+                future1.set(null);
                 future2.set(null);
                 return null;
               }
@@ -112,7 +112,7 @@ public class TestBulkMutationVeneerApi {
   }
 
   @Test
-  public void testIsClosed() throws IOException {
+  public void testWhenBatcherIsClosed() throws IOException {
     @SuppressWarnings("unchecked")
     Batcher<RowMutationEntry, Void> actualBatcher =
         new BatcherImpl(
@@ -127,6 +127,7 @@ public class TestBulkMutationVeneerApi {
     Exception actualEx = null;
     try {
       underTest.add(rowMutation);
+      fail("batcher should throw exception");
     } catch (Exception e) {
       actualEx = e;
     }
