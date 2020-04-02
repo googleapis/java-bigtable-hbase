@@ -58,7 +58,7 @@ public class BulkReadVeneerApi implements BulkReadWrapper {
     this.batchers = new HashMap<>();
     this.cleanupBarrier = new AtomicLong();
     this.cleanupBarrier
-        .incrementAndGet(); // wait for sendAsync to signal before cleaning up the batcher map
+        .incrementAndGet(); // wait for sendOutstanding to signal before cleaning up the batcher map
   }
 
   @Override
@@ -105,7 +105,7 @@ public class BulkReadVeneerApi implements BulkReadWrapper {
   }
 
   @Override
-  public void sendAsync() {
+  public void sendOutstanding() {
     for (Batcher<ByteString, Row> batcher : batchers.values()) {
       batcher.sendOutstanding();
     }

@@ -327,7 +327,7 @@ public class TestBatchExecutor {
 
     Result[] results = createExecutor().batch(gets);
     verify(mockBulkRead, times(10)).add(any(ByteString.class), any(Filters.Filter.class));
-    verify(mockBulkRead, times(1)).sendAsync();
+    verify(mockBulkRead, times(1)).sendOutstanding();
     assertTrue(matchesRow(Result.EMPTY_RESULT).matches(results[0]));
     for (int i = 1; i < results.length; i++) {
       assertTrue(

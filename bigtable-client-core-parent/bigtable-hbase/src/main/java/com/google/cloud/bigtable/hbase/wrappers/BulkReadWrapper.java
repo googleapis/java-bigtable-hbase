@@ -40,5 +40,5 @@ public interface BulkReadWrapper {
    * Sends all remaining requests to the server. This method does not wait for the method to
    * complete.
    */
-  void sendAsync();
+  void sendOutstanding();
 }

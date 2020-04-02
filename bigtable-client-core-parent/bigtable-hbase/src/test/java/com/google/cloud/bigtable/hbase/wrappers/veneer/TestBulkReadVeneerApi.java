@@ -101,16 +101,16 @@ public class TestBulkReadVeneerApi {
         new BulkReadVeneerApi(BigtableDataClient.create(settingsBuilder.build()), TABLE_ID);
 
     bulkReadWrapper.add(ByteString.copyFromUtf8("one"), null);
-    bulkReadWrapper.sendAsync();
+    bulkReadWrapper.sendOutstanding();
 
     bulkReadWrapper.add(ByteString.copyFromUtf8("two"), null);
-    bulkReadWrapper.sendAsync();
+    bulkReadWrapper.sendOutstanding();
 
     bulkReadWrapper.add(ByteString.copyFromUtf8("three"), null);
-    bulkReadWrapper.sendAsync();
+    bulkReadWrapper.sendOutstanding();
 
     bulkReadWrapper.add(ByteString.copyFromUtf8("four"), null);
-    bulkReadWrapper.sendAsync();
+    bulkReadWrapper.sendOutstanding();
 
     bulkReadWrapper.add(ByteString.copyFromUtf8("five"), null).get();
 
@@ -137,7 +137,7 @@ public class TestBulkReadVeneerApi {
     assertFalse(resultFuture.isDone());
 
     // This does not guarantee instance result but it will take less time then autoFlush.
-    bulkReadWrapper.sendAsync();
+    bulkReadWrapper.sendOutstanding();
 
     // TODO: investigate if I am not adding this(another) entry then it is not resolving
     bulkReadWrapper.add(ByteString.copyFromUtf8("two"), null);
