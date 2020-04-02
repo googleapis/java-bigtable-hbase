@@ -22,6 +22,7 @@ import com.google.cloud.bigtable.hbase.BigtableBufferedMutatorHelper;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -56,6 +57,11 @@ public class BigtableAsyncBufferedMutator implements AsyncBufferedMutator {
   @Override
   public void close() {
     flush();
+    try {
+      helper.close();
+    } catch (IOException ioException) {
+      throw new RuntimeException("could not close buffered mutator", ioException);
+    }
   }
 
   /** {@inheritDoc} */
@@ -86,7 +92,7 @@ public class BigtableAsyncBufferedMutator implements AsyncBufferedMutator {
   @Override
   public List<CompletableFuture<Void>> mutate(List<? extends Mutation> mutations) {
     return helper.mutate(mutations).stream()
-        .map(listenableFuture -> toCompletableFuture(listenableFuture).thenApply(r -> (Void) null))
+        .map(apiFuture -> toCompletableFuture(apiFuture).thenApply(r -> (Void) null))
         .collect(Collectors.toList());
   }
 
