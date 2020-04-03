@@ -21,7 +21,6 @@ import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
-import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdapters;
@@ -29,7 +28,6 @@ import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
-import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableClassicApi;
 import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableHBaseClassicSettings;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings;
 import com.google.cloud.bigtable.hbase2_x.BigtableAsyncAdmin;
@@ -64,7 +62,6 @@ import org.apache.hadoop.hbase.security.User;
 public class BigtableAsyncConnection implements AsyncConnection, CommonConnection, Closeable {
   private final Logger LOG = new Logger(getClass());
 
-  private final BigtableSession session;
   private final BigtableApi bigtableApi;
   private final BigtableHBaseSettings settings;
   private volatile boolean closed = false;
@@ -95,9 +92,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
     }
 
     this.closed = false;
-    this.session =
-        new BigtableSession(((BigtableHBaseClassicSettings) settings).getBigtableOptions());
-    this.bigtableApi = new BigtableClassicApi(settings, session);
+    this.bigtableApi = BigtableApi.create(settings);
   }
 
   public HBaseRequestAdapter createAdapter(TableName tableName) {
@@ -111,17 +106,13 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
     return new HBaseRequestAdapter(settings, tableName, mutationAdapters);
   }
 
-  public BigtableSession getSession() {
-    return this.session;
-  }
-
   public BigtableApi getBigtableApi() {
     return bigtableApi;
   }
 
   public BigtableOptions getOptions() {
     if (settings instanceof BigtableHBaseVeneerSettings) {
-      throw new UnsupportedOperationException("veneer client is not yet supported");
+      throw new UnsupportedOperationException("veneer client does not support BigtableOptions");
     }
     return ((BigtableHBaseClassicSettings) this.settings).getBigtableOptions();
   }
@@ -139,7 +130,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
   public void close() throws IOException {
     LOG.debug("closing BigtableAsyncConnection");
     if (!this.closed) {
-      this.session.close();
+      this.bigtableApi.close();
       this.closed = true;
     }
   }
@@ -394,7 +385,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
             settings.getProjectId(), settings.getInstanceId(), tableName.getQualifierAsString()));
     List<KeyOffset> sampleRowKeyResponse =
         ApiExceptions.callAndTranslateApiException(
-            this.session.getDataClientWrapper().sampleRowKeysAsync(tableName.getNameAsString()));
+            this.bigtableApi.getDataClient().sampleRowKeysAsync(tableName.getNameAsString()));
 
     return getSampledRowKeysAdapter(tableName, serverName).adaptResponse(sampleRowKeyResponse)
         .stream()
