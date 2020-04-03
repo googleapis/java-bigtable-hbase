@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.wrappers.veneer;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ServerStream;
 import com.google.api.gax.rpc.StateCheckingResponseObserver;
 import com.google.api.gax.rpc.StreamController;
@@ -44,6 +45,8 @@ import org.apache.hadoop.hbase.client.AbstractClientScanner;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 
+/** For internal use only - public for technical reasons. */
+@InternalApi("For internal usage only")
 public class DataClientVeneerApi implements DataClientWrapper {
 
   private final BigtableDataClient delegate;
