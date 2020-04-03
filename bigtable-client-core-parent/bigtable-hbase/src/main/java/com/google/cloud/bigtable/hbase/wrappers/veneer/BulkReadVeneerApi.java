@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.wrappers.veneer;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.InternalApi;
 import com.google.api.gax.batching.Batcher;
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
@@ -39,8 +40,11 @@ import org.apache.hadoop.hbase.client.Result;
  * <p>This class works with {@link com.google.cloud.bigtable.hbase.BatchExecutor} to enable bulk
  * reads from the hbase api.
  *
- * <p>This class is not thread safe. It must be used on a single thread
+ * <p>This class is not thread safe. It must be used on a single thread.
+ *
+ * <p>For internal use only - public for technical reasons.
  */
+@InternalApi("For internal usage only")
 public class BulkReadVeneerApi implements BulkReadWrapper {
 
   private final BigtableDataClient client;
