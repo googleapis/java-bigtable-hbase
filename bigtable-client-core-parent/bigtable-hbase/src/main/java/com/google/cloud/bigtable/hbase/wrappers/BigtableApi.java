@@ -50,4 +50,7 @@ public abstract class BigtableApi implements AutoCloseable {
   public BigtableHBaseSettings getBigtableHBaseSettings() {
     return hBaseSettings;
   }
+
+  @Override
+  public abstract void close() throws IOException;
 }

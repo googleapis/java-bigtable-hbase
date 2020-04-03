@@ -262,7 +262,7 @@ public class DataClientClassicApi implements DataClientWrapper {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() throws IOException {
     session.close();
   }
 

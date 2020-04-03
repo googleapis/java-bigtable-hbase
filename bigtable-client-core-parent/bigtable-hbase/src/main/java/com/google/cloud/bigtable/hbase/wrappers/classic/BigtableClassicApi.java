@@ -68,7 +68,7 @@ public class BigtableClassicApi extends BigtableApi {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() throws IOException {
     if (adminClientWrapper != null) {
       adminClientWrapper.close();
     }

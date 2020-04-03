@@ -25,6 +25,7 @@ import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
+import java.io.IOException;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.client.Result;
@@ -71,4 +72,7 @@ public interface DataClientWrapper extends AutoCloseable {
 
   /** Read {@link Result} asynchronously, and pass them to a stream observer to be processed. */
   void readRowsAsync(Query request, StreamObserver<Result> observer);
+
+  @Override
+  void close() throws IOException;
 }
