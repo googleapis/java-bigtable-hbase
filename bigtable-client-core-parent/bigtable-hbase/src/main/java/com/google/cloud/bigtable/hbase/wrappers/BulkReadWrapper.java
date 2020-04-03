@@ -19,7 +19,6 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.protobuf.ByteString;
-import java.io.IOException;
 import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.client.Result;
 
@@ -29,7 +28,7 @@ import org.apache.hadoop.hbase.client.Result;
  * <p>For internal use only - public for technical reasons.
  */
 @InternalApi("For internal usage only")
-public interface BulkReadWrapper extends AutoCloseable {
+public interface BulkReadWrapper {
 
   /**
    * Adds a {@code rowKey} to a batch read row request with an optional {@link Filters.Filter}. The
@@ -41,8 +40,5 @@ public interface BulkReadWrapper extends AutoCloseable {
    * Sends all remaining requests to the server. This method does not wait for the method to
    * complete.
    */
-  void flush();
-
-  /** Closes the batch and prevents new keys addition. */
-  void close() throws IOException;
+  void sendOutstanding();
 }

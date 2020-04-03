@@ -210,7 +210,7 @@ public class BatchExecutor {
     } finally {
       // If there is a bulk mutation in progress, then send it.
       bufferedMutatorHelper.sendUnsent();
-      bulkRead.flush();
+      bulkRead.sendOutstanding();
     }
   }
 
