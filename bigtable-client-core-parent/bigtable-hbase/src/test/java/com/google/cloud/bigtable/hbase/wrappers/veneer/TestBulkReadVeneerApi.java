@@ -46,6 +46,7 @@ public class TestBulkReadVeneerApi {
   private static final String TABLE_ID = "fake-table-id";
   private FakeDataService fakeDataService = new FakeDataService();
   private BigtableDataSettings.Builder settingsBuilder;
+  private Server server;
 
   @Before
   public void setUp() throws IOException {
@@ -54,13 +55,21 @@ public class TestBulkReadVeneerApi {
       port = s.getLocalPort();
     }
 
-    Server server = ServerBuilder.forPort(port).addService(fakeDataService).build();
+    server = ServerBuilder.forPort(port).addService(fakeDataService).build();
     server.start();
 
     settingsBuilder =
         BigtableDataSettings.newBuilderForEmulator(port)
             .setProjectId("fake-project")
             .setInstanceId("fake-instance");
+  }
+
+  @Test
+  public void tearDown() throws InterruptedException {
+    if (server != null) {
+      server.shutdown();
+      server.awaitTermination();
+    }
   }
 
   @Test

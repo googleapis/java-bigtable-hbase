@@ -20,6 +20,7 @@ import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -53,4 +54,7 @@ public interface AdminClientWrapper extends AutoCloseable {
 
   /** Asynchronously drops all data in the table */
   ApiFuture<Void> dropAllRowsAsync(String tableId);
+
+  @Override
+  void close() throws IOException;
 }
