@@ -1363,22 +1363,35 @@ public abstract class AbstractTestFilters extends AbstractTest {
   @Test
   public void testFirstKeyFilter() throws IOException {
     // Initialize
+    int rowCount = 5;
     int numCols = 5;
+    String rowPrefix = dataHelper.randomString("testFirstKeyValue-");
     String columnValue = "includeThisValue";
     Table table = getDefaultTable();
-    byte[] rowKey = dataHelper.randomData("testRow-");
-    Put put = new Put(rowKey);
-    for (int i = 0; i < numCols; ++i) {
-      put.addColumn(COLUMN_FAMILY, dataHelper.randomData(""), Bytes.toBytes(columnValue));
+
+    List<Put> puts = new ArrayList<>(rowCount);
+    for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+      Put put = new Put(Bytes.toBytes(rowPrefix + rowIndex));
+      for (int i = 0; i < numCols; ++i) {
+        put.addColumn(COLUMN_FAMILY, dataHelper.randomData(""), Bytes.toBytes(columnValue));
+      }
+      puts.add(put);
     }
-    table.put(put);
+    table.put(puts);
 
     // Filter for results
     Filter filter = new FirstKeyOnlyFilter();
 
-    Get get = new Get(rowKey).setFilter(filter);
-    Result result = table.get(get);
-    Assert.assertEquals("Should only return 1 keyvalue", 1, result.size());
+    Scan scan = new Scan().setRowPrefixFilter(Bytes.toBytes(rowPrefix)).setFilter(filter);
+    try (ResultScanner resultScanner = table.getScanner(scan)) {
+      int rowIndex = 0;
+      for (Result result : resultScanner) {
+        Assert.assertArrayEquals(Bytes.toBytes(rowPrefix + rowIndex), result.getRow());
+        Assert.assertEquals("Should only return 1 keyvalue", 1, result.size());
+
+        rowIndex++;
+      }
+    }
 
     table.close();
   }
