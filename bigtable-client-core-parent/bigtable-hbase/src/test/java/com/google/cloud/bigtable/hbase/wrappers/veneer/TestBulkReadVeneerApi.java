@@ -76,20 +76,17 @@ public class TestBulkReadVeneerApi {
   public void testAdd() throws Exception {
     BulkReadVeneerApi bulkReadWrapper =
         new BulkReadVeneerApi(BigtableDataClient.create(settingsBuilder.build()), TABLE_ID);
-    ApiFuture<Result> resultFuture1 = bulkReadWrapper.add(ByteString.copyFromUtf8("one"), null);
-    assertFalse(resultFuture1.isDone());
+    ApiFuture<Result> resultFuture = bulkReadWrapper.add(ByteString.copyFromUtf8("one"), null);
+    assertFalse(resultFuture.isDone());
+    // Here AutoFlush triggers the batch
+    resultFuture.get();
 
     Filters.Filter filter = Filters.FILTERS.key().regex("cf");
-    ApiFuture<Result> secBatchResult1 = bulkReadWrapper.add(ByteString.copyFromUtf8("1"), filter);
-    ApiFuture<Result> secBatchResult2 = bulkReadWrapper.add(ByteString.copyFromUtf8("2"), filter);
+    ApiFuture<Result> secBatchResult = bulkReadWrapper.add(ByteString.copyFromUtf8("1"), filter);
+    secBatchResult.get();
 
-    // Here AutoFlush triggers the batch
-    resultFuture1.get();
-    secBatchResult1.get();
-
-    // If one entry of the batch is resolved then another should also be
-    assertTrue(resultFuture1.isDone());
-    assertTrue(secBatchResult2.isDone());
+    assertTrue(resultFuture.isDone());
+    assertTrue(secBatchResult.isDone());
 
     assertEquals(2, fakeDataService.getReadRowsCount());
   }
