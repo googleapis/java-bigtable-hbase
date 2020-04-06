@@ -18,7 +18,6 @@ package org.apache.hadoop.hbase.client;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
@@ -28,7 +27,6 @@ import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
-import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableClassicApi;
 import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableHBaseClassicSettings;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings;
 import com.google.common.base.MoreObjects;
@@ -72,7 +70,6 @@ public abstract class AbstractBigtableConnection
   private volatile ExecutorService batchPool = null;
   private ExecutorService bufferedMutatorExecutorService;
 
-  private final BigtableSession session;
   private final BigtableApi bigtableApi;
 
   private volatile boolean cleanupPool = false;
@@ -122,9 +119,7 @@ public abstract class AbstractBigtableConnection
 
     this.batchPool = pool;
     this.closed = false;
-    this.session =
-        new BigtableSession(((BigtableHBaseClassicSettings) this.settings).getBigtableOptions());
-    this.bigtableApi = new BigtableClassicApi(settings, session);
+    this.bigtableApi = BigtableApi.create(settings);
   }
 
   /** {@inheritDoc} */
@@ -259,7 +254,7 @@ public abstract class AbstractBigtableConnection
   @Override
   public void close() throws IOException {
     if (!this.closed) {
-      this.session.close();
+      this.bigtableApi.close();
       // If the clients are shutdown, there shouldn't be any more activity on the
       // batch pool (assuming we created it ourselves). If exceptions were raised
       // shutting down the clients, it's not entirely safe to shutdown the pool
@@ -310,7 +305,7 @@ public abstract class AbstractBigtableConnection
    */
   public BigtableOptions getOptions() {
     if (settings instanceof BigtableHBaseVeneerSettings) {
-      throw new UnsupportedOperationException("veneer client is not yet supported");
+      throw new UnsupportedOperationException("veneer client does not support BigtableOptions");
     }
     return ((BigtableHBaseClassicSettings) settings).getBigtableOptions();
   }
@@ -327,15 +322,6 @@ public abstract class AbstractBigtableConnection
    */
   public Set<TableName> getDisabledTables() {
     return disabledTables;
-  }
-
-  /**
-   * Getter for the field <code>session</code>.
-   *
-   * @return a {@link com.google.cloud.bigtable.grpc.BigtableSession} object.
-   */
-  public BigtableSession getSession() {
-    return session;
   }
 
   public BigtableApi getBigtableApi() {

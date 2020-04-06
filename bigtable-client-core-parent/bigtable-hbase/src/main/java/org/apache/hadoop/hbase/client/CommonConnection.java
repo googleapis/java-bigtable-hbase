@@ -17,7 +17,6 @@ package org.apache.hadoop.hbase.client;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import java.io.Closeable;
@@ -35,10 +34,6 @@ import org.apache.hadoop.hbase.TableName;
  */
 @InternalApi("For internal usage only")
 public interface CommonConnection extends Closeable {
-
-  /** @deprecated Please use {@link #getBigtableApi()}. */
-  @Deprecated
-  BigtableSession getSession();
 
   /** Returns {@link BigtableApi} object to access bigtable data and admin client APIs. */
   BigtableApi getBigtableApi();
