@@ -39,7 +39,6 @@ import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowCell;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
-import com.google.cloud.bigtable.hbase.adapters.read.ResultRowAdapter;
 import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.BulkReadWrapper;
 import com.google.common.collect.ImmutableList;
@@ -180,7 +179,7 @@ public class TestDataClientVeneerApi {
   @Test
   public void testReadRows() throws IOException {
     Query query = Query.create(TABLE_ID).rowKey(ROW_KEY);
-    when(mockDataClient.readRowsCallable(Mockito.<ResultRowAdapter>any()))
+    when(mockDataClient.readRowsCallable(Mockito.<RowResultAdapter>any()))
         .thenReturn(mockStreamingCallable)
         .thenReturn(mockStreamingCallable);
     when(serverStream.iterator())
@@ -200,7 +199,7 @@ public class TestDataClientVeneerApi {
     assertNull(noRowsResultScanner.next());
 
     verify(serverStream).cancel();
-    verify(mockDataClient, times(2)).readRowsCallable(Mockito.<ResultRowAdapter>any());
+    verify(mockDataClient, times(2)).readRowsCallable(Mockito.<RowResultAdapter>any());
     verify(serverStream, times(2)).iterator();
     verify(mockStreamingCallable, times(2)).call(query);
   }
@@ -208,7 +207,7 @@ public class TestDataClientVeneerApi {
   @Test
   public void testReadRowsAsync() throws Exception {
     Query query = Query.create(TABLE_ID).rowKey(ROW_KEY);
-    when(mockDataClient.readRowsCallable(Mockito.<ResultRowAdapter>any()))
+    when(mockDataClient.readRowsCallable(Mockito.<RowResultAdapter>any()))
         .thenReturn(mockStreamingCallable);
     when(mockStreamingCallable.all()).thenReturn(mockUnaryCallable);
     List<Result> expectedResult = ImmutableList.of(Result.EMPTY_RESULT, EXPECTED_RESULT);
@@ -221,7 +220,7 @@ public class TestDataClientVeneerApi {
     assertResult(Result.EMPTY_RESULT, actualResult.get(0));
     assertResult(EXPECTED_RESULT, actualResult.get(1));
 
-    verify(mockDataClient).readRowsCallable(Mockito.<ResultRowAdapter>any());
+    verify(mockDataClient).readRowsCallable(Mockito.<RowResultAdapter>any());
     verify(mockStreamingCallable).all();
     verify(mockUnaryCallable).futureCall(query);
   }
@@ -245,7 +244,7 @@ public class TestDataClientVeneerApi {
           @Override
           public void onCompleted() {}
         };
-    when(mockDataClient.readRowsCallable(Mockito.<ResultRowAdapter>any()))
+    when(mockDataClient.readRowsCallable(Mockito.<RowResultAdapter>any()))
         .thenReturn(mockStreamingCallable);
     doAnswer(
             new Answer() {
@@ -270,7 +269,7 @@ public class TestDataClientVeneerApi {
 
     dataClientWrapper.readRowsAsync(request, resultStreamOb);
     dataClientWrapper.readRowsAsync(request, resultStreamOb);
-    verify(mockDataClient, times(2)).readRowsCallable(Mockito.<ResultRowAdapter>any());
+    verify(mockDataClient, times(2)).readRowsCallable(Mockito.<RowResultAdapter>any());
     verify(mockStreamingCallable, times(2))
         .call(Mockito.<Query>any(), Mockito.<ResponseObserver<Result>>any());
   }

@@ -31,7 +31,6 @@ import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
-import com.google.cloud.bigtable.hbase.adapters.read.ResultRowAdapter;
 import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.BulkReadWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
@@ -48,6 +47,8 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 /** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
 public class DataClientVeneerApi implements DataClientWrapper {
+
+  private static final RowResultAdapter RESULT_ADAPTER = new RowResultAdapter();
 
   private final BigtableDataClient delegate;
 
@@ -109,19 +110,17 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
   @Override
   public ResultScanner readRows(Query request) {
-    return new RowResultScanner(delegate.readRowsCallable(new ResultRowAdapter()).call(request));
+    return new RowResultScanner(delegate.readRowsCallable(RESULT_ADAPTER).call(request));
   }
 
   @Override
   public ApiFuture<List<Result>> readRowsAsync(Query request) {
-    return delegate.readRowsCallable(new ResultRowAdapter()).all().futureCall(request);
+    return delegate.readRowsCallable(RESULT_ADAPTER).all().futureCall(request);
   }
 
   @Override
   public void readRowsAsync(Query request, StreamObserver<Result> observer) {
-    delegate
-        .readRowsCallable(new ResultRowAdapter())
-        .call(request, new StreamObserverAdapter<>(observer));
+    delegate.readRowsCallable(RESULT_ADAPTER).call(request, new StreamObserverAdapter<>(observer));
   }
 
   @Override

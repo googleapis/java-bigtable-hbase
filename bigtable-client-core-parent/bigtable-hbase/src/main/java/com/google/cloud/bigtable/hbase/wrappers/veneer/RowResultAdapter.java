@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase.adapters.read;
+package com.google.cloud.bigtable.hbase.wrappers.veneer;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.RowAdapter;
+import com.google.cloud.bigtable.hbase.adapters.read.RowCell;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import com.google.cloud.bigtable.hbase.util.TimestampConverter;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -36,54 +38,109 @@ import org.apache.hadoop.hbase.client.Result;
  * <p>For internal use only - public for technical reasons.
  */
 @InternalApi("For internal usage only")
-public class ResultRowAdapter implements RowAdapter<Result> {
+public class RowResultAdapter implements RowAdapter<Result> {
+
+  private static final byte[] EMPTY_VALUE = new byte[0];
 
   @Override
   public RowBuilder<Result> createRowBuilder() {
-    return new ResultRowBuilder();
+    return new RowResultBuilder();
   }
 
   @Override
   public boolean isScanMarkerRow(Result result) {
+    if (result instanceof RowResult) {
+      return ((RowResult) result).isMarkerRow();
+    }
+    // This may never be executed still is it ok to leave it here.
     return result.isEmpty();
   }
 
   @Override
   public ByteString getKey(Result result) {
+    if (result instanceof RowResult) {
+      return ((RowResult) result).getKey();
+    }
     return ByteStringer.wrap(result.getRow());
   }
 
-  public static class ResultRowBuilder implements RowBuilder<Result> {
-    private byte[] currentKey;
+  static class RowResult extends Result {
+    private final ByteString rowKey;
+    private final boolean isMarkerRow;
+
+    RowResult(ByteString rowKey, List<Cell> cells) {
+      super();
+      this.rowKey = rowKey;
+      this.isMarkerRow = cells == null || cells.isEmpty();
+
+      // all except default ctor of Result are private, So instantiating cells through copyFrom()
+      // because value(), size(), isEmpty() rawCells() etc. are directly using Result's cells field.
+      this.copyFrom(Result.create(cells));
+    }
+
+    ByteString getKey() {
+      return rowKey;
+    }
+
+    boolean isMarkerRow() {
+      return isMarkerRow;
+    }
+  }
+
+  public static class RowResultBuilder implements RowBuilder<Result> {
+    private ByteString currentKey;
     private String family;
-    private ByteString qualifier;
+    private byte[] qualifier;
     private List<String> labels;
     private long timestamp;
-    private ByteString value;
+    private byte[] value;
 
     private Map<String, List<RowCell>> cells = new TreeMap<>();
     private List<RowCell> currentFamilyCells = null;
     private String previousFamily;
-    private int totalCellCount = 0;
+    private int nextValueIndex;
 
     @Override
     public void startRow(ByteString rowKey) {
-      this.currentKey = ByteStringer.extract(rowKey);
+      this.currentKey = rowKey;
     }
 
     @Override
     public void startCell(
         String family, ByteString qualifier, long timestamp, List<String> labels, long size) {
       this.family = family;
-      this.qualifier = qualifier;
+      this.qualifier = qualifier.toByteArray();
       this.timestamp = timestamp;
       this.labels = labels;
-      this.value = ByteString.EMPTY;
+      if (size > 0) {
+        this.value = new byte[(int) size];
+        this.nextValueIndex = 0;
+      } else {
+        this.value = EMPTY_VALUE;
+        this.nextValueIndex = -1;
+      }
     }
 
     @Override
-    public void cellValue(ByteString value) {
-      this.value = this.value.concat(value);
+    public void cellValue(ByteString newValue) {
+      // TODO: Verify if can value ever be null?
+      if (newValue == null || newValue.isEmpty()) {
+        return;
+      }
+
+      if (nextValueIndex == -1) {
+        this.value = newValue.toByteArray();
+        nextValueIndex = newValue.size();
+      } else {
+        int newValueSize = newValue.size();
+        Preconditions.checkState(
+            Integer.MAX_VALUE - nextValueIndex > newValueSize,
+            "value would be too large to contain");
+
+        this.value = Arrays.copyOf(this.value, nextValueIndex + newValueSize);
+        System.arraycopy(newValue.toByteArray(), 0, this.value, nextValueIndex, newValueSize);
+        nextValueIndex += newValueSize;
+      }
     }
 
     /**
@@ -108,6 +165,8 @@ public class ResultRowAdapter implements RowAdapter<Result> {
      */
     @Override
     public void finishCell() {
+      Preconditions.checkState(
+          nextValueIndex == -1 || nextValueIndex == value.length, "Inconsistent value found");
       if (!Objects.equals(this.family, this.previousFamily)) {
         previousFamily = this.family;
         currentFamilyCells = new ArrayList<>();
@@ -116,14 +175,13 @@ public class ResultRowAdapter implements RowAdapter<Result> {
 
       RowCell rowCell =
           new RowCell(
-              this.currentKey,
+              ByteStringer.extract(this.currentKey),
               this.family.getBytes(),
-              ByteStringer.extract(this.qualifier),
+              this.qualifier,
               TimestampConverter.bigtable2hbase(this.timestamp),
-              ByteStringer.extract(this.value),
+              this.value,
               this.labels);
       this.currentFamilyCells.add(rowCell);
-      totalCellCount++;
     }
 
     /**
@@ -135,28 +193,14 @@ public class ResultRowAdapter implements RowAdapter<Result> {
      */
     @Override
     public Result finishRow() {
-      if (totalCellCount == 0) {
-        return Result.EMPTY_RESULT;
-      }
+      Preconditions.checkNotNull(currentKey, "row key cannot be null");
 
       ImmutableList.Builder<Cell> combined = ImmutableList.builder();
       for (List<RowCell> familyCellList : cells.values()) {
-
-        RowCell previous = null;
-        for (RowCell rowCell : familyCellList) {
-          if (previous == null || !rowCell.getLabels().isEmpty() || !keysMatch(rowCell, previous)) {
-            combined.add(rowCell);
-          }
-          previous = rowCell;
-        }
+        combined.addAll(familyCellList);
       }
 
-      return Result.create(combined.build());
-    }
-
-    private boolean keysMatch(RowCell current, RowCell previous) {
-      return current.getTimestamp() == previous.getTimestamp()
-          && Arrays.equals(current.getQualifierArray(), previous.getQualifierArray());
+      return new RowResult(currentKey, combined.build());
     }
 
     @Override
@@ -170,12 +214,11 @@ public class ResultRowAdapter implements RowAdapter<Result> {
       this.cells = new TreeMap<>();
       this.currentFamilyCells = null;
       this.previousFamily = null;
-      this.totalCellCount = 0;
     }
 
     @Override
     public Result createScanMarkerRow(ByteString rowKey) {
-      return Result.EMPTY_RESULT;
+      return new RowResult(rowKey, ImmutableList.<Cell>of());
     }
   }
 }

@@ -70,5 +70,6 @@ public interface DataClientWrapper extends AutoCloseable {
   ApiFuture<List<Result>> readRowsAsync(Query request);
 
   /** Read {@link Result} asynchronously, and pass them to a stream observer to be processed. */
+  // TODO: once veneer is implemented update this to accept gax's ResponseObserver.
   void readRowsAsync(Query request, StreamObserver<Result> observer);
 }

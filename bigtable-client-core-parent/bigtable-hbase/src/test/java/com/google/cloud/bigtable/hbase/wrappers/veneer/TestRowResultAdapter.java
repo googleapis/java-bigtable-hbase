@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase.adapters.read;
+package com.google.cloud.bigtable.hbase.wrappers.veneer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.bigtable.data.v2.models.RowAdapter;
+import com.google.cloud.bigtable.hbase.adapters.read.RowCell;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -34,7 +36,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class TestResultRowAdapter {
+public class TestRowResultAdapter {
 
   private static final ByteString ROW_KEY_ONE = ByteString.copyFromUtf8("one");
   private static final String COL_FAMILY = "cf";
@@ -43,17 +45,18 @@ public class TestResultRowAdapter {
   private static final List<String> LABELS = ImmutableList.of("label-a", "label-b");
   private static final ByteString VALUE = ByteString.copyFromUtf8("value");
 
-  private ResultRowAdapter underTest = new ResultRowAdapter();
+  private RowResultAdapter underTest = new RowResultAdapter();
 
   @Test
   public void testWithSingleCellRow() {
     RowAdapter.RowBuilder<Result> rowBuilder = underTest.createRowBuilder();
 
     rowBuilder.startRow(ROW_KEY_ONE);
-    rowBuilder.startCell(COL_FAMILY, QUAL_ONE, 10000L, Collections.<String>emptyList(), 0);
+    rowBuilder.startCell(
+        COL_FAMILY, QUAL_ONE, 10000L, Collections.<String>emptyList(), VALUE.size());
     rowBuilder.cellValue(VALUE);
     rowBuilder.finishCell();
-    rowBuilder.startCell(COL_FAMILY, QUAL_TWO, 20000L, LABELS, 0);
+    rowBuilder.startCell(COL_FAMILY, QUAL_TWO, 20000L, LABELS, -1);
     rowBuilder.cellValue(VALUE);
     rowBuilder.finishCell();
 
@@ -85,7 +88,8 @@ public class TestResultRowAdapter {
 
     RowAdapter.RowBuilder<Result> rowBuilder = underTest.createRowBuilder();
     rowBuilder.startRow(ROW_KEY_ONE);
-    rowBuilder.startCell(COL_FAMILY, QUAL_ONE, 10000L, Collections.<String>emptyList(), 0);
+    rowBuilder.startCell(
+        COL_FAMILY, QUAL_ONE, 10000L, Collections.<String>emptyList(), valuePart1.size());
     rowBuilder.cellValue(valuePart1);
     rowBuilder.cellValue(valuePart2);
     rowBuilder.cellValue(valuePart3);
@@ -101,12 +105,15 @@ public class TestResultRowAdapter {
   public void testWithMarkerRow() {
     RowAdapter.RowBuilder<Result> rowBuilder = underTest.createRowBuilder();
     Result markerRow = rowBuilder.createScanMarkerRow(ROW_KEY_ONE);
-    assertResult(Result.EMPTY_RESULT, markerRow);
     assertTrue(underTest.isScanMarkerRow(markerRow));
+    assertSame(ROW_KEY_ONE, underTest.getKey(markerRow));
 
     rowBuilder.reset();
-    rowBuilder.startRow(ROW_KEY_ONE);
-    assertResult(Result.EMPTY_RESULT, rowBuilder.finishRow());
+    ByteString anotherKey = ByteString.copyFromUtf8("another-row-key");
+    rowBuilder.startRow(anotherKey);
+    Result anotherRow = rowBuilder.finishRow();
+    assertTrue(underTest.isScanMarkerRow(anotherRow));
+    assertSame(anotherKey, underTest.getKey(anotherRow));
 
     Result resultWithOneCell =
         Result.create(
