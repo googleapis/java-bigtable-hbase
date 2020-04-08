@@ -1388,7 +1388,9 @@ public abstract class AbstractTestFilters extends AbstractTest {
       for (Result result : resultScanner) {
         Assert.assertArrayEquals(Bytes.toBytes(rowPrefix + rowIndex), result.getRow());
         Assert.assertEquals("Should only return 1 keyvalue", 1, result.size());
-        Assert.assertTrue(CellUtil.matchingValue(result.rawCells()[0], columnValue));
+        Assert.assertTrue(
+            "Should contains column value",
+            CellUtil.matchingValue(result.rawCells()[0], columnValue));
 
         rowIndex++;
       }
