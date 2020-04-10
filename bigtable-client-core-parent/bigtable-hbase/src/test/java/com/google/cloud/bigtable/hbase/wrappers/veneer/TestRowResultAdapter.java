@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.bigtable.data.v2.models.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.RowCell;
+import com.google.cloud.bigtable.hbase.wrappers.veneer.RowResultAdapter.RowResult;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -62,8 +63,9 @@ public class TestRowResultAdapter {
     rowBuilder.cellValue(VALUE);
     rowBuilder.finishCell();
 
-    Result expected =
-        Result.create(
+    RowResult expected =
+        RowResult.create(
+            ROW_KEY,
             ImmutableList.<Cell>of(
                 new RowCell(
                     ROW_KEY.toByteArray(),
@@ -189,13 +191,13 @@ public class TestRowResultAdapter {
 
   @Test
   public void testWithMarkerRow() {
-    RowAdapter.RowBuilder<Result> rowBuilder = underTest.createRowBuilder();
-    Result markerRow = rowBuilder.createScanMarkerRow(ROW_KEY);
+    RowResult markerRow = RowResult.createMarker(ROW_KEY);
     assertTrue(underTest.isScanMarkerRow(markerRow));
     assertSame(ROW_KEY, underTest.getKey(markerRow));
 
-    Result resultWithOneCell =
-        Result.create(
+    RowResult resultWithOneCell =
+        RowResult.create(
+            ROW_KEY,
             ImmutableList.<Cell>of(
                 new RowCell(
                     ROW_KEY.toByteArray(),
