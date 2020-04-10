@@ -24,7 +24,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -52,7 +51,7 @@ public class RowResultAdapter implements RowAdapter<Result> {
     if (result instanceof RowResult) {
       return ((RowResult) result).isMarkerRow();
     }
-    // This may never be executed still is it ok to leave it here.
+    // TODO: This may never be executed still is it ok to fallback on this?
     return result.isEmpty();
   }
 
@@ -68,8 +67,15 @@ public class RowResultAdapter implements RowAdapter<Result> {
     private final ByteString rowKey;
     private final boolean isMarkerRow;
 
-    RowResult(ByteString rowKey, List<Cell> cells) {
-      super();
+    static RowResult create(ByteString rowKey, List<Cell> cells) {
+      return new RowResult(rowKey, cells);
+    }
+
+    static RowResult createMarker(ByteString rowKey) {
+      return new RowResult(rowKey, ImmutableList.<Cell>of());
+    }
+
+    private RowResult(ByteString rowKey, List<Cell> cells) {
       this.rowKey = rowKey;
       this.isMarkerRow = cells == null || cells.isEmpty();
 
@@ -87,7 +93,7 @@ public class RowResultAdapter implements RowAdapter<Result> {
     }
   }
 
-  public static class RowResultBuilder implements RowBuilder<Result> {
+  static class RowResultBuilder implements RowBuilder<Result> {
     private ByteString currentKey;
     private String family;
     private byte[] qualifier;
@@ -109,7 +115,7 @@ public class RowResultAdapter implements RowAdapter<Result> {
     public void startCell(
         String family, ByteString qualifier, long timestamp, List<String> labels, long size) {
       this.family = family;
-      this.qualifier = qualifier.toByteArray();
+      this.qualifier = ByteStringer.extract(qualifier);
       this.timestamp = timestamp;
       this.labels = labels;
       if (size > 0) {
@@ -123,24 +129,18 @@ public class RowResultAdapter implements RowAdapter<Result> {
 
     @Override
     public void cellValue(ByteString newValue) {
-      // TODO: Verify if can value ever be null?
-      if (newValue == null || newValue.isEmpty()) {
+      // Optimize unsplit cells by avoiding a copy
+      if (nextValueIndex == -1) {
+        this.value = ByteStringer.extract(newValue);
+        nextValueIndex = newValue.size();
         return;
       }
 
-      if (nextValueIndex == -1) {
-        this.value = newValue.toByteArray();
-        nextValueIndex = newValue.size();
-      } else {
-        int newValueSize = newValue.size();
-        Preconditions.checkState(
-            Integer.MAX_VALUE - nextValueIndex > newValueSize,
-            "value would be too large to contain");
+      Preconditions.checkState(
+          nextValueIndex + newValue.size() <= value.length, "Cell value is larger than expected");
 
-        this.value = Arrays.copyOf(this.value, nextValueIndex + newValueSize);
-        System.arraycopy(newValue.toByteArray(), 0, this.value, nextValueIndex, newValueSize);
-        nextValueIndex += newValueSize;
-      }
+      newValue.copyTo(this.value, this.nextValueIndex);
+      nextValueIndex += newValue.size();
     }
 
     /**
@@ -165,8 +165,9 @@ public class RowResultAdapter implements RowAdapter<Result> {
      */
     @Override
     public void finishCell() {
-      Preconditions.checkState(
-          nextValueIndex == -1 || nextValueIndex == value.length, "Inconsistent value found");
+      Preconditions.checkNotNull(currentKey, "row key cannot be null");
+      Preconditions.checkState(nextValueIndex == value.length, "Cell value too short");
+
       if (!Objects.equals(this.family, this.previousFamily)) {
         previousFamily = this.family;
         currentFamilyCells = new ArrayList<>();
@@ -193,14 +194,12 @@ public class RowResultAdapter implements RowAdapter<Result> {
      */
     @Override
     public Result finishRow() {
-      Preconditions.checkNotNull(currentKey, "row key cannot be null");
-
       ImmutableList.Builder<Cell> combined = ImmutableList.builder();
       for (List<RowCell> familyCellList : cells.values()) {
         combined.addAll(familyCellList);
       }
 
-      return new RowResult(currentKey, combined.build());
+      return RowResult.create(currentKey, combined.build());
     }
 
     @Override
@@ -218,7 +217,7 @@ public class RowResultAdapter implements RowAdapter<Result> {
 
     @Override
     public Result createScanMarkerRow(ByteString rowKey) {
-      return new RowResult(rowKey, ImmutableList.<Cell>of());
+      return RowResult.createMarker(rowKey);
     }
   }
 }

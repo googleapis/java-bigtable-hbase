@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.wrappers.veneer;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
@@ -38,7 +40,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class TestRowResultAdapter {
 
-  private static final ByteString ROW_KEY_ONE = ByteString.copyFromUtf8("one");
+  private static final ByteString ROW_KEY = ByteString.copyFromUtf8("one");
   private static final String COL_FAMILY = "cf";
   private static final ByteString QUAL_ONE = ByteString.copyFromUtf8("q1");
   private static final ByteString QUAL_TWO = ByteString.copyFromUtf8("q2");
@@ -51,7 +53,7 @@ public class TestRowResultAdapter {
   public void testWithSingleCellRow() {
     RowAdapter.RowBuilder<Result> rowBuilder = underTest.createRowBuilder();
 
-    rowBuilder.startRow(ROW_KEY_ONE);
+    rowBuilder.startRow(ROW_KEY);
     rowBuilder.startCell(
         COL_FAMILY, QUAL_ONE, 10000L, Collections.<String>emptyList(), VALUE.size());
     rowBuilder.cellValue(VALUE);
@@ -64,20 +66,20 @@ public class TestRowResultAdapter {
         Result.create(
             ImmutableList.<Cell>of(
                 new RowCell(
-                    ROW_KEY_ONE.toByteArray(),
+                    ROW_KEY.toByteArray(),
                     COL_FAMILY.getBytes(),
                     QUAL_ONE.toByteArray(),
                     10L,
                     VALUE.toByteArray()),
                 new RowCell(
-                    ROW_KEY_ONE.toByteArray(),
+                    ROW_KEY.toByteArray(),
                     COL_FAMILY.getBytes(),
                     QUAL_TWO.toByteArray(),
                     20L,
                     VALUE.toByteArray(),
                     LABELS)));
     assertResult(expected, rowBuilder.finishRow());
-    assertEquals(ROW_KEY_ONE, underTest.getKey(expected));
+    assertEquals(ROW_KEY, underTest.getKey(expected));
   }
 
   @Test
@@ -87,39 +89,116 @@ public class TestRowResultAdapter {
     ByteString valuePart3 = ByteString.copyFromUtf8("part-3");
 
     RowAdapter.RowBuilder<Result> rowBuilder = underTest.createRowBuilder();
-    rowBuilder.startRow(ROW_KEY_ONE);
-    rowBuilder.startCell(
-        COL_FAMILY, QUAL_ONE, 10000L, Collections.<String>emptyList(), valuePart1.size());
+    rowBuilder.startRow(ROW_KEY);
+    rowBuilder.startCell(COL_FAMILY, QUAL_ONE, 10000L, Collections.<String>emptyList(), 18);
     rowBuilder.cellValue(valuePart1);
     rowBuilder.cellValue(valuePart2);
     rowBuilder.cellValue(valuePart3);
     rowBuilder.finishCell();
 
     Result actualResult = rowBuilder.finishRow();
-    Assert.assertArrayEquals(
+    assertArrayEquals(
         valuePart1.concat(valuePart2).concat(valuePart3).toByteArray(),
         actualResult.getValue(COL_FAMILY.getBytes(), QUAL_ONE.toByteArray()));
   }
 
   @Test
+  public void testWhenRowKeyIsNotSet() {
+    RowAdapter.RowBuilder<Result> rowBuilder = underTest.createRowBuilder();
+    rowBuilder.startCell(COL_FAMILY, QUAL_ONE, 30000L, LABELS, VALUE.size());
+    rowBuilder.cellValue(VALUE);
+    try {
+      rowBuilder.finishCell();
+      Assert.fail("should not accept null rowKey");
+    } catch (NullPointerException expected) {
+      assertEquals("row key cannot be null", expected.getMessage());
+    }
+  }
+
+  @Test
+  public void testOnlyValueIsDifferent() {
+    ByteString valuePart1 = ByteString.copyFromUtf8("part-1");
+    RowAdapter.RowBuilder<Result> rowBuilder = underTest.createRowBuilder();
+    rowBuilder.startRow(ROW_KEY);
+    rowBuilder.startCell(COL_FAMILY, QUAL_ONE, 30000L, LABELS, VALUE.size());
+    rowBuilder.cellValue(VALUE);
+    rowBuilder.finishCell();
+
+    // started cell with same qualifier but different value
+    rowBuilder.startCell(COL_FAMILY, QUAL_ONE, 30000L, LABELS, valuePart1.size());
+    rowBuilder.cellValue(valuePart1);
+    rowBuilder.finishCell();
+
+    Result actual = rowBuilder.finishRow();
+    assertEquals(2, actual.size());
+
+    Result expected =
+        Result.create(
+            ImmutableList.<Cell>of(
+                new RowCell(
+                    ROW_KEY.toByteArray(),
+                    COL_FAMILY.getBytes(),
+                    QUAL_ONE.toByteArray(),
+                    30L,
+                    VALUE.toByteArray(),
+                    LABELS),
+                new RowCell(
+                    ROW_KEY.toByteArray(),
+                    COL_FAMILY.getBytes(),
+                    QUAL_ONE.toByteArray(),
+                    30L,
+                    valuePart1.toByteArray(),
+                    LABELS)));
+    assertResult(expected, actual);
+  }
+
+  @Test
+  public void testFamilyOrdering() {
+    RowAdapter.RowBuilder<Result> rowBuilder = underTest.createRowBuilder();
+
+    rowBuilder.startRow(ROW_KEY);
+    rowBuilder.startCell("cc", QUAL_ONE, 20000L, LABELS, -1);
+    rowBuilder.cellValue(VALUE);
+    rowBuilder.finishCell();
+
+    rowBuilder.startCell("bb", QUAL_TWO, 40000L, LABELS, VALUE.size() * 2);
+    rowBuilder.cellValue(VALUE);
+    rowBuilder.cellValue(VALUE);
+    rowBuilder.finishCell();
+
+    rowBuilder.startCell("aa", QUAL_ONE, 20000L, LABELS, VALUE.size());
+    rowBuilder.cellValue(VALUE);
+    rowBuilder.finishCell();
+
+    rowBuilder.startCell("zz", QUAL_ONE, 80000L, LABELS, VALUE.size());
+    rowBuilder.cellValue(VALUE);
+    rowBuilder.finishCell();
+
+    rowBuilder.startCell("b", QUAL_ONE, 10000L, LABELS, VALUE.size());
+    rowBuilder.cellValue(VALUE);
+    rowBuilder.finishCell();
+
+    Result actualResult = rowBuilder.finishRow();
+
+    List<String> colFamilyInActualOrder = new ArrayList<>(5);
+    for (Cell cell : actualResult.listCells()) {
+      colFamilyInActualOrder.add(Bytes.toString(CellUtil.cloneFamily(cell)));
+    }
+    assertEquals(ImmutableList.of("aa", "b", "bb", "cc", "zz"), colFamilyInActualOrder);
+  }
+
+  @Test
   public void testWithMarkerRow() {
     RowAdapter.RowBuilder<Result> rowBuilder = underTest.createRowBuilder();
-    Result markerRow = rowBuilder.createScanMarkerRow(ROW_KEY_ONE);
+    Result markerRow = rowBuilder.createScanMarkerRow(ROW_KEY);
     assertTrue(underTest.isScanMarkerRow(markerRow));
-    assertSame(ROW_KEY_ONE, underTest.getKey(markerRow));
-
-    rowBuilder.reset();
-    ByteString anotherKey = ByteString.copyFromUtf8("another-row-key");
-    rowBuilder.startRow(anotherKey);
-    Result anotherRow = rowBuilder.finishRow();
-    assertTrue(underTest.isScanMarkerRow(anotherRow));
-    assertSame(anotherKey, underTest.getKey(anotherRow));
+    assertSame(ROW_KEY, underTest.getKey(markerRow));
 
     Result resultWithOneCell =
         Result.create(
             ImmutableList.<Cell>of(
                 new RowCell(
-                    ROW_KEY_ONE.toByteArray(),
+                    ROW_KEY.toByteArray(),
                     COL_FAMILY.getBytes(),
                     QUAL_ONE.toByteArray(),
                     10L,
@@ -128,37 +207,40 @@ public class TestRowResultAdapter {
   }
 
   @Test
-  public void testFamilyOrdering() {
+  public void testReset() {
     RowAdapter.RowBuilder<Result> rowBuilder = underTest.createRowBuilder();
 
-    rowBuilder.startRow(ROW_KEY_ONE);
-    rowBuilder.startCell("cc", QUAL_ONE, 20000L, LABELS, 0);
+    rowBuilder.startRow(ROW_KEY);
+    rowBuilder.startCell(
+        COL_FAMILY, QUAL_ONE, 10000L, Collections.<String>emptyList(), VALUE.size());
     rowBuilder.cellValue(VALUE);
     rowBuilder.finishCell();
-    rowBuilder.startCell("bb", QUAL_TWO, 40000L, LABELS, 0);
-    rowBuilder.cellValue(VALUE);
-    rowBuilder.finishCell();
-    rowBuilder.startCell("aa", ByteString.copyFromUtf8("q3"), 20000L, LABELS, 0);
-    rowBuilder.cellValue(VALUE);
-    rowBuilder.finishCell();
-    rowBuilder.startCell("zz", ByteString.copyFromUtf8("q4"), 80000L, LABELS, 0);
-    rowBuilder.cellValue(VALUE);
-    rowBuilder.finishCell();
-    rowBuilder.startCell("b", ByteString.copyFromUtf8("q4"), 10000L, LABELS, 0);
-    rowBuilder.cellValue(VALUE);
-    rowBuilder.finishCell();
-    Result actualResult = rowBuilder.finishRow();
 
-    List<String> colFamilyInActualOrder = new ArrayList<>(5);
-    for (Cell cell : actualResult.listCells()) {
-      colFamilyInActualOrder.add(
-          Bytes.toString(cell.getFamilyArray(), cell.getFamilyOffset(), cell.getFamilyLength()));
-    }
-    assertEquals(ImmutableList.of("aa", "b", "bb", "cc", "zz"), colFamilyInActualOrder);
+    rowBuilder.reset();
+    ByteString anotherKey = ByteString.copyFromUtf8("another-rowKey");
+    rowBuilder.startRow(anotherKey);
+    rowBuilder.startCell(COL_FAMILY, QUAL_TWO, 40000L, LABELS, VALUE.size());
+    rowBuilder.cellValue(VALUE);
+    rowBuilder.finishCell();
+
+    Result actual = rowBuilder.finishRow();
+    assertResult(
+        Result.create(
+            ImmutableList.<Cell>of(
+                new RowCell(
+                    anotherKey.toByteArray(),
+                    COL_FAMILY.getBytes(),
+                    QUAL_TWO.toByteArray(),
+                    40L,
+                    VALUE.toByteArray()))),
+        actual);
   }
 
   private void assertResult(Result expected, Result actual) {
     try {
+      if (actual.isEmpty()) {
+        Assert.fail("Result does not have any rows");
+      }
       Result.compareResults(expected, actual);
     } catch (Throwable throwable) {
       throw new AssertionError("Result did not match", throwable);
