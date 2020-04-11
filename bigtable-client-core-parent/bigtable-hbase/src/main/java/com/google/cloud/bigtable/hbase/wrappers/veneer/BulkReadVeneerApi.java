@@ -30,6 +30,10 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.client.Result;
@@ -47,6 +51,26 @@ import org.apache.hadoop.hbase.client.Result;
 @InternalApi("For internal usage only")
 public class BulkReadVeneerApi implements BulkReadWrapper {
 
+  private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
+  private static final Thread SHUTDOWN_HOOK =
+      new Thread(
+          new Runnable() {
+            @Override
+            public void run() {
+              try {
+                EXECUTOR.shutdownNow();
+                EXECUTOR.awaitTermination(1, TimeUnit.SECONDS);
+              } catch (Throwable ex) {
+                // Ignored
+              }
+            }
+          });
+
+  static {
+    SHUTDOWN_HOOK.setDaemon(true);
+    Runtime.getRuntime().addShutdownHook(SHUTDOWN_HOOK);
+  }
+
   private final BigtableDataClient client;
   private final String tableId;
   private final Map<RowFilter, Batcher<ByteString, Row>> batchers;
@@ -54,6 +78,7 @@ public class BulkReadVeneerApi implements BulkReadWrapper {
   // TODO: remove this once gax-java's Batcher supports asyncClose(). This will eliminate the need
   //  to track individual entries
   private final AtomicLong cleanupBarrier;
+  private final AtomicBoolean signalCleanUp = new AtomicBoolean();
 
   BulkReadVeneerApi(BigtableDataClient client, String tableId) {
     this.client = client;
@@ -61,19 +86,19 @@ public class BulkReadVeneerApi implements BulkReadWrapper {
 
     this.batchers = new HashMap<>();
     this.cleanupBarrier = new AtomicLong();
-    this.cleanupBarrier
-        .incrementAndGet(); // wait for sendOutstanding to signal before cleaning up the batcher map
   }
 
   @Override
   public ApiFuture<Result> add(ByteString rowKey, @Nullable Filters.Filter filter) {
     cleanupBarrier.incrementAndGet();
+    signalCleanUp.set(false);
 
     ApiFuture<Row> rowFuture = getOrCreateBatcher(filter).add(rowKey);
     rowFuture.addListener(
         new Runnable() {
           @Override
           public void run() {
+            cleanupBarrier.decrementAndGet();
             notifyArrival();
           }
         },
@@ -91,8 +116,14 @@ public class BulkReadVeneerApi implements BulkReadWrapper {
   }
 
   private void notifyArrival() {
-    if (cleanupBarrier.decrementAndGet() == 0) {
-      cleanUp();
+    if (cleanupBarrier.get() == 0 && signalCleanUp.get()) {
+      EXECUTOR.submit(
+          new Runnable() {
+            @Override
+            public void run() {
+              cleanUp();
+            }
+          });
     }
   }
 
@@ -113,7 +144,10 @@ public class BulkReadVeneerApi implements BulkReadWrapper {
     for (Batcher<ByteString, Row> batcher : batchers.values()) {
       batcher.sendOutstanding();
     }
-    notifyArrival();
+
+    if (signalCleanUp.compareAndSet(false, true)) {
+      notifyArrival();
+    }
   }
 
   private Batcher<ByteString, Row> getOrCreateBatcher(@Nullable Filters.Filter filter) {
