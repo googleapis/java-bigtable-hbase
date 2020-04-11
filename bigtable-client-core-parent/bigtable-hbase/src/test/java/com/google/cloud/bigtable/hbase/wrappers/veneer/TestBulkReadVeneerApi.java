@@ -92,12 +92,12 @@ public class TestBulkReadVeneerApi {
     ApiFuture<Result> secBatchResult1 = bulkReadWrapper.add(ByteString.copyFromUtf8("1"), filter);
     ApiFuture<Result> secBatchResult2 = bulkReadWrapper.add(ByteString.copyFromUtf8("2"), filter);
 
+    bulkReadWrapper.sendOutstanding();
+
     resultFuture1_1.get();
     resultFuture1_2.get();
     secBatchResult1.get();
     secBatchResult2.get();
-
-    bulkReadWrapper.sendOutstanding();
 
     // If one entry of the batch is resolved then another should also be
     assertTrue(resultFuture1_1.isDone());
