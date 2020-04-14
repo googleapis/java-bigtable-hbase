@@ -90,7 +90,8 @@ public class BulkReadVeneerApi implements BulkReadWrapper {
           public void run() {
             notifyArrival();
           }
-        }, CLEANUP_EXECUTOR);
+        },
+        CLEANUP_EXECUTOR);
 
     return ApiFutures.transform(
         rowFuture,
