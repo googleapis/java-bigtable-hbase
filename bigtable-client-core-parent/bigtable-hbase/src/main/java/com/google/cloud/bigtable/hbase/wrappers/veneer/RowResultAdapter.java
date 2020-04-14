@@ -16,6 +16,8 @@
 package com.google.cloud.bigtable.hbase.wrappers.veneer;
 
 import com.google.api.core.InternalApi;
+import com.google.bigtable.v2.RowFilter.Interleave;
+import com.google.cloud.bigtable.data.v2.models.Filters.InterleaveFilter;
 import com.google.cloud.bigtable.data.v2.models.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.RowCell;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
@@ -25,15 +27,25 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.filter.FilterList.Operator;
 
 /**
  * Adapter for {@link RowAdapter} that uses {@link Result} to represent logical rows.
+ *
+ * <p>This adapter is responsible for cell deduplication. bigtable-hbase will convert a {@link
+ * Operator#MUST_PASS_ONE} filter into an {@link Interleave}. Unfortunately there is a bit of a
+ * mismatch between the 2 filters: MUST_PASS_ONE will not duplicate the cell if it matches multiple
+ * branches of the MUST_PASS_ONE, but Interleave will.This adapter will pave over the difference by
+ * removing the duplicate cells while building the Result. However, HBase's WhileMatchFilter depends
+ * on duplicate labelled cells for its implementation. So this adapter will not deduplicate labelled
+ * cells.
  *
  * <p>For internal use only - public for technical reasons.
  */
@@ -97,6 +109,7 @@ public class RowResultAdapter implements RowAdapter<Result> {
     private List<String> labels;
     private long timestamp;
     private byte[] value;
+    private RowCell previousNoLabelCell;
 
     private Map<String, List<RowCell>> cells = new TreeMap<>();
     private List<RowCell> currentFamilyCells = null;
@@ -159,6 +172,9 @@ public class RowResultAdapter implements RowAdapter<Result> {
      * </ul>
      *
      * A flattened version of the {@link RowCell} map will be sorted correctly.
+     *
+     * <p>Applying {@link InterleaveFilter} may result in a row to contain duplicated cells, where
+     * duplicates are grouped in sequences.
      */
     @Override
     public void finishCell() {
@@ -169,6 +185,7 @@ public class RowResultAdapter implements RowAdapter<Result> {
         previousFamily = this.family;
         currentFamilyCells = new ArrayList<>();
         cells.put(this.family, this.currentFamilyCells);
+        previousNoLabelCell = null;
       }
 
       RowCell rowCell =
@@ -179,7 +196,20 @@ public class RowResultAdapter implements RowAdapter<Result> {
               TimestampConverter.bigtable2hbase(this.timestamp),
               this.value,
               this.labels);
-      this.currentFamilyCells.add(rowCell);
+
+      // dedupe user visible cells. Please see class javadoc for details
+      if (!this.labels.isEmpty()) {
+        this.currentFamilyCells.add(rowCell);
+      } else if (!keysMatch(previousNoLabelCell, rowCell)) {
+        this.currentFamilyCells.add(rowCell);
+        this.previousNoLabelCell = rowCell;
+      }
+    }
+
+    private static boolean keysMatch(RowCell previousNoLabelCell, RowCell current) {
+      return previousNoLabelCell != null
+          && previousNoLabelCell.getTimestamp() == current.getTimestamp()
+          && Arrays.equals(previousNoLabelCell.getQualifierArray(), current.getQualifierArray());
     }
 
     /**
@@ -210,6 +240,7 @@ public class RowResultAdapter implements RowAdapter<Result> {
       this.cells = new TreeMap<>();
       this.currentFamilyCells = null;
       this.previousFamily = null;
+      this.previousNoLabelCell = null;
     }
 
     @Override

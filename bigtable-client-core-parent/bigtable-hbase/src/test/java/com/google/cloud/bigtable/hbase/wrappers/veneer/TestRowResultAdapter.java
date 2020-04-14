@@ -155,6 +155,66 @@ public class TestRowResultAdapter {
   }
 
   @Test
+  public void testDeduplicationLogic() {
+    List<String> EMPTY_LABEL = ImmutableList.of();
+    ByteString valueForNewQual = ByteString.copyFromUtf8("value for new qualifier");
+    ByteString valueForCellWithoutLabel = ByteString.copyFromUtf8("value for Cell without label");
+    ByteString valueForCellWithLabel = ByteString.copyFromUtf8("value for cell with labels");
+    RowAdapter.RowBuilder<Result> rowBuilder = underTest.createRowBuilder();
+    rowBuilder.startRow(ROW_KEY);
+
+    // new qualifier
+    rowBuilder.startCell(COL_FAMILY, QUAL_ONE, 20000L, EMPTY_LABEL, valueForNewQual.size());
+    rowBuilder.cellValue(valueForNewQual);
+    rowBuilder.finishCell();
+
+    // same qualifier, same timestamp, without label
+    rowBuilder.startCell(COL_FAMILY, QUAL_ONE, 20000L, EMPTY_LABEL, -1);
+    rowBuilder.cellValue(valueForCellWithoutLabel);
+    rowBuilder.finishCell();
+
+    // same qualifier, same timestamp, with label
+    rowBuilder.startCell(COL_FAMILY, QUAL_ONE, 20000L, LABELS, -1);
+    rowBuilder.cellValue(valueForCellWithLabel);
+    rowBuilder.finishCell();
+
+    // same qualifier, different timestamp
+    rowBuilder.startCell(COL_FAMILY, QUAL_ONE, 30000L, EMPTY_LABEL, VALUE.size());
+    rowBuilder.cellValue(VALUE);
+    rowBuilder.finishCell();
+
+    Result actual = rowBuilder.finishRow();
+    assertEquals(3, actual.size());
+
+    RowResult expected =
+        RowResult.create(
+            ROW_KEY,
+            ImmutableList.<Cell>of(
+                new RowCell(
+                    ROW_KEY.toByteArray(),
+                    COL_FAMILY.getBytes(),
+                    QUAL_ONE.toByteArray(),
+                    20L,
+                    valueForNewQual.toByteArray(),
+                    EMPTY_LABEL),
+                new RowCell(
+                    ROW_KEY.toByteArray(),
+                    COL_FAMILY.getBytes(),
+                    QUAL_ONE.toByteArray(),
+                    20L,
+                    valueForCellWithLabel.toByteArray(),
+                    LABELS),
+                new RowCell(
+                    ROW_KEY.toByteArray(),
+                    COL_FAMILY.getBytes(),
+                    QUAL_ONE.toByteArray(),
+                    30L,
+                    VALUE.toByteArray(),
+                    EMPTY_LABEL)));
+    assertResult(expected, actual);
+  }
+
+  @Test
   public void testFamilyOrdering() {
     RowAdapter.RowBuilder<Result> rowBuilder = underTest.createRowBuilder();
 
