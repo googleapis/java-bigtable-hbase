@@ -30,6 +30,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.client.Result;
@@ -47,6 +50,17 @@ import org.apache.hadoop.hbase.client.Result;
 @InternalApi("For internal usage only")
 public class BulkReadVeneerApi implements BulkReadWrapper {
 
+  private static final Executor CLEANUP_EXECUTOR =
+      Executors.newSingleThreadExecutor(
+          new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+              Thread thread = new Thread(r);
+              thread.setDaemon(true);
+              thread.setName("bigtable-bulkread-cleanup");
+              return thread;
+            }
+          });
   private final BigtableDataClient client;
   private final String tableId;
   private final Map<RowFilter, Batcher<ByteString, Row>> batchers;
@@ -77,7 +91,7 @@ public class BulkReadVeneerApi implements BulkReadWrapper {
             notifyArrival();
           }
         },
-        MoreExecutors.directExecutor());
+        CLEANUP_EXECUTOR);
 
     return ApiFutures.transform(
         rowFuture,

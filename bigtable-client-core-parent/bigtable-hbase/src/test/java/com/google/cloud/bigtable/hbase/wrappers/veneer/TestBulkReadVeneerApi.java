@@ -27,13 +27,16 @@ import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.data.v2.models.Filters;
+import com.google.cloud.bigtable.hbase.wrappers.BulkReadWrapper;
 import com.google.protobuf.ByteString;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hadoop.hbase.client.Result;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,8 +47,10 @@ import org.threeten.bp.Duration;
 public class TestBulkReadVeneerApi {
 
   private static final String TABLE_ID = "fake-table-id";
-  private FakeDataService fakeDataService = new FakeDataService();
+  private static final ByteString ROW_KEY = ByteString.copyFromUtf8("row-key");
+  private FakeDataService fakeDataService;
   private BigtableDataSettings.Builder settingsBuilder;
+  private BigtableDataClient dataClient;
   private Server server;
 
   @Before
@@ -55,6 +60,7 @@ public class TestBulkReadVeneerApi {
       port = s.getLocalPort();
     }
 
+    fakeDataService = new FakeDataService();
     server = ServerBuilder.forPort(port).addService(fakeDataService).build();
     server.start();
 
@@ -64,8 +70,9 @@ public class TestBulkReadVeneerApi {
             .setInstanceId("fake-instance");
   }
 
-  @Test
+  @After
   public void tearDown() throws InterruptedException {
+    dataClient.close();
     if (server != null) {
       server.shutdown();
       server.awaitTermination();
@@ -74,24 +81,54 @@ public class TestBulkReadVeneerApi {
 
   @Test
   public void testAdd() throws Exception {
-    BulkReadVeneerApi bulkReadWrapper =
-        new BulkReadVeneerApi(BigtableDataClient.create(settingsBuilder.build()), TABLE_ID);
-    ApiFuture<Result> resultFuture1 = bulkReadWrapper.add(ByteString.copyFromUtf8("one"), null);
-    assertFalse(resultFuture1.isDone());
+    dataClient = BigtableDataClient.create(settingsBuilder.build());
+    BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID);
+
+    ApiFuture<Result> resultFuture1_1 = bulkReadWrapper.add(ByteString.copyFromUtf8("one"), null);
+    ApiFuture<Result> resultFuture1_2 = bulkReadWrapper.add(ByteString.copyFromUtf8("two"), null);
+    assertFalse(resultFuture1_1.isDone());
 
     Filters.Filter filter = Filters.FILTERS.key().regex("cf");
     ApiFuture<Result> secBatchResult1 = bulkReadWrapper.add(ByteString.copyFromUtf8("1"), filter);
     ApiFuture<Result> secBatchResult2 = bulkReadWrapper.add(ByteString.copyFromUtf8("2"), filter);
 
-    // Here AutoFlush triggers the batch
-    resultFuture1.get();
+    bulkReadWrapper.sendOutstanding();
+
+    resultFuture1_1.get();
+    resultFuture1_2.get();
     secBatchResult1.get();
+    secBatchResult2.get();
 
     // If one entry of the batch is resolved then another should also be
-    assertTrue(resultFuture1.isDone());
+    assertTrue(resultFuture1_1.isDone());
+    assertTrue(resultFuture1_2.isDone());
+    assertTrue(secBatchResult1.isDone());
     assertTrue(secBatchResult2.isDone());
 
-    assertEquals(2, fakeDataService.getReadRowsCount());
+    assertEquals(2, fakeDataService.getReadRowsBatchCount());
+  }
+
+  @Test
+  public void testAddWithoutSendOutstanding() throws Exception {
+    settingsBuilder
+        .stubSettings()
+        .bulkReadRowsSettings()
+        .setBatchingSettings(
+            BatchingSettings.newBuilder()
+                .setDelayThreshold(Duration.ofMillis(100))
+                .setElementCountThreshold(10L)
+                .setRequestByteThreshold(10L * 1024L)
+                .build());
+    dataClient = BigtableDataClient.create(settingsBuilder.build());
+    BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID);
+
+    ApiFuture<Result> row = bulkReadWrapper.add(ROW_KEY, Filters.FILTERS.key().regex("row"));
+    row.get();
+    assertTrue(row.isDone());
+    assertEquals(1, fakeDataService.getReadRowsBatchCount());
+
+    // To trigger closing of the batcher
+    bulkReadWrapper.sendOutstanding();
   }
 
   @Test
@@ -103,11 +140,11 @@ public class TestBulkReadVeneerApi {
         .setBatchingSettings(
             BatchingSettings.newBuilder()
                 .setDelayThreshold(autoFlushTime)
-                .setElementCountThreshold(10L)
+                .setElementCountThreshold(100L)
                 .setRequestByteThreshold(10L * 1024L)
                 .build());
-    BulkReadVeneerApi bulkReadWrapper =
-        new BulkReadVeneerApi(BigtableDataClient.create(settingsBuilder.build()), TABLE_ID);
+    dataClient = BigtableDataClient.create(settingsBuilder.build());
+    BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID);
 
     bulkReadWrapper.add(ByteString.copyFromUtf8("one"), null);
     bulkReadWrapper.sendOutstanding();
@@ -121,14 +158,16 @@ public class TestBulkReadVeneerApi {
     bulkReadWrapper.add(ByteString.copyFromUtf8("four"), null);
     bulkReadWrapper.sendOutstanding();
 
-    bulkReadWrapper.add(ByteString.copyFromUtf8("five"), null).get();
+    ApiFuture<Result> fifthBatchResult = bulkReadWrapper.add(ByteString.copyFromUtf8("five"), null);
+    bulkReadWrapper.sendOutstanding();
+    fifthBatchResult.get();
 
-    assertEquals(5, fakeDataService.getReadRowsCount());
+    assertEquals(5, fakeDataService.getReadRowsBatchCount());
   }
 
   @Test
   public void testWhenAutoFlushIsOff() throws Exception {
-    Duration autoFlushTime = Duration.ofSeconds(30);
+    Duration autoFlushTime = Duration.ofSeconds(10);
     settingsBuilder
         .stubSettings()
         .bulkReadRowsSettings()
@@ -138,37 +177,38 @@ public class TestBulkReadVeneerApi {
                 .setElementCountThreshold(10L)
                 .setRequestByteThreshold(10L * 1024L)
                 .build());
-    BulkReadVeneerApi bulkReadWrapper =
-        new BulkReadVeneerApi(BigtableDataClient.create(settingsBuilder.build()), TABLE_ID);
+    dataClient = BigtableDataClient.create(settingsBuilder.build());
+    BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID);
 
     long startTime = System.currentTimeMillis();
-    ApiFuture<Result> resultFuture = bulkReadWrapper.add(ByteString.copyFromUtf8("row-key"), null);
+    ApiFuture<Result> resultFuture = bulkReadWrapper.add(ROW_KEY, null);
+
     assertFalse(resultFuture.isDone());
+    assertEquals(0, fakeDataService.getReadRowsBatchCount());
 
-    // This does not guarantee instance result but it will take less time then autoFlush.
+    // This does not guarantee instant result but it should take less time than autoFlush.
     bulkReadWrapper.sendOutstanding();
-
-    // TODO: investigate if I am not adding this(another) entry then it is not resolving
-    bulkReadWrapper.add(ByteString.copyFromUtf8("two"), null);
-
     resultFuture.get();
+
     long totalTime = System.currentTimeMillis() - startTime;
+
     assertTrue(totalTime < autoFlushTime.toMillis());
     assertTrue(resultFuture.isDone());
+    assertEquals(1, fakeDataService.getReadRowsBatchCount());
   }
 
   private static class FakeDataService extends BigtableGrpc.BigtableImplBase {
 
-    int readRowsCount = 0;
+    AtomicInteger readRowsCount = new AtomicInteger(0);
 
-    int getReadRowsCount() {
-      return readRowsCount;
+    int getReadRowsBatchCount() {
+      return readRowsCount.intValue();
     }
 
     @Override
     public void readRows(
         ReadRowsRequest request, StreamObserver<ReadRowsResponse> responseObserver) {
-      readRowsCount++;
+      readRowsCount.incrementAndGet();
       responseObserver.onNext(ReadRowsResponse.getDefaultInstance());
       responseObserver.onCompleted();
     }
