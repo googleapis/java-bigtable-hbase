@@ -87,10 +87,8 @@ public class TestBigtableVeneerApi {
   @After
   public void tearDown() throws Exception {
     bigtableApi.close();
-    if (server != null) {
-      server.shutdownNow();
-      server.awaitTermination();
-    }
+    server.shutdownNow();
+    server.awaitTermination();
   }
 
   @Test
