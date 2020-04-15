@@ -1,11 +1,17 @@
 {
-  "updateTime": "2020-03-13T16:33:41.405276Z",
   "sources": [
     {
-      "template": {
-        "name": "java_library",
-        "origin": "synthtool.gcp",
-        "version": "2020.2.4"
+      "git": {
+        "name": ".",
+        "remote": "https://github.com/googleapis/java-bigtable-hbase.git",
+        "sha": "4f2a00fe7a8d5557de798dcd49e3bd5d68132e17"
+      }
+    },
+    {
+      "git": {
+        "name": "synthtool",
+        "remote": "https://github.com/googleapis/synthtool.git",
+        "sha": "85cbc7f954f4c4c3534f0caafbaed22a8f80f602"
       }
     }
   ]
