@@ -19,6 +19,7 @@ import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableClassicApi;
 import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableHBaseClassicSettings;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings;
+import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableVeneerApi;
 import java.io.IOException;
 
 /**
@@ -33,7 +34,7 @@ public abstract class BigtableApi implements AutoCloseable {
 
   public static BigtableApi create(BigtableHBaseSettings settings) throws IOException {
     if (settings instanceof BigtableHBaseVeneerSettings) {
-      throw new UnsupportedOperationException("Veneer client is not yet supported.");
+      return new BigtableVeneerApi((BigtableHBaseVeneerSettings) settings);
     } else {
       return new BigtableClassicApi((BigtableHBaseClassicSettings) settings);
     }
