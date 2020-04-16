@@ -19,9 +19,9 @@ import static com.google.cloud.bigtable.hbase2_x.FutureUtils.failedFuture;
 import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture;
 
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.admin.v2.internal.NameUtil;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
-import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase.wrappers.AdminClientWrapper;
@@ -89,16 +89,14 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   private final Set<TableName> disabledTables;
   private final AdminClientWrapper bigtableTableAdminClient;
-  private final BigtableInstanceName bigtableInstanceName;
+  private final BigtableHBaseSettings settings;
   private final CommonConnection asyncConnection;
 
   public BigtableAsyncAdmin(CommonConnection asyncConnection) throws IOException {
     LOG.debug("Creating BigtableAsyncAdmin");
-    BigtableHBaseSettings settings = asyncConnection.getBigtableSettings();
+    this.settings = asyncConnection.getBigtableSettings();
     this.bigtableTableAdminClient = asyncConnection.getBigtableApi().getAdminClient();
     this.disabledTables = asyncConnection.getDisabledTables();
-    this.bigtableInstanceName =
-        new BigtableInstanceName(settings.getProjectId(), settings.getInstanceId());
     this.asyncConnection = asyncConnection;
   }
 
@@ -229,7 +227,9 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
                     .map(
                         m ->
                             com.google.bigtable.admin.v2.Table.newBuilder()
-                                .setName(bigtableInstanceName.toTableNameStr(m))
+                                .setName(
+                                    NameUtil.formatTableName(
+                                        settings.getProjectId(), settings.getInstanceId(), m))
                                 .build())
                     .map(Table::fromProto)
                     .map(TableAdapter2x::adapt)

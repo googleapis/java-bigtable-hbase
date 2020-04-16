@@ -26,7 +26,6 @@ import com.google.api.gax.rpc.FailedPreconditionException;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
-import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
@@ -93,7 +92,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private final BigtableHBaseSettings settings;
   protected final CommonConnection connection;
   protected final AdminClientWrapper tableAdminClientWrapper;
-  protected final BigtableInstanceName bigtableInstanceName;
 
   /**
    * Constructor for AbstractBigtableAdmin.
@@ -107,8 +105,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
     settings = connection.getBigtableSettings();
     this.connection = connection;
     disabledTables = connection.getDisabledTables();
-    bigtableInstanceName =
-        new BigtableInstanceName(settings.getProjectId(), settings.getInstanceId());
     tableAdminClientWrapper = connection.getBigtableApi().getAdminClient();
   }
 
