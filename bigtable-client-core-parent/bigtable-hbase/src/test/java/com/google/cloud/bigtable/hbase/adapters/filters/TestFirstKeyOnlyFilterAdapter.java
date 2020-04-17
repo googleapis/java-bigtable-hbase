@@ -35,12 +35,6 @@ public class TestFirstKeyOnlyFilterAdapter {
   public void onlyTheFirstKeyFromEachRowIsEmitted() throws IOException {
     Filters.Filter adaptedFilter =
         adapter.adapt(new FilterAdapterContext(new Scan(), null), new FirstKeyOnlyFilter());
-    Assert.assertEquals(
-        FILTERS
-            .chain()
-            .filter(FILTERS.limit().cellsPerRow(1))
-            .filter(FILTERS.value().strip())
-            .toProto(),
-        adaptedFilter.toProto());
+    Assert.assertEquals(FILTERS.limit().cellsPerRow(1).toProto(), adaptedFilter.toProto());
   }
 }
