@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.cloud.bigtable.util.ThreadUtil;
+import com.google.cloud.bigtable.hbase.util.ThreadUtil;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
