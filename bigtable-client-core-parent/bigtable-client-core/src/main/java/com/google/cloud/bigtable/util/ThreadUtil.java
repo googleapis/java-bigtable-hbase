@@ -22,7 +22,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.concurrent.ThreadFactory;
 
 /**
- * Utility class to create a {@link ThreadFactory} that's safe to use in App Engine.
+ * Creates a {@link ThreadFactory} that's safe to use in App Engine.
  *
  * <p>This class copies code that originates in {@link
  * io.grpc.internal.GrpcUtil#getThreadFactory(String, boolean)}.
@@ -33,10 +33,11 @@ import java.util.concurrent.ThreadFactory;
 public class ThreadUtil {
 
   /**
-   * Creates a {@link ThreadFactory} suitable for use in the current environment.
+   * Get a {@link ThreadFactory} suitable for use in the current environment.
    *
    * @param nameFormat to apply to threads created by the factory.
-   * @param daemon if {@code true} then this factory creates daemon threads.
+   * @param daemon {@code true} if the threads the factory creates are daemon threads, {@code false}
+   *     otherwise.
    * @return a {@link ThreadFactory}.
    */
   public static ThreadFactory getThreadFactory(String nameFormat, boolean daemon) {

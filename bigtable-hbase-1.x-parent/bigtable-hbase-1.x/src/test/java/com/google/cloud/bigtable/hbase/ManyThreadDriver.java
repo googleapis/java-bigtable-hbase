@@ -18,16 +18,19 @@ package com.google.cloud.bigtable.hbase;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.graphite.PickledGraphite;
-import com.google.cloud.bigtable.hbase.util.ThreadUtil;
+import com.google.cloud.PlatformInformation;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.DropwizardMetricRegistry;
 import com.google.cloud.bigtable.metrics.MetricRegistry;
+import com.google.common.util.concurrent.MoreExecutors;
+import io.grpc.internal.GrpcUtil;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -100,8 +103,7 @@ public class ManyThreadDriver {
     final TableName tableName = TableName.valueOf(tableNameStr);
     final AtomicBoolean finished = new AtomicBoolean(false);
     ExecutorService executor =
-        Executors.newFixedThreadPool(
-            numThreads, ThreadUtil.getThreadFactory("WORK_EXECUTOR-%d", true));
+        Executors.newFixedThreadPool(numThreads, getThreadFactory("WORK_EXECUTOR-%d", true));
     ScheduledExecutorService finishExecutor = setupShutdown(finished);
     try (Connection connection = BigtableConfiguration.connect(projectId, instanceId)) {
       setupTable(tableName, connection);
@@ -144,8 +146,7 @@ public class ManyThreadDriver {
 
   static ScheduledExecutorService setupShutdown(final AtomicBoolean finished) {
     ScheduledExecutorService finishExecutor =
-        Executors.newScheduledThreadPool(
-            1, ThreadUtil.getThreadFactory("FINISH_SCHEDULER-%d", true));
+        Executors.newScheduledThreadPool(1, getThreadFactory("FINISH_SCHEDULER-%d", true));
     finishExecutor.schedule(
         new Runnable() {
           @Override
@@ -224,5 +225,20 @@ public class ManyThreadDriver {
       throw new IllegalArgumentException("Missing required system property: " + prop);
     }
     return value;
+  }
+
+  /**
+   * Creates a {@link ThreadFactory} suitable for use in App Engine or other environment.
+   *
+   * @param nameFormat to apply to threads created by the factory.
+   * @param daemon if {@code true} then this factory creates daemon threads.
+   * @return a {@link ThreadFactory}.
+   */
+  private static ThreadFactory getThreadFactory(String nameFormat, boolean daemon) {
+    if (PlatformInformation.isOnGAEStandard7() || PlatformInformation.isOnGAEStandard8()) {
+      return MoreExecutors.platformThreadFactory();
+    } else {
+      return GrpcUtil.getThreadFactory(nameFormat, daemon);
+    }
   }
 }
