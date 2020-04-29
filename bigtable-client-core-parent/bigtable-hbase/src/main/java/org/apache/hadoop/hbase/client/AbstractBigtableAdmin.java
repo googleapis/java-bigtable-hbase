@@ -43,6 +43,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.longrunning.Operation;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Duration;
 import io.grpc.Status;
 import java.io.IOException;
@@ -809,7 +810,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
    */
   public void deleteRowRangeByPrefix(TableName tableName, byte[] prefix) throws IOException {
     try {
-      tableAdminClientWrapper.dropRowRange(tableName.getNameAsString(), Bytes.toString(prefix));
+      tableAdminClientWrapper.dropRowRange(
+          tableName.getNameAsString(), ByteString.copyFrom(prefix));
     } catch (Throwable throwable) {
       throw new IOException(
           String.format("Failed to truncate table '%s'", tableName.getNameAsString()), throwable);

@@ -28,6 +28,7 @@ import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.longrunning.Operation;
+import com.google.protobuf.ByteString;
 import java.util.List;
 
 /**
@@ -126,9 +127,26 @@ public interface IBigtableTableAdminClient {
    *
    * @param tableId
    * @param rowKeyPrefix
+   */
+  void dropRowRange(String tableId, ByteString rowKeyPrefix);
+
+  /**
+   * Permanently deletes all rows in a range.
+   *
+   * @param tableId
+   * @param rowKeyPrefix
    * @return a {@link ApiFuture} that returns {@link Void} object.
    */
   ApiFuture<Void> dropRowRangeAsync(String tableId, String rowKeyPrefix);
+
+  /**
+   * Permanently deletes all rows in a range.
+   *
+   * @param tableId
+   * @param rowKeyPrefix
+   * @return a {@link ApiFuture} that returns {@link Void} object.
+   */
+  ApiFuture<Void> dropRowRangeAsync(String tableId, ByteString rowKeyPrefix);
 
   /**
    * Drops all data in the table.
