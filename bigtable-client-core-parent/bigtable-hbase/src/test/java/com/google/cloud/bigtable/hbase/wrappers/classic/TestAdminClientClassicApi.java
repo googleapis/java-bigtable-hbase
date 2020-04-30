@@ -138,16 +138,17 @@ public class TestAdminClientClassicApi {
 
   @Test
   public void dropRowRangeAsyncForDeleteByPrefix() throws ExecutionException, InterruptedException {
+    ByteString rowKey = ByteString.copyFrom(new byte[] {0, -32, 122, 13});
     DropRowRangeRequest request =
         DropRowRangeRequest.newBuilder()
             .setName(TABLE_NAME)
             .setDeleteAllDataFromTable(false)
-            .setRowKeyPrefix(ByteString.copyFromUtf8(ROW_KEY_PREFIX))
+            .setRowKeyPrefix(rowKey)
             .build();
 
     when(delegate.dropRowRangeAsync(request))
         .thenReturn(immediateFuture(Empty.newBuilder().build()));
-    adminClientWrapper.dropRowRangeAsync(TABLE_ID, ROW_KEY_PREFIX).get();
+    adminClientWrapper.dropRowRangeAsync(TABLE_ID, rowKey).get();
 
     verify(delegate).dropRowRangeAsync(request);
   }
