@@ -19,7 +19,7 @@ limitations under the License.
 
   <groupId>com.google.cloud.bigtable</groupId>
   <artifactId>bigtable-client-parent</artifactId>
-  <version>1.14.1</version>
+  <version>1.14.2-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>${project.groupId}:${project.artifactId}</name>
   <url>https://cloud.google.com/bigtable/</url>
@@ -94,7 +94,7 @@ limitations under the License.
       scm:git:git@github.com:googleapis/java-bigtable-hbase.git
     </developerConnection>
     <url>https://github.com/googleapis/java-bigtable-hbase</url>
-    <tag>bigtable-client-parent-1.14.1</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <developers>
