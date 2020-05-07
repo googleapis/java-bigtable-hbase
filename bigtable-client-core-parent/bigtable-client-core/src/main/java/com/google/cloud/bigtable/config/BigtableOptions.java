@@ -631,7 +631,7 @@ public class BigtableOptions implements Serializable, Cloneable {
     try {
       return (BigtableOptions) super.clone();
     } catch (CloneNotSupportedException e) {
-      throw new RuntimeException("Could not cloe BigtableOptions");
+      throw new RuntimeException("Could not clone BigtableOptions");
     }
   }
 }
