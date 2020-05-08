@@ -17,6 +17,12 @@
         <artifactId>google-http-client-jackson2</artifactId>
         <version>1.34.2</version>
       </dependency>
+      <!--  todo(kolea2): temporary workaround until api-common and google-cloud-core are updated to 1.7.1-->
+      <dependency>
+        <groupId>com.google.auto.value</groupId>
+        <artifactId>auto-value-annotations</artifactId>
+        <version>1.7.1</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
