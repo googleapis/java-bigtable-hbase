@@ -37,6 +37,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.protobuf.ByteString;
 import io.grpc.Status;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -798,7 +799,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     try {
       ApiExceptions.callAndTranslateApiException(
           tableAdminClientWrapper.dropRowRangeAsync(
-              tableName.getNameAsString(), Bytes.toString(prefix)));
+              tableName.getNameAsString(), ByteString.copyFrom(prefix)));
     } catch (Throwable throwable) {
       throw new IOException(
           String.format("Failed to truncate table '%s'", tableName.getNameAsString()), throwable);

@@ -30,6 +30,7 @@ import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.common.collect.Queues;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -128,11 +129,11 @@ public class TestAdminClientVeneerApi {
 
   @Test
   public void dropRowRangeAsync() throws Exception {
-    String rowKey = "cf-dropRange-async";
+    ByteString rowKey = ByteString.copyFromUtf8("cf-dropRange-async");
     adminClientWrapper.dropRowRangeAsync(TABLE_ID_1, rowKey).get();
     DropRowRangeRequest rangeRequest = fakeAdminService.popLastRequest();
     assertEquals(TABLE_ID_1, NameUtil.extractTableIdFromTableName(rangeRequest.getName()));
-    assertEquals(rowKey, rangeRequest.getRowKeyPrefix().toStringUtf8());
+    assertEquals(rowKey, rangeRequest.getRowKeyPrefix());
   }
 
   @Test

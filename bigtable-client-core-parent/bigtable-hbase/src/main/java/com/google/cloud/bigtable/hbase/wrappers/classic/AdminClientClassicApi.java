@@ -133,13 +133,13 @@ public class AdminClientClassicApi implements AdminClientWrapper {
   }
 
   @Override
-  public ApiFuture<Void> dropRowRangeAsync(String tableId, String rowKeyPrefix) {
+  public ApiFuture<Void> dropRowRangeAsync(String tableId, ByteString rowKeyPrefix) {
     Preconditions.checkNotNull(rowKeyPrefix);
     DropRowRangeRequest protoRequest =
         DropRowRangeRequest.newBuilder()
             .setName(instanceName.toTableNameStr(tableId))
             .setDeleteAllDataFromTable(false)
-            .setRowKeyPrefix(ByteString.copyFromUtf8(rowKeyPrefix))
+            .setRowKeyPrefix(rowKeyPrefix)
             .build();
     return ApiFutureUtil.transformAndAdapt(
         delegate.dropRowRangeAsync(protoRequest),

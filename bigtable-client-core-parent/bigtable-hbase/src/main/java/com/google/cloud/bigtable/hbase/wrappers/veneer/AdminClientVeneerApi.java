@@ -22,6 +22,7 @@ import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.cloud.bigtable.hbase.wrappers.AdminClientWrapper;
+import com.google.protobuf.ByteString;
 import java.util.List;
 
 /** For internal use only - public for technical reasons. */
@@ -60,7 +61,7 @@ public class AdminClientVeneerApi implements AdminClientWrapper {
   }
 
   @Override
-  public ApiFuture<Void> dropRowRangeAsync(String tableId, String rowKeyPrefix) {
+  public ApiFuture<Void> dropRowRangeAsync(String tableId, ByteString rowKeyPrefix) {
     return delegate.dropRowRangeAsync(tableId, rowKeyPrefix);
   }
 
