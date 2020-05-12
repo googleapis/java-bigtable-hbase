@@ -41,6 +41,7 @@ public class ResponseQueueReader
     implements StreamObserver<FlatRow>, ClientResponseObserver<ReadRowsRequest, FlatRow> {
 
   private static Timer firstResponseTimer;
+  private final long waitForRowsTimeoutMillis;
 
   private static synchronized Timer getFirstResponseTimer() {
     if (firstResponseTimer == null) {
@@ -58,11 +59,19 @@ public class ResponseQueueReader
   private ClientCallStreamObserver<ReadRowsRequest> requestStream;
   private AtomicInteger markerCounter = new AtomicInteger();
 
+  private static final long DEFAULT_WAIT_FOR_ROWS_TIMEOUT = TimeUnit.MINUTES.toMillis(10);
+
   /** Constructor for ResponseQueueReader. */
   public ResponseQueueReader() {
+    this(DEFAULT_WAIT_FOR_ROWS_TIMEOUT);
+  }
+
+  public ResponseQueueReader(long waitForRowsTimeoutMillis) {
     if (BigtableClientMetrics.isEnabled(MetricLevel.Info)) {
       startTime = System.nanoTime();
     }
+
+    this.waitForRowsTimeoutMillis = waitForRowsTimeoutMillis;
   }
 
   @Override
@@ -123,7 +132,7 @@ public class ResponseQueueReader
   protected ResultQueueEntry<FlatRow> getNext() throws IOException {
     ResultQueueEntry<FlatRow> queueEntry;
     try {
-      queueEntry = resultQueue.take();
+      queueEntry = resultQueue.poll(waitForRowsTimeoutMillis, TimeUnit.MILLISECONDS);
       // Should never happen
       if (queueEntry == null) {
         throw new IllegalStateException("Timed out awaiting next sync rows");
