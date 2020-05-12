@@ -95,20 +95,24 @@ public class Watchdog implements Runnable {
   }
 
   public void run() {
-    Iterator<Entry<WatchedCall<?, ?>, Object>> it = openStreams.entrySet().iterator();
+    try {
+      Iterator<Entry<WatchedCall<?, ?>, Object>> it = openStreams.entrySet().iterator();
 
-    int count = 0;
+      int count = 0;
 
-    while (it.hasNext()) {
-      WatchedCall<?, ?> stream = it.next().getKey();
-      if (stream.cancelIfStale()) {
-        count++;
-        it.remove();
+      while (it.hasNext()) {
+        WatchedCall<?, ?> stream = it.next().getKey();
+        if (stream.cancelIfStale()) {
+          count++;
+          it.remove();
+        }
       }
-    }
 
-    if (count > 0) {
-      LOG.warn("Found %d stale streams and cancelled them", count);
+      if (count > 0) {
+        LOG.warn("Found %d stale streams and cancelled them", count);
+      }
+    } catch (Throwable t) {
+      LOG.error("Caught throwable in periodic Watchdog run. Continuing.", t);
     }
   }
 
