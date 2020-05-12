@@ -95,6 +95,14 @@ public class Watchdog implements Runnable {
   }
 
   public void run() {
+    try {
+      runUnsafe();
+    } catch (Throwable t) {
+      LOG.error("Caught throwable in periodic Watchdog run. Continuing.", t);
+    }
+  }
+
+  private void runUnsafe() {
     Iterator<Entry<WatchedCall<?, ?>, Object>> it = openStreams.entrySet().iterator();
 
     int count = 0;
