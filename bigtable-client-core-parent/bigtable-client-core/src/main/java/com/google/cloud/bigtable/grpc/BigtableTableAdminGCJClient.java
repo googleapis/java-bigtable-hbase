@@ -35,6 +35,7 @@ import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.longrunning.Operation;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import java.util.List;
 import javax.annotation.Nonnull;
@@ -124,9 +125,19 @@ public class BigtableTableAdminGCJClient implements IBigtableTableAdminClient, A
     delegate.dropRowRange(tableId, rowKeyPrefix);
   }
 
+  @Override
+  public void dropRowRange(String tableId, ByteString rowKeyPrefix) {
+    delegate.dropRowRange(tableId, rowKeyPrefix);
+  }
+
   /** {@inheritDoc} */
   @Override
   public ApiFuture<Void> dropRowRangeAsync(String tableId, String rowKeyPrefix) {
+    return delegate.dropRowRangeAsync(tableId, rowKeyPrefix);
+  }
+
+  @Override
+  public ApiFuture<Void> dropRowRangeAsync(String tableId, ByteString rowKeyPrefix) {
     return delegate.dropRowRangeAsync(tableId, rowKeyPrefix);
   }
 

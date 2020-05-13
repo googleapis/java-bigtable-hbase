@@ -48,7 +48,7 @@ integration)
     bash .kokoro/coerce_logs.sh
     ;;
 clirr)
-    mvn -B clirr:check
+    mvn install -B -Denforcer.skip=true clirr:check
     ;;
 *)
     ;;

@@ -20,6 +20,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.ReadRowsRequest;
@@ -34,6 +35,8 @@ import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hadoop.hbase.client.Result;
 import org.junit.After;
@@ -146,22 +149,24 @@ public class TestBulkReadVeneerApi {
     dataClient = BigtableDataClient.create(settingsBuilder.build());
     BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID);
 
-    bulkReadWrapper.add(ByteString.copyFromUtf8("one"), null);
+    List<ApiFuture<Result>> results = new ArrayList<>();
+
+    results.add(bulkReadWrapper.add(ByteString.copyFromUtf8("one"), null));
     bulkReadWrapper.sendOutstanding();
 
-    bulkReadWrapper.add(ByteString.copyFromUtf8("two"), null);
+    results.add(bulkReadWrapper.add(ByteString.copyFromUtf8("two"), null));
     bulkReadWrapper.sendOutstanding();
 
-    bulkReadWrapper.add(ByteString.copyFromUtf8("three"), null);
+    results.add(bulkReadWrapper.add(ByteString.copyFromUtf8("three"), null));
     bulkReadWrapper.sendOutstanding();
 
-    bulkReadWrapper.add(ByteString.copyFromUtf8("four"), null);
+    results.add(bulkReadWrapper.add(ByteString.copyFromUtf8("four"), null));
     bulkReadWrapper.sendOutstanding();
 
-    ApiFuture<Result> fifthBatchResult = bulkReadWrapper.add(ByteString.copyFromUtf8("five"), null);
+    results.add(bulkReadWrapper.add(ByteString.copyFromUtf8("five"), null));
     bulkReadWrapper.sendOutstanding();
-    fifthBatchResult.get();
 
+    ApiFutures.allAsList(results).get();
     assertEquals(5, fakeDataService.getReadRowsBatchCount());
   }
 
