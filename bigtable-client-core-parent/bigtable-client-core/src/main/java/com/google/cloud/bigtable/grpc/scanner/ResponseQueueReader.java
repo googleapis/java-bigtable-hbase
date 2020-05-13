@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.cloud.bigtable.grpc.io.Watchdog;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Timer;
@@ -61,10 +60,6 @@ public class ResponseQueueReader
   private AtomicInteger markerCounter = new AtomicInteger();
 
   /** Constructor for ResponseQueueReader. */
-  public ResponseQueueReader() {
-    this(Watchdog.DEFAULT_IDLE_TIMEOUT_MS);
-  }
-
   public ResponseQueueReader(long waitForRowsTimeoutMillis) {
     if (BigtableClientMetrics.isEnabled(MetricLevel.Info)) {
       startTime = System.nanoTime();

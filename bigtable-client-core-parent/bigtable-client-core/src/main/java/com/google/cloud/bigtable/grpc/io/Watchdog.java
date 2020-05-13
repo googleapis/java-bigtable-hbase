@@ -66,7 +66,7 @@ public class Watchdog implements Runnable {
   private static final Logger LOG = new Logger(Watchdog.class);
 
   // By default kill the stream after 10 minutes of inactivity
-  public static final long DEFAULT_IDLE_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(10);
+  private static final long DEFAULT_IDLE_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(10);
   private static final long MIN_CHECK_PERIOD_MS = TimeUnit.SECONDS.toMillis(10);
 
   // Dummy value to convert the ConcurrentHashMap into a Set

@@ -51,9 +51,11 @@ public class ResponseQueueReaderTest {
 
   private ResponseQueueReader underTest;
 
+  private static final long waitForRowsTimeoutMillis = TimeUnit.SECONDS.toMillis(5);
+
   @Before
   public void setup() {
-    underTest = new ResponseQueueReader();
+    underTest = new ResponseQueueReader(waitForRowsTimeoutMillis);
     underTest.beforeStart(mockClientCallStreamObserver);
   }
 
