@@ -70,7 +70,7 @@ public class TestModifyTable extends AbstractTestModifyTable {
           @Override
           public Void apply(@Nullable HTableDescriptor descriptor) {
             try (Admin admin = getConnection().getAdmin()) {
-              admin.modifyTableAsync(descriptor).get(20, TimeUnit.SECONDS);
+              admin.modifyTableAsync(descriptor).get(60, TimeUnit.SECONDS);
             } catch (Exception e) {
               throw new RuntimeException(e);
             }
