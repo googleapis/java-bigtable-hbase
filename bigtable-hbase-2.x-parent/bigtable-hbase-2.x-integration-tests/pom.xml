@@ -97,6 +97,74 @@ limitations under the License.
       </build>
     </profile>
     <profile>
+      <id>bigtableIntegrationTestH2Snapshot</id>
+      <!-- use the snapshot veneer artifact to run the tests-->
+      <properties>
+        <bigtable.version>LATEST</bigtable.version>
+      </properties>
+
+      <repositories>
+        <repository>
+          <id>sonatype-snapshots</id>
+          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+          <releases>
+            <enabled>false</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </repository>
+      </repositories>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>api-integration-test</id>
+                <goals>
+                  <goal>test</goal>
+                </goals>
+                <phase>none</phase>
+              </execution>
+              <execution>
+                <id>api-gap-test</id>
+                <goals>
+                  <goal>test</goal>
+                </goals>
+                <phase>integration-test</phase>
+                <configuration>
+                  <forkCount>1</forkCount>
+                  <includes>
+                    <include>**/IntegrationTestsNoKnownGap.java</include>
+                  </includes>
+                  <reportNameSuffix>bigtable-server</reportNameSuffix>
+                  <systemPropertyVariables>
+                    <google.bigtable.connection.impl>
+                      ${google.bigtable.connection.impl}
+                    </google.bigtable.connection.impl>
+                    <google.bigtable.async.connection.impl>
+                      ${google.bigtable.async.connection.impl}
+                    </google.bigtable.async.connection.impl>
+                    <google.bigtable.registry.impl>
+                      ${google.bigtable.registry.impl}
+                    </google.bigtable.registry.impl>
+                  </systemPropertyVariables>
+                  <forkedProcessTimeoutInSeconds>
+                    ${test.timeout}
+                  </forkedProcessTimeoutInSeconds>
+                  <!-- Make sure to fail the build when the suite fails to initialize -->
+                  <failIfNoTests>true</failIfNoTests>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
       <id>bigtableGapTestH2</id>
       <build>
         <plugins>
