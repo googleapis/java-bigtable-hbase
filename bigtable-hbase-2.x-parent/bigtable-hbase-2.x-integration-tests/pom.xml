@@ -97,26 +97,6 @@ limitations under the License.
       </build>
     </profile>
     <profile>
-      <id>use-bigtable-snapshots</id>
-      <!-- use the snapshot veneer artifact to run the tests-->
-      <properties>
-        <bigtable.version>LATEST</bigtable.version>
-      </properties>
-
-      <repositories>
-        <repository>
-          <id>sonatype-snapshots</id>
-          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-          <releases>
-            <enabled>false</enabled>
-          </releases>
-          <snapshots>
-            <enabled>true</enabled>
-          </snapshots>
-        </repository>
-      </repositories>
-    </profile>
-    <profile>
       <id>bigtableGapTestH2</id>
       <build>
         <plugins>
