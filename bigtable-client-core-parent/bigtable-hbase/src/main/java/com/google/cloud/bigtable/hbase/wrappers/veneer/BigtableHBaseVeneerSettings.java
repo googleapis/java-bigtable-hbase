@@ -565,10 +565,11 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
         retryBuilder.setTotalTimeout(MAX_ELAPSED_BACKOFF_IN_BATCH_MODE);
       }
 
-      String maxScanTimeoutRetriesAttempts = configuration.get(MAX_SCAN_TIMEOUT_RETRIES);
-      if (!isNullOrEmpty(maxScanTimeoutRetriesAttempts)) {
+      String maxScanTimeoutRetriesAttemptsStr = configuration.get(MAX_SCAN_TIMEOUT_RETRIES);
+      if (!isNullOrEmpty(maxScanTimeoutRetriesAttemptsStr)) {
+        int maxScanTimeoutRetriesAttempts = Integer.parseInt(maxScanTimeoutRetriesAttemptsStr);
         LOG.debug("gRPC max scan timeout retries (count): %d", maxScanTimeoutRetriesAttempts);
-        retryBuilder.setMaxAttempts(Integer.valueOf(maxScanTimeoutRetriesAttempts));
+        retryBuilder.setMaxAttempts(maxScanTimeoutRetriesAttempts);
       }
     }
 

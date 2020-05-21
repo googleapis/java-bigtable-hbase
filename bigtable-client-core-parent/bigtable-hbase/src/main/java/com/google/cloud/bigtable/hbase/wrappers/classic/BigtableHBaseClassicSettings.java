@@ -354,35 +354,40 @@ public class BigtableHBaseClassicSettings extends BigtableHBaseSettings {
       retryOptionsBuilder.setRetryOnDeadlineExceeded(Boolean.parseBoolean(retryOnDeadlineExceeded));
     }
 
-    String initialElapsedBackoffMs = configuration.get(INITIAL_ELAPSED_BACKOFF_MILLIS_KEY);
-    if (!isNullOrEmpty(initialElapsedBackoffMs)) {
+    String initialElapsedBackoffMsStr = configuration.get(INITIAL_ELAPSED_BACKOFF_MILLIS_KEY);
+    if (!isNullOrEmpty(initialElapsedBackoffMsStr)) {
+      int initialElapsedBackoffMs = Integer.parseInt(initialElapsedBackoffMsStr);
       LOG.debug("gRPC retry initialElapsedBackoffMillis: %d", initialElapsedBackoffMs);
-      retryOptionsBuilder.setInitialBackoffMillis(Integer.parseInt(initialElapsedBackoffMs));
+      retryOptionsBuilder.setInitialBackoffMillis(initialElapsedBackoffMs);
     }
 
-    String maxElapsedBackoffMs = configuration.get(MAX_ELAPSED_BACKOFF_MILLIS_KEY);
-    if (!isNullOrEmpty(maxElapsedBackoffMs)) {
-      LOG.debug("gRPC retry maxElapsedBackoffMillis: %s", maxElapsedBackoffMs);
-      retryOptionsBuilder.setMaxElapsedBackoffMillis(Integer.parseInt(maxElapsedBackoffMs));
+    String maxElapsedBackoffMsStr = configuration.get(MAX_ELAPSED_BACKOFF_MILLIS_KEY);
+    if (!isNullOrEmpty(maxElapsedBackoffMsStr)) {
+      int maxElapsedBackoffMs = Integer.parseInt(maxElapsedBackoffMsStr);
+      LOG.debug("gRPC retry maxElapsedBackoffMillis: %d", maxElapsedBackoffMs);
+      retryOptionsBuilder.setMaxElapsedBackoffMillis(maxElapsedBackoffMs);
     }
 
-    String readPartialRowTimeoutMs = configuration.get(READ_PARTIAL_ROW_TIMEOUT_MS);
-    if (!isNullOrEmpty(readPartialRowTimeoutMs)) {
+    String readPartialRowTimeoutMsStr = configuration.get(READ_PARTIAL_ROW_TIMEOUT_MS);
+    if (!isNullOrEmpty(readPartialRowTimeoutMsStr)) {
+      int readPartialRowTimeoutMs = Integer.parseInt(readPartialRowTimeoutMsStr);
       LOG.debug("gRPC read partial row timeout (millis): %d", readPartialRowTimeoutMs);
-      retryOptionsBuilder.setReadPartialRowTimeoutMillis(Integer.parseInt(readPartialRowTimeoutMs));
+      retryOptionsBuilder.setReadPartialRowTimeoutMillis(readPartialRowTimeoutMs);
     }
 
     // TODO: remove streamingBufferSize property, its not used anymore.
-    String streamingBufferSize = configuration.get(READ_BUFFER_SIZE);
-    if (!isNullOrEmpty(streamingBufferSize)) {
+    String streamingBufferSizeStr = configuration.get(READ_BUFFER_SIZE);
+    if (!isNullOrEmpty(streamingBufferSizeStr)) {
+      int streamingBufferSize = Integer.parseInt(streamingBufferSizeStr);
       LOG.debug("gRPC read buffer size (count): %d", streamingBufferSize);
-      retryOptionsBuilder.setStreamingBufferSize(Integer.parseInt(streamingBufferSize));
+      retryOptionsBuilder.setStreamingBufferSize(streamingBufferSize);
     }
 
-    String maxScanTimeoutRetries = configuration.get(MAX_SCAN_TIMEOUT_RETRIES);
-    if (!isNullOrEmpty(maxScanTimeoutRetries)) {
+    String maxScanTimeoutRetriesStr = configuration.get(MAX_SCAN_TIMEOUT_RETRIES);
+    if (!isNullOrEmpty(maxScanTimeoutRetriesStr)) {
+      int maxScanTimeoutRetries = Integer.parseInt(maxElapsedBackoffMsStr);
       LOG.debug("gRPC max scan timeout retries (count): %d", maxScanTimeoutRetries);
-      retryOptionsBuilder.setMaxScanTimeoutRetries(Integer.parseInt(maxScanTimeoutRetries));
+      retryOptionsBuilder.setMaxScanTimeoutRetries(maxScanTimeoutRetries);
     }
 
     builder.setRetryOptions(retryOptionsBuilder.build());
