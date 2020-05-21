@@ -88,7 +88,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>${beam-guava.version}</version>
+      <version>${guava.version}</version>
     </dependency>
 
     <!-- TODO: check if commons-codec was transitively updated to 1.13 and okhttp was updated to 2.7.5 when upgrading-->
