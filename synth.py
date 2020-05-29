@@ -21,6 +21,7 @@ AUTOSYNTH_MULTIPLE_COMMITS = True
 java.common_templates(excludes=[
   'README.md',
   '.github/ISSUE_TEMPLATE/bug_report.md',
+  '.github/workflows/*'
   '.kokoro/presubmit/integration.cfg',
   '.kokoro/nightly/integration.cfg',
   '.kokoro/presubmit/java7.cfg',
@@ -29,6 +30,5 @@ java.common_templates(excludes=[
   '.kokoro/dependencies.sh',
   '.kokoro/build.sh',
   '.kokoro/build.bat',
-  'samples/*',
-  '.github/workflows/*'
+  'samples/*'
 ])
