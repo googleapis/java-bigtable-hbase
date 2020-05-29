@@ -28,5 +28,7 @@ java.common_templates(excludes=[
   '.kokoro/nightly/java7.cfg',
   '.kokoro/dependencies.sh',
   '.kokoro/build.sh',
-  'samples/*'
+  '.kokoro/build.bat',
+  'samples/*',
+  '.github/workflows/*'
 ])
