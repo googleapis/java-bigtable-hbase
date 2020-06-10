@@ -80,7 +80,7 @@ limitations under the License.
     <!-- referred from bigtable-beam-import and bigtable-emulator -->
     <guava.version>29.0-android</guava.version>
     <beam-guava.version>20.0</beam-guava.version>
-    <beam-auto-value.version>1.7.2</beam-auto-value.version>
+    <beam-auto-value.version>1.7.3</beam-auto-value.version>
 
     <!-- Benchmarks related dependencies -->
     <jmh.version>1.23</jmh.version>
