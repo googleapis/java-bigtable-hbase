@@ -20,14 +20,20 @@ scriptDir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
 ## cd to the parent directory, i.e. the root of the git repo
 cd ${scriptDir}/..
 
+# include common functions
+source ${scriptDir}/common.sh
+
 # Print out Java version
 java -version
 echo ${JOB_TYPE}
 
 # if GOOGLE_APPLICATION_CREDIENTIALS is specified as a relative path prepend Kokoro root directory onto it
 if [[ ! -z "${GOOGLE_APPLICATION_CREDENTIALS}" && "${GOOGLE_APPLICATION_CREDENTIALS}" != /* ]]; then
-    export GOOGLE_APPLICATION_CREDENTIALS=$(realpath ${KOKORO_ROOT}/src/${GOOGLE_APPLICATION_CREDENTIALS})
+    export GOOGLE_APPLICATION_CREDENTIALS=$(realpath ${KOKORO_GFILE_DIR}/${GOOGLE_APPLICATION_CREDENTIALS})
 fi
+
+RETURN_CODE=0
+set +e
 
 case ${JOB_TYPE} in
 test)
@@ -38,9 +44,11 @@ test)
     ;;
 lint)
     mvn com.coveo:fmt-maven-plugin:check
+    RETURN_CODE=$?
     ;;
 javadoc)
     mvn javadoc:javadoc javadoc:test-javadoc
+    RETURN_CODE=$?
     ;;
 integration)
 # clean needed when running more than one IT profile
@@ -49,7 +57,25 @@ integration)
     ;;
 clirr)
     mvn install -B -Denforcer.skip=true clirr:check
+    RETURN_CODE=$?
     ;;
 *)
     ;;
 esac
+
+if [ "${REPORT_COVERAGE}" == "true" ]
+then
+  bash ${KOKORO_GFILE_DIR}/codecov.sh
+fi
+
+# fix output location of logs
+bash .kokoro/coerce_logs.sh
+
+if [[ "${ENABLE_BUILD_COP}" == "true" ]]
+then
+    chmod +x ${KOKORO_GFILE_DIR}/linux_amd64/buildcop
+    ${KOKORO_GFILE_DIR}/linux_amd64/buildcop -repo=googleapis/java-bigtable-hbase
+fi
+
+echo "exiting with ${RETURN_CODE}"
+exit ${RETURN_CODE}
