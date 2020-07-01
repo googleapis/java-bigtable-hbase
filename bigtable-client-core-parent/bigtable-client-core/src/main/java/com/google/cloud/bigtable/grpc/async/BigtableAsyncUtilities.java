@@ -27,6 +27,10 @@ import io.grpc.ClientCall.Listener;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Utilities for creating and executing async methods.
  *
@@ -34,6 +38,7 @@ import io.grpc.MethodDescriptor;
  */
 @InternalApi("For internal usage only")
 public interface BigtableAsyncUtilities {
+  public static DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
   /**
    * createAsyncUnaryRpc.
@@ -89,6 +94,7 @@ public interface BigtableAsyncUtilities {
           call.start(listener, metadata);
           call.request(1);
           try {
+            LOG.warn("Message getting enqueued at " + sdf.format(new Date()));
             call.sendMessage(request);
           } catch (Throwable t) {
             LOG.error("Could not sendMessage()", t);

@@ -46,6 +46,10 @@ import io.opencensus.trace.EndSpanOptions;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -63,6 +67,8 @@ import org.threeten.bp.temporal.ChronoUnit;
 @SuppressWarnings("unchecked")
 public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     extends ClientCall.Listener<ResponseT> {
+
+  public static DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(AbstractRetryingOperation.class);
@@ -191,6 +197,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   protected void onError(Status status, Metadata trailers) {
     Code code = status.getCode();
+    LOG.warn("entering onError at %s with status: %s", sdf.format(new Date()), status.toString());
     // CANCELLED
     if (code == Status.Code.CANCELLED) {
       setException(status.asRuntimeException());
@@ -227,8 +234,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
       setException(getExhaustedRetriesException(status));
     } else {
       LOG.warn(
-          "Retrying failed call. Failure #%d, got: %s on channel %s.\nTrailers: %s",
-          status.getCause(), failedCount, status, channelId, trailers);
+          "Retrying failed call. Failure #%d, got: %s on channel %s.\nTrailers: %s at %s",
+          status.getCause(), failedCount, status, channelId, trailers, sdf.format(new Date()));
       performRetry(nextBackOff);
     }
   }
@@ -284,9 +291,17 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
       //       users would have of relating to retries.  That would likely involve updating some
       //       default settings in addition to changing the algorithm.
       currentBackoff = exponentialRetryAlgorithm.createFirstAttempt();
+      LOG.warn("Created first attempt at: " + sdf.format(new Date()) + " with value: " + currentBackoff.toString());
     }
     currentBackoff = exponentialRetryAlgorithm.createNextAttempt(currentBackoff);
+    LOG.warn("Created next attempt at: " + sdf.format(new Date()) + " with value: " + currentBackoff.toString());
+    LOG.warn("shouldRetry is seeing maxTimeout: " + currentBackoff.getGlobalSettings().getTotalTimeout().toNanos()
+            + " and first attempt starttime " + currentBackoff.getFirstAttemptStartTimeNanos() + " current time " + clock.nanoTime()  + " " + sdf.format(new Date()) +
+            " and using timeSpent = " + (clock.nanoTime()
+            - currentBackoff.getFirstAttemptStartTimeNanos()
+            + currentBackoff.getRandomizedRetryDelay().toNanos()));
     if (!exponentialRetryAlgorithm.shouldRetry(currentBackoff)) {
+      LOG.warn("Should retry was false, so not retrying at " + sdf.format(new Date()));
 
       // TODO: consider creating a subclass of exponentialRetryAlgorithm to encapsulate this logic
       long timeLeftNs =
@@ -297,6 +312,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
       if (timeLeftMs > currentBackoff.getGlobalSettings().getInitialRetryDelay().toMillis()) {
         // The backoff algorithm doesn't always wait until the timeout is achieved.  Wait
         // one final time so that retries hit
+        LOG.warn("Returning a value even though shouldRetry is false: " + timeLeftMs);
         return timeLeftMs;
       } else {
 
@@ -304,7 +320,9 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
         return null;
       }
     } else {
-      return currentBackoff.getRandomizedRetryDelay().toMillis();
+      long backoff = currentBackoff.getRandomizedRetryDelay().toMillis();
+      LOG.warn("Should retry is true: retrying after %d/%s", backoff, currentBackoff.getRetryDelay().toString());
+      return  backoff;
     }
   }
 
@@ -332,8 +350,10 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
     Deadline deadline = getOperationCallOptions().getDeadline();
     if (deadline != null) {
+      LOG.warn("opearational call options deadline is not null: " + deadline.toString() + " current timeout " + timeoutMs);
       timeoutMs = deadline.timeRemaining(TimeUnit.MILLISECONDS);
     }
+    LOG.warn("TimeoutMs: %d with deadline: %s at now (%s)", timeoutMs , deadline.toString(), sdf.format(new Date()) );
 
     RetrySettings retrySettings =
         RetrySettings.newBuilder()
@@ -374,6 +394,9 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
               ImmutableMap.of("attempt", AttributeValue.longAttributeValue(failedCount))));
       Metadata metadata = new Metadata();
       metadata.merge(originalMetadata);
+      LOG.warn("Issuing the RPC call at: " + sdf.format(new Date()));
+      exponentialRetryAlgorithm.createFirstAttempt();
+      LOG.warn("Created first attempt at: " + sdf.format(new Date()) + " with value: " + currentBackoff.toString());
       callWrapper.setCallAndStart(rpc, getRpcCallOptions(), getRetryRequest(), this, metadata);
     } catch (Exception e) {
       setException(e);
