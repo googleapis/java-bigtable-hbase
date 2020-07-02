@@ -395,8 +395,6 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
       Metadata metadata = new Metadata();
       metadata.merge(originalMetadata);
       LOG.warn("Issuing the RPC call at: " + sdf.format(new Date()));
-      exponentialRetryAlgorithm.createFirstAttempt();
-      LOG.warn("Created first attempt at: " + sdf.format(new Date()) + " with value: " + currentBackoff.toString());
       callWrapper.setCallAndStart(rpc, getRpcCallOptions(), getRetryRequest(), this, metadata);
     } catch (Exception e) {
       setException(e);
@@ -457,6 +455,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   public ListenableFuture<ResultT> getAsyncResult() {
     Preconditions.checkState(operationTimerContext == null);
     operationTimerContext = rpc.getRpcMetrics().timeOperation();
+    currentBackoff = exponentialRetryAlgorithm.createFirstAttempt();
+    LOG.warn("Created first attempt at: " + sdf.format(new Date()) + " with value: " + currentBackoff.toString());
     run();
     return completionFuture;
   }
