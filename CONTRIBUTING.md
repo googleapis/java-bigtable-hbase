@@ -107,11 +107,6 @@ To run formatting on your project, you can run:
 mvn com.coveo:fmt-maven-plugin:format
 ```
 
-#### IntelliJ IDEA
-
-To activate the Maven Profile inside IntelliJ IDEA, follow the instructions in
-[Activate Maven profiles][3] to activate `enable-samples`.
-
 [1]: https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account
 [2]: https://maven.apache.org/settings.html#Active_Profiles
 [3]: https://www.jetbrains.com/help/idea/work-with-maven-profiles.html#activate_maven_profiles
