@@ -151,13 +151,41 @@ public class TestRetryingUnaryOperation {
   }
 
   private void testTimeout(long expectedTimeoutMs, CallOptions options)
+          throws InterruptedException, java.util.concurrent.TimeoutException {
+    testTimeout(expectedTimeoutMs, options, Status.UNAVAILABLE,
+            /* Do maximum possible attempts within deadline */0 );
+  }
+
+  private void testDeadlineExceeded(long expectedTimeoutMs, CallOptions options)
+          throws InterruptedException, java.util.concurrent.TimeoutException {
+    // When the deadline is exceeded waiting for response, there is no time for a retry, hence only 1 attempt.
+    testTimeout(expectedTimeoutMs, options, Status.DEADLINE_EXCEEDED, 1);
+  }
+
+  /**
+   * Helper method to test timeout scenarios
+   * @param expectedTimeoutMs expected timeout in millis
+   * @param options call options for RPC calls.
+   * @param expectedError the error returned from the mock API call.
+   * @param expectedNumberOfAttempts Expected number of attempted RPCs, it includes the original call and all the
+   *                                 retries. Passing 0 cancels the validation on the number of attempts.
+   * @throws InterruptedException
+   * @throws java.util.concurrent.TimeoutException
+   */
+  private void testTimeout(final long expectedTimeoutMs, CallOptions options, final Status expectedError,
+                           final int expectedNumberOfAttempts)
       throws InterruptedException, java.util.concurrent.TimeoutException {
-    final Status errorStatus = Status.UNAVAILABLE;
+    final AtomicInteger counter = new AtomicInteger(0);
     Answer<Void> answer =
         new Answer<Void>() {
           @Override
           public Void answer(InvocationOnMock invocation) {
-            invocation.<Listener>getArgument(1).onClose(errorStatus, null);
+            if(expectedError == Status.DEADLINE_EXCEEDED){
+              // Simulate the client waiting for the response.
+              clock.incrementSleepTime(expectedTimeoutMs, TimeUnit.MILLISECONDS);
+            }
+            counter.incrementAndGet();
+            invocation.<Listener>getArgument(1).onClose(expectedError, null);
             return null;
           }
         };
@@ -169,9 +197,12 @@ public class TestRetryingUnaryOperation {
       Assert.fail();
     } catch (ExecutionException e) {
       Assert.assertEquals(BigtableRetriesExhaustedException.class, e.getCause().getClass());
-      Assert.assertEquals(errorStatus.getCode(), Status.fromThrowable(e).getCode());
+      Assert.assertEquals(expectedError.getCode(), Status.fromThrowable(e).getCode());
     }
 
+    if(expectedNumberOfAttempts > 0){
+      Assert.assertEquals(expectedNumberOfAttempts, counter.get());
+    }
     clock.assertTimeWithinExpectations(TimeUnit.MILLISECONDS.toNanos(expectedTimeoutMs));
   }
 
