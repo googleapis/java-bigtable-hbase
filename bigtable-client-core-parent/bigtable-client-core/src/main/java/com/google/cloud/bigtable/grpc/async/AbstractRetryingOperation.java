@@ -276,15 +276,6 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   protected abstract boolean onOK(Metadata trailers);
 
   protected Long getNextBackoff() {
-    if (currentBackoff == null) {
-      // Historically, the client waited for "total timeout" after the first failure.  For now,
-      // that behavior is preserved, even though that's not the ideal.
-      //
-      // TODO: Think through retries, and create policy that works with the mental model most
-      //       users would have of relating to retries.  That would likely involve updating some
-      //       default settings in addition to changing the algorithm.
-      currentBackoff = exponentialRetryAlgorithm.createFirstAttempt();
-    }
     currentBackoff = exponentialRetryAlgorithm.createNextAttempt(currentBackoff);
     if (!exponentialRetryAlgorithm.shouldRetry(currentBackoff)) {
 
