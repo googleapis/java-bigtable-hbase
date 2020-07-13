@@ -276,15 +276,6 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   protected abstract boolean onOK(Metadata trailers);
 
   protected Long getNextBackoff() {
-    if (currentBackoff == null) {
-      // Historically, the client waited for "total timeout" after the first failure.  For now,
-      // that behavior is preserved, even though that's not the ideal.
-      //
-      // TODO: Think through retries, and create policy that works with the mental model most
-      //       users would have of relating to retries.  That would likely involve updating some
-      //       default settings in addition to changing the algorithm.
-      currentBackoff = exponentialRetryAlgorithm.createFirstAttempt();
-    }
     currentBackoff = exponentialRetryAlgorithm.createNextAttempt(currentBackoff);
     if (!exponentialRetryAlgorithm.shouldRetry(currentBackoff)) {
 
@@ -434,6 +425,12 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   public ListenableFuture<ResultT> getAsyncResult() {
     Preconditions.checkState(operationTimerContext == null);
     operationTimerContext = rpc.getRpcMetrics().timeOperation();
+
+    // CreateFirstAttempt establishes the time when first call was made and the deadline is set to
+    // `timeOfFirstCall +
+    // timeout`. Hence, its important to create first attempt before any RPCs go out of client.
+    currentBackoff = exponentialRetryAlgorithm.createFirstAttempt();
+
     run();
     return completionFuture;
   }
