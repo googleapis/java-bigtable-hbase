@@ -39,7 +39,6 @@ case ${JOB_TYPE} in
 test)
 # this will not run IT tests, to run IT tests a profile must be enabled (see below)
     mvn verify -B -Dclirr.skip=true
-    bash ${KOKORO_GFILE_DIR}/codecov.sh
     RETURN_CODE=$?
     ;;
 lint)
