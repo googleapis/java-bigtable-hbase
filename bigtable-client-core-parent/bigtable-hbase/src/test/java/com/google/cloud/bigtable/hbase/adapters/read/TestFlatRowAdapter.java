@@ -20,10 +20,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
-import com.google.cloud.bigtable.hbase.util.ByteStringer;
-import com.google.cloud.bigtable.hbase.util.TimestampConverter;
 import com.google.protobuf.ByteString;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellComparator;
@@ -54,7 +52,7 @@ public class TestFlatRowAdapter {
 
     // The rowKey is defined based on the cells, and in this case there are no cells, so there isn't
     // a key.
-    assertNull(transformToFlatRow(result));
+    assertEquals(null, instance.adaptToRow(result));
   }
 
   @Test
@@ -82,7 +80,7 @@ public class TestFlatRowAdapter {
                 ByteString.copyFrom(qualifier1),
                 12345L,
                 ByteString.copyFrom(value2),
-                Collections.singletonList("label"))
+                Arrays.asList("label"))
             // Same family, same timestamp, but different column.
             .addCell(family1, ByteString.copyFrom(qualifier2), 54321L, ByteString.copyFrom(value3))
             // Same column, same timestamp, but different family.
@@ -131,7 +129,7 @@ public class TestFlatRowAdapter {
             // Same timestamp, but different family and column.
             .addCell(family2, ByteString.copyFrom(qualifier2), 54000L, ByteString.copyFrom(value5))
             .build();
-    assertEquals(expected, transformToFlatRow(result));
+    assertEquals(expected, instance.adaptToRow(result));
   }
 
   @Test
@@ -146,7 +144,7 @@ public class TestFlatRowAdapter {
             "value".getBytes());
     Result inputResult = Result.create(new Cell[] {inputKeyValue});
 
-    FlatRow outputRow = transformToFlatRow(inputResult);
+    FlatRow outputRow = instance.adaptToRow(inputResult);
     assertEquals("output doesn't have the same number of cells", 1, outputRow.getCells().size());
     FlatRow.Cell outputCell = outputRow.getCells().get(0);
 
@@ -170,45 +168,11 @@ public class TestFlatRowAdapter {
             "value".getBytes());
     Result inputResult = Result.create(new Cell[] {inputKeyValue});
 
-    FlatRow intermediateRow = transformToFlatRow(inputResult);
+    FlatRow intermediateRow = instance.adaptToRow(inputResult);
 
     Result outputRow = instance.adaptResponse(intermediateRow);
     Cell outputCell = outputRow.listCells().get(0);
 
     assertTrue(CellComparator.equals(inputKeyValue, outputCell));
-  }
-
-  /**
-   * Convert a {@link org.apache.hadoop.hbase.client.Result} to a {@link FlatRow}.
-   *
-   * @param result a {@link org.apache.hadoop.hbase.client.Result} object.
-   * @return a {@link FlatRow} object.
-   */
-  private static FlatRow transformToFlatRow(Result result) {
-    // Result.getRow() is derived from its cells.  If the cells are empty, the row will be null.
-    if (result.getRow() == null) {
-      return null;
-    }
-
-    FlatRow.Builder rowBuilder =
-        FlatRow.newBuilder().withRowKey(ByteStringer.wrap(result.getRow()));
-
-    final Cell[] rawCells = result.rawCells();
-    if (rawCells != null && rawCells.length > 0) {
-      for (Cell rawCell : rawCells) {
-        rowBuilder.addCell(
-            Bytes.toString(
-                rawCell.getFamilyArray(), rawCell.getFamilyOffset(), rawCell.getFamilyLength()),
-            ByteStringer.wrap(
-                rawCell.getQualifierArray(),
-                rawCell.getQualifierOffset(),
-                rawCell.getQualifierLength()),
-            TimestampConverter.hbase2bigtable(rawCell.getTimestamp()),
-            ByteStringer.wrap(
-                rawCell.getValueArray(), rawCell.getValueOffset(), rawCell.getValueLength()));
-      }
-    }
-
-    return rowBuilder.build();
   }
 }

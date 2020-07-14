@@ -274,7 +274,11 @@ public abstract class AbstractBigtableTable implements Table {
   }
 
   protected Result convertToResult(FlatRow row) {
-    return Adapters.FLAT_ROW_ADAPTER.adaptResponse(row);
+    if (row == null) {
+      return Adapters.FLAT_ROW_ADAPTER.adaptResponse(null);
+    } else {
+      return Adapters.FLAT_ROW_ADAPTER.adaptResponse(row);
+    }
   }
 
   /** {@inheritDoc} */
