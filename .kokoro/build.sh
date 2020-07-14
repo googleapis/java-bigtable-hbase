@@ -41,6 +41,7 @@ test)
     mvn verify -B -Dclirr.skip=true
     bash ${KOKORO_GFILE_DIR}/codecov.sh
     bash .kokoro/coerce_logs.sh
+    RETURN_CODE=$?
     ;;
 lint)
     mvn com.coveo:fmt-maven-plugin:check
@@ -54,6 +55,7 @@ integration)
 # clean needed when running more than one IT profile
     mvn clean verify -B ${INTEGRATION_TEST_ARGS} -DtrimStackTrace=false -Dclirr.skip=true -fae
     bash .kokoro/coerce_logs.sh
+    RETURN_CODE=$?
     ;;
 clirr)
     mvn install -B -Denforcer.skip=true clirr:check

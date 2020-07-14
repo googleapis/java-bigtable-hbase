@@ -49,5 +49,6 @@ public class ByteStringComparatorTest {
     Assert.assertTrue(underTest.compare(a, b) < 0);
     Assert.assertTrue(underTest.compare(b, a) > 0);
     Assert.assertTrue(underTest.compare(b, b) == 0);
+    Assert.assertTrue("test", false);
   }
 }
