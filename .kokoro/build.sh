@@ -37,6 +37,7 @@ set +e
 
 case ${JOB_TYPE} in
 test)
+# this will not run IT tests, to run IT tests a profile must be enabled (see below)
     mvn install -B -Dclirr.skip=true
     bash ${KOKORO_GFILE_DIR}/codecov.sh
     bash .kokoro/coerce_logs.sh
