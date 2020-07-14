@@ -104,7 +104,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   private final ExponentialRetryAlgorithm exponentialRetryAlgorithm;
   private final ApiClock clock;
-  private TimedAttemptSettings currentBackoff;
+  protected TimedAttemptSettings currentBackoff;
 
   protected final BigtableAsyncRpc<RequestT, ResponseT> rpc;
   protected final RetryOptions retryOptions;
@@ -301,7 +301,9 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   @VisibleForTesting
   public boolean inRetryMode() {
-    return currentBackoff != null;
+    // ResetStatusBasedBackoff will create the first attempt which creates currentBackoff with 0
+    // attempts.
+    return currentBackoff != null && currentBackoff.getAttemptCount() > 0;
   }
 
   /**
@@ -309,7 +311,9 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    * Status oriented exception handling.
    */
   protected void resetStatusBasedBackoff() {
-    this.currentBackoff = null;
+    // Reset the backoff parameters. CreateFirstAttempt will log the current time as the time of
+    // first call and enforce timeout from this timeOfFirstCall.
+    this.currentBackoff = exponentialRetryAlgorithm.createFirstAttempt();
     this.failedCount = 0;
   }
 
@@ -357,6 +361,14 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    * happen correctly.
    */
   protected void run() {
+
+    if (currentBackoff == null) {
+      // CreateFirstAttempt establishes the time when first call was made and the deadline is set to
+      // `timeOfFirstCall + timeout`. Hence, its important to create first attempt before any RPCs
+      // go out of client.
+      currentBackoff = exponentialRetryAlgorithm.createFirstAttempt();
+    }
+
     try (Scope scope = TRACER.withSpan(operationSpan)) {
       rpcTimerContext = rpc.getRpcMetrics().timeRpc();
       operationSpan.addAnnotation(
@@ -425,11 +437,6 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   public ListenableFuture<ResultT> getAsyncResult() {
     Preconditions.checkState(operationTimerContext == null);
     operationTimerContext = rpc.getRpcMetrics().timeOperation();
-
-    // CreateFirstAttempt establishes the time when first call was made and the deadline is set to
-    // `timeOfFirstCall +
-    // timeout`. Hence, its important to create first attempt before any RPCs go out of client.
-    currentBackoff = exponentialRetryAlgorithm.createFirstAttempt();
 
     run();
     return completionFuture;
