@@ -360,7 +360,6 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
 
   @Override
   public ListenableFuture<ListBackupsResponse> listBackupsAsync(ListBackupsRequest request) {
-
     return createUnaryListener(request, listBackupRpc, request.getParent()).getAsyncResult();
   }
 
