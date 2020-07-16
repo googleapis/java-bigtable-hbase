@@ -19,12 +19,10 @@ import static com.google.cloud.bigtable.hbase2_x.FutureUtils.failedFuture;
 import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture;
 
 import com.google.api.core.InternalApi;
-import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
-import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.Snapshot;
-import com.google.bigtable.admin.v2.SnapshotTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.RestoreTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
@@ -115,7 +113,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
     Configuration configuration = asyncConnection.getConfiguration();
     String clusterId =
-        configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
+        configuration.get(BigtableOptionsFactory.BIGTABLE_BACKUP_CLUSTER_ID_KEY, null);
     if (clusterId != null) {
       bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
     }
@@ -338,14 +336,12 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     return CompletableFuture.supplyAsync(
             () -> {
               try {
-                return DeleteSnapshotRequest.newBuilder()
-                    .setName(getClusterName().toSnapshotName(snapshotName))
-                    .build();
+                return getClusterName().getClusterId();
               } catch (IOException e) {
                 throw new CompletionException(e);
               }
             })
-        .thenAccept(bigtableTableAdminClient::deleteSnapshotAsync);
+        .thenAccept(c -> bigtableTableAdminClient.deleteBackupAsync(c, snapshotName));
   }
 
   @Override
@@ -542,16 +538,17 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     return CompletableFuture.supplyAsync(
             () -> {
               try {
-                return SnapshotTableRequest.newBuilder()
-                    .setCluster(getSnapshotClusterName().toString())
-                    .setSnapshotId(snapshotName)
-                    .setName(bigtableInstanceName.toTableNameStr(tableName.getNameAsString()))
-                    .build();
+                return getBackupClusterName().getClusterId();
               } catch (IOException e) {
                 throw new CompletionException(e);
               }
             })
-        .thenAccept(c -> toCompletableFuture(bigtableTableAdminClient.snapshotTableAsync(c)));
+        .thenAccept(
+            c ->
+                toCompletableFuture(
+                    bigtableTableAdminClient.createBackupAsync(
+                        CreateBackupRequest.of(c, snapshotName)
+                            .setSourceTableId(tableName.getNameAsString()))));
   }
 
   @Override
@@ -559,17 +556,17 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     return CompletableFuture.supplyAsync(
             () -> {
               try {
-                return CreateTableFromSnapshotRequest.newBuilder()
-                    .setParent(bigtableInstanceName.toString())
-                    .setTableId(tableName.getNameAsString())
-                    .setSourceSnapshot(getClusterName().toSnapshotName(snapshotName))
-                    .build();
+                return getBackupClusterName().getClusterId();
               } catch (IOException e) {
                 throw new CompletionException(e);
               }
             })
         .thenAccept(
-            c -> toCompletableFuture(bigtableTableAdminClient.createTableFromSnapshotAsync(c)));
+            c ->
+                toCompletableFuture(
+                    bigtableTableAdminClient.restoreTableAsync(
+                        RestoreTableRequest.of(c, snapshotName)
+                            .setTableId(tableName.getNameAsString()))));
   }
 
   @Override
@@ -583,20 +580,18 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     return CompletableFuture.supplyAsync(
             () -> {
               try {
-                return ListSnapshotsRequest.newBuilder()
-                    .setParent(getSnapshotClusterName().toString())
-                    .build();
+                return getBackupClusterName().getClusterId();
               } catch (IOException e) {
                 throw new CompletionException(e);
               }
             })
         .thenCompose(
-            request ->
-                toCompletableFuture(bigtableTableAdminClient.listSnapshotsAsync(request))
+            c ->
+                toCompletableFuture(bigtableTableAdminClient.listBackupsAsync(c))
                     .thenApply(
                         r ->
-                            r.getSnapshotsList().stream()
-                                .map(BigtableAsyncAdmin::toSnapshotDescription)
+                            r.stream()
+                                .map(b -> new SnapshotDescription(b))
                                 .collect(Collectors.toList())));
   }
 
@@ -746,14 +741,14 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
         });
   }
 
-  private BigtableClusterName getSnapshotClusterName() throws IOException {
+  private BigtableClusterName getBackupClusterName() throws IOException {
     if (bigtableSnapshotClusterName == null) {
       try {
         bigtableSnapshotClusterName = getClusterName();
       } catch (IllegalStateException e) {
         throw new IllegalStateException(
             "Failed to determine which cluster to use for snapshots, please configure it using "
-                + BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY);
+                + BigtableOptionsFactory.BIGTABLE_BACKUP_CLUSTER_ID_KEY);
       }
     }
     return bigtableSnapshotClusterName;

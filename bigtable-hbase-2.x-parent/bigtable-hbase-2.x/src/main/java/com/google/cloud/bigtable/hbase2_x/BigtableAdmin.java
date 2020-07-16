@@ -16,9 +16,6 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import com.google.api.core.InternalApi;
-import com.google.bigtable.admin.v2.ListSnapshotsRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsResponse;
-import com.google.bigtable.admin.v2.Snapshot;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.collect.ImmutableList;
@@ -142,16 +139,13 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public List<SnapshotDescription> listSnapshots() throws IOException {
-    ListSnapshotsRequest request =
-        ListSnapshotsRequest.newBuilder().setParent(getSnapshotClusterName().toString()).build();
-
-    ListSnapshotsResponse snapshotList =
-        Futures.getChecked(tableAdminClientWrapper.listSnapshotsAsync(request), IOException.class);
+    List<String> backups =
+        Futures.getChecked(
+            tableAdminClientWrapper.listBackupsAsync(getBackupClusterName().toString()),
+            IOException.class);
     List<SnapshotDescription> response = new ArrayList<>();
-    for (Snapshot snapshot : snapshotList.getSnapshotsList()) {
-      response.add(
-          new SnapshotDescription(
-              snapshot.getName(), TableName.valueOf(snapshot.getSourceTable().getName())));
+    for (String backup : backups) {
+      response.add(new SnapshotDescription(backup));
     }
     return response;
   }

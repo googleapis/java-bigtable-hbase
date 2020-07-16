@@ -22,11 +22,11 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.FailedPreconditionException;
-import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
-import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
-import com.google.bigtable.admin.v2.SnapshotTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.Backup;
+import com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
+import com.google.cloud.bigtable.admin.v2.models.RestoreTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.Logger;
@@ -42,9 +42,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
-import com.google.longrunning.Operation;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.Duration;
 import io.grpc.Status;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -54,7 +52,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.hadoop.conf.Configuration;
@@ -78,6 +75,8 @@ import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
+import org.threeten.bp.Instant;
+import org.threeten.bp.temporal.ChronoUnit;
 
 /**
  * Abstract AbstractBigtableAdmin class.
@@ -123,7 +122,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     tableAdminClientWrapper = connection.getSession().getTableAdminClientWrapper();
 
     String clusterId =
-        configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
+        configuration.get(BigtableOptionsFactory.BIGTABLE_BACKUP_CLUSTER_ID_KEY, null);
     if (clusterId != null) {
       bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
     }
@@ -866,46 +865,23 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public void snapshot(String snapshotName, TableName tableName)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
 
-    Operation operation = snapshotTable(snapshotName, tableName);
-    try {
-      connection.getSession().getInstanceAdminClient().waitForOperation(operation);
-    } catch (TimeoutException e) {
-      throw new IOException("Timed out waiting for snapshot creation to finish", e);
-    }
+    snapshotTable(snapshotName, tableName);
   }
 
-  /**
-   * Creates a snapshot from an existing table. NOTE: Cloud Bigtable has a cleanup policy
-   *
-   * @param snapshotName a {@link String} object.
-   * @param tableName a {@link TableName} object.
-   * @return a {@link Operation} object.
-   * @throws IOException if any.
-   */
-  protected Operation snapshotTable(String snapshotName, TableName tableName) throws IOException {
-    Preconditions.checkNotNull(snapshotName);
-    Preconditions.checkNotNull(tableName);
-    if (snapshotName.isEmpty()) {
-      // HBase returns an empty operation instance in case snapshotName is an empty string.
-      return Operation.newBuilder().build();
-    }
-
-    SnapshotTableRequest.Builder requestBuilder =
-        SnapshotTableRequest.newBuilder()
-            .setCluster(getSnapshotClusterName().toString())
-            .setSnapshotId(snapshotName)
-            .setName(options.getInstanceName().toTableNameStr(tableName.getNameAsString()));
+  protected Backup snapshotTable(String snapshotName, TableName tableName) throws IOException {
+    CreateBackupRequest request =
+        CreateBackupRequest.of(getBackupClusterName().toString(), snapshotName)
+            .setSourceTableId(tableName.getNameAsString());
 
     int ttlSecs =
-        configuration.getInt(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY, -1);
+        configuration.getInt(BigtableOptionsFactory.BIGTABLE_BACKUP_DEFAULT_TTL_SECS_KEY, -1);
+    Instant expireTime = Instant.now().plus(ttlSecs, ChronoUnit.SECONDS);
     if (ttlSecs > 0) {
-      requestBuilder.setTtl(Duration.newBuilder().setSeconds(ttlSecs).build());
+      request.setExpireTime(expireTime);
     }
 
-    ApiFuture<Operation> future =
-        tableAdminClientWrapper.snapshotTableAsync(requestBuilder.build());
-
-    return Futures.getChecked(future, IOException.class);
+    return Futures.getChecked(
+        tableAdminClientWrapper.createBackupAsync(request), IOException.class);
   }
 
   /**
@@ -957,35 +933,24 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void cloneSnapshot(String snapshotName, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
-    CreateTableFromSnapshotRequest request =
-        CreateTableFromSnapshotRequest.newBuilder()
-            .setParent(options.getInstanceName().toString())
-            .setTableId(tableName.getNameAsString())
-            .setSourceSnapshot(getClusterName().toSnapshotName(snapshotName))
-            .build();
-    Operation operation =
-        Futures.getChecked(
-            tableAdminClientWrapper.createTableFromSnapshotAsync(request), IOException.class);
-
-    try {
-      connection.getSession().getInstanceAdminClient().waitForOperation(operation);
-    } catch (TimeoutException e) {
-      throw new IOException("Timed out waiting for cloneSnapshot operation to finish", e);
-    }
+    RestoreTableRequest request =
+        RestoreTableRequest.of(getClusterName().toString(), snapshotName)
+            .setTableId(tableName.getNameAsString());
+    Futures.getChecked(tableAdminClientWrapper.restoreTableAsync(request), IOException.class);
   }
 
   protected BigtableClusterName getClusterName() throws IOException {
     return connection.getSession().getClusterName();
   }
 
-  protected BigtableClusterName getSnapshotClusterName() throws IOException {
+  protected BigtableClusterName getBackupClusterName() throws IOException {
     if (bigtableSnapshotClusterName == null) {
       try {
         bigtableSnapshotClusterName = getClusterName();
       } catch (IllegalStateException e) {
         throw new IllegalStateException(
             "Failed to determine which cluster to use for snapshots, please configure it using "
-                + BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY);
+                + BigtableOptionsFactory.BIGTABLE_BACKUP_CLUSTER_ID_KEY);
       }
     }
     return bigtableSnapshotClusterName;
@@ -1000,16 +965,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public void deleteSnapshot(String snapshotName) throws IOException {
-    Preconditions.checkNotNull(snapshotName);
-    if (snapshotName.isEmpty()) {
-      return;
-    }
-
-    String btSnapshotName = getClusterName().toSnapshotName(snapshotName);
-    DeleteSnapshotRequest request =
-        DeleteSnapshotRequest.newBuilder().setName(btSnapshotName).build();
-
-    Futures.getUnchecked(tableAdminClientWrapper.deleteSnapshotAsync(request));
+    Futures.getUnchecked(
+        tableAdminClientWrapper.deleteBackupAsync(getClusterName().getClusterId(), snapshotName));
   }
 
   /**
@@ -1031,8 +988,14 @@ public abstract class AbstractBigtableAdmin implements Admin {
    */
   @Override
   public void deleteSnapshots(Pattern pattern) throws IOException {
-    for (SnapshotDescription snapshotDescription : listSnapshots(pattern)) {
-      deleteSnapshot(snapshotDescription.getName());
+    // todo test
+    if (pattern != null && !pattern.matcher("").matches()) {
+      for (SnapshotDescription description : listSnapshots()) {
+        if (pattern.matcher(description.getName()).matches()) {
+          tableAdminClientWrapper.deleteBackupAsync(
+              getClusterName().getClusterId(), description.getName());
+        }
+      }
     }
   }
 

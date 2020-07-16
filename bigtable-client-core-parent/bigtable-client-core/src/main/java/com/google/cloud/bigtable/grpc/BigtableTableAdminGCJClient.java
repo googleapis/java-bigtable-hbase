@@ -30,9 +30,14 @@ import com.google.bigtable.admin.v2.Snapshot;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.cloud.bigtable.admin.v2.BaseBigtableTableAdminClient;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminClient;
+import com.google.cloud.bigtable.admin.v2.models.Backup;
+import com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
+import com.google.cloud.bigtable.admin.v2.models.RestoreTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.RestoredTableResult;
 import com.google.cloud.bigtable.admin.v2.models.Table;
+import com.google.cloud.bigtable.admin.v2.models.UpdateBackupRequest;
 import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.longrunning.Operation;
 import com.google.protobuf.ByteString;
@@ -191,6 +196,41 @@ public class BigtableTableAdminGCJClient implements IBigtableTableAdminClient, A
   @Override
   public ApiFuture<Operation> createTableFromSnapshotAsync(CreateTableFromSnapshotRequest request) {
     return baseAdminClient.createTableFromSnapshotCallable().futureCall(request);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ApiFuture<Backup> createBackupAsync(CreateBackupRequest request) {
+    return delegate.createBackupAsync(request);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ApiFuture<Backup> getBackupAsync(String clusterId, String backupId) {
+    return delegate.getBackupAsync(clusterId, backupId);
+  }
+
+  @Override
+  public ApiFuture<Backup> updateBackupAsync(UpdateBackupRequest request) {
+    return delegate.updateBackupAsync(request);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ApiFuture<List<String>> listBackupsAsync(String clusterId) {
+    return delegate.listBackupsAsync(clusterId);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ApiFuture<Void> deleteBackupAsync(String clusterId, String backupId) {
+    return delegate.deleteBackupAsync(clusterId, backupId);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ApiFuture<RestoredTableResult> restoreTableAsync(RestoreTableRequest request) {
+    return delegate.restoreTableAsync(request);
   }
 
   @Override
