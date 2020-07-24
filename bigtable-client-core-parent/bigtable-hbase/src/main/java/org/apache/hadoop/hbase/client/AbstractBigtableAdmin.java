@@ -989,11 +989,9 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void deleteSnapshots(Pattern pattern) throws IOException {
     if (pattern != null && !pattern.matcher("").matches()) {
-      for (SnapshotDescription description : listSnapshots()) {
-        if (pattern.matcher(description.getName()).matches()) {
-          tableAdminClientWrapper.deleteBackupAsync(
-              getClusterName().getClusterId(), description.getName());
-        }
+      for (SnapshotDescription description : listSnapshots(pattern)) {
+        tableAdminClientWrapper.deleteBackupAsync(
+            getClusterName().getClusterId(), description.getName());
       }
     }
   }
