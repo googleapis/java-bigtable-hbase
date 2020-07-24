@@ -411,7 +411,10 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
               return new RestoredTableResult(
                   Table.fromProto(
                       operation.getResponse().unpack(com.google.bigtable.admin.v2.Table.class)),
-                  operation.getMetadata().unpack(com.google.bigtable.admin.v2.RestoreTableMetadata.class).getOptimizeTableOperationName());
+                  operation
+                      .getMetadata()
+                      .unpack(com.google.bigtable.admin.v2.RestoreTableMetadata.class)
+                      .getOptimizeTableOperationName());
             } catch (InvalidProtocolBufferException e) {
               return new RestoredTableResult(
                   Table.fromProto(com.google.bigtable.admin.v2.Table.getDefaultInstance()), "");
