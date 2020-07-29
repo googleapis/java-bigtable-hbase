@@ -42,6 +42,7 @@ import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.RestoreTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.RestoredTableResult;
 import com.google.cloud.bigtable.admin.v2.models.Table;
+import com.google.cloud.bigtable.admin.v2.models.UpdateBackupRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BigtableVeneerSettingsFactory;
 import com.google.cloud.bigtable.config.CredentialOptions;
@@ -57,6 +58,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.threeten.bp.Instant;
 
 @RunWith(JUnit4.class)
 public class TestBigtableTableAdminGCJClient {
@@ -260,11 +262,19 @@ public class TestBigtableTableAdminGCJClient {
   }
 
   @Test
-  public void testCreateBackupAsync() throws Exception {
+  public void testCreateAndUpdateBackupAsync() throws Exception {
     CreateBackupRequest request =
         CreateBackupRequest.of(CLUSTER_ID, BACKUP_ID).setSourceTableId(tableName);
     Future<Backup> actualResponse = adminGCJClient.createBackupAsync(request);
     assertEquals(BACKUP_ID, actualResponse.get().getId());
+    assertEquals(Instant.EPOCH, actualResponse.get().getExpireTime());
+
+    Instant expireTime = Instant.ofEpochMilli(12345L);
+    Future<Backup> updateResponse =
+        adminGCJClient.updateBackupAsync(
+            UpdateBackupRequest.of(CLUSTER_ID, BACKUP_ID).setExpireTime(expireTime));
+    assertEquals(BACKUP_ID, updateResponse.get().getId());
+    assertEquals(expireTime, updateResponse.get().getExpireTime());
   }
 
   @Test

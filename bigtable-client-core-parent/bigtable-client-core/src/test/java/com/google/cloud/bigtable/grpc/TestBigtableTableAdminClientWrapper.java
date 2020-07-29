@@ -41,6 +41,7 @@ import com.google.bigtable.admin.v2.ListTablesResponse;
 import com.google.bigtable.admin.v2.RestoreTableMetadata;
 import com.google.bigtable.admin.v2.Snapshot;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
+import com.google.cloud.bigtable.admin.v2.internal.NameUtil;
 import com.google.cloud.bigtable.admin.v2.models.Backup;
 import com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
@@ -49,6 +50,7 @@ import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.RestoreTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.RestoredTableResult;
 import com.google.cloud.bigtable.admin.v2.models.Table;
+import com.google.cloud.bigtable.admin.v2.models.UpdateBackupRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
@@ -56,13 +58,17 @@ import com.google.longrunning.Operation;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
+import com.google.protobuf.Timestamp;
+import com.google.protobuf.util.Timestamps;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
+import org.threeten.bp.Instant;
 
 @RunWith(JUnit4.class)
 public class TestBigtableTableAdminClientWrapper {
@@ -385,6 +391,31 @@ public class TestBigtableTableAdminClientWrapper {
     assertEquals(BACKUP_ID, actualResponse.get().getId());
     assertEquals(TABLE_ID, actualResponse.get().getSourceTableId());
     verify(mockAdminClient).getBackupAsync(request);
+  }
+
+  @Test
+  public void testUpdateBackupAsync() throws ExecutionException, InterruptedException {
+    // Setup
+    Timestamp expireTime = Timestamp.newBuilder().setSeconds(123456789).build();
+    long sizeBytes = 12345L;
+    UpdateBackupRequest req = UpdateBackupRequest.of(CLUSTER_ID, BACKUP_ID);
+    com.google.bigtable.admin.v2.Backup response =
+        com.google.bigtable.admin.v2.Backup.newBuilder()
+            .setName(NameUtil.formatBackupName(PROJECT_ID, INSTANCE_ID, CLUSTER_ID, BACKUP_ID))
+            .setSourceTable(NameUtil.formatTableName(PROJECT_ID, INSTANCE_ID, TABLE_ID))
+            .setExpireTime(expireTime)
+            .setSizeBytes(sizeBytes)
+            .build();
+    Mockito.when(mockAdminClient.updateBackupAsync(req.toProto(PROJECT_ID, INSTANCE_ID)))
+        .thenReturn(Futures.immediateFuture(response));
+
+    Backup actualResult = clientWrapper.updateBackupAsync(req).get();
+
+    assertEquals(actualResult.getId(), BACKUP_ID);
+    assertEquals(actualResult.getSourceTableId(), TABLE_ID);
+    assertEquals(
+        actualResult.getExpireTime(), Instant.ofEpochMilli(Timestamps.toMillis(expireTime)));
+    assertEquals(actualResult.getSizeBytes(), sizeBytes);
   }
 
   @Test

@@ -42,6 +42,7 @@ import com.google.bigtable.admin.v2.RestoreTableRequest;
 import com.google.bigtable.admin.v2.Snapshot;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.bigtable.admin.v2.Table;
+import com.google.bigtable.admin.v2.UpdateBackupRequest;
 import com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Any;
@@ -189,6 +190,19 @@ public class FakeBigtableAdminServiceImpl extends BigtableTableAdminImplBase {
                 "projects/fake-project-id/instances/fake-instance-id/clusters/fake-cluster-id/backups/fake-backup-id")
             .setSourceTable(
                 "projects/fake-project-id/instances/fake-instance-id/tables/fake-table-id")
+            .build());
+    responseObserver.onCompleted();
+  }
+
+  @Override
+  public void updateBackup(UpdateBackupRequest request, StreamObserver<Backup> responseObserver) {
+    responseObserver.onNext(
+        Backup.newBuilder()
+            .setName(
+                "projects/fake-project-id/instances/fake-instance-id/clusters/fake-cluster-id/backups/fake-backup-id")
+            .setSourceTable(
+                "projects/fake-project-id/instances/fake-instance-id/tables/fake-table-id")
+            .setExpireTime(request.getBackup().getExpireTime())
             .build());
     responseObserver.onCompleted();
   }

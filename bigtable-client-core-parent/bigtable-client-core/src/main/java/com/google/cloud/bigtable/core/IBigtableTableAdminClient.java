@@ -218,7 +218,6 @@ public interface IBigtableTableAdminClient {
   /** Gets metadata information about the specified backup. */
   ApiFuture<Backup> getBackupAsync(String clusterId, String backupId);
 
-  // todo add test
   /** Update the specified backup. */
   ApiFuture<Backup> updateBackupAsync(UpdateBackupRequest request);
 
