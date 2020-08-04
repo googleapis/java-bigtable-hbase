@@ -173,7 +173,6 @@ public interface IBigtableTableAdminClient {
    *
    * @param request a {@link SnapshotTableRequest} object.
    * @return The long running {@link Operation} for the request.
-   *
    * @deprecated this will be removed in a future release - please use backups API instead
    */
   @Deprecated

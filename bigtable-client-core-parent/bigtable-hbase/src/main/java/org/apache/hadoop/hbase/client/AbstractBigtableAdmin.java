@@ -875,8 +875,9 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
     int ttlSecs =
         configuration.getInt(BigtableOptionsFactory.BIGTABLE_BACKUP_DEFAULT_TTL_SECS_KEY, -1);
-    Instant expireTime = Instant.now().plus(ttlSecs, ChronoUnit.SECONDS);
+
     if (ttlSecs > 0) {
+      Instant expireTime = Instant.now().plus(ttlSecs, ChronoUnit.SECONDS);
       request.setExpireTime(expireTime);
     }
 
