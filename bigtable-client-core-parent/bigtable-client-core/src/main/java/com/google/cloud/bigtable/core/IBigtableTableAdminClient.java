@@ -173,7 +173,10 @@ public interface IBigtableTableAdminClient {
    *
    * @param request a {@link SnapshotTableRequest} object.
    * @return The long running {@link Operation} for the request.
+   *
+   * @deprecated this will be removed in a future release - please use backups API instead
    */
+  @Deprecated
   ApiFuture<Operation> snapshotTableAsync(SnapshotTableRequest request);
 
   /**
@@ -181,7 +184,9 @@ public interface IBigtableTableAdminClient {
    *
    * @param request a {@link GetSnapshotRequest} object.
    * @return The {@link Snapshot} defined by the request.
+   * @deprecated this will be removed in a future release - please use backups API instead
    */
+  @Deprecated
   ApiFuture<Snapshot> getSnapshotAsync(GetSnapshotRequest request);
 
   /**
@@ -189,14 +194,18 @@ public interface IBigtableTableAdminClient {
    *
    * @param request a {@link ListSnapshotsRequest} object.
    * @return The {@link ListSnapshotsResponse} which has the list of the snapshots in the cluster.
+   * @deprecated this will be removed in a future release - please use backups API instead
    */
+  @Deprecated
   ApiFuture<ListSnapshotsResponse> listSnapshotsAsync(ListSnapshotsRequest request);
 
   /**
    * Permanently deletes the specified snapshot.
    *
    * @param request a {@link DeleteSnapshotRequest} object.
+   * @deprecated this will be removed in a future release - please use backups API instead
    */
+  @Deprecated
   ApiFuture<Void> deleteSnapshotAsync(DeleteSnapshotRequest request);
 
   /**
@@ -204,7 +213,9 @@ public interface IBigtableTableAdminClient {
    *
    * @param request a {@link CreateTableFromSnapshotRequest} object.
    * @return The long running {@link Operation} for the request.
+   * @deprecated this will be removed in a future release - please use backups API instead
    */
+  @Deprecated
   ApiFuture<Operation> createTableFromSnapshotAsync(CreateTableFromSnapshotRequest request);
 
   /**

@@ -86,7 +86,9 @@ public class BigtableClusterName {
    * @param snapshotId The id of the snapshot
    * @return A fully qualified snapshot name that contains the fully qualified cluster name as the
    *     parent and the snapshot name as the child.
+   * @deprecated this will be removed in a future release - please use backups API instead
    */
+  @Deprecated
   public String toSnapshotName(String snapshotId) {
     return clusterName + "/snapshots/" + snapshotId;
   }
