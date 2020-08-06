@@ -54,6 +54,7 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncUtilities;
 import com.google.cloud.bigtable.grpc.async.RetryingUnaryOperation;
+import com.google.cloud.bigtable.util.OperationUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicates;
 import com.google.common.primitives.Ints;
@@ -63,13 +64,16 @@ import com.google.iam.v1.Policy;
 import com.google.iam.v1.SetIamPolicyRequest;
 import com.google.iam.v1.TestIamPermissionsRequest;
 import com.google.iam.v1.TestIamPermissionsResponse;
+import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
+import com.google.longrunning.OperationsGrpc;
 import com.google.protobuf.Empty;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.Metadata;
 import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -79,6 +83,8 @@ import java.util.concurrent.TimeoutException;
  */
 @InternalApi("For internal usage only")
 public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
+
+  private final OperationsGrpc.OperationsBlockingStub operationsStub;
 
   private final BigtableAsyncRpc<ListTablesRequest, ListTablesResponse> listTablesRpc;
   private final RetryOptions retryOptions;
@@ -121,6 +127,8 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
       ScheduledExecutorService retryExecutorService,
       BigtableOptions bigtableOptions) {
     BigtableAsyncUtilities asyncUtilities = new BigtableAsyncUtilities.Default(channel);
+
+    operationsStub = OperationsGrpc.newBlockingStub(channel);
 
     // Read only methods.  These are always retried.
     this.listTablesRpc =
@@ -371,6 +379,25 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
   @Override
   public ListenableFuture<Operation> restoreTableAsync(RestoreTableRequest request) {
     return createUnaryListener(request, restoreTableRpc, request.getParent()).getAsyncResult();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Operation getOperation(GetOperationRequest request) {
+    return OperationUtil.getOperation(request, operationsStub);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void waitForOperation(Operation operation) throws IOException, TimeoutException {
+    OperationUtil.waitForOperation(operation, 10, TimeUnit.MINUTES, operationsStub);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void waitForOperation(Operation operation, long timeout, TimeUnit timeUnit)
+      throws TimeoutException, IOException {
+    OperationUtil.waitForOperation(operation, timeout, timeUnit, operationsStub);
   }
 
   @VisibleForTesting

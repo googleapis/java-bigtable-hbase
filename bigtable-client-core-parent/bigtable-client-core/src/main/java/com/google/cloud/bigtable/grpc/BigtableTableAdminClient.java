@@ -45,8 +45,11 @@ import com.google.iam.v1.Policy;
 import com.google.iam.v1.SetIamPolicyRequest;
 import com.google.iam.v1.TestIamPermissionsRequest;
 import com.google.iam.v1.TestIamPermissionsResponse;
+import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /** A client for the Cloud Bigtable Table Admin API. */
@@ -256,4 +259,41 @@ public interface BigtableTableAdminClient {
    * @param request a {@link DeleteBackupRequest} object.
    */
   ListenableFuture<Operation> restoreTableAsync(RestoreTableRequest request);
+
+  /**
+   * Gets the latest state of a long-running operation. Clients may use this method to poll the
+   * operation result at intervals as recommended by the API service.
+   *
+   * <p>{@link #createBackupAsync(CreateBackupRequest)} and {@link #restoreTableAsync(RestoreTableRequest)} will
+   * return a {@link com.google.longrunning.Operation}. Use this method and pass in the {@link
+   * com.google.longrunning.Operation}'s name in the request to see if the Operation is done via
+   * {@link com.google.longrunning.Operation#getDone()}. The backup will not be available until
+   * that happens.
+   *
+   * @param request a {@link com.google.longrunning.GetOperationRequest} object.
+   * @return a {@link com.google.longrunning.Operation} object.
+   */
+  Operation getOperation(GetOperationRequest request);
+
+  /**
+   * Waits for the long running operation to complete by polling with exponential backoff. A default
+   * timeout of 10 minutes is used.
+   *
+   * @param operation
+   * @throws IOException
+   * @throws TimeoutException If the timeout is exceeded.
+   */
+  void waitForOperation(Operation operation) throws TimeoutException, IOException;
+
+  /**
+   * Waits for the long running operation to complete by polling with exponential backoff.
+   *
+   * @param operation
+   * @param timeout
+   * @param timeUnit
+   * @throws IOException
+   * @throws TimeoutException If the timeout is exceeded.
+   */
+  void waitForOperation(Operation operation, long timeout, TimeUnit timeUnit)
+      throws IOException, TimeoutException;
 }

@@ -330,7 +330,7 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
               return Backup.fromProto(
                   operation.getResponse().unpack(com.google.bigtable.admin.v2.Backup.class));
             } catch (InvalidProtocolBufferException e) {
-              return Backup.fromProto(com.google.bigtable.admin.v2.Backup.getDefaultInstance());
+              throw new RuntimeException(e);
             }
           }
         });
@@ -416,8 +416,7 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
                       .unpack(com.google.bigtable.admin.v2.RestoreTableMetadata.class)
                       .getOptimizeTableOperationName());
             } catch (InvalidProtocolBufferException e) {
-              return new RestoredTableResult(
-                  Table.fromProto(com.google.bigtable.admin.v2.Table.getDefaultInstance()), "");
+              throw new RuntimeException(e);
             }
           }
         });

@@ -34,6 +34,7 @@ import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.cloud.bigtable.admin.v2.models.UpdateBackupRequest;
 import com.google.longrunning.Operation;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 
 /**
@@ -242,5 +243,6 @@ public interface IBigtableTableAdminClient {
    *
    * @return The long running {@link Operation} for the request.
    */
-  ApiFuture<RestoredTableResult> restoreTableAsync(RestoreTableRequest request);
+  ApiFuture<RestoredTableResult> restoreTableAsync(RestoreTableRequest request)
+      throws InvalidProtocolBufferException;
 }

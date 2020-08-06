@@ -38,6 +38,7 @@ import com.google.bigtable.admin.v2.ListInstancesRequest;
 import com.google.bigtable.admin.v2.ListInstancesResponse;
 import com.google.bigtable.admin.v2.PartialUpdateInstanceRequest;
 import com.google.bigtable.admin.v2.UpdateAppProfileRequest;
+import com.google.cloud.bigtable.util.OperationUtil;
 import com.google.common.primitives.Ints;
 import com.google.iam.v1.GetIamPolicyRequest;
 import com.google.iam.v1.Policy;
@@ -84,65 +85,20 @@ public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
   /** {@inheritDoc} */
   @Override
   public Operation getOperation(GetOperationRequest request) {
-    return operationsStub.getOperation(request);
+    return OperationUtil.getOperation(request, operationsStub);
   }
 
   /** {@inheritDoc} */
   @Override
   public void waitForOperation(Operation operation) throws IOException, TimeoutException {
-    waitForOperation(operation, 10, TimeUnit.MINUTES);
+    OperationUtil.waitForOperation(operation, 10, TimeUnit.MINUTES, operationsStub);
   }
 
   /** {@inheritDoc} */
   @Override
   public void waitForOperation(Operation operation, long timeout, TimeUnit timeUnit)
       throws TimeoutException, IOException {
-    GetOperationRequest request =
-        GetOperationRequest.newBuilder().setName(operation.getName()).build();
-
-    ExponentialBackOff backOff =
-        new ExponentialBackOff.Builder()
-            .setInitialIntervalMillis(100)
-            .setMultiplier(1.3)
-            .setMaxIntervalMillis(Ints.checkedCast(TimeUnit.SECONDS.toMillis(60)))
-            .setMaxElapsedTimeMillis(Ints.checkedCast(timeUnit.toMillis(timeout)))
-            .build();
-
-    Operation currentOperationState = operation;
-
-    while (true) {
-      if (currentOperationState.getDone()) {
-        switch (currentOperationState.getResultCase()) {
-          case RESPONSE:
-            return;
-          case ERROR:
-            throw StatusProto.toStatusRuntimeException(currentOperationState.getError());
-          case RESULT_NOT_SET:
-            throw new IllegalStateException(
-                "System returned invalid response for Operation check: " + currentOperationState);
-        }
-      }
-
-      final long backOffMillis;
-      try {
-        backOffMillis = backOff.nextBackOffMillis();
-      } catch (IOException e) {
-        // Should never happen.
-        throw new RuntimeException(e);
-      }
-      if (backOffMillis == BackOff.STOP) {
-        throw new TimeoutException("Operation did not complete in time");
-      } else {
-        try {
-          Thread.sleep(backOffMillis);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          throw new IOException("Interrupted while waiting for operation to finish");
-        }
-      }
-
-      currentOperationState = getOperation(request);
-    }
+    OperationUtil.waitForOperation(operation, timeout, timeUnit, operationsStub);
   }
 
   /** {@inheritDoc} */
