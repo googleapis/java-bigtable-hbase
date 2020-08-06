@@ -15,8 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import com.google.api.client.util.BackOff;
-import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.core.InternalApi;
 import com.google.bigtable.admin.v2.AppProfile;
 import com.google.bigtable.admin.v2.BigtableInstanceAdminGrpc;
@@ -39,7 +37,6 @@ import com.google.bigtable.admin.v2.ListInstancesResponse;
 import com.google.bigtable.admin.v2.PartialUpdateInstanceRequest;
 import com.google.bigtable.admin.v2.UpdateAppProfileRequest;
 import com.google.cloud.bigtable.util.OperationUtil;
-import com.google.common.primitives.Ints;
 import com.google.iam.v1.GetIamPolicyRequest;
 import com.google.iam.v1.Policy;
 import com.google.iam.v1.SetIamPolicyRequest;
@@ -50,7 +47,6 @@ import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsGrpc;
 import com.google.protobuf.Empty;
 import io.grpc.Channel;
-import io.grpc.protobuf.StatusProto;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;

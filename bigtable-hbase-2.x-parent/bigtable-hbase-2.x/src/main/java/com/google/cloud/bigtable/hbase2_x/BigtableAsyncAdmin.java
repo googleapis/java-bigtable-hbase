@@ -563,8 +563,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
               }
             })
         .thenAccept(
-            c ->
-            {
+            c -> {
               try {
                 toCompletableFuture(
                     bigtableTableAdminClient.restoreTableAsync(

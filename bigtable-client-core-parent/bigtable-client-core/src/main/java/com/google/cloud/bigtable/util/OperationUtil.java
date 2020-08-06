@@ -28,15 +28,22 @@ import java.util.concurrent.TimeoutException;
 
 public class OperationUtil {
 
-  public static Operation getOperation(GetOperationRequest request, OperationsGrpc.OperationsBlockingStub operationsStub) {
+  public static Operation getOperation(
+      GetOperationRequest request, OperationsGrpc.OperationsBlockingStub operationsStub) {
     return operationsStub.getOperation(request);
   }
 
-  public static void waitForOperation(Operation operation, OperationsGrpc.OperationsBlockingStub operationsStub) throws IOException, TimeoutException {
+  public static void waitForOperation(
+      Operation operation, OperationsGrpc.OperationsBlockingStub operationsStub)
+      throws IOException, TimeoutException {
     waitForOperation(operation, 10, TimeUnit.MINUTES, operationsStub);
   }
 
-  public static void waitForOperation(Operation operation, long timeout, TimeUnit timeUnit, OperationsGrpc.OperationsBlockingStub operationsStub)
+  public static void waitForOperation(
+      Operation operation,
+      long timeout,
+      TimeUnit timeUnit,
+      OperationsGrpc.OperationsBlockingStub operationsStub)
       throws TimeoutException, IOException {
     GetOperationRequest request =
         GetOperationRequest.newBuilder().setName(operation.getName()).build();

@@ -264,11 +264,12 @@ public interface BigtableTableAdminClient {
    * Gets the latest state of a long-running operation. Clients may use this method to poll the
    * operation result at intervals as recommended by the API service.
    *
-   * <p>{@link #createBackupAsync(CreateBackupRequest)} and {@link #restoreTableAsync(RestoreTableRequest)} will
-   * return a {@link com.google.longrunning.Operation}. Use this method and pass in the {@link
+   * <p>{@link #createBackupAsync(CreateBackupRequest)} and {@link
+   * #restoreTableAsync(RestoreTableRequest)} will return a {@link
+   * com.google.longrunning.Operation}. Use this method and pass in the {@link
    * com.google.longrunning.Operation}'s name in the request to see if the Operation is done via
-   * {@link com.google.longrunning.Operation#getDone()}. The backup will not be available until
-   * that happens.
+   * {@link com.google.longrunning.Operation#getDone()}. The backup will not be available until that
+   * happens.
    *
    * @param request a {@link com.google.longrunning.GetOperationRequest} object.
    * @return a {@link com.google.longrunning.Operation} object.
