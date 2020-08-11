@@ -52,6 +52,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.hadoop.conf.Configuration;
@@ -990,9 +991,19 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void deleteSnapshots(Pattern pattern) throws IOException {
     if (pattern != null && !pattern.matcher("").matches()) {
+      List<ApiFuture<Void>> futures = new ArrayList<>();
       for (SnapshotDescription description : listSnapshots(pattern)) {
-        tableAdminClientWrapper.deleteBackupAsync(
-            getClusterName().getClusterId(), description.getName());
+        futures.add(
+            tableAdminClientWrapper.deleteBackupAsync(
+                getClusterName().getClusterId(), description.getName()));
+      }
+      try {
+        ApiFutures.allAsList(futures).get();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IOException("Interrupted while deleting snapshots");
+      } catch (ExecutionException e) {
+        throw Status.fromThrowable(e).asRuntimeException();
       }
     }
   }

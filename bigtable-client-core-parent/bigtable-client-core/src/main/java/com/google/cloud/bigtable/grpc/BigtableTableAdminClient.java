@@ -256,7 +256,8 @@ public interface BigtableTableAdminClient {
   /**
    * Creates a new table from a backup.
    *
-   * @param request a {@link DeleteBackupRequest} object.
+   * @param request a {@link RestoreTableRequest} object.
+   * @return The long running {@link Operation} for the request.
    */
   ListenableFuture<Operation> restoreTableAsync(RestoreTableRequest request);
 

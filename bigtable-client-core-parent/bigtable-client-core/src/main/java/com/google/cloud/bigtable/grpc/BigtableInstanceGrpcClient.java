@@ -60,7 +60,7 @@ import java.util.concurrent.TimeoutException;
 public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
 
   private final BigtableInstanceAdminGrpc.BigtableInstanceAdminBlockingStub instanceClient;
-  private final OperationsGrpc.OperationsBlockingStub operationsStub;
+  private final OperationUtil operationUtil;
 
   /**
    * Constructor for BigtableInstanceGrpcClient.
@@ -69,7 +69,7 @@ public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
    */
   public BigtableInstanceGrpcClient(Channel channel) {
     this.instanceClient = BigtableInstanceAdminGrpc.newBlockingStub(channel);
-    operationsStub = OperationsGrpc.newBlockingStub(channel);
+    operationUtil = new OperationUtil(OperationsGrpc.newBlockingStub(channel));
   }
 
   /** {@inheritDoc} */
@@ -81,20 +81,20 @@ public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
   /** {@inheritDoc} */
   @Override
   public Operation getOperation(GetOperationRequest request) {
-    return OperationUtil.getOperation(request, operationsStub);
+    return operationUtil.getOperation(request);
   }
 
   /** {@inheritDoc} */
   @Override
   public void waitForOperation(Operation operation) throws IOException, TimeoutException {
-    OperationUtil.waitForOperation(operation, 10, TimeUnit.MINUTES, operationsStub);
+    operationUtil.waitForOperation(operation, 10, TimeUnit.MINUTES);
   }
 
   /** {@inheritDoc} */
   @Override
   public void waitForOperation(Operation operation, long timeout, TimeUnit timeUnit)
       throws TimeoutException, IOException {
-    OperationUtil.waitForOperation(operation, timeout, timeUnit, operationsStub);
+    operationUtil.waitForOperation(operation, timeout, timeUnit);
   }
 
   /** {@inheritDoc} */

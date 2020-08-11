@@ -133,6 +133,9 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public void cloneSnapshot(String s, TableName tableName, boolean b)
       throws IOException, TableExistsException, RestoreSnapshotException {
+    if(!b) {
+      this.cloneSnapshot(s, tableName);
+    }
     throw new UnsupportedOperationException("cloneSnapshot"); // TODO
   }
 

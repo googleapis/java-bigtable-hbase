@@ -22,6 +22,7 @@ import com.google.common.primitives.Ints;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsGrpc;
+import com.google.longrunning.OperationsGrpc.OperationsBlockingStub;
 import io.grpc.protobuf.StatusProto;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -30,25 +31,25 @@ import java.util.concurrent.TimeoutException;
 @InternalApi("For internal usage only")
 public class OperationUtil {
 
+  private OperationsGrpc.OperationsBlockingStub operationsStub;
+
   @InternalApi("For internal usage only")
-  public static Operation getOperation(
-      GetOperationRequest request, OperationsGrpc.OperationsBlockingStub operationsStub) {
+  public OperationUtil(OperationsBlockingStub operationsStub) {
+    this.operationsStub = operationsStub;
+  }
+
+  @InternalApi("For internal usage only")
+  public Operation getOperation(GetOperationRequest request) {
     return operationsStub.getOperation(request);
   }
 
   @InternalApi("For internal usage only")
-  public static void waitForOperation(
-      Operation operation, OperationsGrpc.OperationsBlockingStub operationsStub)
-      throws IOException, TimeoutException {
-    waitForOperation(operation, 10, TimeUnit.MINUTES, operationsStub);
+  public void waitForOperation(Operation operation) throws IOException, TimeoutException {
+    waitForOperation(operation, 10, TimeUnit.MINUTES);
   }
 
   @InternalApi("For internal usage only")
-  public static void waitForOperation(
-      Operation operation,
-      long timeout,
-      TimeUnit timeUnit,
-      OperationsGrpc.OperationsBlockingStub operationsStub)
+  public void waitForOperation(Operation operation, long timeout, TimeUnit timeUnit)
       throws TimeoutException, IOException {
     GetOperationRequest request =
         GetOperationRequest.newBuilder().setName(operation.getName()).build();
@@ -94,7 +95,7 @@ public class OperationUtil {
         }
       }
 
-      currentOperationState = getOperation(request, operationsStub);
+      currentOperationState = getOperation(request);
     }
   }
 }

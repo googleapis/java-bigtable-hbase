@@ -84,7 +84,7 @@ import java.util.concurrent.TimeoutException;
 @InternalApi("For internal usage only")
 public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
 
-  private final OperationsGrpc.OperationsBlockingStub operationsStub;
+  private final OperationUtil operationUtil;
 
   private final BigtableAsyncRpc<ListTablesRequest, ListTablesResponse> listTablesRpc;
   private final RetryOptions retryOptions;
@@ -128,7 +128,7 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
       BigtableOptions bigtableOptions) {
     BigtableAsyncUtilities asyncUtilities = new BigtableAsyncUtilities.Default(channel);
 
-    operationsStub = OperationsGrpc.newBlockingStub(channel);
+    operationUtil = new OperationUtil(OperationsGrpc.newBlockingStub(channel));
 
     // Read only methods.  These are always retried.
     this.listTablesRpc =
@@ -384,20 +384,20 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
   /** {@inheritDoc} */
   @Override
   public Operation getOperation(GetOperationRequest request) {
-    return OperationUtil.getOperation(request, operationsStub);
+    return operationUtil.getOperation(request);
   }
 
   /** {@inheritDoc} */
   @Override
   public void waitForOperation(Operation operation) throws IOException, TimeoutException {
-    OperationUtil.waitForOperation(operation, 10, TimeUnit.MINUTES, operationsStub);
+    operationUtil.waitForOperation(operation, 10, TimeUnit.MINUTES);
   }
 
   /** {@inheritDoc} */
   @Override
   public void waitForOperation(Operation operation, long timeout, TimeUnit timeUnit)
       throws TimeoutException, IOException {
-    OperationUtil.waitForOperation(operation, timeout, timeUnit, operationsStub);
+    operationUtil.waitForOperation(operation, timeout, timeUnit);
   }
 
   @VisibleForTesting
