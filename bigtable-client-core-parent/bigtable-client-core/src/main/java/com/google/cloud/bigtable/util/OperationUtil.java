@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.util;
 
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.core.InternalApi;
 import com.google.common.primitives.Ints;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
@@ -26,19 +27,23 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+@InternalApi("For internal usage only")
 public class OperationUtil {
 
+  @InternalApi("For internal usage only")
   public static Operation getOperation(
       GetOperationRequest request, OperationsGrpc.OperationsBlockingStub operationsStub) {
     return operationsStub.getOperation(request);
   }
 
+  @InternalApi("For internal usage only")
   public static void waitForOperation(
       Operation operation, OperationsGrpc.OperationsBlockingStub operationsStub)
       throws IOException, TimeoutException {
     waitForOperation(operation, 10, TimeUnit.MINUTES, operationsStub);
   }
 
+  @InternalApi("For internal usage only")
   public static void waitForOperation(
       Operation operation,
       long timeout,
