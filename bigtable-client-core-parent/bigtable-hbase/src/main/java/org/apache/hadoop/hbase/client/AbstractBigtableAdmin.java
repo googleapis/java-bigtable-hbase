@@ -968,6 +968,11 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public void deleteSnapshot(String snapshotName) throws IOException {
+    Preconditions.checkNotNull(snapshotName);
+    if (snapshotName.isEmpty()) {
+      return;
+    }
+
     Futures.getUnchecked(
         tableAdminClientWrapper.deleteBackupAsync(getClusterName().getClusterId(), snapshotName));
   }
