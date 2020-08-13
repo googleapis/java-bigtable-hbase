@@ -243,6 +243,5 @@ public interface IBigtableTableAdminClient {
    *
    * @return The long running {@link Operation} for the request.
    */
-  ApiFuture<RestoredTableResult> restoreTableAsync(RestoreTableRequest request)
-      throws InvalidProtocolBufferException;
+  ApiFuture<RestoredTableResult> restoreTableAsync(RestoreTableRequest request);
 }

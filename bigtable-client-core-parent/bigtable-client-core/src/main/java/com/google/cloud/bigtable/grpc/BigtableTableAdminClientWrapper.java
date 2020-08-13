@@ -334,7 +334,7 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
                       .getResponse()
                       .unpack(com.google.bigtable.admin.v2.Backup.class));
             } catch (TimeoutException | IOException e) {
-              throw new RuntimeException(e);
+              throw new IllegalStateException(e);
             }
           }
         });
@@ -423,7 +423,7 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
                       .unpack(com.google.bigtable.admin.v2.RestoreTableMetadata.class)
                       .getOptimizeTableOperationName());
             } catch (TimeoutException | IOException e) {
-              throw new RuntimeException(e);
+              throw new IllegalStateException(e);
             }
           }
         });
