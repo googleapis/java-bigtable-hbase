@@ -124,7 +124,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     tableAdminClientWrapper = connection.getSession().getTableAdminClientWrapper();
 
     String clusterId =
-        configuration.get(BigtableOptionsFactory.BIGTABLE_BACKUP_CLUSTER_ID_KEY, null);
+        configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
     if (clusterId != null) {
       bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
     }
@@ -953,7 +953,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
       } catch (IllegalStateException e) {
         throw new IllegalStateException(
             "Failed to determine which cluster to use for snapshots, please configure it using "
-                + BigtableOptionsFactory.BIGTABLE_BACKUP_CLUSTER_ID_KEY);
+                + BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY);
       }
     }
     return bigtableSnapshotClusterName;

@@ -70,9 +70,6 @@ public class BigtableOptionsFactory {
   /** Constant <code>APP_PROFILE_ID_KEY="google.bigtable.app_profile.id"</code> */
   public static final String APP_PROFILE_ID_KEY = "google.bigtable.app_profile.id";
 
-  /** Constant <code>BIGTABLE_BACKUP_CLUSTER_ID_KEY="google.bigtable.backup.cluster.id"</code> */
-  public static final String BIGTABLE_BACKUP_CLUSTER_ID_KEY = "google.bigtable.backup.cluster.id";
-
   /**
    * Constant <code>BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY="google.bigtable.snapshot.cluster.id"</code>
    */

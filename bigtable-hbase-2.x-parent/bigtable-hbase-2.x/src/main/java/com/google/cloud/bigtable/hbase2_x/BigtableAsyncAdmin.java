@@ -117,7 +117,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
     Configuration configuration = asyncConnection.getConfiguration();
     String clusterId =
-        configuration.get(BigtableOptionsFactory.BIGTABLE_BACKUP_CLUSTER_ID_KEY, null);
+        configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
     if (clusterId != null) {
       bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
     }
@@ -713,7 +713,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
       } catch (IllegalStateException e) {
         throw new IllegalStateException(
             "Failed to determine which cluster to use for snapshots, please configure it using "
-                + BigtableOptionsFactory.BIGTABLE_BACKUP_CLUSTER_ID_KEY);
+                + BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY);
       }
     }
     return bigtableSnapshotClusterName;
