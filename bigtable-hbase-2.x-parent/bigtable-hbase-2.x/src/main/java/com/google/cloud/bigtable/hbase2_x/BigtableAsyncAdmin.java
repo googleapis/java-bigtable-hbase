@@ -31,6 +31,7 @@ import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
+import com.google.cloud.bigtable.hbase.util.SnapshotDescriptionUtil;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -84,8 +85,9 @@ import org.apache.hadoop.hbase.security.access.GetUserPermissionsRequest;
 import org.apache.hadoop.hbase.security.access.Permission;
 import org.apache.hadoop.hbase.security.access.UserPermission;
 import org.apache.hadoop.hbase.shaded.com.google.protobuf.RpcChannel;
-import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.threeten.bp.Instant;
+import org.threeten.bp.temporal.ChronoUnit;
 
 /**
  * Bigtable implementation of {@link AsyncAdmin}
@@ -102,6 +104,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   private final TableAdapter2x tableAdapter2x;
   private final CommonConnection asyncConnection;
   private BigtableClusterName bigtableSnapshotClusterName;
+  private final int ttlSeconds;
 
   public BigtableAsyncAdmin(CommonConnection asyncConnection) throws IOException {
     LOG.debug("Creating BigtableAsyncAdmin");
@@ -118,6 +121,8 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     if (clusterId != null) {
       bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
     }
+    this.ttlSeconds =
+        configuration.getInt(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY, 86400);
   }
 
   /** {@inheritDoc} */
@@ -348,8 +353,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Void> deleteTableSnapshots(
       Pattern tableNamePattern, Pattern snapshotNamePattern) {
-    return listTableSnapshots(tableNamePattern, snapshotNamePattern)
-        .thenApply(deleteSnapshotsFunc());
+    throw new UnsupportedOperationException("Unsupported - please use deleteSnapshots");
   }
 
   //  ******************* START COLUMN FAMILY MODIFICATION  ************************
@@ -406,7 +410,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
    */
   @Override
   public CompletableFuture<Void> restoreSnapshot(String snapshotName) {
-    return restoreSnapshot(snapshotName, false);
+    throw new UnsupportedOperationException("restoreSnapshot");
   }
 
   /**
@@ -417,49 +421,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Void> restoreSnapshot(
       String snapshotName, boolean takeFailSafeSnapshot) {
-    CompletableFuture<Void> future = new CompletableFuture<>();
-    listSnapshots(Pattern.compile(snapshotName))
-        .whenComplete(
-            (snapshotDescriptions, err) -> {
-              if (err != null) {
-                future.completeExceptionally(err);
-                return;
-              }
-              final TableName tableName = snapshotExists(snapshotName, snapshotDescriptions);
-              if (tableName == null) {
-                future.completeExceptionally(
-                    new RestoreSnapshotException(
-                        "Unable to find the table name for snapshot=" + snapshotName));
-                return;
-              }
-              tableExists(tableName)
-                  .whenComplete(
-                      (exists, err2) -> {
-                        if (err2 != null) {
-                          future.completeExceptionally(err2);
-                        } else if (!exists) {
-                          // if table does not exist, then just clone snapshot into new table.
-                          completeConditionalOnFuture(
-                              future, cloneSnapshot(snapshotName, tableName));
-                        } else {
-                          isTableDisabled(tableName)
-                              .whenComplete(
-                                  (disabled, err4) -> {
-                                    if (err4 != null) {
-                                      future.completeExceptionally(err4);
-                                    } else if (!disabled) {
-                                      future.completeExceptionally(
-                                          new TableNotDisabledException(tableName));
-                                    } else {
-                                      completeConditionalOnFuture(
-                                          future,
-                                          restoreSnapshot(snapshotName, takeFailSafeSnapshot));
-                                    }
-                                  });
-                        }
-                      });
-            });
-    return future;
+    throw new UnsupportedOperationException("restoreSnapshot");
   }
 
   @Override
@@ -514,7 +476,8 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   private Function<List<SnapshotDescription>, Void> deleteSnapshotsFunc() {
     return snapshots -> {
-      snapshots.stream().forEach(desc -> deleteSnapshot(desc.getName()));
+      snapshots.stream()
+          .forEach(desc -> deleteSnapshot(SnapshotDescriptionUtil.getSnapshotId(desc.getName())));
       return null;
     };
   }
@@ -536,6 +499,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   @Override
   public CompletableFuture<Void> snapshot(String snapshotName, TableName tableName) {
+    Instant expireTime = Instant.now().plus(ttlSeconds, ChronoUnit.SECONDS);
     return CompletableFuture.supplyAsync(
             () -> {
               try {
@@ -549,6 +513,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
                 toCompletableFuture(
                     bigtableTableAdminClient.createBackupAsync(
                         CreateBackupRequest.of(c, snapshotName)
+                            .setExpireTime(expireTime)
                             .setSourceTableId(tableName.getNameAsString()))));
   }
 
@@ -607,20 +572,21 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     if (pattern.matcher("").matches()) {
       return CompletableFuture.completedFuture(ImmutableList.of());
     }
-    return listSnapshots().thenApply(r -> filter(r, d -> pattern.matcher(d.getName()).matches()));
+    return listSnapshots()
+        .thenApply(
+            r ->
+                filter(
+                    r,
+                    d ->
+                        pattern
+                            .matcher(SnapshotDescriptionUtil.getSnapshotId(d.getName()))
+                            .matches()));
   }
 
   @Override
   public CompletableFuture<List<SnapshotDescription>> listTableSnapshots(
       Pattern tableNamePattern, Pattern snapshotPattern) {
-    Preconditions.checkNotNull(tableNamePattern);
-    if (tableNamePattern.matcher("").matches()) {
-      return CompletableFuture.completedFuture(ImmutableList.of());
-    }
-
-    return listSnapshots(snapshotPattern)
-        .thenApply(
-            r -> filter(r, d -> tableNamePattern.matcher(d.getTableNameAsString()).matches()));
+    throw new UnsupportedOperationException("Unsupported - please use listSnapshots");
   }
 
   private static SnapshotDescription toSnapshotDescription(Snapshot snapshot) {
@@ -709,14 +675,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   @Override
   public CompletableFuture<List<SnapshotDescription>> listTableSnapshots(Pattern tableNamePattern) {
-    return listSnapshots()
-        .thenApply(
-            r ->
-                filter(
-                    r,
-                    d ->
-                        tableNamePattern == null
-                            || tableNamePattern.matcher(d.getTableNameAsString()).matches()));
+    throw new UnsupportedOperationException("Unsupported - please use listSnapshots");
   }
 
   @Override

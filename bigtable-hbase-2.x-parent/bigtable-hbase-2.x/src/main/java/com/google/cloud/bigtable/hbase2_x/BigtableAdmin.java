@@ -15,11 +15,15 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
+import com.google.cloud.bigtable.hbase.util.SnapshotDescriptionUtil;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
+import io.grpc.Status;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +34,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 import org.apache.hadoop.hbase.CacheEvictionStats;
@@ -130,7 +135,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
     List<SnapshotDescription> response = new ArrayList<>();
     for (SnapshotDescription description : listSnapshots()) {
-      if (pattern.matcher(description.getName()).matches()) {
+      if (pattern.matcher(SnapshotDescriptionUtil.getSnapshotId(description.getName())).matches()) {
         response.add(description);
       }
     }
@@ -141,13 +146,34 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public List<SnapshotDescription> listSnapshots() throws IOException {
     List<String> backups =
         Futures.getChecked(
-            tableAdminClientWrapper.listBackupsAsync(getBackupClusterName().toString()),
+            tableAdminClientWrapper.listBackupsAsync(getBackupClusterName().getClusterId()),
             IOException.class);
     List<SnapshotDescription> response = new ArrayList<>();
     for (String backup : backups) {
       response.add(new SnapshotDescription(backup));
     }
     return response;
+  }
+
+  @Override
+  public void deleteSnapshots(Pattern pattern) throws IOException {
+    if (pattern != null && !pattern.matcher("").matches()) {
+      List<ApiFuture<Void>> futures = new ArrayList<>();
+      for (SnapshotDescription description : listSnapshots(pattern)) {
+        futures.add(
+            tableAdminClientWrapper.deleteBackupAsync(
+                getClusterName().getClusterId(),
+                SnapshotDescriptionUtil.getSnapshotId(description.getName())));
+      }
+      try {
+        ApiFutures.allAsList(futures).get();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IOException("Interrupted while deleting snapshots");
+      } catch (ExecutionException e) {
+        throw Status.fromThrowable(e).asRuntimeException();
+      }
+    }
   }
 
   /**
@@ -299,23 +325,13 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public List<SnapshotDescription> listTableSnapshots(String tableName, String snapshotName)
       throws IOException {
-    return listTableSnapshots(Pattern.compile(tableName), Pattern.compile(snapshotName));
+    throw new UnsupportedOperationException("Unsupported - please use listSnapshots");
   }
 
   @Override
   public List<SnapshotDescription> listTableSnapshots(Pattern tableName, Pattern snapshotName)
       throws IOException {
-    if (tableName == null || tableName.matcher("").matches()) {
-      return ImmutableList.of();
-    }
-
-    List<SnapshotDescription> response = new ArrayList<>();
-    for (SnapshotDescription snapshot : listSnapshots(snapshotName)) {
-      if (tableName.matcher(snapshot.getTableNameAsString()).matches()) {
-        response.add(snapshot);
-      }
-    }
-    return response;
+    throw new UnsupportedOperationException("Unsupported - please use listSnapshots");
   }
 
   @Override

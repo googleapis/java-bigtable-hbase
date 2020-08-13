@@ -36,6 +36,7 @@ import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
+import com.google.cloud.bigtable.hbase.util.SnapshotDescriptionUtil;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
@@ -871,11 +872,11 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   protected Backup snapshotTable(String snapshotName, TableName tableName) throws IOException {
     CreateBackupRequest request =
-        CreateBackupRequest.of(getBackupClusterName().toString(), snapshotName)
+        CreateBackupRequest.of(getBackupClusterName().getClusterId(), snapshotName)
             .setSourceTableId(tableName.getNameAsString());
 
     int ttlSecs =
-        configuration.getInt(BigtableOptionsFactory.BIGTABLE_BACKUP_DEFAULT_TTL_SECS_KEY, -1);
+        configuration.getInt(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY, 86400);
 
     if (ttlSecs > 0) {
       Instant expireTime = Instant.now().plus(ttlSecs, ChronoUnit.SECONDS);
@@ -936,7 +937,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public void cloneSnapshot(String snapshotName, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
     RestoreTableRequest request =
-        RestoreTableRequest.of(getClusterName().toString(), snapshotName)
+        RestoreTableRequest.of(getClusterName().getClusterId(), snapshotName)
             .setTableId(tableName.getNameAsString());
     Futures.getChecked(tableAdminClientWrapper.restoreTableAsync(request), IOException.class);
   }
@@ -995,7 +996,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
       for (SnapshotDescription description : listSnapshots(pattern)) {
         futures.add(
             tableAdminClientWrapper.deleteBackupAsync(
-                getClusterName().getClusterId(), description.getName()));
+                getClusterName().getClusterId(),
+                SnapshotDescriptionUtil.getSnapshotId(description.getName())));
       }
       try {
         ApiFutures.allAsList(futures).get();
@@ -1024,10 +1026,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void deleteTableSnapshots(Pattern tableNamePattern, Pattern snapshotNamePattern)
       throws IOException {
-    for (SnapshotDescription snapshotDescription :
-        listTableSnapshots(tableNamePattern, snapshotNamePattern)) {
-      deleteSnapshot(snapshotDescription.getName());
-    }
+    throw new UnsupportedOperationException("Unsupported - please use deleteSnapshots");
   }
 
   // ------------- Unsupported snapshot methods.

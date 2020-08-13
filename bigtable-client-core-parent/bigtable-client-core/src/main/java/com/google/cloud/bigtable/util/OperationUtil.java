@@ -49,7 +49,7 @@ public class OperationUtil {
   }
 
   @InternalApi("For internal usage only")
-  public void waitForOperation(Operation operation, long timeout, TimeUnit timeUnit)
+  public Operation waitForOperation(Operation operation, long timeout, TimeUnit timeUnit)
       throws TimeoutException, IOException {
     GetOperationRequest request =
         GetOperationRequest.newBuilder().setName(operation.getName()).build();
@@ -68,7 +68,7 @@ public class OperationUtil {
       if (currentOperationState.getDone()) {
         switch (currentOperationState.getResultCase()) {
           case RESPONSE:
-            return;
+            return currentOperationState;
           case ERROR:
             throw StatusProto.toStatusRuntimeException(currentOperationState.getError());
           case RESULT_NOT_SET:

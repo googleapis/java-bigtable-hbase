@@ -23,6 +23,7 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import java.util.concurrent.Executor;
 
 /** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
@@ -39,5 +40,10 @@ public final class ApiFutureUtil {
   public static <F, T> ApiFuture<T> transformAndAdapt(
       ListenableFuture<F> listenableFuture, Function<F, T> transform) {
     return adapt(Futures.transform(listenableFuture, transform, MoreExecutors.directExecutor()));
+  }
+
+  public static <F, T> ApiFuture<T> transformAndAdapt(
+      ListenableFuture<F> listenableFuture, Function<F, T> transform, Executor executor) {
+    return adapt(Futures.transform(listenableFuture, transform, executor));
   }
 }

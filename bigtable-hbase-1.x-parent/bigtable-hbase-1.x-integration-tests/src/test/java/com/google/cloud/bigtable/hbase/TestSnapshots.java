@@ -16,56 +16,57 @@
 package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
-import org.junit.Test;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Before;
 
 public class TestSnapshots extends AbstractTestSnapshot {
 
-  @Test
-  public void testSnapshotWithSingleParam() throws IOException {
-    Exception actualError = null;
+  @Before
+  public void setUp() throws IOException {
     try (Admin admin = getConnection().getAdmin()) {
-      try {
-        admin.snapshot(null);
-      } catch (Exception e) {
-        actualError = e;
-      }
-      assertNotNull(actualError);
-      assertTrue(actualError instanceof NullPointerException);
-      actualError = null;
+      // Setup a prefix to avoid collisions between concurrent test runs
+      prefix = String.format("020%d", System.currentTimeMillis());
 
-      try {
-        admin.snapshot("", tableName, null);
-      } catch (Exception e) {
-        actualError = e;
+      // clean up stale backups
+      String stalePrefix =
+          String.format("020%d", System.currentTimeMillis() - TimeUnit.HOURS.toMillis(2));
+
+      for (SnapshotDescription snapshotDescription : admin.listSnapshots()) {
+        int i = snapshotDescription.getName().lastIndexOf("/");
+        String backupId = snapshotDescription.getName().substring(i + 1);
+        if (backupId.endsWith(TEST_BACKUP_SUFFIX) && stalePrefix.compareTo(backupId) > 0) {
+          LOG.info("Deleting old snapshot: " + backupId);
+          admin.deleteSnapshots(backupId);
+        }
       }
-      assertNotNull(actualError);
+      values = createAndPopulateTable(tableName);
     }
   }
 
   @Override
-  protected void createTable(TableName tableName) throws IOException {
+  protected void snapshot(String snapshotName, TableName tableName)
+      throws IOException, InterruptedException {
     try (Admin admin = getConnection().getAdmin()) {
-      HTableDescriptor descriptor = new HTableDescriptor(tableName);
-      descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
-      admin.createTable(descriptor);
-    }
-  }
-
-  @Override
-  protected void snapshot(String snapshotName, TableName tableName) throws IOException {
-    try (Admin admin = getConnection().getAdmin()) {
-      admin.snapshot(snapshotName, tableName);
+      createBackupAndWait(admin, snapshotName, tableName);
     }
   }
 
@@ -113,32 +114,9 @@ public class TestSnapshots extends AbstractTestSnapshot {
   }
 
   @Override
-  protected void deleteTableSnapshots(Pattern tableName, Pattern snapshotName) throws IOException {
-    try (Admin admin = getConnection().getAdmin()) {
-      admin.deleteTableSnapshots(tableName, snapshotName);
-    }
-  }
-
-  @Override
-  protected int listTableSnapshotsSize(String tableNameRegex, String snapshotNameRegex)
-      throws IOException {
-    try (Admin admin = getConnection().getAdmin()) {
-      return admin.listTableSnapshots(tableNameRegex, snapshotNameRegex).size();
-    }
-  }
-
-  @Override
   protected int listSnapshotsSize(Pattern pattern) throws IOException {
     try (Admin admin = getConnection().getAdmin()) {
       return admin.listSnapshots(pattern).size();
-    }
-  }
-
-  @Override
-  protected int listTableSnapshotsSize(Pattern tableNamePattern, Pattern snapshotNamePattern)
-      throws IOException {
-    try (Admin admin = getConnection().getAdmin()) {
-      return admin.listTableSnapshots(tableNamePattern, snapshotNamePattern).size();
     }
   }
 
@@ -149,10 +127,41 @@ public class TestSnapshots extends AbstractTestSnapshot {
     }
   }
 
-  @Override
-  protected int listTableSnapshotsSize(Pattern tableNamePattern) throws Exception {
+  protected Map<String, Long> createAndPopulateTable(TableName tableName) throws IOException {
     try (Admin admin = getConnection().getAdmin()) {
-      return admin.listTableSnapshots(tableNamePattern, Pattern.compile(".*")).size();
+      HTableDescriptor descriptor = new HTableDescriptor(tableName);
+      descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
+      admin.createTable(descriptor);
+
+      Map<String, Long> values = new HashMap<>();
+      try (Table table = getConnection().getTable(tableName)) {
+        values.clear();
+        List<Put> puts = new ArrayList<>();
+        for (long i = 0; i < 10; i++) {
+          final UUID rowKey = UUID.randomUUID();
+          byte[] row = Bytes.toBytes(rowKey.toString());
+          values.put(rowKey.toString(), i);
+          puts.add(new Put(row).addColumn(COLUMN_FAMILY, QUALIFIER, Bytes.toBytes(i)));
+        }
+        table.put(puts);
+      }
+      return values;
     }
+  }
+
+  protected void createBackupAndWait(Admin admin, String backupId, TableName tableName)
+      throws InterruptedException, IOException {
+    admin.snapshot(backupId, tableName);
+    for (int i = 0; i < BACKOFF_DURATION.length; i++) {
+      List<SnapshotDescription> snapshotDescriptions =
+          admin.listSnapshots(Pattern.compile(backupId));
+      if (!snapshotDescriptions.isEmpty()) {
+        return;
+      }
+
+      Thread.sleep(BACKOFF_DURATION[i] * 1000);
+    }
+
+    fail("Creating Backup Timeout");
   }
 }

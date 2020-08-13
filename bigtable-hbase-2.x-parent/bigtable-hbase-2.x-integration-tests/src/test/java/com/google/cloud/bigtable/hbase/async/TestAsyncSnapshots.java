@@ -16,13 +16,20 @@
 
 package com.google.cloud.bigtable.hbase.async;
 
+import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.google.cloud.bigtable.hbase.AbstractTestSnapshot;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -30,15 +37,41 @@ import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AsyncAdmin;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.SnapshotDescription;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class TestAsyncSnapshots extends AbstractTestSnapshot {
+
+  @Before
+  public void setUp() throws ExecutionException, InterruptedException, IOException {
+    // Setup a prefix to avoid collisions between concurrent test runs
+    prefix = String.format("020%d", System.currentTimeMillis());
+
+    // clean up stale backups
+    String stalePrefix =
+        String.format("020%d", System.currentTimeMillis() - TimeUnit.HOURS.toMillis(2));
+
+    for (SnapshotDescription snapshotDescription : getAsyncAdmin().listSnapshots().get()) {
+      int i = snapshotDescription.getName().lastIndexOf("/");
+      String backupId = snapshotDescription.getName().substring(i + 1);
+      if (backupId.endsWith(TEST_BACKUP_SUFFIX) && stalePrefix.compareTo(backupId) > 0) {
+        LOG.info("Deleting old snapshot: " + backupId);
+        getAsyncAdmin().deleteSnapshots(Pattern.compile(backupId));
+      }
+    }
+
+    values = createAndPopulateTable(tableName);
+  }
 
   private AsyncAdmin getAsyncAdmin() throws InterruptedException, ExecutionException {
     return AbstractAsyncTest.getAsyncConnection().getAdmin();
@@ -68,29 +101,6 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
   }
 
   @Test
-  public void testListTableSnapshotsWithNullAndEmptyString() throws IOException {
-    Exception actualError = null;
-    try {
-      listTableSnapshotsSize(null, "");
-    } catch (Exception ex) {
-      actualError = ex;
-    }
-    assertNotNull(actualError);
-    assertTrue(actualError instanceof NullPointerException);
-    actualError = null;
-
-    try {
-      listTableSnapshotsSize((Pattern) null, null);
-    } catch (Exception ex) {
-      actualError = ex;
-    }
-    assertNotNull(actualError);
-    assertTrue(actualError instanceof NullPointerException);
-
-    assertEquals(0, listTableSnapshotsSize("", ""));
-  }
-
-  @Test
   public void testDeleteSnapshotWithEmptyString() throws Exception {
     Exception actualError = null;
     try {
@@ -103,27 +113,8 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
     assertTrue(actualError instanceof NullPointerException);
     actualError = null;
 
-    try {
-      // NPE is expected with AsyncAdmin.
-      deleteTableSnapshots(null, null);
-    } catch (Exception ex) {
-      actualError = ex;
-    }
-    assertNotNull(actualError);
-
     // No snapshot matches hence no exception should be thrown
     deleteSnapshots(Pattern.compile(""));
-
-    deleteTableSnapshots(Pattern.compile(""), Pattern.compile(""));
-  }
-
-  @Override
-  protected void createTable(TableName tableName) throws IOException {
-    try {
-      getAsyncAdmin().createTable(createDescriptor(tableName)).get();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new IOException("Error while creating table: " + e.getCause());
-    }
   }
 
   private TableDescriptor createDescriptor(TableName tableName) {
@@ -136,16 +127,69 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
   @Override
   protected void snapshot(String snapshotName, TableName tableName) throws IOException {
     try {
-      getAsyncAdmin().snapshot(snapshotName, tableName).get();
+      createBackupAndWait(snapshotName, tableName);
     } catch (InterruptedException | ExecutionException e) {
       throw new IOException("Error while creating snapshot: " + e.getCause());
     }
   }
 
+  protected Map<String, Long> createAndPopulateTable(TableName tableName) throws IOException {
+    try {
+      getAsyncAdmin().createTable(createDescriptor(tableName)).get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException("Error while creating table: " + e.getCause());
+    }
+
+    Map<String, Long> values = new HashMap<>();
+    try (Table table = getConnection().getTable(tableName)) {
+      List<Put> puts = new ArrayList<>();
+      for (long i = 0; i < 10; i++) {
+        final UUID rowKey = UUID.randomUUID();
+        byte[] row = Bytes.toBytes(rowKey.toString());
+        values.put(rowKey.toString(), i);
+        puts.add(new Put(row).addColumn(COLUMN_FAMILY, QUALIFIER, Bytes.toBytes(i)));
+      }
+      table.put(puts);
+    }
+    return values;
+  }
+
+  protected void createBackupAndWait(String backupId, TableName tableName)
+      throws InterruptedException, ExecutionException {
+    getAsyncAdmin().snapshot(backupId, tableName).get();
+    for (int i = 0; i < BACKOFF_DURATION.length; i++) {
+      List<SnapshotDescription> snapshotDescriptions =
+          getAsyncAdmin().listSnapshots(Pattern.compile(backupId)).get();
+      if (snapshotDescriptions.isEmpty()) {
+        return;
+      }
+
+      Thread.sleep(BACKOFF_DURATION[i] * 1000);
+    }
+
+    fail("Creating Backup Timeout");
+  }
+
+  protected void deleteBackupAndWait(String backupId)
+      throws InterruptedException, ExecutionException {
+    getAsyncAdmin().deleteSnapshot(backupId).get();
+    for (int i = 0; i < BACKOFF_DURATION.length; i++) {
+      List<SnapshotDescription> snapshotDescriptions =
+          getAsyncAdmin().listSnapshots(Pattern.compile(backupId)).get();
+      if (!snapshotDescriptions.isEmpty()) {
+        return;
+      }
+
+      Thread.sleep(BACKOFF_DURATION[i] * 1000);
+    }
+
+    fail("Creating Backup Timeout");
+  }
+
   @Override
   protected void deleteSnapshot(String snapshotName) throws IOException {
     try {
-      getAsyncAdmin().deleteSnapshot(snapshotName).get();
+      deleteBackupAndWait(snapshotName);
     } catch (InterruptedException | ExecutionException e) {
       throw new IOException("Error while deleting snapshot: " + e.getCause());
     }
@@ -189,33 +233,12 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
   }
 
   @Override
-  protected void deleteTableSnapshots(Pattern tableName, Pattern snapshotRegEx) throws IOException {
-    try {
-      getAsyncAdmin().deleteTableSnapshots(tableName, snapshotRegEx).get();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new IOException("Error while deleting snapshots: " + e.getCause());
-    }
-  }
-
-  @Override
   protected int listSnapshotsSize(String regEx) throws IOException {
     try {
       Pattern pattern = Pattern.compile(regEx);
       return getAsyncAdmin().listSnapshots(pattern).get().size();
     } catch (InterruptedException | ExecutionException e) {
       throw new IOException("Error while listing snapshots size: " + e.getCause());
-    }
-  }
-
-  @Override
-  protected int listTableSnapshotsSize(String tableNameRegex, String snapshotNameRegex)
-      throws IOException {
-    try {
-      Pattern tableNamePattern = Pattern.compile(tableNameRegex);
-      Pattern snapshotNamePattern = Pattern.compile(snapshotNameRegex);
-      return getAsyncAdmin().listTableSnapshots(tableNamePattern, snapshotNamePattern).get().size();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new IOException("Error while listing table snapshot size: " + e.getCause());
     }
   }
 
@@ -229,30 +252,11 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
   }
 
   @Override
-  protected int listTableSnapshotsSize(Pattern tableNamePattern, Pattern snapshotNamePattern)
-      throws IOException {
-    try {
-      return getAsyncAdmin().listTableSnapshots(tableNamePattern, snapshotNamePattern).get().size();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new IOException("Error while listing table snapshot size: " + e.getCause());
-    }
-  }
-
-  @Override
   protected void deleteTable(TableName tableName) throws IOException {
     try {
       getAsyncAdmin().deleteTable(tableName).get();
     } catch (InterruptedException | ExecutionException e) {
       throw new IOException("Error while deleting table: " + e.getCause());
-    }
-  }
-
-  @Override
-  protected int listTableSnapshotsSize(Pattern tableNamePattern) throws Exception {
-    try {
-      return getAsyncAdmin().listTableSnapshots(tableNamePattern).get(60, TimeUnit.SECONDS).size();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new IOException("Error while listing table snapshots: " + e.getCause());
     }
   }
 }

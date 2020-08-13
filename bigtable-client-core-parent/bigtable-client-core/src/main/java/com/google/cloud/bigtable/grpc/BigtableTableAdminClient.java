@@ -285,7 +285,7 @@ public interface BigtableTableAdminClient {
    * @throws IOException
    * @throws TimeoutException If the timeout is exceeded.
    */
-  void waitForOperation(Operation operation) throws TimeoutException, IOException;
+  Operation waitForOperation(Operation operation) throws TimeoutException, IOException;
 
   /**
    * Waits for the long running operation to complete by polling with exponential backoff.
@@ -296,6 +296,6 @@ public interface BigtableTableAdminClient {
    * @throws IOException
    * @throws TimeoutException If the timeout is exceeded.
    */
-  void waitForOperation(Operation operation, long timeout, TimeUnit timeUnit)
+  Operation waitForOperation(Operation operation, long timeout, TimeUnit timeUnit)
       throws IOException, TimeoutException;
 }

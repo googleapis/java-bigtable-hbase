@@ -372,6 +372,7 @@ public class TestBigtableTableAdminClientWrapper {
                         .setSourceTable(TABLE_NAME)
                         .build()))
             .build();
+    when(mockAdminClient.waitForOperation(op)).thenReturn(op);
     when(mockAdminClient.createBackupAsync(requestProto)).thenReturn(Futures.immediateFuture(op));
     Future<Backup> actualResponse = clientWrapper.createBackupAsync(request);
     assertEquals(BACKUP_ID, actualResponse.get().getId());
@@ -458,6 +459,7 @@ public class TestBigtableTableAdminClientWrapper {
                 Any.pack(
                     com.google.bigtable.admin.v2.Table.newBuilder().setName(TABLE_NAME).build()))
             .build();
+    when(mockAdminClient.waitForOperation(op)).thenReturn(op);
     when(mockAdminClient.restoreTableAsync(requestProto)).thenReturn(Futures.immediateFuture(op));
     Future<RestoredTableResult> actualResponse = clientWrapper.restoreTableAsync(request);
     assertEquals(TABLE_ID, actualResponse.get().getTable().getId());

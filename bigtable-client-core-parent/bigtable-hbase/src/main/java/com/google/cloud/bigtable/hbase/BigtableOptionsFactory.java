@@ -72,12 +72,6 @@ public class BigtableOptionsFactory {
 
   /** Constant <code>BIGTABLE_BACKUP_CLUSTER_ID_KEY="google.bigtable.backup.cluster.id"</code> */
   public static final String BIGTABLE_BACKUP_CLUSTER_ID_KEY = "google.bigtable.backup.cluster.id";
-  /**
-   * Constant <code>
-   * BIGTABLE_BACKUP_DEFAULT_TTL_SECS_KEY="google.bigtable.backup.default.ttl.secs"</code>
-   */
-  public static final String BIGTABLE_BACKUP_DEFAULT_TTL_SECS_KEY =
-      "google.bigtable.backup.default.ttl.secs";
 
   /**
    * Constant <code>BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY="google.bigtable.snapshot.cluster.id"</code>
@@ -86,7 +80,8 @@ public class BigtableOptionsFactory {
       "google.bigtable.snapshot.cluster.id";
   /**
    * Constant <code>
-   * BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY="google.bigtable.snapshot.default.ttl.secs"</code>
+   * BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY="google.bigtable.snapshot.default.ttl.secs"</code> Will
+   * default to 24 hrs if not set
    */
   public static final String BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY =
       "google.bigtable.snapshot.default.ttl.secs";

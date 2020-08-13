@@ -389,15 +389,15 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
 
   /** {@inheritDoc} */
   @Override
-  public void waitForOperation(Operation operation) throws IOException, TimeoutException {
-    operationUtil.waitForOperation(operation, 10, TimeUnit.MINUTES);
+  public Operation waitForOperation(Operation operation) throws IOException, TimeoutException {
+    return operationUtil.waitForOperation(operation, 10, TimeUnit.MINUTES);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void waitForOperation(Operation operation, long timeout, TimeUnit timeUnit)
+  public Operation waitForOperation(Operation operation, long timeout, TimeUnit timeUnit)
       throws TimeoutException, IOException {
-    operationUtil.waitForOperation(operation, timeout, timeUnit);
+    return operationUtil.waitForOperation(operation, timeout, timeUnit);
   }
 
   @VisibleForTesting

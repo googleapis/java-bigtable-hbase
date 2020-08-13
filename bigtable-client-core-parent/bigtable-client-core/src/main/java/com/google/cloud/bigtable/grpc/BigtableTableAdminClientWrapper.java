@@ -51,9 +51,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.longrunning.Operation;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
-import com.google.protobuf.InvalidProtocolBufferException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 import javax.annotation.Nonnull;
 
 /**
@@ -327,9 +328,12 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
           @Override
           public Backup apply(Operation operation) {
             try {
+              Operation completedOperation = delegate.waitForOperation(operation);
               return Backup.fromProto(
-                  operation.getResponse().unpack(com.google.bigtable.admin.v2.Backup.class));
-            } catch (InvalidProtocolBufferException e) {
+                  completedOperation
+                      .getResponse()
+                      .unpack(com.google.bigtable.admin.v2.Backup.class));
+            } catch (TimeoutException | IOException e) {
               throw new RuntimeException(e);
             }
           }
@@ -408,14 +412,17 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
           @Override
           public RestoredTableResult apply(Operation operation) {
             try {
+              Operation completedOperation = delegate.waitForOperation(operation);
               return new RestoredTableResult(
                   Table.fromProto(
-                      operation.getResponse().unpack(com.google.bigtable.admin.v2.Table.class)),
+                      completedOperation
+                          .getResponse()
+                          .unpack(com.google.bigtable.admin.v2.Table.class)),
                   operation
                       .getMetadata()
                       .unpack(com.google.bigtable.admin.v2.RestoreTableMetadata.class)
                       .getOptimizeTableOperationName());
-            } catch (InvalidProtocolBufferException e) {
+            } catch (TimeoutException | IOException e) {
               throw new RuntimeException(e);
             }
           }
