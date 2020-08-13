@@ -35,7 +35,6 @@ import com.google.cloud.bigtable.hbase.util.SnapshotDescriptionUtil;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.Status;
 import java.io.IOException;
 import java.util.Collection;
@@ -529,14 +528,10 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
             })
         .thenAccept(
             c -> {
-              try {
-                toCompletableFuture(
-                    bigtableTableAdminClient.restoreTableAsync(
-                        RestoreTableRequest.of(c, snapshotName)
-                            .setTableId(tableName.getNameAsString())));
-              } catch (InvalidProtocolBufferException e) {
-                throw new RuntimeException(e);
-              }
+              toCompletableFuture(
+                  bigtableTableAdminClient.restoreTableAsync(
+                      RestoreTableRequest.of(c, snapshotName)
+                          .setTableId(tableName.getNameAsString())));
             });
   }
 

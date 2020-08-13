@@ -54,7 +54,10 @@ import com.google.protobuf.Empty;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import javax.annotation.Nonnull;
 
 /**
@@ -70,6 +73,7 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
 
   private final BigtableTableAdminClient delegate;
   private final BigtableInstanceName instanceName;
+  private final ExecutorService batchThreadPool;
 
   public BigtableTableAdminClientWrapper(
       @Nonnull BigtableTableAdminClient adminClient, @Nonnull BigtableOptions options) {
@@ -77,6 +81,7 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
     Preconditions.checkNotNull(options);
     this.delegate = adminClient;
     this.instanceName = options.getInstanceName();
+    batchThreadPool = BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool();
   }
 
   /** {@inheritDoc} */
@@ -321,23 +326,34 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
 
   @Override
   public ApiFuture<Backup> createBackupAsync(CreateBackupRequest request) {
-    return ApiFutureUtil.transformAndAdapt(
+    ListenableFuture<Operation> backupAsync =
         delegate.createBackupAsync(
-            request.toProto(instanceName.getProjectId(), instanceName.getInstanceId())),
+            request.toProto(instanceName.getProjectId(), instanceName.getInstanceId()));
+    Function<Operation, Backup> function =
         new Function<Operation, Backup>() {
           @Override
-          public Backup apply(Operation operation) {
+          public Backup apply(final Operation operation) {
             try {
-              Operation completedOperation = delegate.waitForOperation(operation);
+              Future<Operation> operationFuture =
+                  batchThreadPool.submit(
+                      new Callable<Operation>() {
+                        @Override
+                        public Operation call() throws Exception {
+                          return delegate.waitForOperation(operation);
+                        }
+                      });
+
               return Backup.fromProto(
-                  completedOperation
+                  operationFuture
+                      .get()
                       .getResponse()
                       .unpack(com.google.bigtable.admin.v2.Backup.class));
-            } catch (TimeoutException | IOException e) {
+            } catch (IOException | InterruptedException | ExecutionException e) {
               throw new IllegalStateException(e);
             }
           }
-        });
+        };
+    return ApiFutureUtil.transformAndAdapt(backupAsync, function);
   }
 
   @Override
@@ -410,19 +426,28 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
             request.toProto(instanceName.getProjectId(), instanceName.getInstanceId())),
         new Function<Operation, RestoredTableResult>() {
           @Override
-          public RestoredTableResult apply(Operation operation) {
+          public RestoredTableResult apply(final Operation operation) {
             try {
-              Operation completedOperation = delegate.waitForOperation(operation);
+              Future<Operation> operationFuture =
+                  batchThreadPool.submit(
+                      new Callable<Operation>() {
+                        @Override
+                        public Operation call() throws Exception {
+                          return delegate.waitForOperation(operation);
+                        }
+                      });
+
               return new RestoredTableResult(
                   Table.fromProto(
-                      completedOperation
+                      operationFuture
+                          .get()
                           .getResponse()
                           .unpack(com.google.bigtable.admin.v2.Table.class)),
                   operation
                       .getMetadata()
                       .unpack(com.google.bigtable.admin.v2.RestoreTableMetadata.class)
                       .getOptimizeTableOperationName());
-            } catch (TimeoutException | IOException e) {
+            } catch (IOException | InterruptedException | ExecutionException e) {
               throw new IllegalStateException(e);
             }
           }
