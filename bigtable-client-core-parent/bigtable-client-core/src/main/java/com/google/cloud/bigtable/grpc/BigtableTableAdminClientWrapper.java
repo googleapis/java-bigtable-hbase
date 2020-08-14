@@ -33,6 +33,7 @@ import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.ListTablesResponse;
 import com.google.bigtable.admin.v2.Snapshot;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
+import com.google.cloud.bigtable.admin.v2.internal.NameUtil;
 import com.google.cloud.bigtable.admin.v2.models.Backup;
 import com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
@@ -397,7 +398,7 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
           public List<String> apply(ListBackupsResponse response) {
             List<String> backups = new ArrayList<>();
             for (com.google.bigtable.admin.v2.Backup backup : response.getBackupsList()) {
-              backups.add(backup.getName());
+              backups.add(NameUtil.extractBackupIdFromBackupName(backup.getName()));
             }
             return backups;
           }

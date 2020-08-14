@@ -16,6 +16,8 @@
 package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
@@ -37,6 +39,7 @@ import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptio
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
+import org.junit.Test;
 
 public class TestSnapshots extends AbstractTestSnapshot {
 
@@ -59,6 +62,27 @@ public class TestSnapshots extends AbstractTestSnapshot {
         }
       }
       values = createAndPopulateTable(tableName);
+    }
+  }
+
+  @Test
+  public void listSnapshots() throws IOException, InterruptedException {
+    String snapshot1 = generateId("snapshot-1");
+    snapshot(snapshot1, tableName);
+
+    String snapshot2 = generateId("snapshot-2");
+    snapshot(snapshot2, tableName);
+
+    try (Admin admin = getConnection().getAdmin()) {
+      List<SnapshotDescription> snapshotDescriptions = admin.listSnapshots();
+      List<String> descStrings = new ArrayList<>();
+      for (SnapshotDescription snapshotDescription : snapshotDescriptions) {
+        descStrings.add(snapshotDescription.getName());
+      }
+      assertThat(descStrings, hasItems(snapshot1, snapshot2));
+    } finally {
+      deleteSnapshot(snapshot1);
+      deleteSnapshot(snapshot2);
     }
   }
 

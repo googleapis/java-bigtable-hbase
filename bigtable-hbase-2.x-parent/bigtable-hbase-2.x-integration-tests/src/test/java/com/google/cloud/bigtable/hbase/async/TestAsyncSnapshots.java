@@ -17,6 +17,8 @@
 package com.google.cloud.bigtable.hbase.async;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -98,6 +100,26 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
     assertTrue(actualError instanceof NullPointerException);
 
     assertEquals(0, listSnapshotsSize(""));
+  }
+
+  @Test
+  public void listSnapshots() throws IOException, InterruptedException, ExecutionException {
+    String snapshot1 = generateId("snapshot-1");
+    snapshot(snapshot1, tableName);
+
+    String snapshot2 = generateId("snapshot-2");
+    snapshot(snapshot2, tableName);
+    try {
+      List<SnapshotDescription> snapshotDescriptions = getAsyncAdmin().listSnapshots().get();
+      List<String> descStrings = new ArrayList<>();
+      for (SnapshotDescription snapshotDescription : snapshotDescriptions) {
+        descStrings.add(snapshotDescription.getName());
+      }
+      assertThat(descStrings, hasItems(snapshot1, snapshot2));
+    } finally {
+      deleteSnapshot(snapshot1);
+      deleteSnapshot(snapshot2);
+    }
   }
 
   private TableDescriptor createDescriptor(TableName tableName) {

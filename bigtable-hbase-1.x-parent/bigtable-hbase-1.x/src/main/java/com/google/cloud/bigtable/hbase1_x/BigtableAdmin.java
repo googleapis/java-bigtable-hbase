@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase1_x;
 
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.hbase.util.SnapshotDescriptionUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
@@ -171,7 +170,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
     List<HBaseProtos.SnapshotDescription> response = new ArrayList<>();
     for (HBaseProtos.SnapshotDescription description : listSnapshots()) {
-      if (pattern.matcher(SnapshotDescriptionUtil.getSnapshotId(description.getName())).matches()) {
+      if (pattern.matcher(description.getName()).matches()) {
         response.add(description);
       }
     }

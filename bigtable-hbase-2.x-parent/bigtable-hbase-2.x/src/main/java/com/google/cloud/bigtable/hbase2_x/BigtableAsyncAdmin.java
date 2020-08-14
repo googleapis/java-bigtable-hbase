@@ -31,7 +31,6 @@ import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
-import com.google.cloud.bigtable.hbase.util.SnapshotDescriptionUtil;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -559,15 +558,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     if (pattern.matcher("").matches()) {
       return CompletableFuture.completedFuture(ImmutableList.of());
     }
-    return listSnapshots()
-        .thenApply(
-            r ->
-                filter(
-                    r,
-                    d ->
-                        pattern
-                            .matcher(SnapshotDescriptionUtil.getSnapshotId(d.getName()))
-                            .matches()));
+    return listSnapshots().thenApply(r -> filter(r, d -> pattern.matcher(d.getName()).matches()));
   }
 
   @Override

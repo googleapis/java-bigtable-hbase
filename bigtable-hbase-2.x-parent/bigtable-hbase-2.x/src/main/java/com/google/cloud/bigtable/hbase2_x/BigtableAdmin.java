@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase2_x;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
-import com.google.cloud.bigtable.hbase.util.SnapshotDescriptionUtil;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
@@ -131,7 +130,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
     List<SnapshotDescription> response = new ArrayList<>();
     for (SnapshotDescription description : listSnapshots()) {
-      if (pattern.matcher(SnapshotDescriptionUtil.getSnapshotId(description.getName())).matches()) {
+      if (pattern.matcher(description.getName()).matches()) {
         response.add(description);
       }
     }
