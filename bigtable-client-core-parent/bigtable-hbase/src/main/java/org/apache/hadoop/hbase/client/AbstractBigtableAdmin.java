@@ -36,7 +36,6 @@ import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
-import com.google.cloud.bigtable.hbase.util.SnapshotDescriptionUtil;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
@@ -53,7 +52,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.hadoop.conf.Configuration;
@@ -71,7 +69,6 @@ import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
-import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.regionserver.wal.FailedLogCloseException;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
@@ -977,42 +974,14 @@ public abstract class AbstractBigtableAdmin implements Admin {
         tableAdminClientWrapper.deleteBackupAsync(getClusterName().getClusterId(), snapshotName));
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>The snapshots will be deleted serially and the first failure will prevent the deletion of
-   * the remaining snapshots.
-   */
   @Override
   public void deleteSnapshots(String regex) throws IOException {
-    deleteSnapshots(Pattern.compile(regex));
+    throw new UnsupportedOperationException("use deleteSnapshot instead");
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>The snapshots will be deleted serially and the first failure will prevent the deletion of
-   * the remaining snapshots.
-   */
   @Override
   public void deleteSnapshots(Pattern pattern) throws IOException {
-    if (pattern != null && !pattern.matcher("").matches()) {
-      List<ApiFuture<Void>> futures = new ArrayList<>();
-      for (SnapshotDescription description : listSnapshots(pattern)) {
-        futures.add(
-            tableAdminClientWrapper.deleteBackupAsync(
-                getClusterName().getClusterId(),
-                SnapshotDescriptionUtil.getSnapshotId(description.getName())));
-      }
-      try {
-        ApiFutures.allAsList(futures).get();
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw new IOException("Interrupted while deleting snapshots");
-      } catch (ExecutionException e) {
-        throw Status.fromThrowable(e).asRuntimeException();
-      }
-    }
+    throw new UnsupportedOperationException("use deleteSnapshot instead");
   }
 
   /** {@inheritDoc} */

@@ -66,7 +66,7 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
       String backupId = snapshotDescription.getName().substring(i + 1);
       if (backupId.endsWith(TEST_BACKUP_SUFFIX) && stalePrefix.compareTo(backupId) > 0) {
         LOG.info("Deleting old snapshot: " + backupId);
-        getAsyncAdmin().deleteSnapshots(Pattern.compile(backupId));
+        getAsyncAdmin().deleteSnapshot(backupId);
       }
     }
 
@@ -98,23 +98,6 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
     assertTrue(actualError instanceof NullPointerException);
 
     assertEquals(0, listSnapshotsSize(""));
-  }
-
-  @Test
-  public void testDeleteSnapshotWithEmptyString() throws Exception {
-    Exception actualError = null;
-    try {
-      // NPE is expected with AsyncAdmin.
-      deleteSnapshots(null);
-    } catch (Exception ex) {
-      actualError = ex;
-    }
-    assertNotNull(actualError);
-    assertTrue(actualError instanceof NullPointerException);
-    actualError = null;
-
-    // No snapshot matches hence no exception should be thrown
-    deleteSnapshots(Pattern.compile(""));
   }
 
   private TableDescriptor createDescriptor(TableName tableName) {
@@ -160,7 +143,7 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
     for (int i = 0; i < BACKOFF_DURATION.length; i++) {
       List<SnapshotDescription> snapshotDescriptions =
           getAsyncAdmin().listSnapshots(Pattern.compile(backupId)).get();
-      if (snapshotDescriptions.isEmpty()) {
+      if (!snapshotDescriptions.isEmpty()) {
         return;
       }
 
@@ -176,7 +159,7 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
     for (int i = 0; i < BACKOFF_DURATION.length; i++) {
       List<SnapshotDescription> snapshotDescriptions =
           getAsyncAdmin().listSnapshots(Pattern.compile(backupId)).get();
-      if (!snapshotDescriptions.isEmpty()) {
+      if (snapshotDescriptions.isEmpty()) {
         return;
       }
 
@@ -224,19 +207,19 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
   }
 
   @Override
-  protected void deleteSnapshots(Pattern pattern) throws IOException {
-    try {
-      getAsyncAdmin().deleteSnapshots(pattern).get();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new IOException("Error while deleting snapshots: " + e.getCause());
-    }
-  }
-
-  @Override
   protected int listSnapshotsSize(String regEx) throws IOException {
     try {
       Pattern pattern = Pattern.compile(regEx);
       return getAsyncAdmin().listSnapshots(pattern).get().size();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException("Error while listing snapshots size: " + e.getCause());
+    }
+  }
+
+  @Override
+  protected int listSnapshotsSize() throws IOException {
+    try {
+      return getAsyncAdmin().listSnapshots().get().size();
     } catch (InterruptedException | ExecutionException e) {
       throw new IOException("Error while listing snapshots size: " + e.getCause());
     }

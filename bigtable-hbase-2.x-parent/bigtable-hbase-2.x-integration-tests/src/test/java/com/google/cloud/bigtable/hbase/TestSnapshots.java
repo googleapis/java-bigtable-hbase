@@ -35,7 +35,9 @@ import org.apache.hadoop.hbase.client.SnapshotDescription;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 
 public class TestSnapshots extends AbstractTestSnapshot {
 
@@ -54,10 +56,23 @@ public class TestSnapshots extends AbstractTestSnapshot {
         String backupId = snapshotDescription.getName().substring(i + 1);
         if (backupId.endsWith(TEST_BACKUP_SUFFIX) && stalePrefix.compareTo(backupId) > 0) {
           LOG.info("Deleting old snapshot: " + backupId);
-          admin.deleteSnapshots(backupId);
+          admin.deleteSnapshot(backupId);
         }
       }
       values = createAndPopulateTable(tableName);
+    }
+  }
+
+  @Test
+  public void testSnapshotDescription() throws IOException, InterruptedException {
+    String snapshotName = generateId("test-snapshot");
+    try {
+      SnapshotDescription snapshotDescription = new SnapshotDescription(snapshotName, tableName);
+      snapshot(snapshotDescription);
+      Assert.assertEquals(1, listSnapshotsSize(snapshotName));
+    } finally {
+      deleteSnapshot(snapshotName);
+      Assert.assertEquals(0, listSnapshotsSize(snapshotName));
     }
   }
 
@@ -69,6 +84,20 @@ public class TestSnapshots extends AbstractTestSnapshot {
     }
   }
 
+  protected void snapshot(SnapshotDescription snapshotDescription)
+      throws IOException, InterruptedException {
+    try (Admin admin = getConnection().getAdmin()) {
+      createBackupAndWait(admin, snapshotDescription);
+    }
+  }
+
+  @Override
+  protected int listSnapshotsSize() throws IOException {
+    try (Admin admin = getConnection().getAdmin()) {
+      return admin.listSnapshots().size();
+    }
+  }
+
   @Override
   protected int listSnapshotsSize(String regEx) throws IOException {
     try (Admin admin = getConnection().getAdmin()) {
@@ -77,9 +106,9 @@ public class TestSnapshots extends AbstractTestSnapshot {
   }
 
   @Override
-  protected void deleteSnapshot(String snapshotName) throws IOException {
+  protected void deleteSnapshot(String snapshotName) throws IOException, InterruptedException {
     try (Admin admin = getConnection().getAdmin()) {
-      admin.deleteSnapshot(snapshotName);
+      deleteBackupAndWait(admin, snapshotName);
     }
   }
 
@@ -102,13 +131,6 @@ public class TestSnapshots extends AbstractTestSnapshot {
       throws IOException, TableExistsException, RestoreSnapshotException {
     try (Admin admin = getConnection().getAdmin()) {
       admin.cloneSnapshot(snapshotName, tableName);
-    }
-  }
-
-  @Override
-  protected void deleteSnapshots(Pattern pattern) throws IOException {
-    try (Admin admin = getConnection().getAdmin()) {
-      admin.deleteSnapshots(pattern);
     }
   }
 
@@ -154,6 +176,38 @@ public class TestSnapshots extends AbstractTestSnapshot {
       List<SnapshotDescription> snapshotDescriptions =
           admin.listSnapshots(Pattern.compile(backupId));
       if (!snapshotDescriptions.isEmpty()) {
+        return;
+      }
+
+      Thread.sleep(BACKOFF_DURATION[i] * 1000);
+    }
+
+    fail("Creating Backup Timeout");
+  }
+
+  protected void createBackupAndWait(Admin admin, SnapshotDescription snapshotDescription)
+      throws InterruptedException, IOException {
+    admin.snapshot(snapshotDescription);
+    for (int i = 0; i < BACKOFF_DURATION.length; i++) {
+      List<SnapshotDescription> snapshotDescriptions =
+          admin.listSnapshots(Pattern.compile(snapshotDescription.getName()));
+      if (!snapshotDescriptions.isEmpty()) {
+        return;
+      }
+
+      Thread.sleep(BACKOFF_DURATION[i] * 1000);
+    }
+
+    fail("Creating Backup Timeout");
+  }
+
+  protected void deleteBackupAndWait(Admin admin, String backupId)
+      throws InterruptedException, IOException {
+    admin.deleteSnapshot(backupId);
+    for (int i = 0; i < BACKOFF_DURATION.length; i++) {
+      List<SnapshotDescription> snapshotDescriptions =
+          admin.listSnapshots(Pattern.compile(backupId));
+      if (snapshotDescriptions.isEmpty()) {
         return;
       }
 

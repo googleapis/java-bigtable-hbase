@@ -59,9 +59,6 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
 
   @After
   public void cleanup() {
-    if (sharedTestEnv.isBigtable()) {
-      return;
-    }
     try {
       delete(tableName);
     } catch (Exception e) {
@@ -78,9 +75,6 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
 
   @Test
   public void testSnapshot() throws IOException, InterruptedException, ExecutionException {
-    if (sharedTestEnv.isBigtable()) {
-      return;
-    }
     String snapshotName = generateId("test-snapshot");
     try {
       snapshot(snapshotName, tableName);
@@ -94,28 +88,27 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
   @Test
   public void testListAndDeleteSnapshots()
       throws IOException, InterruptedException, ExecutionException {
-    if (sharedTestEnv.isBigtable()) {
-      return;
-    }
     String snapshotName = generateId("list-1");
     String snapshotName2 = generateId("list-2");
-    final Pattern allSnapshots = Pattern.compile(snapshotName + ".*");
+    Pattern allSnapshots = Pattern.compile(prefix + ".*" + "list" + ".*");
 
     try {
       snapshot(snapshotName, tableName);
-      snapshot(snapshotName2, tableName);
-
-      Assert.assertEquals(2, listSnapshotsSize(allSnapshots));
       Assert.assertEquals(1, listSnapshotsSize(Pattern.compile(snapshotName)));
+
+      snapshot(snapshotName2, tableName);
+      Assert.assertEquals(2, listSnapshotsSize(allSnapshots));
+
       Assert.assertEquals(1, listSnapshotsSize(Pattern.compile(snapshotName2)));
     } finally {
-      deleteSnapshots(allSnapshots);
+      deleteSnapshot(snapshotName);
+      deleteSnapshot(snapshotName2);
       Assert.assertEquals(0, listSnapshotsSize(allSnapshots));
     }
   }
 
   @Test
-  public void testCloneSnapshot() throws IOException, InterruptedException, ExecutionException {
+  public void testCloneSnapshot() throws IOException, InterruptedException {
     String cloneSnapshotName = generateId("clone-test");
     snapshot(cloneSnapshotName, tableName);
 
@@ -154,14 +147,6 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
     Assert.assertEquals(0, listSnapshotsSize(""));
   }
 
-  @Test
-  public void testDeleteSnapshotWithEmptyString() throws Exception {
-    // No snapshot matches with null or empty string hence no exception should be thrown
-    deleteSnapshots(null);
-
-    deleteSnapshots(Pattern.compile(""));
-  }
-
   protected void validateClone(TableName tableName, Map<String, Long> values) throws IOException {
     try (Table clonedTable = getConnection().getTable(tableName);
         ResultScanner scanner = clonedTable.getScanner(new Scan())) {
@@ -182,11 +167,14 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
   protected abstract Map<String, Long> createAndPopulateTable(TableName tableName)
       throws IOException, ExecutionException, InterruptedException;
 
+  protected abstract int listSnapshotsSize() throws IOException;
+
   protected abstract int listSnapshotsSize(String regEx) throws IOException;
 
   protected abstract int listSnapshotsSize(Pattern pattern) throws IOException;
 
-  protected abstract void deleteSnapshot(String snapshotName) throws IOException;
+  protected abstract void deleteSnapshot(String snapshotName)
+      throws IOException, InterruptedException;
 
   protected abstract boolean tableExists(final TableName tableName) throws IOException;
 
@@ -195,11 +183,9 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
   protected abstract void cloneSnapshot(final String snapshotName, final TableName tableName)
       throws IOException;
 
-  protected abstract void deleteSnapshots(final Pattern pattern) throws IOException;
-
   protected abstract void deleteTable(final TableName tableName) throws IOException;
 
-  private static String generateId(String name) {
+  protected static String generateId(String name) {
     return prefix + "-" + name + "-" + TEST_BACKUP_SUFFIX;
   }
 }

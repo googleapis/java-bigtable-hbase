@@ -55,7 +55,7 @@ public class TestSnapshots extends AbstractTestSnapshot {
         String backupId = snapshotDescription.getName().substring(i + 1);
         if (backupId.endsWith(TEST_BACKUP_SUFFIX) && stalePrefix.compareTo(backupId) > 0) {
           LOG.info("Deleting old snapshot: " + backupId);
-          admin.deleteSnapshots(backupId);
+          admin.deleteSnapshot(backupId);
         }
       }
       values = createAndPopulateTable(tableName);
@@ -71,6 +71,13 @@ public class TestSnapshots extends AbstractTestSnapshot {
   }
 
   @Override
+  protected int listSnapshotsSize() throws IOException {
+    try (Admin admin = getConnection().getAdmin()) {
+      return admin.listSnapshots().size();
+    }
+  }
+
+  @Override
   protected int listSnapshotsSize(String regEx) throws IOException {
     try (Admin admin = getConnection().getAdmin()) {
       return admin.listSnapshots(regEx).size();
@@ -78,9 +85,9 @@ public class TestSnapshots extends AbstractTestSnapshot {
   }
 
   @Override
-  protected void deleteSnapshot(String snapshotName) throws IOException {
+  protected void deleteSnapshot(String snapshotName) throws IOException, InterruptedException {
     try (Admin admin = getConnection().getAdmin()) {
-      admin.deleteSnapshot(snapshotName);
+      deleteBackupAndWait(admin, snapshotName);
     }
   }
 
@@ -107,13 +114,6 @@ public class TestSnapshots extends AbstractTestSnapshot {
   }
 
   @Override
-  protected void deleteSnapshots(Pattern pattern) throws IOException {
-    try (Admin admin = getConnection().getAdmin()) {
-      admin.deleteSnapshots(pattern);
-    }
-  }
-
-  @Override
   protected int listSnapshotsSize(Pattern pattern) throws IOException {
     try (Admin admin = getConnection().getAdmin()) {
       return admin.listSnapshots(pattern).size();
@@ -135,7 +135,6 @@ public class TestSnapshots extends AbstractTestSnapshot {
 
       Map<String, Long> values = new HashMap<>();
       try (Table table = getConnection().getTable(tableName)) {
-        values.clear();
         List<Put> puts = new ArrayList<>();
         for (long i = 0; i < 10; i++) {
           final UUID rowKey = UUID.randomUUID();
@@ -156,6 +155,22 @@ public class TestSnapshots extends AbstractTestSnapshot {
       List<SnapshotDescription> snapshotDescriptions =
           admin.listSnapshots(Pattern.compile(backupId));
       if (!snapshotDescriptions.isEmpty()) {
+        return;
+      }
+
+      Thread.sleep(BACKOFF_DURATION[i] * 1000);
+    }
+
+    fail("Creating Backup Timeout");
+  }
+
+  protected void deleteBackupAndWait(Admin admin, String backupId)
+      throws InterruptedException, IOException {
+    admin.deleteSnapshot(backupId);
+    for (int i = 0; i < BACKOFF_DURATION.length; i++) {
+      List<SnapshotDescription> snapshotDescriptions =
+          admin.listSnapshots(Pattern.compile(backupId));
+      if (snapshotDescriptions.isEmpty()) {
         return;
       }
 

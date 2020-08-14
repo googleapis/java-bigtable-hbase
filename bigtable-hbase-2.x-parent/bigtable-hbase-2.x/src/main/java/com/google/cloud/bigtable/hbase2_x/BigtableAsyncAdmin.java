@@ -473,27 +473,19 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
         bigtableTableAdminClient.dropAllRowsAsync(tableName.getNameAsString()));
   }
 
-  private Function<List<SnapshotDescription>, Void> deleteSnapshotsFunc() {
-    return snapshots -> {
-      snapshots.stream()
-          .forEach(desc -> deleteSnapshot(SnapshotDescriptionUtil.getSnapshotId(desc.getName())));
-      return null;
-    };
-  }
-
   @Override
   public CompletableFuture<Void> deleteSnapshots() {
-    return listSnapshots().thenApply(deleteSnapshotsFunc());
+    throw new UnsupportedOperationException("use deleteSnapshot instead");
   }
 
   @Override
   public CompletableFuture<Void> deleteSnapshots(Pattern pattern) {
-    return listSnapshots(pattern).thenApply(deleteSnapshotsFunc());
+    throw new UnsupportedOperationException("use deleteSnapshot instead");
   }
 
   @Override
   public CompletableFuture<Void> deleteTableSnapshots(Pattern tableNamePattern) {
-    return listSnapshots(tableNamePattern).thenApply(deleteSnapshotsFunc());
+    throw new UnsupportedOperationException("please use deleteSnapshot");
   }
 
   @Override

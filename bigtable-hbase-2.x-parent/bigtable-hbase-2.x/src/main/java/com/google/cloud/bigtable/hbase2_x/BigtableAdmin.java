@@ -15,15 +15,12 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase.util.SnapshotDescriptionUtil;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
-import io.grpc.Status;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,7 +31,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 import org.apache.hadoop.hbase.CacheEvictionStats;
@@ -157,23 +153,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public void deleteSnapshots(Pattern pattern) throws IOException {
-    if (pattern != null && !pattern.matcher("").matches()) {
-      List<ApiFuture<Void>> futures = new ArrayList<>();
-      for (SnapshotDescription description : listSnapshots(pattern)) {
-        futures.add(
-            tableAdminClientWrapper.deleteBackupAsync(
-                getClusterName().getClusterId(),
-                SnapshotDescriptionUtil.getSnapshotId(description.getName())));
-      }
-      try {
-        ApiFutures.allAsList(futures).get();
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw new IOException("Interrupted while deleting snapshots");
-      } catch (ExecutionException e) {
-        throw Status.fromThrowable(e).asRuntimeException();
-      }
-    }
+    throw new UnsupportedOperationException("use deleteSnapshot instead");
   }
 
   /**
