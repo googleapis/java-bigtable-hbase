@@ -38,6 +38,7 @@ import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -868,6 +869,13 @@ public abstract class AbstractBigtableAdmin implements Admin {
   }
 
   protected Backup snapshotTable(String snapshotName, TableName tableName) throws IOException {
+    if (Strings.isNullOrEmpty(snapshotName)) {
+      throw new IllegalArgumentException("Snapshot name cannot be null");
+    }
+    if (Strings.isNullOrEmpty(tableName.getNameAsString())) {
+      throw new IllegalArgumentException("Table name cannot be null");
+    }
+
     CreateBackupRequest request =
         CreateBackupRequest.of(getBackupClusterName().getClusterId(), snapshotName)
             .setSourceTableId(tableName.getNameAsString());
@@ -934,7 +942,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public void cloneSnapshot(String snapshotName, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
     RestoreTableRequest request =
-        RestoreTableRequest.of(getClusterName().getClusterId(), snapshotName)
+        RestoreTableRequest.of(getBackupClusterName().getClusterId(), snapshotName)
             .setTableId(tableName.getNameAsString());
     Futures.getChecked(tableAdminClientWrapper.restoreTableAsync(request), IOException.class);
   }
@@ -971,7 +979,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
     }
 
     Futures.getUnchecked(
-        tableAdminClientWrapper.deleteBackupAsync(getClusterName().getClusterId(), snapshotName));
+        tableAdminClientWrapper.deleteBackupAsync(
+            getBackupClusterName().getClusterId(), snapshotName));
   }
 
   @Override

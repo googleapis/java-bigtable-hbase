@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.SnapshotDescription;
+import org.apache.hadoop.hbase.client.SnapshotType;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -69,7 +70,8 @@ public class TestSnapshots extends AbstractTestSnapshot {
   public void testSnapshotDescription() throws IOException, InterruptedException {
     String snapshotName = generateId("test-snapshot");
     try {
-      SnapshotDescription snapshotDescription = new SnapshotDescription(snapshotName, tableName);
+      SnapshotDescription snapshotDescription =
+          new SnapshotDescription(snapshotName, tableName, SnapshotType.FLUSH);
       snapshot(snapshotDescription);
       Assert.assertEquals(1, listSnapshotsSize(snapshotName));
     } finally {

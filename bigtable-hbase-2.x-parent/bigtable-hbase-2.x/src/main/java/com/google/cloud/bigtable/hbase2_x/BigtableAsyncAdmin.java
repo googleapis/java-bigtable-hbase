@@ -33,6 +33,7 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import io.grpc.Status;
 import java.io.IOException;
@@ -337,15 +338,13 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   @Override
   public CompletableFuture<Void> deleteSnapshot(String snapshotName) {
-    return CompletableFuture.supplyAsync(
-            () -> {
-              try {
-                return getClusterName().getClusterId();
-              } catch (IOException e) {
-                throw new CompletionException(e);
-              }
-            })
-        .thenAccept(c -> bigtableTableAdminClient.deleteBackupAsync(c, snapshotName));
+    try {
+      return toCompletableFuture(
+          bigtableTableAdminClient.deleteBackupAsync(
+              getBackupClusterName().getClusterId(), snapshotName));
+    } catch (IOException e) {
+      throw new CompletionException(e);
+    }
   }
 
   @Override
@@ -490,40 +489,36 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Void> snapshot(String snapshotName, TableName tableName) {
     Instant expireTime = Instant.now().plus(ttlSeconds, ChronoUnit.SECONDS);
-    return CompletableFuture.supplyAsync(
-            () -> {
-              try {
-                return getBackupClusterName().getClusterId();
-              } catch (IOException e) {
-                throw new CompletionException(e);
-              }
-            })
-        .thenAccept(
-            c ->
-                toCompletableFuture(
-                    bigtableTableAdminClient.createBackupAsync(
-                        CreateBackupRequest.of(c, snapshotName)
-                            .setExpireTime(expireTime)
-                            .setSourceTableId(tableName.getNameAsString()))));
+    if (Strings.isNullOrEmpty(snapshotName)) {
+      throw new IllegalArgumentException("Snapshot name cannot be null");
+    }
+    if (Strings.isNullOrEmpty(tableName.getNameAsString())) {
+      throw new IllegalArgumentException("Table name cannot be null");
+    }
+
+    try {
+      return toCompletableFuture(
+              bigtableTableAdminClient.createBackupAsync(
+                  CreateBackupRequest.of(getBackupClusterName().getClusterId(), snapshotName)
+                      .setExpireTime(expireTime)
+                      .setSourceTableId(tableName.getNameAsString())))
+          .thenAccept(backup -> {});
+    } catch (IOException e) {
+      throw new CompletionException(e);
+    }
   }
 
   @Override
   public CompletableFuture<Void> cloneSnapshot(String snapshotName, TableName tableName) {
-    return CompletableFuture.supplyAsync(
-            () -> {
-              try {
-                return getBackupClusterName().getClusterId();
-              } catch (IOException e) {
-                throw new CompletionException(e);
-              }
-            })
-        .thenAccept(
-            c -> {
-              toCompletableFuture(
-                  bigtableTableAdminClient.restoreTableAsync(
-                      RestoreTableRequest.of(c, snapshotName)
-                          .setTableId(tableName.getNameAsString())));
-            });
+    try {
+      return toCompletableFuture(
+              bigtableTableAdminClient.restoreTableAsync(
+                  RestoreTableRequest.of(getBackupClusterName().getClusterId(), snapshotName)
+                      .setTableId(tableName.getNameAsString())))
+          .thenAccept(backup -> {});
+    } catch (IOException e) {
+      throw new CompletionException(e);
+    }
   }
 
   @Override
