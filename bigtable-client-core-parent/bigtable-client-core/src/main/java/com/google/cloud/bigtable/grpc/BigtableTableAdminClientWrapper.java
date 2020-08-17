@@ -52,6 +52,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.longrunning.Operation;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -349,7 +350,10 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
                       .get()
                       .getResponse()
                       .unpack(com.google.bigtable.admin.v2.Backup.class));
-            } catch (IOException | InterruptedException | ExecutionException e) {
+            } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
+              throw new RuntimeException("Interrupted while waiting for operation to finish");
+            } catch (ExecutionException | InvalidProtocolBufferException e) {
               throw new IllegalStateException(e);
             }
           }

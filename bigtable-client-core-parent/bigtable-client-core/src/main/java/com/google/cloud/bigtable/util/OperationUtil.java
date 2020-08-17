@@ -71,7 +71,7 @@ public class OperationUtil {
             return currentOperationState;
           case ERROR:
             throw StatusProto.toStatusRuntimeException(currentOperationState.getError());
-          case RESULT_NOT_SET:
+          default:
             throw new IllegalStateException(
                 "System returned invalid response for Operation check: " + currentOperationState);
         }

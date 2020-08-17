@@ -857,27 +857,23 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /**
    * Creates a snapshot from an existing table. NOTE: Cloud Bigtable has a cleanup policy
    *
-   * @param snapshotName a {@link String} object.
+   * @param snapshotId a {@link String} object.
    * @param tableName a {@link TableName} object.
    * @throws IOException if any.
    */
   @Override
-  public void snapshot(String snapshotName, TableName tableName)
+  public void snapshot(String snapshotId, TableName tableName)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
 
-    snapshotTable(snapshotName, tableName);
+    snapshotTable(snapshotId, tableName);
   }
 
-  protected Backup snapshotTable(String snapshotName, TableName tableName) throws IOException {
-    if (Strings.isNullOrEmpty(snapshotName)) {
-      throw new IllegalArgumentException("Snapshot name cannot be null");
-    }
-    if (Strings.isNullOrEmpty(tableName.getNameAsString())) {
-      throw new IllegalArgumentException("Table name cannot be null");
-    }
+  protected Backup snapshotTable(String snapshotId, TableName tableName) throws IOException {
+    Preconditions.checkArgument(Strings.isNullOrEmpty(snapshotId));
+    Preconditions.checkArgument(Strings.isNullOrEmpty(tableName.getNameAsString()));
 
     CreateBackupRequest request =
-        CreateBackupRequest.of(getBackupClusterName().getClusterId(), snapshotName)
+        CreateBackupRequest.of(getBackupClusterName().getClusterId(), snapshotId)
             .setSourceTableId(tableName.getNameAsString());
 
     int ttlSecs =
@@ -895,31 +891,31 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /**
    * This is needed for the hbase shell.
    *
-   * @param snapshotName a byte array object.
+   * @param snapshotId a byte array object.
    * @param tableName a byte array object.
    * @throws IOException if any.
    */
-  public void snapshot(byte[] snapshotName, byte[] tableName)
+  public void snapshot(byte[] snapshotId, byte[] tableName)
       throws IOException, IllegalArgumentException {
-    snapshot(snapshotName, TableName.valueOf(tableName));
+    snapshot(snapshotId, TableName.valueOf(tableName));
   }
 
   /** {@inheritDoc} */
   @Override
-  public void snapshot(byte[] snapshotName, TableName tableName)
+  public void snapshot(byte[] snapshotId, TableName tableName)
       throws IOException, IllegalArgumentException {
-    snapshot(Bytes.toString(snapshotName), tableName);
+    snapshot(Bytes.toString(snapshotId), tableName);
   }
 
   /**
    * This is needed for the hbase shell.
    *
-   * @param snapshotName a byte array object.
+   * @param snapshotId a byte array object.
    * @param tableName a byte array object.
    * @throws IOException if any.
    */
-  public void cloneSnapshot(byte[] snapshotName, byte[] tableName) throws IOException {
-    cloneSnapshot(snapshotName, TableName.valueOf(tableName));
+  public void cloneSnapshot(byte[] snapshotId, byte[] tableName) throws IOException {
+    cloneSnapshot(snapshotId, TableName.valueOf(tableName));
   }
 
   /**
@@ -934,15 +930,15 @@ public abstract class AbstractBigtableAdmin implements Admin {
   }
 
   /**
-   * @param snapshotName a {@link String} object.
+   * @param snapshotId a {@link String} object.
    * @param tableName a {@link TableName} object.
    * @throws IOException if any.
    */
   @Override
-  public void cloneSnapshot(String snapshotName, TableName tableName)
+  public void cloneSnapshot(String snapshotId, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
     RestoreTableRequest request =
-        RestoreTableRequest.of(getBackupClusterName().getClusterId(), snapshotName)
+        RestoreTableRequest.of(getBackupClusterName().getClusterId(), snapshotId)
             .setTableId(tableName.getNameAsString());
     Futures.getChecked(tableAdminClientWrapper.restoreTableAsync(request), IOException.class);
   }
@@ -972,15 +968,15 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
   /** {@inheritDoc} */
   @Override
-  public void deleteSnapshot(String snapshotName) throws IOException {
-    Preconditions.checkNotNull(snapshotName);
-    if (snapshotName.isEmpty()) {
+  public void deleteSnapshot(String snapshotId) throws IOException {
+    Preconditions.checkNotNull(snapshotId);
+    if (snapshotId.isEmpty()) {
       return;
     }
 
     Futures.getUnchecked(
         tableAdminClientWrapper.deleteBackupAsync(
-            getBackupClusterName().getClusterId(), snapshotName));
+            getBackupClusterName().getClusterId(), snapshotId));
   }
 
   @Override

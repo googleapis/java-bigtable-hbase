@@ -337,11 +337,11 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
-  public CompletableFuture<Void> deleteSnapshot(String snapshotName) {
+  public CompletableFuture<Void> deleteSnapshot(String snapshotId) {
     try {
       return toCompletableFuture(
           bigtableTableAdminClient.deleteBackupAsync(
-              getBackupClusterName().getClusterId(), snapshotName));
+              getBackupClusterName().getClusterId(), snapshotId));
     } catch (IOException e) {
       throw new CompletionException(e);
     }
@@ -487,9 +487,9 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
-  public CompletableFuture<Void> snapshot(String snapshotName, TableName tableName) {
+  public CompletableFuture<Void> snapshot(String snapshotId, TableName tableName) {
     Instant expireTime = Instant.now().plus(ttlSeconds, ChronoUnit.SECONDS);
-    if (Strings.isNullOrEmpty(snapshotName)) {
+    if (Strings.isNullOrEmpty(snapshotId)) {
       throw new IllegalArgumentException("Snapshot name cannot be null");
     }
     if (Strings.isNullOrEmpty(tableName.getNameAsString())) {
@@ -499,7 +499,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
     try {
       return toCompletableFuture(
               bigtableTableAdminClient.createBackupAsync(
-                  CreateBackupRequest.of(getBackupClusterName().getClusterId(), snapshotName)
+                  CreateBackupRequest.of(getBackupClusterName().getClusterId(), snapshotId)
                       .setExpireTime(expireTime)
                       .setSourceTableId(tableName.getNameAsString())))
           .thenAccept(backup -> {});
@@ -509,11 +509,11 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
-  public CompletableFuture<Void> cloneSnapshot(String snapshotName, TableName tableName) {
+  public CompletableFuture<Void> cloneSnapshot(String snapshotId, TableName tableName) {
     try {
       return toCompletableFuture(
               bigtableTableAdminClient.restoreTableAsync(
-                  RestoreTableRequest.of(getBackupClusterName().getClusterId(), snapshotName)
+                  RestoreTableRequest.of(getBackupClusterName().getClusterId(), snapshotId)
                       .setTableId(tableName.getNameAsString())))
           .thenAccept(backup -> {});
     } catch (IOException e) {

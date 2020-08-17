@@ -225,9 +225,9 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   /** {@inheritDoc} */
   @Override
-  public void snapshot(String snapshotName, TableName tableName, SnapshotType arg2)
+  public void snapshot(String snapshotId, TableName tableName, SnapshotType arg2)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
-    snapshot(snapshotName, tableName);
+    snapshot(snapshotId, tableName);
   }
 
   /** {@inheritDoc} */
@@ -302,7 +302,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public List<SnapshotDescription> listTableSnapshots(String tableName, String snapshotName)
+  public List<SnapshotDescription> listTableSnapshots(String tableName, String snapshotId)
       throws IOException {
     throw new UnsupportedOperationException("Unsupported - please use listSnapshots");
   }

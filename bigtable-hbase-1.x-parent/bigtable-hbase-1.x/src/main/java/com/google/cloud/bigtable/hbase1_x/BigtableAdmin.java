@@ -105,9 +105,9 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
    */
   @Override
   public void snapshot(
-      String snapshotName, TableName tableName, HBaseProtos.SnapshotDescription.Type type)
+      String snapshotId, TableName tableName, HBaseProtos.SnapshotDescription.Type type)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
-    snapshot(snapshotName, tableName);
+    snapshot(snapshotId, tableName);
   }
 
   /** {@inheritDoc} */
