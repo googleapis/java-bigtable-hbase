@@ -881,10 +881,12 @@ public abstract class AbstractBigtableAdmin implements Admin {
             BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY,
             BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_VALUE);
 
-    if (ttlSecs > 0) {
-      Instant expireTime = Instant.now().plus(ttlSecs, ChronoUnit.SECONDS);
-      request.setExpireTime(expireTime);
+    if (ttlSecs <= 0) {
+      throw new IllegalArgumentException(
+          BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY + " must be > 0");
     }
+    Instant expireTime = Instant.now().plus(ttlSecs, ChronoUnit.SECONDS);
+    request.setExpireTime(expireTime);
 
     return Futures.getChecked(
         tableAdminClientWrapper.createBackupAsync(request), IOException.class);

@@ -124,6 +124,11 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
         configuration.getInt(
             BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY,
             BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_VALUE);
+
+    if (this.ttlSeconds <= 0) {
+      throw new IllegalArgumentException(
+          BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY + " must be > 0");
+    }
   }
 
   /** {@inheritDoc} */
@@ -402,19 +407,19 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   //  ******************* END COLUMN FAMILY MODIFICATION  ************************
 
-  /** Same table restorations are not supported. Please use cloneSnapshot */
+  /** In place table restorations are not supported. Please use cloneSnapshot */
   @Override
   public CompletableFuture<Void> restoreSnapshot(String snapshotName) {
     throw new UnsupportedOperationException(
-        "Same table restorations are not supported. Please use cloneSnapshot");
+        "In place table restorations are not supported. Please use cloneSnapshot");
   }
 
-  /** Same table restorations are not supported. Please use cloneSnapshot */
+  /** In place table restorations are not supported. Please use cloneSnapshot */
   @Override
   public CompletableFuture<Void> restoreSnapshot(
       String snapshotName, boolean takeFailSafeSnapshot) {
     throw new UnsupportedOperationException(
-        "Same table restorations are not supported. Please use cloneSnapshot");
+        "In place table restorations are not supported. Please use cloneSnapshot");
   }
 
   /** Same table restorations are not supported. Please use cloneSnapshot */
@@ -422,7 +427,7 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   public CompletableFuture<Void> restoreSnapshot(
       String snapshotName, boolean takeFailSafeSnapshot, boolean restoreAcl) {
     throw new UnsupportedOperationException(
-        "Same table restorations are not supported. Please use cloneSnapshot");
+        "In place table restorations are not supported. Please use cloneSnapshot");
   }
 
   /**
