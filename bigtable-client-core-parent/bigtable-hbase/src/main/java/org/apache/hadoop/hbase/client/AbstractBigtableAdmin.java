@@ -869,15 +869,17 @@ public abstract class AbstractBigtableAdmin implements Admin {
   }
 
   protected Backup snapshotTable(String snapshotId, TableName tableName) throws IOException {
-    Preconditions.checkArgument(Strings.isNullOrEmpty(snapshotId));
-    Preconditions.checkArgument(Strings.isNullOrEmpty(tableName.getNameAsString()));
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(snapshotId));
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableName.getNameAsString()));
 
     CreateBackupRequest request =
         CreateBackupRequest.of(getBackupClusterName().getClusterId(), snapshotId)
             .setSourceTableId(tableName.getNameAsString());
 
     int ttlSecs =
-        configuration.getInt(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY, 86400);
+        configuration.getInt(
+            BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY,
+            BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_VALUE);
 
     if (ttlSecs > 0) {
       Instant expireTime = Instant.now().plus(ttlSecs, ChronoUnit.SECONDS);
@@ -974,9 +976,10 @@ public abstract class AbstractBigtableAdmin implements Admin {
       return;
     }
 
-    Futures.getUnchecked(
+    Futures.getChecked(
         tableAdminClientWrapper.deleteBackupAsync(
-            getBackupClusterName().getClusterId(), snapshotId));
+            getBackupClusterName().getClusterId(), snapshotId),
+        IOException.class);
   }
 
   @Override

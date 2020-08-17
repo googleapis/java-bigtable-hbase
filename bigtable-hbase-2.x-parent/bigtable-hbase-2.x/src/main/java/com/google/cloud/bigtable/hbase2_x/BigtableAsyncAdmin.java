@@ -121,7 +121,9 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
       bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
     }
     this.ttlSeconds =
-        configuration.getInt(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY, 86400);
+        configuration.getInt(
+            BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY,
+            BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_VALUE);
   }
 
   /** {@inheritDoc} */
@@ -400,31 +402,27 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
 
   //  ******************* END COLUMN FAMILY MODIFICATION  ************************
 
-  /**
-   * Restore the specified snapshot on the original table.
-   *
-   * <p>{@inheritDoc}
-   */
+  /** Same table restorations are not supported. Please use cloneSnapshot */
   @Override
   public CompletableFuture<Void> restoreSnapshot(String snapshotName) {
-    throw new UnsupportedOperationException("restoreSnapshot");
+    throw new UnsupportedOperationException(
+        "Same table restorations are not supported. Please use cloneSnapshot");
   }
 
-  /**
-   * Restore the specified snapshot on the original table.
-   *
-   * <p>{@inheritDoc}
-   */
+  /** Same table restorations are not supported. Please use cloneSnapshot */
   @Override
   public CompletableFuture<Void> restoreSnapshot(
       String snapshotName, boolean takeFailSafeSnapshot) {
-    throw new UnsupportedOperationException("restoreSnapshot");
+    throw new UnsupportedOperationException(
+        "Same table restorations are not supported. Please use cloneSnapshot");
   }
 
+  /** Same table restorations are not supported. Please use cloneSnapshot */
   @Override
   public CompletableFuture<Void> restoreSnapshot(
       String snapshotName, boolean takeFailSafeSnapshot, boolean restoreAcl) {
-    throw new UnsupportedOperationException("restoreSnapshot");
+    throw new UnsupportedOperationException(
+        "Same table restorations are not supported. Please use cloneSnapshot");
   }
 
   /**
@@ -471,19 +469,28 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
         bigtableTableAdminClient.dropAllRowsAsync(tableName.getNameAsString()));
   }
 
+  /*
+   * deleteSnapshots is not supported due to backup write quota limits - please use deleteSnapshot
+   */
   @Override
   public CompletableFuture<Void> deleteSnapshots() {
     throw new UnsupportedOperationException("use deleteSnapshot instead");
   }
 
+  /*
+   * deleteSnapshots is not supported due to backup write quota limits - please use deleteSnapshot
+   */
   @Override
   public CompletableFuture<Void> deleteSnapshots(Pattern pattern) {
     throw new UnsupportedOperationException("use deleteSnapshot instead");
   }
 
+  /*
+   * deleteSnapshots is not supported due to backup write quota limits - please use deleteSnapshot
+   */
   @Override
   public CompletableFuture<Void> deleteTableSnapshots(Pattern tableNamePattern) {
-    throw new UnsupportedOperationException("please use deleteSnapshot");
+    throw new UnsupportedOperationException("use deleteSnapshot instead");
   }
 
   @Override

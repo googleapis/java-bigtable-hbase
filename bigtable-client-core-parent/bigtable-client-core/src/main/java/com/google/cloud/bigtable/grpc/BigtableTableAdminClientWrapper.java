@@ -395,6 +395,8 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
     ListBackupsRequest request =
         ListBackupsRequest.newBuilder().setParent(clusterName.getClusterName()).build();
 
+    // pagination is not required as page_size in the request is not set - everything will be
+    // returned
     return ApiFutureUtil.transformAndAdapt(
         delegate.listBackupsAsync(request),
         new Function<ListBackupsResponse, List<String>>() {

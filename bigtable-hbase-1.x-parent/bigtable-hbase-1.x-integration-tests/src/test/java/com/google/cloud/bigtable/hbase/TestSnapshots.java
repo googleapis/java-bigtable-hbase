@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.hbase;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -90,7 +89,7 @@ public class TestSnapshots extends AbstractTestSnapshot {
   protected void snapshot(String snapshotName, TableName tableName)
       throws IOException, InterruptedException {
     try (Admin admin = getConnection().getAdmin()) {
-      createBackupAndWait(admin, snapshotName, tableName);
+      admin.snapshot(snapshotName, tableName);
     }
   }
 
@@ -111,7 +110,7 @@ public class TestSnapshots extends AbstractTestSnapshot {
   @Override
   protected void deleteSnapshot(String snapshotName) throws IOException, InterruptedException {
     try (Admin admin = getConnection().getAdmin()) {
-      deleteBackupAndWait(admin, snapshotName);
+      admin.deleteSnapshot(snapshotName);
     }
   }
 
@@ -170,37 +169,5 @@ public class TestSnapshots extends AbstractTestSnapshot {
       }
       return values;
     }
-  }
-
-  protected void createBackupAndWait(Admin admin, String backupId, TableName tableName)
-      throws InterruptedException, IOException {
-    admin.snapshot(backupId, tableName);
-    for (int i = 0; i < BACKOFF_DURATION.length; i++) {
-      List<SnapshotDescription> snapshotDescriptions =
-          admin.listSnapshots(Pattern.compile(backupId));
-      if (!snapshotDescriptions.isEmpty()) {
-        return;
-      }
-
-      Thread.sleep(BACKOFF_DURATION[i] * 1000);
-    }
-
-    fail("Creating Backup Timeout");
-  }
-
-  protected void deleteBackupAndWait(Admin admin, String backupId)
-      throws InterruptedException, IOException {
-    admin.deleteSnapshot(backupId);
-    for (int i = 0; i < BACKOFF_DURATION.length; i++) {
-      List<SnapshotDescription> snapshotDescriptions =
-          admin.listSnapshots(Pattern.compile(backupId));
-      if (snapshotDescriptions.isEmpty()) {
-        return;
-      }
-
-      Thread.sleep(BACKOFF_DURATION[i] * 1000);
-    }
-
-    fail("Creating Backup Timeout");
   }
 }

@@ -22,7 +22,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import com.google.cloud.bigtable.hbase.AbstractTestSnapshot;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
@@ -132,7 +131,7 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
   @Override
   protected void snapshot(String snapshotName, TableName tableName) throws IOException {
     try {
-      createBackupAndWait(snapshotName, tableName);
+      getAsyncAdmin().snapshot(snapshotName, tableName).get();
     } catch (InterruptedException | ExecutionException e) {
       throw new IOException("Error while creating snapshot: " + e.getCause());
     }
@@ -159,42 +158,10 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
     return values;
   }
 
-  protected void createBackupAndWait(String backupId, TableName tableName)
-      throws InterruptedException, ExecutionException {
-    getAsyncAdmin().snapshot(backupId, tableName).get();
-    for (int i = 0; i < BACKOFF_DURATION.length; i++) {
-      List<SnapshotDescription> snapshotDescriptions =
-          getAsyncAdmin().listSnapshots(Pattern.compile(backupId)).get();
-      if (!snapshotDescriptions.isEmpty()) {
-        return;
-      }
-
-      Thread.sleep(BACKOFF_DURATION[i] * 1000);
-    }
-
-    fail("Creating Backup Timeout");
-  }
-
-  protected void deleteBackupAndWait(String backupId)
-      throws InterruptedException, ExecutionException {
-    getAsyncAdmin().deleteSnapshot(backupId).get();
-    for (int i = 0; i < BACKOFF_DURATION.length; i++) {
-      List<SnapshotDescription> snapshotDescriptions =
-          getAsyncAdmin().listSnapshots(Pattern.compile(backupId)).get();
-      if (snapshotDescriptions.isEmpty()) {
-        return;
-      }
-
-      Thread.sleep(BACKOFF_DURATION[i] * 1000);
-    }
-
-    fail("Creating Backup Timeout");
-  }
-
   @Override
   protected void deleteSnapshot(String snapshotName) throws IOException {
     try {
-      deleteBackupAndWait(snapshotName);
+      getAsyncAdmin().deleteSnapshot(snapshotName).get();
     } catch (InterruptedException | ExecutionException e) {
       throw new IOException("Error while deleting snapshot: " + e.getCause());
     }
