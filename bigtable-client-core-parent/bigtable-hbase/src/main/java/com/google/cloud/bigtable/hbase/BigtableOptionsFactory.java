@@ -77,10 +77,16 @@ public class BigtableOptionsFactory {
       "google.bigtable.snapshot.cluster.id";
   /**
    * Constant <code>
-   * BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY="google.bigtable.snapshot.default.ttl.secs"</code>
+   * BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY="google.bigtable.snapshot.default.ttl.secs"</code> Will
+   * default to 24 hrs if not set (see BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_VALUE)
    */
   public static final String BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY =
       "google.bigtable.snapshot.default.ttl.secs";
+
+  /*
+   * Constant for default ttl for backups - 24 hours
+   */
+  public static final int BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_VALUE = 86400;
 
   /** Constant <code>CUSTOM_USER_AGENT_KEY="google.bigtable.custom.user.agent"</code> */
   public static final String CUSTOM_USER_AGENT_KEY = "google.bigtable.custom.user.agent";

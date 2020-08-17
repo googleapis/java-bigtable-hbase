@@ -15,8 +15,6 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import com.google.api.client.util.BackOff;
-import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.core.InternalApi;
 import com.google.bigtable.admin.v2.AppProfile;
 import com.google.bigtable.admin.v2.BigtableInstanceAdminGrpc;
@@ -38,7 +36,7 @@ import com.google.bigtable.admin.v2.ListInstancesRequest;
 import com.google.bigtable.admin.v2.ListInstancesResponse;
 import com.google.bigtable.admin.v2.PartialUpdateInstanceRequest;
 import com.google.bigtable.admin.v2.UpdateAppProfileRequest;
-import com.google.common.primitives.Ints;
+import com.google.cloud.bigtable.util.OperationUtil;
 import com.google.iam.v1.GetIamPolicyRequest;
 import com.google.iam.v1.Policy;
 import com.google.iam.v1.SetIamPolicyRequest;
@@ -49,7 +47,6 @@ import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsGrpc;
 import com.google.protobuf.Empty;
 import io.grpc.Channel;
-import io.grpc.protobuf.StatusProto;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -63,7 +60,7 @@ import java.util.concurrent.TimeoutException;
 public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
 
   private final BigtableInstanceAdminGrpc.BigtableInstanceAdminBlockingStub instanceClient;
-  private final OperationsGrpc.OperationsBlockingStub operationsStub;
+  private final OperationUtil operationUtil;
 
   /**
    * Constructor for BigtableInstanceGrpcClient.
@@ -72,7 +69,7 @@ public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
    */
   public BigtableInstanceGrpcClient(Channel channel) {
     this.instanceClient = BigtableInstanceAdminGrpc.newBlockingStub(channel);
-    operationsStub = OperationsGrpc.newBlockingStub(channel);
+    operationUtil = new OperationUtil(OperationsGrpc.newBlockingStub(channel));
   }
 
   /** {@inheritDoc} */
@@ -84,65 +81,20 @@ public class BigtableInstanceGrpcClient implements BigtableInstanceClient {
   /** {@inheritDoc} */
   @Override
   public Operation getOperation(GetOperationRequest request) {
-    return operationsStub.getOperation(request);
+    return operationUtil.getOperation(request);
   }
 
   /** {@inheritDoc} */
   @Override
   public void waitForOperation(Operation operation) throws IOException, TimeoutException {
-    waitForOperation(operation, 10, TimeUnit.MINUTES);
+    operationUtil.waitForOperation(operation, 10, TimeUnit.MINUTES);
   }
 
   /** {@inheritDoc} */
   @Override
   public void waitForOperation(Operation operation, long timeout, TimeUnit timeUnit)
       throws TimeoutException, IOException {
-    GetOperationRequest request =
-        GetOperationRequest.newBuilder().setName(operation.getName()).build();
-
-    ExponentialBackOff backOff =
-        new ExponentialBackOff.Builder()
-            .setInitialIntervalMillis(100)
-            .setMultiplier(1.3)
-            .setMaxIntervalMillis(Ints.checkedCast(TimeUnit.SECONDS.toMillis(60)))
-            .setMaxElapsedTimeMillis(Ints.checkedCast(timeUnit.toMillis(timeout)))
-            .build();
-
-    Operation currentOperationState = operation;
-
-    while (true) {
-      if (currentOperationState.getDone()) {
-        switch (currentOperationState.getResultCase()) {
-          case RESPONSE:
-            return;
-          case ERROR:
-            throw StatusProto.toStatusRuntimeException(currentOperationState.getError());
-          case RESULT_NOT_SET:
-            throw new IllegalStateException(
-                "System returned invalid response for Operation check: " + currentOperationState);
-        }
-      }
-
-      final long backOffMillis;
-      try {
-        backOffMillis = backOff.nextBackOffMillis();
-      } catch (IOException e) {
-        // Should never happen.
-        throw new RuntimeException(e);
-      }
-      if (backOffMillis == BackOff.STOP) {
-        throw new TimeoutException("Operation did not complete in time");
-      } else {
-        try {
-          Thread.sleep(backOffMillis);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          throw new IOException("Interrupted while waiting for operation to finish");
-        }
-      }
-
-      currentOperationState = getOperation(request);
-    }
+    operationUtil.waitForOperation(operation, timeout, timeUnit);
   }
 
   /** {@inheritDoc} */

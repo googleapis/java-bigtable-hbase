@@ -151,6 +151,10 @@ limitations under the License.
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java-util</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>io.grpc</groupId>
@@ -281,6 +285,14 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
             <usedDependency>commons-codec:commons-codec</usedDependency>
             <usedDependency>io.grpc:grpc-grpclb</usedDependency>
           </usedDependencies>
+        </configuration>
+      </plugin>
+      <plugin>
+        <!-- skip for bigtable-client-core to allow for upcoming refactoring-->
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>clirr-maven-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
         </configuration>
       </plugin>
     </plugins>

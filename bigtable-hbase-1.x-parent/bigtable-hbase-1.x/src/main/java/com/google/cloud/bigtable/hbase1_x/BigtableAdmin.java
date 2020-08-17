@@ -16,11 +16,6 @@
 package com.google.cloud.bigtable.hbase1_x;
 
 import com.google.api.core.InternalApi;
-import com.google.bigtable.admin.v2.ListSnapshotsRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsResponse;
-import com.google.bigtable.admin.v2.Snapshot;
-import com.google.cloud.bigtable.grpc.BigtableSnapshotName;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
@@ -110,9 +105,9 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
    */
   @Override
   public void snapshot(
-      String snapshotName, TableName tableName, HBaseProtos.SnapshotDescription.Type type)
+      String snapshotId, TableName tableName, HBaseProtos.SnapshotDescription.Type type)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
-    snapshot(snapshotName, tableName);
+    snapshot(snapshotId, tableName);
   }
 
   /** {@inheritDoc} */
@@ -131,32 +126,31 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public void restoreSnapshot(String s, boolean b, boolean b1)
-      throws IOException, RestoreSnapshotException {}
+      throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot"); // TODO
+  }
 
   @Override
   public void cloneSnapshot(String s, TableName tableName, boolean b)
-      throws IOException, TableExistsException, RestoreSnapshotException {}
+      throws IOException, TableExistsException, RestoreSnapshotException {
+    if (!b) {
+      this.cloneSnapshot(s, tableName);
+    }
+    throw new UnsupportedOperationException("cloneSnapshot"); // TODO
+  }
 
   /** {@inheritDoc} */
   @Override
   public List<HBaseProtos.SnapshotDescription> listSnapshots() throws IOException {
-    ListSnapshotsRequest request =
-        ListSnapshotsRequest.newBuilder().setParent(getSnapshotClusterName().toString()).build();
-
-    ListSnapshotsResponse snapshotList =
-        Futures.getChecked(tableAdminClientWrapper.listSnapshotsAsync(request), IOException.class);
+    List<String> backups =
+        Futures.getChecked(
+            tableAdminClientWrapper.listBackupsAsync(getBackupClusterName().getClusterId()),
+            IOException.class);
 
     List<HBaseProtos.SnapshotDescription> response = new ArrayList<>();
 
-    for (Snapshot snapshot : snapshotList.getSnapshotsList()) {
-      BigtableSnapshotName snapshotName = new BigtableSnapshotName(snapshot.getName());
-      BigtableTableName tableName = new BigtableTableName(snapshot.getSourceTable().getName());
-      response.add(
-          HBaseProtos.SnapshotDescription.newBuilder()
-              .setName(snapshotName.getSnapshotId())
-              .setTable(tableName.getTableId())
-              .setCreationTime(TimeUnit.SECONDS.toMillis(snapshot.getCreateTime().getSeconds()))
-              .build());
+    for (String snapshot : backups) {
+      response.add(HBaseProtos.SnapshotDescription.newBuilder().setName(snapshot).build());
     }
     return response;
   }
@@ -186,23 +180,13 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public List<SnapshotDescription> listTableSnapshots(
       String tableNameRegex, String snapshotNameRegex) throws IOException {
-    return listTableSnapshots(Pattern.compile(tableNameRegex), Pattern.compile(snapshotNameRegex));
+    throw new UnsupportedOperationException("Unsupported - please use listSnapshots");
   }
 
   @Override
   public List<SnapshotDescription> listTableSnapshots(
       Pattern tableNamePattern, Pattern snapshotNamePattern) throws IOException {
-    if (tableNamePattern == null || tableNamePattern.matcher("").matches()) {
-      return ImmutableList.of();
-    }
-
-    List<SnapshotDescription> response = new ArrayList<>();
-    for (SnapshotDescription snapshotDescription : listSnapshots(snapshotNamePattern)) {
-      if (tableNamePattern.matcher(snapshotDescription.getTable()).matches()) {
-        response.add(snapshotDescription);
-      }
-    }
-    return response;
+    throw new UnsupportedOperationException("Unsupported - please use listSnapshots");
   }
 
   @Override

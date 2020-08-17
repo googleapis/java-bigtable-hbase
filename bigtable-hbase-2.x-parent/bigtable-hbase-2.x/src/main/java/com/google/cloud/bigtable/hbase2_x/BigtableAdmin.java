@@ -16,9 +16,6 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import com.google.api.core.InternalApi;
-import com.google.bigtable.admin.v2.ListSnapshotsRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsResponse;
-import com.google.bigtable.admin.v2.Snapshot;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.collect.ImmutableList;
@@ -142,18 +139,20 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public List<SnapshotDescription> listSnapshots() throws IOException {
-    ListSnapshotsRequest request =
-        ListSnapshotsRequest.newBuilder().setParent(getSnapshotClusterName().toString()).build();
-
-    ListSnapshotsResponse snapshotList =
-        Futures.getChecked(tableAdminClientWrapper.listSnapshotsAsync(request), IOException.class);
+    List<String> backups =
+        Futures.getChecked(
+            tableAdminClientWrapper.listBackupsAsync(getBackupClusterName().getClusterId()),
+            IOException.class);
     List<SnapshotDescription> response = new ArrayList<>();
-    for (Snapshot snapshot : snapshotList.getSnapshotsList()) {
-      response.add(
-          new SnapshotDescription(
-              snapshot.getName(), TableName.valueOf(snapshot.getSourceTable().getName())));
+    for (String backup : backups) {
+      response.add(new SnapshotDescription(backup));
     }
     return response;
+  }
+
+  @Override
+  public void deleteSnapshots(Pattern pattern) throws IOException {
+    throw new UnsupportedOperationException("use deleteSnapshot instead");
   }
 
   /**
@@ -226,9 +225,9 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   /** {@inheritDoc} */
   @Override
-  public void snapshot(String snapshotName, TableName tableName, SnapshotType arg2)
+  public void snapshot(String snapshotId, TableName tableName, SnapshotType arg2)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
-    snapshot(snapshotName, tableName);
+    snapshot(snapshotId, tableName);
   }
 
   /** {@inheritDoc} */
@@ -303,25 +302,15 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public List<SnapshotDescription> listTableSnapshots(String tableName, String snapshotName)
+  public List<SnapshotDescription> listTableSnapshots(String tableName, String snapshotId)
       throws IOException {
-    return listTableSnapshots(Pattern.compile(tableName), Pattern.compile(snapshotName));
+    throw new UnsupportedOperationException("Unsupported - please use listSnapshots");
   }
 
   @Override
   public List<SnapshotDescription> listTableSnapshots(Pattern tableName, Pattern snapshotName)
       throws IOException {
-    if (tableName == null || tableName.matcher("").matches()) {
-      return ImmutableList.of();
-    }
-
-    List<SnapshotDescription> response = new ArrayList<>();
-    for (SnapshotDescription snapshot : listSnapshots(snapshotName)) {
-      if (tableName.matcher(snapshot.getTableNameAsString()).matches()) {
-        response.add(snapshot);
-      }
-    }
-    return response;
+    throw new UnsupportedOperationException("Unsupported - please use listSnapshots");
   }
 
   @Override

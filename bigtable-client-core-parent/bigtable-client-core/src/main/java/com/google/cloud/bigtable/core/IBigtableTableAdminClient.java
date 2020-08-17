@@ -24,9 +24,14 @@ import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsResponse;
 import com.google.bigtable.admin.v2.Snapshot;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.Backup;
+import com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
+import com.google.cloud.bigtable.admin.v2.models.RestoreTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.RestoredTableResult;
 import com.google.cloud.bigtable.admin.v2.models.Table;
+import com.google.cloud.bigtable.admin.v2.models.UpdateBackupRequest;
 import com.google.longrunning.Operation;
 import com.google.protobuf.ByteString;
 import java.util.List;
@@ -168,7 +173,9 @@ public interface IBigtableTableAdminClient {
    *
    * @param request a {@link SnapshotTableRequest} object.
    * @return The long running {@link Operation} for the request.
+   * @deprecated this will be removed in a future release - please use backups API instead
    */
+  @Deprecated
   ApiFuture<Operation> snapshotTableAsync(SnapshotTableRequest request);
 
   /**
@@ -176,7 +183,9 @@ public interface IBigtableTableAdminClient {
    *
    * @param request a {@link GetSnapshotRequest} object.
    * @return The {@link Snapshot} defined by the request.
+   * @deprecated this will be removed in a future release - please use backups API instead
    */
+  @Deprecated
   ApiFuture<Snapshot> getSnapshotAsync(GetSnapshotRequest request);
 
   /**
@@ -184,14 +193,18 @@ public interface IBigtableTableAdminClient {
    *
    * @param request a {@link ListSnapshotsRequest} object.
    * @return The {@link ListSnapshotsResponse} which has the list of the snapshots in the cluster.
+   * @deprecated this will be removed in a future release - please use backups API instead
    */
+  @Deprecated
   ApiFuture<ListSnapshotsResponse> listSnapshotsAsync(ListSnapshotsRequest request);
 
   /**
    * Permanently deletes the specified snapshot.
    *
    * @param request a {@link DeleteSnapshotRequest} object.
+   * @deprecated this will be removed in a future release - please use backups API instead
    */
+  @Deprecated
   ApiFuture<Void> deleteSnapshotAsync(DeleteSnapshotRequest request);
 
   /**
@@ -199,6 +212,35 @@ public interface IBigtableTableAdminClient {
    *
    * @param request a {@link CreateTableFromSnapshotRequest} object.
    * @return The long running {@link Operation} for the request.
+   * @deprecated this will be removed in a future release - please use backups API instead
    */
+  @Deprecated
   ApiFuture<Operation> createTableFromSnapshotAsync(CreateTableFromSnapshotRequest request);
+
+  /**
+   * Creates a new backup from a table in a specific cluster.
+   *
+   * @param request a {@link CreateBackupRequest} object.
+   * @return The long running {@link Operation} for the request.
+   */
+  ApiFuture<Backup> createBackupAsync(CreateBackupRequest request);
+
+  /** Gets metadata information about the specified backup. */
+  ApiFuture<Backup> getBackupAsync(String clusterId, String backupId);
+
+  /** Update the specified backup. */
+  ApiFuture<Backup> updateBackupAsync(UpdateBackupRequest request);
+
+  /** Lists all backups associated with the specified cluster. */
+  ApiFuture<List<String>> listBackupsAsync(String clusterId);
+
+  /** Permanently deletes the specified backup. */
+  ApiFuture<Void> deleteBackupAsync(String clusterId, String backupId);
+
+  /**
+   * Creates a new table from a backup.
+   *
+   * @return The long running {@link Operation} for the request.
+   */
+  ApiFuture<RestoredTableResult> restoreTableAsync(RestoreTableRequest request);
 }

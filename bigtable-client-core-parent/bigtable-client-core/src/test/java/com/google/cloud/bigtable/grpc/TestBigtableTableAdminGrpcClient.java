@@ -24,16 +24,21 @@ import static org.mockito.Mockito.when;
 
 import com.google.bigtable.admin.v2.CheckConsistencyRequest;
 import com.google.bigtable.admin.v2.CheckConsistencyResponse;
+import com.google.bigtable.admin.v2.CreateBackupRequest;
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.CreateTableRequest;
+import com.google.bigtable.admin.v2.DeleteBackupRequest;
 import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
 import com.google.bigtable.admin.v2.GenerateConsistencyTokenRequest;
 import com.google.bigtable.admin.v2.GenerateConsistencyTokenResponse;
+import com.google.bigtable.admin.v2.GetBackupRequest;
 import com.google.bigtable.admin.v2.GetSnapshotRequest;
 import com.google.bigtable.admin.v2.GetTableRequest;
+import com.google.bigtable.admin.v2.ListBackupsRequest;
 import com.google.bigtable.admin.v2.ListSnapshotsRequest;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
+import com.google.bigtable.admin.v2.RestoreTableRequest;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.bigtable.admin.v2.Table;
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -220,6 +225,54 @@ public class TestBigtableTableAdminGrpcClient {
             .build();
     complete();
     defaultClient.createTableFromSnapshotAsync(request).get(1, TimeUnit.SECONDS);
+    verifyRequestCalled(request);
+  }
+
+  @Test
+  public void testBackupTable() throws Exception {
+    CreateBackupRequest request =
+        CreateBackupRequest.newBuilder()
+            .setBackupId("backupId")
+            .setBackup(
+                com.google.bigtable.admin.v2.Backup.newBuilder()
+                    .setName("backupId")
+                    .setSourceTable(TABLE_NAME))
+            .build();
+    complete();
+    defaultClient.createBackupAsync(request).get(1, TimeUnit.SECONDS);
+    verifyRequestCalled(request);
+  }
+
+  @Test
+  public void testGetBackup() throws Exception {
+    GetBackupRequest request = GetBackupRequest.newBuilder().setName(TABLE_NAME).build();
+    complete();
+    defaultClient.getBackupAsync(request).get(1, TimeUnit.SECONDS);
+    verifyRequestCalled(request);
+  }
+
+  @Test
+  public void testListBackups() throws Exception {
+    ListBackupsRequest request = ListBackupsRequest.newBuilder().setParent(TABLE_NAME).build();
+    complete();
+    defaultClient.listBackupsAsync(request).get(1, TimeUnit.SECONDS);
+    verifyRequestCalled(request);
+  }
+
+  @Test
+  public void testDeleteBackup() throws Exception {
+    DeleteBackupRequest request = DeleteBackupRequest.newBuilder().setName(TABLE_NAME).build();
+    complete();
+    defaultClient.deleteBackupAsync(request).get(1, TimeUnit.SECONDS);
+    verifyRequestCalled(request);
+  }
+
+  @Test
+  public void testCreateTableFromBackup() throws Exception {
+    RestoreTableRequest request =
+        RestoreTableRequest.newBuilder().setParent(INSTANCE_NAME.getInstanceName()).build();
+    complete();
+    defaultClient.restoreTableAsync(request).get(1, TimeUnit.SECONDS);
     verifyRequestCalled(request);
   }
 
