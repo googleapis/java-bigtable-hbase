@@ -16,56 +16,87 @@
 package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Before;
 import org.junit.Test;
 
 public class TestSnapshots extends AbstractTestSnapshot {
 
+  @Before
+  public void setUp() throws IOException {
+    try (Admin admin = getConnection().getAdmin()) {
+      // Setup a prefix to avoid collisions between concurrent test runs
+      prefix = String.format("020%d", System.currentTimeMillis());
+
+      // clean up stale backups
+      String stalePrefix =
+          String.format("020%d", System.currentTimeMillis() - TimeUnit.HOURS.toMillis(2));
+
+      for (SnapshotDescription snapshotDescription : admin.listSnapshots()) {
+        int i = snapshotDescription.getName().lastIndexOf("/");
+        String backupId = snapshotDescription.getName().substring(i + 1);
+        if (backupId.endsWith(TEST_BACKUP_SUFFIX) && stalePrefix.compareTo(backupId) > 0) {
+          LOG.info("Deleting old snapshot: " + backupId);
+          admin.deleteSnapshot(backupId);
+        }
+      }
+      values = createAndPopulateTable(tableName);
+    }
+  }
+
   @Test
-  public void testSnapshotWithSingleParam() throws IOException {
-    Exception actualError = null;
-    try (Admin admin = getConnection().getAdmin()) {
-      try {
-        admin.snapshot(null);
-      } catch (Exception e) {
-        actualError = e;
-      }
-      assertNotNull(actualError);
-      assertTrue(actualError instanceof NullPointerException);
-      actualError = null;
+  public void listSnapshots() throws IOException, InterruptedException {
+    String snapshot1 = generateId("snapshot-1");
+    snapshot(snapshot1, tableName);
 
-      try {
-        admin.snapshot("", tableName, null);
-      } catch (Exception e) {
-        actualError = e;
+    String snapshot2 = generateId("snapshot-2");
+    snapshot(snapshot2, tableName);
+
+    try (Admin admin = getConnection().getAdmin()) {
+      List<SnapshotDescription> snapshotDescriptions = admin.listSnapshots();
+      List<String> descStrings = new ArrayList<>();
+      for (SnapshotDescription snapshotDescription : snapshotDescriptions) {
+        descStrings.add(snapshotDescription.getName());
       }
-      assertNotNull(actualError);
+      assertThat(descStrings, hasItems(snapshot1, snapshot2));
+    } finally {
+      deleteSnapshot(snapshot1);
+      deleteSnapshot(snapshot2);
     }
   }
 
   @Override
-  protected void createTable(TableName tableName) throws IOException {
-    try (Admin admin = getConnection().getAdmin()) {
-      HTableDescriptor descriptor = new HTableDescriptor(tableName);
-      descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
-      admin.createTable(descriptor);
-    }
-  }
-
-  @Override
-  protected void snapshot(String snapshotName, TableName tableName) throws IOException {
+  protected void snapshot(String snapshotName, TableName tableName)
+      throws IOException, InterruptedException {
     try (Admin admin = getConnection().getAdmin()) {
       admin.snapshot(snapshotName, tableName);
+    }
+  }
+
+  @Override
+  protected int listSnapshotsSize() throws IOException {
+    try (Admin admin = getConnection().getAdmin()) {
+      return admin.listSnapshots().size();
     }
   }
 
@@ -77,7 +108,7 @@ public class TestSnapshots extends AbstractTestSnapshot {
   }
 
   @Override
-  protected void deleteSnapshot(String snapshotName) throws IOException {
+  protected void deleteSnapshot(String snapshotName) throws IOException, InterruptedException {
     try (Admin admin = getConnection().getAdmin()) {
       admin.deleteSnapshot(snapshotName);
     }
@@ -106,39 +137,9 @@ public class TestSnapshots extends AbstractTestSnapshot {
   }
 
   @Override
-  protected void deleteSnapshots(Pattern pattern) throws IOException {
-    try (Admin admin = getConnection().getAdmin()) {
-      admin.deleteSnapshots(pattern);
-    }
-  }
-
-  @Override
-  protected void deleteTableSnapshots(Pattern tableName, Pattern snapshotName) throws IOException {
-    try (Admin admin = getConnection().getAdmin()) {
-      admin.deleteTableSnapshots(tableName, snapshotName);
-    }
-  }
-
-  @Override
-  protected int listTableSnapshotsSize(String tableNameRegex, String snapshotNameRegex)
-      throws IOException {
-    try (Admin admin = getConnection().getAdmin()) {
-      return admin.listTableSnapshots(tableNameRegex, snapshotNameRegex).size();
-    }
-  }
-
-  @Override
   protected int listSnapshotsSize(Pattern pattern) throws IOException {
     try (Admin admin = getConnection().getAdmin()) {
       return admin.listSnapshots(pattern).size();
-    }
-  }
-
-  @Override
-  protected int listTableSnapshotsSize(Pattern tableNamePattern, Pattern snapshotNamePattern)
-      throws IOException {
-    try (Admin admin = getConnection().getAdmin()) {
-      return admin.listTableSnapshots(tableNamePattern, snapshotNamePattern).size();
     }
   }
 
@@ -149,10 +150,24 @@ public class TestSnapshots extends AbstractTestSnapshot {
     }
   }
 
-  @Override
-  protected int listTableSnapshotsSize(Pattern tableNamePattern) throws Exception {
+  protected Map<String, Long> createAndPopulateTable(TableName tableName) throws IOException {
     try (Admin admin = getConnection().getAdmin()) {
-      return admin.listTableSnapshots(tableNamePattern, Pattern.compile(".*")).size();
+      HTableDescriptor descriptor = new HTableDescriptor(tableName);
+      descriptor.addFamily(new HColumnDescriptor(COLUMN_FAMILY));
+      admin.createTable(descriptor);
+
+      Map<String, Long> values = new HashMap<>();
+      try (Table table = getConnection().getTable(tableName)) {
+        List<Put> puts = new ArrayList<>();
+        for (long i = 0; i < 10; i++) {
+          final UUID rowKey = UUID.randomUUID();
+          byte[] row = Bytes.toBytes(rowKey.toString());
+          values.put(rowKey.toString(), i);
+          puts.add(new Put(row).addColumn(COLUMN_FAMILY, QUALIFIER, Bytes.toBytes(i)));
+        }
+        table.put(puts);
+      }
+      return values;
     }
   }
 }

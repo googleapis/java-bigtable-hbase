@@ -77,7 +77,8 @@ public class BigtableOptionsFactory {
       "google.bigtable.snapshot.cluster.id";
   /**
    * Constant <code>
-   * BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY="google.bigtable.snapshot.default.ttl.secs"</code>
+   * BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY="google.bigtable.snapshot.default.ttl.secs"</code> Will
+   * default to 24 hrs if not set (see BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_VALUE)
    */
   public static final String BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY =
       "google.bigtable.snapshot.default.ttl.secs";
