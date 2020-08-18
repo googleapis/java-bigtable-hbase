@@ -23,6 +23,8 @@ which makes it easy for development teams to get started.
 
 Note: Please use [google-cloud-bigtable][google-cloud-bigtable] to access Bigtable APIs instead of `bigtable-core-client`. These artifacts are meant to wrap HBase over Bigtable API. 
 
+test
+
 ## Project setup, installation, and configuration
 
 ### Prerequisites
