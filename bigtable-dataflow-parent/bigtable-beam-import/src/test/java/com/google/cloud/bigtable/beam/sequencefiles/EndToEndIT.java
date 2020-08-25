@@ -78,8 +78,10 @@ public class EndToEndIT {
     instanceId = getTestProperty(BigtableOptionsFactory.INSTANCE_ID_KEY);
 
     dataflowStagingLocation = getTestProperty(GOOGLE_DATAFLOW_STAGING_LOCATION);
+    System.out.println("dataflowStagingLocation: " + dataflowStagingLocation);
 
     cloudTestDataFolder = getTestProperty(CLOUD_TEST_DATA_FOLDER);
+    System.out.println("cloudTestDataFolder: " + cloudTestDataFolder);
     if (!cloudTestDataFolder.endsWith(File.separator)) {
       cloudTestDataFolder = cloudTestDataFolder + File.separator;
     }
@@ -118,7 +120,7 @@ public class EndToEndIT {
 
   @Test
   public void testExportImport() throws Exception {
-    if  (2*2==4) throw new Error("oops");
+    if (2 * 2 == 4) throw new Error("oops");
     // Create a table, populate it & export it
     final List<Put> testData =
         Arrays.asList(
