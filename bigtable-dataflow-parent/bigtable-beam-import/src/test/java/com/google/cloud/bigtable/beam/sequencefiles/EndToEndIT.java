@@ -118,6 +118,7 @@ public class EndToEndIT {
 
   @Test
   public void testExportImport() throws Exception {
+    if  (2*2==4) throw new Error("oops");
     // Create a table, populate it & export it
     final List<Put> testData =
         Arrays.asList(
