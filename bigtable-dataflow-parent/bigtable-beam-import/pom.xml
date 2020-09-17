@@ -300,26 +300,24 @@ limitations under the License.
       <!-- Required properties:
          google.bigtable.project.id
          google.bigtable.instance.id
-         google.dataflow.stagingLocation
-         cloud.test.data.folder
+         google.dataflow.gcsPath
      -->
       <build>
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-failsafe-plugin</artifactId>
+            <artifactId>maven-surefire-plugin</artifactId>
             <executions>
               <execution>
                 <id>import-e2e-test</id>
                 <goals>
-                  <goal>integration-test</goal>
-                  <goal>verify</goal>
+                  <goal>test</goal>
                 </goals>
                 <phase>integration-test</phase>
                 <configuration>
                   <forkCount>1</forkCount>
                   <includes>
-                    <include>**/*IT.java</include>
+                    <include>**/EndToEndIT.java</include>
                   </includes>
                   <!-- Use Isolated Classloader so that dataflow can find all files
                        that must be staged.

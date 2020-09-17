@@ -22,15 +22,16 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_HO
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.INSTANCE_ID_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.PROJECT_ID_KEY;
 
-import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
+import com.google.cloud.bigtable.beam.TestHelper;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.Pipeline;
@@ -61,6 +62,7 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.shaded.org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -69,32 +71,32 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /**
- * This class contains integration test for Beam Dataflow.It creates dataflow pipelines that perform
- * the following task using pipeline chain process:
+ * Integration test for Beam Dataflow. The test creates dataflow pipelines that perform the
+ * following tasks using pipeline chain process:
  *
  * <ol>
- *   <li>Creates records and performs a Bigtable Put on each record.
- *   <li>Creates Scan and perform count for each Row of Bigtable.
+ *   <li>Create records and perform the Bigtable Put on each record.
+ *   <li>Create Scan and perform Count for each row of Bigtable.
  * </ol>
  *
- * <p>Arguments to configure in this integration test. These are required for running the test case
- * on Google Cloud Platform.
+ * <p>Mandatory parameters:
  *
  * <pre>
- *  -Dgoogle.bigtable.project.id=[bigtable project] \
- *  -Dgoogle.bigtable.instance.id=[bigtable instance id] \
- *  -DdataflowStagingLocation=gs://[google storage bucket] \
- *  -DdataflowZoneId=[dataflow zone Id]
+ *  -Dgoogle.bigtable.project.id=[bigtable project]
+ *  -Dgoogle.bigtable.instance.id=[bigtable instance id]
+ *  -Dgoogle.dataflow.gcsPath=gs://[google storage path]
  * </pre>
  *
- * <p>These options are optional, If not provided it will fallback to defaults.
+ * <p>Optional parameters:
  *
  * <pre>
- *  -Dgoogle.bigtable.endpoint.host=[bigtable batch host] \
- *  -Dgoogle.bigtable.admin.endpoint.host=[bigtable admin host] \
- *  -DtableName=[tableName to be used] \
- *  -Dtotal_row_count=[number of rows to write and read] \
- *  -Dprefix_count=[cell prefix count]
+ *  -Dgoogle.bigtable.endpoint.host=[bigtable batch host]
+ *  -Dgoogle.bigtable.admin.endpoint.host=[bigtable admin host]
+ *  -Dgoogle.dataflow.zoneId=[dataflow zone Id]
+ *  -Dgoogle.dataflow.tableName=[table name to be used]
+ *  -Dgoogle.dataflow.cell_size=[cell size]
+ *  -Dgoogle.dataflow.total_row_count=[number of rows to write and read]
+ *  -Dgoogle.dataflow.prefix_count=[cell prefix count]
  * </pre>
  */
 @RunWith(JUnit4.class)
@@ -102,13 +104,14 @@ public class CloudBigtableBeamITTest {
 
   private final Log LOG = LogFactory.getLog(getClass());
 
-  private static final String STAGING_LOCATION_KEY = "dataflowStagingLocation";
-  private static final String ZONE_ID_KEY = "dataflowZoneId";
+  private static String projectId;
+  private static String instanceId;
+  private static String gcsPath;
+  private static String gcsWorkDir;
+  private static String stagingLocation;
+  private static String tempLocation;
 
-  private static final String projectId = System.getProperty(PROJECT_ID_KEY);
-  private static final String instanceId = System.getProperty(INSTANCE_ID_KEY);
-  private static final String stagingLocation = System.getProperty(STAGING_LOCATION_KEY);
-  private static final String zoneId = System.getProperty(ZONE_ID_KEY);
+  private static final String zoneId = System.getProperty("google.dataflow.zoneId");
 
   private static final String workerMachineType =
       System.getProperty("workerMachineType", "n1" + "-standard-8");
@@ -117,21 +120,24 @@ public class CloudBigtableBeamITTest {
   private static final String adminEndpoint =
       System.getProperty(BIGTABLE_ADMIN_HOST_KEY, BIGTABLE_ADMIN_HOST_DEFAULT);
   private static final String TABLE_NAME_STR =
-      System.getProperty("tableName", "BeamCloudBigtableIOIntegrationTest");
+      System.getProperty("google.dataflow.tableName", "BeamCloudBigtableIOIntegrationTest");
 
   private static final TableName TABLE_NAME = TableName.valueOf(TABLE_NAME_STR);
-  private static final byte[] FAMILY = Bytes.toBytes("test-family");
+  private static final byte[] FAMILY = Bytes.toBytes("google.dataflow.test-family");
   private static final byte[] QUALIFIER = Bytes.toBytes("test-qualifier");
-  private static final int CELL_SIZE = Integer.getInteger("cell_size", 1_000);
-  private static final long TOTAL_ROW_COUNT = Integer.getInteger("total_row_count", 1_000_000);
-  private static final int PREFIX_COUNT = Integer.getInteger("prefix_count", 1_000);
+  private static final int CELL_SIZE = Integer.getInteger("google.dataflow.cell_size", 1_000);
+  private static final long TOTAL_ROW_COUNT =
+      Integer.getInteger("google.dataflow.total_row_count", 1_000_000);
+  private static final int PREFIX_COUNT = Integer.getInteger("google.dataflow.prefix_count", 1_000);
 
   @BeforeClass
   public static void setUpConfiguration() {
-    Preconditions.checkArgument(stagingLocation != null, "Set -D" + STAGING_LOCATION_KEY + ".");
-    Preconditions.checkArgument(zoneId != null, "Set -D" + ZONE_ID_KEY + ".");
-    Preconditions.checkArgument(projectId != null, "Set -D" + PROJECT_ID_KEY + ".");
-    Preconditions.checkArgument(instanceId != null, "Set -D" + INSTANCE_ID_KEY + ".");
+    projectId = TestHelper.getTestProperty(PROJECT_ID_KEY);
+    instanceId = TestHelper.getTestProperty(INSTANCE_ID_KEY);
+    gcsPath = TestHelper.getTestProperty("google.dataflow.gcsPath");
+    gcsWorkDir = gcsPath + "/" + UUID.randomUUID().toString();
+    stagingLocation = gcsWorkDir + "/staging";
+    tempLocation = gcsWorkDir + "/temp";
   }
 
   @Before
@@ -147,6 +153,14 @@ public class CloudBigtableBeamITTest {
       admin.createTable(new HTableDescriptor(TABLE_NAME).addFamily(new HColumnDescriptor(FAMILY)));
       LOG.info(String.format("Created a table to perform batching: %s", TABLE_NAME));
     }
+  }
+
+  @After
+  public void tearDown() throws IOException {
+    TestHelper.init(projectId);
+    TestHelper.cleanUpStorageFolder(stagingLocation);
+    TestHelper.cleanUpStorageFolder(tempLocation);
+    TestHelper.cleanUpStorageFolder(gcsWorkDir);
   }
 
   private static final DoFn<String, Mutation> WRITE_ONE_TENTH_PERCENT =
@@ -255,9 +269,11 @@ public class CloudBigtableBeamITTest {
   private DataflowPipelineOptions createOptions() {
     DataflowPipelineOptions options = PipelineOptionsFactory.as(DataflowPipelineOptions.class);
     options.setProject(projectId);
-    options.setZone(zoneId);
-    options.setStagingLocation(stagingLocation + "/stage");
-    options.setTempLocation(stagingLocation + "/temp");
+    if (zoneId != null) {
+      options.setZone(zoneId);
+    }
+    options.setStagingLocation(stagingLocation);
+    options.setTempLocation(tempLocation);
     options.setRunner(DataflowRunner.class);
     options.setWorkerMachineType(workerMachineType);
     return options;

@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.beam;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.Logger;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,16 +59,14 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class CloudBigtableIOIntegrationTest {
-  private static final String BIGTABLE_PROJECT_KEY = "google.bigtable.project.id";
-  private static final String BIGTABLE_INSTANCE_KEY = "google.bigtable.instance.id";
 
   public static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
   public static final byte[] QUALIFIER1 = Bytes.toBytes("qualifier1");
 
   private static final Logger LOG = new Logger(CloudBigtableIOIntegrationTest.class);
 
-  private static String projectId = System.getProperty(BIGTABLE_PROJECT_KEY);
-  private static String instanceId = System.getProperty(BIGTABLE_INSTANCE_KEY);
+  private static String projectId = System.getProperty(BigtableOptionsFactory.PROJECT_ID_KEY);
+  private static String instanceId = System.getProperty(BigtableOptionsFactory.INSTANCE_ID_KEY);
 
   private static int LARGE_VALUE_SIZE = 201326;
 

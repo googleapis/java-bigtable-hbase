@@ -37,6 +37,26 @@ again.
        -Dgoogle.bigtable.project.id=[your cloud project id] \
        -Dgoogle.bigtable.instance.id=[your cloud bigtable instance id]
    ```
+
+   Use the following command to run the Cloud Bigtable integration tests for Bigtable I/O:
+
+   ```sh
+   mvn clean verify \
+       -PbigtableDataflowIntegrationTest \
+       -Dgoogle.bigtable.project.id=[your cloud project id] \
+       -Dgoogle.bigtable.instance.id=[your cloud bigtable instance id]
+   ```
+
+   Use the following command to run the Cloud Bigtable integration tests for dataflow export/import
+
+   ```sh
+   mvn clean verify \
+       -PsequencefileIntegrationTest,beamIntegrationTest \
+       -Dgoogle.dataflow.gcsPath=gs://[your cloud storage path] \
+       -Dgoogle.bigtable.project.id=[your cloud project id] \
+       -Dgoogle.bigtable.instance.id=[your cloud bigtable instance id]
+   ```
+
    
    There are also tests that perform compatibility tests against an HBase Minicluster, which can be invoked with the following commands for HBase 1 and HBase 2 respectively: 
    ```sh
