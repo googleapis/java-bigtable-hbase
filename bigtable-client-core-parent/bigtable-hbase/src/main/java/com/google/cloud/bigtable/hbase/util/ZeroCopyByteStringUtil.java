@@ -68,7 +68,14 @@ public final class ZeroCopyByteStringUtil {
       if (offset != 0 || length != value.length) {
         throw new UnsupportedOperationException();
       }
-      bytes = value;
+      if (bytes == null) {
+        bytes = value;
+      } else {
+        byte[] newBytes = new byte[bytes.length + value.length];
+        System.arraycopy(bytes, 0, newBytes, 0, bytes.length);
+        System.arraycopy(value, 0, newBytes, bytes.length, value.length);
+        bytes = newBytes;
+      }
     }
 
     @Override
