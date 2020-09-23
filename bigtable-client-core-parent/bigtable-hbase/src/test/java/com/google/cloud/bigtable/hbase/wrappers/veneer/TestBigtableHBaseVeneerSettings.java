@@ -58,6 +58,7 @@ import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
+import com.google.cloud.bigtable.hbase.wrappers.veneer.metrics.MetricsApiTracerAdapterFactory;
 import io.grpc.internal.GrpcUtil;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -126,6 +127,9 @@ public class TestBigtableHBaseVeneerSettings {
 
     assertTrue(settingUtils.isChannelPoolCachingEnabled());
     assertTrue(settingUtils.isRetriesWithoutTimestampAllowed());
+    assertTrue(
+        dataSettings.getStubSettings().getTracerFactory()
+            instanceof MetricsApiTracerAdapterFactory);
   }
 
   @Test

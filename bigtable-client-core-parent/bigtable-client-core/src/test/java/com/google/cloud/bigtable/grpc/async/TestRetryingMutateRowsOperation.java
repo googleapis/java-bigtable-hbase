@@ -29,6 +29,7 @@ import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.metrics.RpcMetrics;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.rpc.Status;
 import io.grpc.CallOptions;
@@ -61,8 +62,8 @@ public class TestRetryingMutateRowsOperation {
 
   private static Status OK = statusOf(io.grpc.Status.Code.OK);
   private static Status DEADLINE_EXCEEDED = statusOf(io.grpc.Status.Code.DEADLINE_EXCEEDED);
-  private static final BigtableAsyncRpc.RpcMetrics metrics =
-      BigtableAsyncRpc.RpcMetrics.createRpcMetrics(BigtableGrpc.getMutateRowsMethod());
+  private static final RpcMetrics metrics =
+      BigtableAsyncUtilities.Default.createRpcMetrics(BigtableGrpc.getMutateRowsMethod());
 
   private static MutateRowsResponse createResponse(Status... statuses) {
     MutateRowsResponse.Builder builder = MutateRowsResponse.newBuilder();

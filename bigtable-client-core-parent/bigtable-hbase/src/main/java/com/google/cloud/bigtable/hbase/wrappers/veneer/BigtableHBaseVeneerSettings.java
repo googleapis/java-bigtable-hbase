@@ -77,10 +77,12 @@ import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.admin.v2.stub.BigtableInstanceAdminStubSettings;
 import com.google.cloud.bigtable.admin.v2.stub.BigtableTableAdminStubSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
+import com.google.cloud.bigtable.data.v2.BigtableDataSettings.Builder;
 import com.google.cloud.bigtable.data.v2.stub.EnhancedBigtableStubSettings;
 import com.google.cloud.bigtable.hbase.BigtableExtendedConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableHBaseVersion;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
+import com.google.cloud.bigtable.hbase.wrappers.veneer.metrics.MetricsApiTracerAdapterFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import io.grpc.ManagedChannelBuilder;
@@ -259,7 +261,15 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     configureIdempotentCallSettings(stubSettings.readRowSettings());
     configureIdempotentCallSettings(stubSettings.sampleRowKeysSettings());
 
+    configureMetricsBridge(dataBuilder);
+
     return dataBuilder.build();
+  }
+
+  private void configureMetricsBridge(Builder settings) {
+    MetricsApiTracerAdapterFactory metricsApiTracerAdapterFactory =
+        new MetricsApiTracerAdapterFactory();
+    settings.stubSettings().setTracerFactory(metricsApiTracerAdapterFactory);
   }
 
   private BigtableTableAdminSettings buildBigtableTableAdminSettings() throws IOException {

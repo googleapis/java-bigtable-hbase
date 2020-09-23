@@ -235,7 +235,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   protected BigtableRetriesExhaustedException getExhaustedRetriesException(Status status) {
     operationSpan.addAnnotation("exhaustedRetries");
-    rpc.getRpcMetrics().markRetriesExhasted();
+    rpc.getRpcMetrics().markRetriesExhausted();
     finalizeStats(status);
     String message = String.format("Exhausted retries after %d failures.", failedCount);
     return new BigtableRetriesExhaustedException(message, status.asRuntimeException());

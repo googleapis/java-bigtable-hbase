@@ -102,7 +102,7 @@ public class RetryingMutateRowsOperation
     Long nextBackOff = getNextBackoff();
     if (nextBackOff == null) {
       // Return the response as is, and don't retry;
-      rpc.getRpcMetrics().markRetriesExhasted();
+      rpc.getRpcMetrics().markRetriesExhausted();
       completionFuture.set(Arrays.asList(requestManager.buildResponse()));
       operationSpan.addAnnotation(
           "MutationCount",
