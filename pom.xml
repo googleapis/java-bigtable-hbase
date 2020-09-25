@@ -56,7 +56,7 @@ limitations under the License.
     <compileSource.1.8>1.8</compileSource.1.8>
 
     <!-- core dependency versions -->
-    <bigtable.version>1.13.0</bigtable.version>
+    <bigtable.version>1.15.0</bigtable.version>
     <dropwizard.metrics.version>3.2.6</dropwizard.metrics.version>
     <!--  keeping at this version to align with hbase-->
     <slf4j.version>1.7.25</slf4j.version>

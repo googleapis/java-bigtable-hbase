@@ -416,6 +416,14 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
 
+    <!--  TODO: remove this dependency when upgraded through transitive dependency (http-client -> org.apache.httpcomponents:httpclient)
+this is not used directly, but upgrading due to transitive vulnerabilities in older versions-->
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>1.14</version>
+    </dependency>
+
     <!-- Testing deps -->
     <dependency>
       <groupId>org.mockito</groupId>
@@ -483,6 +491,8 @@ limitations under the License.
           <usedDependencies>
             <usedDependency>${project.groupId}:bigtable-hbase-2.x</usedDependency>
             <usedDependency>org.slf4j:slf4j-log4j12</usedDependency>
+            <!-- commons-codec is not used directly, but upgrading due to transitive vulnerabilities in older versions. -->
+            <usedDependency>commons-codec:commons-codec</usedDependency>
           </usedDependencies>
         </configuration>
       </plugin>
