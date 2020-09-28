@@ -87,7 +87,7 @@ import org.junit.runners.JUnit4;
  *  -Dgoogle.dataflow.gcsPath=gs://[google storage path]
  * </pre>
  *
- * <p>Optional parameters:
+ * <p>Optional parameters, if not provided defaults will be used:
  *
  * <pre>
  *  -Dgoogle.bigtable.endpoint.host=[bigtable batch host]
