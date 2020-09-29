@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.beam;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +50,13 @@ public class TestHelper {
     for (GcsPath path : gcsUtil.expand(GcsPath.fromUri(gsPath + "*"))) {
       pathsToRemove.add(path.toString());
     }
-    pathsToRemove.add(gsPath);
+    try {
+      if (gcsUtil.getObject(GcsPath.fromUri(gsPath)) != null) {
+        pathsToRemove.add(gsPath);
+      }
+    } catch (FileNotFoundException e) {
+      // okay
+    }
     gcsUtil.remove(pathsToRemove);
   }
 
