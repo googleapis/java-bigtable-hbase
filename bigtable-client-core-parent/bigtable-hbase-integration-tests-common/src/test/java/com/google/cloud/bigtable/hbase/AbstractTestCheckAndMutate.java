@@ -50,19 +50,20 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
 
       // Put with a bad check on a null value, then try with a good one
       Put put = new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, value1);
-      boolean success = checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, value2, put);
-      Assert.assertFalse("Column doesn't exist.  Should fail.", success);
-      success = checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, null, put);
-      Assert.assertTrue(success);
+      Assert.assertFalse(
+          "Column doesn't exist.  Should fail.",
+          checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, value2, put));
+      Assert.assertTrue(checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, null, put));
 
       // Fail on null check, now there's a value there
       put = new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, value2);
-      success = checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, null, put);
-      Assert.assertFalse("Null check should fail", success);
-      success = checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, value2, put);
-      Assert.assertFalse("Wrong value should fail", success);
-      success = checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, value1, put);
-      Assert.assertTrue(success);
+      Assert.assertFalse(
+          "Null check should fail",
+          checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, null, put));
+      Assert.assertFalse(
+          "Wrong value should fail",
+          checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, value2, put));
+      Assert.assertTrue(checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, value1, put));
 
       // Check results
       Get get = new Get(rowKey);
@@ -107,17 +108,19 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
 
     // Delete all previous versions if the value is found.
     Delete delete = new Delete(rowKey).addColumns(SharedTestEnvRule.COLUMN_FAMILY, qual);
-    boolean success = checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, value1, delete);
-    Assert.assertFalse("Column doesn't exist.  Should fail.", success);
-    success = checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, null, delete);
+    Assert.assertFalse(
+        "Column doesn't exist.  Should fail.",
+        checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, value1, delete));
+    Assert.assertTrue(checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, null, delete));
 
     // Add a value and check again
     Put put = new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, value1);
     table.put(put);
-    success = checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, value2, delete);
-    Assert.assertFalse("Wrong value.  Should fail.", success);
-    success = checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, value1, delete);
-    Assert.assertTrue(success);
+    Assert.assertFalse(
+        "Wrong value.  Should fail.",
+        checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, value2, delete));
+    Assert.assertTrue(
+        checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, value1, delete));
     Assert.assertFalse("Row should be gone", table.exists(new Get(rowKey)));
 
     table.close();
@@ -136,19 +139,20 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
 
     // Put then again
     Put put = new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual1, value1);
-    boolean success = checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual2, value2, put);
-    Assert.assertFalse("Column doesn't exist.  Should fail.", success);
-    success = checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual2, null, put);
-    Assert.assertTrue(success);
+    Assert.assertFalse(
+        "Column doesn't exist.  Should fail.",
+        checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual2, value2, put));
+    Assert.assertTrue(checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual2, null, put));
 
     // Fail on null check, now there's a value there
     put = new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual2, value2);
-    success = checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual1, null, put);
-    Assert.assertFalse("Null check should fail", success);
-    success = checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual1, value2, put);
-    Assert.assertFalse("Wrong value should fail", success);
-    success = checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual1, value1, put);
-    Assert.assertTrue(success);
+    Assert.assertFalse(
+        "Null check should fail",
+        checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual1, null, put));
+    Assert.assertFalse(
+        "Wrong value should fail",
+        checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual1, value2, put));
+    Assert.assertTrue(checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual1, value1, put));
 
     // Check results
     Get get = new Get(rowKey);
@@ -178,11 +182,10 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
 
     // Delete all versions of a column if the latest version matches
     Delete delete = new Delete(rowKey).addColumns(SharedTestEnvRule.COLUMN_FAMILY, qual1);
-    boolean success =
-        checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual2, value2, delete);
-    Assert.assertFalse("Column doesn't exist.  Should fail.", success);
-    success = checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual2, null, delete);
-    Assert.assertTrue(success);
+    Assert.assertFalse(
+        "Column doesn't exist.  Should fail.",
+        checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual2, value2, delete));
+    Assert.assertTrue(checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual2, null, delete));
 
     // Add a value now
     Put put =
@@ -192,15 +195,16 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
     table.put(put);
 
     // Fail on null check, now there's a value there
-    success = checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual2, null, delete);
-    Assert.assertFalse("Null check should fail", success);
-    success = checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual2, value1, delete);
-    Assert.assertFalse("Wrong value should fail", success);
-    success = checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual2, value2, delete);
-    Assert.assertTrue(success);
+    Assert.assertFalse(
+        "Null check should fail",
+        checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual2, null, delete));
+    Assert.assertFalse(
+        "Wrong value should fail",
+        checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual2, value1, delete));
+    Assert.assertTrue(
+        checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual2, value2, delete));
     delete = new Delete(rowKey).addColumns(SharedTestEnvRule.COLUMN_FAMILY, qual2);
-    success = checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual1, null, delete);
-    Assert.assertTrue(success);
+    Assert.assertTrue(checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual1, null, delete));
     Assert.assertFalse("Row should be gone", table.exists(new Get(rowKey)));
 
     table.close();
@@ -266,14 +270,13 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
     rm.add(new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualPut, valuePut));
     rm.add(new Delete(rowKey).addColumns(SharedTestEnvRule.COLUMN_FAMILY, qualDelete));
 
-    boolean success =
+    Assert.assertFalse(
+        "Column doesn't exist.  Should fail.",
         checkAndMutate(
-            rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, valueCheck, rm);
-    Assert.assertFalse("Column doesn't exist.  Should fail.", success);
-    success =
+            rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, valueCheck, rm));
+    Assert.assertTrue(
         checkAndMutate(
-            rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, null, rm);
-    Assert.assertTrue(success);
+            rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, null, rm));
 
     // Add a value now
     Put put =
@@ -282,19 +285,18 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
             .addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualDelete, Bytes.toBytes("todelete"));
     table.put(put);
     // Fail on null check, now there's a value there
-    success =
+    Assert.assertFalse(
+        "Null check should fail",
         checkAndMutate(
-            rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, null, rm);
-    Assert.assertFalse("Null check should fail", success);
+            rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, null, rm));
     // valuePut is in qualPut and not in qualCheck so this will fail:
-    success =
+    Assert.assertFalse(
+        "Wrong value should fail",
         checkAndMutate(
-            rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, valuePut, rm);
-    Assert.assertFalse("Wrong value should fail", success);
-    success =
+            rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, valuePut, rm));
+    Assert.assertTrue(
         checkAndMutate(
-            rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, valueCheck, rm);
-    Assert.assertTrue(success);
+            rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, valueCheck, rm));
 
     Result row = table.get(new Get(rowKey).addFamily(SharedTestEnvRule.COLUMN_FAMILY));
     // QualCheck and QualPut should exist
@@ -312,7 +314,6 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qualToCheck = dataHelper.randomData("toCheck-");
     byte[] otherQual = dataHelper.randomData("other-");
-    boolean success;
 
     Table table = getDefaultTable();
 
@@ -323,135 +324,135 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
     Put someRandomPut =
         new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, otherQual, Bytes.toBytes(1l));
 
-    success =
+    Assert.assertTrue(
+        "1000 < 2000 should succeed",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             qualToCheck,
             CompareOp.LESS,
             Bytes.toBytes(1000l),
-            someRandomPut);
-    Assert.assertTrue("1000 < 2000 should succeed", success);
+            someRandomPut));
 
-    success =
+    Assert.assertFalse(
+        "4000 < 2000 should fail",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             qualToCheck,
             CompareOp.LESS,
             Bytes.toBytes(4000l),
-            someRandomPut);
-    Assert.assertFalse("4000 < 2000 should fail", success);
+            someRandomPut));
 
-    success =
+    Assert.assertFalse(
+        "1000 > 2000 should fail",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             qualToCheck,
             CompareOp.GREATER,
             Bytes.toBytes(1000l),
-            someRandomPut);
-    Assert.assertFalse("1000 > 2000 should fail", success);
+            someRandomPut));
 
-    success =
+    Assert.assertTrue(
+        "4000 > 2000 should succeed",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             qualToCheck,
             CompareOp.GREATER,
             Bytes.toBytes(4000l),
-            someRandomPut);
-    Assert.assertTrue("4000 > 2000 should succeed", success);
+            someRandomPut));
 
-    success =
+    Assert.assertTrue(
+        "1000 <= 2000 should succeed",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             qualToCheck,
             CompareOp.LESS_OR_EQUAL,
             Bytes.toBytes(1000l),
-            someRandomPut);
-    Assert.assertTrue("1000 <= 2000 should succeed", success);
+            someRandomPut));
 
-    success =
+    Assert.assertFalse(
+        "4000 <= 2000 should fail",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             qualToCheck,
             CompareOp.LESS_OR_EQUAL,
             Bytes.toBytes(4000l),
-            someRandomPut);
-    Assert.assertFalse("4000 <= 2000 should fail", success);
+            someRandomPut));
 
-    success =
+    Assert.assertFalse(
+        "1000 >= 2000 should fail",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             qualToCheck,
             CompareOp.GREATER_OR_EQUAL,
             Bytes.toBytes(1000l),
-            someRandomPut);
-    Assert.assertFalse("1000 >= 2000 should fail", success);
+            someRandomPut));
 
-    success =
+    Assert.assertTrue(
+        "4000 >= 2000 should succeed",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             qualToCheck,
             CompareOp.GREATER_OR_EQUAL,
             Bytes.toBytes(4000l),
-            someRandomPut);
-    Assert.assertTrue("4000 >= 2000 should succeed", success);
+            someRandomPut));
 
-    success =
+    Assert.assertFalse(
+        "1000 == 2000 should fail",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             qualToCheck,
             CompareOp.EQUAL,
             Bytes.toBytes(1000l),
-            someRandomPut);
-    Assert.assertFalse("1000 == 2000 should fail", success);
+            someRandomPut));
 
-    success =
+    Assert.assertTrue(
+        "2000 == 2000 should succeed",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             qualToCheck,
             CompareOp.EQUAL,
             Bytes.toBytes(2000l),
-            someRandomPut);
-    Assert.assertTrue("2000 == 2000 should succeed", success);
+            someRandomPut));
 
-    success =
+    Assert.assertFalse(
+        "2000 != 2000 should fail",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             qualToCheck,
             CompareOp.NOT_EQUAL,
             Bytes.toBytes(2000l),
-            someRandomPut);
-    Assert.assertFalse("2000 != 2000 should fail", success);
+            someRandomPut));
 
-    success =
+    Assert.assertTrue(
+        "4000 != 2000 should succeed",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             qualToCheck,
             CompareOp.NOT_EQUAL,
             Bytes.toBytes(4000l),
-            someRandomPut);
-    Assert.assertTrue("4000 != 2000 should succeed", success);
+            someRandomPut));
 
-    success =
+    Assert.assertTrue(
+        "4000 > MIN_BYTES should succeed",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             qualToCheck,
             CompareOp.GREATER_OR_EQUAL,
             new byte[] {Byte.MIN_VALUE},
-            someRandomPut);
-    Assert.assertTrue("4000 > MIN_BYTES should succeed", success);
+            someRandomPut));
   }
 
   @Test
@@ -460,7 +461,6 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
     byte[] nullQual = dataHelper.randomData("null-");
     byte[] popluatedQual = dataHelper.randomData("pupulated-");
     byte[] otherQual = dataHelper.randomData("other-");
-    boolean success;
 
     Table table = getDefaultTable();
 
@@ -471,60 +471,65 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
     Put someRandomPut =
         new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, otherQual, Bytes.toBytes(1l));
 
-    success =
+    Assert.assertTrue(
+        "< null should succeed",
         checkAndPut(
-            rowKey, SharedTestEnvRule.COLUMN_FAMILY, nullQual, CompareOp.LESS, null, someRandomPut);
-    Assert.assertTrue("< null should succeed", success);
+            rowKey,
+            SharedTestEnvRule.COLUMN_FAMILY,
+            nullQual,
+            CompareOp.LESS,
+            null,
+            someRandomPut));
 
-    success =
+    Assert.assertTrue(
+        "> null should succeed",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             nullQual,
             CompareOp.GREATER,
             null,
-            someRandomPut);
-    Assert.assertTrue("> null should succeed", success);
+            someRandomPut));
 
-    success =
+    Assert.assertTrue(
+        "<= null should succeed",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             nullQual,
             CompareOp.LESS_OR_EQUAL,
             null,
-            someRandomPut);
-    Assert.assertTrue("<= null should succeed", success);
+            someRandomPut));
 
-    success =
+    Assert.assertTrue(
+        ">= null should succeed",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             nullQual,
             CompareOp.GREATER_OR_EQUAL,
             null,
-            someRandomPut);
-    Assert.assertTrue(">= null should succeed", success);
+            someRandomPut));
 
-    success =
+    Assert.assertTrue(
+        "== null should succeed",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             nullQual,
             CompareOp.EQUAL,
             null,
-            someRandomPut);
-    Assert.assertTrue("== null should succeed", success);
+            someRandomPut));
 
-    success =
+    Assert.assertFalse(
+        "> MIN_BYTES should fail",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             nullQual,
             CompareOp.GREATER_OR_EQUAL,
             new byte[] {Byte.MIN_VALUE},
-            someRandomPut);
-    Assert.assertFalse("> MIN_BYTES should fail", success);
+            someRandomPut));
   }
 
   /**
@@ -552,29 +557,27 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
     Put someRandomPut =
         new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, otherQual, Bytes.toBytes(1l));
 
-    boolean success;
-
     // This doesn't work in HBase, but we need this to work in CBT
-    success =
+    Assert.assertFalse(
+        "!= null should fail",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             nullQual,
             CompareOp.NOT_EQUAL,
             null,
-            someRandomPut);
-    Assert.assertFalse("!= null should fail", success);
+            someRandomPut));
 
     // This doesn't work in HBase, but we need this to work in CBT
-    success =
+    Assert.assertTrue(
+        "2000 != null should succeed",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             popluatedQual,
             CompareOp.NOT_EQUAL,
             null,
-            someRandomPut);
-    Assert.assertTrue("2000 != null should succeed", success);
+            someRandomPut));
   }
 
   @Test
@@ -582,7 +585,6 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
     byte[] rowKey = dataHelper.randomData("rowKey-");
     byte[] qualToCheck = dataHelper.randomData("toCheck-");
     byte[] otherQual = dataHelper.randomData("other-");
-    boolean success;
 
     Table table = getDefaultTable();
     Put someRandomPut =
@@ -596,14 +598,14 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
         new Put(rowKey, System.currentTimeMillis())
             .addColumn(SharedTestEnvRule.COLUMN_FAMILY, qualToCheck, Bytes.toBytes(4000l)));
 
-    success =
+    Assert.assertFalse(
+        "3000 > 4000 should fail",
         checkAndPut(
             rowKey,
             SharedTestEnvRule.COLUMN_FAMILY,
             qualToCheck,
             CompareOp.GREATER,
             Bytes.toBytes(3000l),
-            someRandomPut);
-    Assert.assertFalse("3000 > 4000 should fail", success);
+            someRandomPut));
   }
 }
