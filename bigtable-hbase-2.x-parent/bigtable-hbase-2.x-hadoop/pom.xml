@@ -123,6 +123,7 @@ limitations under the License.
             </requireUpperBoundDeps>
             <banDuplicateClasses>
               <ignoreClasses>
+                <!-- todo(kolea2): investigate transitive deps causing conflicts-->
                 <ignoreClass>**</ignoreClass>
               </ignoreClasses>
             </banDuplicateClasses>
