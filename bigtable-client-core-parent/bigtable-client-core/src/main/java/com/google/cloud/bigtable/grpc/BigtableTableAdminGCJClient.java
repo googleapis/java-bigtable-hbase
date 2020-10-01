@@ -15,34 +15,26 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
-
-import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
-import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
-import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
-import com.google.bigtable.admin.v2.GetSnapshotRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsResponse;
-import com.google.bigtable.admin.v2.Snapshot;
-import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.cloud.bigtable.admin.v2.BaseBigtableTableAdminClient;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminClient;
+import com.google.cloud.bigtable.admin.v2.models.Backup;
+import com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
+import com.google.cloud.bigtable.admin.v2.models.RestoreTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.RestoredTableResult;
 import com.google.cloud.bigtable.admin.v2.models.Table;
+import com.google.cloud.bigtable.admin.v2.models.UpdateBackupRequest;
 import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
-import com.google.longrunning.Operation;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.Empty;
 import java.util.List;
 import javax.annotation.Nonnull;
 
 /**
- * This class implements existing {@link IBigtableTableAdminClient} operations with
- * Google-cloud-java's {@link BigtableTableAdminClient} & {@link BaseBigtableTableAdminClient}.
+ * This class implements existing {@link IBigtableTableAdminClient} operations with java-bigtable's
+ * {@link BigtableTableAdminClient} & {@link BaseBigtableTableAdminClient}.
  *
  * <p>For internal use only - public for technical reasons.
  */
@@ -155,40 +147,37 @@ public class BigtableTableAdminGCJClient implements IBigtableTableAdminClient, A
 
   /** {@inheritDoc} */
   @Override
-  public ApiFuture<Operation> snapshotTableAsync(SnapshotTableRequest request) {
-    return baseAdminClient.snapshotTableCallable().futureCall(request);
+  public ApiFuture<Backup> createBackupAsync(CreateBackupRequest request) {
+    return delegate.createBackupAsync(request);
   }
 
   /** {@inheritDoc} */
   @Override
-  public ApiFuture<Snapshot> getSnapshotAsync(GetSnapshotRequest request) {
-    return baseAdminClient.getSnapshotCallable().futureCall(request);
+  public ApiFuture<Backup> getBackupAsync(String clusterId, String backupId) {
+    return delegate.getBackupAsync(clusterId, backupId);
+  }
+
+  @Override
+  public ApiFuture<Backup> updateBackupAsync(UpdateBackupRequest request) {
+    return delegate.updateBackupAsync(request);
   }
 
   /** {@inheritDoc} */
   @Override
-  public ApiFuture<ListSnapshotsResponse> listSnapshotsAsync(ListSnapshotsRequest request) {
-    return baseAdminClient.listSnapshotsCallable().futureCall(request);
+  public ApiFuture<List<String>> listBackupsAsync(String clusterId) {
+    return delegate.listBackupsAsync(clusterId);
   }
 
   /** {@inheritDoc} */
   @Override
-  public ApiFuture<Void> deleteSnapshotAsync(DeleteSnapshotRequest request) {
-    return ApiFutures.transform(
-        baseAdminClient.deleteSnapshotCallable().futureCall(request),
-        new ApiFunction<Empty, Void>() {
-          @Override
-          public Void apply(Empty input) {
-            return null;
-          }
-        },
-        directExecutor());
+  public ApiFuture<Void> deleteBackupAsync(String clusterId, String backupId) {
+    return delegate.deleteBackupAsync(clusterId, backupId);
   }
 
   /** {@inheritDoc} */
   @Override
-  public ApiFuture<Operation> createTableFromSnapshotAsync(CreateTableFromSnapshotRequest request) {
-    return baseAdminClient.createTableFromSnapshotCallable().futureCall(request);
+  public ApiFuture<RestoredTableResult> restoreTableAsync(RestoreTableRequest request) {
+    return delegate.restoreTableAsync(request);
   }
 
   @Override

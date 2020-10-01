@@ -23,9 +23,16 @@ import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiExceptions;
 import com.google.api.gax.rpc.FailedPreconditionException;
+import com.google.cloud.bigtable.admin.v2.internal.NameUtil;
+import com.google.cloud.bigtable.admin.v2.models.Backup;
+import com.google.cloud.bigtable.admin.v2.models.Cluster;
+import com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
+import com.google.cloud.bigtable.admin.v2.models.RestoreTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
+import com.google.cloud.bigtable.grpc.BigtableClusterName;
+import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
@@ -34,6 +41,8 @@ import com.google.cloud.bigtable.hbase.wrappers.AdminClientWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
@@ -69,6 +78,8 @@ import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
+import org.threeten.bp.Instant;
+import org.threeten.bp.temporal.ChronoUnit;
 
 /**
  * Abstract AbstractBigtableAdmin class.
@@ -93,6 +104,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private final BigtableHBaseSettings settings;
   protected final CommonConnection connection;
   protected final AdminClientWrapper tableAdminClientWrapper;
+  private BigtableClusterName bigtableSnapshotClusterName;
 
   /**
    * Constructor for AbstractBigtableAdmin.
@@ -107,6 +119,16 @@ public abstract class AbstractBigtableAdmin implements Admin {
     this.connection = connection;
     disabledTables = connection.getDisabledTables();
     tableAdminClientWrapper = connection.getBigtableApi().getAdminClient();
+
+    String clusterId =
+        configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
+    if (clusterId != null) {
+      BigtableInstanceName bigtableInstanceName =
+          new BigtableInstanceName(
+              connection.getBigtableSettings().getProjectId(),
+              connection.getBigtableSettings().getInstanceId());
+      bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
+    }
   }
 
   /** {@inheritDoc} */
@@ -844,23 +866,35 @@ public abstract class AbstractBigtableAdmin implements Admin {
   // ------------ SNAPSHOT methods begin
 
   /**
+   * This is needed for the hbase shell.
+   *
+   * @param snapshotId a byte array object.
+   * @param tableName a byte array object.
+   * @throws IOException if any.
+   */
+  public void snapshot(byte[] snapshotId, byte[] tableName)
+      throws IOException, IllegalArgumentException {
+    snapshot(snapshotId, TableName.valueOf(tableName));
+  }
+
+  /**
    * Creates a snapshot from an existing table. NOTE: Cloud Bigtable has a cleanup policy
    *
-   * @param snapshotName a {@link String} object.
+   * @param snapshotId a {@link String} object.
    * @param tableName a {@link TableName} object.
    * @throws IOException if any.
    */
   @Override
-  public void snapshot(String snapshotName, TableName tableName)
+  public void snapshot(String snapshotId, TableName tableName)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
-    throw new UnsupportedOperationException("snapshot");
+    snapshotTable(snapshotId, tableName);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void snapshot(byte[] snapshotName, TableName tableName)
+  public void snapshot(byte[] snapshotId, TableName tableName)
       throws IOException, IllegalArgumentException {
-    throw new UnsupportedOperationException("snapshot");
+    snapshot(Bytes.toString(snapshotId), tableName);
   }
 
   /**
@@ -871,30 +905,41 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void cloneSnapshot(byte[] snapshotName, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("cloneSnapshot");
+    cloneSnapshot(Bytes.toString(snapshotName), tableName);
   }
 
   /**
-   * @param snapshotName a {@link String} object.
+   * @param snapshotId a {@link String} object.
    * @param tableName a {@link TableName} object.
    * @throws IOException if any.
    */
   @Override
-  public void cloneSnapshot(String snapshotName, TableName tableName)
+  public void cloneSnapshot(String snapshotId, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("cloneSnapshot");
+    RestoreTableRequest request =
+        RestoreTableRequest.of(getBackupClusterName().getClusterId(), snapshotId)
+            .setTableId(tableName.getNameAsString());
+    Futures.getChecked(tableAdminClientWrapper.restoreTableAsync(request), IOException.class);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void deleteSnapshot(byte[] snapshotName) throws IOException {
-    throw new UnsupportedOperationException("deleteSnapshot");
+  public void deleteSnapshot(byte[] snapshotId) throws IOException {
+    deleteSnapshot(Bytes.toString(snapshotId));
   }
 
   /** {@inheritDoc} */
   @Override
-  public void deleteSnapshot(String snapshotName) throws IOException {
-    throw new UnsupportedOperationException("deleteSnapshot");
+  public void deleteSnapshot(String snapshotId) throws IOException {
+    Preconditions.checkNotNull(snapshotId);
+    if (snapshotId.isEmpty()) {
+      return;
+    }
+
+    Futures.getChecked(
+        tableAdminClientWrapper.deleteBackupAsync(
+            getBackupClusterName().getClusterId(), snapshotId),
+        IOException.class);
   }
 
   /**
@@ -905,7 +950,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
    */
   @Override
   public void deleteSnapshots(String regex) throws IOException {
-    throw new UnsupportedOperationException("deleteSnapshots");
+    throw new UnsupportedOperationException("use deleteSnapshot instead");
   }
 
   /**
@@ -916,14 +961,14 @@ public abstract class AbstractBigtableAdmin implements Admin {
    */
   @Override
   public void deleteSnapshots(Pattern pattern) throws IOException {
-    throw new UnsupportedOperationException("deleteSnapshots");
+    throw new UnsupportedOperationException("use deleteSnapshot instead");
   }
 
   /** {@inheritDoc} */
   @Override
   public void deleteTableSnapshots(String tableNameRegex, String snapshotNameRegex)
       throws IOException {
-    throw new UnsupportedOperationException("deleteTableSnapshots");
+    throw new UnsupportedOperationException("Unsupported - please use deleteSnapshots");
   }
 
   /**
@@ -935,7 +980,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void deleteTableSnapshots(Pattern tableNamePattern, Pattern snapshotNamePattern)
       throws IOException {
-    throw new UnsupportedOperationException("deleteTableSnapshots");
+    throw new UnsupportedOperationException("Unsupported - please use deleteSnapshots");
   }
 
   // ------------- Unsupported snapshot methods.
@@ -963,6 +1008,54 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public void restoreSnapshot(String snapshotName, boolean takeFailSafeSnapshot)
       throws IOException, RestoreSnapshotException {
     throw new UnsupportedOperationException("restoreSnapshot"); // TODO
+  }
+
+  protected Backup snapshotTable(String snapshotId, TableName tableName) throws IOException {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(snapshotId));
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableName.getNameAsString()));
+
+    CreateBackupRequest request =
+        CreateBackupRequest.of(getBackupClusterName().getClusterId(), snapshotId)
+            .setSourceTableId(tableName.getNameAsString());
+
+    int ttlSecs =
+        configuration.getInt(
+            BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY,
+            BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_VALUE);
+
+    if (ttlSecs <= 0) {
+      throw new IllegalArgumentException(
+          BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY + " must be > 0");
+    }
+    Instant expireTime = Instant.now().plus(ttlSecs, ChronoUnit.SECONDS);
+    request.setExpireTime(expireTime);
+
+    return Futures.getChecked(
+        tableAdminClientWrapper.createBackupAsync(request), IOException.class);
+  }
+
+  protected synchronized BigtableClusterName getBackupClusterName() {
+    if (this.bigtableSnapshotClusterName == null) {
+      List<Cluster> clusters =
+          connection
+              .getBigtableApi()
+              .getAdminClient()
+              .listClusters(connection.getBigtableSettings().getInstanceId());
+      Preconditions.checkState(
+          clusters.size() == 1,
+          String.format(
+              "Project '%s' / Instance '%s' has %d clusters. There must be exactly 1 for this operation to work.",
+              connection.getBigtableSettings().getProjectId(),
+              connection.getBigtableSettings().getInstanceId(),
+              clusters.size()));
+      String clusterName =
+          NameUtil.formatClusterName(
+              connection.getBigtableSettings().getProjectId(),
+              connection.getBigtableSettings().getInstanceId(),
+              clusters.get(0).getId());
+      bigtableSnapshotClusterName = new BigtableClusterName(clusterName);
+    }
+    return bigtableSnapshotClusterName;
   }
 
   // ------------- Snapshot method end

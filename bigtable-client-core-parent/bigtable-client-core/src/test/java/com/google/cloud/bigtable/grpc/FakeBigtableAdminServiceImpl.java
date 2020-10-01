@@ -15,26 +15,31 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.bigtable.admin.v2.Backup;
 import com.google.bigtable.admin.v2.BigtableTableAdminGrpc.BigtableTableAdminImplBase;
 import com.google.bigtable.admin.v2.ColumnFamily;
+import com.google.bigtable.admin.v2.CreateBackupMetadata;
+import com.google.bigtable.admin.v2.CreateBackupRequest;
 import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
 import com.google.bigtable.admin.v2.CreateTableRequest;
-import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
+import com.google.bigtable.admin.v2.DeleteBackupRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
-import com.google.bigtable.admin.v2.GetSnapshotRequest;
+import com.google.bigtable.admin.v2.GetBackupRequest;
 import com.google.bigtable.admin.v2.GetTableRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsResponse;
+import com.google.bigtable.admin.v2.ListBackupsRequest;
+import com.google.bigtable.admin.v2.ListBackupsResponse;
 import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.ListTablesResponse;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification;
-import com.google.bigtable.admin.v2.Snapshot;
-import com.google.bigtable.admin.v2.SnapshotTableRequest;
+import com.google.bigtable.admin.v2.RestoreTableMetadata;
+import com.google.bigtable.admin.v2.RestoreTableRequest;
 import com.google.bigtable.admin.v2.Table;
+import com.google.bigtable.admin.v2.UpdateBackupRequest;
 import com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.longrunning.Operation;
+import com.google.protobuf.Any;
 import com.google.protobuf.Empty;
 import com.google.protobuf.GeneratedMessageV3;
 import io.grpc.stub.StreamObserver;
@@ -119,35 +124,92 @@ public class FakeBigtableAdminServiceImpl extends BigtableTableAdminImplBase {
   }
 
   @Override
-  public void snapshotTable(
-      SnapshotTableRequest request, StreamObserver<Operation> responseObserver) {
-    responseObserver.onNext(Operation.newBuilder().setDone(true).build());
+  public void createBackup(
+      CreateBackupRequest request, StreamObserver<Operation> responseObserver) {
+    responseObserver.onNext(
+        Operation.newBuilder()
+            .setMetadata(
+                Any.pack(CreateBackupMetadata.newBuilder().setName(request.getBackupId()).build()))
+            .setResponse(
+                Any.pack(
+                    com.google.bigtable.admin.v2.Backup.newBuilder()
+                        .setName(
+                            "projects/fake-project-id/instances/fake-instance-id/clusters/fake-cluster-id/backups/fake-backup-id")
+                        .setSourceTable(
+                            "projects/fake-project-id/instances/fake-instance-id/tables/fake-table-id")
+                        .build()))
+            .setDone(true)
+            .build());
     responseObserver.onCompleted();
   }
 
   @Override
-  public void getSnapshot(GetSnapshotRequest request, StreamObserver<Snapshot> responseObserver) {
-    responseObserver.onNext(Snapshot.newBuilder().setName("testSnapshotName").build());
+  public void getBackup(GetBackupRequest request, StreamObserver<Backup> responseObserver) {
+    responseObserver.onNext(
+        Backup.newBuilder()
+            .setName(
+                "projects/fake-project-id/instances/fake-instance-id/clusters/fake-cluster-id/backups/fake-backup-id")
+            .setSourceTable(
+                "projects/fake-project-id/instances/fake-instance-id/tables/fake-table-id")
+            .build());
     responseObserver.onCompleted();
   }
 
   @Override
-  public void listSnapshots(
-      ListSnapshotsRequest request, StreamObserver<ListSnapshotsResponse> responseObserver) {
-    ListSnapshotsResponse listSnapshot =
-        ListSnapshotsResponse.newBuilder()
-            .addSnapshots(Snapshot.newBuilder().setName("firstSnapshotName").build())
-            .addSnapshots(Snapshot.newBuilder().setName("secondSnapshotName").build())
+  public void updateBackup(UpdateBackupRequest request, StreamObserver<Backup> responseObserver) {
+    responseObserver.onNext(
+        Backup.newBuilder()
+            .setName(
+                "projects/fake-project-id/instances/fake-instance-id/clusters/fake-cluster-id/backups/fake-backup-id")
+            .setSourceTable(
+                "projects/fake-project-id/instances/fake-instance-id/tables/fake-table-id")
+            .setExpireTime(request.getBackup().getExpireTime())
+            .build());
+    responseObserver.onCompleted();
+  }
+
+  @Override
+  public void listBackups(
+      ListBackupsRequest request, StreamObserver<ListBackupsResponse> responseObserver) {
+    ListBackupsResponse listBackups =
+        ListBackupsResponse.newBuilder()
+            .addBackups(
+                Backup.newBuilder()
+                    .setName(
+                        "projects/fake-project-id/instances/fake-instance-id/clusters/fake-cluster-id/backups/fake-backup-1")
+                    .build())
+            .addBackups(
+                Backup.newBuilder()
+                    .setName(
+                        "projects/fake-project-id/instances/fake-instance-id/clusters/fake-cluster-id/backups/fake-backup-2")
+                    .build())
             .build();
-    responseObserver.onNext(listSnapshot);
+    responseObserver.onNext(listBackups);
     responseObserver.onCompleted();
   }
 
   @Override
-  public void deleteSnapshot(
-      DeleteSnapshotRequest request, StreamObserver<Empty> responseObserver) {
+  public void deleteBackup(DeleteBackupRequest request, StreamObserver<Empty> responseObserver) {
     requests.add(request);
     responseObserver.onNext(Empty.newBuilder().build());
+    responseObserver.onCompleted();
+  }
+
+  @Override
+  public void restoreTable(
+      RestoreTableRequest request, StreamObserver<Operation> responseObserver) {
+    responseObserver.onNext(
+        Operation.newBuilder()
+            .setMetadata(
+                Any.pack(RestoreTableMetadata.newBuilder().setName(request.getTableId()).build()))
+            .setResponse(
+                Any.pack(
+                    com.google.bigtable.admin.v2.Table.newBuilder()
+                        .setName(
+                            "projects/fake-project-id/instances/fake-instance-id/tables/fake-Table-id")
+                        .build()))
+            .setDone(true)
+            .build());
     responseObserver.onCompleted();
   }
 

@@ -75,7 +75,8 @@ public class TestAdminClientVeneerApi {
                 .setProjectId(PROJECT_ID)
                 .setInstanceId(INSTANCE_ID)
                 .build());
-    adminClientWrapper = new AdminClientVeneerApi(adminClientV2);
+
+    adminClientWrapper = new AdminClientVeneerApi(adminClientV2, null);
   }
 
   @After

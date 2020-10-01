@@ -90,4 +90,17 @@ public class BigtableClusterName {
   public String toSnapshotName(String snapshotId) {
     return clusterName + "/snapshots/" + snapshotId;
   }
+
+  /**
+   * Create a fully qualified backup name based on the the clusterName and the backupId. Backup name
+   * will look like:
+   * "projects/{projectId}/instances/{instanceId}/clusters/{clusterId}/backups/{backupId}".
+   *
+   * @param backupId The id of the backup
+   * @return A fully qualified backup name that contains the fully qualified cluster name as the
+   *     parent and the backup name as the child.
+   */
+  public String toBackupName(String backupId) {
+    return clusterName + "/backups/" + backupId;
+  }
 }

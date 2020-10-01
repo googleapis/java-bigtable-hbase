@@ -98,8 +98,7 @@ public class RowMergerTest {
   @Test
   public void testMultiChunkCell() {
     CellChunk cellChunk1 =
-        createCell("row_key1", "family", "qualifier", "v", 1, false)
-            .toBuilder()
+        createCell("row_key1", "family", "qualifier", "v", 1, false).toBuilder()
             .setValueSize("value".length())
             .build();
     CellChunk cellChunk2 = createCell(null, null, null, "alue", 1, true);

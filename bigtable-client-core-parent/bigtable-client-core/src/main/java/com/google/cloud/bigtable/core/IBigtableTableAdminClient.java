@@ -17,16 +17,14 @@ package com.google.cloud.bigtable.core;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.InternalApi;
-import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
-import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
-import com.google.bigtable.admin.v2.GetSnapshotRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsResponse;
-import com.google.bigtable.admin.v2.Snapshot;
-import com.google.bigtable.admin.v2.SnapshotTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.Backup;
+import com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
+import com.google.cloud.bigtable.admin.v2.models.RestoreTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.RestoredTableResult;
 import com.google.cloud.bigtable.admin.v2.models.Table;
+import com.google.cloud.bigtable.admin.v2.models.UpdateBackupRequest;
 import com.google.longrunning.Operation;
 import com.google.protobuf.ByteString;
 import java.util.List;
@@ -162,43 +160,30 @@ public interface IBigtableTableAdminClient {
    */
   ApiFuture<Void> dropAllRowsAsync(String tableId);
 
-  // ////////////// SNAPSHOT methods /////////////
   /**
-   * Creates a new snapshot from a table in a specific cluster.
+   * Creates a new backup from a table in a specific cluster.
    *
-   * @param request a {@link SnapshotTableRequest} object.
+   * @param request a {@link CreateBackupRequest} object.
    * @return The long running {@link Operation} for the request.
    */
-  ApiFuture<Operation> snapshotTableAsync(SnapshotTableRequest request);
+  ApiFuture<Backup> createBackupAsync(CreateBackupRequest request);
+
+  /** Gets metadata information about the specified backup. */
+  ApiFuture<Backup> getBackupAsync(String clusterId, String backupId);
+
+  /** Update the specified backup. */
+  ApiFuture<Backup> updateBackupAsync(UpdateBackupRequest request);
+
+  /** Lists all backups associated with the specified cluster. */
+  ApiFuture<List<String>> listBackupsAsync(String clusterId);
+
+  /** Permanently deletes the specified backup. */
+  ApiFuture<Void> deleteBackupAsync(String clusterId, String backupId);
 
   /**
-   * Gets metadata information about the specified snapshot.
+   * Creates a new table from a backup.
    *
-   * @param request a {@link GetSnapshotRequest} object.
-   * @return The {@link Snapshot} defined by the request.
-   */
-  ApiFuture<Snapshot> getSnapshotAsync(GetSnapshotRequest request);
-
-  /**
-   * Lists all snapshots associated with the specified cluster.
-   *
-   * @param request a {@link ListSnapshotsRequest} object.
-   * @return The {@link ListSnapshotsResponse} which has the list of the snapshots in the cluster.
-   */
-  ApiFuture<ListSnapshotsResponse> listSnapshotsAsync(ListSnapshotsRequest request);
-
-  /**
-   * Permanently deletes the specified snapshot.
-   *
-   * @param request a {@link DeleteSnapshotRequest} object.
-   */
-  ApiFuture<Void> deleteSnapshotAsync(DeleteSnapshotRequest request);
-
-  /**
-   * Creates a new table from a snapshot.
-   *
-   * @param request a {@link CreateTableFromSnapshotRequest} object.
    * @return The long running {@link Operation} for the request.
    */
-  ApiFuture<Operation> createTableFromSnapshotAsync(CreateTableFromSnapshotRequest request);
+  ApiFuture<RestoredTableResult> restoreTableAsync(RestoreTableRequest request);
 }

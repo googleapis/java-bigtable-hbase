@@ -17,10 +17,17 @@ package com.google.cloud.bigtable.hbase.wrappers.veneer;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.admin.v2.BigtableInstanceAdminClient;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminClient;
+import com.google.cloud.bigtable.admin.v2.models.Backup;
+import com.google.cloud.bigtable.admin.v2.models.Cluster;
+import com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
+import com.google.cloud.bigtable.admin.v2.models.RestoreTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.RestoredTableResult;
 import com.google.cloud.bigtable.admin.v2.models.Table;
+import com.google.cloud.bigtable.admin.v2.models.UpdateBackupRequest;
 import com.google.cloud.bigtable.hbase.wrappers.AdminClientWrapper;
 import com.google.protobuf.ByteString;
 import java.util.List;
@@ -30,9 +37,12 @@ import java.util.List;
 public class AdminClientVeneerApi implements AdminClientWrapper {
 
   private final BigtableTableAdminClient delegate;
+  private final BigtableInstanceAdminClient instanceDelegate;
 
-  AdminClientVeneerApi(BigtableTableAdminClient delegate) {
+  AdminClientVeneerApi(
+      BigtableTableAdminClient delegate, BigtableInstanceAdminClient instanceDelegate) {
     this.delegate = delegate;
+    this.instanceDelegate = instanceDelegate;
   }
 
   @Override
@@ -68,6 +78,45 @@ public class AdminClientVeneerApi implements AdminClientWrapper {
   @Override
   public ApiFuture<Void> dropAllRowsAsync(String tableId) {
     return delegate.dropAllRowsAsync(tableId);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ApiFuture<Backup> createBackupAsync(CreateBackupRequest request) {
+    return delegate.createBackupAsync(request);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ApiFuture<Backup> getBackupAsync(String clusterId, String backupId) {
+    return delegate.getBackupAsync(clusterId, backupId);
+  }
+
+  @Override
+  public ApiFuture<Backup> updateBackupAsync(UpdateBackupRequest request) {
+    return delegate.updateBackupAsync(request);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ApiFuture<List<String>> listBackupsAsync(String clusterId) {
+    return delegate.listBackupsAsync(clusterId);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ApiFuture<Void> deleteBackupAsync(String clusterId, String backupId) {
+    return delegate.deleteBackupAsync(clusterId, backupId);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ApiFuture<RestoredTableResult> restoreTableAsync(RestoreTableRequest request) {
+    return delegate.restoreTableAsync(request);
+  }
+
+  public List<Cluster> listClusters(String instanceId) {
+    return instanceDelegate.listClusters(instanceId);
   }
 
   @Override
