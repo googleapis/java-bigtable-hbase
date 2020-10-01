@@ -60,7 +60,7 @@ limitations under the License.
     </dependency>
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-client-core</artifactId>
+      <artifactId>bigtable-metrics-api</artifactId>
       <version>${project.version}</version>
     </dependency>
 
@@ -137,6 +137,14 @@ limitations under the License.
       <scope>compile</scope>
     </dependency>
 
+    <!--  TODO: remove this dependency when upgraded through transitive dependency (http-client -> org.apache.httpcomponents:httpclient)
+this is not used directly, but upgrading due to transitive vulnerabilities in older versions-->
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>1.14</version>
+    </dependency>
+
     <!-- Test dependencies-->
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
@@ -151,4 +159,18 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
   </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <configuration>
+          <!-- commons-codec is not used directly, but upgrading due to transitive vulnerabilities in older versions.-->
+          <usedDependencies>
+            <usedDependency>commons-codec:commons-codec</usedDependency>
+          </usedDependencies>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
