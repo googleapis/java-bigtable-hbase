@@ -121,6 +121,11 @@ limitations under the License.
                 <exclude>com.google.guava:guava</exclude>
               </excludes>
             </requireUpperBoundDeps>
+            <banDuplicateClasses>
+              <ignoreClasses>
+                <ignoreClass>**</ignoreClass>
+              </ignoreClasses>
+            </banDuplicateClasses>
           </rules>
         </configuration>
       </plugin>

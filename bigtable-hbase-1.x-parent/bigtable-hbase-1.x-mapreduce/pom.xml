@@ -129,6 +129,11 @@ limitations under the License.
                     <exclude>org.apache.hadoop:hadoop-yarn-api</exclude>
                   </excludes>
                 </requireUpperBoundDeps>
+                <banDuplicateClasses>
+                  <ignoreClasses>
+                    <ignoreClass>**</ignoreClass>
+                  </ignoreClasses>
+                </banDuplicateClasses>
               </rules>
             </configuration>
           </execution>
