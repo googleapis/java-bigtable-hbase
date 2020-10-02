@@ -27,6 +27,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
@@ -34,6 +35,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Builds a complete {@link FlatRow} from {@link com.google.bigtable.v2.ReadRowsResponse} objects. A
@@ -247,7 +252,11 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
   private static final class RowInProgress {
 
     // 50MB is pretty large for a row, so log any rows that are of that size
-    private static final int LARGE_ROW_SIZE = 50 * 1024 * 1024;
+    // Logging aggressively for rows > 20MB
+    private static final int LARGE_ROW_SIZE = 20 * 1024 * 1024;
+
+    // 10000 is a lot of cells for a row.
+    private static final int WIDE_ROW_COUNT = 10 * 1000;
 
     private ByteString rowKey;
 
@@ -256,6 +265,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     private ByteString.Output outputStream;
     private int currentByteSize = 0;
     private int loggedAtSize = 0;
+    private int loggedAtCount = 0;
 
     private final Map<String, List<FlatRow.Cell>> cells = new TreeMap<>();
     private int cellCount = 0;
@@ -272,6 +282,12 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
             "Large row read is in progress. key: `%s`, size: %d, cells: %d",
             rowKey.toStringUtf8(), currentByteSize, cellCount);
         loggedAtSize = currentByteSize;
+      }
+      if (cellCount >= loggedAtCount + WIDE_ROW_COUNT) {
+        LOG.warn(
+            "Wide row read is in progress. key: `%s`, size: %d, cells: %d",
+            rowKey.toStringUtf8(), currentByteSize, cellCount);
+        loggedAtCount = cellCount;
       }
     }
 
@@ -395,12 +411,23 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
   }
 
   private final StreamObserver<FlatRow> observer;
+  private static final int NEXT_ROW_THRESHOLD_SECONDS = 10;
+
+  /** Executes timer task if RowMerger does not emit a row in NEXT_ROW_THRESHOLD_SECONDS seconds. */
+  private static final ScheduledExecutorService NEXT_ROW_MONITOR_EXECUTOR_SERVICE =
+      Executors.newSingleThreadScheduledExecutor(
+          new ThreadFactoryBuilder().setNameFormat("next-row-monitor-%d").setDaemon(true).build());
+  /** Future linked to the current logging task. */
+  private ScheduledFuture<?> nextRowFuture = null;
+  /** Used to measure time to first byte. */
+  private boolean receivedFirstRow = false;
 
   private RowMergerState state = RowMergerState.NewRow;
   private ByteString lastCompletedRowKey = null;
   private RowInProgress rowInProgress = null;
   private boolean complete = false;
   private Integer rowCountInLastMessage = null;
+  private long lastRowEmittedAtMillis = System.currentTimeMillis();
 
   /**
    * Constructor for RowMerger.
@@ -409,6 +436,47 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
    */
   public RowMerger(StreamObserver<FlatRow> observer) {
     this.observer = observer;
+    rescheduleNextRowTask();
+  }
+
+  /** Resets the timer for waiting on next row. Will be called when a row is emitted. */
+  private void rescheduleNextRowTask() {
+    if (nextRowFuture != null) {
+      nextRowFuture.cancel(false);
+    }
+    lastRowEmittedAtMillis = System.currentTimeMillis();
+    nextRowFuture =
+        NEXT_ROW_MONITOR_EXECUTOR_SERVICE.scheduleAtFixedRate(
+            new Runnable() {
+              @Override
+              public void run() {
+
+                long cellCount = (rowInProgress != null) ? rowInProgress.cellCount : 0;
+                long secondsSinceLastRowEmitted =
+                    (System.currentTimeMillis() - lastRowEmittedAtMillis) / 1000;
+                if (!receivedFirstRow) {
+                  LOG.warn(
+                      "No rows emitted for "
+                          + secondsSinceLastRowEmitted
+                          + " seconds for a NEW Read request (Time to First Byte). "
+                          + "Current Rowmerger state: "
+                          + state.name()
+                          + ", Cells in current row: "
+                          + cellCount);
+                } else {
+                  LOG.warn(
+                      "No rows emitted for "
+                          + secondsSinceLastRowEmitted
+                          + " seconds. Current Rowmerger state: "
+                          + state.name()
+                          + ", Cells in current row: "
+                          + cellCount);
+                }
+              }
+            },
+            NEXT_ROW_THRESHOLD_SECONDS,
+            NEXT_ROW_THRESHOLD_SECONDS,
+            TimeUnit.SECONDS);
   }
 
   public void clearRowInProgress() {
@@ -454,6 +522,10 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
         }
 
         if (chunk.getCommitRow()) {
+          // No side effect of setting it every time. It just needs to turn true after first row is
+          // received.
+          receivedFirstRow = true;
+          rescheduleNextRowTask();
           observer.onNext(rowInProgress.buildRow());
           lastCompletedRowKey = rowInProgress.getRowKey();
           state = RowMergerState.NewRow;
@@ -492,6 +564,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
   @Override
   public void onCompleted() {
     complete = true;
+    nextRowFuture.cancel(true);
     state.handleOnComplete(observer);
   }
 
@@ -499,6 +572,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
   @Override
   public void onError(Throwable e) {
     complete = true;
+    nextRowFuture.cancel(true);
     observer.onError(e);
   }
 
