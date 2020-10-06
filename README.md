@@ -1,121 +1,133 @@
-# [Google Cloud Bigtable HBase client for Java](https://cloud.google.com/bigtable/docs/bigtable-and-hbase)
+# Google Google Cloud Bigtable Hbase Client Client for Java
 
-[![Travis CI status][travis-shield]][travis-link]
-[![Maven][maven-hbase-shield]][maven-hbase-client-maven-search]
-[![Stack Overflow][stackoverflow-shield]][stackoverflow-link]
+Java idiomatic client for [Google Cloud Bigtable Hbase Client][product-docs].
 
-[Google Cloud Bigtable](https://cloud.google.com/bigtable/) is Google's NoSQL
-Big Data database service. It's the same database that powers many core Google
-services, including Search, Analytics, Maps, and Gmail.
+[![Maven][maven-version-image]][maven-version-link]
+![Stability][stability-image]
 
-Bigtable is designed to handle massive workloads at consistent low latency and
-high throughput, so it's a great choice for both operational and analytical
-applications, including IoT, user analytics, and financial data analysis.
+- [Product Documentation][product-docs]
+- [Client Library Documentation][javadocs]
 
-Bigtable provisions and scales to hundreds of petabytes automatically, and can
-smoothly handle millions of operations per second. Changes to the deployment
-configuration are immediate, so there is no downtime during reconfiguration.
+## Quickstart
 
-Bigtable [integrates easily][integrations] with popular Big Data tools like
-Hadoop, as well as Google Cloud Platform products like Cloud Dataflow and
-Dataproc. Plus, Bigtable supports the open-source, industry-standard HBase API,
-which makes it easy for development teams to get started.
 
-Note: Please use [google-cloud-bigtable][google-cloud-bigtable] to access Bigtable APIs instead of `bigtable-core-client`. These artifacts are meant to wrap HBase over Bigtable API. 
+If you are using Maven, add this to your pom.xml file:
 
-## Project setup, installation, and configuration
+```xml
+<dependency>
+  <groupId>com.google.cloud.bigtable</groupId>
+  <artifactId>bigtable-client-parent</artifactId>
+  <version>1.16.0</version>
+</dependency>
+```
+
+[//]: # ({x-version-update-start:bigtable-client-parent:released})
+
+If you are using Gradle, add this to your dependencies
+```Groovy
+compile 'com.google.cloud.bigtable:bigtable-client-parent:1.16.0'
+```
+If you are using SBT, add this to your dependencies
+```Scala
+libraryDependencies += "com.google.cloud.bigtable" % "bigtable-client-parent" % "1.16.0"
+```
+[//]: # ({x-version-update-end})
+
+## Authentication
+
+See the [Authentication][authentication] section in the base directory's README.
+
+## Getting Started
 
 ### Prerequisites
 
-* [Create a Cloud Bigtable instance](https://cloud.google.com/bigtable/docs/creating-instance)
-* **Recommended**: [Install the Google Cloud SDK for Cloud Bigtable](https://cloud.google.com/bigtable/docs/installing-cloud-sdk)
+You will need a [Google Cloud Platform Console][developer-console] project with the Google Cloud Bigtable Hbase Client [API enabled][enable-api].
 
-### Using the Java client
+[Follow these instructions][create-project] to get your project set up. You will also need to set up the local development environment by
+[installing the Google Cloud SDK][cloud-sdk] and running the following commands in command line:
+`gcloud auth login` and `gcloud config set project [YOUR PROJECT ID]`.
 
-* Add the appropriate [Cloud Bigtable artifact dependencies](http://mvnrepository.com/artifact/com.google.cloud.bigtable) to your [Maven project](https://cloud.google.com/bigtable/docs/using-maven).
-  * `bigtable-hbase-1.x`: use for standalone applications where you are in control of your dependencies.
-  * `bigtable-hbase-1.x-hadoop`: use in hadoop environments.
-  * `bigtable-hbase-1.x-mapreduce`: use for map/reduce utilities.
-  * `bigtable-hbase-1.x-shaded`: use in environments (other than hadoop) that require older versions of protobuf, guava, etc.  
-  * `bigtable-hbase-2.x`: use for standalone applications where you are in control of your dependencies.  This includes an HBase async client.
-  * `bigtable-hbase-2.x-hadoop`: use in hadoop environments.
-  * `bigtable-hbase-2.x-shaded`: use in environments (other than hadoop) that require older versions of protobuf, guava, etc.  
+### Installation and setup
 
-[//]: # ({x-version-update-start:bigtable-hbase-1x-parent:released})
-  Maven:
-  ```xml
-  <dependency>
-    <groupId>com.google.cloud.bigtable</groupId>
-    <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>1.14.1</version>
-  </dependency>
-  ```
+You'll need to obtain the `bigtable-client-parent` library.  See the [Quickstart](#quickstart) section
+to add `bigtable-client-parent` as a dependency in your code.
 
-  Gradle:
-  ```Groovy
-  compile 'com.google.cloud.bigtable:bigtable-hbase-1.x:1.14.1'
-  ```
+## About Google Cloud Bigtable Hbase Client
 
-  SBT:
-  ```Scala
-  libraryDependencies += "com.google.cloud.bigtable" % "bigtable-hbase-1.x" % "1.14.1"
-  ```
-[//]: # ({x-version-update-end})
-* Refer to the [Java samples documentation](https://cloud.google.com/bigtable/docs/samples) for detailed demonstrations of how to read and write data with Cloud Bigtable. The code for these samples is available in the [Cloud Bigtable examples project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples).
 
-## Questions and discussions
+[Google Cloud Bigtable Hbase Client][product-docs] 
 
-If you have questions or run into issues with Google Cloud Bigtable or the
-client libraries, use any of the following forums:
+See the [Google Cloud Bigtable Hbase Client client library docs][javadocs] to learn how to
+use this Google Cloud Bigtable Hbase Client Client Library.
 
-* Stack Overflow: tag questions with [`google-cloud-bigtable`][stackoverflow-link]
-* Mailing list: [google-cloud-bigtable-discuss@][google-cloud-bigtable-discuss]
 
-You can also subscribe to
-[google-cloud-bigtable-announce@][google-cloud-bigtable-announce] list to receive
-infrequent product and client library announcements.
 
-## Clients and Repositories
 
-| Name | Language | Repository | latest version | status |
-| --- | --- | --- | --- | --- |
-| Cloud Bigtable Examples | Java, others | [GoogleCloudPlatform/cloud-bigtable-examples][maven-examples-repo] | | |
-| HBase client | Java | [googleapis/cloud-bigtable-client][maven-hbase-client-repo] | [![Maven][maven-hbase-shield]][maven-hbase-client-maven-search] | GA |
-| Cloud Bigtable GoLang | Go | [googleapis/google-cloud-go](https://github.com/googleapis/google-cloud-go) | N/A | GA |
-| Cloud Bigtable Java | Java | [googleapis/java-bigtable][google-cloud-bigtable] | [![Maven][maven-google-cloud-java-shield]][maven-google-cloud-java-maven-search] | GA |
-| Cloud Bigtable Python | Python | [googleapis/google-cloud-python](http://github.com/googleapis/google-cloud-python) | [![PyPI version](https://badge.fury.io/py/google-cloud-bigtable.svg)](https://badge.fury.io/py/google-cloud-bigtable) | Beta |
-| Cloud Bigtable Node.js | Node | [googleaps/nodejs-bigtable][maven-bigtable-nodejs-repo] | [![npm version][npm-shield]][npm-bigtable-client] | GA |
-| Cloud Bigtable C# | C# | [googleapis/google-cloud-dotnet](http://github.com/googleapis/google-cloud-dotnet) | [![NuGet version](https://badge.fury.io/nu/Google.Cloud.Bigtable.V2.svg)](https://badge.fury.io/nu/Google.Cloud.Bigtable.V2) | GA |
-| Cloud Bigtable C++ | C++ | [googleapis/google-cloud-cpp](http://github.com/googleapis/google-cloud-cpp) | 0.9.0 | Beta |
-| Cloud Bigtable Ruby | Ruby | [googleapis/google-cloud-ruby](http://github.com/googleapis/google-cloud-ruby) | [![Gem Version](https://badge.fury.io/rb/google-cloud-bigtable.svg)](https://badge.fury.io/rb/google-cloud-bigtable) | Beta |
-| Cloud Bigtable PHP | PHP | [googleapis/google-cloud-php](http://github.com/googleapis/google-cloud-php) | [![Latest Stable Version](https://poser.pugx.org/google/cloud/v/stable)](https://packagist.org/packages/google/cloud) | Beta  |
 
-## Contributing changes
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for more information on how to contribute
-to this project.
+## Troubleshooting
+
+To get help, follow the instructions in the [shared Troubleshooting document][troubleshooting].
+
+## Java Versions
+
+Java 7 or above is required for using this client.
+
+## Versioning
+
+
+This library follows [Semantic Versioning](http://semver.org/).
+
+
+## Contributing
+
+
+Contributions to this library are always welcome and highly encouraged.
+
+See [CONTRIBUTING][contributing] for more information how to get started.
+
+Please note that this project is released with a Contributor Code of Conduct. By participating in
+this project you agree to abide by its terms. See [Code of Conduct][code-of-conduct] for more
+information.
 
 ## License
 
-Apache 2.0; see [LICENSE](LICENSE) for details.
+Apache 2.0 - See [LICENSE][license] for more information.
 
-<!-- references -->
+## CI Status
 
-[travis-shield]: https://travis-ci.org/googleapis/java-bigtable-hbase.svg
-[travis-link]: https://travis-ci.org/googleapis/java-bigtable-hbase/builds
-[maven-hbase-shield]: https://maven-badges.herokuapp.com/maven-central/com.google.cloud.bigtable/bigtable-client-core/badge.svg
-[maven-hbase-client-maven-search]: http://search.maven.org/#search%7Cga%7C1%7Ccom.google.cloud.bigtable
-[maven-google-cloud-java-shield]: https://maven-badges.herokuapp.com/maven-central/com.google.cloud/google-cloud-bigtable/badge.svg
-[maven-google-cloud-java-maven-search]: https://search.maven.org/search?q=a:google-cloud-bigtable
-[npm-shield]: https://badge.fury.io/js/%40google-cloud%2Fbigtable.svg
-[npm-bigtable-client]: https://www.npmjs.com/package/@google-cloud/bigtable
-[stackoverflow-shield]: https://img.shields.io/badge/stackoverflow-google--cloud--bigtable-blue.svg
-[stackoverflow-link]: http://stackoverflow.com/search?q=[google-cloud-bigtable]
-[integrations]: https://cloud.google.com/bigtable/docs/integrations
-[maven-hbase-client-repo]: https://github.com/googleapis/cloud-bigtable-client
-[maven-bigtable-nodejs-repo]: https://github.com/googleapis/nodejs-bigtable
-[maven-examples-repo]: https://github.com/GoogleCloudPlatform/cloud-bigtable-examples
-[google-cloud-bigtable-discuss]: https://groups.google.com/group/google-cloud-bigtable-discuss
-[google-cloud-bigtable-announce]: https://groups.google.com/group/google-cloud-bigtable-announce
-[google-cloud-bigtable-emulator]: https://github.com/googleapis/google-cloud-java/tree/master/google-cloud-testing/google-cloud-bigtable-emulator
-[google-cloud-bigtable]: https://github.com/googleapis/java-bigtable
+Java Version | Status
+------------ | ------
+Java 7 | [![Kokoro CI][kokoro-badge-image-1]][kokoro-badge-link-1]
+Java 8 | [![Kokoro CI][kokoro-badge-image-2]][kokoro-badge-link-2]
+Java 8 OSX | [![Kokoro CI][kokoro-badge-image-3]][kokoro-badge-link-3]
+Java 8 Windows | [![Kokoro CI][kokoro-badge-image-4]][kokoro-badge-link-4]
+Java 11 | [![Kokoro CI][kokoro-badge-image-5]][kokoro-badge-link-5]
+
+[product-docs]: https://cloud.google.com/bigtable
+[javadocs]: https://googleapis.dev/java/java-bigtable-hbase/latest/
+[kokoro-badge-image-1]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java7.svg
+[kokoro-badge-link-1]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java7.html
+[kokoro-badge-image-2]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java8.svg
+[kokoro-badge-link-2]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java8.html
+[kokoro-badge-image-3]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java8-osx.svg
+[kokoro-badge-link-3]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java8-osx.html
+[kokoro-badge-image-4]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java8-win.svg
+[kokoro-badge-link-4]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java8-win.html
+[kokoro-badge-image-5]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java11.svg
+[kokoro-badge-link-5]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java11.html
+[stability-image]: https://img.shields.io/badge/stability-ga-green
+[maven-version-image]: https://img.shields.io/maven-central/v/com.google.cloud.bigtable/bigtable-client-parent.svg
+[maven-version-link]: https://search.maven.org/search?q=g:com.google.cloud.bigtable%20AND%20a:bigtable-client-parent&core=gav
+[authentication]: https://github.com/googleapis/google-cloud-java#authentication
+[developer-console]: https://console.developers.google.com/
+[create-project]: https://cloud.google.com/resource-manager/docs/creating-managing-projects
+[cloud-sdk]: https://cloud.google.com/sdk/
+[troubleshooting]: https://github.com/googleapis/google-cloud-common/blob/master/troubleshooting/readme.md#troubleshooting
+[contributing]: https://github.com/googleapis/java-bigtable-hbase/blob/master/CONTRIBUTING.md
+[code-of-conduct]: https://github.com/googleapis/java-bigtable-hbase/blob/master/CODE_OF_CONDUCT.md#contributor-code-of-conduct
+[license]: https://github.com/googleapis/java-bigtable-hbase/blob/master/LICENSE
+
+[enable-api]: https://console.cloud.google.com/flows/enableapi?apiid=bigtable.googleapis.com
+[libraries-bom]: https://github.com/GoogleCloudPlatform/cloud-opensource-java/wiki/The-Google-Cloud-Platform-Libraries-BOM
+[shell_img]: https://gstatic.com/cloudssh/images/open-btn.png
