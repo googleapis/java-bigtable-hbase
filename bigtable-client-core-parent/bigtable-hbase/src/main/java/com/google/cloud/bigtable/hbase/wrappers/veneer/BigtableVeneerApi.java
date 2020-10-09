@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.wrappers.veneer;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.admin.v2.BigtableInstanceAdminClient;
+import com.google.cloud.bigtable.admin.v2.BigtableInstanceAdminSettings;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminClient;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
 import com.google.cloud.bigtable.hbase.wrappers.AdminClientWrapper;
@@ -35,10 +36,14 @@ public class BigtableVeneerApi extends BigtableApi {
     super(settings);
     dataClientWrapper =
         new DataClientVeneerApi(BigtableDataClient.create(settings.getDataSettings()));
+    BigtableInstanceAdminSettings instanceAdminSettings = settings.getInstanceAdminSettings();
     adminClientWrapper =
         new AdminClientVeneerApi(
             BigtableTableAdminClient.create(settings.getTableAdminSettings()),
-            BigtableInstanceAdminClient.create(settings.getInstanceAdminSettings()));
+            // instance admin can be null in emulator env
+            instanceAdminSettings == null
+                ? null
+                : BigtableInstanceAdminClient.create(instanceAdminSettings));
   }
 
   @Override
