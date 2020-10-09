@@ -126,6 +126,10 @@ limitations under the License.
       <artifactId>commons-logging</artifactId>
       <version>${commons-logging.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.google.api.grpc</groupId>
+      <artifactId>proto-google-common-protos</artifactId>
+    </dependency>
 
     <!-- For veneer client settings configurations -->
     <dependency>
