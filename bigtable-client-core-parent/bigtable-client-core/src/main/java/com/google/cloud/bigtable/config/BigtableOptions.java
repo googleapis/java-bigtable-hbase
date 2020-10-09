@@ -342,7 +342,9 @@ public class BigtableOptions implements Serializable, Cloneable {
       Preconditions.checkNotNull(options.bulkOptions, "bulk options cannot be null");
       if (options.bulkOptions.getMaxInflightRpcs() <= 0) {
         options.bulkOptions =
-            options.bulkOptions.toBuilder()
+            options
+                .bulkOptions
+                .toBuilder()
                 .setMaxInflightRpcs(getDefaultMaxInflightRpcCount())
                 .build();
       }

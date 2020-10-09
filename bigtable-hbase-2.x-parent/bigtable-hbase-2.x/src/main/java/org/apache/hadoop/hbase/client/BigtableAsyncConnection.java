@@ -387,8 +387,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
         ApiExceptions.callAndTranslateApiException(
             this.bigtableApi.getDataClient().sampleRowKeysAsync(tableName.getNameAsString()));
 
-    return getSampledRowKeysAdapter(tableName, serverName)
-        .adaptResponse(sampleRowKeyResponse)
+    return getSampledRowKeysAdapter(tableName, serverName).adaptResponse(sampleRowKeyResponse)
         .stream()
         .map(HRegionLocation::getRegionInfo)
         .collect(Collectors.toCollection(CopyOnWriteArrayList::new));

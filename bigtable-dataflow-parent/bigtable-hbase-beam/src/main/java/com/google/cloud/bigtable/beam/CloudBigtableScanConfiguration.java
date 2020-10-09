@@ -131,7 +131,9 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       final ByteString start = ByteStringer.wrap(startKey);
       final ByteString stop = ByteStringer.wrap(stopKey);
       return withRequest(
-          request.get().toBuilder()
+          request
+              .get()
+              .toBuilder()
               .setRows(
                   RowSet.newBuilder()
                       .addRowRanges(

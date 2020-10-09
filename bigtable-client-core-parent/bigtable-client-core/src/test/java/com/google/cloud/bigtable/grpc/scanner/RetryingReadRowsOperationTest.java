@@ -333,7 +333,8 @@ public class RetryingReadRowsOperationTest {
   private ReadRowsResponse setCommitToFalse(ReadRowsResponse message) {
     int lastIndex = message.getChunksCount() - 1;
     CellChunk lastChunk = message.getChunks(lastIndex);
-    return message.toBuilder()
+    return message
+        .toBuilder()
         .setChunks(lastIndex, lastChunk.toBuilder().setCommitRow(false).build())
         .build();
   }
