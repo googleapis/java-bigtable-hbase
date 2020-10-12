@@ -81,7 +81,7 @@ public class TestAppProfile {
     BigtableOptions opts =
         BigtableOptions.builder()
             .setDataHost("localhost")
-            .setAdminHost("locahost")
+            .setAdminHost("localhost")
             .setPort(port)
             .setProjectId("fake-project")
             .setInstanceId("fake-instance")
