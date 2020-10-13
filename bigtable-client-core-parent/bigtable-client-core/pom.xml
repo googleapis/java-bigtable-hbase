@@ -216,7 +216,7 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
-      <version>1.14</version>
+      <version>1.15</version>
     </dependency>
 
     <!-- Test -->
