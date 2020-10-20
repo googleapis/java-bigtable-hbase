@@ -26,7 +26,6 @@ limitations under the License.
 
   <properties>
     <mainClass>com.google.cloud.bigtable.beam.Main</mainClass>
-    <skipITs>false</skipITs>
   </properties>
 
   <dependencies>

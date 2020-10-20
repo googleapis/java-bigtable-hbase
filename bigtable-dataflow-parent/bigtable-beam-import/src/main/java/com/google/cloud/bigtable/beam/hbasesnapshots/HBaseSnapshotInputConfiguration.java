@@ -86,10 +86,10 @@ class HBaseSnapshotInputConfiguration {
     } catch (Exception e) {
       this.LOG.fatal(e);
     }
-    this.hbaseConf = new SerializableConfiguration(conf).get();
+    this.hbaseConf = new SerializableConfiguration(conf);
   }
 
   public Configuration getHbaseConf() {
-    return hbaseConf;
+    return hbaseConf.get();
   }
 }
