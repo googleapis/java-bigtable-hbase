@@ -83,7 +83,7 @@ limitations under the License.
     <beam-auto-value.version>1.7.4</beam-auto-value.version>
 
     <!-- Benchmarks related dependencies -->
-    <jmh.version>1.23</jmh.version>
+    <jmh.version>1.26</jmh.version>
   </properties>
 
   <distributionManagement>
