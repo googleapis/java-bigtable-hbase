@@ -4,14 +4,14 @@
       "git": {
         "name": ".",
         "remote": "https://github.com/googleapis/java-bigtable-hbase.git",
-        "sha": "4e60e9296e663fee4fa79fc5aa3fc8dd489ea946"
+        "sha": "f170143de55def1ca4887d5499dc0a3f96c9505b"
       }
     },
     {
       "git": {
         "name": "synthtool",
         "remote": "https://github.com/googleapis/synthtool.git",
-        "sha": "5a506ec8765cc04f7e29f888b8e9b257d9a7ae11"
+        "sha": "0762e8ee2ec21cdfc4d82020b985a104feb0453b"
       }
     }
   ],
@@ -22,7 +22,6 @@
     ".github/PULL_REQUEST_TEMPLATE.md",
     ".github/readme/synth.py",
     ".github/release-please.yml",
-    ".github/snippet-bot.yml",
     ".github/trusted-contribution.yml",
     ".kokoro/coerce_logs.sh",
     ".kokoro/common.cfg",
