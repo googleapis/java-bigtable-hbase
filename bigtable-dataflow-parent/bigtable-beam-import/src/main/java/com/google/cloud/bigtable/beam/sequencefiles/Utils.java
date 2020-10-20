@@ -46,7 +46,7 @@ class Utils {
     // By default, dataflow allocates 250 GB local disks, thats not necessary. Lower it unless the
     // user requested an explicit size
     if (dataflowOpts.getDiskSizeGb() == 0) {
-      dataflowOpts.setDiskSizeGb(25);
+      dataflowOpts.setDiskSizeGb(200);
     }
 
     return dataflowOpts;
