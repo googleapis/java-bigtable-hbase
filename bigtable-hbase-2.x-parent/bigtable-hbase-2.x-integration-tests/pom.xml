@@ -395,6 +395,7 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
 
+    <!-- adding slf4j due to older versions in transitive deps-->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
@@ -499,6 +500,7 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
             <usedDependency>org.slf4j:slf4j-log4j12</usedDependency>
             <!-- commons-codec is not used directly, but upgrading due to transitive vulnerabilities in older versions. -->
             <usedDependency>commons-codec:commons-codec</usedDependency>
+            <!-- adding slf4j due to older versions in transitive deps-->
             <usedDependency>org.slf4j:slf4j-api</usedDependency>
           </usedDependencies>
         </configuration>

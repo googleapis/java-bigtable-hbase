@@ -101,6 +101,7 @@ limitations under the License.
       <version>${dropwizard.metrics.version}</version>
     </dependency>
 
+    <!-- adding slf4j due to older versions in transitive deps-->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
@@ -337,6 +338,7 @@ limitations under the License.
               io.opencensus:opencensus-exporter-trace-stackdriver
             </usedDependency>
             <usedDependency>
+              <!-- adding slf4j due to older versions in transitive deps-->
               org.slf4j:slf4j-api
             </usedDependency>
           </usedDependencies>
