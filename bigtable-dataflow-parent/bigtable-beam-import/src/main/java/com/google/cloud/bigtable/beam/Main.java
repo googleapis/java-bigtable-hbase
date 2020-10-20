@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.beam.sequencefiles;
+package com.google.cloud.bigtable.beam;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
+import com.google.cloud.bigtable.beam.hbasesnapshots.ImportJobFromHbaseSnapshot;
+import com.google.cloud.bigtable.beam.sequencefiles.CreateTableHelper;
+import com.google.cloud.bigtable.beam.sequencefiles.ExportJob;
+import com.google.cloud.bigtable.beam.sequencefiles.ImportJob;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -43,6 +47,9 @@ public class Main {
       case "import":
         ImportJob.main(subArgs);
         break;
+      case "importsnapshot":
+        ImportJobFromHbaseSnapshot.main(subArgs);
+        break;
       case "create-table":
         CreateTableHelper.main(subArgs);
         break;
@@ -65,7 +72,7 @@ public class Main {
 
     System.out.printf(
         "java -jar %s <action> <action_params>\n"
-            + "Where <action> can be 'export', 'import' or 'create-table'. To get further help, run: \n"
+            + "Where <action> can be 'export', 'import' , 'importsnapshot' or 'create-table'. To get further help, run: \n"
             + "java -jar %s <action> --help\n",
         jarName, jarName);
   }
