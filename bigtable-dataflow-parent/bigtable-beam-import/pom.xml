@@ -59,6 +59,7 @@ limitations under the License.
       <artifactId>beam-sdks-java-core</artifactId>
       <version>${beam.version}</version>
     </dependency>
+    <!--
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>
@@ -66,6 +67,7 @@ limitations under the License.
       </artifactId>
       <version>${beam.version}</version>
     </dependency>
+    -->
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-io-hadoop-common</artifactId>
@@ -280,6 +282,16 @@ limitations under the License.
           <transformers>
             <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
           </transformers>
+	  <filters>
+	      <filter>
+		  <artifact>*:*</artifact>
+		  <excludes>
+		      <exclude>META-INF/*.SF</exclude>
+		      <exclude>META-INF/*.DSA</exclude>
+		      <exclude>META-INF/*.RSA</exclude>
+		  </excludes>
+	      </filter>
+	  </filters>
         </configuration>
       </plugin>
 
