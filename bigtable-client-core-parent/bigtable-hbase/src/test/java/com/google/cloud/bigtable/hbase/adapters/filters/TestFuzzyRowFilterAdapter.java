@@ -20,7 +20,9 @@ import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -59,36 +61,34 @@ public class TestFuzzyRowFilterAdapter {
 
   @Test
   public void singleByteKey() throws IOException {
-    Pair<Byte, String>[] testData =
-        new Pair[] {
-          Pair.newPair((byte) -128, "\\x80"),
-          Pair.newPair((byte) -127, "\\x81"),
-          Pair.newPair((byte) -42, "\\xD6"),
-          Pair.newPair((byte) -2, "\\xFE"),
-          Pair.newPair((byte) -1, "\\xFF"),
-          Pair.newPair((byte) 0, "\\x00"),
-          Pair.newPair((byte) 1, "\\\001"),
-          Pair.newPair((byte) 15, "\\\017"),
-          Pair.newPair((byte) 42, "\\*"),
-          Pair.newPair((byte) 50, "2"),
-          Pair.newPair((byte) 70, "F"),
-          Pair.newPair((byte) 94, "\\^"),
-          Pair.newPair((byte) 95, "_"),
-          Pair.newPair((byte) 100, "d"),
-          Pair.newPair((byte) 126, "\\~"),
-          Pair.newPair((byte) 127, "\\\177")
-        };
+    Map<Byte, String> testData = new HashMap<>();
+    testData.put((byte) -128, "\\x80");
+    testData.put((byte) -127, "\\x81");
+    testData.put((byte) -42, "\\xD6");
+    testData.put((byte) -2, "\\xFE");
+    testData.put((byte) -1, "\\xFF");
+    testData.put((byte) 0, "\\x00");
+    testData.put((byte) 1, "\\\001");
+    testData.put((byte) 15, "\\\017");
+    testData.put((byte) 42, "\\*");
+    testData.put((byte) 50, "2");
+    testData.put((byte) 70, "F");
+    testData.put((byte) 94, "\\^");
+    testData.put((byte) 95, "_");
+    testData.put((byte) 100, "d");
+    testData.put((byte) 126, "\\~");
+    testData.put((byte) 127, "\\\177");
 
     byte[] yes = new byte[] {0};
     byte[] no = new byte[] {1};
     Filters.Filter expectedNo = FILTERS.key().regex("\\C\\C*");
 
-    for (Pair<Byte, String> pair : testData) {
-      byte[] key = new byte[] {pair.getFirst()};
+    for (Byte byteKey : testData.keySet()) {
+      byte[] key = new byte[] {byteKey};
 
       FuzzyRowFilter fuzzyYes = new FuzzyRowFilter(ImmutableList.of(Pair.newPair(key, yes)));
       Filters.Filter filterYes = FilterAdapter.buildAdapter().adaptFilter(null, fuzzyYes).get();
-      Filters.Filter expectedYes = FILTERS.key().regex(pair.getSecond() + "\\C*");
+      Filters.Filter expectedYes = FILTERS.key().regex(testData.get(byteKey) + "\\C*");
       Assert.assertEquals(expectedYes.toProto(), filterYes.toProto());
 
       FuzzyRowFilter fuzzyNo = new FuzzyRowFilter(ImmutableList.of(Pair.newPair(key, no)));
@@ -99,36 +99,33 @@ public class TestFuzzyRowFilterAdapter {
 
   @Test
   public void keysAreProducedFromIntegers() throws IOException {
-    Pair<Integer, String>[] testData =
-        new Pair[] {
-          Pair.newPair(Integer.MIN_VALUE, "\\x80\\x00\\x00\\x00"),
-          Pair.newPair(Integer.MIN_VALUE + 1, "\\x80\\x00\\x00\\\001"),
-          Pair.newPair(-100500, "\\xFF\\xFEwl"),
-          Pair.newPair(-128, "\\xFF\\xFF\\xFF\\x80"),
-          Pair.newPair(-127, "\\xFF\\xFF\\xFF\\x81"),
-          Pair.newPair(-2, "\\xFF\\xFF\\xFF\\xFE"),
-          Pair.newPair(-1, "\\xFF\\xFF\\xFF\\xFF"),
-          Pair.newPair(0, "\\x00\\x00\\x00\\x00"),
-          Pair.newPair(1, "\\x00\\x00\\x00\\\001"),
-          Pair.newPair(2, "\\x00\\x00\\x00\\\002"),
-          Pair.newPair(70, "\\x00\\x00\\x00F"),
-          Pair.newPair(100, "\\x00\\x00\\x00d"),
-          Pair.newPair(126, "\\x00\\x00\\x00\\~"),
-          Pair.newPair(127, "\\x00\\x00\\x00\\\177"),
-          Pair.newPair(128, "\\x00\\x00\\x00\\x80"),
-          Pair.newPair(129, "\\x00\\x00\\x00\\x81"),
-          Pair.newPair(7000000, "\\x00j\\xCF\\xC0"),
-          Pair.newPair(1131376492, "Cool"),
-          Pair.newPair(Integer.MAX_VALUE - 1, "\\\177\\xFF\\xFF\\xFE"),
-          Pair.newPair(Integer.MAX_VALUE, "\\\177\\xFF\\xFF\\xFF"),
-        };
+    Map<Integer, String> testData = new HashMap<>();
+    testData.put(Integer.MIN_VALUE, "\\x80\\x00\\x00\\x00");
+    testData.put(Integer.MIN_VALUE + 1, "\\x80\\x00\\x00\\\001");
+    testData.put(-100500, "\\xFF\\xFEwl");
+    testData.put(-128, "\\xFF\\xFF\\xFF\\x80");
+    testData.put(-127, "\\xFF\\xFF\\xFF\\x81");
+    testData.put(-2, "\\xFF\\xFF\\xFF\\xFE");
+    testData.put(-1, "\\xFF\\xFF\\xFF\\xFF");
+    testData.put(0, "\\x00\\x00\\x00\\x00");
+    testData.put(1, "\\x00\\x00\\x00\\\001");
+    testData.put(2, "\\x00\\x00\\x00\\\002");
+    testData.put(70, "\\x00\\x00\\x00F");
+    testData.put(100, "\\x00\\x00\\x00d");
+    testData.put(126, "\\x00\\x00\\x00\\~");
+    testData.put(127, "\\x00\\x00\\x00\\\177");
+    testData.put(128, "\\x00\\x00\\x00\\x80");
+    testData.put(129, "\\x00\\x00\\x00\\x81");
+    testData.put(7000000, "\\x00j\\xCF\\xC0");
+    testData.put(1131376492, "Cool");
+    testData.put(Integer.MAX_VALUE - 1, "\\\177\\xFF\\xFF\\xFE");
+    testData.put(Integer.MAX_VALUE, "\\\177\\xFF\\xFF\\xFF");
 
-    for (Pair<Integer, String> pair : testData) {
-      byte[] key = createKey(pair.getFirst());
-
+    for (Integer intKey : testData.keySet()) {
+      byte[] key = createKey(intKey);
       FuzzyRowFilter fuzzy = new FuzzyRowFilter(ImmutableList.of(Pair.newPair(key, new byte[4])));
       Filters.Filter filter = FilterAdapter.buildAdapter().adaptFilter(null, fuzzy).get();
-      Filters.Filter expected = FILTERS.key().regex(pair.getSecond() + "\\C*");
+      Filters.Filter expected = FILTERS.key().regex(testData.get(intKey) + "\\C*");
       Assert.assertEquals(expected.toProto(), filter.toProto());
     }
   }
