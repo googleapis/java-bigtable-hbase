@@ -29,6 +29,12 @@ limitations under the License.
   </description>
   <!-- TODO: improve the description -->
 
+  <parent>
+    <groupId>com.google.cloud</groupId>
+    <artifactId>google-cloud-shared-config</artifactId>
+    <version>0.9.4</version>
+  </parent>
+
   <licenses>
     <license>
       <name>The Apache License, Version 2.0</name>
