@@ -1,6 +1,5 @@
 # [Google Cloud Bigtable HBase client for Java](https://cloud.google.com/bigtable/docs/bigtable-and-hbase)
 
-[![Travis CI status][travis-shield]][travis-link]
 [![Maven][maven-hbase-shield]][maven-hbase-client-maven-search]
 [![Stack Overflow][stackoverflow-shield]][stackoverflow-link]
 
@@ -171,8 +170,6 @@ Apache 2.0; see [LICENSE](LICENSE) for details.
 
 <!-- references -->
 
-[travis-shield]: https://travis-ci.org/googleapis/java-bigtable-hbase.svg
-[travis-link]: https://travis-ci.org/googleapis/java-bigtable-hbase/builds
 [maven-hbase-shield]: https://maven-badges.herokuapp.com/maven-central/com.google.cloud.bigtable/bigtable-client-core/badge.svg
 [maven-hbase-client-maven-search]: http://search.maven.org/#search%7Cga%7C1%7Ccom.google.cloud.bigtable
 [maven-google-cloud-java-shield]: https://maven-badges.herokuapp.com/maven-central/com.google.cloud/google-cloud-bigtable/badge.svg
