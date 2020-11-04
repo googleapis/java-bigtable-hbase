@@ -63,6 +63,35 @@ Note: Please use [google-cloud-bigtable][google-cloud-bigtable] to access Bigtab
 [//]: # ({x-version-update-end})
 * Refer to the [Java samples documentation](https://cloud.google.com/bigtable/docs/samples) for detailed demonstrations of how to read and write data with Cloud Bigtable. The code for these samples is available in the [Cloud Bigtable examples project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples).
 
+### OpenCensus Integration
+OpenCensus Stats and Tracing work similarly as for the idiomatic client. See the respective docs:
+ 
+* [Stats](https://github.com/googleapis/java-bigtable#opencensus-stats)
+* [Tracing](https://github.com/googleapis/java-bigtable#opencensus-stats)
+
+A couple differences for the Shaded client:
+
+1) Packages are renamed with the prefix "com.google.bigtable.repackaged.", e.g.
+
+```
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.BigtableDataSettings;
+import com.google.bigtable.repackaged.io.opencensus.exporter.stats.stackdriver.StackdriverStatsConfiguration;
+import com.google.bigtable.repackaged.io.opencensus.exporter.stats.stackdriver.StackdriverStatsExporter;
+
+///
+
+void enableStackdriver() {
+        StackdriverStatsExporter.createAndRegister(
+                StackdriverStatsConfiguration.builder().setProjectId(projectId).build()
+        );
+        BigtableDataSettings.enableOpenCensusStats();
+}
+```
+
+2) shaded-client users do not need to import additional dependencies for OpenCensus (e.g. io.opencensus:* or
+io.grpc:grpc-census), as they are already included in the shaded client.
+
+
 ## Questions and discussions
 
 If you have questions or run into issues with Google Cloud Bigtable or the
