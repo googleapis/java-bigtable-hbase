@@ -133,8 +133,6 @@ public class BigtableSession implements Closeable {
   static final long CHANNEL_KEEP_ALIVE_TIME_SECONDS = 30;
   // Use this conservative values for timeout (10s) and do
   static final long CHANNEL_KEEP_ALIVE_TIMEOUT_SECONDS = 10;
-  // Do not use keepalive without any outstanding rpc calls as it can add a bunch of load.
-  static final boolean CHANNEL_KEEP_ALIVE_WITHOUT_RPC_CALLS = false;
 
   @VisibleForTesting
   static final String PROJECT_ID_EMPTY_OR_NULL = "ProjectId must not be empty or null.";
@@ -628,7 +626,8 @@ public class BigtableSession implements Closeable {
         .maxInboundMessageSize(MAX_MESSAGE_SIZE)
         .keepAliveTime(CHANNEL_KEEP_ALIVE_TIME_SECONDS, TimeUnit.SECONDS)
         .keepAliveTimeout(CHANNEL_KEEP_ALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        .keepAliveWithoutCalls(CHANNEL_KEEP_ALIVE_WITHOUT_RPC_CALLS)
+        // Default behavior Do not use keepalive without any outstanding rpc calls as it can add a
+        // bunch of load.
         .userAgent(BigtableVersionInfo.CORE_USER_AGENT + "," + options.getUserAgent())
         .intercept(interceptors)
         .build();
