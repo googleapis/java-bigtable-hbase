@@ -131,7 +131,7 @@ public class BigtableSession implements Closeable {
 
   // Google Frontends limits keepalive calls at 30s by default.
   static final long CHANNEL_KEEP_ALIVE_TIME_SECONDS = 30;
-  // Use this conservative values for timeout (10s) and do
+  // Use this conservative values for timeout (10s)
   static final long CHANNEL_KEEP_ALIVE_TIMEOUT_SECONDS = 10;
 
   @VisibleForTesting
