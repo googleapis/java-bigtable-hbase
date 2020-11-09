@@ -1906,7 +1906,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     Result result = table.get(get);
     Cell[] cells = result.rawCells();
     Assert.assertEquals("Should have five cells, qualifiers 6 - 10.", 5, cells.length);
-    assertResult(cells, 6);
+    assertCellQualifiersAreAscendingFrom(cells, 6);
 
     Filter greaterOrEqualFilter = new QualifierFilter(CompareOp.GREATER_OR_EQUAL, binaryComparator);
 
@@ -1915,21 +1915,21 @@ public abstract class AbstractTestFilters extends AbstractTest {
     Result greaterOrEqualResult = table.get(greaterOrEqualGet);
     Cell[] greaterOrEqualCells = greaterOrEqualResult.rawCells();
     Assert.assertEquals("Should have six cells, qualifiers 5 -10.", 6, greaterOrEqualCells.length);
-    assertResult(greaterOrEqualCells, 5);
+    assertCellQualifiersAreAscendingFrom(greaterOrEqualCells, 5);
 
     Filter lessFilter = new QualifierFilter(CompareOp.LESS, binaryComparator);
     Get lessGet = new Get(rowKey).setFilter(lessFilter).addFamily(COLUMN_FAMILY);
     Result lessResult = table.get(lessGet);
     Cell[] lessCells = lessResult.rawCells();
     Assert.assertEquals("Should have four cells, qualifiers 1 -4.", 4, lessCells.length);
-    assertResult(lessCells, 1);
+    assertCellQualifiersAreAscendingFrom(lessCells, 1);
 
     Filter lessOrEqualFilter = new QualifierFilter(CompareOp.LESS_OR_EQUAL, binaryComparator);
     Get lessOrEqualGet = new Get(rowKey).setFilter(lessOrEqualFilter).addFamily(COLUMN_FAMILY);
     Result lessOrEqualResult = table.get(lessOrEqualGet);
     Cell[] lessOrEqualCells = lessOrEqualResult.rawCells();
     Assert.assertEquals("Should have five cells, qualifiers 1 -5.", 5, lessOrEqualCells.length);
-    assertResult(lessOrEqualCells, 1);
+    assertCellQualifiersAreAscendingFrom(lessOrEqualCells, 1);
 
     Filter equalFilter = new QualifierFilter(CompareOp.EQUAL, binaryComparator);
     Get equalGet = new Get(rowKey).setFilter(equalFilter).addFamily(COLUMN_FAMILY);
@@ -1958,7 +1958,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     table.close();
   }
 
-  private void assertResult(Cell[] cells, int qualifierValue) {
+  private void assertCellQualifiersAreAscendingFrom(Cell[] cells, int qualifierValue) {
     for (Cell cell : cells) {
       Assert.assertArrayEquals(Bytes.toBytes(qualifierValue), CellUtil.cloneQualifier(cell));
       qualifierValue++;

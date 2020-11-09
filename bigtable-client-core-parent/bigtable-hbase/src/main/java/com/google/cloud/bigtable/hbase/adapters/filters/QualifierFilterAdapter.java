@@ -60,21 +60,24 @@ public class QualifierFilterAdapter extends TypedFilterAdapterBase<QualifierFilt
             "Cannot adapt comparator %s", filter.getComparator().getClass().getCanonicalName()));
   }
 
+  // Handles conversion of HBase's binary comparators to Bigtable's filters. Inequalities are
+  // implemented as ColumnRange filters, while EQUALS is implemented as a literal
+  // column_qualifier_regex_filter
   private Filter adaptBinaryComparator(
       FilterAdapterContext context, CompareOp compareOp, BinaryComparator comparator)
       throws IOException {
-    ByteString quotedValue = ByteString.copyFrom(comparator.getValue());
+    ByteString value = ByteString.copyFrom(comparator.getValue());
     switch (compareOp) {
       case LESS:
         return FILTERS
             .qualifier()
             .rangeWithinFamily(FilterAdapterHelper.getSingleFamilyName(context))
-            .endOpen(quotedValue);
+            .endOpen(value);
       case LESS_OR_EQUAL:
         return FILTERS
             .qualifier()
             .rangeWithinFamily(FilterAdapterHelper.getSingleFamilyName(context))
-            .endClosed(quotedValue);
+            .endClosed(value);
       case EQUAL:
         return FILTERS
             .qualifier()
@@ -84,18 +87,18 @@ public class QualifierFilterAdapter extends TypedFilterAdapterBase<QualifierFilt
         String familyName = FilterAdapterHelper.getSingleFamilyName(context);
         return FILTERS
             .interleave()
-            .filter(FILTERS.qualifier().rangeWithinFamily(familyName).endOpen(quotedValue))
-            .filter(FILTERS.qualifier().rangeWithinFamily(familyName).startOpen(quotedValue));
+            .filter(FILTERS.qualifier().rangeWithinFamily(familyName).endOpen(value))
+            .filter(FILTERS.qualifier().rangeWithinFamily(familyName).startOpen(value));
       case GREATER_OR_EQUAL:
         return FILTERS
             .qualifier()
             .rangeWithinFamily(FilterAdapterHelper.getSingleFamilyName(context))
-            .startClosed(quotedValue);
+            .startClosed(value);
       case GREATER:
         return FILTERS
             .qualifier()
             .rangeWithinFamily(FilterAdapterHelper.getSingleFamilyName(context))
-            .startOpen(quotedValue);
+            .startOpen(value);
       case NO_OP:
         // No-op always passes. Instead of attempting to return null or default instance,
         // include an always-match filter.
