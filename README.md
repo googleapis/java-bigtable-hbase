@@ -45,21 +45,217 @@ Note: Please use [google-cloud-bigtable][google-cloud-bigtable] to access Bigtab
   <dependency>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>1.11.0</version>
+    <version>1.17.0</version>
   </dependency>
   ```
 
   Gradle:
   ```Groovy
-  compile 'com.google.cloud.bigtable:bigtable-hbase-1.x:1.11.0'
+  compile 'com.google.cloud.bigtable:bigtable-hbase-1.x:1.17.0'
   ```
 
   SBT:
   ```Scala
-  libraryDependencies += "com.google.cloud.bigtable" % "bigtable-hbase-1.x" % "1.11.0"
+  libraryDependencies += "com.google.cloud.bigtable" % "bigtable-hbase-1.x" % "1.17.0"
   ```
 
 * Refer to the [Java samples documentation](https://cloud.google.com/bigtable/docs/samples) for detailed demonstrations of how to read and write data with Cloud Bigtable. The code for these samples is available in the [Cloud Bigtable examples project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples).
+
+## OpenCensus Integration
+
+The Bigtable HBase Client supports OpenCensus telemetry, specifically exporting gRPC metrics to Stats and supporting
+Tracing.
+
+### Stats
+
+The code example below shows how to enable metrics. For more details, see the [gRPC Java Guide](https://opencensus.io/guides/grpc/java/).
+
+##### Maven Setup
+
+If you are _not_ using the shaded Bigtable HBase Client artifact, you need to define the OpenCensus dependencies.
+```xml
+<!-- OpenCensus dependencies -->
+<dependency>
+    <groupId>com.google.cloud.bigtable</groupId>
+    <artifactId>bigtable-hbase-1.x</artifactId>
+    <version>1.17.0</version>
+</dependency>
+<dependency>
+    <groupId>io.opencensus</groupId>
+    <artifactId>opencensus-impl</artifactId>
+    <version>0.24.0</version>
+    <scope>runtime</scope>
+</dependency>
+<dependency>
+    <groupId>io.opencensus</groupId>
+    <artifactId>opencensus-exporter-stats-stackdriver</artifactId>
+    <version>0.24.0</version>
+    <exclusions>
+        <exclusion>
+            <groupId>io.grpc</groupId>
+            <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>com.google.auth</groupId>
+            <artifactId>*</artifactId>
+        </exclusion>
+    </exclusions>
+</dependency>
+```
+
+If you _are_ using the shaded Bigtable HBase Client artifact, then the OpenCensus dependencies are embedded in the
+shaded artifact; i.e. nothing additional for you to do.
+
+```xml
+
+<!-- OpenCensus dependencies -->
+<dependency>
+    <groupId>com.google.cloud.bigtable</groupId>
+    <artifactId>bigtable-hbase-1.x-shaded</artifactId>
+    <version>1.17.0</version>
+</dependency>
+```
+
+##### Java Example
+```java
+// For the non-shaded client, remove the package prefix "com.google.bigtable.repackaged."
+import com.google.bigtable.repackaged.io.opencensus.contrib.grpc.metrics.RpcViews;
+import com.google.bigtable.repackaged.io.opencensus.exporter.stats.stackdriver.StackdriverStatsConfiguration;
+import com.google.bigtable.repackaged.io.opencensus.exporter.stats.stackdriver.StackdriverStatsExporter;
+
+import java.io.IOException;
+
+public class OpenCensusExample {
+    String projectId = "your-project-id";
+
+    void setupStatsExport() throws Exception {
+        // Option 1: Automatic Configuration (from GCP Resources only):
+        // If you are running from a GCP Resource (e.g. a GCE VM), the Stackdriver metrics are automatically
+        // configured to upload to your resource.
+        // For examples of monitored resources, see here: https://cloud.google.com/monitoring/api/resources
+        StackdriverStatsExporter.createAndRegister();
+
+        // Then register your gRPC views in OpenCensus.
+        RpcViews.registerClientGrpcViews();
+
+
+        // Option 2: Manual Configuration
+        // If you are not running from a GCP Resource (e.g. if you are running on-prem), then you should
+        // configure the monitored resource yourself.
+        // Use the code snippet below as a starting example.
+        // For examples of monitored resources, see here: https://cloud.google.com/monitoring/api/resources
+        StackdriverStatsExporter.createAndRegister(
+                StackdriverStatsConfiguration.builder()
+                        .setProjectId(projectId)
+                        // This example uses generic_node as the MonitoredResource, with your host name as the node ID.
+                        .setMonitoredResource(MonitoredResource.newBuilder()
+                                .setType("generic_node")
+                                .putLabels("project_id", projectId)
+                                .putLabels("location", "us-west1-b")
+                                .putLabels("namespace", "anyNamespaceYouChoose")
+                                .putLabels("node_id", InetAddress.getLocalHost().getHostName())  // specify any node you choose; in this case, the local hostname
+                                .build())
+                        .build()
+        );
+        
+        // Then register your gRPC views in OpenCensus.
+        RpcViews.registerBigtableClientViews();
+    }
+}
+```
+
+##### Viewing Your Metrics in Google Cloud Console
+
+The above steps will expose Bigtable's gRPC metrics under the
+custom.googleapis.com/opencensus/grpc.io/client prefix.
+
+Follow [these instructions](https://opencensus.io/guides/grpc/java/) for viewing the metrics in
+Google Cloud Console.
+
+Be sure to choose your Resource Type as the one you defined in your Stackdriver configuration in
+the code.
+
+
+### Tracing
+
+The code example below shows how to enable tracing. For more details, see [here](https://cloud.google.com/community/tutorials/bigtable-oc).
+
+##### Maven Setup
+
+If you are _not_ using the shaded Bigtable HBase Client artifact, you need to define the OpenCensus dependencies.
+```xml
+<!-- OpenCensus dependencies -->
+<dependency>
+    <groupId>com.google.cloud.bigtable</groupId>
+    <artifactId>bigtable-hbase-1.x</artifactId>
+    <version>1.17.0</version>
+</dependency>
+<dependency>
+    <groupId>io.opencensus</groupId>
+    <artifactId>opencensus-impl</artifactId>
+    <version>0.24.0</version>
+    <scope>runtime</scope>
+</dependency>
+<dependency>
+    <groupId>io.opencensus</groupId>
+    <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
+    <version>0.24.0</version>
+    <exclusions>
+        <exclusion>
+            <groupId>io.grpc</groupId>
+            <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>com.google.auth</groupId>
+            <artifactId>*</artifactId>
+        </exclusion>
+    </exclusions>
+</dependency>
+```
+
+If you _are_ using the shaded Bigtable HBase Client artifact, then the OpenCensus dependencies are embedded in the
+shaded artifact; i.e. nothing additional for you to do.
+
+```xml
+
+<!-- OpenCensus dependencies -->
+<dependency>
+    <groupId>com.google.cloud.bigtable</groupId>
+    <artifactId>bigtable-hbase-1.x-shaded</artifactId>
+    <version>1.17.0</version>
+</dependency>
+```
+
+##### Java Example
+
+```java
+// For the non-shaded client, remove the package prefix "com.google.bigtable.repackaged."
+import com.google.bigtable.repackaged.io.opencensus.exporter.trace.stackdriver.StackdriverTraceConfiguration;
+import com.google.bigtable.repackaged.io.opencensus.exporter.trace.stackdriver.StackdriverTraceExporter;
+import com.google.bigtable.repackaged.io.opencensus.trace.Tracing;
+import com.google.bigtable.repackaged.io.opencensus.trace.samplers.Samplers;
+
+import java.io.IOException;
+
+public class OpenCensusExample {
+    String projectId = "your-project-id";
+
+    void setupTracing() throws Exception {
+        //// Setup tracing.
+        StackdriverTraceExporter.createAndRegister(
+                StackdriverTraceConfiguration.builder()
+                        .setProjectId(projectId)
+                        .build()
+        );
+        Tracing.getTraceConfig().updateActiveTraceParams(
+                Tracing.getTraceConfig().getActiveTraceParams().toBuilder()
+                        // Adjust the sampling rate as you see fit.
+                        .setSampler(Samplers.probabilitySampler(0.01))
+                        .build()
+        );
+    }
+}
+```
 
 ## Questions and discussions
 
