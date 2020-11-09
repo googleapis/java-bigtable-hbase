@@ -1953,7 +1953,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     Filter noOpFilter = new QualifierFilter(CompareOp.NO_OP, binaryComparator);
     Get noOpGet = new Get(rowKey).setFilter(noOpFilter).addFamily(COLUMN_FAMILY);
     Result noOpResult = table.get(noOpGet);
-    Assert.assertEquals(0, noOpResult.size());
+    Assert.assertEquals(10, noOpResult.size());
 
     table.close();
   }
