@@ -19,7 +19,6 @@ import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
-import com.google.cloud.bigtable.data.v2.models.Filters.QualifierRangeFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
@@ -64,25 +63,39 @@ public class QualifierFilterAdapter extends TypedFilterAdapterBase<QualifierFilt
   private Filter adaptBinaryComparator(
       FilterAdapterContext context, CompareOp compareOp, BinaryComparator comparator)
       throws IOException {
-    ByteString quotedValue = ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());
+    ByteString quotedValue = ByteString.copyFrom(comparator.getValue());
     switch (compareOp) {
       case LESS:
-        return range(context).endOpen(quotedValue);
+        return FILTERS
+            .qualifier()
+            .rangeWithinFamily(FilterAdapterHelper.getSingleFamilyName(context))
+            .endOpen(quotedValue);
       case LESS_OR_EQUAL:
-        return range(context).endClosed(quotedValue);
+        return FILTERS
+            .qualifier()
+            .rangeWithinFamily(FilterAdapterHelper.getSingleFamilyName(context))
+            .endClosed(quotedValue);
       case EQUAL:
-        return FILTERS.qualifier().regex(quotedValue);
+        return FILTERS
+            .qualifier()
+            .regex(ReaderExpressionHelper.quoteRegularExpression(comparator.getValue()));
       case NOT_EQUAL:
         // This strictly less than + strictly greater than:
-        String familyName = getFamily(context);
+        String familyName = FilterAdapterHelper.getSingleFamilyName(context);
         return FILTERS
             .interleave()
-            .filter(range(familyName).endOpen(quotedValue))
-            .filter(range(familyName).startOpen(quotedValue));
+            .filter(FILTERS.qualifier().rangeWithinFamily(familyName).endOpen(quotedValue))
+            .filter(FILTERS.qualifier().rangeWithinFamily(familyName).startOpen(quotedValue));
       case GREATER_OR_EQUAL:
-        return range(context).startClosed(quotedValue);
+        return FILTERS
+            .qualifier()
+            .rangeWithinFamily(FilterAdapterHelper.getSingleFamilyName(context))
+            .startClosed(quotedValue);
       case GREATER:
-        return range(context).startOpen(quotedValue);
+        return FILTERS
+            .qualifier()
+            .rangeWithinFamily(FilterAdapterHelper.getSingleFamilyName(context))
+            .startOpen(quotedValue);
       case NO_OP:
         // No-op always passes. Instead of attempting to return null or default instance,
         // include an always-match filter.
@@ -91,18 +104,6 @@ public class QualifierFilterAdapter extends TypedFilterAdapterBase<QualifierFilt
         throw new IllegalStateException(
             String.format("Cannot handle unknown compare op %s", compareOp));
     }
-  }
-
-  private QualifierRangeFilter range(FilterAdapterContext context) {
-    return range(getFamily(context));
-  }
-
-  private QualifierRangeFilter range(String family) {
-    return FILTERS.qualifier().rangeWithinFamily(family);
-  }
-
-  private static String getFamily(FilterAdapterContext context) {
-    return FilterAdapterHelper.getSingleFamilyName(context);
   }
 
   private static Filter adaptRegexStringComparator(

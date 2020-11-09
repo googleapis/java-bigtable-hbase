@@ -1888,6 +1888,84 @@ public abstract class AbstractTestFilters extends AbstractTest {
   }
 
   @Test
+  public void testQualifierBinaryComparatorFilter() throws IOException {
+    // Initialize
+    int numCols = 10;
+    Table table = getDefaultTable();
+    byte[] rowKey = dataHelper.randomData("testRow-qualifier-");
+    Put put = new Put(rowKey);
+    for (int i = 1; i <= numCols; ++i) {
+      put.addColumn(COLUMN_FAMILY, Bytes.toBytes(i), i, Bytes.toBytes("value-" + i));
+    }
+    table.put(put);
+
+    BinaryComparator binaryComparator = new BinaryComparator(Bytes.toBytes(5));
+
+    Filter greaterFilter = new QualifierFilter(CompareOp.GREATER, binaryComparator);
+    Get get = new Get(rowKey).setFilter(greaterFilter).addFamily(COLUMN_FAMILY);
+    Result result = table.get(get);
+    Cell[] cells = result.rawCells();
+    Assert.assertEquals("Should have five cells, qualifiers 6 - 10.", 5, cells.length);
+    assertResult(cells, 6);
+
+    Filter greaterOrEqualFilter = new QualifierFilter(CompareOp.GREATER_OR_EQUAL, binaryComparator);
+
+    Get greaterOrEqualGet =
+        new Get(rowKey).setFilter(greaterOrEqualFilter).addFamily(COLUMN_FAMILY);
+    Result greaterOrEqualResult = table.get(greaterOrEqualGet);
+    Cell[] greaterOrEqualCells = greaterOrEqualResult.rawCells();
+    Assert.assertEquals("Should have six cells, qualifiers 5 -10.", 6, greaterOrEqualCells.length);
+    assertResult(greaterOrEqualCells, 5);
+
+    Filter lessFilter = new QualifierFilter(CompareOp.LESS, binaryComparator);
+    Get lessGet = new Get(rowKey).setFilter(lessFilter).addFamily(COLUMN_FAMILY);
+    Result lessResult = table.get(lessGet);
+    Cell[] lessCells = lessResult.rawCells();
+    Assert.assertEquals("Should have four cells, qualifiers 1 -4.", 4, lessCells.length);
+    assertResult(lessCells, 1);
+
+    Filter lessOrEqualFilter = new QualifierFilter(CompareOp.LESS_OR_EQUAL, binaryComparator);
+    Get lessOrEqualGet = new Get(rowKey).setFilter(lessOrEqualFilter).addFamily(COLUMN_FAMILY);
+    Result lessOrEqualResult = table.get(lessOrEqualGet);
+    Cell[] lessOrEqualCells = lessOrEqualResult.rawCells();
+    Assert.assertEquals("Should have five cells, qualifiers 1 -5.", 5, lessOrEqualCells.length);
+    assertResult(lessOrEqualCells, 1);
+
+    Filter equalFilter = new QualifierFilter(CompareOp.EQUAL, binaryComparator);
+    Get equalGet = new Get(rowKey).setFilter(equalFilter).addFamily(COLUMN_FAMILY);
+    Result equalResult = table.get(equalGet);
+    Cell[] equalCells = equalResult.rawCells();
+    Assert.assertEquals("Should have one cell, qualifier 5.", 1, equalCells.length);
+    Assert.assertArrayEquals(Bytes.toBytes(5), CellUtil.cloneQualifier(equalCells[0]));
+
+    Filter notEqualFilter = new QualifierFilter(CompareOp.NOT_EQUAL, binaryComparator);
+    Get notEqualGet = new Get(rowKey).setFilter(notEqualFilter).addFamily(COLUMN_FAMILY);
+    Result notEqualResult = table.get(notEqualGet);
+    Cell[] notEqualCells = notEqualResult.rawCells();
+    Assert.assertEquals("Should have nine cells, all but 5.", 9, notEqualCells.length);
+
+    int[] notEqualQualifiers = {1, 2, 3, 4, 6, 7, 8, 9, 10};
+    for (int i = 0; i < notEqualCells.length; i++) {
+      Assert.assertArrayEquals(
+          Bytes.toBytes(notEqualQualifiers[i]), CellUtil.cloneQualifier(notEqualCells[i]));
+    }
+
+    Filter noOpFilter = new QualifierFilter(CompareOp.NO_OP, binaryComparator);
+    Get noOpGet = new Get(rowKey).setFilter(noOpFilter).addFamily(COLUMN_FAMILY);
+    Result noOpResult = table.get(noOpGet);
+    Assert.assertEquals(0, noOpResult.size());
+
+    table.close();
+  }
+
+  private void assertResult(Cell[] cells, int qualifierValue) {
+    for (Cell cell : cells) {
+      Assert.assertArrayEquals(Bytes.toBytes(qualifierValue), CellUtil.cloneQualifier(cell));
+      qualifierValue++;
+    }
+  }
+
+  @Test
   public void testFamilyFilter() throws IOException {
     byte[] rowKey = dataHelper.randomData("family-filter-");
     byte[] qualA = dataHelper.randomData("family-filter-qualA-");
