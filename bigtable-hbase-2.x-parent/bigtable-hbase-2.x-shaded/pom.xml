@@ -78,6 +78,15 @@ limitations under the License.
       <groupId>io.opencensus</groupId>
       <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.opencensus</groupId>
+      <artifactId>opencensus-exporter-stats-stackdriver</artifactId>
+    </dependency>
+    <!-- grpc-census needed alongside opencensus-exporter-stats-stackdriver for GRPC stats exports to work -->
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-census</artifactId>
+    </dependency>
 
     <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
     <dependency>
@@ -330,6 +339,10 @@ limitations under the License.
             <usedDependency>
               io.opencensus:opencensus-exporter-trace-stackdriver
             </usedDependency>
+            <usedDependency>
+              io.opencensus:opencensus-exporter-stats-stackdriver
+            </usedDependency>
+            <usedDependency>io.grpc:grpc-census</usedDependency>
           </usedDependencies>
         </configuration>
       </plugin>
