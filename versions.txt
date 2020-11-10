@@ -1,9 +1,9 @@
 # Format:
 # module:released-version:current-version
 
-bigtable-client-parent:1.14.0:1.14.1-SNAPSHOT
-bigtable-client-core-parent:1.14.0:1.14.1-SNAPSHOT
-bigtable-hbase-1x-parent:1.14.0:1.14.1-SNAPSHOT
-bigtable-hbase-2x-parent:1.14.0:1.14.1-SNAPSHOT
-bigtable-dataflow-parent:1.14.0:1.14.1-SNAPSHOT
-bigtable-test:1.14.0:1.14.1-SNAPSHOT
+bigtable-client-parent:1.15.0:1.15.0
+bigtable-client-core-parent:1.15.0:1.15.0
+bigtable-hbase-1x-parent:1.15.0:1.15.0
+bigtable-hbase-2x-parent:1.15.0:1.15.0
+bigtable-dataflow-parent:1.15.0:1.15.0
+bigtable-test:1.15.0:1.15.0
