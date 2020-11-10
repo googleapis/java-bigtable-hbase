@@ -55,6 +55,7 @@ import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
+import org.apache.hadoop.hbase.client.AbstractClientScanner;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
@@ -276,15 +277,39 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public ResultScanner getScanner(final Scan scan) throws IOException {
     LOG.trace("getScanner(Scan)");
-    Span span = TRACER.spanBuilder("BigtableTable.scan").startSpan();
+    final Span span = TRACER.spanBuilder("BigtableTable.scan").startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
 
       final ResultScanner scanner = clientWrapper.readRows(hbaseAdapter.adapt(scan));
       if (hasWhileMatchFilter(scan.getFilter())) {
         return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner, span);
       }
-      // TODO: need to end the span when stream ends
-      return scanner;
+
+      return new AbstractClientScanner() {
+        @Override
+        public Result next() throws IOException {
+          Result row = scanner.next();
+          if (row == null) {
+            // Null signals EOF.
+            span.end();
+            return null;
+          }
+          return row;
+        }
+
+        @Override
+        public void close() {
+          try {
+            scanner.close();
+          } finally {
+            span.end();
+          }
+        }
+
+        public boolean renewLease() {
+          throw new UnsupportedOperationException("renewLease");
+        }
+      };
     } catch (Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
       span.setStatus(Status.UNKNOWN);
