@@ -306,6 +306,7 @@ public abstract class AbstractBigtableTable implements Table {
           }
         }
 
+        @Override
         public boolean renewLease() {
           throw new UnsupportedOperationException("renewLease");
         }
