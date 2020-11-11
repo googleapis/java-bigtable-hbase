@@ -183,8 +183,9 @@ public class Watchdog implements Runnable {
 
             @Override
             public void onClose(Status status, Metadata trailers) {
+              // Log channel IDs. I am not sure if we should log here for everything.
+              // LOG.warn("Closing the channel: " + ChannelPool.extractIdentifier(trailers));
               openStreams.remove(WatchedCall.this);
-
               super.onClose(status, trailers);
             }
           },
@@ -235,7 +236,7 @@ public class Watchdog implements Runnable {
             if (waitTime >= waitTimeoutMs) {
               delegate()
                   .cancel(
-                      "Canceled due to timeout waiting for next response",
+                      "Canceled due to timeout waiting for next response for " + waitTime + " ms.",
                       new StreamWaitTimeoutException(this.state, waitTime));
               return true;
             }
