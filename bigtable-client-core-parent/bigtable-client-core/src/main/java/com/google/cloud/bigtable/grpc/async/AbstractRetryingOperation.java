@@ -191,15 +191,19 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   protected void onError(Status status, Metadata trailers) {
     Code code = status.getCode();
+    String channelId = ChannelPool.extractIdentifier(trailers);
+
     // CANCELLED
     if (code == Status.Code.CANCELLED) {
+      LOG.error(
+          "Received a CANCELLED error. Failure #%d, got: %s on channel %s.\nTrailers: %s",
+          status.getCause(), failedCount, status, channelId, trailers);
       setException(status.asRuntimeException());
       // An explicit user cancellation is not considered a failure.
       finalizeStats(status);
       return;
     }
 
-    String channelId = ChannelPool.extractIdentifier(trailers);
     // Non retry scenario
     if (!retryOptions.enableRetries()
         || !retryOptions.isRetryable(code)
