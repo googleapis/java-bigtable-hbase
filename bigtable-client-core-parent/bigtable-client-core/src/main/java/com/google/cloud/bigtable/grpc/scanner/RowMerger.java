@@ -428,6 +428,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
   private boolean complete = false;
   private Integer rowCountInLastMessage = null;
   private long lastRowEmittedAtMillis = System.currentTimeMillis();
+  private long nextRowMonitorReschedulingcounter = 0;
 
   /**
    * Constructor for RowMerger.
@@ -441,42 +442,59 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
 
   /** Resets the timer for waiting on next row. Will be called when a row is emitted. */
   private void rescheduleNextRowTask() {
-    if (nextRowFuture != null) {
-      nextRowFuture.cancel(false);
-    }
-    lastRowEmittedAtMillis = System.currentTimeMillis();
-    nextRowFuture =
-        NEXT_ROW_MONITOR_EXECUTOR_SERVICE.scheduleAtFixedRate(
-            new Runnable() {
-              @Override
-              public void run() {
-
-                long cellCount = (rowInProgress != null) ? rowInProgress.cellCount : 0;
-                long secondsSinceLastRowEmitted =
-                    (System.currentTimeMillis() - lastRowEmittedAtMillis) / 1000;
-                if (!receivedFirstRow) {
-                  LOG.warn(
-                      "No rows emitted for "
-                          + secondsSinceLastRowEmitted
-                          + " seconds for a NEW Read request (Time to First Byte). "
-                          + "Current Rowmerger state: "
-                          + state.name()
-                          + ", Cells in current row: "
-                          + cellCount);
-                } else {
-                  LOG.warn(
-                      "No rows emitted for "
-                          + secondsSinceLastRowEmitted
-                          + " seconds. Current Rowmerger state: "
-                          + state.name()
-                          + ", Cells in current row: "
-                          + cellCount);
+    try {
+      nextRowMonitorReschedulingcounter++;
+      if (nextRowMonitorReschedulingcounter % 20 == 0) {
+        // Heartbeat every 20 rows to make sure that its running.
+        // This counter is local to a RowMerger, which is tied to a single ReadRows call, so having
+        // a higher number will mean that it never
+        // gets called.
+        LOG.warn("RowMerger processed %d rows", nextRowMonitorReschedulingcounter - 1);
+      }
+      if (nextRowFuture != null) {
+        nextRowFuture.cancel(false);
+      }
+      lastRowEmittedAtMillis = System.currentTimeMillis();
+    } catch (Exception e) {
+      LOG.warn("Exception while scheduling NextRowFutureRunnable ", e);
+    } finally {
+      // Make sure that the next task is always scheduled.
+      nextRowFuture =
+          NEXT_ROW_MONITOR_EXECUTOR_SERVICE.scheduleAtFixedRate(
+              new Runnable() {
+                @Override
+                public void run() {
+                  try {
+                    long cellCount = (rowInProgress != null) ? rowInProgress.cellCount : 0;
+                    long secondsSinceLastRowEmitted =
+                        (System.currentTimeMillis() - lastRowEmittedAtMillis) / 1000;
+                    if (!receivedFirstRow) {
+                      LOG.warn(
+                          "No rows emitted for "
+                              + secondsSinceLastRowEmitted
+                              + " seconds for a NEW Read request (Time to First Byte). "
+                              + "Current Rowmerger state: "
+                              + state.name()
+                              + ", Cells in current row: "
+                              + cellCount);
+                    } else {
+                      LOG.warn(
+                          "No rows emitted for "
+                              + secondsSinceLastRowEmitted
+                              + " seconds. Current Rowmerger state: "
+                              + state.name()
+                              + ", Cells in current row: "
+                              + cellCount);
+                    }
+                  } catch (Exception e) {
+                    LOG.warn("Exception in NextRowFutureRunnable ", e);
+                  }
                 }
-              }
-            },
-            NEXT_ROW_THRESHOLD_SECONDS,
-            NEXT_ROW_THRESHOLD_SECONDS,
-            TimeUnit.SECONDS);
+              },
+              NEXT_ROW_THRESHOLD_SECONDS,
+              NEXT_ROW_THRESHOLD_SECONDS,
+              TimeUnit.SECONDS);
+    }
   }
 
   public void clearRowInProgress() {
