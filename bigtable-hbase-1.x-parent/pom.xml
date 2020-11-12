@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-client-parent</artifactId>
-    <version>1.17.1-SNAPSHOT</version>
+    <version>1.17.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-1x-parent:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-1.x-parent</artifactId>
@@ -38,6 +38,32 @@ limitations under the License.
     <module>bigtable-hbase-1.x-benchmarks</module>
   </modules>
 
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <configuration>
+            <windowtitle>
+              HBase + Cloud Bigtable Connector ${project.version} API
+            </windowtitle>
+            <doctitle>
+              HBase + Cloud Bigtable Connector ${project.version} API
+            </doctitle>
+            <overview>../overview.html</overview>
+            <bottom><![CDATA[<br>]]></bottom>
+
+            <detectLinks />
+            <links>
+              <link>https://hbase.apache.org/apidocs/</link>
+              <link>http://www.grpc.io/grpc-java/javadoc/</link>
+            </links>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
   <profiles>
     <profile>
       <!-- Shading workaround for IDEs:
@@ -52,33 +78,6 @@ limitations under the License.
         <module>bigtable-hbase-1.x-shaded</module>
         <module>bigtable-hbase-1.x-hadoop</module>
       </modules>
-    </profile>
-    <profile>
-      <id>release</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <configuration>
-              <windowtitle>
-                HBase + Cloud Bigtable Connector ${project.version} API
-              </windowtitle>
-              <doctitle>
-                HBase + Cloud Bigtable Connector ${project.version} API
-              </doctitle>
-              <overview>../overview.html</overview>
-              <bottom><![CDATA[<br>]]></bottom>
-
-              <detectLinks />
-              <links>
-                <link>https://hbase.apache.org/apidocs/</link>
-                <link>http://www.grpc.io/grpc-java/javadoc/</link>
-              </links>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
     </profile>
   </profiles>
 </project>

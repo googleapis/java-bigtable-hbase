@@ -3,7 +3,7 @@
   <parent>
     <artifactId>bigtable-hbase-1.x-parent</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>1.17.1-SNAPSHOT</version>
+    <version>1.17.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-1x-parent:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -90,6 +90,14 @@
         </configuration>
       </plugin>
       <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <version>1.6.8</version>
+        <configuration>
+          <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
         <configuration>
@@ -100,6 +108,14 @@
               org.openjdk.jmh:jmh-generator-annprocess
             </usedDependency>
           </usedDependencies>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <configuration>
+          <!--  skip for tests -->
+          <skip>true</skip>
         </configuration>
       </plugin>
     </plugins>

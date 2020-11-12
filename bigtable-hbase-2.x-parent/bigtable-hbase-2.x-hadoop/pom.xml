@@ -18,7 +18,7 @@ limitations under the License.
   <parent>
     <artifactId>bigtable-hbase-2.x-parent</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>1.17.1-SNAPSHOT</version>
+    <version>1.17.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-2x-parent:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -104,6 +104,32 @@ limitations under the License.
 
   <build>
     <plugins>
+      <plugin>
+        <!-- overriding the default config to add exclusions-->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <configuration>
+          <rules>
+            <requireMavenVersion>
+              <version>[3.0,)</version>
+            </requireMavenVersion>
+            <requireJavaVersion>
+              <version>[1.7,)</version>
+            </requireJavaVersion>
+            <requireUpperBoundDeps>
+              <excludes>
+                <exclude>com.google.guava:guava</exclude>
+              </excludes>
+            </requireUpperBoundDeps>
+            <banDuplicateClasses>
+              <ignoreClasses>
+                <!-- todo(kolea2): investigate transitive deps causing conflicts-->
+                <ignoreClass>**</ignoreClass>
+              </ignoreClasses>
+            </banDuplicateClasses>
+          </rules>
+        </configuration>
+      </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
