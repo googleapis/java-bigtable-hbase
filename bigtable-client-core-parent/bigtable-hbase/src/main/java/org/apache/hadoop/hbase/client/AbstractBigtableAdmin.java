@@ -40,9 +40,11 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import io.grpc.Status;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -688,13 +690,50 @@ public abstract class AbstractBigtableAdmin implements Admin {
   /** {@inheritDoc} */
   @Override
   public ClusterStatus getClusterStatus() throws IOException {
-    return new ClusterStatus() {
-      @Override
-      public Collection<ServerName> getServers() {
-        // TODO(sduskis): Point the server name to options.getServerName()
-        return Collections.emptyList();
-      }
-    };
+    try {
+      return new ClusterStatus() {
+        @Override
+        public Collection<ServerName> getServers() {
+          // TODO(sduskis): Point the server name to options.getServerName()
+          return Collections.emptyList();
+        }
+      };
+    } catch (NoSuchMethodError e) {
+      return getClusterStatusHbase2x();
+    }
+  }
+
+  private ClusterStatus getClusterStatusHbase2x() {
+    Class cls = ClusterStatus.class;
+    try {
+      Constructor ctor =
+          cls.getConstructor(
+              String.class,
+              String.class,
+              Map.class,
+              Collection.class,
+              ServerName.class,
+              Collection.class,
+              List.class,
+              String[].class,
+              Boolean.class,
+              int.class);
+      return (ClusterStatus)
+          (ctor.newInstance(
+              "hbaseVersion",
+              "clusterid",
+              new HashMap(),
+              new ArrayList(),
+              null,
+              new ArrayList(),
+              new ArrayList(),
+              new String[0],
+              false,
+              -1));
+    } catch (Exception e) {
+      throw new UnsupportedOperationException(
+          "Unable to get ClusterStatus instance for hbase-shaded-client-2.x library", e);
+    }
   }
 
   /** {@inheritDoc} */
