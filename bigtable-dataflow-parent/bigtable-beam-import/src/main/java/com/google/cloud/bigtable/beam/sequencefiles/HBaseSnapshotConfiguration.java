@@ -19,6 +19,7 @@ import static java.lang.System.*;
 
 import com.google.common.base.Preconditions;
 import org.apache.beam.sdk.io.FileBasedSource;
+import org.apache.beam.sdk.io.hadoop.SerializableConfiguration;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -38,23 +39,19 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 
-/**
- * A {@link FileBasedSource} that can read hadoop's {@link SequenceFile}s.
- *
- * @param <K> The type of the {@link SequenceFile} key.
- * @param <V> The type of the {@link SequenceFile} value.
- */
-class HBaseSnapshotConfiguration {
+/** A {@link FileBasedSource} that can read hadoop's {@link SequenceFile}s. */
+public class HBaseSnapshotConfiguration {
 
   private static final Log LOG = LogFactory.getLog(HBaseSnapshotConfiguration.class);
 
-  private final Configuration hbaseConf;
+  private final SerializableConfiguration hbaseConf;
 
   /**
    * Constructs a new top level source.
    *
    * @param snapshotDir The path or pattern of the file(s) to read.
    */
+  // TODO Add a param for Hash directory.
   HBaseSnapshotConfiguration(
       ValueProvider<String> snapshotDir,
       ValueProvider<String> snapshotName,
@@ -62,15 +59,15 @@ class HBaseSnapshotConfiguration {
 
     Preconditions.checkArgument(
         snapshotDir.toString().startsWith("gs://"),
-        "snapshot folder must be hosted in a GCS bucket ");
+        "snapshot folder must be hosted in a GCS bucket " + snapshotDir.toString());
 
     Configuration conf = HBaseConfiguration.create();
     try {
       conf.set("hbase.rootdir", snapshotDir.toString());
-      conf.set("hadoop.home.rootdir", "gs://lichng-gcs/");
+      conf.set("hadoop.home.rootdir", "gs//shitanshu-gs/hbase-hashtable/hbase");
       conf.set("fs.AbstractFileSystem.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS");
       conf.set("fs.gs.project.id", "google.com:cloud-bigtable-dev");
-      conf.set("fs.defaultFS", "gs://lichng-gcs");
+      conf.set("fs.defaultFS", "gs://shitanshu-gs");
       conf.set("google.cloud.auth.service.account.enable", "true");
       conf.setClass(
           "mapreduce.job.inputformat.class", TableSnapshotInputFormat.class, InputFormat.class);
@@ -85,10 +82,11 @@ class HBaseSnapshotConfiguration {
           job, snapshotName.toString(), new Path(restoreDir.toString()));
       conf = job.getConfiguration(); // extract the modified clone
     } catch (Exception e) {
+      LOG.warn("This is wrong!");
       this.LOG.fatal(e);
       exit(-1);
     } finally {
-      this.hbaseConf = conf;
+      this.hbaseConf = new SerializableConfiguration(conf);
       /*for (Map.Entry<String, String> entry : conf) {
         this.LOG.error("DEBUG:" + entry.getKey() + ":" + entry.getValue());
       }*/
@@ -96,6 +94,6 @@ class HBaseSnapshotConfiguration {
   }
 
   public Configuration getHbaseConf() {
-    return hbaseConf;
+    return hbaseConf.get();
   }
 }
