@@ -57,7 +57,7 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
  * intended to be a preparation step before running an {@link ImportJob}.
  */
 @InternalApi
-class CreateTableHelper {
+public class CreateTableHelper {
   private static final Log LOG = LogFactory.getLog(CreateTableHelper.class);
 
   @InternalApi

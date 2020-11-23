@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.beam.sequencefiles;
+package com.google.cloud.bigtable.beam;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
+import com.google.cloud.bigtable.beam.hbasesnapshots.ImportJobFromHbaseSnapshot;
+import com.google.cloud.bigtable.beam.sequencefiles.CreateTableHelper;
+import com.google.cloud.bigtable.beam.sequencefiles.ExportJob;
+import com.google.cloud.bigtable.beam.sequencefiles.ImportJob;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.Arrays;

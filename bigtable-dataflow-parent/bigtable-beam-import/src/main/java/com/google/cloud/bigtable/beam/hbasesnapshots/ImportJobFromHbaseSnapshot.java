@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.beam.sequencefiles;
+package com.google.cloud.bigtable.beam.hbasesnapshots;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.beam.TemplateUtils;
+import com.google.cloud.bigtable.beam.sequencefiles.HBaseResultToMutationFn;
+import com.google.cloud.bigtable.beam.sequencefiles.ImportJob;
+import com.google.cloud.bigtable.beam.sequencefiles.Utils;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
@@ -44,7 +47,7 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
  *
  * <pre>
  * mvn compile exec:java \
- *   -DmainClass=com.google.cloud.bigtable.beam.sequencefiles.ImportJobFromHbaseSnapshot \
+ *   -DmainClass=com.google.cloud.bigtable.beam.hbasesnapshots.ImportJobFromHbaseSnapshot \
  *   -Dexec.args="--runner=DataflowRunner \
  *                --stagingLocation=gs://$STAGING_PATH \
  *                --project=$PROJECT \
@@ -57,7 +60,7 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
  *
  * <pre>
  * mvn compile exec:java \
- *   -DmainClass=com.google.cloud.bigtable.beam.sequencefiles.ImportJobFromHbaseSnapshot \
+ *   -DmainClass=com.google.cloud.bigtable.beam.hbasesnapshots.ImportJobFromHbaseSnapshot \
  *   -Dexec.args="--runner=DataflowRunner \
  *                --project=$PROJECT \
  *                --stagingLocation=gs://$STAGING_PATH \

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.beam.sequencefiles;
 
+import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.PipelineResult;
@@ -28,7 +29,8 @@ import org.apache.beam.sdk.transforms.SimpleFunction;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-class Utils {
+@InternalApi
+public class Utils {
   private static final Log LOG = LogFactory.getLog(Utils.class);
 
   /**
@@ -74,7 +76,7 @@ class Utils {
    *
    * @param result
    */
-  static void waitForPipelineToFinish(PipelineResult result) {
+  public static void waitForPipelineToFinish(PipelineResult result) {
     try {
       // Check to see if we are creating a template.
       // This should throw {@link UnsupportedOperationException} when creating a template.

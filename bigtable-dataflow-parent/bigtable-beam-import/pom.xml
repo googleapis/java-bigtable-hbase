@@ -25,7 +25,7 @@ limitations under the License.
   <artifactId>bigtable-beam-import</artifactId>
 
   <properties>
-    <mainClass>com.google.cloud.bigtable.beam.sequencefiles.Main</mainClass>
+    <mainClass>com.google.cloud.bigtable.beam.Main</mainClass>
   </properties>
 
   <dependencies>
@@ -100,9 +100,6 @@ limitations under the License.
       <artifactId>hbase-common</artifactId>
       <version>${hbase.version}</version>
     </dependency>
-
-
-
     <dependency>
       <groupId>com.google.auto.value</groupId>
       <artifactId>auto-value</artifactId>
