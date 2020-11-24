@@ -4,14 +4,14 @@
       "git": {
         "name": ".",
         "remote": "https://github.com/googleapis/java-bigtable-hbase.git",
-        "sha": "48a60f6ecb2451b8fd400d69703daab139a60e4c"
+        "sha": "debb0b2ed24ae6cbf987365c3387f9cb78d0fefe"
       }
     },
     {
       "git": {
         "name": "synthtool",
         "remote": "https://github.com/googleapis/synthtool.git",
-        "sha": "68742c6016bf0d16948a572633d17955a8737414"
+        "sha": "943bb78606d035001123030067dffcc34f4645f2"
       }
     }
   ],
@@ -20,6 +20,7 @@
     ".github/ISSUE_TEMPLATE/feature_request.md",
     ".github/ISSUE_TEMPLATE/support_request.md",
     ".github/PULL_REQUEST_TEMPLATE.md",
+    ".github/blunderbuss.yml",
     ".github/generated-files-bot.yml",
     ".github/readme/synth.py",
     ".github/release-please.yml",
