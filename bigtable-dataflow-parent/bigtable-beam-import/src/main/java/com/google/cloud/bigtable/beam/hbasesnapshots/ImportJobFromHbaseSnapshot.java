@@ -146,7 +146,7 @@ public class ImportJobFromHbaseSnapshot {
             "Read from HBase Snapshot",
             HadoopFormatIO.<ImmutableBytesWritable, Result>read()
                 .withConfiguration(
-                    new HBaseSnapshotConfiguration(
+                    new HBaseSnapshotInputConfiguration(
                             opts.getBigtableProject(),
                             opts.getHbaseRootDir(),
                             opts.getSnapshotName(),

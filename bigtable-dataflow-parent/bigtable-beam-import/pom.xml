@@ -400,5 +400,33 @@ limitations under the License.
         </plugins>
       </build>
     </profile>
+
+    <profile>
+      <id>hbasesnapshotsIntegrationTest</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>hbasesnapshots-integration-test</id>
+                <goals>
+                  <goal>test</goal>
+                </goals>
+                <phase>integration-test</phase>
+                <configuration>
+                  <forkCount>1</forkCount>
+                  <includes>
+                    <include>**/*IT.java</include>
+                  </includes>
+                  <useSystemClassLoader>false</useSystemClassLoader>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 </project>

@@ -44,9 +44,9 @@ import org.apache.hadoop.mapreduce.Job;
  * @param <K> The type of the {@link SequenceFile} key.
  * @param <V> The type of the {@link SequenceFile} value.
  */
-class HBaseSnapshotConfiguration {
+class HBaseSnapshotInputConfiguration {
 
-  private static final Log LOG = LogFactory.getLog(HBaseSnapshotConfiguration.class);
+  private static final Log LOG = LogFactory.getLog(HBaseSnapshotInputConfiguration.class);
 
   private final Configuration hbaseConf;
 
@@ -55,7 +55,7 @@ class HBaseSnapshotConfiguration {
    *
    * @param snapshotDir The path or pattern of the file(s) to read.
    */
-  HBaseSnapshotConfiguration(
+  HBaseSnapshotInputConfiguration(
       ValueProvider<String> gcsProjectId,
       ValueProvider<String> snapshotDir,
       ValueProvider<String> snapshotName,
@@ -86,12 +86,8 @@ class HBaseSnapshotConfiguration {
       conf = job.getConfiguration(); // extract the modified clone
     } catch (Exception e) {
       this.LOG.fatal(e);
-      exit(-1);
     } finally {
       this.hbaseConf = conf;
-      /*for (Map.Entry<String, String> entry : conf) {
-        this.LOG.error("DEBUG:" + entry.getKey() + ":" + entry.getValue());
-      }*/
     }
   }
 
