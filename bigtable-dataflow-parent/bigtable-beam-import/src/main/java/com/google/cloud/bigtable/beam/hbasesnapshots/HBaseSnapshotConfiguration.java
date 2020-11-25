@@ -56,6 +56,7 @@ class HBaseSnapshotConfiguration {
    * @param snapshotDir The path or pattern of the file(s) to read.
    */
   HBaseSnapshotConfiguration(
+      ValueProvider<String> gcsProjectId,
       ValueProvider<String> snapshotDir,
       ValueProvider<String> snapshotName,
       ValueProvider<String> restoreDir) {
@@ -67,25 +68,10 @@ class HBaseSnapshotConfiguration {
     Configuration conf = HBaseConfiguration.create();
     try {
       conf.set("hbase.rootdir", snapshotDir.toString());
-      // conf.set("hadoop.home.rootdir", "gs://lichng-gcs/");
       conf.set("fs.AbstractFileSystem.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS");
-      conf.set("fs.gs.project.id", "google.com:cloud-bigtable-dev");
-      conf.set("fs.defaultFS", "gs://lichng-gcs");
+      conf.set("fs.gs.project.id", gcsProjectId.toString());
+      conf.set("fs.defaultFS", snapshotDir.toString());
       conf.set("google.cloud.auth.service.account.enable", "true");
-      // cache native libs from gcs bucket not working!
-      // DistributedCache.createSymlink(conf);
-      // DistributedCache.addCacheFile(
-      //     new URI("gs://lichng-gcs/native/libhadoop.so.1.0.0#hadoop"), conf);
-      // DistributedCache.addCacheFile(
-      //     new URI("gs://lichng-gcs/native/libsnappy.so.1.3.0#libsnappy.so"), conf);
-      //
-      // System.loadLibrary("hadoop");
-      // System.loadLibrary("libsnappy.so");
-
-      // conf.set(
-      //     "io.compression.codecs",
-      //
-      // "org.apache.hadoop.io.compress.DefaultCodec,org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec,org.apache.hadoop.io.compress.DeflateCodec,org.apache.hadoop.io.compress.SnappyCodec,org.apache.hadoop.io.compress.Lz4Codec");
       conf.setClass(
           "mapreduce.job.inputformat.class", TableSnapshotInputFormat.class, InputFormat.class);
       conf.setClass("key.class", ImmutableBytesWritable.class, Writable.class);

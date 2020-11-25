@@ -147,7 +147,10 @@ public class ImportJobFromHbaseSnapshot {
             HadoopFormatIO.<ImmutableBytesWritable, Result>read()
                 .withConfiguration(
                     new HBaseSnapshotConfiguration(
-                            opts.getHbaseRootDir(), opts.getSnapshotName(), opts.getRestoreDir())
+                            opts.getBigtableProject(),
+                            opts.getHbaseRootDir(),
+                            opts.getSnapshotName(),
+                            opts.getRestoreDir())
                         .getHbaseConf()))
         .apply("Create Mutations", ParDo.of(new HBaseResultToMutationFn()))
         .apply("Write to Bigtable", createSink(opts));
