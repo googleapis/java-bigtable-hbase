@@ -21,6 +21,7 @@ import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.DeadlineGenerator;
 import com.google.cloud.bigtable.grpc.async.AbstractRetryingOperation;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.async.CallController;
@@ -28,7 +29,6 @@ import com.google.cloud.bigtable.grpc.io.Watchdog.StreamWaitTimeoutException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
-import io.grpc.CallOptions;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.stub.ClientResponseObserver;
@@ -84,7 +84,7 @@ public class RetryingReadRowsOperation
       RetryOptions retryOptions,
       ReadRowsRequest request,
       BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> retryableRpc,
-      CallOptions callOptions,
+      DeadlineGenerator deadlineGenerator,
       ScheduledExecutorService retryExecutorService,
       Metadata originalMetadata,
       ApiClock clock) {
@@ -92,7 +92,7 @@ public class RetryingReadRowsOperation
         retryOptions,
         request,
         retryableRpc,
-        callOptions,
+        deadlineGenerator,
         retryExecutorService,
         originalMetadata,
         clock);

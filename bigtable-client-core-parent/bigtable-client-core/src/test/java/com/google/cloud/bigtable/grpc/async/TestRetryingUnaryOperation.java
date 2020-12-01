@@ -25,6 +25,8 @@ import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.DeadlineGenerator;
+import com.google.cloud.bigtable.grpc.TestDeadlineGeneratorFactory;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.CallOptions;
@@ -97,7 +99,7 @@ public class TestRetryingUnaryOperation {
             (ClientCall.Listener) any(),
             (Metadata) any(),
             (ClientCall) any());
-    ListenableFuture future = createOperation(CallOptions.DEFAULT).getAsyncResult();
+    ListenableFuture future = createOperation(DeadlineGenerator.DEFAULT).getAsyncResult();
     Assert.assertEquals(result, future.get(1, TimeUnit.SECONDS));
     verify(readAsync, times(1))
         .start(
@@ -133,7 +135,7 @@ public class TestRetryingUnaryOperation {
             Mockito.<ClientCall.Listener>any(),
             Mockito.<Metadata>any(),
             Mockito.<ClientCall>any());
-    ListenableFuture future = createOperation(CallOptions.DEFAULT).getAsyncResult();
+    ListenableFuture future = createOperation(DeadlineGenerator.DEFAULT).getAsyncResult();
 
     Assert.assertEquals(result, future.get(1, TimeUnit.SECONDS));
     Assert.assertEquals(5, counter.get());
@@ -201,7 +203,9 @@ public class TestRetryingUnaryOperation {
         .when(readAsync)
         .start((ReadRowsRequest) any(), (Listener) any(), (Metadata) any(), (ClientCall) any());
     try {
-      createOperation(options).getAsyncResult().get(1, TimeUnit.SECONDS);
+      createOperation(TestDeadlineGeneratorFactory.mockCallOptionsFactory(options))
+          .getAsyncResult()
+          .get(1, TimeUnit.SECONDS);
       Assert.fail();
     } catch (ExecutionException e) {
       Assert.assertEquals(BigtableRetriesExhaustedException.class, e.getCause().getClass());
@@ -214,12 +218,12 @@ public class TestRetryingUnaryOperation {
     clock.assertTimeWithinExpectations(TimeUnit.MILLISECONDS.toNanos(expectedTimeoutMs));
   }
 
-  private RetryingUnaryOperation createOperation(CallOptions options) {
+  private RetryingUnaryOperation createOperation(DeadlineGenerator deadlineGenerator) {
     return new RetryingUnaryOperation<>(
         RETRY_OPTIONS,
         ReadRowsRequest.getDefaultInstance(),
         readAsync,
-        options,
+        deadlineGenerator,
         executorService,
         new Metadata(),
         clock);
