@@ -15,15 +15,18 @@
  */
 package com.google.cloud.bigtable.config;
 
+import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import io.grpc.CallOptions;
 import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Experimental options to turn on timeout options. {@link io.grpc.CallOptions} supports other
- * settings as well, which this configuration object could help set.
+ * Experimental options to turn on timeout options. {@link CallOptions} supports other settings as
+ * well, which this configuration object could help set.
  */
 @InternalExtensionOnly
 public class CallOptionsConfig implements Serializable {
@@ -54,9 +57,12 @@ public class CallOptionsConfig implements Serializable {
   public static class Builder {
     private boolean useTimeout = USE_TIMEOUT_DEFAULT;
     private int shortRpcTimeoutMs = SHORT_TIMEOUT_MS_DEFAULT;
+    private Optional<Integer> shortRpcAttemptTimeoutMs = Optional.absent();
     private int longRpcTimeoutMs = LONG_TIMEOUT_MS_DEFAULT;
     private int mutateRpcTimeoutMs = LONG_TIMEOUT_MS_DEFAULT;
+    private Optional<Integer> mutateRpcAttemptTimeoutMs = Optional.absent();
     private int readRowsRpcTimeoutMs = READ_ROWS_TIMEOUT_MS_DEFAULT;
+    private Optional<Integer> readRowsRpcAttemptTimeoutMs = Optional.absent();
 
     /** @deprecated Please use {@link CallOptionsConfig#builder()} */
     @Deprecated
@@ -65,9 +71,12 @@ public class CallOptionsConfig implements Serializable {
     private Builder(CallOptionsConfig original) {
       this.useTimeout = original.useTimeout;
       this.shortRpcTimeoutMs = original.shortRpcTimeoutMs;
+      this.shortRpcAttemptTimeoutMs = original.shortRpcAttemptTimeoutMs;
       this.longRpcTimeoutMs = original.longRpcTimeoutMs;
       this.mutateRpcTimeoutMs = original.mutateRpcTimeoutMs;
+      this.mutateRpcAttemptTimeoutMs = original.mutateRpcAttemptTimeoutMs;
       this.readRowsRpcTimeoutMs = original.readStreamRpcTimeoutMs;
+      this.readRowsRpcAttemptTimeoutMs = original.readStreamRpcAttemptTimeoutMs;
     }
 
     /**
@@ -86,6 +95,7 @@ public class CallOptionsConfig implements Serializable {
      *
      * @param timeoutMs timeout value in milliseconds.
      * @return a {@link Builder} object, for chaining
+     * @deprecated Use {@link #setShortRpcAttemptTimeoutMs(int)} instead
      */
     @Deprecated
     public Builder setTimeoutMs(int timeoutMs) {
@@ -93,7 +103,14 @@ public class CallOptionsConfig implements Serializable {
     }
 
     /**
-     * The amount of milliseconds to wait before issuing a client side timeout for short RPCs.
+     * The amount of milliseconds to wait before issuing a client side timeout for a short RPC
+     * operation.
+     *
+     * <p>By short RPC, we mean single-row operations like CheckAndMutateRow, MutateRow, and
+     * ReadRows on a single key.
+     *
+     * <p>The timeout spans the full end-to-end operation from the user perspective, i.e. covering
+     * multiple retry attempts.
      *
      * @param shortRpcTimeoutMs timeout value in milliseconds.
      * @return a {@link Builder} object, for chaining
@@ -102,6 +119,26 @@ public class CallOptionsConfig implements Serializable {
       Preconditions.checkArgument(
           shortRpcTimeoutMs > 0, "Short Timeout ms has to be greater than 0.");
       this.shortRpcTimeoutMs = shortRpcTimeoutMs;
+      return this;
+    }
+
+    /**
+     * The amount of milliseconds to wait before issuing a client side timeout for a short RPC
+     * attempt.
+     *
+     * <p>See {@link #setShortRpcTimeoutMs(int)} for the definition of short RPC.
+     *
+     * <p>This timeout covers a single RPC call attempt to the server, whereas {@link
+     * #setShortRpcTimeoutMs(int)} covers the total time across all attempts.
+     *
+     * @param shortRpcAttemptTimeoutMs timeout value in milliseconds.
+     * @return a {@link Builder} object, for chaining
+     */
+    @BetaApi("The API for setting attempt timeouts is not yet stable and may change in the future")
+    public Builder setShortRpcAttemptTimeoutMs(int shortRpcAttemptTimeoutMs) {
+      Preconditions.checkArgument(
+          shortRpcAttemptTimeoutMs > 0, "Short Timeout ms has to be greater than 0.");
+      this.shortRpcAttemptTimeoutMs = Optional.of(shortRpcAttemptTimeoutMs);
       return this;
     }
 
@@ -123,8 +160,12 @@ public class CallOptionsConfig implements Serializable {
     }
 
     /**
-     * The amount of time in milliseconds to wait before issuing a client side timeout for row
-     * mutation RPCs.
+     * The amount of time in milliseconds to wait before issuing a client side timeout for bulk row
+     * mutation RPCs (i.e. multiple rows). Single-row mutations are governed by {@link
+     * #shortRpcTimeoutMs};
+     *
+     * <p>The timeout spans the full end-to-end operation from the user perspective, i.e. covering
+     * multiple retry attempts.
      *
      * @param mutateRpcTimeoutMs timeout value in milliseconds.
      * @return a {@link Builder} object, for chaining
@@ -137,8 +178,30 @@ public class CallOptionsConfig implements Serializable {
     }
 
     /**
+     * The amount of time in milliseconds to wait before issuing a client side timeout for bulk row
+     * mutation RPCs (i.e. multiple rows). Single-row mutations are governed by {@link
+     * #shortRpcAttemptTimeoutMs};
+     *
+     * <p>This timeout covers a single RPC call attempt to the server, whereas {@link
+     * #setShortRpcTimeoutMs(int)} covers the total time across all attempts.
+     *
+     * @param mutateRpcAttemptTimeoutMs timeout value in milliseconds.
+     * @return a {@link Builder} object, for chaining
+     */
+    @BetaApi("The API for setting attempt timeouts is not yet stable and may change in the future")
+    public Builder setMutateRpcAttemptTimeoutMs(int mutateRpcAttemptTimeoutMs) {
+      Preconditions.checkArgument(
+          mutateRpcAttemptTimeoutMs > 0, "Mutate Rows RPC Timeout ms has to be greater than 0");
+      this.mutateRpcAttemptTimeoutMs = Optional.of(mutateRpcAttemptTimeoutMs);
+      return this;
+    }
+
+    /**
      * The amount of time in millisecond to wait before issuing a client side timeout for readRows
      * streaming RPCs.
+     *
+     * <p>The timeout spans the full end-to-end operation from the user perspective, i.e. covering
+     * multiple retry attempts.
      *
      * @param readStreamRpcTimeoutMs timeout value in milliseconds.
      * @return a {@link Builder} object, for chaining
@@ -150,6 +213,24 @@ public class CallOptionsConfig implements Serializable {
       return this;
     }
 
+    /**
+     * The amount of time in milliseconds to wait before issuing a client side timeout for readRows
+     * streaming RPCs.
+     *
+     * <p>This timeout covers a single RPC call attempt to the server, whereas {@link
+     * #setShortRpcTimeoutMs(int)} covers the total time across all attempts.
+     *
+     * @param readRowsRpcAttemptTimeoutMs timeout value in milliseconds.
+     * @return a {@link Builder} object, for chaining
+     */
+    @BetaApi("The API for setting attempt timeouts is not yet stable and may change in the future")
+    public Builder setReadRowsRpcAttemptTimeoutMs(int readRowsRpcAttemptTimeoutMs) {
+      Preconditions.checkArgument(
+          readRowsRpcAttemptTimeoutMs > 0, "Mutate Rows RPC Timeout ms has to be greater than 0");
+      this.readRowsRpcAttemptTimeoutMs = Optional.of(readRowsRpcAttemptTimeoutMs);
+      return this;
+    }
+
     public CallOptionsConfig build() {
       return new CallOptionsConfig(this);
     }
@@ -157,9 +238,12 @@ public class CallOptionsConfig implements Serializable {
 
   private final boolean useTimeout;
   private final int shortRpcTimeoutMs;
+  private final Optional<Integer> shortRpcAttemptTimeoutMs;
   private final int longRpcTimeoutMs;
   private final int mutateRpcTimeoutMs;
+  private final Optional<Integer> mutateRpcAttemptTimeoutMs;
   private final int readStreamRpcTimeoutMs;
+  private final Optional<Integer> readStreamRpcAttemptTimeoutMs;
 
   /**
    * Constructor for CallOptionsConfig.
@@ -173,14 +257,18 @@ public class CallOptionsConfig implements Serializable {
   public CallOptionsConfig(boolean useTimeout, int unaryRpcTimeoutMs, int longRpcTimeoutMs) {
     this.useTimeout = useTimeout;
     this.shortRpcTimeoutMs = unaryRpcTimeoutMs;
+    this.shortRpcAttemptTimeoutMs = Optional.absent();
     this.longRpcTimeoutMs = longRpcTimeoutMs;
     this.mutateRpcTimeoutMs = longRpcTimeoutMs;
+    this.mutateRpcAttemptTimeoutMs = Optional.absent();
     this.readStreamRpcTimeoutMs = longRpcTimeoutMs;
+    this.readStreamRpcAttemptTimeoutMs = Optional.absent();
   }
 
   private CallOptionsConfig(Builder builder) {
     this.useTimeout = builder.useTimeout;
     this.shortRpcTimeoutMs = builder.shortRpcTimeoutMs;
+    this.shortRpcAttemptTimeoutMs = builder.shortRpcAttemptTimeoutMs;
     this.longRpcTimeoutMs = builder.longRpcTimeoutMs;
     int mutateTimeout = builder.mutateRpcTimeoutMs;
     int readRowsTimeout = builder.readRowsRpcTimeoutMs;
@@ -192,7 +280,9 @@ public class CallOptionsConfig implements Serializable {
       readRowsTimeout = longRpcTimeoutMs;
     }
     this.mutateRpcTimeoutMs = mutateTimeout;
+    this.mutateRpcAttemptTimeoutMs = builder.mutateRpcAttemptTimeoutMs;
     this.readStreamRpcTimeoutMs = readRowsTimeout;
+    this.readStreamRpcAttemptTimeoutMs = builder.readRowsRpcAttemptTimeoutMs;
   }
 
   /**
@@ -225,6 +315,19 @@ public class CallOptionsConfig implements Serializable {
   }
 
   /**
+   * Getter for the field <code>shortRpcAttemptTimeoutMs</code>.
+   *
+   * <p>If the Optional value is not present, the attempt timeout will leverage {@link
+   * #shortRpcTimeoutMs}.
+   *
+   * @return an Optional int, populated if the property was present.
+   */
+  @BetaApi("The API for setting attempt timeouts is not yet stable and may change in the future")
+  public Optional<Integer> getShortRpcAttemptTimeoutMs() {
+    return shortRpcAttemptTimeoutMs;
+  }
+
+  /**
    * Getter for the field <code>longRpcTimeoutMs</code>.
    *
    * @return an int.
@@ -246,12 +349,38 @@ public class CallOptionsConfig implements Serializable {
   }
 
   /**
+   * Getter for the field <code>mutateRpcAttemptTimeoutMs</code>.
+   *
+   * <p>If the Optional value is not present, the attempt timeout will leverage {@link
+   * #mutateRpcTimeoutMs}.
+   *
+   * @return an Optional int, populated if the property was present.
+   */
+  @BetaApi("The API for setting attempt timeouts is not yet stable and may change in the future")
+  public Optional<Integer> getMutateRpcAttemptTimeoutMs() {
+    return mutateRpcAttemptTimeoutMs;
+  }
+
+  /**
    * Getter for the field <code>readStreamRpcTimeoutMs</code>.
    *
    * @return an int.
    */
   public int getReadStreamRpcTimeoutMs() {
     return readStreamRpcTimeoutMs;
+  }
+
+  /**
+   * Getter for the field <code>readStreamRpcAttemptTimeoutMs</code>.
+   *
+   * <p>If the Optional value is not present, the attempt timeout will leverage {@link
+   * #readStreamRpcTimeoutMs}.
+   *
+   * @return an Optional int, populated if the property was present.
+   */
+  @BetaApi("The API for setting attempt timeouts is not yet stable and may change in the future")
+  public Optional<Integer> getReadStreamRpcAttemptTimeoutMs() {
+    return readStreamRpcAttemptTimeoutMs;
   }
 
   /** {@inheritDoc} */

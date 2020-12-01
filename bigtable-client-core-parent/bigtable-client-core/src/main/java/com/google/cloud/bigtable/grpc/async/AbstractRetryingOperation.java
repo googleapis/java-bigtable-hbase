@@ -20,14 +20,14 @@ import com.google.api.core.InternalApi;
 import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.TimedAttemptSettings;
-import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.grpc.CallOptionsFactory;
+import com.google.cloud.bigtable.grpc.DeadlineGenerator;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractFuture;
@@ -71,10 +71,6 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   private static final EndSpanOptions END_SPAN_OPTIONS_WITH_SAMPLE_STORE =
       EndSpanOptions.builder().setSampleToLocalSpanStore(true).build();
 
-  // The server-side has a 5 minute timeout. Unary operations should be timed-out on the client side
-  // after 6 minutes.
-  protected static final long UNARY_DEADLINE_MINUTES = 6l;
-
   private static String makeSpanName(String prefix, String fullMethodName) {
     return prefix + "." + fullMethodName.replace('/', '.');
   }
@@ -111,7 +107,12 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   protected final ScheduledExecutorService retryExecutorService;
 
   private final RequestT request;
-  private final CallOptions callOptions;
+  /**
+   * gRPC callOptionsFactory meant to use for both the full RPC operation and the individual RPC
+   * attempts.
+   */
+  private final DeadlineGenerator deadlineGenerator;
+
   private final Metadata originalMetadata;
 
   protected int failedCount = 0;
@@ -131,7 +132,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
    * @param request a RequestT object.
    * @param retryableRpc a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc} object.
-   * @param callOptions a {@link io.grpc.CallOptions} object.
+   * @param deadlineGenerator a {@link DeadlineGenerator} object.
    * @param retryExecutorService a {@link java.util.concurrent.ScheduledExecutorService} object.
    * @param originalMetadata a {@link io.grpc.Metadata} object.
    * @param clock a {@link ApiClock} object
@@ -140,14 +141,14 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
       RetryOptions retryOptions,
       RequestT request,
       BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
-      CallOptions callOptions,
+      DeadlineGenerator deadlineGenerator,
       ScheduledExecutorService retryExecutorService,
       Metadata originalMetadata,
       ApiClock clock) {
     this.retryOptions = retryOptions;
     this.request = request;
     this.rpc = retryableRpc;
-    this.callOptions = callOptions;
+    this.deadlineGenerator = deadlineGenerator;
     this.retryExecutorService = retryExecutorService;
     this.originalMetadata = originalMetadata;
     this.completionFuture = new GrpcFuture<>();
@@ -323,12 +324,9 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
    * @return a {@link ExponentialRetryAlgorithm} object.
    */
   private ExponentialRetryAlgorithm createRetryAlgorithm(ApiClock clock) {
-    long timeoutMs = retryOptions.getMaxElapsedBackoffMillis();
+    Optional<Long> operationTimeoutMs = deadlineGenerator.getOperationTimeoutMs();
 
-    Deadline deadline = getOperationCallOptions().getDeadline();
-    if (deadline != null) {
-      timeoutMs = deadline.timeRemaining(TimeUnit.MILLISECONDS);
-    }
+    long timeoutMs = operationTimeoutMs.or((long) retryOptions.getMaxElapsedBackoffMillis());
 
     RetrySettings retrySettings =
         RetrySettings.newBuilder()
@@ -377,56 +375,16 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
               ImmutableMap.of("attempt", AttributeValue.longAttributeValue(failedCount))));
       Metadata metadata = new Metadata();
       metadata.merge(originalMetadata);
-      callWrapper.setCallAndStart(rpc, getRpcCallOptions(), getRetryRequest(), this, metadata);
+
+      Optional<Deadline> rpcAttemptDeadline = deadlineGenerator.getRpcAttemptDeadline();
+      CallOptions callOptions =
+          rpcAttemptDeadline.isPresent()
+              ? CallOptions.DEFAULT.withDeadline(rpcAttemptDeadline.get())
+              : CallOptions.DEFAULT;
+      callWrapper.setCallAndStart(rpc, callOptions, getRetryRequest(), this, metadata);
     } catch (Exception e) {
       setException(e);
     }
-  }
-
-  /**
-   * Returns the {@link CallOptions} that a user set for the entire Operation, which can span
-   * multiple RPCs/retries.
-   *
-   * @return The {@link CallOptions}
-   */
-  protected CallOptions getOperationCallOptions() {
-    return callOptions;
-  }
-
-  /**
-   * Create an {@link CallOptions} that has a fail safe RPC deadline to make sure that unary
-   * operations don't hang. This will have to be overridden for streaming RPCs like read rows.
-   *
-   * <p>The logic is as follows:
-   *
-   * <ol>
-   *   <li>If the user provides a deadline, use the deadline
-   *   <li>Else If this is a streaming read, don't set an explicit deadline. The {@link
-   *       com.google.cloud.bigtable.grpc.io.Watchdog} will handle hanging
-   *   <li>Else Set a deadline of {@link #UNARY_DEADLINE_MINUTES} minutes deadline.
-   * </ol>
-   *
-   * @see com.google.cloud.bigtable.grpc.io.Watchdog Watchdog which handles hanging for streaming
-   *     reads.
-   * @return a {@link CallOptions}
-   */
-  protected CallOptions getRpcCallOptions() {
-    if (callOptions.getDeadline() != null || isStreamingRead()) {
-      // If the user set a deadline, honor it.
-      // If this is a streaming read, then the Watchdog will take affect and ensure that hanging
-      // does not occur.
-      return getOperationCallOptions();
-    } else {
-      // Unary calls should fail after 6 minutes, if there isn't any response from the server.
-      return callOptions.withDeadlineAfter(UNARY_DEADLINE_MINUTES, TimeUnit.MINUTES);
-    }
-  }
-
-  // TODO(sduskis): This is only required because BigtableDataGrpcClient doesn't always use
-  //      RetryingReadRowsOperation like it should.
-  protected boolean isStreamingRead() {
-    return request instanceof ReadRowsRequest
-        && !CallOptionsFactory.ConfiguredCallOptionsFactory.isGet((ReadRowsRequest) request);
   }
 
   protected RequestT getRetryRequest() {
