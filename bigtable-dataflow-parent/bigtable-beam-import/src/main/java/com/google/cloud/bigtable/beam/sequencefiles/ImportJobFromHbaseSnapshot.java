@@ -19,6 +19,7 @@ import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.beam.TemplateUtils;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
@@ -154,6 +155,26 @@ public class ImportJobFromHbaseSnapshot {
 
   static PTransform<PCollection<Mutation>, PDone> createSink(ImportOptions opts) {
     CloudBigtableTableConfiguration config = TemplateUtils.BuildImportConfig(opts);
+    config =
+        config
+            .toBuilder()
+            .withAppProfileId("us-east")
+            // BulkMutations like MutateRows timeout
+            .withConfiguration(BigtableOptionsFactory.BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY, "6000")
+            // THis is for unary operations. Point reads and single row writes
+            .withConfiguration(BigtableOptionsFactory.BIGTABLE_RPC_TIMEOUT_MS_KEY, "6000")
+            // Enable gRPC timeouts and enable all the values being set here.
+            .withConfiguration(BigtableOptionsFactory.BIGTABLE_USE_TIMEOUTS_KEY, "true")
+            .withConfiguration(
+                BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING, "true")
+            .withConfiguration(
+                BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS, "100")
+            // This is for scan operations
+            .withConfiguration(BigtableOptionsFactory.BIGTABLE_READ_RPC_TIMEOUT_MS_KEY, "6000")
+            // If timeouts are disabled, the whole operation(inclding retries) should finish within
+            // this time.
+            .withConfiguration(BigtableOptionsFactory.MAX_ELAPSED_BACKOFF_MILLIS_KEY, "60000")
+            .build();
     return CloudBigtableIO.writeToTable(config);
   }
 }

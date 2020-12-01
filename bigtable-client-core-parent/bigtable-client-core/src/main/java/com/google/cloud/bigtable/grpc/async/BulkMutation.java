@@ -381,7 +381,7 @@ public class BulkMutation {
     this.operationAccountant = operationAccountant;
     this.maxRowKeyCount = bulkOptions.getBulkMaxRowKeyCount();
     this.maxRequestSize = bulkOptions.getBulkMaxRequestSize();
-    this.autoflushMs = bulkOptions.getAutoflushMs();
+    this.autoflushMs = 0;
   }
 
   public ListenableFuture<MutateRowResponse> add(MutateRowRequest request) {

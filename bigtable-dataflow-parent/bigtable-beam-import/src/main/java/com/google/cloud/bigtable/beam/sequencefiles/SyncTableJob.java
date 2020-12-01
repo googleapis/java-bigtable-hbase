@@ -16,9 +16,6 @@
 package com.google.cloud.bigtable.beam.sequencefiles;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
-import com.google.cloud.bigtable.beam.CloudBigtableIO;
-import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
-import com.google.cloud.bigtable.beam.TemplateUtils;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.runners.dataflow.options.DataflowWorkerLoggingOptions;
 import org.apache.beam.runners.dataflow.options.DataflowWorkerLoggingOptions.Level;
@@ -32,14 +29,10 @@ import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.transforms.MapElements;
-import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.SimpleFunction;
-import org.apache.beam.sdk.values.PCollection;
-import org.apache.beam.sdk.values.PDone;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.mapreduce.ComputeHashRangeFromBigtableDoFn;
 import org.apache.hadoop.hbase.mapreduce.HadoopHashTableSource;
 import org.apache.hadoop.hbase.mapreduce.HadoopHashTableSource.RangeHash;
