@@ -21,8 +21,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.Coder;
-import org.apache.beam.sdk.coders.SerializableCoder;
+import org.apache.beam.sdk.coders.DefaultCoder;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration;
 import org.apache.beam.sdk.options.PipelineOptions;
@@ -41,6 +42,7 @@ import org.apache.hadoop.hbase.util.Bytes;
  */
 public class HadoopHashTableSource extends BoundedSource<RangeHash> {
 
+  @DefaultCoder(AvroCoder.class)
   public static class RangeHash implements Serializable {
     public byte[] startInclusive;
     public byte[] endExclusive;
@@ -65,7 +67,9 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
       return String.format(
           "RangeHash{ range = [ %s, %s), hash: %s }",
           // TODO: use HEX representation everywhere.
-          new String(startInclusive), new String(endExclusive), Bytes.toHex(hash));
+          Bytes.toStringBinary(startInclusive),
+          Bytes.toStringBinary(endExclusive),
+          Bytes.toHex(hash));
     }
   }
 
@@ -77,12 +81,12 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
   protected String hashTableOutputPathDir;
 
   // Coder to encode/decode the RangeHash
-  private final SerializableCoder<RangeHash> coder;
+  private final AvroCoder<RangeHash> coder;
 
   public HadoopHashTableSource(SerializableConfiguration conf, String hashTableOutputPathDir) {
     this.conf = conf;
     this.hashTableOutputPathDir = hashTableOutputPathDir;
-    this.coder = SerializableCoder.of(RangeHash.class);
+    this.coder = AvroCoder.of(RangeHash.class);
   }
 
   @Override
@@ -139,9 +143,9 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
     for (int i = 0; i < hash.partitions.size(); i++) {
       LOG.warn(
           "Adding: ["
-              + new String(startRow.get())
+              + Bytes.toStringBinary(startRow.get())
               + ", "
-              + new String(hash.partitions.get(i).get())
+              + Bytes.toStringBinary(hash.partitions.get(i).get())
               + "]");
       splitSources.add(
           new KeyBasedHashTableSource(
@@ -150,9 +154,9 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
     }
     LOG.warn(
         "Adding: ["
-            + new String(startRow.get())
+            + Bytes.toStringBinary(startRow.get())
             + ", "
-            + new String(HConstants.EMPTY_END_ROW)
+            + Bytes.toStringBinary(HConstants.EMPTY_END_ROW)
             + "]");
     // Add the last range for [lastPartition, stopRow).
     splitSources.add(
@@ -175,7 +179,7 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
   public long getEstimatedSizeBytes(PipelineOptions options) throws Exception {
     // TODO: Understand how this impacts parallelism and try to use SampleRows to determine approx
     // sizes like in CloudBigtableIO
-    return 0;
+    return 40 * 1024 * 1024 * 1024; // 40 GB
   }
 
   @Override
@@ -242,7 +246,7 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
       if (bytes == null) {
         return "";
       }
-      return new String(bytes.get());
+      return Bytes.toStringBinary(bytes.get());
     }
 
     @Override

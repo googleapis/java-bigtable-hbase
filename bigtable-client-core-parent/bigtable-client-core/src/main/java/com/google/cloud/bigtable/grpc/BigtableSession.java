@@ -688,9 +688,10 @@ public class BigtableSession implements Closeable {
     if (options.useGCJClient()) {
       LOG.warn("Using cloud-bigtable-client's implementation of BulkMutation.");
     }
+    // LOG.error("Creating bulk mutation with dataclient.");
     return new BulkMutation(
         tableName,
-        dataClient,
+        throttlingDataClient,
         BigtableSessionSharedThreadPools.getInstance().getRetryExecutor(),
         options.getBulkOptions());
   }

@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.beam.sequencefiles;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.common.annotations.VisibleForTesting;
+import java.util.List;
 import org.apache.beam.runners.dataflow.options.DataflowWorkerLoggingOptions;
 import org.apache.beam.runners.dataflow.options.DataflowWorkerLoggingOptions.Level;
 import org.apache.beam.runners.dataflow.options.DataflowWorkerLoggingOptions.WorkerLogLevelOverrides;
@@ -28,14 +29,17 @@ import org.apache.beam.sdk.io.hadoop.SerializableConfiguration;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider;
+import org.apache.beam.sdk.transforms.GroupByKey;
 import org.apache.beam.sdk.transforms.MapElements;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.SimpleFunction;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.mapreduce.ComputeHashRangeFromBigtableDoFn;
+import org.apache.hadoop.hbase.mapreduce.GenerateGroupByKeyDoFn;
 import org.apache.hadoop.hbase.mapreduce.HadoopHashTableSource;
 import org.apache.hadoop.hbase.mapreduce.HadoopHashTableSource.RangeHash;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * A job that takes HBase HashTable output and compares the hashes from Cloud Bigtable table.
@@ -164,8 +168,11 @@ public class SyncTableJob {
                 new HadoopHashTableSource(
                     new SerializableConfiguration(conf.getHbaseConf()),
                     // TODO: Move this to a config option.
-                    "gs://shitanshu-gs/hbase-hashtable/validation-hash-bigtable/")))
+                    "gs://shitanshu-gs/hbase-keymaster_uncompressed/keymaster_uncompressed_hashtable")))
         // TODO: Add counters for matches and mismatches.
+        .apply("Generate group by keys", ParDo.of(new GenerateGroupByKeyDoFn()))
+        .apply(
+            "group by and create granular workitems", GroupByKey.<String, List<RangeHash>>create())
         .apply("validate hash", ParDo.of(new ComputeHashRangeFromBigtableDoFn(opts)))
         .apply(
             "Serialize the ranges",
@@ -175,7 +182,8 @@ public class SyncTableJob {
                   public String apply(RangeHash input) {
                     return String.format(
                         "[%s, %s)",
-                        new String(input.startInclusive), new String(input.endExclusive));
+                        Bytes.toStringBinary(input.startInclusive),
+                        Bytes.toStringBinary(input.endExclusive));
                   }
                 }))
         .apply(

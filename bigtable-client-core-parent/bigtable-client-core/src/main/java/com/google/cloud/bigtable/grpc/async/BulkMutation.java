@@ -381,6 +381,7 @@ public class BulkMutation {
     this.operationAccountant = operationAccountant;
     this.maxRowKeyCount = bulkOptions.getBulkMaxRowKeyCount();
     this.maxRequestSize = bulkOptions.getBulkMaxRequestSize();
+    LOG.error("Got autoflush as " + bulkOptions.getAutoflushMs());
     this.autoflushMs = 0;
   }
 
