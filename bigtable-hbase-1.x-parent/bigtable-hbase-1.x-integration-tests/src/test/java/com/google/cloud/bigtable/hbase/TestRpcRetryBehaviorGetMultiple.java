@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableMap;
 import io.grpc.stub.StreamObserver;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.commons.lang.time.StopWatch;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Table;
@@ -39,8 +40,9 @@ public class TestRpcRetryBehaviorGetMultiple extends TestRpcRetryBehavior {
   }
 
   @Override
-  protected void executeLogic(Table table) throws Exception {
+  protected void executeLogic(Table table, StopWatch sw) throws Exception {
     try {
+      sw.start();
       table.get(
           Arrays.asList(
               new Get("mykey1".getBytes()),
@@ -49,6 +51,9 @@ public class TestRpcRetryBehaviorGetMultiple extends TestRpcRetryBehavior {
 
       fail("Should have errored out");
     } catch (RetriesExhaustedWithDetailsException e) {
+      // Stop ASAP to reduce potential flakiness (due to adding ms to measured query times).
+      sw.stop();
+
       // Expect this specific error class above.
       // As a sanity check for our test, verify that the exception count matches the number of
       // gets (this exact

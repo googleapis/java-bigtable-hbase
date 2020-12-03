@@ -49,29 +49,27 @@ public class ConfiguredDeadlineGeneratorFactory implements DeadlineGeneratorFact
           config.isUseTimeout(),
           config.getReadStreamRpcTimeoutMs(),
           config.getReadStreamRpcAttemptTimeoutMs(),
-          // Timeouts aren't specified if we have come this far.  If this is a streaming read, then
-          // no need to specify a fallback deadline, since the Watchdog will take affect and ensure
-          // that hanging does not occur.
+          // Streaming reads do not need to specify a fallback deadline, since the Watchdog will
+          // take affect and ensure that hanging does not occur. See
+          // com.google.cloud.bigtable.grpc.io.Watchdog, which handles hanging for streaming reads.
           Optional.<Long>absent());
     } else if (request instanceof MutateRowsRequest) {
       return new DeadlineGeneratorImpl(
           config.isUseTimeout(),
           config.getMutateRpcTimeoutMs(),
           config.getMutateRpcAttemptTimeoutMs(),
-          // Unary calls should fail after 6 minutes, if there isn't any response from the server.
+          // Calls should fail after 6 minutes, if there isn't any response from the server.
           Optional.of(TimeUnit.MINUTES.toMillis(UNARY_DEADLINE_MINUTES)));
     } else {
       return new DeadlineGeneratorImpl(
           config.isUseTimeout(),
           config.getShortRpcTimeoutMs(),
           config.getShortRpcAttemptTimeoutMs(),
-          // Unary calls should fail after 6 minutes, if there isn't any response from the server.
+          // Calls should fail after 6 minutes, if there isn't any response from the server.
           Optional.of(TimeUnit.MINUTES.toMillis(UNARY_DEADLINE_MINUTES)));
     }
   }
 
-  // TODO(sduskis): This is only required because BigtableDataGrpcClient doesn't always use
-  //      RetryingReadRowsOperation like it should.
   private static <RequestT> boolean isStreamingRead(RequestT request) {
     return request instanceof ReadRowsRequest && !isGet((ReadRowsRequest) request);
   }
@@ -91,7 +89,9 @@ public class ConfiguredDeadlineGeneratorFactory implements DeadlineGeneratorFact
     private final boolean useTimeout;
     private final int requestTimeoutMs;
     private final Optional<Integer> requestAttemptTimeoutMs;
+    /** A fail safe RPC deadline to make sure that operations don't hang. */
     private final Optional<Long> nonTimeoutFallbackDeadlineMs;
+
     private final Optional<Deadline> operationDeadline;
 
     DeadlineGeneratorImpl(
@@ -103,6 +103,7 @@ public class ConfiguredDeadlineGeneratorFactory implements DeadlineGeneratorFact
       this.requestTimeoutMs = requestTimeoutMs;
       this.requestAttemptTimeoutMs = requestAttemptTimeoutMs;
       this.nonTimeoutFallbackDeadlineMs = nonTimeoutFallbackDeadlineMs;
+      // Note: operationDeadline is always non-null if useTimeout == true
       this.operationDeadline = createOperationDeadline();
     }
 
@@ -116,14 +117,12 @@ public class ConfiguredDeadlineGeneratorFactory implements DeadlineGeneratorFact
      * </ol>
      */
     private Optional<Deadline> createOperationDeadline() {
-      Deadline contextDeadline = Context.current().getDeadline();
-      if (contextDeadline != null) {
-        return Optional.of(contextDeadline);
-      } else if (useTimeout) {
-        return Optional.of(Deadline.after(requestTimeoutMs, TimeUnit.MILLISECONDS));
-      } else {
-        return Optional.absent();
+      Optional<Deadline> deadline = Optional.fromNullable(Context.current().getDeadline());
+      if (useTimeout) {
+        deadline =
+            deadline.or(Optional.of(Deadline.after(requestTimeoutMs, TimeUnit.MILLISECONDS)));
       }
+      return deadline;
     }
 
     @Override
@@ -133,14 +132,6 @@ public class ConfiguredDeadlineGeneratorFactory implements DeadlineGeneratorFact
           : Optional.<Long>absent();
     }
 
-    /**
-     * Create a {@link Deadline} that has a fail safe RPC deadline to make sure that unary
-     * operations don't hang. This will have to be overridden for streaming RPCs like read rows.
-     *
-     * @see com.google.cloud.bigtable.grpc.io.Watchdog Watchdog which handles hanging for streaming
-     *     reads (i.e. the {@link #nonTimeoutFallbackDeadlineMs} value for the streaming RPC
-     *     above)..
-     */
     @Override
     public Optional<Deadline> getRpcAttemptDeadline() {
       // Check for RPC Attempt Timeouts first for backward-compatibility, so that
@@ -149,9 +140,15 @@ public class ConfiguredDeadlineGeneratorFactory implements DeadlineGeneratorFact
         Deadline attemptDeadline =
             Deadline.after(requestAttemptTimeoutMs.get(), TimeUnit.MILLISECONDS);
         // Ensure we don't exceed the absolute operation deadline by taking the min of the attempt
-        // and
-        // operation deadlines.
-        return Optional.of(attemptDeadline.minimum(operationDeadline.get()));
+        // and operation deadlines.
+        if (operationDeadline.isPresent()) {
+          return Optional.of(attemptDeadline.minimum(operationDeadline.get()));
+        } else {
+          // This branch should never be exercised, since if useTimeout == true, then we've set the
+          // operationDeadline in the constructor. To avoid any compile-time syntax questions and to
+          // add documentation, we keep this code.
+          return Optional.of(attemptDeadline);
+        }
       } else if (operationDeadline.isPresent()) {
         // If the user set a deadline, honor it.
         return operationDeadline;

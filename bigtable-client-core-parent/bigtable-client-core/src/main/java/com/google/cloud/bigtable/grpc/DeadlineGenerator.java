@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.api.core.InternalApi;
 import com.google.common.base.Optional;
 import io.grpc.CallOptions;
 import io.grpc.Context;
@@ -25,6 +26,7 @@ import io.grpc.Deadline;
  * the full operation and retry attempts within an operation. A single {@link DeadlineGenerator}
  * object should be used for a client operation instance and reused across retry attempts.
  */
+@InternalApi("For internal usage only")
 public interface DeadlineGenerator {
   /**
    * The server-side has a 5 minute timeout. Unary operations should be timed-out on the client side
