@@ -59,10 +59,8 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.List;
@@ -153,7 +151,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   private final ScheduledExecutorService retryExecutorService;
   private final RetryOptions retryOptions;
 
-  private CallOptionsFactory callOptionsFactory = new CallOptionsFactory.Default();
+  private DeadlineGeneratorFactory deadlineGeneratorFactory = DeadlineGeneratorFactory.DEFAULT;
 
   private final BigtableAsyncRpc<SampleRowKeysRequest, SampleRowKeysResponse> sampleRowKeysAsync;
   private final BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> readRowsAsync;
@@ -217,8 +215,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   /** {@inheritDoc} */
   @Override
-  public void setCallOptionsFactory(CallOptionsFactory callOptionsFactory) {
-    this.callOptionsFactory = callOptionsFactory;
+  public void setDeadlineGeneratorFactory(DeadlineGeneratorFactory deadlineGeneratorFactory) {
+    this.deadlineGeneratorFactory = deadlineGeneratorFactory;
   }
 
   private <T> Predicate<T> getMutationRetryableFunction(Predicate<T> isRetryableMutation) {
@@ -274,10 +272,17 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     if (shouldOverrideAppProfile(request.getAppProfileId())) {
       request = request.toBuilder().setAppProfileId(clientDefaultAppProfileId).build();
     }
-    CallOptions callOptions = getCallOptions(mutateRowsRpc.getMethodDescriptor(), request);
+    DeadlineGenerator deadlineGenerator =
+        deadlineGeneratorFactory.getRequestDeadlineGenerator(request);
     Metadata metadata = createMetadata(request.getTableName());
     return new RetryingMutateRowsOperation(
-        retryOptions, request, mutateRowsRpc, callOptions, retryExecutorService, metadata, CLOCK);
+        retryOptions,
+        request,
+        mutateRowsRpc,
+        deadlineGenerator,
+        retryExecutorService,
+        metadata,
+        CLOCK);
   }
 
   /** {@inheritDoc} */
@@ -388,23 +393,20 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   private <ReqT, RespT> RetryingUnaryOperation<ReqT, RespT> createUnaryListener(
       ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
-    CallOptions callOptions = getCallOptions(rpc.getMethodDescriptor(), request);
+    DeadlineGenerator deadlineGenerator =
+        deadlineGeneratorFactory.getRequestDeadlineGenerator(request);
     Metadata metadata = createMetadata(tableName);
     return new RetryingUnaryOperation<>(
-        retryOptions, request, rpc, callOptions, retryExecutorService, metadata, CLOCK);
+        retryOptions, request, rpc, deadlineGenerator, retryExecutorService, metadata, CLOCK);
   }
 
   private <ReqT, RespT> RetryingStreamOperation<ReqT, RespT> createStreamingListener(
       ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
-    CallOptions callOptions = getCallOptions(rpc.getMethodDescriptor(), request);
+    DeadlineGenerator deadlineGenerator =
+        deadlineGeneratorFactory.getRequestDeadlineGenerator(request);
     Metadata metadata = createMetadata(tableName);
     return new RetryingStreamOperation<>(
-        retryOptions, request, rpc, callOptions, retryExecutorService, metadata, CLOCK);
-  }
-
-  private <ReqT> CallOptions getCallOptions(
-      final MethodDescriptor<ReqT, ?> methodDescriptor, ReqT request) {
-    return callOptionsFactory.create(methodDescriptor, request);
+        retryOptions, request, rpc, deadlineGenerator, retryExecutorService, metadata, CLOCK);
   }
 
   /** Creates a {@link Metadata} that contains pertinent headers. */
@@ -512,7 +514,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         retryOptions,
         request,
         readRowsAsync,
-        getCallOptions(readRowsAsync.getMethodDescriptor(), request),
+        deadlineGeneratorFactory.getRequestDeadlineGenerator(request),
         retryExecutorService,
         createMetadata(request.getTableName()),
         CLOCK);

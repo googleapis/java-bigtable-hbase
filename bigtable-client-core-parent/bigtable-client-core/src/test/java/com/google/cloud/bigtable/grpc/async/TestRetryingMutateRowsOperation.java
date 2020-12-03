@@ -29,9 +29,9 @@ import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.DeadlineGenerator;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.rpc.Status;
-import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.Status.Code;
@@ -247,7 +247,7 @@ public class TestRetryingMutateRowsOperation {
         RETRY_OPTIONS,
         request,
         mutateRows,
-        CallOptions.DEFAULT,
+        DeadlineGenerator.DEFAULT,
         executorService,
         new Metadata(),
         clock);
