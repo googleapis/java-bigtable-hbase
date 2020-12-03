@@ -71,13 +71,9 @@ public abstract class TestRpcRetryBehavior {
   protected boolean serverRpcAbortsForTest;
 
   // Choose timeouts such that we can have multiple attempts while having some overlap in the last
-  // attempt over
-  // the timeout.
-  // Here, we have attempts at the approximate times 0, 450, 900, 1350, 1800 ms before reaching
-  // timeout at 2000 ms.
-  // Hence, we expect 5 attempts.
-  // The last attempt at 1800 would end at 2250 if it weren't for a timeout, so our tests need to
-  // verify that our
+  // attempt over the timeout. Here, we have attempts at the approximate times 0, 450, 900, 1350,
+  // 1800 ms before reaching timeout at 2000 ms. Hence, we expect 5 attempts. The last attempt at
+  // 1800 would end at 2250 if it weren't for a timeout, so our tests need to verify that our
   // operations don't reach to that point and instead end at around 2000 ms.
   protected final long attemptTimeoutMs = 450;
   protected final long operationTimeoutMs = 2000;
@@ -97,8 +93,7 @@ public abstract class TestRpcRetryBehavior {
   }
 
   // TODO(stepanian): move away from these parameterized-test flags and move the logic directly into
-  // these test
-  // methods and out of testMain.
+  // these test methods and out of testMain.
   @Test
   public void testOperationAndAttemptTimeoutsWillRetryOnServerAbort() throws Exception {
     timeoutEnabled = true;
@@ -146,10 +141,7 @@ public abstract class TestRpcRetryBehavior {
       Table table = conn.getTable(TableName.valueOf("table"));
 
       StopWatch sw = new StopWatch();
-      sw.start();
-      executeLogic(table);
-
-      sw.stop();
+      executeLogic(table, sw);
 
       validateOperationRuntime(sw);
     }
@@ -159,7 +151,7 @@ public abstract class TestRpcRetryBehavior {
 
   protected abstract AtomicInteger getInvocations();
 
-  protected abstract void executeLogic(Table table) throws Exception;
+  protected abstract void executeLogic(Table table, StopWatch sw) throws Exception;
 
   protected abstract ImmutableMap.Builder<String, String> defineProperties();
 

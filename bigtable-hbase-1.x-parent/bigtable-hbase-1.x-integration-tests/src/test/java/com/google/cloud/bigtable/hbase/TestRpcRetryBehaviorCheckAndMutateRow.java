@@ -48,7 +48,7 @@ public class TestRpcRetryBehaviorCheckAndMutateRow extends TestRpcRetryBehavior 
   }
 
   @Override
-  protected void executeLogic(Table table) throws Exception {
+  protected void executeLogic(Table table, StopWatch sw) throws Exception {
     try {
       RowMutations rowMutations = new RowMutations("mykey".getBytes());
       rowMutations.add(
@@ -58,6 +58,7 @@ public class TestRpcRetryBehaviorCheckAndMutateRow extends TestRpcRetryBehavior 
           new Put(("mykey").getBytes())
               .addColumn("cf1".getBytes(), "qualifier".getBytes(), "value".getBytes()));
 
+      sw.start();
       table.checkAndMutate(
           "mykey".getBytes(),
           "b".getBytes(),
@@ -68,11 +69,11 @@ public class TestRpcRetryBehaviorCheckAndMutateRow extends TestRpcRetryBehavior 
 
       fail("Should have errored out");
     } catch (Exception e) {
+      // Stop ASAP to reduce potential flakiness (due to adding ms to measured query times).
+      sw.stop();
+
       String expectedExceptionMessage = serverRpcAbortsForTest ? "ABORTED" : "DEADLINE_EXCEEDED";
       assertThat(e.getCause().getMessage(), CoreMatchers.containsString(expectedExceptionMessage));
-      // In master branch, this will become:
-      // assertThat(e.getCause().getCause(),
-      // CoreMatchers.instanceOf(BigtableRetriesExhaustedException.class));
     }
   }
 
