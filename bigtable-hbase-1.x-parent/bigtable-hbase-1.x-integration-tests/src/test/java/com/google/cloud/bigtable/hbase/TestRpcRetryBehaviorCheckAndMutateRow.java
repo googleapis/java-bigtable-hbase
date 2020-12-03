@@ -70,9 +70,6 @@ public class TestRpcRetryBehaviorCheckAndMutateRow extends TestRpcRetryBehavior 
     } catch (Exception e) {
       String expectedExceptionMessage = serverRpcAbortsForTest ? "ABORTED" : "DEADLINE_EXCEEDED";
       assertThat(e.getCause().getMessage(), CoreMatchers.containsString(expectedExceptionMessage));
-      // In master branch, this will become:
-      // assertThat(e.getCause().getCause(),
-      // CoreMatchers.instanceOf(BigtableRetriesExhaustedException.class));
     }
   }
 

@@ -21,14 +21,13 @@ import static org.junit.Assert.fail;
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
+import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.common.collect.ImmutableMap;
 import io.grpc.stub.StreamObserver;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Table;
 import org.hamcrest.CoreMatchers;
-import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
 
 public class TestRpcRetryBehaviorGetSingle extends TestRpcRetryBehavior {
   private final AtomicInteger numReadRowsInvocations = new AtomicInteger();
@@ -64,18 +63,7 @@ public class TestRpcRetryBehaviorGetSingle extends TestRpcRetryBehavior {
 
       fail("Should have errored out");
     } catch (Exception e) {
-      Matcher<String> hasAbortedMessage = CoreMatchers.containsString("ABORTED");
-      Matcher<String> hasDeadlineExceededMessage = CoreMatchers.containsString("DEADLINE_EXCEEDED");
-      if (timeoutEnabled) {
-        assertThat(e.getMessage(), hasDeadlineExceededMessage);
-      } else {
-        assertThat(
-            e.getMessage(), Matchers.either(hasDeadlineExceededMessage).or(hasAbortedMessage));
-      }
-
-      // In master branch, this will become:
-      // assertThat(e.getCause(),
-      // CoreMatchers.instanceOf(BigtableRetriesExhaustedException.class));
+      assertThat(e.getCause(), CoreMatchers.instanceOf(BigtableRetriesExhaustedException.class));
     }
   }
 

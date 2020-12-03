@@ -21,6 +21,7 @@ import static org.junit.Assert.fail;
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
+import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.common.collect.ImmutableMap;
 import io.grpc.stub.StreamObserver;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -40,12 +41,9 @@ public class TestRpcRetryBehaviorPutSingle extends TestRpcRetryBehavior {
 
       fail("Should have errored out");
     } catch (Exception e) {
-      String expectedExceptionMessage =
-          serverRpcAbortsForTest && !timeoutEnabled ? "ABORTED" : "DEADLINE_EXCEEDED";
-      assertThat(e.getCause().getMessage(), CoreMatchers.containsString(expectedExceptionMessage));
-      // In master branch, this will become:
-      // assertThat(e.getCause().getCause(),
-      // CoreMatchers.instanceOf(BigtableRetriesExhaustedException.class));
+      assertThat(
+          e.getCause().getCause(),
+          CoreMatchers.instanceOf(BigtableRetriesExhaustedException.class));
     }
   }
 

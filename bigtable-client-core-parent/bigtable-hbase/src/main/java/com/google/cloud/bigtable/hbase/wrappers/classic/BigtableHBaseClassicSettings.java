@@ -29,10 +29,13 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BU
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_HOST_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_MUTATE_RPC_ATTEMPT_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_PORT_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_READ_RPC_TIMEOUT_MS_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_RPC_ATTEMPT_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_RPC_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY;
@@ -264,6 +267,11 @@ public class BigtableHBaseClassicSettings extends BigtableHBaseSettings {
       callOptionsBuilder.setShortRpcTimeoutMs(Integer.parseInt(shortRpcTimeoutMs));
     }
 
+    String shortRpcAttemptTimeoutMs = configuration.get(BIGTABLE_RPC_ATTEMPT_TIMEOUT_MS_KEY);
+    if (!isNullOrEmpty(shortRpcAttemptTimeoutMs)) {
+      callOptionsBuilder.setShortRpcAttemptTimeoutMs(Integer.parseInt(shortRpcAttemptTimeoutMs));
+    }
+
     String longTimeoutMs = configuration.get(BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY);
     if (!isNullOrEmpty(longTimeoutMs)) {
       callOptionsBuilder.setLongRpcTimeoutMs(Integer.parseInt(longTimeoutMs));
@@ -274,9 +282,22 @@ public class BigtableHBaseClassicSettings extends BigtableHBaseSettings {
       callOptionsBuilder.setMutateRpcTimeoutMs(Integer.parseInt(mutateRpcTimeoutMs));
     }
 
+    String mutateRpcAttemptTimeoutMs =
+        configuration.get(BIGTABLE_MUTATE_RPC_ATTEMPT_TIMEOUT_MS_KEY);
+    if (!isNullOrEmpty(mutateRpcAttemptTimeoutMs)) {
+      callOptionsBuilder.setMutateRpcAttemptTimeoutMs(Integer.parseInt(mutateRpcAttemptTimeoutMs));
+    }
+
     String readRowsRpcTimeoutMs = configuration.get(BIGTABLE_READ_RPC_TIMEOUT_MS_KEY);
     if (!isNullOrEmpty(readRowsRpcTimeoutMs)) {
       callOptionsBuilder.setReadRowsRpcTimeoutMs(Integer.parseInt(readRowsRpcTimeoutMs));
+    }
+
+    String readRowsRpcAttemptTimeoutMs =
+        configuration.get(BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY);
+    if (!isNullOrEmpty(readRowsRpcAttemptTimeoutMs)) {
+      callOptionsBuilder.setReadRowsRpcAttemptTimeoutMs(
+          Integer.parseInt(readRowsRpcAttemptTimeoutMs));
     }
 
     builder.setCallOptionsConfig(callOptionsBuilder.build());
