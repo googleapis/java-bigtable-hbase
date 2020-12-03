@@ -22,6 +22,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import io.grpc.CallOptions;
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * Experimental options to turn on timeout options. {@link CallOptions} supports other settings as
@@ -394,9 +395,25 @@ public class CallOptionsConfig implements Serializable {
     CallOptionsConfig other = (CallOptionsConfig) obj;
     return useTimeout == other.useTimeout
         && shortRpcTimeoutMs == other.shortRpcTimeoutMs
+        && Objects.equals(shortRpcAttemptTimeoutMs, other.shortRpcAttemptTimeoutMs)
         && longRpcTimeoutMs == other.longRpcTimeoutMs
         && mutateRpcTimeoutMs == other.mutateRpcTimeoutMs
-        && readStreamRpcTimeoutMs == other.readStreamRpcTimeoutMs;
+        && Objects.equals(mutateRpcAttemptTimeoutMs, other.mutateRpcAttemptTimeoutMs)
+        && readStreamRpcTimeoutMs == other.readStreamRpcTimeoutMs
+        && Objects.equals(readStreamRpcAttemptTimeoutMs, other.readStreamRpcAttemptTimeoutMs);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        useTimeout,
+        shortRpcTimeoutMs,
+        shortRpcAttemptTimeoutMs,
+        longRpcTimeoutMs,
+        mutateRpcTimeoutMs,
+        mutateRpcAttemptTimeoutMs,
+        readStreamRpcTimeoutMs,
+        readStreamRpcAttemptTimeoutMs);
   }
 
   /** {@inheritDoc} */
@@ -405,9 +422,12 @@ public class CallOptionsConfig implements Serializable {
     return MoreObjects.toStringHelper(this)
         .add("useTimeout", useTimeout)
         .add("shortRpcTimeoutMs", shortRpcTimeoutMs)
+        .add("shortRpcAttemptTimeoutMs", shortRpcAttemptTimeoutMs)
         .add("longRpcTimeoutMs", longRpcTimeoutMs)
         .add("mutateRpcTimeoutMs", mutateRpcTimeoutMs)
+        .add("mutateRpcAttemptTimeoutMs", mutateRpcAttemptTimeoutMs)
         .add("readStreamRpcTimeoutMs", readStreamRpcTimeoutMs)
+        .add("readStreamRpcAttemptTimeoutMs", readStreamRpcAttemptTimeoutMs)
         .toString();
   }
 

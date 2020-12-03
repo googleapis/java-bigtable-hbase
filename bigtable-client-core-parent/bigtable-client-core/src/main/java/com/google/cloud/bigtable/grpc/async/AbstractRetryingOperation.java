@@ -326,6 +326,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   private ExponentialRetryAlgorithm createRetryAlgorithm(ApiClock clock) {
     Optional<Long> operationTimeoutMs = deadlineGenerator.getOperationTimeoutMs();
 
+    // TODO(stepanian): Consider if the maxElapsedBackoffMillis logic could/should be included in
+    // DeadlineGenerator.
     long timeoutMs = operationTimeoutMs.or((long) retryOptions.getMaxElapsedBackoffMillis());
 
     RetrySettings retrySettings =

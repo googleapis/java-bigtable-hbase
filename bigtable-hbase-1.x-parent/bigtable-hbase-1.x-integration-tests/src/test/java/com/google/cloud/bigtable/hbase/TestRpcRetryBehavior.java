@@ -50,7 +50,9 @@ import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
+@Category(KnownHBaseGap.class)
 public abstract class TestRpcRetryBehavior {
   /**
    * Indicates whether the test will involve timeouts from the user side. In case we don't, the
