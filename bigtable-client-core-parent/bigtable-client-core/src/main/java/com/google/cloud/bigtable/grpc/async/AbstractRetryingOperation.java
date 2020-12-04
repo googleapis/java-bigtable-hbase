@@ -395,25 +395,25 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   /**
    * Create an {@link CallOptions} that has a fail safe RPC deadline to make sure that unary
-   * operations don't hang. This will have to be overridden for streaming RPCs like read rows.
+   * operations don't stop responding. This will have to be overridden for streaming RPCs like read rows.
    *
    * <p>The logic is as follows:
    *
    * <ol>
    *   <li>If the user provides a deadline, use the deadline
    *   <li>Else If this is a streaming read, don't set an explicit deadline. The {@link
-   *       com.google.cloud.bigtable.grpc.io.Watchdog} will handle hanging
+   *       com.google.cloud.bigtable.grpc.io.Watchdog} will handle unresponsiveness
    *   <li>Else Set a deadline of {@link #UNARY_DEADLINE_MINUTES} minutes deadline.
    * </ol>
    *
-   * @see com.google.cloud.bigtable.grpc.io.Watchdog Watchdog which handles hanging for streaming
+   * @see com.google.cloud.bigtable.grpc.io.Watchdog Watchdog which handles unresponsiveness for streaming
    *     reads.
    * @return a {@link CallOptions}
    */
   protected CallOptions getRpcCallOptions() {
     if (callOptions.getDeadline() != null || isStreamingRead()) {
       // If the user set a deadline, honor it.
-      // If this is a streaming read, then the Watchdog will take affect and ensure that hanging
+      // If this is a streaming read, then the Watchdog will take affect and ensure that unresponsiveness
       // does not occur.
       return getOperationCallOptions();
     } else {
