@@ -25,10 +25,10 @@ import org.junit.Test;
 
 public class HBaseSnapshotInputConfigurationTest {
 
-  static String TEST_PROJECT = "test_project";
-  static String TEST_SNAPSHOT_DIR = "gs://test-bucket/hbase-export";
-  static String TEST_SNAPSHOT_NAME = "test_snapshot";
-  static String TEST_RESTORE_DIR = "gs://test-bucket/hbase-restore";
+  private static final String TEST_PROJECT = "test_project";
+  private static final String TEST_SNAPSHOT_DIR = "gs://test-bucket/hbase-export";
+  private static final String TEST_SNAPSHOT_NAME = "test_snapshot";
+  private static final String TEST_RESTORE_DIR = "gs://test-bucket/hbase-restore";
 
   @Test
   public void testBuildingHBaseSnapshotInputConfiguration() {

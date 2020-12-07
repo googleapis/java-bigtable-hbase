@@ -195,6 +195,12 @@ limitations under the License.
       <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-shaded-testing-util</artifactId>
+      <version>${hbase.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -407,18 +413,18 @@ limitations under the License.
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
+            <artifactId>maven-failsafe-plugin</artifactId>
             <executions>
               <execution>
                 <id>hbasesnapshots-integration-test</id>
                 <goals>
-                  <goal>test</goal>
+                  <goal>integration-test</goal>
                 </goals>
                 <phase>integration-test</phase>
                 <configuration>
                   <forkCount>1</forkCount>
                   <includes>
-                    <include>**/*IT.java</include>
+                    <include>**/hbasesnapshots/*IT.java</include>
                   </includes>
                   <useSystemClassLoader>false</useSystemClassLoader>
                 </configuration>
