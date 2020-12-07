@@ -30,16 +30,16 @@ public class TestColumnFamilyAdmin extends AbstractTestColumnFamilyAdmin {
 
   @Override
   protected void addColumn(byte[] columnName, int versions) throws Exception {
-    admin.addColumn(tableName, new HColumnDescriptor(columnName).setMaxVersions(versions));
+    admin.addColumnFamily(tableName, new HColumnDescriptor(columnName).setMaxVersions(versions));
   }
 
   @Override
   protected void modifyColumn(byte[] columnName, int versions) throws Exception {
-    admin.modifyColumn(tableName, new HColumnDescriptor(columnName).setMaxVersions(versions));
+    admin.modifyColumnFamily(tableName, new HColumnDescriptor(columnName).setMaxVersions(versions));
   }
 
   @Override
   protected void deleteColumn(byte[] columnName) throws Exception {
-    admin.deleteColumn(tableName, columnName);
+    admin.deleteColumnFamily(tableName, columnName);
   }
 }

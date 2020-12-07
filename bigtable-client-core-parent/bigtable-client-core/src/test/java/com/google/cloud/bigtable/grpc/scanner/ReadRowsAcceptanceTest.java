@@ -25,7 +25,6 @@ import com.google.protobuf.TextFormat;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -181,7 +180,7 @@ public class ReadRowsAcceptanceTest {
     for (String chunkStr : testCase.chunks) {
       ReadRowsResponse.Builder responseBuilder = ReadRowsResponse.newBuilder();
       CellChunk.Builder ccBuilder = CellChunk.newBuilder();
-      TextFormat.merge(new StringReader(chunkStr), ccBuilder);
+      TextFormat.merge(new StringBuffer(chunkStr), ccBuilder);
       responseBuilder.addChunks(ccBuilder.build());
       rowMerger.onNext(responseBuilder.build());
     }

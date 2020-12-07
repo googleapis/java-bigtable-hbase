@@ -216,14 +216,15 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
-      <version>1.14</version>
+      <version>1.15</version>
     </dependency>
 
     <!-- Test -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.11.2</version>
+      <!-- align version with veneer's flattened dep -->
+      <version>2.11.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>

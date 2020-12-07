@@ -15,7 +15,7 @@
       <dependency>
         <groupId>com.google.http-client</groupId>
         <artifactId>google-http-client-jackson2</artifactId>
-        <version>1.35.0</version>
+        <version>1.38.0</version>
       </dependency>
       <!--  todo(kolea2): temporary workaround until api-common and google-cloud-core are updated to 1.7.1-->
       <dependency>
@@ -125,6 +125,13 @@
               org.openjdk.jmh:jmh-generator-annprocess
             </usedDependency>
           </usedDependencies>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
         </configuration>
       </plugin>
     </plugins>

@@ -9,5 +9,6 @@
   "repo": "googleapis/java-bigtable-hbase",
   "repo_short": "java-bigtable-hbase",
   "distribution_name": "com.google.cloud.bigtable:bigtable-client-parent",
-  "api_id": "bigtable.googleapis.com"
+  "api_id": "bigtable.googleapis.com",
+  "codeowner_team": "@googleapis/api-bigtable"
 }
