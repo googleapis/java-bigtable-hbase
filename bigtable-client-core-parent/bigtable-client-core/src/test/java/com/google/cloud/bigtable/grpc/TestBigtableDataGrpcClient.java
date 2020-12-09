@@ -347,7 +347,8 @@ public class TestBigtableDataGrpcClient {
       verify(mockClientCall, times(1)).start(listenerCaptor.capture(), any(Metadata.class));
       Listener listener = listenerCaptor.getValue();
 
-      // Reset mock before starting the next attempt
+      // Reset mock before starting the next attempt, this ensures that the call count verification
+      // is incremental. (ie. times(1) for a single attempt instead n+1 for previous attempts)
       Mockito.reset(mockClientCall);
 
       // mark last attempt as timeout to possibly start the next attempt

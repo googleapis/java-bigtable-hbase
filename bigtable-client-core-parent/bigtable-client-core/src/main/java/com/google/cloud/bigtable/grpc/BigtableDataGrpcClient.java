@@ -557,7 +557,10 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     }
 
     @Override
-    public void onError(Throwable throwable) {
+    public void onError(Throwable ignored) {
+      // note: we dont need to save the error here because it will be bubbled (possibly wrapped)
+      // by the Operation's getAsyncResult. This check is mainly a sanity check to ensure that the
+      // caller doesn't ignore that error and try to fetch partial results.
       state.set(State.ERROR);
     }
 
