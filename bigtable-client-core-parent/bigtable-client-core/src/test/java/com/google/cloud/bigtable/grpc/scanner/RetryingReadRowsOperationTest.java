@@ -142,16 +142,19 @@ public class RetryingReadRowsOperationTest {
   }
 
   protected RetryingReadRowsOperation createOperation() {
-    return createOperation(DeadlineGenerator.DEFAULT, mockFlatRowObserver);
+    return createOperation(
+        DeadlineGenerator.DEFAULT, READ_ENTIRE_TABLE_REQUEST, mockFlatRowObserver);
   }
 
   protected RetryingReadRowsOperation createOperation(
-      DeadlineGenerator deadlineGenerator, StreamObserver<FlatRow> observer) {
+      DeadlineGenerator deadlineGenerator,
+      ReadRowsRequest request,
+      StreamObserver<FlatRow> observer) {
     RetryingReadRowsOperation operation =
         new RetryingReadRowsOperation(
             observer,
             RETRY_OPTIONS,
-            READ_ENTIRE_TABLE_REQUEST,
+            request,
             mockRetryableRpc,
             deadlineGenerator,
             mockRetryExecutorService,
@@ -253,7 +256,8 @@ public class RetryingReadRowsOperationTest {
             any(Metadata.class),
             any(ClientCall.class));
 
-    RetryingReadRowsOperation underTest = createOperation(deadlineGenerator, mockFlatRowObserver);
+    RetryingReadRowsOperation underTest =
+        createOperation(deadlineGenerator, READ_ENTIRE_TABLE_REQUEST, mockFlatRowObserver);
     try {
       underTest.getAsyncResult().get(100, TimeUnit.MILLISECONDS);
     } catch (ExecutionException e) {
@@ -427,6 +431,24 @@ public class RetryingReadRowsOperationTest {
     Assert.assertTrue(underTest.getRowMerger().isComplete());
   }
 
+  @Test
+  public void testErrorAfterComplete() throws UnsupportedEncodingException {
+    ByteString key1 = ByteString.copyFromUtf8("SomeKey1");
+
+    ReadRowsRequest req =
+        ReadRowsRequest.newBuilder().setRows(RowSet.newBuilder().addRowKeys(key1)).build();
+    RetryingReadRowsOperation underTest =
+        createOperation(DeadlineGenerator.DEFAULT, req, mockFlatRowObserver);
+
+    start(underTest);
+    underTest.onMessage(buildResponse(key1));
+    underTest.onClose(Status.DEADLINE_EXCEEDED, new Metadata());
+
+    verify(mockFlatRowObserver, times(1)).onCompleted();
+    Assert.assertFalse(underTest.inRetryMode());
+    Assert.assertTrue(underTest.getRowMerger().isComplete());
+  }
+
   @SuppressWarnings("unchecked")
   @Test
   public void testImmediateOnClose() {
@@ -480,16 +502,14 @@ public class RetryingReadRowsOperationTest {
   }
 
   private void start(RetryingReadRowsOperation underTest) {
+    ReadRowsRequest initialRequest = underTest.getRetryRequest();
+
     underTest.getAsyncResult();
     verify(mockRpcMetrics, times(1)).timeOperation();
     verify(mockRpcMetrics, times(1)).timeRpc();
     verify(mockRetryableRpc, times(1)).newCall(eq(CallOptions.DEFAULT));
     verify(mockRetryableRpc, times(1))
-        .start(
-            eq(READ_ENTIRE_TABLE_REQUEST),
-            same(underTest),
-            any(Metadata.class),
-            same(mockClientCall));
+        .start(eq(initialRequest), same(underTest), any(Metadata.class), same(mockClientCall));
   }
 
   private void finishOK(RetryingReadRowsOperation underTest, int expectedRetryCount) {
