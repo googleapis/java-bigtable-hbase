@@ -423,6 +423,14 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
 
+    <!--  TODO: remove this dependency when upgraded through transitive dependency (http-client -> org.apache.httpcomponents:httpclient)
+this is not used directly, but upgrading due to transitive vulnerabilities in older versions-->
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>1.14</version>
+    </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -476,6 +484,8 @@ limitations under the License.
           <usedDependencies>
             <usedDependency>${project.groupId}:bigtable-hbase-2.x
             </usedDependency>
+            <!-- commons-codec is not used directly, but upgrading due to transitive vulnerabilities in older versions. -->
+            <usedDependency>commons-codec:commons-codec</usedDependency>
           </usedDependencies>
         </configuration>
       </plugin>
