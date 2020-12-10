@@ -280,7 +280,6 @@ public class TestBigtableDataGrpcClient {
   public void testReadFlatRowsAsyncWaitTimeoutRetry() throws Exception {
     ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
 
-
     // Start the call
     ListenableFuture<List<FlatRow>> resultFuture =
         defaultClient.readFlatRowsAsync(requestBuilder.build());
