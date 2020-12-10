@@ -52,6 +52,10 @@ class ReadRowsRequestManager {
     this.originalRequest = originalRequest;
   }
 
+  public ByteString getLastFoundKey() {
+    return lastFoundKey;
+  }
+
   void updateLastFoundKey(ByteString key) {
     this.lastFoundKey = key;
   }

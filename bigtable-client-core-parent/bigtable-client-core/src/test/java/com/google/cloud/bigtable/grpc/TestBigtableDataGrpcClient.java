@@ -227,7 +227,7 @@ public class TestBigtableDataGrpcClient {
   @Test
   public void testScanner() throws IOException {
     ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
-    requestBuilder.getRowsBuilder().addRowKeys(ByteString.EMPTY);
+
     ResultScanner<FlatRow> scanner = defaultClient.readFlatRows(requestBuilder.build());
     ArgumentCaptor<ClientCall.Listener> listenerCaptor =
         ArgumentCaptor.forClass(ClientCall.Listener.class);
@@ -248,7 +248,7 @@ public class TestBigtableDataGrpcClient {
   @Test
   public void testScannerIdle() throws IOException {
     ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
-    requestBuilder.getRowsBuilder().addRowKeys(ByteString.EMPTY);
+
     ResultScanner<FlatRow> scanner = defaultClient.readFlatRows(requestBuilder.build());
     ArgumentCaptor<ClientCall.Listener> listenerCaptor =
         ArgumentCaptor.forClass(ClientCall.Listener.class);
