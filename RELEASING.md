@@ -9,7 +9,9 @@ need python 3.6+ to run this tool.
 
 1. Make sure the team agrees that it is time to release.
 
-2. Run `releasetool start`. Select "minor" or "patch" for the release type. This will bump the
+2. Run `mvn clean` on your branch.
+
+3. Run `releasetool start`. Select "minor" or "patch" for the release type. This will bump the
    artifact versions, ask you to edit release notes, and create the release pull request. 
    You can either edit the release notes in your editor or wait until a PR is created on GitHub to edit there.
 
@@ -28,8 +30,10 @@ need python 3.6+ to run this tool.
 
 2. Look through the logs for the `java-bigtable-hbase/release/stage` and find the staging repository
    ids used. It will look like `comgooglecloudbigtable-1234`.
+   
+3. **Optional** Check https://oss.sonatype.org/ to see the staged release.
 
-3. Promote or drop the staged repository.
+4. Promote or drop the staged repository.
 
    a. To publish the staged repository, trigger the `java-bigtable-hbase/release/promote` Kokoro job for
      each staging repository. To specify the staging repository, add an environment variable
