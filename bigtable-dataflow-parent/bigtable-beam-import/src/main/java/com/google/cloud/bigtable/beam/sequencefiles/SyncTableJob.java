@@ -18,9 +18,6 @@ package com.google.cloud.bigtable.beam.sequencefiles;
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
-import org.apache.beam.runners.dataflow.options.DataflowWorkerLoggingOptions;
-import org.apache.beam.runners.dataflow.options.DataflowWorkerLoggingOptions.Level;
-import org.apache.beam.runners.dataflow.options.DataflowWorkerLoggingOptions.WorkerLogLevelOverrides;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.io.Read;
@@ -35,8 +32,7 @@ import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.SimpleFunction;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.mapreduce.ComputeHashRangeFromBigtableDoFn;
-import org.apache.hadoop.hbase.mapreduce.GenerateGroupByKeyDoFn;
+import org.apache.hadoop.hbase.mapreduce.ComputeAndValidaeHashFromBigtableDoFn;
 import org.apache.hadoop.hbase.mapreduce.HadoopHashTableSource;
 import org.apache.hadoop.hbase.mapreduce.HadoopHashTableSource.RangeHash;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -50,17 +46,19 @@ import org.apache.hadoop.hbase.util.Bytes;
  *   mvn compile exec:java \                                                                                [20/11/18| 9:45PM]
  *      -DmainClass=com.google.cloud.bigtable.beam.sequencefiles.SyncTableJob \
  *      -Dexec.args="--runner=DataflowRunner \
- *            --project=google.com:cloud-bigtable-dev \
- *            --bigtableInstanceId=shitanshu-test \
- *            --bigtableTableId=validation-test7 \
- *            --hbaseRootDir=gs://shitanshu-gs/hbase-hashtable/hbase/ \
- *            --snapshotName=validation_test_20200929  \
- *            --restoreDir=gs://shitanshu-gs/hbase-hashtable/restore-2 \
- *            --defaultWorkerLogLevel=DEBUG \
- *            --stagingLocation=gs://shitanshu-gs/staging \
- *            --tempLocation=gs://shitanshu-gs/dataflow-test/temp \
- *            --region=us-east1 \
- *            --workerZone=us-east1-b"
+ *            --project=$PROJECT \
+ *            --bigtableInstanceId=$INSTANCE \
+ *            --bigtableTableId=$TABLE \
+ *            --hbaseRootDir=$HBASE_ROOT \
+ *            --snapshotName=$SNAPSHOT_NAME  \
+ *            --restoreDir=$RESTORE_DIR \
+ *            --hashTableOutputDir=$HASHTABLE_OUTPUT_DIR \
+ *            --outputPrefix=$OUtPUT_PREFIX \
+ *            --defaultWorkerLogLevel=INFO \
+ *            --stagingLocation=$STAGING_LOC \
+ *            --tempLocation=$TMP_LOC \
+ *            --region=$REGION \
+ *            --workerZone=$WORKER_ZONE"
  * </pre>
  *
  * <p>Execute the following command to create the Dataflow template:
@@ -84,6 +82,8 @@ import org.apache.hadoop.hbase.util.Bytes;
  * </pre>
  *
  * <p>Example
+ *
+ * <p>// TODO FIX this command
  *
  * <pre>
  *   $ export GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/controller_service_account.json
@@ -121,6 +121,18 @@ public class SyncTableJob {
 
     @SuppressWarnings("unused")
     void setSnapshotName(ValueProvider<String> snapshotName);
+
+    @Description("HBase HashTable job output dir.")
+    ValueProvider<String> getHashTableOutputDir();
+
+    @SuppressWarnings("unused")
+    void setHashTableOutputDir(ValueProvider<String> hashTableOutputDir);
+
+    @Description("File pattern for files containing mismatched row ranges.")
+    ValueProvider<String> getOutputPrefix();
+
+    @SuppressWarnings("unused")
+    void setOutputPrefix(ValueProvider<String> outputPrefix);
   }
 
   public static void main(String[] args) {
@@ -142,24 +154,11 @@ public class SyncTableJob {
 
   @VisibleForTesting
   static Pipeline buildPipeline(SyncTableOptions opts) {
+    // TODO: Make the snapshot loading optional, TBD after importSnapshot is checked-in
     HBaseSnapshotConfiguration conf =
         new HBaseSnapshotConfiguration(
             opts.getHbaseRootDir(), opts.getSnapshotName(), opts.getRestoreDir());
     Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
-    DataflowWorkerLoggingOptions loggingOptions = opts.as(DataflowWorkerLoggingOptions.class);
-    // Overrides the default log level on the worker to emit logs at TRACE or higher.
-    loggingOptions.setDefaultWorkerLogLevel(Level.INFO);
-    // Overrides the Foo class and "com.google.cloud.dataflow" package to emit logs at WARN or
-    // higher.
-    WorkerLogLevelOverrides overrides = new WorkerLogLevelOverrides();
-    overrides.addOverrideForPackage(Package.getPackage("com.google.api.client.http"), Level.ERROR);
-    overrides.addOverrideForPackage(
-        Package.getPackage("com.google.cloud.hadoop.repackaged.gcs.com.google.cloud.hadoop.gcsio"),
-        Level.ERROR);
-    overrides.addOverrideForPackage(
-        Package.getPackage("com.google.cloud.hadoop.repackaged.gcs.com.google.api.client.http"),
-        Level.ERROR);
-    loggingOptions.setWorkerLogLevelOverrides(overrides);
 
     pipeline
         .apply(
@@ -167,30 +166,24 @@ public class SyncTableJob {
             Read.from(
                 new HadoopHashTableSource(
                     new SerializableConfiguration(conf.getHbaseConf()),
-                    // TODO: Move this to a config option.
-                    "gs://shitanshu-gs/hbase-keymaster_uncompressed/keymaster_uncompressed_hashtable")))
-        // TODO: Add counters for matches and mismatches.
+                    // TODO: Check if we really need a ValueProvider here?
+                    opts.getHashTableOutputDir())))
         .apply("Generate group by keys", ParDo.of(new GenerateGroupByKeyDoFn()))
         .apply(
             "group by and create granular workitems", GroupByKey.<String, List<RangeHash>>create())
-        .apply("validate hash", ParDo.of(new ComputeHashRangeFromBigtableDoFn(opts)))
-        .apply(
-            "Serialize the ranges",
-            MapElements.via(
-                new SimpleFunction<RangeHash, String>() {
-                  @Override
-                  public String apply(RangeHash input) {
-                    return String.format(
-                        "[%s, %s)",
-                        Bytes.toStringBinary(input.startInclusive),
-                        Bytes.toStringBinary(input.endExclusive));
-                  }
-                }))
-        .apply(
-            "Write to file",
-            TextIO.write()
-                .to("gs://shitanshu-gs/hbase-hashtable/mismatch" + System.currentTimeMillis())
-                .withSuffix(".txt"));
+        // TODO: Add counters for matches and mismatches.
+        .apply("validate hash", ParDo.of(new ComputeAndValidaeHashFromBigtableDoFn(opts)))
+        .apply("Serialize the ranges", MapElements.via(new RangeHashToString()))
+        .apply("Write to file", TextIO.write().to(opts.getOutputPrefix()).withSuffix(".txt"));
     return pipeline;
+  }
+
+  static class RangeHashToString extends SimpleFunction<RangeHash, String> {
+    @Override
+    public String apply(RangeHash input) {
+      return String.format(
+          "[%s, %s)",
+          Bytes.toStringBinary(input.startInclusive), Bytes.toStringBinary(input.endExclusive));
+    }
   }
 }

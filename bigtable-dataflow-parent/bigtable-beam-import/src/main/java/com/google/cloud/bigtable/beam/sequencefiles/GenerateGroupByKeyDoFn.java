@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hbase.mapreduce;
+package com.google.cloud.bigtable.beam.sequencefiles;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.values.KV;
 import org.apache.commons.logging.Log;
@@ -26,11 +27,11 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * A {@link DoFn} function that takes a range and hash from HBase and generates a batch or work. The
- * key is the start key of the batch and value is the sorted range of RangeHases. This function
+ * key is the start key of the batch and value is the sorted range of RangeHashes. This function
  * generates a KV<String, List<RangeHash>> to preserve the sorted nature of RangeHashes. There is no
- * guarantee of preseving the order of RangeHash if this function returns KV<String,RangeHash>.
+ * guarantee of preserving the order of RangeHash if this function returns KV<String,RangeHash>.
  *
- * <p>Sorted list of RangeHashes allows the subsequent functions to issue a single scan to bigtable
+ * <p>Sorted list of RangeHashes allows the subsequent functions to issue a single scan to Bigtable
  * covering all the ranges in the list of RangeHash.
  */
 public class GenerateGroupByKeyDoFn extends DoFn<RangeHash, KV<String, List<RangeHash>>> {
@@ -38,18 +39,29 @@ public class GenerateGroupByKeyDoFn extends DoFn<RangeHash, KV<String, List<Rang
   // Batch 50 row ranges in a batch. We may change it in future to be based on the size of a batch.
   // Having smaller batches also helps in validateHash stage as it doesn't emit an output in happy
   // case. Finishing smaller bundles will tell the dataflow service that worker is alive.
-  private static final int GROUP_BY_BATCH_SIZE = 50;
+  private static final int DEFAULT_BATCH_SIZE = 50;
   private static final long serialVersionUID = 1L;
-  private List<RangeHash> buffer = new ArrayList<>(GROUP_BY_BATCH_SIZE);
+  private final int batchSize;
+  private List<RangeHash> buffer;
   private static final Log LOG = LogFactory.getLog(GenerateGroupByKeyDoFn.class);
+
+  public GenerateGroupByKeyDoFn() {
+    this.batchSize = DEFAULT_BATCH_SIZE;
+    buffer = new ArrayList<>(batchSize);
+  }
+
+  public GenerateGroupByKeyDoFn(ValueProvider<Integer> batchSize) {
+    this.batchSize = batchSize.get();
+    buffer = new ArrayList(this.batchSize);
+  }
 
   @StartBundle
   public void start(StartBundleContext context) {
     // TODO: Currently all the batches from a workitem are in single bundle. Not sure how to split
     // it. Having a single bundle per file can create memory pressure, since we are keeping every
     // thing in memory in the buffer.
-    LOG.error("Starting a new bundle on thread " + Thread.currentThread().getName());
-    buffer = new ArrayList<>(GROUP_BY_BATCH_SIZE);
+    // TODO: Figure out why we need to initialize here, just initializing on constructor gives NPE.
+    buffer = new ArrayList<>(batchSize);
   }
 
   @ProcessElement
@@ -58,10 +70,10 @@ public class GenerateGroupByKeyDoFn extends DoFn<RangeHash, KV<String, List<Rang
     // Used to distribute work amongst workers. We want to split a file but want to retain
     // the contiguous nature of scans. So that for each bundle we can do a single bigtable scan.
 
-    if (buffer.size() == GROUP_BY_BATCH_SIZE) {
+    if (buffer.size() == batchSize) {
       // This batch is complete, next item will start a new batch.
       context.output(KV.of(Bytes.toStringBinary(buffer.get(0).startInclusive), buffer));
-      buffer = new ArrayList<>(GROUP_BY_BATCH_SIZE);
+      buffer = new ArrayList<>(batchSize);
     }
   }
 }

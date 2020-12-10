@@ -63,6 +63,8 @@ public class HBaseSnapshotConfiguration {
 
     Configuration conf = HBaseConfiguration.create();
     try {
+      // TODO Set these from the params, this will conflict with import changes. Fix it after import
+      // is finalized.
       conf.set("hbase.rootdir", snapshotDir.toString());
       conf.set("hadoop.home.rootdir", "gs//shitanshu-gs/hbase-hashtable/hbase");
       conf.set("fs.AbstractFileSystem.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS");
