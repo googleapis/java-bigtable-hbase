@@ -60,7 +60,7 @@ public class TestCreateTableHBase2 extends AbstractTestCreateTable {
 
   private TableDescriptor createDescriptor(TableName tableName) {
     return TableDescriptorBuilder.newBuilder(tableName)
-        .addColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder(COLUMN_FAMILY).build())
+        .setColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder(COLUMN_FAMILY).build())
         .build();
   }
 

@@ -129,8 +129,10 @@ public class BigtableSession implements Closeable {
   // 256 MB, server has 256 MB limit.
   private static final int MAX_MESSAGE_SIZE = 1 << 28;
 
-  static final long DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS = 3600;
-  static final long DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS = 20;
+  // Google Frontends limits keepalive calls at 30s by default.
+  static final long CHANNEL_KEEP_ALIVE_TIME_SECONDS = 30;
+  // Use this conservative values for timeout (10s)
+  static final long CHANNEL_KEEP_ALIVE_TIMEOUT_SECONDS = 10;
 
   @VisibleForTesting
   static final String PROJECT_ID_EMPTY_OR_NULL = "ProjectId must not be empty or null.";
@@ -588,9 +590,6 @@ public class BigtableSession implements Closeable {
               + " This is currently an experimental feature and should not be used in production.");
 
       builder = ComputeEngineChannelBuilder.forAddress(host, options.getPort());
-      builder.keepAliveTime(DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS, TimeUnit.SECONDS);
-      builder.keepAliveTimeout(DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-
       // When channel pooling is enabled, force the pick_first grpclb strategy.
       // This is necessary to avoid the multiplicative effect of creating channel pool with
       // `poolSize` number of `ManagedChannel`s, each with a `subSetting` number of number of
@@ -625,6 +624,10 @@ public class BigtableSession implements Closeable {
     return builder
         .idleTimeout(Long.MAX_VALUE, TimeUnit.SECONDS)
         .maxInboundMessageSize(MAX_MESSAGE_SIZE)
+        .keepAliveTime(CHANNEL_KEEP_ALIVE_TIME_SECONDS, TimeUnit.SECONDS)
+        .keepAliveTimeout(CHANNEL_KEEP_ALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        // Default behavior Do not use keepalive without any outstanding rpc calls as it can add a
+        // bunch of load.
         .userAgent(BigtableVersionInfo.CORE_USER_AGENT + "," + options.getUserAgent())
         .intercept(interceptors)
         .build();

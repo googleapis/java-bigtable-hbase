@@ -129,6 +129,12 @@ limitations under the License.
                     <exclude>org.apache.hadoop:hadoop-yarn-api</exclude>
                   </excludes>
                 </requireUpperBoundDeps>
+                <banDuplicateClasses>
+                  <ignoreClasses>
+                    <!-- todo(kolea2): investigate transitive deps causing conflicts-->
+                    <ignoreClass>**</ignoreClass>
+                  </ignoreClasses>
+                </banDuplicateClasses>
               </rules>
             </configuration>
           </execution>
