@@ -60,15 +60,6 @@ limitations under the License.
       <artifactId>beam-sdks-java-core</artifactId>
       <version>${beam.version}</version>
     </dependency>
-    <!--
-    <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>
-        beam-sdks-java-extensions-google-cloud-platform-core
-      </artifactId>
-      <version>${beam.version}</version>
-    </dependency>
-    -->
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-io-hadoop-common</artifactId>
@@ -138,7 +129,6 @@ limitations under the License.
       <artifactId>commons-codec</artifactId>
       <version>1.15</version>
     </dependency>
-
     <dependency>
       <groupId>com.squareup.okhttp</groupId>
       <artifactId>okhttp</artifactId>

@@ -40,7 +40,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 
 /**
- * A job that imports data from Cloud Storage bucket with HBase SequenceFile format into Cloud
+ * A job that imports data from HBase snapshot exports hosted in Cloud Storage bucket into Cloud
  * Bigtable. This job can be run directly or as a Dataflow template.
  *
  * <p>Execute the following command to run the job directly:
@@ -53,7 +53,9 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
  *                --project=$PROJECT \
  *                --bigtableInstanceId=$INSTANCE \
  *                --bigtableTableId=$TABLE \
- *                --sourcePattern=gs://$SOURCE_PATTERN"
+ *                --hbaseRootDir=gs://$HBASE_ROOT_PATH \
+ *                --snapshotName=$SNAPSHOT_NAME  \
+ *                --restoreDir=gs://$RESTORE_PATH
  * </pre>
  *
  * <p>Execute the following command to create the Dataflow template:
@@ -79,22 +81,7 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
  * <pre>
  * gcloud beta dataflow jobs run $JOB_NAME \
  *   --gcs-location gs://$TEMPLATE_PATH \
- *   --parameters bigtableProject=$PROJECT,bigtableInstanceId=$INSTANCE,bigtableTableId=$TABLE,sourcePattern=gs://$SOURCE_PATTERN
- * </pre>
- *
- * <p>Example
- *
- * <pre>
- *   $ export GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/controller_service_account.json
- *   $ java -jar target/bigtable-beam-import-1.14.1-SNAPSHOT-shaded.jar importsnapshot \
- *   --runner=DataflowRunner --project=google.com:cloud-bigtable-dev \
- *   --bigtableInstanceId=lichng-test --bigtableTableId=books \
- *   --hbaseRootDir=gs://lichng-gcs/hbase-export \
- *   --snapshotName=validation_test_20200716_1635  \
- *   --restoreDir=gs://lichng-gcs/hbase --defaultWorkerLogLevel=DEBUG \
- *   --stagingLocation=gs://lichng-gcs/dataflow-test/staging \
- *   --tempLocation=gs://lichng-gcs/dataflow-test/temp
- *
+ *   --parameters bigtableProject=$PROJECT,bigtableInstanceId=$INSTANCE,bigtableTableId=$TABLE,hbaseRootDir=gs://$HBASE_ROOT_PATH,snapshotName=$SNAPSHOT_NAME,restoreDir=gs://$RESTORE_PATH
  * </pre>
  */
 @InternalExtensionOnly

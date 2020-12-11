@@ -18,7 +18,7 @@ package com.google.cloud.bigtable.beam.hbasesnapshots;
 import static java.lang.System.*;
 
 import com.google.common.base.Preconditions;
-import org.apache.beam.sdk.io.FileBasedSource;
+import org.apache.beam.sdk.io.hadoop.SerializableConfiguration;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,20 +33,19 @@ import org.apache.hadoop.hbase.mapreduce.TableSnapshotInputFormat;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
 import org.apache.hadoop.hbase.util.Base64;
-import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 
 /**
- * A {@link FileBasedSource} that can read hadoop's {@link SequenceFile}s.
- *
- * @param <K> The type of the {@link SequenceFile} key.
- * @param <V> The type of the {@link SequenceFile} value.
+ * A {@link Configuration} that could be used in {@link HadoopFormatIO} for reading HBase snapshot
+ * hosted in Google Cloud Storage(GCS) bucket via GCS connector. It uses {@link
+ * TableSnapshotInputFormat} for reading HBase snapshots.
  */
 class HBaseSnapshotInputConfiguration {
 
   private static final Log LOG = LogFactory.getLog(HBaseSnapshotInputConfiguration.class);
+  private static final int BATCH_SIZE = 1000;
 
   private final Configuration hbaseConf;
 
@@ -76,7 +75,7 @@ class HBaseSnapshotInputConfiguration {
           "mapreduce.job.inputformat.class", TableSnapshotInputFormat.class, InputFormat.class);
       conf.setClass("key.class", ImmutableBytesWritable.class, Writable.class);
       conf.setClass("value.class", Result.class, Object.class);
-      ClientProtos.Scan proto = ProtobufUtil.toScan(new Scan().setBatch(1000).setCaching(1000));
+      ClientProtos.Scan proto = ProtobufUtil.toScan(new Scan().setBatch(BATCH_SIZE));
       conf.set(TableInputFormat.SCAN, Base64.encodeBytes(proto.toByteArray()));
 
       this.LOG.debug(conf);
@@ -86,9 +85,8 @@ class HBaseSnapshotInputConfiguration {
       conf = job.getConfiguration(); // extract the modified clone
     } catch (Exception e) {
       this.LOG.fatal(e);
-    } finally {
-      this.hbaseConf = conf;
     }
+    this.hbaseConf = new SerializableConfiguration(conf).get();
   }
 
   public Configuration getHbaseConf() {
