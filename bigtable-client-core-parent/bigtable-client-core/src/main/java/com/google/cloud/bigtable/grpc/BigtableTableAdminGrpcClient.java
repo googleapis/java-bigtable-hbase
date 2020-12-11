@@ -453,7 +453,7 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
         retryOptions,
         request,
         rpc,
-        deadlineGeneratorFactory.getRequestDeadlineGenerator(request),
+        deadlineGeneratorFactory.getRequestDeadlineGenerator(request, rpc.isRetryable(request)),
         retryExecutorService,
         metadata,
         NanoClock.getDefaultClock());
