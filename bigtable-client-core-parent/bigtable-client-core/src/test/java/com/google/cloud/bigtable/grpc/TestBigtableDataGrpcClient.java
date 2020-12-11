@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,9 +41,14 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor;
 import com.google.cloud.bigtable.grpc.io.Watchdog;
+import com.google.cloud.bigtable.grpc.io.Watchdog.State;
+import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.RetryingReadRowsOperationTest;
+import com.google.cloud.bigtable.grpc.scanner.RowMerger;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -52,8 +58,12 @@ import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -62,6 +72,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
@@ -263,6 +274,105 @@ public class TestBigtableDataGrpcClient {
     Assert.assertEquals(key3, scanner.next().getRowKey());
     // There was a retry based on the idle
     verify(mochScheduler, times(1)).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
+  }
+
+  @Test
+  public void testReadFlatRowsAsyncWaitTimeoutRetry() throws Exception {
+    ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
+
+    // Start the call
+    ListenableFuture<List<FlatRow>> resultFuture =
+        defaultClient.readFlatRowsAsync(requestBuilder.build());
+
+    // Capture the caller's listener
+    ArgumentCaptor<ClientCall.Listener> listenerCaptor =
+        ArgumentCaptor.forClass(ClientCall.Listener.class);
+    verify(mockClientCall, times(1)).start(listenerCaptor.capture(), any(Metadata.class));
+
+    // Get the listener for the first attempt
+    Listener listener = listenerCaptor.getValue();
+    listener.onMessage(
+        RetryingReadRowsOperationTest.buildResponse(ByteString.copyFromUtf8("Key1")));
+    listener.onClose(
+        Status.CANCELLED.withCause(
+            new Watchdog.StreamWaitTimeoutException(State.WAITING, TimeUnit.MINUTES.toMillis(10))),
+        new Metadata());
+
+    // Verify that the retry was scheduled
+    ArgumentCaptor<Runnable> scheduledRetryCaptor = ArgumentCaptor.forClass(Runnable.class);
+    verify(mochScheduler, times(1))
+        .schedule(scheduledRetryCaptor.capture(), anyLong(), any(TimeUnit.class));
+    Runnable scheduledRetry = scheduledRetryCaptor.getValue();
+    scheduledRetry.run();
+
+    // Get the listener for the retry attempyt
+    listener = listenerCaptor.getValue();
+    listener.onMessage(
+        RetryingReadRowsOperationTest.buildResponse(ByteString.copyFromUtf8("Key2")));
+    listener.onClose(Status.OK, new Metadata());
+
+    Assert.assertEquals(
+        resultFuture.get(),
+        RowMerger.toRows(
+            Lists.newArrayList(
+                RetryingReadRowsOperationTest.buildResponse(
+                    ByteString.copyFromUtf8("Key1"), ByteString.copyFromUtf8("Key2")))));
+  }
+
+  @Test
+  public void testReadFlatRowsAsyncWaitTimeoutRetryFailEventually() throws Exception {
+    // Run retries immediately
+    Mockito.when(mochScheduler.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class)))
+        .thenAnswer(
+            new Answer<ScheduledFuture>() {
+              @Override
+              public ScheduledFuture answer(InvocationOnMock invocation) {
+                Runnable runnable = invocation.getArgument(0);
+                runnable.run();
+                return null;
+              }
+            });
+
+    ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
+
+    // Start the call
+    ListenableFuture<List<FlatRow>> resultFuture =
+        defaultClient.readFlatRowsAsync(requestBuilder.build());
+
+    for (int i = 0; i < 10; i++) {
+      // Get the caller's listener for the current attempt.
+      ArgumentCaptor<ClientCall.Listener> listenerCaptor =
+          ArgumentCaptor.forClass(ClientCall.Listener.class);
+      verify(mockClientCall, times(1)).start(listenerCaptor.capture(), any(Metadata.class));
+      Listener listener = listenerCaptor.getValue();
+
+      // Reset mock before starting the next attempt, this ensures that the call count verification
+      // is incremental. (ie. times(1) for a single attempt instead n+1 for previous attempts)
+      Mockito.reset(mockClientCall);
+
+      // mark last attempt as timeout to possibly start the next attempt
+      listener.onClose(
+          Status.CANCELLED.withCause(
+              new Watchdog.StreamWaitTimeoutException(
+                  State.WAITING, TimeUnit.MINUTES.toMillis(10))),
+          new Metadata());
+
+      // Check if the operation finished
+      if (resultFuture.isDone()) {
+        break;
+      }
+    }
+
+    Throwable actualException = null;
+    try {
+      resultFuture.get(1, TimeUnit.MILLISECONDS);
+    } catch (ExecutionException e) {
+      actualException = e.getCause();
+    }
+
+    assertThat(
+        actualException,
+        CoreMatchers.<Throwable>instanceOf(BigtableRetriesExhaustedException.class));
   }
 
   private void setResponse(final Object response) {
