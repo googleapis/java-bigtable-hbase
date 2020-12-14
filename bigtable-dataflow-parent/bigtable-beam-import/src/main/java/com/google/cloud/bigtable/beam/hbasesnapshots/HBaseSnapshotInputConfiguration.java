@@ -50,7 +50,7 @@ class HBaseSnapshotInputConfiguration {
   private final Configuration hbaseConf;
 
   /**
-   * Constructs a new top level source.
+   * Constructs a HBase Configuration that could read HBase snapshot files from GCS Bucket.
    *
    * @param snapshotDir The path or pattern of the file(s) to read.
    */
