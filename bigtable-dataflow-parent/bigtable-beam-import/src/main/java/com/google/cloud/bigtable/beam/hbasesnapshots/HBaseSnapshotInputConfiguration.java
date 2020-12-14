@@ -47,7 +47,7 @@ class HBaseSnapshotInputConfiguration {
   private static final Log LOG = LogFactory.getLog(HBaseSnapshotInputConfiguration.class);
   private static final int BATCH_SIZE = 1000;
 
-  private final Configuration hbaseConf;
+  private final SerializableConfiguration hbaseConf;
 
   /**
    * Constructs a HBase Configuration that could read HBase snapshot files from GCS Bucket.
