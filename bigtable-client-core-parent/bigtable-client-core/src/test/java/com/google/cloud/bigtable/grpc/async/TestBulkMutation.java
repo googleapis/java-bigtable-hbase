@@ -18,6 +18,8 @@ package com.google.cloud.bigtable.grpc.async;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -29,25 +31,35 @@ import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.SetCell;
+import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.BulkMutation.Batch;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.ClientInterceptors;
+import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -59,6 +71,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
@@ -79,10 +92,15 @@ public class TestBulkMutation {
           .build();
 
   static MutateRowsRequest.Entry createEntry() {
+    return createEntryWithIndex("");
+  }
+
+  static MutateRowsRequest.Entry createEntryWithIndex(String suffix) {
     SetCell setCell =
         SetCell.newBuilder().setFamilyName("cf1").setColumnQualifier(QUALIFIER).build();
+    String rowKey = "SomeKey" + suffix;
     return MutateRowsRequest.Entry.newBuilder()
-        .setRowKey(ByteString.copyFrom("SomeKey".getBytes()))
+        .setRowKey(ByteString.copyFrom(rowKey.getBytes()))
         .addMutations(Mutation.newBuilder().setSetCell(setCell))
         .build();
   }
@@ -93,6 +111,9 @@ public class TestBulkMutation {
   @Mock private IBigtableDataClient clientWrapper;
   @Mock private ScheduledExecutorService retryExecutorService;
   @Mock private ScheduledFuture mockScheduledFuture;
+  @Mock private ResourceLimiter fakeResourceLimiter;
+  @Mock private Channel fakeChannel;
+  @Mock private ClientCall<MutateRowsRequest, MutateRowResponse> fakeClientCall;
 
   private AtomicLong time;
   private AtomicInteger timeIncrementCount = new AtomicInteger();
@@ -379,6 +400,72 @@ public class TestBulkMutation {
         Collections.nCopies(
             (int) BulkMutation.MAX_NUMBER_OF_MUTATIONS, bigRequest.getMutations(0)));
     underTest.add(bigRequest.build());
+  }
+
+  @Test
+  public void testConcurrentFlush() throws Exception {
+    // Test the behavior when an auto flushed task is blocked at resource limiter, a buffered batch
+    // was sent and returned. Verify that there's no race condition and all the added entries are
+    // sent successfully.
+    when(fakeResourceLimiter.registerOperationWithHeapSize(anyLong()))
+        .then(
+            new Answer<Object>() {
+              @Override
+              public Object answer(InvocationOnMock invocation) throws Throwable {
+                Thread.sleep(10);
+                return null;
+              }
+            });
+    when(fakeChannel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
+        .thenReturn(fakeClientCall);
+    Channel throttledChannel =
+        ClientInterceptors.intercept(
+            fakeChannel, new ThrottlingClientInterceptor(fakeResourceLimiter));
+    ScheduledThreadPoolExecutor executorService = new ScheduledThreadPoolExecutor(10);
+    BigtableDataGrpcClient dataClient =
+        new BigtableDataGrpcClient(
+            throttledChannel, executorService, BigtableOptions.builder().build());
+    OperationAccountant accountant = Mockito.mock(OperationAccountant.class);
+    doNothing().when(accountant).awaitCompletion();
+    BulkMutation bulkMutation =
+        new BulkMutation(
+            TABLE_NAME,
+            dataClient,
+            accountant,
+            executorService,
+            BulkOptions.builder().setAutoflushMs(25).setBulkMaxRowKeyCount(2).build());
+
+    // If the wait in resource limiter is interrupted, ClientCall.sendMessage won't get called in
+    // ThrottlingClientInterceptor#sendMessage. Whenever ClientCall.sendMessage is called, adding
+    // the request entries to a set and verify them with the entries we added.
+    final Set<MutateRowsRequest.Entry> entries = new HashSet<>();
+    doAnswer(
+            new Answer<Void>() {
+              public Void answer(InvocationOnMock invocationOnMock) {
+                MutateRowsRequest requests =
+                    invocationOnMock.getArgument(0, MutateRowsRequest.class);
+                for (MutateRowsRequest.Entry entry : requests.getEntriesList()) {
+                  entries.add(entry);
+                }
+                return null;
+              }
+            })
+        .when(fakeClientCall)
+        .sendMessage(any(MutateRowsRequest.class));
+
+    Set<MutateRowsRequest.Entry> addedEntries = new HashSet<>();
+    for (int i = 0; i < 100; i++) {
+      MutateRowsRequest.Entry e = createEntryWithIndex(String.valueOf(i));
+      bulkMutation.add(e);
+      addedEntries.add(e);
+      Thread.sleep(10);
+    }
+
+    // Send out any remaining requests and wait for them to finish
+    bulkMutation.flush();
+    Thread.sleep(100);
+
+    Assert.assertEquals(addedEntries, entries);
   }
 
   private BulkMutation createBulkMutation() {

@@ -441,7 +441,9 @@ public class BulkMutation {
                   @Override
                   public void run() {
                     synchronized (BulkMutation.this) {
-                      scheduledFlush = null;
+                      synchronized (scheduledFlush) {
+                        scheduledFlush = null;
+                      }
                       sendUnsent();
                     }
                   }
