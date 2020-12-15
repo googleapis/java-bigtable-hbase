@@ -439,6 +439,7 @@ public class TestBulkMutation {
     // ThrottlingClientInterceptor#sendMessage. Whenever ClientCall.sendMessage is called, adding
     // the request entries to a set and verify them with the entries we added.
     final Set<MutateRowsRequest.Entry> entries = new HashSet<>();
+    final AtomicInteger counter = new AtomicInteger(0);
     doAnswer(
             new Answer<Void>() {
               public Void answer(InvocationOnMock invocationOnMock) {
@@ -446,6 +447,7 @@ public class TestBulkMutation {
                     invocationOnMock.getArgument(0, MutateRowsRequest.class);
                 for (MutateRowsRequest.Entry entry : requests.getEntriesList()) {
                   entries.add(entry);
+                  counter.incrementAndGet();
                 }
                 return null;
               }
@@ -465,6 +467,7 @@ public class TestBulkMutation {
     bulkMutation.flush();
     Thread.sleep(100);
 
+    Assert.assertEquals(addedEntries.size(), counter.get());
     Assert.assertEquals(addedEntries, entries);
   }
 
