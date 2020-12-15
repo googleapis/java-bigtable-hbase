@@ -20,8 +20,8 @@ import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSes
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.beam.AbstractCloudBigtableTableDoFn;
 import com.google.cloud.bigtable.beam.TemplateUtils;
-import com.google.cloud.bigtable.beam.sequencefiles.SyncTableJob.SyncTableOptions;
 import com.google.cloud.bigtable.beam.validation.HadoopHashTableSource.RangeHash;
+import com.google.cloud.bigtable.beam.validation.SyncTableJob.SyncTableOptions;
 import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
 import java.io.IOException;
 import java.util.Iterator;

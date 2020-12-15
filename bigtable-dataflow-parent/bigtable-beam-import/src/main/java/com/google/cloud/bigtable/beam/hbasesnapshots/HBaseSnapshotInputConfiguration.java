@@ -42,7 +42,7 @@ import org.apache.hadoop.mapreduce.Job;
  * hosted in Google Cloud Storage(GCS) bucket via GCS connector. It uses {@link
  * TableSnapshotInputFormat} for reading HBase snapshots.
  */
-class HBaseSnapshotInputConfiguration {
+public class HBaseSnapshotInputConfiguration {
 
   private static final Log LOG = LogFactory.getLog(HBaseSnapshotInputConfiguration.class);
   private static final int BATCH_SIZE = 1000;
@@ -54,7 +54,7 @@ class HBaseSnapshotInputConfiguration {
    *
    * @param snapshotDir The path or pattern of the file(s) to read.
    */
-  HBaseSnapshotInputConfiguration(
+  public HBaseSnapshotInputConfiguration(
       ValueProvider<String> gcsProjectId,
       ValueProvider<String> snapshotDir,
       ValueProvider<String> snapshotName,

@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.beam.sequencefiles;
+package com.google.cloud.bigtable.beam.validation;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
-import com.google.cloud.bigtable.beam.validation.ComputeAndValidaeHashFromBigtableDoFn;
-import com.google.cloud.bigtable.beam.validation.GenerateGroupByKeyDoFn;
-import com.google.cloud.bigtable.beam.validation.HadoopHashTableSource;
+import com.google.cloud.bigtable.beam.hbasesnapshots.HBaseSnapshotInputConfiguration;
+import com.google.cloud.bigtable.beam.sequencefiles.ImportJob.ImportOptions;
+import com.google.cloud.bigtable.beam.sequencefiles.Utils;
 import com.google.cloud.bigtable.beam.validation.HadoopHashTableSource.RangeHash;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
@@ -45,7 +45,7 @@ import org.apache.hadoop.hbase.util.Bytes;
  *
  * <pre>
  *   mvn compile exec:java \                                                                                [20/11/18| 9:45PM]
- *      -DmainClass=com.google.cloud.bigtable.beam.sequencefiles.SyncTableJob \
+ *      -DmainClass=com.google.cloud.bigtable.beam.validation.SyncTableJob \
  *      -Dexec.args="--runner=DataflowRunner \
  *            --project=$PROJECT \
  *            --bigtableInstanceId=$INSTANCE \
@@ -104,7 +104,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 public class SyncTableJob {
   private static final Log LOG = LogFactory.getLog(SyncTableJob.class);
 
-  public interface SyncTableOptions extends ImportJob.ImportOptions {
+  public interface SyncTableOptions extends ImportOptions {
     // Keep the snapshot params, we will need to restore the snapshot for cell by cell comparision.
     @Description("The HBase root dir where HBase snapshot files resides.")
     ValueProvider<String> getHbaseRootDir();
@@ -157,9 +157,12 @@ public class SyncTableJob {
   @VisibleForTesting
   static Pipeline buildPipeline(SyncTableOptions opts) {
     // TODO: Make the snapshot loading optional, TBD after importSnapshot is checked-in
-    HBaseSnapshotConfiguration conf =
-        new HBaseSnapshotConfiguration(
-            opts.getHbaseRootDir(), opts.getSnapshotName(), opts.getRestoreDir());
+    HBaseSnapshotInputConfiguration conf =
+        new HBaseSnapshotInputConfiguration(
+            opts.getBigtableProject(),
+            opts.getHbaseRootDir(),
+            opts.getSnapshotName(),
+            opts.getRestoreDir());
     Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
 
     pipeline

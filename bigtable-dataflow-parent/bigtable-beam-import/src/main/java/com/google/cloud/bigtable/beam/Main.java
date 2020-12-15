@@ -21,6 +21,7 @@ import com.google.cloud.bigtable.beam.hbasesnapshots.ImportJobFromHbaseSnapshot;
 import com.google.cloud.bigtable.beam.sequencefiles.CreateTableHelper;
 import com.google.cloud.bigtable.beam.sequencefiles.ExportJob;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob;
+import com.google.cloud.bigtable.beam.validation.SyncTableJob;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.Arrays;
