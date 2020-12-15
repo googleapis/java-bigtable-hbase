@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hbase.mapreduce;
+package com.google.cloud.bigtable.beam.validation;
 
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowRange;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
@@ -21,6 +21,7 @@ import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.beam.AbstractCloudBigtableTableDoFn;
 import com.google.cloud.bigtable.beam.TemplateUtils;
 import com.google.cloud.bigtable.beam.sequencefiles.SyncTableJob.SyncTableOptions;
+import com.google.cloud.bigtable.beam.validation.HadoopHashTableSource.RangeHash;
 import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
 import java.io.IOException;
 import java.util.Iterator;
@@ -32,8 +33,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.HadoopHashTableSource.RangeHash;
-import org.apache.hadoop.hbase.mapreduce.HashTable.ResultHasher;
+import org.apache.hadoop.hbase.mapreduce.BigtableTableHashAccessor.BigtableResultHasher;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
@@ -85,7 +85,7 @@ public class ComputeAndValidaeHashFromBigtableDoFn
       byte[] rangeStartInclusive = buffer.get(0).startInclusive;
       byte[] rangeEndExclusive = buffer.get(buffer.size() - 1).endExclusive;
 
-      ResultHasher resultHasher = new ResultHasher();
+      BigtableResultHasher resultHasher = new BigtableResultHasher();
       resultHasher.startBatch(new ImmutableBytesWritable(rangeStartInclusive));
 
       // Since all the row-ranges are sorted in HashTable's data files, 1 big scan can be used
@@ -192,7 +192,7 @@ public class ComputeAndValidaeHashFromBigtableDoFn
   }
 
   private void ValidateBatchHash(
-      ProcessContext context, ResultHasher resultHasher, RangeHash currentRangeHash) {
+      ProcessContext context, BigtableResultHasher resultHasher, RangeHash currentRangeHash) {
     resultHasher.finishBatch();
     if (!resultHasher.getBatchHash().equals(currentRangeHash.hash)) {
       DOFN_LOG.info(

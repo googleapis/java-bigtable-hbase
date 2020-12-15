@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hbase.mapreduce;
+package com.google.cloud.bigtable.beam.validation;
 
 import autovalue.shaded.com.google$.common.annotations.$VisibleForTesting;
+import com.google.cloud.bigtable.beam.validation.HadoopHashTableSource.RangeHash;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.NoSuchElementException;
-import org.apache.beam.sdk.coders.AvroCoder;
 import java.util.function.Supplier;
+import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.DefaultCoder;
 import org.apache.beam.sdk.io.BoundedSource;
@@ -35,9 +37,7 @@ import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.HadoopHashTableSource.RangeHash;
 import org.apache.hadoop.hbase.mapreduce.HashTable.TableHash;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -46,6 +46,8 @@ import org.apache.hadoop.hbase.util.Bytes;
  * data file and emits a row-range/hash pair.
  */
 public class HadoopHashTableSource extends BoundedSource<RangeHash> {
+
+  static interface SerializableSupplier<T> extends Serializable, Supplier<T> {}
 
   @DefaultCoder(AvroCoder.class)
   public static class RangeHash {
@@ -86,9 +88,9 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
         return false;
       }
       RangeHash rangeHash = (RangeHash) o;
-      return Arrays.equals(startInclusive, rangeHash.startInclusive) &&
-          Arrays.equals(endExclusive, rangeHash.endExclusive) &&
-          Arrays.equals(hash, rangeHash.hash);
+      return Arrays.equals(startInclusive, rangeHash.startInclusive)
+          && Arrays.equals(endExclusive, rangeHash.endExclusive)
+          && Arrays.equals(hash, rangeHash.hash);
     }
 
     @Override
@@ -107,8 +109,7 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
   // Coder to encode/decode the RangeHash
   protected final AvroCoder<RangeHash> coder;
 
-  @$VisibleForTesting
-  protected Supplier<BigtableTableHashAccessor> tableHashHelperSupplier;
+  @$VisibleForTesting protected SerializableSupplier<TableHashWrapper> tableHashHelperSupplier;
 
   public HadoopHashTableSource(
       // TODO do we need to ValueProvider<SerializableConfiguration>?
@@ -116,9 +117,10 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
     this.conf = conf;
     this.hashTableOutputPathDir = hashTableOutputPathDir.get();
     this.coder = AvroCoder.of(RangeHash.class);
-    Supplier<BigtableTableHashAccessor> helperSupplier = () -> {
-      return BigtableTableHashAccessor.create(conf, hashTableOutputPathDir.get());
-    };
+    tableHashHelperSupplier =
+        () -> {
+          return TableHashWrapper.create(conf, hashTableOutputPathDir.get());
+        };
   }
 
   @Override
@@ -126,7 +128,7 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
       long desiredBundleSizeBytes, PipelineOptions options) {
     // This method relies on the partitioning done by HBase-HashTable job. There is a possibility
     // of stragglers. SyncTable handles it by using a group by and further splitting workitems.
-    BigtableTableHashAccessor hash = null;
+    TableHashWrapper hash = null;
     hash = tableHashHelperSupplier.get();
 
     ImmutableList<ImmutableBytesWritable> partitions = hash.getPartitions();
@@ -167,8 +169,7 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
               + Bytes.toStringBinary(partitions.get(i).get())
               + "]");
       splitSources.add(
-          new KeyBasedHashTableSource(
-              conf, hashTableOutputPathDir, startRow, partitions.get(i)));
+          new KeyBasedHashTableSource(conf, hashTableOutputPathDir, startRow, partitions.get(i)));
       startRow = partitions.get(i);
     }
     // Add the last range for [lastPartition, stopRow).
@@ -220,14 +221,15 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
       super(conf, StaticValueProvider.of(hadoopHashTableOutputDir));
       this.startRow = encodeImmutableBytesWritable(startRow);
       this.stopRow = encodeImmutableBytesWritable(stopRow);
-      Supplier<BigtableTableHashAccessor> helperSupplier = () -> {
-        return BigtableTableHashAccessor.create(conf, hadoopHashTableOutputDir);
-      };
+      Supplier<TableHashWrapper> helperSupplier =
+          () -> {
+            return TableHashWrapper.create(conf, hadoopHashTableOutputDir);
+          };
     }
 
     @Override
     public BoundedReader createReader(PipelineOptions options) {
-      BigtableTableHashAccessor hash = tableHashHelperSupplier.get();
+      TableHashWrapper hash = tableHashHelperSupplier.get();
       return new HashBasedReader(
           this,
           decodeImmutableBytesWritable(startRow),
@@ -235,11 +237,12 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
           hash.newReader(conf.get(), decodeImmutableBytesWritable(startRow)));
     }
 
-    static final String encodeImmutableBytesWritable(ImmutableBytesWritable immutableBytesWritable){
+    static final String encodeImmutableBytesWritable(
+        ImmutableBytesWritable immutableBytesWritable) {
       return Base64.getEncoder().encodeToString(immutableBytesWritable.copyBytes());
     }
 
-    static final ImmutableBytesWritable decodeImmutableBytesWritable(String base64EncodedBytes){
+    static final ImmutableBytesWritable decodeImmutableBytesWritable(String base64EncodedBytes) {
       return new ImmutableBytesWritable(Base64.getDecoder().decode(base64EncodedBytes));
     }
 
@@ -252,8 +255,7 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
         return false;
       }
       KeyBasedHashTableSource that = (KeyBasedHashTableSource) o;
-      return Objects.equal(startRow, that.startRow) &&
-          Objects.equal(stopRow, that.stopRow);
+      return Objects.equal(startRow, that.startRow) && Objects.equal(stopRow, that.stopRow);
     }
 
     @Override
@@ -309,7 +311,7 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
 
       if (reader.next()) {
         cachedBatchStartKey = reader.getCurrentKey();
-        if(cachedBatchStartKey.compareTo(stopRow) >= 0){
+        if (cachedBatchStartKey.compareTo(stopRow) >= 0) {
           // First key in the HashTable data file is beyond this workitem's range.
           return false;
         }
@@ -357,10 +359,8 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
       }
 
       ImmutableBytesWritable currentKey = reader.getCurrentKey();
-      if (currentKey.compareTo(stopRow) >=0 ) {
-        LOG.debug(
-            "Setting workitem ended to true on row "
-                + immutableBytesToString(currentKey));
+      if (currentKey.compareTo(stopRow) >= 0) {
+        LOG.debug("Setting workitem ended to true on row " + immutableBytesToString(currentKey));
         // This workitem has ended here. But we have a cached start key, we need to return the
         // cached batch with the partition end key.
         workItemEnded = true;
@@ -374,10 +374,7 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
         // Emit a sentinel key/hash to conclude the scan till the end of key range.
         LOG.debug("Scan ended, returning range with stopRow");
         out =
-            RangeHash.of(
-                cachedBatchStartKey,
-                new ImmutableBytesWritable(stopRow),
-                cachedBatchHash);
+            RangeHash.of(cachedBatchStartKey, new ImmutableBytesWritable(stopRow), cachedBatchHash);
         cachedBatchHash = null;
       } else {
         ImmutableBytesWritable currentKey = reader.getCurrentKey();

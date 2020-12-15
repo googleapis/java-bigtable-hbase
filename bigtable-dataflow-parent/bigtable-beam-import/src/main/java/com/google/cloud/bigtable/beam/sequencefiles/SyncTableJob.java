@@ -16,6 +16,10 @@
 package com.google.cloud.bigtable.beam.sequencefiles;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
+import com.google.cloud.bigtable.beam.validation.ComputeAndValidaeHashFromBigtableDoFn;
+import com.google.cloud.bigtable.beam.validation.GenerateGroupByKeyDoFn;
+import com.google.cloud.bigtable.beam.validation.HadoopHashTableSource;
+import com.google.cloud.bigtable.beam.validation.HadoopHashTableSource.RangeHash;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
 import org.apache.beam.sdk.Pipeline;
@@ -32,9 +36,6 @@ import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.SimpleFunction;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.mapreduce.ComputeAndValidaeHashFromBigtableDoFn;
-import org.apache.hadoop.hbase.mapreduce.HadoopHashTableSource;
-import org.apache.hadoop.hbase.mapreduce.HadoopHashTableSource.RangeHash;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
@@ -98,6 +99,7 @@ import org.apache.hadoop.hbase.util.Bytes;
  *
  * </pre>
  */
+// TODO: Move it to validation package post merging.
 @InternalExtensionOnly
 public class SyncTableJob {
   private static final Log LOG = LogFactory.getLog(SyncTableJob.class);

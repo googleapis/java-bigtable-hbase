@@ -1,4 +1,19 @@
-package org.apache.hadoop.hbase.mapreduce;
+/*
+ * Copyright 2017 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.cloud.bigtable.beam.validation;
 
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -7,6 +22,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.bigtable.beam.validation.HadoopHashTableSource.HashBasedReader;
+import com.google.cloud.bigtable.beam.validation.HadoopHashTableSource.KeyBasedHashTableSource;
+import com.google.cloud.bigtable.beam.validation.HadoopHashTableSource.RangeHash;
 import java.io.IOException;
 import junit.framework.TestCase;
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration;
@@ -14,11 +32,7 @@ import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.HadoopHashTableSource.HashBasedReader;
-import org.apache.hadoop.hbase.mapreduce.HadoopHashTableSource.KeyBasedHashTableSource;
-import org.apache.hadoop.hbase.mapreduce.HadoopHashTableSource.RangeHash;
 import org.apache.hadoop.hbase.mapreduce.HashTable.TableHash;
-import org.apache.hadoop.yarn.webapp.hamlet.Hamlet.H3;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,29 +46,28 @@ public class HadoopHashBasedReaderTest extends TestCase {
   HashBasedReader reader;
 
   public static final String HASH_TABLE_OUTPUT_PATH_DIR = "gs://my-bucket/outputDir";
-  private static final ImmutableBytesWritable START_ROW = new ImmutableBytesWritable(
-      "a".getBytes());
+  private static final ImmutableBytesWritable START_ROW =
+      new ImmutableBytesWritable("a".getBytes());
   private static final ImmutableBytesWritable STOP_ROW = new ImmutableBytesWritable("y".getBytes());
-  private static final ImmutableBytesWritable POST_STOP_ROW = new ImmutableBytesWritable(
-      "z".getBytes());
+  private static final ImmutableBytesWritable POST_STOP_ROW =
+      new ImmutableBytesWritable("z".getBytes());
 
-  private static final ImmutableBytesWritable PARTITION1 = new ImmutableBytesWritable(
-      "d".getBytes());
-  private static final ImmutableBytesWritable PARTITION2 = new ImmutableBytesWritable(
-      "g".getBytes());
-  private static final ImmutableBytesWritable PARTITION3 = new ImmutableBytesWritable(
-      "k".getBytes());
-  private static final ImmutableBytesWritable EMPTY_ROW_KEY = new ImmutableBytesWritable(
-      HConstants.EMPTY_BYTE_ARRAY);
-  private static final ImmutableBytesWritable HASH1 = new ImmutableBytesWritable(
-      "hash-001".getBytes());
-  private static final ImmutableBytesWritable HASH2 = new ImmutableBytesWritable(
-      "hash-002".getBytes());
-  private static final ImmutableBytesWritable HASH3 = new ImmutableBytesWritable(
-      "hash-003".getBytes());
-  private static final ImmutableBytesWritable HASH4 = new ImmutableBytesWritable(
-      "hash-004".getBytes());
-
+  private static final ImmutableBytesWritable PARTITION1 =
+      new ImmutableBytesWritable("d".getBytes());
+  private static final ImmutableBytesWritable PARTITION2 =
+      new ImmutableBytesWritable("g".getBytes());
+  private static final ImmutableBytesWritable PARTITION3 =
+      new ImmutableBytesWritable("k".getBytes());
+  private static final ImmutableBytesWritable EMPTY_ROW_KEY =
+      new ImmutableBytesWritable(HConstants.EMPTY_BYTE_ARRAY);
+  private static final ImmutableBytesWritable HASH1 =
+      new ImmutableBytesWritable("hash-001".getBytes());
+  private static final ImmutableBytesWritable HASH2 =
+      new ImmutableBytesWritable("hash-002".getBytes());
+  private static final ImmutableBytesWritable HASH3 =
+      new ImmutableBytesWritable("hash-003".getBytes());
+  private static final ImmutableBytesWritable HASH4 =
+      new ImmutableBytesWritable("hash-004".getBytes());
 
   @Before
   public void setUp() throws Exception {
@@ -62,8 +75,8 @@ public class HadoopHashBasedReaderTest extends TestCase {
     SerializableConfiguration conf = new SerializableConfiguration(new Configuration());
     source = new HadoopHashTableSource(conf, StaticValueProvider.of(HASH_TABLE_OUTPUT_PATH_DIR));
     mockTableHashReader = Mockito.mock(TableHash.Reader.class);
-    keyBasedHashTableSource = new KeyBasedHashTableSource(conf, HASH_TABLE_OUTPUT_PATH_DIR,
-        START_ROW, STOP_ROW);
+    keyBasedHashTableSource =
+        new KeyBasedHashTableSource(conf, HASH_TABLE_OUTPUT_PATH_DIR, START_ROW, STOP_ROW);
     reader = new HashBasedReader(keyBasedHashTableSource, START_ROW, STOP_ROW, mockTableHashReader);
     reset(mockTableHashReader);
   }
@@ -123,14 +136,15 @@ public class HadoopHashBasedReaderTest extends TestCase {
     // then simulates end of hashTable output.
     when(mockTableHashReader.next()).thenReturn(true, true, true, true, false);
     // Setup 4 keys returned by reader.getCurrentKey().
-    when(mockTableHashReader.getCurrentKey()).thenReturn(
-        /*start*/START_ROW,
-        /*start*/PARTITION1,
-        /*getCurrent*/PARTITION1,
-        /*advance*/PARTITION2,
-        /*getCurrent*/ PARTITION2,
-        /*advance*/ PARTITION3,
-        /*getCurrent*/PARTITION3);
+    when(mockTableHashReader.getCurrentKey())
+        .thenReturn(
+            /*start*/ START_ROW,
+            /*start*/ PARTITION1,
+            /*getCurrent*/ PARTITION1,
+            /*advance*/ PARTITION2,
+            /*getCurrent*/ PARTITION2,
+            /*advance*/ PARTITION3,
+            /*getCurrent*/ PARTITION3);
     when(mockTableHashReader.getCurrentHash()).thenReturn(HASH1, HASH2, HASH3, HASH4);
 
     // First entry will contain the full source, START to END.
@@ -177,10 +191,8 @@ public class HadoopHashBasedReaderTest extends TestCase {
     // Setup 2 entries in hashtable datafile. The last entry matches stopRow.
     when(mockTableHashReader.next()).thenReturn(true, true);
     // Setup 2 keys returned by reader.getCurrentKey().
-    when(mockTableHashReader.getCurrentKey()).thenReturn(
-        /*start*/START_ROW,
-        /*start*/POST_STOP_ROW,
-        /*getCurrent*/POST_STOP_ROW);
+    when(mockTableHashReader.getCurrentKey())
+        .thenReturn(/*start*/ START_ROW, /*start*/ POST_STOP_ROW, /*getCurrent*/ POST_STOP_ROW);
     when(mockTableHashReader.getCurrentHash()).thenReturn(HASH1, HASH2);
 
     RangeHash expectedRangeHash1 = RangeHash.of(START_ROW, POST_STOP_ROW, HASH1);
@@ -201,14 +213,15 @@ public class HadoopHashBasedReaderTest extends TestCase {
     // Setup 4 entries in hashtable datafile. The last entry matches stopRow.
     when(mockTableHashReader.next()).thenReturn(true, true, true, true);
     // Setup 4 keys returned by reader.getCurrentKey().
-    when(mockTableHashReader.getCurrentKey()).thenReturn(
-        /*start*/START_ROW,
-        /*start*/PARTITION1,
-        /*getCurrent*/PARTITION1,
-        /*advance*/PARTITION2,
-        /*getCurrent*/ PARTITION2,
-        /*advance*/ STOP_ROW,
-        /*getCurrent*/ STOP_ROW);
+    when(mockTableHashReader.getCurrentKey())
+        .thenReturn(
+            /*start*/ START_ROW,
+            /*start*/ PARTITION1,
+            /*getCurrent*/ PARTITION1,
+            /*advance*/ PARTITION2,
+            /*getCurrent*/ PARTITION2,
+            /*advance*/ STOP_ROW,
+            /*getCurrent*/ STOP_ROW);
     when(mockTableHashReader.getCurrentHash()).thenReturn(HASH1, HASH2, HASH3, HASH4);
 
     RangeHash expectedRangeHash1 = RangeHash.of(START_ROW, PARTITION1, HASH1);
@@ -230,20 +243,20 @@ public class HadoopHashBasedReaderTest extends TestCase {
     verify(mockTableHashReader, times(4)).getCurrentHash();
   }
 
-
   @Test
   public void testHashReaderWorkItemEndedStopRowNotExactMatch() throws IOException {
     // Setup 4 entries in hashtable datafile. The last entry matches stopRow.
     when(mockTableHashReader.next()).thenReturn(true, true, true, true);
     // Setup 4 keys returned by reader.getCurrentKey().
-    when(mockTableHashReader.getCurrentKey()).thenReturn(
-        /*start*/START_ROW,
-        /*start*/PARTITION1,
-        /*getCurrent*/PARTITION1,
-        /*advance*/PARTITION2,
-        /*getCurrent*/ PARTITION2,
-        /*advance*/ POST_STOP_ROW,
-        /*getCurrent*/ POST_STOP_ROW);
+    when(mockTableHashReader.getCurrentKey())
+        .thenReturn(
+            /*start*/ START_ROW,
+            /*start*/ PARTITION1,
+            /*getCurrent*/ PARTITION1,
+            /*advance*/ PARTITION2,
+            /*getCurrent*/ PARTITION2,
+            /*advance*/ POST_STOP_ROW,
+            /*getCurrent*/ POST_STOP_ROW);
     when(mockTableHashReader.getCurrentHash()).thenReturn(HASH1, HASH2, HASH3, HASH4);
 
     RangeHash expectedRangeHash1 = RangeHash.of(START_ROW, PARTITION1, HASH1);

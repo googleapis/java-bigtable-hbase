@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.beam.sequencefiles;
+package com.google.cloud.bigtable.beam.validation;
 
+import com.google.cloud.bigtable.beam.validation.HadoopHashTableSource.RangeHash;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.beam.sdk.options.ValueProvider;
@@ -22,7 +23,6 @@ import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.values.KV;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.mapreduce.HadoopHashTableSource.RangeHash;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
