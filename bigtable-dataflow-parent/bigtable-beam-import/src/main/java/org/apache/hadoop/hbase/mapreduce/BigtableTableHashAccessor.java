@@ -58,7 +58,7 @@ public class BigtableTableHashAccessor {
     return new ImmutableBytesWritable(hash.stopRow);
   }
 
-  public HashTable.TableHash.Reader createReader(Configuration conf, ImmutableBytesWritable startRow){
+  public HashTable.TableHash.Reader newReader(Configuration conf, ImmutableBytesWritable startRow){
     try {
       return hash.newReader(conf, startRow);
     } catch (IOException e) {

@@ -35,7 +35,6 @@ import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.HadoopHashTableSource.RangeHash;
@@ -77,6 +76,25 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
           Bytes.toStringBinary(endExclusive),
           Bytes.toHex(hash));
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (!(o instanceof RangeHash)) {
+        return false;
+      }
+      RangeHash rangeHash = (RangeHash) o;
+      return Arrays.equals(startInclusive, rangeHash.startInclusive) &&
+          Arrays.equals(endExclusive, rangeHash.endExclusive) &&
+          Arrays.equals(hash, rangeHash.hash);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(startInclusive, endExclusive, hash);
+    }
   }
 
   public static final Log LOG = LogFactory.getLog(HadoopHashTableSource.class);
@@ -87,10 +105,10 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
   protected String hashTableOutputPathDir;
 
   // Coder to encode/decode the RangeHash
-  private final AvroCoder<RangeHash> coder;
+  protected final AvroCoder<RangeHash> coder;
 
   @$VisibleForTesting
-  Supplier<BigtableTableHashAccessor> tableHashHelperSupplier;
+  protected Supplier<BigtableTableHashAccessor> tableHashHelperSupplier;
 
   public HadoopHashTableSource(
       // TODO do we need to ValueProvider<SerializableConfiguration>?
@@ -99,13 +117,13 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
     this.hashTableOutputPathDir = hashTableOutputPathDir.get();
     this.coder = AvroCoder.of(RangeHash.class);
     Supplier<BigtableTableHashAccessor> helperSupplier = () -> {
-      return BigtableTableHashAccessor.create(conf, hashTableOutputPathDir);
+      return BigtableTableHashAccessor.create(conf, hashTableOutputPathDir.get());
     };
   }
 
   @Override
   public List<? extends BoundedSource<RangeHash>> split(
-      long desiredBundleSizeBytes, PipelineOptions options) throws Exception {
+      long desiredBundleSizeBytes, PipelineOptions options) {
     // This method relies on the partitioning done by HBase-HashTable job. There is a possibility
     // of stragglers. SyncTable handles it by using a group by and further splitting workitems.
     BigtableTableHashAccessor hash = null;
@@ -128,6 +146,7 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
 
     // Use the HashTable start key. The value is HConstants.EMPTY_START_ROW for full table scan.
     ImmutableBytesWritable startRow = new ImmutableBytesWritable(hash.getStartRow());
+    ImmutableBytesWritable stopRow = new ImmutableBytesWritable(hash.getStopRow());
 
     // The output of HashTable is organized as partition file and a set of datafiles.
     // Partition file contains a list of partitions, these partitions split the key-range of a table
@@ -157,7 +176,7 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
         "Adding: ["
             + Bytes.toStringBinary(startRow.get())
             + ", "
-            + Bytes.toStringBinary(hash.getStopRow().get())
+            + Bytes.toStringBinary(stopRow.get())
             + "]");
     // Add the last range for [lastPartition, stopRow).
     splitSources.add(
@@ -165,7 +184,7 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
             conf,
             hashTableOutputPathDir,
             partitions.get(numPartitions - 1),
-            new ImmutableBytesWritable(hash.getStopRow())));
+            new ImmutableBytesWritable(stopRow)));
     LOG.info("Returning " + splitSources.size() + " sources from " + numPartitions + " partitions");
     return splitSources;
   }
@@ -182,7 +201,7 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
   }
 
   @Override
-  public BoundedReader<RangeHash> createReader(PipelineOptions options) throws IOException {
+  public BoundedReader<RangeHash> createReader(PipelineOptions options) {
     // Reader should always come from KeyBasedSource.
     throw new IllegalArgumentException("Reader can't be created from HadoopHashTableSource.");
   }
@@ -195,22 +214,20 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
 
     public KeyBasedHashTableSource(
         SerializableConfiguration conf,
-        String pathDir,
+        String hadoopHashTableOutputDir,
         ImmutableBytesWritable startRow,
         ImmutableBytesWritable stopRow) {
-      super(conf, StaticValueProvider.of(pathDir));
+      super(conf, StaticValueProvider.of(hadoopHashTableOutputDir));
       this.startRow = encodeImmutableBytesWritable(startRow);
       this.stopRow = encodeImmutableBytesWritable(stopRow);
+      Supplier<BigtableTableHashAccessor> helperSupplier = () -> {
+        return BigtableTableHashAccessor.create(conf, hadoopHashTableOutputDir);
+      };
     }
 
     @Override
-    public BoundedReader createReader(PipelineOptions options) throws IOException {
-      TableHash hash = null;
-      try {
-        hash = TableHash.read(conf.get(), new Path(hashTableOutputPathDir));
-      } catch (IOException e) {
-        LOG.fatal("failed to read tableHash", e);
-      }
+    public BoundedReader createReader(PipelineOptions options) {
+      BigtableTableHashAccessor hash = tableHashHelperSupplier.get();
       return new HashBasedReader(
           this,
           decodeImmutableBytesWritable(startRow),
@@ -241,11 +258,12 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
 
     @Override
     public int hashCode() {
+      // TODO Should we add the conf and pathDir here?
       return Objects.hashCode(startRow, stopRow);
     }
   }
 
-  class HashBasedReader extends BoundedReader<RangeHash> {
+  static class HashBasedReader extends BoundedReader<RangeHash> {
 
     KeyBasedHashTableSource source;
     TableHash.Reader reader;
@@ -254,7 +272,9 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
     ImmutableBytesWritable stopRow;
 
     transient int numKeys = 0;
+    // Flags a state where reader.getCurrentKey() > stopRow, which means the workItem has ended.
     transient boolean workItemEnded = false;
+    // Flags a state where reader.next() == false, which means that all the hashes have been read.
     transient boolean scanEnded = false;
     transient ImmutableBytesWritable cachedBatchStartKey;
     transient ImmutableBytesWritable cachedBatchHash;
@@ -289,14 +309,19 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
 
       if (reader.next()) {
         cachedBatchStartKey = reader.getCurrentKey();
+        if(cachedBatchStartKey.compareTo(stopRow) >= 0){
+          // First key in the HashTable data file is beyond this workitem's range.
+          return false;
+        }
+
         cachedBatchHash = reader.getCurrentHash();
 
         // The reader's current is consumed here, advance the reader to get a new value in
         // getCurrent.
-        reader.next();
+        readNextKey();
+        // return true since cachedBatchStartKey needs to be returned.
         return true;
       }
-
       return false;
     }
 
@@ -305,7 +330,7 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
       numKeys++;
       // Avoid infinite loops
       if (workItemEnded || scanEnded) {
-        LOG.warn(
+        LOG.debug(
             "Ending workitem at key "
                 + immutableBytesToString(cachedBatchStartKey)
                 + " scanEnded "
@@ -315,7 +340,12 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
         return false;
       }
 
-      // TODO the second key might have been skipped here, the reader is already advanced on line275
+      readNextKey();
+      // return true since cachedBatchStartKey needs to be returned.
+      return true;
+    }
+
+    private void readNextKey() throws IOException {
       if (!reader.next()) {
         // There are no hash batches remaining. We have a cached start, return that with an
         // HConstants.EMPTY_END_RANGE. Return true to emit the cached range.
@@ -323,20 +353,18 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
             "Setting scan ended to true on row " + immutableBytesToString(cachedBatchStartKey));
         scanEnded = true;
         // There is a a cached Range that needs to be returned.
-        return true;
+        return;
       }
 
-      if (stopRow.equals(reader.getCurrentKey())) {
+      ImmutableBytesWritable currentKey = reader.getCurrentKey();
+      if (currentKey.compareTo(stopRow) >=0 ) {
         LOG.debug(
             "Setting workitem ended to true on row "
-                + immutableBytesToString(reader.getCurrentKey()));
+                + immutableBytesToString(currentKey));
         // This workitem has ended here. But we have a cached start key, we need to return the
         // cached batch with the partition end key.
         workItemEnded = true;
-        return true;
       }
-
-      return true;
     }
 
     @Override
@@ -344,20 +372,21 @@ public class HadoopHashTableSource extends BoundedSource<RangeHash> {
       RangeHash out = null;
       if (scanEnded) {
         // Emit a sentinel key/hash to conclude the scan till the end of key range.
-        LOG.debug("Scan ended, returning range with empty stopRow");
+        LOG.debug("Scan ended, returning range with stopRow");
         out =
             RangeHash.of(
                 cachedBatchStartKey,
-                new ImmutableBytesWritable(HConstants.EMPTY_END_ROW),
+                new ImmutableBytesWritable(stopRow),
                 cachedBatchHash);
         cachedBatchHash = null;
       } else {
+        ImmutableBytesWritable currentKey = reader.getCurrentKey();
         // workitemEnded case is handled normally. TableHash.Reader's current item acts as
         // stopRowExclusive for HashBasedReader. So when TableHash.Reader reaches the workitem's end
-        // stopRowExclusive is cached but never emitted (becuase advance returns false).
-        out = RangeHash.of(cachedBatchStartKey, reader.getCurrentKey(), cachedBatchHash);
+        // stopRowExclusive is cached but never emitted (because advance returns false).
+        out = RangeHash.of(cachedBatchStartKey, currentKey, cachedBatchHash);
         // Move to the next step.
-        cachedBatchStartKey = reader.getCurrentKey();
+        cachedBatchStartKey = currentKey;
         cachedBatchHash = reader.getCurrentHash();
       }
 
