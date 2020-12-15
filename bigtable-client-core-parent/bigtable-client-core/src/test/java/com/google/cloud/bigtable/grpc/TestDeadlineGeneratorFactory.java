@@ -76,7 +76,7 @@ public class TestDeadlineGeneratorFactory {
   public void testDefault() {
     DeadlineGeneratorFactory factory = DeadlineGeneratorFactory.DEFAULT;
     Assert.assertFalse(
-        factory.getRequestDeadlineGenerator(null).getRpcAttemptDeadline().isPresent());
+        factory.getRequestDeadlineGenerator(null, false).getRpcAttemptDeadline().isPresent());
   }
 
   @Test
@@ -102,7 +102,7 @@ public class TestDeadlineGeneratorFactory {
 
     assertThat(
         factory
-            .getRequestDeadlineGenerator(null)
+            .getRequestDeadlineGenerator(null, false)
             .getRpcAttemptDeadline()
             .get()
             .timeRemaining(TimeUnit.MINUTES),
@@ -193,7 +193,7 @@ public class TestDeadlineGeneratorFactory {
     DeadlineGeneratorFactory factory = new ConfiguredDeadlineGeneratorFactory(config);
     Assert.assertFalse(
         factory
-            .getRequestDeadlineGenerator(ReadRowsRequest.getDefaultInstance())
+            .getRequestDeadlineGenerator(ReadRowsRequest.getDefaultInstance(), false)
             .getRpcAttemptDeadline()
             .isPresent());
   }
@@ -212,7 +212,7 @@ public class TestDeadlineGeneratorFactory {
   private int getDeadlineMs(DeadlineGeneratorFactory factory, Object request) {
     return (int)
         factory
-            .getRequestDeadlineGenerator(request)
+            .getRequestDeadlineGenerator(request, false)
             .getRpcAttemptDeadline()
             .get()
             .timeRemaining(TimeUnit.MILLISECONDS);

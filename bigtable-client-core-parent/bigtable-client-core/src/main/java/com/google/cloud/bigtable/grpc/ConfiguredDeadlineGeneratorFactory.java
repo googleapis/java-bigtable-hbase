@@ -43,12 +43,14 @@ public class ConfiguredDeadlineGeneratorFactory implements DeadlineGeneratorFact
   }
 
   @Override
-  public <RequestT> DeadlineGenerator getRequestDeadlineGenerator(RequestT request) {
+  public <RequestT> DeadlineGenerator getRequestDeadlineGenerator(
+      RequestT request, boolean retriable) {
     if (isStreamingRead(request)) {
       return new DeadlineGeneratorImpl(
           config.isUseTimeout(),
           config.getReadStreamRpcTimeoutMs(),
           config.getReadStreamRpcAttemptTimeoutMs(),
+          retriable,
           // Streaming reads do not need to specify a fallback deadline, since the Watchdog will
           // take affect and ensure that hanging does not occur. See
           // com.google.cloud.bigtable.grpc.io.Watchdog, which handles hanging for streaming reads.
@@ -58,6 +60,7 @@ public class ConfiguredDeadlineGeneratorFactory implements DeadlineGeneratorFact
           config.isUseTimeout(),
           config.getMutateRpcTimeoutMs(),
           config.getMutateRpcAttemptTimeoutMs(),
+          retriable,
           // Calls should fail after 6 minutes, if there isn't any response from the server.
           Optional.of(TimeUnit.MINUTES.toMillis(UNARY_DEADLINE_MINUTES)));
     } else {
@@ -65,6 +68,7 @@ public class ConfiguredDeadlineGeneratorFactory implements DeadlineGeneratorFact
           config.isUseTimeout(),
           config.getShortRpcTimeoutMs(),
           config.getShortRpcAttemptTimeoutMs(),
+          retriable,
           // Calls should fail after 6 minutes, if there isn't any response from the server.
           Optional.of(TimeUnit.MINUTES.toMillis(UNARY_DEADLINE_MINUTES)));
     }
@@ -98,10 +102,12 @@ public class ConfiguredDeadlineGeneratorFactory implements DeadlineGeneratorFact
         boolean useTimeout,
         int requestTimeoutMs,
         Optional<Integer> requestAttemptTimeoutMs,
+        boolean retriable,
         Optional<Long> nonTimeoutFallbackDeadlineMs) {
       this.useTimeout = useTimeout;
       this.requestTimeoutMs = requestTimeoutMs;
-      this.requestAttemptTimeoutMs = requestAttemptTimeoutMs;
+      this.requestAttemptTimeoutMs =
+          retriable ? requestAttemptTimeoutMs : Optional.<Integer>absent();
       this.nonTimeoutFallbackDeadlineMs = nonTimeoutFallbackDeadlineMs;
       // Note: operationDeadline is always non-null if useTimeout == true
       this.operationDeadline = createOperationDeadline();

@@ -31,6 +31,7 @@ import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.common.collect.ImmutableMap;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -54,6 +55,8 @@ import org.junit.experimental.categories.Category;
 
 @Category(KnownHBaseGap.class)
 public abstract class TestRpcRetryBehavior {
+  private static final Logger LOG = new Logger(TestRpcRetryBehavior.class);
+
   /**
    * Indicates whether the test will involve timeouts from the user side. In case we don't, the
    * client would only retry the logic on a server response.
@@ -189,6 +192,8 @@ public abstract class TestRpcRetryBehavior {
     } else {
       expectedInvocations = 1;
     }
+
+    LOG.info("Expecting invocations for test: {}", expectedInvocations);
 
     assertThat(counter.get(), equalTo(expectedInvocations));
   }

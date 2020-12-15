@@ -32,7 +32,6 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
-import org.junit.Assume;
 
 public class TestRpcRetryBehaviorCheckAndMutateRow extends TestRpcRetryBehavior {
   private final AtomicInteger numCheckAndMutateRowInvocations = new AtomicInteger();
@@ -107,20 +106,6 @@ public class TestRpcRetryBehaviorCheckAndMutateRow extends TestRpcRetryBehavior 
           String.valueOf(maxElapsedBackoffMs));
     }
     return connPropsBuilder;
-  }
-
-  @Override
-  public void testOperationAndAttemptTimeoutsWillRetryOnServerAbort() throws Exception {
-    Assume.assumeTrue(
-        "Attempt RPC timeout not yet enabled for CheckAndMutate, so skipping test", false);
-    super.testOperationAndAttemptTimeoutsWillRetryOnServerAbort();
-  }
-
-  @Override
-  public void testOperationAndAttemptTimeoutsWillRetryOnServerHang() throws Exception {
-    Assume.assumeTrue(
-        "Attempt RPC timeout not yet enabled for CheckAndMutate, so skipping test", false);
-    super.testOperationAndAttemptTimeoutsWillRetryOnServerHang();
   }
 
   @Override

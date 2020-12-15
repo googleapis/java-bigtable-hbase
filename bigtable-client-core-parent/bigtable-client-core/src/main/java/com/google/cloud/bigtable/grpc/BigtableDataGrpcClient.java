@@ -276,7 +276,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       request = request.toBuilder().setAppProfileId(clientDefaultAppProfileId).build();
     }
     DeadlineGenerator deadlineGenerator =
-        deadlineGeneratorFactory.getRequestDeadlineGenerator(request);
+        deadlineGeneratorFactory.getRequestDeadlineGenerator(
+            request, mutateRowsRpc.isRetryable(request));
     Metadata metadata = createMetadata(request.getTableName());
     return new RetryingMutateRowsOperation(
         retryOptions,
@@ -405,7 +406,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   private <ReqT, RespT> RetryingUnaryOperation<ReqT, RespT> createUnaryListener(
       ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
     DeadlineGenerator deadlineGenerator =
-        deadlineGeneratorFactory.getRequestDeadlineGenerator(request);
+        deadlineGeneratorFactory.getRequestDeadlineGenerator(request, rpc.isRetryable(request));
     Metadata metadata = createMetadata(tableName);
     return new RetryingUnaryOperation<>(
         retryOptions, request, rpc, deadlineGenerator, retryExecutorService, metadata, CLOCK);
@@ -414,7 +415,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   private <ReqT, RespT> RetryingStreamOperation<ReqT, RespT> createStreamingListener(
       ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
     DeadlineGenerator deadlineGenerator =
-        deadlineGeneratorFactory.getRequestDeadlineGenerator(request);
+        deadlineGeneratorFactory.getRequestDeadlineGenerator(request, rpc.isRetryable(request));
     Metadata metadata = createMetadata(tableName);
     return new RetryingStreamOperation<>(
         retryOptions, request, rpc, deadlineGenerator, retryExecutorService, metadata, CLOCK);
@@ -525,7 +526,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         retryOptions,
         request,
         readRowsAsync,
-        deadlineGeneratorFactory.getRequestDeadlineGenerator(request),
+        deadlineGeneratorFactory.getRequestDeadlineGenerator(
+            request, readRowsAsync.isRetryable(request)),
         retryExecutorService,
         createMetadata(request.getTableName()),
         CLOCK);

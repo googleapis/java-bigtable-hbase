@@ -27,7 +27,8 @@ public interface DeadlineGeneratorFactory {
   DeadlineGeneratorFactory DEFAULT =
       new DeadlineGeneratorFactory() {
         @Override
-        public <RequestT> DeadlineGenerator getRequestDeadlineGenerator(RequestT request) {
+        public <RequestT> DeadlineGenerator getRequestDeadlineGenerator(
+            RequestT request, boolean retriable) {
           return DeadlineGenerator.DEFAULT;
         }
       };
@@ -36,5 +37,5 @@ public interface DeadlineGeneratorFactory {
    * Returns a {@link DeadlineGenerator} instance to use for the given RPC operation. This should
    * only be called once per operation and be used for the duration of the operation.
    */
-  <RequestT> DeadlineGenerator getRequestDeadlineGenerator(RequestT request);
+  <RequestT> DeadlineGenerator getRequestDeadlineGenerator(RequestT request, boolean retriable);
 }
