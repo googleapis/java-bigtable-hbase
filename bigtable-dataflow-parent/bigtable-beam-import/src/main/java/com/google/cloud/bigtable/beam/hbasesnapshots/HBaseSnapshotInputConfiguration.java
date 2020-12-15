@@ -62,7 +62,7 @@ class HBaseSnapshotInputConfiguration {
 
     Preconditions.checkArgument(
         snapshotDir.toString().startsWith("gs://"),
-        "snapshot folder must be hosted in a GCS bucket ");
+        "snapshot folder must be hosted in a GCS bucket, provided: " + snapshotDir.get());
 
     Configuration conf = HBaseConfiguration.create();
     try {
@@ -85,6 +85,7 @@ class HBaseSnapshotInputConfiguration {
       conf = job.getConfiguration(); // extract the modified clone
     } catch (Exception e) {
       this.LOG.fatal(e);
+      // TODO: The job should die here?
     }
     this.hbaseConf = new SerializableConfiguration(conf);
   }

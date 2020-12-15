@@ -53,6 +53,9 @@ public class Main {
       case "create-table":
         CreateTableHelper.main(subArgs);
         break;
+      case "sync-table":
+        SyncTableJob.main(subArgs);
+        break;
       default:
         usage();
         System.exit(1);
