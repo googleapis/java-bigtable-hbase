@@ -54,7 +54,7 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
  *                --project=$PROJECT \
  *                --bigtableInstanceId=$INSTANCE \
  *                --bigtableTableId=$TABLE \
- *                --hbaseRootDir=gs://$HBASE_ROOT_PATH \
+ *                --hbaseRootDir=gs://$HBASE_EXPORT_ROOT_PATH \
  *                --snapshotName=$SNAPSHOT_NAME  \
  *                --restoreDir=gs://$RESTORE_PATH
  * </pre>
@@ -82,7 +82,7 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
  * <pre>
  * gcloud beta dataflow jobs run $JOB_NAME \
  *   --gcs-location gs://$TEMPLATE_PATH \
- *   --parameters bigtableProject=$PROJECT,bigtableInstanceId=$INSTANCE,bigtableTableId=$TABLE,hbaseRootDir=gs://$HBASE_ROOT_PATH,snapshotName=$SNAPSHOT_NAME,restoreDir=gs://$RESTORE_PATH
+ *   --parameters bigtableProject=$PROJECT,bigtableInstanceId=$INSTANCE,bigtableTableId=$TABLE,hbaseRootDir=gs://$HBASE_EXPORT_ROOT_PATH,snapshotName=$SNAPSHOT_NAME,restoreDir=gs://$RESTORE_PATH
  * </pre>
  */
 @InternalExtensionOnly
