@@ -441,10 +441,10 @@ public class BulkMutation {
                   @Override
                   public void run() {
                     synchronized (BulkMutation.this) {
-                      synchronized (scheduledFlush) {
+                      if (scheduledFlush != null) {
                         scheduledFlush = null;
+                        sendUnsent();
                       }
-                      sendUnsent();
                     }
                   }
                 },
