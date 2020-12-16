@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -453,11 +452,12 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
     try {
       nextRowMonitorReschedulingcounter++;
       if (nextRowMonitorReschedulingcounter % 500 == 0) {
-        // Heartbeat every 20 rows to make sure that its running.
+        // Heartbeat every 500 rows to make sure that its running.
         // This counter is local to a RowMerger, which is tied to a single ReadRows call, so having
         // a higher number will mean that it never
         // gets called.
-        LOG.warn("RowMerger[" + this.id + "] processed %d rows", nextRowMonitorReschedulingcounter - 1);
+        LOG.warn(
+            "RowMerger[" + this.id + "] processed %d rows", nextRowMonitorReschedulingcounter - 1);
       }
       if (nextRowFuture != null) {
         nextRowFuture.cancel(false);

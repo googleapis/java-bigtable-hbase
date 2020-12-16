@@ -183,8 +183,6 @@ public class Watchdog implements Runnable {
 
             @Override
             public void onClose(Status status, Metadata trailers) {
-              // Log channel IDs. I am not sure if we should log here for everything.
-              // LOG.warn("Closing the channel: " + ChannelPool.extractIdentifier(trailers));
               openStreams.remove(WatchedCall.this);
               super.onClose(status, trailers);
             }
