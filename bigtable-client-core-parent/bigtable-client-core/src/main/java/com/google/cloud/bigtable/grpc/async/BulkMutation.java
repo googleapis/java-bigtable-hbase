@@ -441,7 +441,15 @@ public class BulkMutation {
                   @Override
                   public void run() {
                     synchronized (BulkMutation.this) {
-                      if (scheduledFlush != null) {
+                      // This run method is not synchronized with BulkMutation.this. It could get
+                      // cancelled from line 419, after entering this method and before entering
+                      // this synchronized block. In this case, this thread
+                      // won't get interrupted until later when it tries to acquire resources from
+                      // ResourceLimiter, and all the entries in the currentBatch will fail because
+                      // of InterruptedException.
+                      // Check and make sure the current thread is not interrupted to avoid this
+                      // race condition.
+                      if (!Thread.interrupted()) {
                         scheduledFlush = null;
                         sendUnsent();
                       }

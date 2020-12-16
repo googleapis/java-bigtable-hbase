@@ -39,6 +39,7 @@ import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.grpc.async.BulkMutation.Batch;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
@@ -53,6 +54,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -404,9 +406,9 @@ public class TestBulkMutation {
 
   @Test
   public void testConcurrentFlush() throws Exception {
-    // Test the behavior when an auto flushed task is blocked at resource limiter, a buffered batch
-    // was sent and returned. Verify that there's no race condition and all the added entries are
-    // sent successfully.
+    // Test the behavior when a scheduled auto flush is run around the same time of a buffered batch
+    // is sent. After the buffered batch is sent, it'll cancel the scheduled job. Test that the
+    // previously scheduled job won't send any requests in this case.
     when(fakeResourceLimiter.registerOperationWithHeapSize(anyLong()))
         .then(
             new Answer<Object>() {
@@ -433,12 +435,12 @@ public class TestBulkMutation {
             dataClient,
             accountant,
             executorService,
-            BulkOptions.builder().setAutoflushMs(25).setBulkMaxRowKeyCount(2).build());
+            BulkOptions.builder().setAutoflushMs(10).setBulkMaxRowKeyCount(2).build());
 
     // If the wait in resource limiter is interrupted, ClientCall.sendMessage won't get called in
     // ThrottlingClientInterceptor#sendMessage. Whenever ClientCall.sendMessage is called, adding
-    // the request entries to a set and verify them with the entries we added.
-    final Set<MutateRowsRequest.Entry> entries = new HashSet<>();
+    // the request entries to a set and verify them with the entries we added to the batch.
+    final Set<MutateRowsRequest.Entry> entries = Sets.newConcurrentHashSet();
     final AtomicInteger counter = new AtomicInteger(0);
     doAnswer(
             new Answer<Void>() {
@@ -456,11 +458,12 @@ public class TestBulkMutation {
         .sendMessage(any(MutateRowsRequest.class));
 
     Set<MutateRowsRequest.Entry> addedEntries = new HashSet<>();
-    for (int i = 0; i < 100; i++) {
-      MutateRowsRequest.Entry e = createEntryWithIndex(String.valueOf(i));
+    long stopTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10);
+    Random rand = new Random();
+    for (; System.currentTimeMillis() < stopTime; ) {
+      MutateRowsRequest.Entry e = createEntryWithIndex(String.valueOf(rand.nextInt()));
       bulkMutation.add(e);
       addedEntries.add(e);
-      Thread.sleep(10);
     }
 
     // Send out any remaining requests and wait for them to finish
