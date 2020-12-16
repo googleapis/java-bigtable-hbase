@@ -34,7 +34,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -429,6 +431,7 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
   private Integer rowCountInLastMessage = null;
   private long lastRowEmittedAtMillis = System.currentTimeMillis();
   private long nextRowMonitorReschedulingcounter = 0;
+  private UUID id;
 
   /**
    * Constructor for RowMerger.
@@ -436,20 +439,25 @@ public class RowMerger implements StreamObserver<ReadRowsResponse> {
    * @param observer a {@link io.grpc.stub.StreamObserver} object.
    */
   public RowMerger(StreamObserver<FlatRow> observer) {
+    id = UUID.randomUUID();
     this.observer = observer;
     rescheduleNextRowTask();
+    // RowMerger heartbeats spam the logs. This log message identifies new rowMergers and helps
+    // debug the situation where small scans with less than 500 rows will destroy the rowmerger
+    // without emitting a heartbeat.
+    LOG.warn("Creating a new RowMerger " + id);
   }
 
   /** Resets the timer for waiting on next row. Will be called when a row is emitted. */
   private void rescheduleNextRowTask() {
     try {
       nextRowMonitorReschedulingcounter++;
-      if (nextRowMonitorReschedulingcounter % 20 == 0) {
+      if (nextRowMonitorReschedulingcounter % 500 == 0) {
         // Heartbeat every 20 rows to make sure that its running.
         // This counter is local to a RowMerger, which is tied to a single ReadRows call, so having
         // a higher number will mean that it never
         // gets called.
-        LOG.warn("RowMerger processed %d rows", nextRowMonitorReschedulingcounter - 1);
+        LOG.warn("RowMerger[" + this.id + "] processed %d rows", nextRowMonitorReschedulingcounter - 1);
       }
       if (nextRowFuture != null) {
         nextRowFuture.cancel(false);
