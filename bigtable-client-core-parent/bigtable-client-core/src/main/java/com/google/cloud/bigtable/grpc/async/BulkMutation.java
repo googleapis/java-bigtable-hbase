@@ -441,8 +441,18 @@ public class BulkMutation {
                   @Override
                   public void run() {
                     synchronized (BulkMutation.this) {
-                      scheduledFlush = null;
-                      sendUnsent();
+                      // Scheduled auto flush will be cancelled after a filled batch is sent. The
+                      // cancellation could happen after the scheduled thread starts but before
+                      // it enters this synchronized block. In this case, this thread won't get
+                      // interrupted until later when it tries to acquire resources from
+                      // ResourceLimiter, and all the entries in the currentBatch will fail because
+                      // of InterruptedException.
+                      // Check and make sure the current thread is not interrupted to avoid this
+                      // race condition.
+                      if (!Thread.interrupted()) {
+                        scheduledFlush = null;
+                        sendUnsent();
+                      }
                     }
                   }
                 },
