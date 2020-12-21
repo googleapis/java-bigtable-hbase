@@ -51,6 +51,33 @@ class HBaseSnapshotInputConfiguration {
 
   /**
    * Constructs a HBase Configuration that could read HBase snapshot files from GCS Bucket.
+   *
+   * @param snapshotDir The path or pattern of the file(s) to read.
+   */
+  HBaseSnapshotInputConfiguration(
+      ValueProvider<String> gcsProjectId,
+      ValueProvider<String> snapshotDir,
+      ValueProvider<String> snapshotName,
+      ValueProvider<String> restoreDir) {
+
+    Preconditions.checkArgument(
+        snapshotDir.toString().startsWith("gs://"),
+        "snapshot folder must be hosted in a GCS bucket ");
+
+    Configuration conf = HBaseConfiguration.create();
+    try {
+      conf.set("hbase.rootdir", snapshotDir.toString());
+      conf.set("fs.AbstractFileSystem.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS");
+      conf.set("fs.gs.project.id", gcsProjectId.toString());
+      conf.set("fs.defaultFS", snapshotDir.toString());
+      conf.set("google.cloud.auth.service.account.enable", "true");
+      conf.setClass(
+          "mapreduce.job.inputformat.class", TableSnapshotInputFormat.class, InputFormat.class);
+      conf.setClass("key.class", ImmutableBytesWritable.class, Writable.class);
+      conf.setClass("value.class", Result.class, Object.class);
+      ClientProtos.Scan proto = ProtobufUtil.toScan(new Scan().setBatch(BATCH_SIZE));
+      conf.set(TableInputFormat.SCAN, Base64.encodeBytes(proto.toByteArray()));
+
       // LOG.debug(conf);
       Job job = Job.getInstance(conf); // creates internal clone of hbaseConf
       TableSnapshotInputFormat.setInput(
