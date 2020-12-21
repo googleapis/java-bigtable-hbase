@@ -78,13 +78,13 @@ class HBaseSnapshotInputConfiguration {
       ClientProtos.Scan proto = ProtobufUtil.toScan(new Scan().setBatch(BATCH_SIZE));
       conf.set(TableInputFormat.SCAN, Base64.encodeBytes(proto.toByteArray()));
 
-      this.LOG.debug(conf);
+      // LOG.debug(conf);
       Job job = Job.getInstance(conf); // creates internal clone of hbaseConf
       TableSnapshotInputFormat.setInput(
           job, snapshotName.toString(), new Path(restoreDir.toString()));
       conf = job.getConfiguration(); // extract the modified clone
     } catch (Exception e) {
-      this.LOG.fatal(e);
+      LOG.fatal(e);
     }
     this.hbaseConf = new SerializableConfiguration(conf);
   }
