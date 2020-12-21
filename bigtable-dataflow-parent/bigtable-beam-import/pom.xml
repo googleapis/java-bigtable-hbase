@@ -51,6 +51,10 @@ limitations under the License.
           <groupId>io.opencensus</groupId>
           <artifactId>*</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>io.grpc</groupId>
+          <artifactId>grpc-census</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
