@@ -18,8 +18,6 @@ package com.google.cloud.bigtable.beam.hbasesnapshots;
 import static java.lang.System.*;
 
 import com.google.common.base.Preconditions;
-import org.apache.beam.sdk.io.hadoop.SerializableConfiguration;
-import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -42,34 +40,51 @@ import org.apache.hadoop.mapreduce.Job;
  * hosted in Google Cloud Storage(GCS) bucket via GCS connector. It uses {@link
  * TableSnapshotInputFormat} for reading HBase snapshots.
  */
-class HBaseSnapshotInputConfiguration {
+class HBaseSnapshotInputConfigBuilder {
 
-  private static final Log LOG = LogFactory.getLog(HBaseSnapshotInputConfiguration.class);
+  private static final Log LOG = LogFactory.getLog(HBaseSnapshotInputConfigBuilder.class);
   private static final int BATCH_SIZE = 1000;
 
-  private final SerializableConfiguration hbaseConf;
+  private String projectId;
+  private String exportedSnapshotDir;
+  private String snapshotName;
+  private String restoreDir;
 
-  /**
-   * Constructs a HBase Configuration that could read HBase snapshot files from GCS Bucket.
-   *
-   * @param snapshotDir The path or pattern of the file(s) to read.
-   */
-  HBaseSnapshotInputConfiguration(
-      ValueProvider<String> gcsProjectId,
-      ValueProvider<String> snapshotDir,
-      ValueProvider<String> snapshotName,
-      ValueProvider<String> restoreDir) {
+  public HBaseSnapshotInputConfigBuilder() {}
 
+  public HBaseSnapshotInputConfigBuilder setProjectId(String projectId) {
+    this.projectId = projectId;
+    return this;
+  }
+
+  public HBaseSnapshotInputConfigBuilder setExportedSnapshotDir(String exportedSnapshotDir) {
+    this.exportedSnapshotDir = exportedSnapshotDir;
+    return this;
+  }
+
+  public HBaseSnapshotInputConfigBuilder setSnapshotName(String snapshotName) {
+    this.snapshotName = snapshotName;
+    return this;
+  }
+
+  public HBaseSnapshotInputConfigBuilder setRestoreDir(String restoreDir) {
+    this.restoreDir = restoreDir;
+    return this;
+  }
+
+  public Configuration build() {
+    Preconditions.checkNotNull(projectId);
+    Preconditions.checkNotNull(exportedSnapshotDir);
+    Preconditions.checkNotNull(snapshotName);
     Preconditions.checkArgument(
-        snapshotDir.toString().startsWith("gs://"),
-        "snapshot folder must be hosted in a GCS bucket ");
+        exportedSnapshotDir.startsWith("gs://"), "snapshot folder must be hosted in a GCS bucket ");
 
     Configuration conf = HBaseConfiguration.create();
     try {
-      conf.set("hbase.rootdir", snapshotDir.toString());
+      conf.set("hbase.rootdir", exportedSnapshotDir);
       conf.set("fs.AbstractFileSystem.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS");
-      conf.set("fs.gs.project.id", gcsProjectId.toString());
-      conf.set("fs.defaultFS", snapshotDir.toString());
+      conf.set("fs.gs.project.id", projectId);
+      conf.set("fs.defaultFS", exportedSnapshotDir);
       conf.set("google.cloud.auth.service.account.enable", "true");
       conf.setClass(
           "mapreduce.job.inputformat.class", TableSnapshotInputFormat.class, InputFormat.class);
@@ -80,16 +95,11 @@ class HBaseSnapshotInputConfiguration {
 
       // LOG.debug(conf);
       Job job = Job.getInstance(conf); // creates internal clone of hbaseConf
-      TableSnapshotInputFormat.setInput(
-          job, snapshotName.toString(), new Path(restoreDir.toString()));
-      conf = job.getConfiguration(); // extract the modified clone
+      TableSnapshotInputFormat.setInput(job, snapshotName, new Path(restoreDir));
+      return job.getConfiguration(); // extract the modified clone
     } catch (Exception e) {
       LOG.fatal(e);
     }
-    this.hbaseConf = new SerializableConfiguration(conf);
-  }
-
-  public Configuration getHbaseConf() {
-    return hbaseConf.get();
+    return conf;
   }
 }

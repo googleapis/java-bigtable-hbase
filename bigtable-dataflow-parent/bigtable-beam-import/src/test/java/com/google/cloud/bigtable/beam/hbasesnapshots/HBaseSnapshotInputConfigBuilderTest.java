@@ -17,13 +17,12 @@ package com.google.cloud.bigtable.beam.hbasesnapshots;
 
 import static org.junit.Assert.assertEquals;
 
-import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.mapreduce.TableSnapshotInputFormat;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.junit.Test;
 
-public class HBaseSnapshotInputConfigurationTest {
+public class HBaseSnapshotInputConfigBuilderTest {
 
   private static final String TEST_PROJECT = "test_project";
   private static final String TEST_SNAPSHOT_DIR = "gs://test-bucket/hbase-export";
@@ -31,14 +30,14 @@ public class HBaseSnapshotInputConfigurationTest {
   private static final String TEST_RESTORE_DIR = "gs://test-bucket/hbase-restore";
 
   @Test
-  public void testBuildingHBaseSnapshotInputConfiguration() {
+  public void testBuildingHBaseSnapshotInputConfigBuilder() {
     Configuration conf =
-        new HBaseSnapshotInputConfiguration(
-                ValueProvider.StaticValueProvider.of(TEST_PROJECT),
-                ValueProvider.StaticValueProvider.of(TEST_SNAPSHOT_DIR),
-                ValueProvider.StaticValueProvider.of(TEST_SNAPSHOT_NAME),
-                ValueProvider.StaticValueProvider.of(TEST_RESTORE_DIR))
-            .getHbaseConf();
+        new HBaseSnapshotInputConfigBuilder()
+            .setProjectId(TEST_PROJECT)
+            .setExportedSnapshotDir(TEST_SNAPSHOT_DIR)
+            .setSnapshotName(TEST_SNAPSHOT_NAME)
+            .setRestoreDir(TEST_RESTORE_DIR)
+            .build();
     assertEquals(
         "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS", conf.get("fs.AbstractFileSystem.gs.impl"));
     assertEquals(TEST_PROJECT, conf.get("fs.gs.project.id"));
