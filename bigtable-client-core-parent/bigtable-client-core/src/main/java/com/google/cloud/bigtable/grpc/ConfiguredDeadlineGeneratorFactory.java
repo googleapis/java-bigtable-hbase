@@ -52,8 +52,9 @@ public class ConfiguredDeadlineGeneratorFactory implements DeadlineGeneratorFact
           config.getReadStreamRpcAttemptTimeoutMs(),
           retriable,
           // Streaming reads do not need to specify a fallback deadline, since the Watchdog will
-          // take affect and ensure that hanging does not occur. See
-          // com.google.cloud.bigtable.grpc.io.Watchdog, which handles hanging for streaming reads.
+          // take affect and ensure that unresponsiveness does not occur. See
+          // com.google.cloud.bigtable.grpc.io.Watchdog, which handles unresponsiveness for
+          // streaming reads.
           Optional.<Long>absent());
     } else if (request instanceof MutateRowsRequest) {
       return new DeadlineGeneratorImpl(
@@ -93,7 +94,7 @@ public class ConfiguredDeadlineGeneratorFactory implements DeadlineGeneratorFact
     private final boolean useTimeout;
     private final int requestTimeoutMs;
     private final Optional<Integer> requestAttemptTimeoutMs;
-    /** A fail safe RPC deadline to make sure that operations don't hang. */
+    /** A fail safe RPC deadline to make sure that operations don't stop responding. */
     private final Optional<Long> nonTimeoutFallbackDeadlineMs;
 
     private final Optional<Deadline> operationDeadline;
