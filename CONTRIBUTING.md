@@ -52,7 +52,7 @@ again.
    ```sh
    mvn clean verify \
        -PsequencefileIntegrationTest,beamIntegrationTest \
-       -Dgoogle.dataflow.gcsPath=gs://[your cloud storage path] \
+       -Dgoogle.bigtable.dataflow.gcsPath=gs://[your cloud storage path] \
        -Dgoogle.bigtable.project.id=[your cloud project id] \
        -Dgoogle.bigtable.instance.id=[your cloud bigtable instance id]
    ```

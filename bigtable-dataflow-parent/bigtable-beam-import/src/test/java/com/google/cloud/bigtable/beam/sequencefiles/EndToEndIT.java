@@ -55,7 +55,7 @@ import org.junit.runners.JUnit4;
  * <pre>
  *  -Dgoogle.bigtable.project.id=[bigtable project]
  *  -Dgoogle.bigtable.instance.id=[bigtable instance id]
- *  -Dgoogle.dataflow.gcsPath=gs://[google storage path]
+ *  -Dgoogle.bigtable.dataflow.gcsPath=gs://[google storage path]
  * </pre>
  */
 @RunWith(JUnit4.class)
@@ -65,7 +65,7 @@ public class EndToEndIT {
 
   private static final String projectId = getTestProperty(BigtableOptionsFactory.PROJECT_ID_KEY);
   private static final String instanceId = getTestProperty(BigtableOptionsFactory.INSTANCE_ID_KEY);
-  private static final String gcsPath = getTestProperty("google.dataflow.gcsPath");
+  private static final String gcsPath = getTestProperty("google.bigtable.dataflow.gcsPath");
   private static final String gcsWorkDir = gcsPath + "/" + UUID.randomUUID();
   private static final String stagingLocation = gcsWorkDir + "/staging";
   private static final String tempLocation = gcsWorkDir + "/temp";

@@ -84,7 +84,7 @@ import org.junit.runners.JUnit4;
  * <pre>
  *  -Dgoogle.bigtable.project.id=[bigtable project]
  *  -Dgoogle.bigtable.instance.id=[bigtable instance id]
- *  -Dgoogle.dataflow.gcsPath=gs://[google storage path]
+ *  -Dgoogle.bigtable.dataflow.gcsPath=gs://[google storage path]
  * </pre>
  *
  * <p>Optional parameters, if not provided defaults will be used:
@@ -92,11 +92,11 @@ import org.junit.runners.JUnit4;
  * <pre>
  *  -Dgoogle.bigtable.endpoint.host=[bigtable batch host]
  *  -Dgoogle.bigtable.admin.endpoint.host=[bigtable admin host]
- *  -Dgoogle.dataflow.zoneId=[dataflow zone Id]
- *  -Dgoogle.dataflow.tableName=[table name to be used]
- *  -Dgoogle.dataflow.cell_size=[cell size]
- *  -Dgoogle.dataflow.total_row_count=[number of rows to write and read]
- *  -Dgoogle.dataflow.prefix_count=[cell prefix count]
+ *  -Dgoogle.bigtable.dataflow.zoneId=[dataflow zone Id]
+ *  -Dgoogle.bigtable.dataflow.tableName=[table name to be used]
+ *  -Dgoogle.bigtable.dataflow.cell_size=[cell size]
+ *  -Dgoogle.bigtable.dataflow.total_row_count=[number of rows to write and read]
+ *  -Dgoogle.bigtable.dataflow.prefix_count=[cell prefix count]
  * </pre>
  */
 @RunWith(JUnit4.class)
@@ -111,7 +111,7 @@ public class CloudBigtableBeamITTest {
   private static String stagingLocation;
   private static String tempLocation;
 
-  private static final String zoneId = System.getProperty("google.dataflow.zoneId");
+  private static final String zoneId = System.getProperty("google.bigtable.dataflow.zoneId");
 
   private static final String workerMachineType =
       System.getProperty("workerMachineType", "n1" + "-standard-8");
@@ -120,21 +120,30 @@ public class CloudBigtableBeamITTest {
   private static final String adminEndpoint =
       System.getProperty(BIGTABLE_ADMIN_HOST_KEY, BIGTABLE_ADMIN_HOST_DEFAULT);
   private static final String TABLE_NAME_STR =
-      System.getProperty("google.dataflow.tableName", "BeamCloudBigtableIOIntegrationTest");
+      System.getProperty(
+          "google.bigtable.dataflow.tableName", "BeamCloudBigtableIOIntegrationTest");
 
   private static final TableName TABLE_NAME = TableName.valueOf(TABLE_NAME_STR);
-  private static final byte[] FAMILY = Bytes.toBytes("google.dataflow.test-family");
+  private static final byte[] FAMILY = Bytes.toBytes("test-family");
   private static final byte[] QUALIFIER = Bytes.toBytes("test-qualifier");
-  private static final int CELL_SIZE = Integer.getInteger("google.dataflow.cell_size", 1_000);
+  private static final int CELL_SIZE_FALLBACK =
+      Integer.getInteger("google.dataflow.cell_size", 1_000);
+  private static final int CELL_SIZE =
+      Integer.getInteger("google.bigtable.dataflow.cell_size", CELL_SIZE_FALLBACK);
+  private static final long TOTAL_ROW_COUNT_FALLBACK =
+      Long.getLong("google.dataflow.total_row_count", 1_000_000);
   private static final long TOTAL_ROW_COUNT =
-      Integer.getInteger("google.dataflow.total_row_count", 1_000_000);
-  private static final int PREFIX_COUNT = Integer.getInteger("google.dataflow.prefix_count", 1_000);
+      Long.getLong("google.bigtable.dataflow.total_row_count", TOTAL_ROW_COUNT_FALLBACK);
+  private static final int PREFIX_COUNT_FALLBACK =
+      Integer.getInteger("google.dataflow.prefix_count", 1_000);
+  private static final int PREFIX_COUNT =
+      Integer.getInteger("google.bigtable.dataflow.prefix_count", PREFIX_COUNT_FALLBACK);
 
   @BeforeClass
   public static void setUpConfiguration() {
     projectId = TestHelper.getTestProperty(PROJECT_ID_KEY);
     instanceId = TestHelper.getTestProperty(INSTANCE_ID_KEY);
-    gcsPath = TestHelper.getTestProperty("google.dataflow.gcsPath");
+    gcsPath = TestHelper.getTestProperty("google.bigtable.dataflow.gcsPath");
     gcsWorkDir = gcsPath + "/" + UUID.randomUUID().toString();
     stagingLocation = gcsWorkDir + "/staging";
     tempLocation = gcsWorkDir + "/temp";
