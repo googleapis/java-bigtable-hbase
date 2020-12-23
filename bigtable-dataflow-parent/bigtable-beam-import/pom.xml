@@ -34,12 +34,12 @@ limitations under the License.
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-api</artifactId>
-        <version>1.29.0</version>
+        <version>${beam-grpc.version}</version>
       </dependency>
       <dependency>
         <groupId>io.grpc</groupId>
         <artifactId>grpc-core</artifactId>
-        <version>1.29.0</version>
+        <version>${beam-grpc.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
