@@ -33,9 +33,13 @@ limitations under the License.
     <dependencies>
       <dependency>
         <groupId>io.grpc</groupId>
+        <artifactId>grpc-api</artifactId>
+        <version>1.29.0</version>
+      </dependency>
+      <dependency>
+        <groupId>io.grpc</groupId>
         <artifactId>grpc-core</artifactId>
         <version>1.29.0</version>
-        <scope>import</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -62,10 +66,6 @@ limitations under the License.
         <exclusion>
           <groupId>io.opencensus</groupId>
           <artifactId>*</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>io.grpc</groupId>
-          <artifactId>grpc-census</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -116,18 +116,6 @@ limitations under the License.
         <exclusion>
           <groupId>com.google.cloud.bigtable</groupId>
           <artifactId>bigtable-client-core</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.google.cloud</groupId>
-          <artifactId>google-cloud-spanner</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>io.grpc</groupId>
-          <artifactId>grpc-grpclb</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>io.grpc</groupId>
-          <artifactId>grpc-netty</artifactId>
         </exclusion>
         <exclusion>
           <groupId>com.google.api.grpc</groupId>
