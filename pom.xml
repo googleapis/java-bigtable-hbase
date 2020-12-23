@@ -81,7 +81,7 @@ limitations under the License.
     <guava.version>30.1-android</guava.version>
     <beam-guava.version>20.0</beam-guava.version>
     <beam-auto-value.version>1.7.4</beam-auto-value.version>
-    <beam-grpc.version>1.29.0</beam-grpc.version>
+    <beam-grpc.version>1.34.1</beam-grpc.version>
 
     <!-- Benchmarks related dependencies -->
     <jmh.version>1.27</jmh.version>
