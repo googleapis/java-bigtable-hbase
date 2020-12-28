@@ -678,17 +678,17 @@ public class CloudBigtableIO {
     }
 
     @VisibleForTesting
-    void setSession(BigtableSession session) {
+    protected void setSession(BigtableSession session) {
       this.session = session;
     }
 
     @VisibleForTesting
-    void setScanner(ResultScanner<FlatRow> scanner) {
+    protected void setScanner(ResultScanner<FlatRow> scanner) {
       this.scanner = scanner;
     }
 
     @VisibleForTesting
-    ByteKeyRangeTracker getRangeTracker() {
+    public ByteKeyRangeTracker getRangeTracker() {
       return rangeTracker;
     }
 
