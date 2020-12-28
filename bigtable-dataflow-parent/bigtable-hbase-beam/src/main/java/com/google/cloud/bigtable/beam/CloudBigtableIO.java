@@ -678,17 +678,17 @@ public class CloudBigtableIO {
     }
 
     @VisibleForTesting
-    protected void setSession(BigtableSession session) {
+    void setSession(BigtableSession session) {
       this.session = session;
     }
 
     @VisibleForTesting
-    protected void setScanner(ResultScanner<FlatRow> scanner) {
+    void setScanner(ResultScanner<FlatRow> scanner) {
       this.scanner = scanner;
     }
 
     @VisibleForTesting
-    public ByteKeyRangeTracker getRangeTracker() {
+    ByteKeyRangeTracker getRangeTracker() {
       return rangeTracker;
     }
 
@@ -698,6 +698,10 @@ public class CloudBigtableIO {
       if (scanner != null) {
         scanner.close();
         scanner = null;
+      }
+      if (session != null) {
+        session.close();
+        session = null;
       }
       long totalOps = getRowsReadCount();
       long elapsedTimeMs = System.currentTimeMillis() - workStart;
