@@ -35,6 +35,8 @@ need python 3.6+ to run this tool.
 
 4. Promote or drop the staged repository.
 
+Be sure to again use the tag as the commitish (ie `v.1.17.0`)
+
    a. To publish the staged repository, trigger the `java-bigtable-hbase/release/promote` Kokoro job for
      each staging repository. To specify the staging repository, add an environment variable
      configuration with `STAGING_REPOSITORY_ID=<staging repository id>` from the UI.
