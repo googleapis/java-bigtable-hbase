@@ -29,6 +29,7 @@ import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.Row;
 import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
+import com.google.cloud.bigtable.config.CallOptionsConfig;
 import com.google.cloud.bigtable.grpc.scanner.FlatRow;
 import com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.cloud.bigtable.grpc.scanner.ScanHandler;
@@ -130,7 +131,24 @@ public interface BigtableDataClient {
   ListenableFuture<List<SampleRowKeysResponse>> sampleRowKeysAsync(SampleRowKeysRequest request);
 
   /**
-   * Perform a scan over {@link Row}s, in key order.
+   * Perform a scan over {@link Row}s, in key order. The returned stream necessary comprises
+   * <b>all</b> rows which are available for the moment of the call and satisfy the given {@code
+   * request}. If an RPC call exceeds timeout but some available rows are not consumed by the stream
+   * another attempt will be performed if total timeout is not hit and the maximum number of retries
+   * is not reached.
+   *
+   * <p>The following links point on the relative options which are used to configure {@code
+   * readRows}:
+   *
+   * <ul>
+   *   <li>{@link com.google.cloud.bigtable.config.RetryOptions#getReadPartialRowTimeoutMillis}
+   *   <li>{@link com.google.cloud.bigtable.config.RetryOptions#getMaxScanTimeoutRetries}
+   *   <li>{@link com.google.cloud.bigtable.config.RetryOptions#getInitialBackoffMillis}
+   *   <li>{@link com.google.cloud.bigtable.config.RetryOptions#getBackoffMultiplier}
+   *   <li>{@link com.google.cloud.bigtable.config.RetryOptions#getMaxElapsedBackoffMillis}
+   *   <li>{@link CallOptionsConfig#isUseTimeout()}
+   *   <li>{@link CallOptionsConfig#getReadStreamRpcTimeoutMs()}
+   * </ul>
    *
    * @param request a {@link com.google.bigtable.v2.ReadRowsRequest} object.
    * @return a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner} object.
