@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,6 +33,7 @@ import java.util.regex.Pattern;
 import org.apache.hadoop.hbase.CacheEvictionStats;
 import org.apache.hadoop.hbase.ClusterMetrics;
 import org.apache.hadoop.hbase.ClusterMetrics.Option;
+import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
@@ -832,5 +834,20 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public Future<Void> updateReplicationPeerConfigAsync(
       String s, ReplicationPeerConfig replicationPeerConfig) {
     throw new UnsupportedOperationException("updateReplicationPeerConfigAsync"); // TODO
+  }
+
+  @Override
+  public ClusterStatus getClusterStatus() throws IOException {
+    return new ClusterStatus(
+        "hbaseVersion",
+        "clusterid",
+        new HashMap(),
+        new ArrayList(),
+        null,
+        new ArrayList(),
+        new ArrayList(),
+        new String[0],
+        false,
+        -1);
   }
 }

@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase1_x;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import com.google.bigtable.admin.v2.BigtableTableAdminGrpc;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
@@ -34,6 +35,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.concurrent.ArrayBlockingQueue;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.TableName;
 import org.junit.After;
 import org.junit.Before;
@@ -128,5 +130,12 @@ public class TestBigtableAdmin {
         }
       };
     }
+  }
+
+  @Test
+  public void testGetClusterStatus() throws IOException {
+    // test to verify compatibility between 1x and 2x
+    ClusterStatus status = admin.getClusterStatus();
+    assertNotNull(status);
   }
 }

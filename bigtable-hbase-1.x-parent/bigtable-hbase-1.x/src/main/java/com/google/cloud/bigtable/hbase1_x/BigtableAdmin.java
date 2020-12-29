@@ -17,9 +17,12 @@ package com.google.cloud.bigtable.hbase1_x;
 
 import com.google.api.core.InternalApi;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.regex.Pattern;
+import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.ProcedureInfo;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableExistsException;
@@ -257,5 +260,15 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public boolean[] setSplitOrMergeEnabled(boolean arg0, boolean arg1, MasterSwitchType... arg2)
       throws IOException {
     throw new UnsupportedOperationException("setSplitOrMergeEnabled"); // TODO
+  }
+
+  @Override
+  public ClusterStatus getClusterStatus() throws IOException {
+    return new ClusterStatus() {
+      @Override
+      public Collection<ServerName> getServers() {
+        return Collections.emptyList();
+      }
+    };
   }
 }
