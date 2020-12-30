@@ -25,8 +25,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
-import org.apache.beam.runners.direct.DirectRunner;
 import org.apache.beam.sdk.PipelineResult.State;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
 import org.apache.beam.sdk.extensions.gcp.util.GcsUtil;
@@ -64,6 +64,7 @@ public class EndToEndIT {
   private static final String TEST_SNAPSHOT_NAME = "test-snapshot";
   // Location of test data hosted on Google Cloud Storage, for on-cloud dataflow tests.
   private static final String CLOUD_TEST_DATA_FOLDER = "cloud.test.data.folder";
+  private static final String DATAFLOW_REGION = "region";
 
   // Column family name used in all test bigtables.
   private static final String CF = "cf";
@@ -75,6 +76,7 @@ public class EndToEndIT {
   private String projectId;
   private String instanceId;
   private String tableId;
+  private String region;
 
   private GcsUtil gcsUtil;
   private String dataflowStagingLocation;
@@ -90,6 +92,7 @@ public class EndToEndIT {
     projectId = getTestProperty(BigtableOptionsFactory.PROJECT_ID_KEY);
     instanceId = getTestProperty(BigtableOptionsFactory.INSTANCE_ID_KEY);
     dataflowStagingLocation = getTestProperty(GOOGLE_DATAFLOW_STAGING_LOCATION);
+    region = getTestProperty(DATAFLOW_REGION);
     String cloudTestDataFolder = getTestProperty(CLOUD_TEST_DATA_FOLDER);
     if (!cloudTestDataFolder.endsWith(File.separator)) {
       cloudTestDataFolder = cloudTestDataFolder + File.separator;
@@ -159,10 +162,11 @@ public class EndToEndIT {
       System.out.println("DEBUG (import snapshot) ==>");
       DataflowPipelineOptions importPipelineOpts =
           PipelineOptionsFactory.as(DataflowPipelineOptions.class);
-      importPipelineOpts.setRunner(DirectRunner.class);
+      importPipelineOpts.setRunner(DataflowRunner.class);
       importPipelineOpts.setGcpTempLocation(dataflowStagingLocation);
       importPipelineOpts.setNumWorkers(1);
       importPipelineOpts.setProject(projectId);
+      importPipelineOpts.setRegion(region);
 
       ImportJobFromHbaseSnapshot.ImportOptions importOpts =
           importPipelineOpts.as(ImportJobFromHbaseSnapshot.ImportOptions.class);
