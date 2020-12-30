@@ -77,6 +77,13 @@ limitations under the License.
     </dependency>
     <dependency>
       <groupId>org.apache.beam</groupId>
+      <artifactId>
+        beam-sdks-java-extensions-google-cloud-platform-core
+      </artifactId>
+      <version>${beam.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-io-hadoop-common</artifactId>
       <version>${beam.version}</version>
     </dependency>
