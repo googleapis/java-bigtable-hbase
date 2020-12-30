@@ -177,9 +177,10 @@ public class EndToEndIT {
       importOpts.setBigtableAppProfileId(null);
 
       // setup Hbase snapshot info
-      importOpts.setHbaseRootDir(StaticValueProvider.of(hbaseSnapshotDir));
-      importOpts.setRestoreDir(StaticValueProvider.of(restoreDir));
-      importOpts.setSnapshotName(StaticValueProvider.of(TEST_SNAPSHOT_NAME));
+      importOpts.setGcsProject(projectId);
+      importOpts.setHbaseRootDir(hbaseSnapshotDir);
+      importOpts.setRestoreDir(restoreDir);
+      importOpts.setSnapshotName(TEST_SNAPSHOT_NAME);
 
       // run pipeline
       State state = ImportJobFromHbaseSnapshot.buildPipeline(importOpts).run().waitUntilFinish();

@@ -29,7 +29,6 @@ import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
-import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.PCollection;
@@ -90,23 +89,29 @@ public class ImportJobFromHbaseSnapshot {
   private static final Log LOG = LogFactory.getLog(ImportJobFromHbaseSnapshot.class);
 
   public interface ImportOptions extends ImportJob.ImportOptions {
-    @Description("The HBase root dir where HBase snapshot files resides.")
-    ValueProvider<String> getHbaseRootDir();
+    @Description("The GCP project id for the GCS bucket")
+    String getGcsProject();
 
     @SuppressWarnings("unused")
-    void setHbaseRootDir(ValueProvider<String> hbaseRootDir);
+    void setGcsProject(String gcsProjectId);
+
+    @Description("The HBase root dir where HBase snapshot files resides.")
+    String getHbaseRootDir();
+
+    @SuppressWarnings("unused")
+    void setHbaseRootDir(String hbaseRootDir);
 
     @Description("Temp location for restoring snapshots")
-    ValueProvider<String> getRestoreDir();
+    String getRestoreDir();
 
     @SuppressWarnings("unused")
-    void setRestoreDir(ValueProvider<String> restoreDir);
+    void setRestoreDir(String restoreDir);
 
     @Description("Snapshot name")
-    ValueProvider<String> getSnapshotName();
+    String getSnapshotName();
 
     @SuppressWarnings("unused")
-    void setSnapshotName(ValueProvider<String> snapshotName);
+    void setSnapshotName(String snapshotName);
   }
 
   public static void main(String[] args) {
@@ -135,10 +140,10 @@ public class ImportJobFromHbaseSnapshot {
             HadoopFormatIO.<ImmutableBytesWritable, Result>read()
                 .withConfiguration(
                     new HBaseSnapshotInputConfigBuilder()
-                        .setProjectId(opts.getBigtableProject().get())
-                        .setExportedSnapshotDir(opts.getHbaseRootDir().get())
-                        .setSnapshotName(opts.getSnapshotName().get())
-                        .setRestoreDir(opts.getRestoreDir().get())
+                        .setProjectId(opts.getGcsProject())
+                        .setExportedSnapshotDir(opts.getHbaseRootDir())
+                        .setSnapshotName(opts.getSnapshotName())
+                        .setRestoreDir(opts.getRestoreDir())
                         .build()))
         .apply("Create Mutations", ParDo.of(new HBaseResultToMutationFn()))
         .apply("Write to Bigtable", createSink(opts));
