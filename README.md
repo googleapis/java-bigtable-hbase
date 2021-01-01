@@ -162,7 +162,7 @@ public class OpenCensusExample {
         );
         
         // Then register your gRPC views in OpenCensus.
-        RpcViews.registerBigtableClientViews();
+        RpcViews.registerClientGrpcViews();
     }
 }
 ```
