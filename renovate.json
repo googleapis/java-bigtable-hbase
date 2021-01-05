@@ -66,6 +66,22 @@
         "^com.fasterxml.jackson.core"
       ],
       "groupName": "jackson dependencies"
+    },
+    {
+      "packagePatterns": ["^beam-auto-value.version"],
+      "enabled": false
+    },
+    {
+      "packagePatterns": ["^beam-grpc.version"],
+      "enabled": false
+    },
+    {
+      "packagePatterns": ["^beam-guava.version"],
+      "enabled": false
+    },
+    {
+      "packagePatterns": ["^com.google.cloud.bigtable"],
+      "enabled": false
     }
   ],
   "semanticCommits": true,
