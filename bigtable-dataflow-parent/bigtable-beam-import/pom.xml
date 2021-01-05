@@ -33,13 +33,10 @@ limitations under the License.
     <dependencies>
       <dependency>
         <groupId>io.grpc</groupId>
-        <artifactId>grpc-api</artifactId>
+        <artifactId>grpc-bom</artifactId>
         <version>${beam-grpc.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.grpc</groupId>
-        <artifactId>grpc-core</artifactId>
-        <version>${beam-grpc.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
