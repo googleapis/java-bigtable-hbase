@@ -22,7 +22,6 @@ import com.google.cloud.bigtable.beam.TemplateUtils;
 import com.google.cloud.bigtable.beam.sequencefiles.HBaseResultToMutationFn;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob;
 import com.google.cloud.bigtable.beam.sequencefiles.Utils;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
@@ -128,11 +127,6 @@ public class ImportJobFromHbaseSnapshot {
 
   static PTransform<PCollection<Mutation>, PDone> createSink(ImportOptions opts) {
     CloudBigtableTableConfiguration config = TemplateUtils.BuildImportConfig(opts);
-    config =
-        config
-            .toBuilder()
-            .withConfiguration(BigtableOptionsFactory.BIGTABLE_BULK_AUTOFLUSH_MS_KEY, "0")
-            .build();
     return CloudBigtableIO.writeToTable(config);
   }
 }
