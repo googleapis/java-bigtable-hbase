@@ -67,6 +67,10 @@ limitations under the License.
           <groupId>io.opencensus</groupId>
           <artifactId>*</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-shaded-client</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
@@ -91,12 +95,6 @@ limitations under the License.
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-io-hadoop-format</artifactId>
       <version>${beam.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-client</artifactId>
-      <version>${hbase.version}</version>
     </dependency>
 
     <!-- For HBase 2.x, this should be hbase-mapreduce
