@@ -80,6 +80,14 @@
       "enabled": false
     },
     {
+      "packagePatterns": ["^hbase1-hadoop.version"],
+      "enabled": false
+    },
+    {
+      "packagePatterns": ["^hbase2-hadoop.version"],
+      "enabled": false
+    },
+    {
       "packagePatterns": ["^com.google.cloud.bigtable"],
       "enabled": false
     }
