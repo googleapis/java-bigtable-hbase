@@ -46,18 +46,18 @@ Note: Please use [google-cloud-bigtable][google-cloud-bigtable] to access Bigtab
   <dependency>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>1.18.0</version>
+    <version>1.15.0</version>
   </dependency>
   ```
 
   Gradle:
   ```Groovy
-  compile 'com.google.cloud.bigtable:bigtable-hbase-1.x:1.18.0'
+  compile 'com.google.cloud.bigtable:bigtable-hbase-1.x:1.15.0'
   ```
 
   SBT:
   ```Scala
-  libraryDependencies += "com.google.cloud.bigtable" % "bigtable-hbase-1.x" % "1.18.0"
+  libraryDependencies += "com.google.cloud.bigtable" % "bigtable-hbase-1.x" % "1.15.0"
   ```
 [//]: # ({x-version-update-end})
 * Refer to the [Java samples documentation](https://cloud.google.com/bigtable/docs/samples) for detailed demonstrations of how to read and write data with Cloud Bigtable. The code for these samples is available in the [Cloud Bigtable examples project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples).
@@ -81,18 +81,18 @@ If you are _not_ using the shaded Bigtable HBase Client artifact, you need to de
 <dependency>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>1.18.0</version>
+    <version>1.15.0</version>
 </dependency>
 <dependency>
     <groupId>io.opencensus</groupId>
     <artifactId>opencensus-impl</artifactId>
-    <version>0.24.0</version>
+    <version>1.15.0</version>
     <scope>runtime</scope>
 </dependency>
 <dependency>
     <groupId>io.opencensus</groupId>
     <artifactId>opencensus-exporter-stats-stackdriver</artifactId>
-    <version>0.24.0</version>
+    <version>1.15.0</version>
     <exclusions>
         <exclusion>
             <groupId>io.grpc</groupId>
@@ -114,7 +114,7 @@ shaded artifact; i.e. nothing additional for you to do.
 <dependency>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x-shaded</artifactId>
-    <version>1.18.0</version>
+    <version>1.15.0</version>
 </dependency>
 ```
 [//]: # ({x-version-update-end})
@@ -193,18 +193,18 @@ If you are _not_ using the shaded Bigtable HBase Client artifact, you need to de
 <dependency>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>1.18.0</version>
+    <version>1.15.0</version>
 </dependency>
 <dependency>
     <groupId>io.opencensus</groupId>
     <artifactId>opencensus-impl</artifactId>
-    <version>0.24.0</version>
+    <version>1.15.0</version>
     <scope>runtime</scope>
 </dependency>
 <dependency>
     <groupId>io.opencensus</groupId>
     <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
-    <version>0.24.0</version>
+    <version>1.15.0</version>
     <exclusions>
         <exclusion>
             <groupId>io.grpc</groupId>
@@ -226,7 +226,7 @@ shaded artifact; i.e. nothing additional for you to do.
 <dependency>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x-shaded</artifactId>
-    <version>1.18.0</version>
+    <version>1.15.0</version>
 </dependency>
 ```
 [//]: # ({x-version-update-end})
