@@ -15,8 +15,6 @@
  */
 package com.google.cloud.bigtable.beam.hbasesnapshots;
 
-import static java.lang.System.*;
-
 import com.google.common.base.Preconditions;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -52,21 +50,34 @@ class HBaseSnapshotInputConfigBuilder {
 
   public HBaseSnapshotInputConfigBuilder() {}
 
+  /*
+   * Set the project id use to access the GCS bucket with HBase snapshot data to be imported
+   */
   public HBaseSnapshotInputConfigBuilder setProjectId(String projectId) {
     this.projectId = projectId;
     return this;
   }
 
+  /*
+   * Set the GCS path where the HBase snapshot data is located
+   */
   public HBaseSnapshotInputConfigBuilder setExportedSnapshotDir(String exportedSnapshotDir) {
     this.exportedSnapshotDir = exportedSnapshotDir;
     return this;
   }
 
+  /*
+   * Set the name of the snapshot to be imported
+   */
   public HBaseSnapshotInputConfigBuilder setSnapshotName(String snapshotName) {
     this.snapshotName = snapshotName;
     return this;
   }
 
+  /*
+   * Set the temporal GCS path used by TableSnapshotInputFormat while reading the HBase snapshot
+   * This path should not be under {@code exportedSnapshotDir}
+   */
   public HBaseSnapshotInputConfigBuilder setRestoreDir(String restoreDir) {
     this.restoreDir = restoreDir;
     return this;
@@ -76,7 +87,7 @@ class HBaseSnapshotInputConfigBuilder {
     Preconditions.checkNotNull(projectId);
     Preconditions.checkNotNull(exportedSnapshotDir);
     Preconditions.checkNotNull(snapshotName);
-    Preconditions.checkArgument(
+    Preconditions.checkState(
         exportedSnapshotDir.startsWith("gs://"), "snapshot folder must be hosted in a GCS bucket ");
 
     Configuration conf = HBaseConfiguration.create();
@@ -93,7 +104,6 @@ class HBaseSnapshotInputConfigBuilder {
       ClientProtos.Scan proto = ProtobufUtil.toScan(new Scan().setBatch(BATCH_SIZE));
       conf.set(TableInputFormat.SCAN, Base64.encodeBytes(proto.toByteArray()));
 
-      // LOG.debug(conf);
       Job job = Job.getInstance(conf); // creates internal clone of hbaseConf
       TableSnapshotInputFormat.setInput(job, snapshotName, new Path(restoreDir));
       return job.getConfiguration(); // extract the modified clone

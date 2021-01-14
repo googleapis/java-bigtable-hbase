@@ -75,7 +75,7 @@ public class ImportJobFromHbaseSnapshot {
     @SuppressWarnings("unused")
     void setHbaseRootDir(String hbaseRootDir);
 
-    @Description("Temp location for restoring snapshots")
+    @Description("Temporal location for restoring snapshots")
     String getRestoreDir();
 
     @SuppressWarnings("unused")

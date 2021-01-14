@@ -148,51 +148,49 @@ public class EndToEndIT {
   @Test
   public void testHBaseSnapshotImport() throws Exception {
 
-    try (Connection connection = BigtableConfiguration.connect(projectId, instanceId)) {
-      // Crete table
-      System.out.println("DEBUG (create test table) ==>");
-      TableName tableName = TableName.valueOf(tableId);
-      HTableDescriptor descriptor = new HTableDescriptor(tableName);
+    // Crete table
+    System.out.println("DEBUG (create test table) ==>");
+    TableName tableName = TableName.valueOf(tableId);
+    HTableDescriptor descriptor = new HTableDescriptor(tableName);
 
-      descriptor.addFamily(new HColumnDescriptor(CF));
+    descriptor.addFamily(new HColumnDescriptor(CF));
 
-      connection.getAdmin().createTable(descriptor, SnapshotTestingUtils.getSplitKeys());
+    connection.getAdmin().createTable(descriptor, SnapshotTestingUtils.getSplitKeys());
 
-      // Start import
-      System.out.println("DEBUG (import snapshot) ==>");
-      DataflowPipelineOptions importPipelineOpts =
-          PipelineOptionsFactory.as(DataflowPipelineOptions.class);
-      importPipelineOpts.setRunner(DataflowRunner.class);
-      importPipelineOpts.setGcpTempLocation(dataflowStagingLocation);
-      importPipelineOpts.setNumWorkers(1);
-      importPipelineOpts.setProject(projectId);
-      importPipelineOpts.setRegion(region);
+    // Start import
+    System.out.println("DEBUG (import snapshot) ==>");
+    DataflowPipelineOptions importPipelineOpts =
+        PipelineOptionsFactory.as(DataflowPipelineOptions.class);
+    importPipelineOpts.setRunner(DataflowRunner.class);
+    importPipelineOpts.setGcpTempLocation(dataflowStagingLocation);
+    importPipelineOpts.setNumWorkers(1);
+    importPipelineOpts.setProject(projectId);
+    importPipelineOpts.setRegion(region);
 
-      ImportJobFromHbaseSnapshot.ImportOptions importOpts =
-          importPipelineOpts.as(ImportJobFromHbaseSnapshot.ImportOptions.class);
-      // setup GCP and bigtable
-      importOpts.setBigtableProject(StaticValueProvider.of(projectId));
-      importOpts.setBigtableInstanceId(StaticValueProvider.of(instanceId));
-      importOpts.setBigtableTableId(StaticValueProvider.of(tableId));
-      importOpts.setBigtableAppProfileId(null);
+    ImportJobFromHbaseSnapshot.ImportOptions importOpts =
+        importPipelineOpts.as(ImportJobFromHbaseSnapshot.ImportOptions.class);
 
-      // setup Hbase snapshot info
-      importOpts.setGcsProject(projectId);
-      importOpts.setHbaseRootDir(hbaseSnapshotDir);
-      importOpts.setRestoreDir(restoreDir);
-      importOpts.setSnapshotName(TEST_SNAPSHOT_NAME);
+    // setup GCP and bigtable
+    importOpts.setBigtableProject(StaticValueProvider.of(projectId));
+    importOpts.setBigtableInstanceId(StaticValueProvider.of(instanceId));
+    importOpts.setBigtableTableId(StaticValueProvider.of(tableId));
 
-      // run pipeline
-      State state = ImportJobFromHbaseSnapshot.buildPipeline(importOpts).run().waitUntilFinish();
-      Assert.assertEquals(State.DONE, state);
+    // setup HBase snapshot info
+    importOpts.setGcsProject(projectId);
+    importOpts.setHbaseRootDir(hbaseSnapshotDir);
+    importOpts.setRestoreDir(restoreDir);
+    importOpts.setSnapshotName(TEST_SNAPSHOT_NAME);
 
-      // check data in bigtable
-      BigtableTableUtils destTable = new BigtableTableUtils(connection, tableId, CF);
-      Assert.assertEquals(
-          100 /* There are 100 rows in test snapshot*/,
-          destTable.readAllCellsFromTable().toArray().length);
+    // run pipeline
+    State state = ImportJobFromHbaseSnapshot.buildPipeline(importOpts).run().waitUntilFinish();
+    Assert.assertEquals(State.DONE, state);
 
-      // TODO(vermas2012): Add more validations after this.
-    }
+    // check data in bigtable
+    BigtableTableUtils destTable = new BigtableTableUtils(connection, tableId, CF);
+    Assert.assertEquals(
+        100 /* There are 100 rows in test snapshot*/,
+        destTable.readAllCellsFromTable().toArray().length);
+
+    // TODO(vermas2012): Add more validations after this.
   }
 }
