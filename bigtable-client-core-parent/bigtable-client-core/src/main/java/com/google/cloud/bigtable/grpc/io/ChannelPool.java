@@ -53,9 +53,6 @@ public class ChannelPool extends ManagedChannel {
   private static final Key<String> CHANNEL_ID_KEY =
       Key.of("bigtable-channel-id", Metadata.ASCII_STRING_MARSHALLER);
 
-  private static final Key<String> CHANNEL_LOG_ID_KEY =
-      Key.of("grpc-channel-id", Metadata.ASCII_STRING_MARSHALLER);
-
   /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public static final String extractIdentifier(Metadata trailers) {
