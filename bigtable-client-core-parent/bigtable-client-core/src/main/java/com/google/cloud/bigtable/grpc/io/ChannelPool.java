@@ -53,6 +53,9 @@ public class ChannelPool extends ManagedChannel {
   private static final Key<String> CHANNEL_ID_KEY =
       Key.of("bigtable-channel-id", Metadata.ASCII_STRING_MARSHALLER);
 
+  private static final Key<String> CHANNEL_LOG_ID_KEY =
+      Key.of("grpc-channel-id", Metadata.ASCII_STRING_MARSHALLER);
+
   /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public static final String extractIdentifier(Metadata trailers) {
@@ -198,8 +201,9 @@ public class ChannelPool extends ManagedChannel {
         public void onClose(Status status, Metadata trailers) {
           try {
             if (trailers != null) {
-              // Be extra defensive since this is only used for logging
-              trailers.put(CHANNEL_ID_KEY, Integer.toString(channelId));
+              trailers.put(
+                  CHANNEL_ID_KEY,
+                  String.format("{cbt:%d,grpc:%s}", channelId, InstrumentedChannel.this.delegate));
             }
             if (!decremented.getAndSet(true)) {
               getStats().ACTIVE_RPC_COUNTER.dec();
