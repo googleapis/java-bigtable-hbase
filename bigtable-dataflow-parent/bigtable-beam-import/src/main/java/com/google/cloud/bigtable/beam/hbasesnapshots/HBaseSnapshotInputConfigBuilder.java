@@ -68,6 +68,9 @@ class HBaseSnapshotInputConfigBuilder {
 
   /*
    * Set the name of the snapshot to be imported
+   * e.g when importing snapshot 'gs://<your-gcs-path>/hbase-export/table_snapshot'
+   * put 'table_snapshot' as the {@code snapshotName}
+   * and 'gs://<your-gcs-path>/hbase-export' as {@code exportedSnapshotDir}
    */
   public HBaseSnapshotInputConfigBuilder setSnapshotName(String snapshotName) {
     this.snapshotName = snapshotName;
@@ -75,7 +78,7 @@ class HBaseSnapshotInputConfigBuilder {
   }
 
   /*
-   * Set the temporal GCS path used by TableSnapshotInputFormat while reading the HBase snapshot
+   * Set the temporary restore GCS path used by TableSnapshotInputFormat while reading the HBase snapshot
    * This path should not be under {@code exportedSnapshotDir}
    */
   public HBaseSnapshotInputConfigBuilder setRestoreDir(String restoreDir) {
