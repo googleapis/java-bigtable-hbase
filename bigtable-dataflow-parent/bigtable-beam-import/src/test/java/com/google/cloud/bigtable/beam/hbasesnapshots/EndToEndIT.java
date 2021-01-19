@@ -33,6 +33,8 @@ import org.apache.beam.sdk.extensions.gcp.util.GcsUtil;
 import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -61,6 +63,7 @@ import org.junit.Test;
  */
 public class EndToEndIT {
 
+  private final Log LOG = LogFactory.getLog(getClass());
   private static final String TEST_SNAPSHOT_NAME = "test-snapshot";
   // Location of test data hosted on Google Cloud Storage, for on-cloud dataflow tests.
   private static final String CLOUD_TEST_DATA_FOLDER = "cloud.test.data.folder";
@@ -111,7 +114,7 @@ public class EndToEndIT {
     connection = BigtableConfiguration.connect(projectId, instanceId);
     tableId = "test_" + UUID.randomUUID().toString();
 
-    System.out.println("Setting up integration tests");
+    LOG.info("Setting up integration tests");
 
     String[] keys = new String[] {"1", "2", "3", "4", "5", "6", "7", "8", "9"};
     keySplits = new byte[keys.length][];
@@ -149,7 +152,7 @@ public class EndToEndIT {
   public void testHBaseSnapshotImport() throws Exception {
 
     // Crete table
-    System.out.println("DEBUG (create test table) ==>");
+    LOG.debug("DEBUG (create test table) ==>");
     TableName tableName = TableName.valueOf(tableId);
     HTableDescriptor descriptor = new HTableDescriptor(tableName);
 
@@ -158,7 +161,7 @@ public class EndToEndIT {
     connection.getAdmin().createTable(descriptor, SnapshotTestingUtils.getSplitKeys());
 
     // Start import
-    System.out.println("DEBUG (import snapshot) ==>");
+    LOG.debug("DEBUG (import snapshot) ==>");
     DataflowPipelineOptions importPipelineOpts =
         PipelineOptionsFactory.as(DataflowPipelineOptions.class);
     importPipelineOpts.setRunner(DataflowRunner.class);
