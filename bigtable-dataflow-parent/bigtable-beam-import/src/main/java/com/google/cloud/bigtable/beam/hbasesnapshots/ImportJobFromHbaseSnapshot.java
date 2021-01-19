@@ -53,8 +53,7 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
  *                --project=$PROJECT \
  *                --bigtableInstanceId=$INSTANCE \
  *                --bigtableTableId=$TABLE \
- *                --gcsProject=$PROJECT \
- *                --hbaseRootDir=gs://$HBASE_EXPORT_ROOT_PATH \
+ *                --hbaseSnapshotSourceDir=gs://$HBASE_EXPORT_ROOT_PATH \
  *                --snapshotName=$SNAPSHOT_NAME  \
  *                --restoreDir=gs://$RESTORE_PATH
  * </pre>
