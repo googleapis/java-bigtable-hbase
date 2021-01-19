@@ -65,10 +65,10 @@ public class ImportJobFromHbaseSnapshot {
 
   public interface ImportOptions extends ImportJob.ImportOptions {
     @Description("The HBase root dir where HBase snapshot files resides.")
-    String getHbaseRootDir();
+    String getHbaseSnapshotSourceDir();
 
     @SuppressWarnings("unused")
-    void setHbaseRootDir(String hbaseRootDir);
+    void setHbaseSnapshotSourceDir(String hbaseSnapshotSourceDir);
 
     @Description("Temporal location for restoring snapshots")
     String getRestoreDir();
@@ -108,7 +108,7 @@ public class ImportJobFromHbaseSnapshot {
       Configuration configuration =
           new HBaseSnapshotInputConfigBuilder()
               .setProjectId(opts.getProject())
-              .setExportedSnapshotDir(opts.getHbaseRootDir())
+              .setHbaseSnapshotSourceDir(opts.getHbaseSnapshotSourceDir())
               .setSnapshotName(opts.getSnapshotName())
               .setRestoreDir(opts.getRestoreDir())
               .build();

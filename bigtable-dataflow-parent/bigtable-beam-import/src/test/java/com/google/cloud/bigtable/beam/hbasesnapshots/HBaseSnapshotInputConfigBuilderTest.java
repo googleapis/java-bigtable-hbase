@@ -34,7 +34,7 @@ public class HBaseSnapshotInputConfigBuilderTest {
     Configuration conf =
         new HBaseSnapshotInputConfigBuilder()
             .setProjectId(TEST_PROJECT)
-            .setExportedSnapshotDir(TEST_SNAPSHOT_DIR)
+            .setHbaseSnapshotSourceDir(TEST_SNAPSHOT_DIR)
             .setSnapshotName(TEST_SNAPSHOT_NAME)
             .setRestoreDir(TEST_RESTORE_DIR)
             .createHBaseConfiguration();

@@ -45,7 +45,7 @@ class HBaseSnapshotInputConfigBuilder {
   private static final int BATCH_SIZE = 1000;
 
   private String projectId;
-  private String exportedSnapshotDir;
+  private String hbaseSnapshotSourceDir;
   private String snapshotName;
   private String restoreDir;
 
@@ -62,8 +62,8 @@ class HBaseSnapshotInputConfigBuilder {
   /*
    * Set the GCS path where the HBase snapshot data is located
    */
-  public HBaseSnapshotInputConfigBuilder setExportedSnapshotDir(String exportedSnapshotDir) {
-    this.exportedSnapshotDir = exportedSnapshotDir;
+  public HBaseSnapshotInputConfigBuilder setHbaseSnapshotSourceDir(String hbaseSnapshotSourceDir) {
+    this.hbaseSnapshotSourceDir = hbaseSnapshotSourceDir;
     return this;
   }
 
@@ -89,10 +89,11 @@ class HBaseSnapshotInputConfigBuilder {
 
   public Configuration build() throws Exception {
     Preconditions.checkNotNull(projectId);
-    Preconditions.checkNotNull(exportedSnapshotDir);
+    Preconditions.checkNotNull(hbaseSnapshotSourceDir);
     Preconditions.checkNotNull(snapshotName);
     Preconditions.checkState(
-        exportedSnapshotDir.startsWith("gs://"), "snapshot folder must be hosted in a GCS bucket ");
+        hbaseSnapshotSourceDir.startsWith("gs://"),
+        "snapshot folder must be hosted in a GCS bucket ");
 
     Configuration conf = createHBaseConfiguration();
 
@@ -111,8 +112,8 @@ class HBaseSnapshotInputConfigBuilder {
 
     // Setup the input data location for HBase snapshot import
     // exportedSnapshotDir should be a GCS Bucket path.
-    conf.set("hbase.rootdir", exportedSnapshotDir);
-    conf.set("fs.defaultFS", exportedSnapshotDir);
+    conf.set("hbase.rootdir", hbaseSnapshotSourceDir);
+    conf.set("fs.defaultFS", hbaseSnapshotSourceDir);
 
     // Setup GCS connector to use GCS as Hadoop filesystem
     conf.set("fs.AbstractFileSystem.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS");
