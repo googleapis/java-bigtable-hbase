@@ -176,7 +176,6 @@ public class EndToEndIT {
     importOpts.setBigtableTableId(StaticValueProvider.of(tableId));
 
     // setup HBase snapshot info
-    importOpts.setGcsProject(projectId);
     importOpts.setHbaseRootDir(hbaseSnapshotDir);
     importOpts.setRestoreDir(restoreDir);
     importOpts.setSnapshotName(TEST_SNAPSHOT_NAME);

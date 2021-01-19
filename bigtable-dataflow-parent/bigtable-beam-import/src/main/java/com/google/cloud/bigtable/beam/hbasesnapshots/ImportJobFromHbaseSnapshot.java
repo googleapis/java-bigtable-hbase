@@ -34,13 +34,14 @@ import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PDone;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 
 /**
  * A job that imports data from HBase snapshot exports hosted in Cloud Storage bucket into Cloud
- * Bigtable. This job can be run directly or as a Dataflow template.
+ * Bigtable.
  *
  * <p>Execute the following command to run the job directly:
  *
@@ -63,12 +64,6 @@ public class ImportJobFromHbaseSnapshot {
   private static final Log LOG = LogFactory.getLog(ImportJobFromHbaseSnapshot.class);
 
   public interface ImportOptions extends ImportJob.ImportOptions {
-    @Description("The GCP project id for the GCS bucket")
-    String getGcsProject();
-
-    @SuppressWarnings("unused")
-    void setGcsProject(String gcsProjectId);
-
     @Description("The HBase root dir where HBase snapshot files resides.")
     String getHbaseRootDir();
 
@@ -107,21 +102,29 @@ public class ImportJobFromHbaseSnapshot {
 
   @VisibleForTesting
   static Pipeline buildPipeline(ImportOptions opts) {
-    Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
-    pipeline
-        .apply(
-            "Read from HBase Snapshot",
-            HadoopFormatIO.<ImmutableBytesWritable, Result>read()
-                .withConfiguration(
-                    new HBaseSnapshotInputConfigBuilder()
-                        .setProjectId(opts.getGcsProject())
-                        .setExportedSnapshotDir(opts.getHbaseRootDir())
-                        .setSnapshotName(opts.getSnapshotName())
-                        .setRestoreDir(opts.getRestoreDir())
-                        .build()))
-        .apply("Create Mutations", ParDo.of(new HBaseResultToMutationFn()))
-        .apply("Write to Bigtable", createSink(opts));
 
+    Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
+    try {
+      Configuration configuration =
+          new HBaseSnapshotInputConfigBuilder()
+              .setProjectId(opts.getProject())
+              .setExportedSnapshotDir(opts.getHbaseRootDir())
+              .setSnapshotName(opts.getSnapshotName())
+              .setRestoreDir(opts.getRestoreDir())
+              .build();
+      pipeline
+          .apply(
+              "Read from HBase Snapshot",
+              HadoopFormatIO.<ImmutableBytesWritable, Result>read()
+                  .withConfiguration(configuration))
+          .apply("Create Mutations", ParDo.of(new HBaseResultToMutationFn()))
+          .apply("Write to Bigtable", createSink(opts));
+
+    } catch (Exception e) {
+      LOG.fatal("Failed to create HBaseConfiguration for HadoopFormatIO");
+      LOG.fatal(e);
+      System.exit(-1);
+    }
     return pipeline;
   }
 

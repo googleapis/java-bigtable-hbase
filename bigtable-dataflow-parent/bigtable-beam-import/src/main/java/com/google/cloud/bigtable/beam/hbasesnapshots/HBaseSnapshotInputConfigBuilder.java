@@ -41,6 +41,7 @@ import org.apache.hadoop.mapreduce.Job;
 class HBaseSnapshotInputConfigBuilder {
 
   private static final Log LOG = LogFactory.getLog(HBaseSnapshotInputConfigBuilder.class);
+  // Batch size used for HBase snapshot scans
   private static final int BATCH_SIZE = 1000;
 
   private String projectId;
@@ -86,33 +87,43 @@ class HBaseSnapshotInputConfigBuilder {
     return this;
   }
 
-  public Configuration build() {
+  public Configuration build() throws Exception {
     Preconditions.checkNotNull(projectId);
     Preconditions.checkNotNull(exportedSnapshotDir);
     Preconditions.checkNotNull(snapshotName);
     Preconditions.checkState(
         exportedSnapshotDir.startsWith("gs://"), "snapshot folder must be hosted in a GCS bucket ");
 
-    Configuration conf = HBaseConfiguration.create();
-    try {
-      conf.set("hbase.rootdir", exportedSnapshotDir);
-      conf.set("fs.AbstractFileSystem.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS");
-      conf.set("fs.gs.project.id", projectId);
-      conf.set("fs.defaultFS", exportedSnapshotDir);
-      conf.set("google.cloud.auth.service.account.enable", "true");
-      conf.setClass(
-          "mapreduce.job.inputformat.class", TableSnapshotInputFormat.class, InputFormat.class);
-      conf.setClass("key.class", ImmutableBytesWritable.class, Writable.class);
-      conf.setClass("value.class", Result.class, Object.class);
-      ClientProtos.Scan proto = ProtobufUtil.toScan(new Scan().setBatch(BATCH_SIZE));
-      conf.set(TableInputFormat.SCAN, Base64.encodeBytes(proto.toByteArray()));
+    Configuration conf = createHBaseConfiguration();
 
-      Job job = Job.getInstance(conf); // creates internal clone of hbaseConf
-      TableSnapshotInputFormat.setInput(job, snapshotName, new Path(restoreDir));
-      return job.getConfiguration(); // extract the modified clone
-    } catch (Exception e) {
-      LOG.fatal(e);
-    }
+    // Configuring a MapReduce Job base on HBaseConfiguration
+    // and return the job Configuration
+    ClientProtos.Scan proto = ProtobufUtil.toScan(new Scan().setBatch(BATCH_SIZE));
+    conf.set(TableInputFormat.SCAN, Base64.encodeBytes(proto.toByteArray()));
+    Job job = Job.getInstance(conf); // creates internal clone of hbaseConf
+    TableSnapshotInputFormat.setInput(job, snapshotName, new Path(restoreDir));
+    return job.getConfiguration(); // extract the modified clone
+  }
+
+  // separate static part for unit testing
+  public Configuration createHBaseConfiguration() {
+    Configuration conf = HBaseConfiguration.create();
+
+    // Setup the input data location for HBase snapshot import
+    // exportedSnapshotDir should be a GCS Bucket path.
+    conf.set("hbase.rootdir", exportedSnapshotDir);
+    conf.set("fs.defaultFS", exportedSnapshotDir);
+
+    // Setup GCS connector to use GCS as Hadoop filesystem
+    conf.set("fs.AbstractFileSystem.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS");
+    conf.set("fs.gs.project.id", projectId);
+    conf.set("google.cloud.auth.service.account.enable", "true");
+
+    // Setup MapReduce config for TableSnapshotInputFormat
+    conf.setClass(
+        "mapreduce.job.inputformat.class", TableSnapshotInputFormat.class, InputFormat.class);
+    conf.setClass("key.class", ImmutableBytesWritable.class, Writable.class);
+    conf.setClass("value.class", Result.class, Object.class);
     return conf;
   }
 }

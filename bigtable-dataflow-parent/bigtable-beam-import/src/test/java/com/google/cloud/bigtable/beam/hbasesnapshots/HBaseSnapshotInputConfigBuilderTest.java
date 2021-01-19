@@ -37,7 +37,7 @@ public class HBaseSnapshotInputConfigBuilderTest {
             .setExportedSnapshotDir(TEST_SNAPSHOT_DIR)
             .setSnapshotName(TEST_SNAPSHOT_NAME)
             .setRestoreDir(TEST_RESTORE_DIR)
-            .build();
+            .createHBaseConfiguration();
     assertEquals(
         "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS", conf.get("fs.AbstractFileSystem.gs.impl"));
     assertEquals(TEST_PROJECT, conf.get("fs.gs.project.id"));
