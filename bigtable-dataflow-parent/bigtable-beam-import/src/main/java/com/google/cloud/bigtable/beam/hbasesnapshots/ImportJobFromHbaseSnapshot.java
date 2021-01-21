@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.beam.hbasesnapshots;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
-import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.beam.TemplateUtils;
 import com.google.cloud.bigtable.beam.sequencefiles.HBaseResultToMutationFn;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob;
@@ -28,14 +27,10 @@ import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
-import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
-import org.apache.beam.sdk.values.PCollection;
-import org.apache.beam.sdk.values.PDone;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 
@@ -87,16 +82,15 @@ public class ImportJobFromHbaseSnapshot {
     void setSnapshotName(String snapshotName);
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
     PipelineOptionsFactory.register(ImportOptions.class);
 
     ImportOptions opts =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(ImportOptions.class);
 
-    LOG.info("DEBUG===> Building Pipeline");
+    LOG.info("Building Pipeline");
     Pipeline pipeline = buildPipeline(opts);
-
-    LOG.info("DEBUG===> Running Pipeline");
+    LOG.info("Running Pipeline");
     PipelineResult result = pipeline.run();
 
     if (opts.getWait()) {
@@ -105,35 +99,25 @@ public class ImportJobFromHbaseSnapshot {
   }
 
   @VisibleForTesting
-  static Pipeline buildPipeline(ImportOptions opts) {
+  static Pipeline buildPipeline(ImportOptions opts) throws Exception {
 
     Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
-    try {
-      Configuration configuration =
-          new HBaseSnapshotInputConfigBuilder()
-              .setProjectId(opts.getProject())
-              .setHbaseSnapshotSourceDir(opts.getHbaseSnapshotSourceDir())
-              .setSnapshotName(opts.getSnapshotName())
-              .setRestoreDir(opts.getRestoreDir())
-              .build();
-      pipeline
-          .apply(
-              "Read from HBase Snapshot",
-              HadoopFormatIO.<ImmutableBytesWritable, Result>read()
-                  .withConfiguration(configuration))
-          .apply("Create Mutations", ParDo.of(new HBaseResultToMutationFn()))
-          .apply("Write to Bigtable", createSink(opts));
+    Configuration configuration =
+        new HBaseSnapshotInputConfigBuilder()
+            .setProjectId(opts.getProject())
+            .setHbaseSnapshotSourceDir(opts.getHbaseSnapshotSourceDir())
+            .setSnapshotName(opts.getSnapshotName())
+            .setRestoreDir(opts.getRestoreDir())
+            .build();
+    pipeline
+        .apply(
+            "Read from HBase Snapshot",
+            HadoopFormatIO.<ImmutableBytesWritable, Result>read().withConfiguration(configuration))
+        .apply("Create Mutations", ParDo.of(new HBaseResultToMutationFn()))
+        .apply(
+            "Write to Bigtable",
+            CloudBigtableIO.writeToTable(TemplateUtils.BuildImportConfig(opts)));
 
-    } catch (Exception e) {
-      LOG.fatal("Failed to create HBaseConfiguration for HadoopFormatIO");
-      LOG.fatal(e);
-      System.exit(-1);
-    }
     return pipeline;
-  }
-
-  static PTransform<PCollection<Mutation>, PDone> createSink(ImportOptions opts) {
-    CloudBigtableTableConfiguration config = TemplateUtils.BuildImportConfig(opts);
-    return CloudBigtableIO.writeToTable(config);
   }
 }
