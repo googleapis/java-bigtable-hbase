@@ -22,15 +22,12 @@ import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.PipelineResult.State;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
 import org.apache.beam.sdk.extensions.gcp.util.GcsUtil;
-import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.commons.logging.Log;
@@ -88,7 +85,6 @@ public class EndToEndIT {
 
   // Snapshot data setup
   private String hbaseSnapshotDir;
-  private String restoreDir;
 
   @Before
   public void setup() throws Exception {
@@ -103,7 +99,6 @@ public class EndToEndIT {
 
     hbaseSnapshotDir = cloudTestDataFolder + "data/";
     UUID test_uuid = UUID.randomUUID();
-    restoreDir = cloudTestDataFolder + "restore/" + test_uuid;
 
     // Cloud Storage config
     GcpOptions gcpOptions = PipelineOptionsFactory.create().as(GcpOptions.class);
@@ -129,17 +124,6 @@ public class EndToEndIT {
 
   @After
   public void teardown() throws IOException {
-    final List<GcsPath> paths = gcsUtil.expand(GcsPath.fromUri(restoreDir + "/*"));
-
-    if (!paths.isEmpty()) {
-      final List<String> pathStrs = new ArrayList<>();
-
-      for (GcsPath path : paths) {
-        pathStrs.add(path.toString());
-      }
-      this.gcsUtil.remove(pathStrs);
-    }
-
     connection.close();
 
     // delete test table
@@ -152,7 +136,6 @@ public class EndToEndIT {
   public void testHBaseSnapshotImport() throws Exception {
 
     // Crete table
-    LOG.debug("DEBUG (create test table) ==>");
     TableName tableName = TableName.valueOf(tableId);
     HTableDescriptor descriptor = new HTableDescriptor(tableName);
 
@@ -161,7 +144,6 @@ public class EndToEndIT {
     connection.getAdmin().createTable(descriptor, SnapshotTestingUtils.getSplitKeys());
 
     // Start import
-    LOG.debug("DEBUG (import snapshot) ==>");
     DataflowPipelineOptions importPipelineOpts =
         PipelineOptionsFactory.as(DataflowPipelineOptions.class);
     importPipelineOpts.setRunner(DataflowRunner.class);
@@ -180,7 +162,6 @@ public class EndToEndIT {
 
     // setup HBase snapshot info
     importOpts.setHbaseSnapshotSourceDir(hbaseSnapshotDir);
-    importOpts.setRestoreDir(restoreDir);
     importOpts.setSnapshotName(TEST_SNAPSHOT_NAME);
 
     // run pipeline

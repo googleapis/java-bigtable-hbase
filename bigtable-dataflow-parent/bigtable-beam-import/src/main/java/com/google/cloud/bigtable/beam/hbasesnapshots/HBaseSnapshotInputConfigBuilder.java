@@ -44,10 +44,12 @@ class HBaseSnapshotInputConfigBuilder {
   // Batch size used for HBase snapshot scans
   private static final int BATCH_SIZE = 1000;
 
+  // a temp location to store metadata extracted from snapshot
+  public static final String RESTORE_DIR = "/.restore";
+
   private String projectId;
   private String hbaseSnapshotSourceDir;
   private String snapshotName;
-  private String restoreDir;
 
   public HBaseSnapshotInputConfigBuilder() {}
 
@@ -78,15 +80,6 @@ class HBaseSnapshotInputConfigBuilder {
     return this;
   }
 
-  /*
-   * Set the temporary restore GCS path used by TableSnapshotInputFormat while reading the HBase snapshot
-   * This path should not be under {@code exportedSnapshotDir}
-   */
-  public HBaseSnapshotInputConfigBuilder setRestoreDir(String restoreDir) {
-    this.restoreDir = restoreDir;
-    return this;
-  }
-
   public Configuration build() throws Exception {
     Preconditions.checkNotNull(projectId);
     Preconditions.checkNotNull(hbaseSnapshotSourceDir);
@@ -102,7 +95,9 @@ class HBaseSnapshotInputConfigBuilder {
     ClientProtos.Scan proto = ProtobufUtil.toScan(new Scan().setBatch(BATCH_SIZE));
     conf.set(TableInputFormat.SCAN, Base64.encodeBytes(proto.toByteArray()));
     Job job = Job.getInstance(conf); // creates internal clone of hbaseConf
-    TableSnapshotInputFormat.setInput(job, snapshotName, new Path(restoreDir));
+    // the restore folder need to under current bucket root so to be considered
+    // within the same filesystem with the hbaseSnapshotSourceDir
+    TableSnapshotInputFormat.setInput(job, snapshotName, new Path(RESTORE_DIR));
     return job.getConfiguration(); // extract the modified clone
   }
 

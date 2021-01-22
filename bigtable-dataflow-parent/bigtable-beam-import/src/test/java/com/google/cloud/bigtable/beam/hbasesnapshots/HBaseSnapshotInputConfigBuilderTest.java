@@ -27,7 +27,6 @@ public class HBaseSnapshotInputConfigBuilderTest {
   private static final String TEST_PROJECT = "test_project";
   private static final String TEST_SNAPSHOT_DIR = "gs://test-bucket/hbase-export";
   private static final String TEST_SNAPSHOT_NAME = "test_snapshot";
-  private static final String TEST_RESTORE_DIR = "gs://test-bucket/hbase-restore";
 
   @Test
   public void testBuildingHBaseSnapshotInputConfigBuilder() {
@@ -36,7 +35,6 @@ public class HBaseSnapshotInputConfigBuilderTest {
             .setProjectId(TEST_PROJECT)
             .setHbaseSnapshotSourceDir(TEST_SNAPSHOT_DIR)
             .setSnapshotName(TEST_SNAPSHOT_NAME)
-            .setRestoreDir(TEST_RESTORE_DIR)
             .createHBaseConfiguration();
     assertEquals(
         "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS", conf.get("fs.AbstractFileSystem.gs.impl"));
