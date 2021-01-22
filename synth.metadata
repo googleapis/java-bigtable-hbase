@@ -23,7 +23,6 @@
     ".github/blunderbuss.yml",
     ".github/generated-files-bot.yml",
     ".github/readme/synth.py",
-    ".github/release-please.yml",
     ".github/trusted-contribution.yml",
     ".kokoro/coerce_logs.sh",
     ".kokoro/common.cfg",
