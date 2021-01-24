@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.beam.hbasesnapshots;
 
 import com.google.common.base.Preconditions;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.beam.sdk.io.FileSystems;
@@ -43,9 +42,6 @@ public class CleanupHBaseSnapshotRestoreFilesFn extends DoFn<KV<String, String>,
             .map(metadata -> metadata.resourceId())
             .collect(Collectors.toList());
     FileSystems.delete(paths, MoveOptions.StandardMoveOptions.IGNORE_MISSING_FILES);
-    FileSystems.delete(
-        Collections.singletonList(FileSystems.matchSingleFileSpec(restoreDir).resourceId()),
-        MoveOptions.StandardMoveOptions.IGNORE_MISSING_FILES);
     context.output(true);
   }
 

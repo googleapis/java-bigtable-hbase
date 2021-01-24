@@ -27,22 +27,22 @@ public class CleanupHBaseSnapshotRestoreFilesFnTest {
   @Test
   public void testGetRestorePath() {
     assertEquals(
-        "gs://test-bucket" + TEST_RESTORE_PATH + '/',
+        "gs://test-bucket" + TEST_RESTORE_PATH,
         CleanupHBaseSnapshotRestoreFilesFn.getRestoreDir(TEST_SNAPSHOT_PATH, TEST_RESTORE_PATH));
 
     assertEquals(
-        "gs://test-bucket" + TEST_RESTORE_PATH + '/',
+        "gs://test-bucket" + TEST_RESTORE_PATH,
         CleanupHBaseSnapshotRestoreFilesFn.getRestoreDir(
             TEST_SNAPSHOT_PATH + '/', TEST_RESTORE_PATH));
 
     // These are not valid case as one could not use bucket root as hbase snapshot folder.
     assertEquals(
-        "gs://test-bucket" + TEST_RESTORE_PATH + '/',
+        "gs://test-bucket" + TEST_RESTORE_PATH,
         CleanupHBaseSnapshotRestoreFilesFn.getRestoreDir(
             TEST_BUCKET_PATH + '/', TEST_RESTORE_PATH));
 
     assertEquals(
-        "gs://test-bucket" + TEST_RESTORE_PATH + '/',
+        "gs://test-bucket" + TEST_RESTORE_PATH,
         CleanupHBaseSnapshotRestoreFilesFn.getRestoreDir(TEST_BUCKET_PATH, TEST_RESTORE_PATH));
   }
 }
