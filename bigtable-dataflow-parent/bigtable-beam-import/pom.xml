@@ -175,6 +175,14 @@ limitations under the License.
       <classifier>shaded</classifier>
     </dependency>
 
+    <!-- https://mvnrepository.com/artifact/com.google.apis/google-api-services-storage -->
+    <dependency>
+      <groupId>com.google.apis</groupId>
+      <artifactId>google-api-services-storage</artifactId>
+      <version>v1-rev171-1.25.0</version>
+    </dependency>
+
+
     <!-- Test -->
     <dependency>
       <groupId>org.apache.beam</groupId>

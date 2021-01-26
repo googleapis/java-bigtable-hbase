@@ -126,7 +126,7 @@ class HBaseSnapshotInputConfigBuilder {
     // Setup GCS connector to use GCS as Hadoop filesystem
     conf.set("fs.AbstractFileSystem.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS");
     conf.set("fs.gs.project.id", projectId);
-    conf.set("google.cloud.auth.service.account.enable", "true");
+    conf.setBoolean("google.cloud.auth.service.account.enable", true);
 
     // Setup MapReduce config for TableSnapshotInputFormat
     conf.setClass(
