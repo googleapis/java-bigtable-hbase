@@ -18,14 +18,15 @@ package com.google.cloud.bigtable.beam.hbasesnapshots;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
+import java.util.UUID;
 import org.junit.Test;
 
 public class CleanupHBaseSnapshotRestoreFilesFnTest {
   private static final String TEST_BUCKET_NAME = "test-bucket";
   private static final String TEST_SNAPSHOT_PATH = "gs://" + TEST_BUCKET_NAME + "/hbase-export";
-  private static final String TEST_RESTORE_PATH = HBaseSnapshotInputConfigBuilder.RESTORE_DIR;
-  private static final String TEST_RESTORE_PREFIX =
-      HBaseSnapshotInputConfigBuilder.RESTORE_DIR.substring(1);
+  private static final String TEST_RESTORE_PATH =
+      HBaseSnapshotInputConfigBuilder.RESTORE_DIR + UUID.randomUUID();
+  private static final String TEST_RESTORE_PREFIX = TEST_RESTORE_PATH.substring(1);
 
   @Test
   public void testGetWorkingBucketName() {

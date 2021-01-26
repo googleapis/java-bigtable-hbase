@@ -50,6 +50,7 @@ class HBaseSnapshotInputConfigBuilder {
   private String projectId;
   private String hbaseSnapshotSourceDir;
   private String snapshotName;
+  private String restoreDirSuffix;
 
   public HBaseSnapshotInputConfigBuilder() {}
 
@@ -80,6 +81,18 @@ class HBaseSnapshotInputConfigBuilder {
     return this;
   }
 
+  /*
+   * Set the unique suffix to be used for restore folder to avoid conflicts
+   */
+  public HBaseSnapshotInputConfigBuilder setRestoreDirSuffix(String suffix) {
+    this.restoreDirSuffix = suffix;
+    return this;
+  }
+
+  public String getRestoreDir() {
+    return RESTORE_DIR + this.restoreDirSuffix;
+  }
+
   public Configuration build() throws Exception {
     Preconditions.checkNotNull(projectId);
     Preconditions.checkNotNull(hbaseSnapshotSourceDir);
@@ -97,7 +110,7 @@ class HBaseSnapshotInputConfigBuilder {
     Job job = Job.getInstance(conf); // creates internal clone of hbaseConf
     // the restore folder need to under current bucket root so to be considered
     // within the same filesystem with the hbaseSnapshotSourceDir
-    TableSnapshotInputFormat.setInput(job, snapshotName, new Path(RESTORE_DIR));
+    TableSnapshotInputFormat.setInput(job, snapshotName, new Path(getRestoreDir()));
     return job.getConfiguration(); // extract the modified clone
   }
 

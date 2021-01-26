@@ -103,6 +103,7 @@ public class ImportJobFromHbaseSnapshot {
             .setProjectId(opts.getProject())
             .setHbaseSnapshotSourceDir(opts.getHbaseSnapshotSourceDir())
             .setSnapshotName(opts.getSnapshotName())
+            .setRestoreDirSuffix(opts.getJobName())
             .build();
     PCollection<KV<ImmutableBytesWritable, Result>> readResult =
         pipeline.apply(
@@ -117,7 +118,11 @@ public class ImportJobFromHbaseSnapshot {
 
     final List<KV<String, String>> tempFiles =
         Arrays.asList(
-            KV.of(opts.getHbaseSnapshotSourceDir(), HBaseSnapshotInputConfigBuilder.RESTORE_DIR));
+            KV.of(
+                opts.getHbaseSnapshotSourceDir(),
+                new HBaseSnapshotInputConfigBuilder()
+                    .setRestoreDirSuffix(opts.getJobName())
+                    .getRestoreDir()));
     pipeline
         .apply(Create.of(tempFiles))
         .apply(Wait.on(readResult))
