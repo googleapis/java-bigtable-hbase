@@ -15,13 +15,15 @@
  */
 package com.google.cloud.bigtable.beam.hbasesnapshots;
 
+import com.google.api.services.storage.model.Objects;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.apache.beam.sdk.io.FileSystems;
-import org.apache.beam.sdk.io.fs.MoveOptions;
-import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
+import org.apache.beam.sdk.extensions.gcp.util.GcsUtil;
+import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.values.KV;
 import org.apache.commons.logging.Log;
@@ -36,29 +38,43 @@ public class CleanupHBaseSnapshotRestoreFilesFn extends DoFn<KV<String, String>,
 
     String hbaseSnapshotDir = elem.getKey();
     String restorePath = elem.getValue();
-    String restoreDir = getRestoreDir(hbaseSnapshotDir, restorePath);
-    List<ResourceId> paths =
-        FileSystems.match(restoreDir + "**").metadata().stream()
-            .map(metadata -> metadata.resourceId())
-            .collect(Collectors.toList());
-    FileSystems.delete(paths, MoveOptions.StandardMoveOptions.IGNORE_MISSING_FILES);
+    String prefix = getListPrefix(restorePath);
+    String bucketName = getWorkingBucketName(hbaseSnapshotDir);
+    Preconditions.checkState(
+        !prefix.isEmpty() && !hbaseSnapshotDir.contains(String.format("%s/%s", bucketName, prefix)),
+        "restore folder should not be empty or a subfolder of hbaseSnapshotSourceDir");
+    GcpOptions gcpOptions = context.getPipelineOptions().as(GcpOptions.class);
+    GcsUtil gcsUtil = new GcsUtil.GcsUtilFactory().create(gcpOptions);
+
+    String pageToken = null;
+    List<String> results = new ArrayList<>();
+    do {
+      Objects objects = gcsUtil.listObjects(bucketName, prefix, pageToken);
+      if (objects.getItems() == null) {
+        break;
+      }
+      results.addAll(
+          objects.getItems().stream()
+              .map(storageObject -> GcsPath.fromObject(storageObject).toString())
+              .collect(Collectors.toList()));
+      pageToken = objects.getNextPageToken();
+    } while (pageToken != null);
+    gcsUtil.remove(results);
     context.output(true);
   }
 
-  public static String getRestoreDir(String hbaseSnapshotDir, String restoreDir) {
-    Preconditions.checkState(
+  public static String getWorkingBucketName(String hbaseSnapshotDir) {
+    Preconditions.checkArgument(
         hbaseSnapshotDir.startsWith("gs://"), "snapshot folder must be hosted in a GCS bucket ");
-    Preconditions.checkState(
-        restoreDir.startsWith("/"),
-        "restore folder must be an absolute path in current filesystem");
-    int bucketNameEndIndex = hbaseSnapshotDir.indexOf('/', 5); // "offset gs://"
-    String bucketName;
-    if (bucketNameEndIndex > 0) {
-      bucketName = hbaseSnapshotDir.substring(0, bucketNameEndIndex);
-    } else {
-      bucketName = hbaseSnapshotDir;
-    }
 
-    return String.format("%s%s", bucketName, restoreDir);
+    return GcsPath.fromUri(hbaseSnapshotDir).getBucket();
+  }
+  // getListPrefix convert absolut restorePath in a Hadoop filesystem
+  // to a match prefix in a GCS bucket
+  public static String getListPrefix(String restorePath) {
+    Preconditions.checkArgument(
+        restorePath.startsWith("/"),
+        "restore folder must be an absolute path in current filesystem");
+    return restorePath.substring(1);
   }
 }

@@ -16,33 +16,39 @@
 package com.google.cloud.bigtable.beam.hbasesnapshots;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 import org.junit.Test;
 
 public class CleanupHBaseSnapshotRestoreFilesFnTest {
-  private static final String TEST_BUCKET_PATH = "gs://test-bucket";
-  private static final String TEST_SNAPSHOT_PATH = TEST_BUCKET_PATH + "/hbase-export";
+  private static final String TEST_BUCKET_NAME = "test-bucket";
+  private static final String TEST_SNAPSHOT_PATH = "gs://" + TEST_BUCKET_NAME + "/hbase-export";
   private static final String TEST_RESTORE_PATH = HBaseSnapshotInputConfigBuilder.RESTORE_DIR;
+  private static final String TEST_RESTORE_PREFIX =
+      HBaseSnapshotInputConfigBuilder.RESTORE_DIR.substring(1);
 
   @Test
-  public void testGetRestorePath() {
+  public void testGetWorkingBucketName() {
     assertEquals(
-        "gs://test-bucket" + TEST_RESTORE_PATH,
-        CleanupHBaseSnapshotRestoreFilesFn.getRestoreDir(TEST_SNAPSHOT_PATH, TEST_RESTORE_PATH));
+        TEST_BUCKET_NAME,
+        CleanupHBaseSnapshotRestoreFilesFn.getWorkingBucketName(TEST_SNAPSHOT_PATH));
 
-    assertEquals(
-        "gs://test-bucket" + TEST_RESTORE_PATH,
-        CleanupHBaseSnapshotRestoreFilesFn.getRestoreDir(
-            TEST_SNAPSHOT_PATH + '/', TEST_RESTORE_PATH));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          CleanupHBaseSnapshotRestoreFilesFn.getWorkingBucketName(TEST_BUCKET_NAME);
+        });
+  }
 
-    // These are not valid case as one could not use bucket root as hbase snapshot folder.
+  @Test
+  public void testGetListPrefix() {
     assertEquals(
-        "gs://test-bucket" + TEST_RESTORE_PATH,
-        CleanupHBaseSnapshotRestoreFilesFn.getRestoreDir(
-            TEST_BUCKET_PATH + '/', TEST_RESTORE_PATH));
+        TEST_RESTORE_PREFIX, CleanupHBaseSnapshotRestoreFilesFn.getListPrefix(TEST_RESTORE_PATH));
 
-    assertEquals(
-        "gs://test-bucket" + TEST_RESTORE_PATH,
-        CleanupHBaseSnapshotRestoreFilesFn.getRestoreDir(TEST_BUCKET_PATH, TEST_RESTORE_PATH));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          CleanupHBaseSnapshotRestoreFilesFn.getWorkingBucketName(TEST_RESTORE_PREFIX);
+        });
   }
 }

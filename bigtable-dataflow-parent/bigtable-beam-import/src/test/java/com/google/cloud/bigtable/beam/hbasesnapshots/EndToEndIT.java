@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.beam.hbasesnapshots;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.services.storage.model.Objects;
 import com.google.cloud.bigtable.beam.sequencefiles.testing.BigtableTableUtils;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
@@ -28,6 +29,7 @@ import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.PipelineResult.State;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
 import org.apache.beam.sdk.extensions.gcp.util.GcsUtil;
+import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.commons.logging.Log;
@@ -173,6 +175,15 @@ public class EndToEndIT {
     Assert.assertEquals(
         100 /* There are 100 rows in test snapshot*/,
         destTable.readAllCellsFromTable().toArray().length);
+
+    // check that the .restore dir used for temp files has been removed
+    Objects objects =
+        gcsUtil.listObjects(
+            GcsPath.fromUri(hbaseSnapshotDir).getBucket(),
+            CleanupHBaseSnapshotRestoreFilesFn.getListPrefix(
+                HBaseSnapshotInputConfigBuilder.RESTORE_DIR),
+            null);
+    Assert.assertNull(objects.getItems());
 
     // TODO(vermas2012): Add more validations after this.
   }
