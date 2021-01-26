@@ -4,14 +4,14 @@
       "git": {
         "name": ".",
         "remote": "https://github.com/googleapis/java-bigtable-hbase.git",
-        "sha": "b5d9ec29f2b3805ab868738e67270c3bd79d5d03"
+        "sha": "4a76cd6c886cccea0999a1cb51575e1270b291b7"
       }
     },
     {
       "git": {
         "name": "synthtool",
         "remote": "https://github.com/googleapis/synthtool.git",
-        "sha": "3f67ceece7e797a5736a25488aae35405649b90b"
+        "sha": "3816b080296d4d52975079fd26c110dd26ba25af"
       }
     }
   ],
@@ -68,7 +68,6 @@
     "LICENSE",
     "codecov.yaml",
     "java.header",
-    "license-checks.xml",
-    "renovate.json"
+    "license-checks.xml"
   ]
 }
