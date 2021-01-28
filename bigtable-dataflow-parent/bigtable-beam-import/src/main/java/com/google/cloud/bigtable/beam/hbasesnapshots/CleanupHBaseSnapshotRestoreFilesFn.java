@@ -29,7 +29,7 @@ import org.apache.beam.sdk.values.KV;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public class CleanupHBaseSnapshotRestoreFilesFn extends DoFn<KV<String, String>, Boolean> {
+class CleanupHBaseSnapshotRestoreFilesFn extends DoFn<KV<String, String>, Boolean> {
   private static final Log LOG = LogFactory.getLog(CleanupHBaseSnapshotRestoreFilesFn.class);
 
   @ProcessElement
