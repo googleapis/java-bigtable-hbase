@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.beam.hbasesnapshots;
 
 import com.google.common.base.Preconditions;
+import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -98,7 +99,7 @@ class HBaseSnapshotInputConfigBuilder {
     Preconditions.checkNotNull(hbaseSnapshotSourceDir);
     Preconditions.checkNotNull(snapshotName);
     Preconditions.checkState(
-        hbaseSnapshotSourceDir.startsWith("gs://"),
+        hbaseSnapshotSourceDir.startsWith(GcsPath.SCHEME),
         "snapshot folder must be hosted in a GCS bucket ");
 
     Configuration conf = createHBaseConfiguration();

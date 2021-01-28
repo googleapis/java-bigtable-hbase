@@ -29,6 +29,10 @@ import org.apache.beam.sdk.values.KV;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * A {@link DoFn} that could be used for cleaning up temp files generated during HBase snapshot
+ * scans in Google Cloud Storage(GCS) bucket via GCS connector.
+ */
 class CleanupHBaseSnapshotRestoreFilesFn extends DoFn<KV<String, String>, Boolean> {
   private static final Log LOG = LogFactory.getLog(CleanupHBaseSnapshotRestoreFilesFn.class);
 
@@ -65,11 +69,12 @@ class CleanupHBaseSnapshotRestoreFilesFn extends DoFn<KV<String, String>, Boolea
 
   public static String getWorkingBucketName(String hbaseSnapshotDir) {
     Preconditions.checkArgument(
-        hbaseSnapshotDir.startsWith("gs://"), "snapshot folder must be hosted in a GCS bucket ");
+        hbaseSnapshotDir.startsWith(GcsPath.SCHEME),
+        "snapshot folder must be hosted in a GCS bucket ");
 
     return GcsPath.fromUri(hbaseSnapshotDir).getBucket();
   }
-  // getListPrefix convert absolut restorePath in a Hadoop filesystem
+  // getListPrefix convert absolute restorePath in a Hadoop filesystem
   // to a match prefix in a GCS bucket
   public static String getListPrefix(String restorePath) {
     Preconditions.checkArgument(
