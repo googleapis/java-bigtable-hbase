@@ -58,6 +58,10 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
  *                --hbaseSnapshotSourceDir=gs://$HBASE_EXPORT_ROOT_PATH \
  *                --snapshotName=$SNAPSHOT_NAME
  * </pre>
+ *
+ * Note that in the case of job failures, the temp files generated in the .restore-$JOB_NAME
+ * directory under the snapshot export bucket will not get deleted. Hence one need to either launch
+ * a replacement job with the same jobName to re-run the job or manually delete this directory.
  */
 @InternalExtensionOnly
 public class ImportJobFromHbaseSnapshot {
