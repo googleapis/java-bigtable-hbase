@@ -25,7 +25,7 @@ limitations under the License.
   <artifactId>bigtable-beam-import</artifactId>
 
   <properties>
-    <mainClass>com.google.cloud.bigtable.beam.sequencefiles.Main</mainClass>
+    <mainClass>com.google.cloud.bigtable.beam.Main</mainClass>
   </properties>
 
   <!-- Adding this to resolve version conflict within beam sdk-->
@@ -46,6 +46,12 @@ limitations under the License.
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-beam</artifactId>
       <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-shaded-client</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
@@ -63,6 +69,10 @@ limitations under the License.
         <exclusion>
           <groupId>io.opencensus</groupId>
           <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-shaded-client</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -84,10 +94,18 @@ limitations under the License.
       <artifactId>beam-sdks-java-io-hadoop-common</artifactId>
       <version>${beam.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-sdks-java-io-hadoop-format</artifactId>
+      <version>${beam.version}</version>
+    </dependency>
 
+    <!-- For HBase 2.x, this should be hbase-mapreduce
+    https://hbase.apache.org/2.1/book.html#export
+    -->
     <dependency>
       <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-client</artifactId>
+      <artifactId>hbase-shaded-server</artifactId>
       <version>${hbase.version}</version>
     </dependency>
 
@@ -101,7 +119,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>${beam-guava.version}</version>
+      <version>${gcs-guava.version}</version>
     </dependency>
 
     <!-- TODO: check if commons-codec was transitively updated to 1.13 and okhttp was updated to 2.7.5 when upgrading-->
@@ -126,7 +144,7 @@ limitations under the License.
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
-      <version>1.14</version>
+      <version>1.15</version>
     </dependency>
     <dependency>
       <groupId>com.squareup.okhttp</groupId>
@@ -146,6 +164,21 @@ limitations under the License.
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
     </dependency>
+    <!-- https://mvnrepository.com/artifact/com.google.cloud.bigdataoss/gcs-connector -->
+    <dependency>
+      <groupId>com.google.cloud.bigdataoss</groupId>
+      <artifactId>gcs-connector</artifactId>
+      <version>hadoop2-2.1.4</version>
+      <classifier>shaded</classifier>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/com.google.apis/google-api-services-storage -->
+    <dependency>
+      <groupId>com.google.apis</groupId>
+      <artifactId>google-api-services-storage</artifactId>
+      <version>v1-rev171-1.25.0</version>
+    </dependency>
+
 
     <!-- Test -->
     <dependency>
@@ -176,6 +209,12 @@ limitations under the License.
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-shaded-testing-util</artifactId>
+      <version>${hbase.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -213,7 +252,7 @@ limitations under the License.
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <version>1.6.0</version>
+        <version>3.0.0</version>
         <executions>
           <execution>
             <goals>
@@ -229,7 +268,7 @@ limitations under the License.
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
-        <version>3.0.0</version>
+        <version>3.2.0</version>
         <executions>
           <execution>
             <id>add-source</id>
@@ -262,6 +301,16 @@ limitations under the License.
           <transformers>
             <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
           </transformers>
+	  <filters>
+	      <filter>
+		  <artifact>*:*</artifact>
+		  <excludes>
+		      <exclude>META-INF/*.SF</exclude>
+		      <exclude>META-INF/*.DSA</exclude>
+		      <exclude>META-INF/*.RSA</exclude>
+		  </excludes>
+	      </filter>
+	  </filters>
         </configuration>
       </plugin>
 
@@ -366,6 +415,34 @@ limitations under the License.
                     <include>**/CloudBigtableBeamITTest.java</include>
                   </includes>
                   <reportNameSuffix>bigtable-beam</reportNameSuffix>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>hbasesnapshotsIntegrationTest</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>hbasesnapshots-integration-test</id>
+                <goals>
+                  <goal>integration-test</goal>
+                </goals>
+                <phase>integration-test</phase>
+                <configuration>
+                  <forkCount>1</forkCount>
+                  <includes>
+                    <include>**/hbasesnapshots/*IT.java</include>
+                  </includes>
+                  <useSystemClassLoader>false</useSystemClassLoader>
                 </configuration>
               </execution>
             </executions>
