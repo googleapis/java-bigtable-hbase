@@ -20,7 +20,6 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
 import org.apache.beam.sdk.extensions.gcp.util.GcsUtil;
 import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
@@ -57,10 +56,10 @@ class CleanupHBaseSnapshotRestoreFilesFn extends DoFn<KV<String, String>, Boolea
       if (objects.getItems() == null) {
         break;
       }
-      results.addAll(
-          objects.getItems().stream()
-              .map(storageObject -> GcsPath.fromObject(storageObject).toString())
-              .collect(Collectors.toList()));
+
+      objects.getItems().stream()
+          .map(storageObject -> GcsPath.fromObject(storageObject).toString())
+          .forEach(results::add);
       pageToken = objects.getNextPageToken();
     } while (pageToken != null);
     gcsUtil.remove(results);

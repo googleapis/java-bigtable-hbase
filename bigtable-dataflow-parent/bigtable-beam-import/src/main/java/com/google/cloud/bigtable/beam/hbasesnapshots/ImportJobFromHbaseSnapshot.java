@@ -36,7 +36,6 @@ import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 
@@ -98,17 +97,18 @@ public class ImportJobFromHbaseSnapshot {
   static Pipeline buildPipeline(ImportOptions opts) throws Exception {
 
     Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
-    Configuration configuration =
+    HBaseSnapshotInputConfigBuilder configurationBuilder =
         new HBaseSnapshotInputConfigBuilder()
             .setProjectId(opts.getProject())
             .setHbaseSnapshotSourceDir(opts.getHbaseSnapshotSourceDir())
             .setSnapshotName(opts.getSnapshotName())
             .setRestoreDirSuffix(opts.getJobName())
-            .build();
+            .setRestoreDirSuffix(opts.getJobName());
     PCollection<KV<ImmutableBytesWritable, Result>> readResult =
         pipeline.apply(
             "Read from HBase Snapshot",
-            HadoopFormatIO.<ImmutableBytesWritable, Result>read().withConfiguration(configuration));
+            HadoopFormatIO.<ImmutableBytesWritable, Result>read()
+                .withConfiguration(configurationBuilder.build()));
 
     readResult
         .apply("Create Mutations", ParDo.of(new HBaseResultToMutationFn()))
@@ -116,15 +116,11 @@ public class ImportJobFromHbaseSnapshot {
             "Write to Bigtable",
             CloudBigtableIO.writeToTable(TemplateUtils.BuildImportConfig(opts)));
 
-    final List<KV<String, String>> tempFiles =
+    final List<KV<String, String>> sourceAndRestoreFolders =
         Arrays.asList(
-            KV.of(
-                opts.getHbaseSnapshotSourceDir(),
-                new HBaseSnapshotInputConfigBuilder()
-                    .setRestoreDirSuffix(opts.getJobName())
-                    .getRestoreDir()));
+            KV.of(opts.getHbaseSnapshotSourceDir(), configurationBuilder.getRestoreDir()));
     pipeline
-        .apply(Create.of(tempFiles))
+        .apply(Create.of(sourceAndRestoreFolders))
         .apply(Wait.on(readResult))
         .apply(ParDo.of(new CleanupHBaseSnapshotRestoreFilesFn()));
 
