@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.beam.sequencefiles;
 
+import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
@@ -43,7 +44,8 @@ import org.slf4j.LoggerFactory;
  * A {@link DoFn} function that converts a {@link Result} in the pipeline input to a {@link
  * Mutation} for output.
  */
-class HBaseResultToMutationFn extends DoFn<KV<ImmutableBytesWritable, Result>, Mutation> {
+@InternalApi
+public class HBaseResultToMutationFn extends DoFn<KV<ImmutableBytesWritable, Result>, Mutation> {
   private static Logger logger = LoggerFactory.getLogger(HBaseResultToMutationFn.class);
 
   private static final long serialVersionUID = 1L;
