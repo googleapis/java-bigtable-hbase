@@ -3,7 +3,7 @@
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x-parent</artifactId>
-    <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-1x-parent:current} -->
+    <version>1.15.0</version> <!-- {x-version-update:bigtable-hbase-1x-parent:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
