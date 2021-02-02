@@ -26,6 +26,7 @@ limitations under the License.
 
   <properties>
     <mainClass>com.google.cloud.bigtable.beam.Main</mainClass>
+    <skipITs>false</skipITs>
   </properties>
 
   <!-- Adding this to resolve version conflict within beam sdk-->
@@ -215,6 +216,23 @@ limitations under the License.
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-testing-util</artifactId>
       <version>${hbase.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.truth</groupId>
+      <artifactId>truth</artifactId>
+      <version>1.0.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.auto.service</groupId>
+      <artifactId>auto-service-annotations</artifactId>
+      <version>1.0-rc7</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-bigtable-emulator</artifactId>
+      <version>0.124.0</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
