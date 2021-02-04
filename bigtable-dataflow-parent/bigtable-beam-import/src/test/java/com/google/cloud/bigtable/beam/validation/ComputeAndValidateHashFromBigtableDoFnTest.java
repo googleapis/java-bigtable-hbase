@@ -72,11 +72,9 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
   private static final int FIRST_ROW_INDEX = 20;
   private static final int LAST_ROW_INDEX = 31;
 
-  @Rule
-  public final BigtableEmulatorRule bigtableEmulator = BigtableEmulatorRule.create();
+  @Rule public final BigtableEmulatorRule bigtableEmulator = BigtableEmulatorRule.create();
 
-  @Rule
-  public final transient TestPipeline p = TestPipeline.create();
+  @Rule public final transient TestPipeline p = TestPipeline.create();
 
   private ComputeAndValidateHashFromBigtableDoFn doFn;
 
@@ -166,9 +164,7 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
     table.put(puts);
   }
 
-  /**
-   * Deletes the row range [startIndex, stopIndex)
-   */
+  /** Deletes the row range [startIndex, stopIndex) */
   private void deleteRange(int startIndex, int stopIndex) throws IOException {
     for (int i = startIndex; i < stopIndex; i++) {
       table.delete(new Delete(getRowKey(i)));
@@ -362,7 +358,8 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
     // Delete a range in middle
     deleteRange(23, 25);
 
-    // Delete row ranges at the end, bigtable scanner will finish with multiple row-ranges to process.
+    // Delete row ranges at the end, bigtable scanner will finish with multiple row-ranges to
+    // process.
     deleteRange(27, LAST_ROW_INDEX + 1);
 
     PCollection<KV<String, Iterable<List<RangeHash>>>> input =

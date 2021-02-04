@@ -111,7 +111,8 @@ class BufferedHadoopHashTableSource extends BoundedSource<KV<String, List<RangeH
       return false;
     }
     BufferedHadoopHashTableSource that = (BufferedHadoopHashTableSource) o;
-    return maxBufferSize == that.maxBufferSize && Objects.equal(hashTableSource, that.hashTableSource);
+    return maxBufferSize == that.maxBufferSize
+        && Objects.equal(hashTableSource, that.hashTableSource);
   }
 
   @Override
