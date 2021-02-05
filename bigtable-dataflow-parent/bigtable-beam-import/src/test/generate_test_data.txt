@@ -110,7 +110,7 @@ hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot test-snapshot -c
 
 // Create the hashes for the table. Run the command from unix shell on an HBase
 // node.
-hbase org.apache.hadoop.hbase.mapreduce.HashTable --batchsize=100 --numhashfiles=10 test /integration-test/hashtable
+hbase org.apache.hadoop.hbase.mapreduce.HashTable --batchsize=10 --numhashfiles=10 test /integration-test/hashtable
 
 // Export the data into GCS
 hadoop fs -copyToLocal /integration-test /tmp/

@@ -77,6 +77,16 @@ limitations under the License.
         </exclusion>
       </exclusions>
     </dependency>
+    <dependency>
+      <groupId>com.google.api</groupId>
+      <artifactId>api-common</artifactId>
+      <version>1.10.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.2.4</version>
+    </dependency>
 
     <dependency>
       <groupId>org.apache.beam</groupId>
@@ -225,11 +235,6 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.google.auto.service</groupId>
-      <artifactId>auto-service-annotations</artifactId>
-      <version>1.0-rc7</version>
-    </dependency>
-    <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-bigtable-emulator</artifactId>
       <version>0.124.0</version>
@@ -360,7 +365,6 @@ limitations under the License.
         <configuration>
           <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
           <usedDependencies>
-            <usedDependency>com.google.auto.value:auto-value</usedDependency>
             <usedDependency>commons-codec:commons-codec</usedDependency>
             <usedDependency>com.squareup.okhttp:okhttp</usedDependency>
             <usedDependency>org.apache.beam:beam-sdks-java-io-hadoop-common
