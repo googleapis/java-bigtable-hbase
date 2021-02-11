@@ -15,8 +15,8 @@
  */
 package com.google.cloud.bigtable.beam.validation;
 
+import com.google.bigtable.repackaged.com.google.gson.Gson;
 import com.google.common.collect.ImmutableList;
-import com.google.gson.Gson;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;

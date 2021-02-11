@@ -229,6 +229,11 @@ limitations under the License.
       <version>0.124.0</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+      <version>${jsr305.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -354,6 +359,7 @@ limitations under the License.
         <configuration>
           <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
           <usedDependencies>
+            <usedDependency>com.google.auto.value:auto-value</usedDependency>
             <usedDependency>commons-codec:commons-codec</usedDependency>
             <usedDependency>com.squareup.okhttp:okhttp</usedDependency>
             <usedDependency>org.apache.beam:beam-sdks-java-io-hadoop-common
