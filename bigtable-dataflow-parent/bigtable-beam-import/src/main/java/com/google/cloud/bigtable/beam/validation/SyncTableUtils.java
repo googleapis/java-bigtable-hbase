@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google Inc. All Rights Reserved.
+ * Copyright 2021 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  */
 package com.google.cloud.bigtable.beam.validation;
 
+import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /** Utility class for SyncTable job. */
+@InternalApi
 public class SyncTableUtils {
 
   private SyncTableUtils() {}

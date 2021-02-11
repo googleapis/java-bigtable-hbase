@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google Inc. All Rights Reserved.
+ * Copyright 2021 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,6 @@ public class HadoopHashBasedReaderTest {
       new ImmutableBytesWritable("AAAA".getBytes());
   private static final ImmutableBytesWritable STOP_ROW =
       new ImmutableBytesWritable("ZZZZ".getBytes());
-  private static final ImmutableBytesWritable POST_STOP_ROW =
-      new ImmutableBytesWritable("z".getBytes()); // Lowercase z is lexicographically > uppercase Z
   private static final ImmutableBytesWritable EMPTY_ROW =
       new ImmutableBytesWritable(HConstants.EMPTY_BYTE_ARRAY);
   private static final ImmutableBytesWritable START_HASH =
@@ -139,7 +137,7 @@ public class HadoopHashBasedReaderTest {
   @Test
   public void testHashReaderWorkItemEndedOnFirstBatch() throws IOException {
     // Setup 1 entry in this hashtable datafile. This entry is outside of the workitem's row
-    fakeTableHashWrapper.hashes.add(KV.of(POST_STOP_ROW, START_HASH));
+    fakeTableHashWrapper.hashes.add(KV.of(STOP_ROW, START_HASH));
     // Source will be empty as no hashes fall in its bounds.
     assertEquals(new ArrayList<RangeHash>(), SourceTestUtils.readFromSource(hashTableSource, null));
   }
@@ -159,8 +157,8 @@ public class HadoopHashBasedReaderTest {
   public void testHashReaderWorkItemEndedAfterMultipleBatches() throws IOException {
     // Setup 4 entries in this hashtable datafile.
     List<RangeHash> expected = setupTestData(START_ROW, STOP_ROW, 4);
-    // Add a next entry after the stop row. Reader should stop and read just 4 entry.
-    fakeTableHashWrapper.hashes.add(KV.of(POST_STOP_ROW, getHash(100)));
+    // Add a next entry at the stop row. Reader should stop and read just 4 entry.
+    fakeTableHashWrapper.hashes.add(KV.of(STOP_ROW, getHash(100)));
     assertEquals(expected, SourceTestUtils.readFromSource(hashTableSource, null));
   }
 

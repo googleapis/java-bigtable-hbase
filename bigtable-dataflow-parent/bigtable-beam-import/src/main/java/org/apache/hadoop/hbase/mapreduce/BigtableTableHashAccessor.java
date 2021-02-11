@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google Inc. All Rights Reserved.
+ * Copyright 2021 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.apache.hadoop.hbase.mapreduce;
 
+import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import org.apache.hadoop.hbase.client.Result;
@@ -24,6 +25,7 @@ import org.apache.hadoop.hbase.mapreduce.HashTable.ResultHasher;
 import org.apache.hadoop.hbase.mapreduce.HashTable.TableHash;
 
 /** A helper class to access package private fields of HashTable.TableHash. */
+@InternalApi
 public class BigtableTableHashAccessor {
 
   // Restrict object creation. This class should only be used to access state from TableHash.

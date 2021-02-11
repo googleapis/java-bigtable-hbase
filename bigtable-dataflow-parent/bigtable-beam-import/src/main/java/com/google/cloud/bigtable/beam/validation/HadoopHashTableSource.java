@@ -18,11 +18,9 @@ package com.google.cloud.bigtable.beam.validation;
 import static com.google.cloud.bigtable.beam.validation.SyncTableUtils.createConfiguration;
 import static com.google.cloud.bigtable.beam.validation.SyncTableUtils.immutableBytesToString;
 
-import autovalue.shaded.com.google$.common.annotations.$VisibleForTesting;
-import com.google.api.core.InternalApi;
+import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.cloud.bigtable.beam.validation.HadoopHashTableSource.RangeHash;
 import com.google.cloud.bigtable.beam.validation.TableHashWrapper.TableHashReader;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -32,6 +30,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.DefaultCoder;
 import org.apache.beam.sdk.io.BoundedSource;
@@ -46,7 +45,6 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
  * A beam source to read output of Hadoop HashTable job. The source creates 1 workitem per HashTable
  * data file and emits a row-range/hash pair.
  */
-@InternalApi
 class HadoopHashTableSource extends BoundedSource<RangeHash> implements Serializable {
 
   private static final long serialVersionUID = 2383724L;
@@ -120,9 +118,9 @@ class HadoopHashTableSource extends BoundedSource<RangeHash> implements Serializ
   private RangeHashCoder coder;
 
   // Row range owned by this source.
-  @VisibleForTesting ImmutableBytesWritable startRowInclusive;
+  @VisibleForTesting @Nullable ImmutableBytesWritable startRowInclusive;
 
-  @VisibleForTesting ImmutableBytesWritable stopRowExclusive;
+  @VisibleForTesting @Nullable ImmutableBytesWritable stopRowExclusive;
 
   private TableHashWrapperFactory tableHashWrapperFactory;
 
@@ -143,12 +141,12 @@ class HadoopHashTableSource extends BoundedSource<RangeHash> implements Serializ
    * Constructor to initialize a HadoopHashTableSource for a given row-range. Used for creating
    * split sources.
    */
-  @$VisibleForTesting
+  @VisibleForTesting
   HadoopHashTableSource(
       ValueProvider<String> projectId,
       ValueProvider<String> sourceHashDir,
-      ImmutableBytesWritable startRowInclusive,
-      ImmutableBytesWritable stopRowExclusive) {
+      @Nullable ImmutableBytesWritable startRowInclusive,
+      @Nullable ImmutableBytesWritable stopRowExclusive) {
     this(
         projectId,
         sourceHashDir,
@@ -161,8 +159,8 @@ class HadoopHashTableSource extends BoundedSource<RangeHash> implements Serializ
   HadoopHashTableSource(
       ValueProvider<String> projectId,
       ValueProvider<String> hadoopHashTableOutputDir,
-      ImmutableBytesWritable startRowInclusive,
-      ImmutableBytesWritable stopRowExclusive,
+      @Nullable ImmutableBytesWritable startRowInclusive,
+      @Nullable ImmutableBytesWritable stopRowExclusive,
       TableHashWrapperFactory tableHashWrapperFactory) {
     this.coder = new RangeHashCoder();
     this.projectId = projectId;
@@ -192,15 +190,15 @@ class HadoopHashTableSource extends BoundedSource<RangeHash> implements Serializ
           new HadoopHashTableSource(
               projectId,
               sourceHashDir,
-              new ImmutableBytesWritable(hash.getStartRow()),
-              new ImmutableBytesWritable(hash.getStopRow()),
+              hash.getStartRow(),
+              hash.getStopRow(),
               tableHashWrapperFactory));
       return splitSources;
     }
 
     // Use the HashTable start key. The value is HConstants.EMPTY_START_ROW for full table scan.
-    ImmutableBytesWritable startRow = new ImmutableBytesWritable(hash.getStartRow());
-    ImmutableBytesWritable stopRow = new ImmutableBytesWritable(hash.getStopRow());
+    ImmutableBytesWritable startRow = hash.getStartRow();
+    ImmutableBytesWritable stopRow = hash.getStopRow();
 
     // The output of HashTable is organized as partition file and a set of datafiles.
     // Partition file contains a list of partitions, these partitions split the key-range of a table
@@ -238,7 +236,7 @@ class HadoopHashTableSource extends BoundedSource<RangeHash> implements Serializ
             projectId,
             sourceHashDir,
             partitions.get(numPartitions - 1),
-            new ImmutableBytesWritable(stopRow),
+            stopRow,
             tableHashWrapperFactory));
     LOG.info("Returning " + splitSources.size() + " sources from " + numPartitions + " partitions");
     return splitSources;
@@ -270,11 +268,11 @@ class HadoopHashTableSource extends BoundedSource<RangeHash> implements Serializ
 
     return new HashBasedReader(
         this,
-        new ImmutableBytesWritable(startRowInclusive),
-        new ImmutableBytesWritable(stopRowExclusive),
+        startRowInclusive,
+        stopRowExclusive,
         hash.newReader(
             createConfiguration(this.projectId.get(), this.sourceHashDir.get()),
-            new ImmutableBytesWritable(startRowInclusive)));
+            startRowInclusive));
   }
 
   @Override
@@ -307,7 +305,6 @@ class HadoopHashTableSource extends BoundedSource<RangeHash> implements Serializ
   }
 
   private void writeObject(ObjectOutputStream s) throws IOException {
-    // s.defaultWriteObject();
     s.writeObject(projectId);
     s.writeObject(sourceHashDir);
     s.writeObject(tableHashWrapperFactory);
@@ -328,50 +325,48 @@ class HadoopHashTableSource extends BoundedSource<RangeHash> implements Serializ
   }
 
   private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
-    // s.defaultReadObject();
-    this.projectId = (ValueProvider<String>) s.readObject();
-    this.sourceHashDir = (ValueProvider<String>) s.readObject();
-    this.tableHashWrapperFactory = (TableHashWrapperFactory) s.readObject();
+    projectId = (ValueProvider<String>) s.readObject();
+    sourceHashDir = (ValueProvider<String>) s.readObject();
+    tableHashWrapperFactory = (TableHashWrapperFactory) s.readObject();
     // start/stop can be null, they are preceded by a boolean indicating their presence.
     if (s.readBoolean() == true) {
-      this.startRowInclusive = new ImmutableBytesWritable((byte[]) s.readObject());
+      startRowInclusive = new ImmutableBytesWritable((byte[]) s.readObject());
     }
     if (s.readBoolean() == true) {
-      this.stopRowExclusive = new ImmutableBytesWritable((byte[]) s.readObject());
+      stopRowExclusive = new ImmutableBytesWritable((byte[]) s.readObject());
     }
   }
 
   @VisibleForTesting
   static class HashBasedReader extends BoundedReader<RangeHash> {
 
-    final HadoopHashTableSource source;
-    final TableHashReader reader;
+    private final HadoopHashTableSource source;
+    private final TableHashReader reader;
 
-    final ImmutableBytesWritable startRowInclusive;
-    final ImmutableBytesWritable stopRowExclusive;
+    @VisibleForTesting final ImmutableBytesWritable startRowInclusive;
+    @VisibleForTesting final ImmutableBytesWritable stopRowExclusive;
 
-    long numKeys = 0;
+    private long numKeys = 0;
     // Flag indicating that this workitem is finished.
-    boolean isDone = false;
-    ImmutableBytesWritable currentRangeStartKey;
+    private boolean isDone = false;
+    private ImmutableBytesWritable currentRangeStartKey;
     // Hash for the current range.
-    ImmutableBytesWritable currentHash;
-    RangeHash currentRangeHash;
+    private ImmutableBytesWritable currentHash;
+    private RangeHash currentRangeHash;
 
     public HashBasedReader(
         HadoopHashTableSource source,
         ImmutableBytesWritable startRowInclusive,
         ImmutableBytesWritable stopRowExclusive,
         TableHashReader reader) {
-      this.reader = reader;
       this.source = source;
       this.startRowInclusive = startRowInclusive;
       this.stopRowExclusive = stopRowExclusive;
+      this.reader = reader;
     }
 
     @Override
     public boolean start() throws IOException {
-      // NO CHECKED EXCEPTIONS HERE.
       LOG.debug(
           "Starting a new reader at key range ["
               + immutableBytesToString(startRowInclusive)
@@ -401,14 +396,9 @@ class HadoopHashTableSource extends BoundedSource<RangeHash> implements Serializ
       ImmutableBytesWritable startKey = this.currentRangeStartKey;
       ImmutableBytesWritable hash = this.currentHash;
 
-      if (!readNextKey()) {
-        this.currentRangeHash = RangeHash.of(startKey, stopRowExclusive, hash);
-        // return true since we have lastBatchStartKey to emit. Set isDone=true to prevent reading
-        // from a potentially exhausted reader.
-        isDone = true;
-      } else {
-        this.currentRangeHash = RangeHash.of(startKey, reader.getCurrentKey(), hash);
-      }
+      // if there is nothing to read, we are done. readNextKey advances the currentRangeStartKey.
+      isDone = !readNextKey();
+      currentRangeHash = RangeHash.of(startKey, currentRangeStartKey, hash);
 
       return true;
     }
@@ -417,22 +407,23 @@ class HadoopHashTableSource extends BoundedSource<RangeHash> implements Serializ
     private boolean readNextKey() throws IOException {
       if (reader.next()) {
         numKeys++;
-        this.currentRangeStartKey = reader.getCurrentKey();
+        currentRangeStartKey = reader.getCurrentKey();
         if ( // StopRow is not set, everything is in bounds.
         (stopRowExclusive.equals(HConstants.EMPTY_END_ROW)
             || currentRangeStartKey.compareTo(stopRowExclusive) < 0)) { // currentKey < stopKey
           // There is a key to read and the key is within the bounds of this workitem. Return true.
-          this.currentHash = reader.getCurrentHash();
+          currentHash = reader.getCurrentHash();
           return true;
         } else {
           // There is a key to read but its outside of the bounds of this workitem.
-          this.currentHash = null;
+          currentHash = null;
           return false;
         }
       }
 
-      // Nothing left to read for this workitem.
-      currentRangeStartKey = null;
+      // Nothing left to read for this workitem. Next range would have started from
+      // stopRowExclusive.
+      currentRangeStartKey = stopRowExclusive;
       currentHash = null;
       return false;
     }

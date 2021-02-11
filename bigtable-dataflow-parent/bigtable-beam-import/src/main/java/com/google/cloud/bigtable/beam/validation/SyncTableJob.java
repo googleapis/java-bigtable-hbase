@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google Inc. All Rights Reserved.
+ * Copyright 2021 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package com.google.cloud.bigtable.beam.validation;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
+import com.google.bigtable.repackaged.com.google.gson.Gson;
 import com.google.cloud.bigtable.beam.sequencefiles.Utils;
 import com.google.cloud.bigtable.beam.validation.HadoopHashTableSource.RangeHash;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.gson.Gson;
 import java.util.List;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
@@ -183,17 +183,11 @@ public class SyncTableJob {
   static class RangeHashToString extends SimpleFunction<RangeHash, String> {
     // TODO maybe explore a sequenceFile sink for RangeHash. Hadoop jobs using this output may be
     // easier to write for sequence file.
-
-    // GSON is not serializable, keep it transient. Member variable to avoid creating a Gson object
-    // per apply call.
-    private transient Gson gson = null;
+    private static final Gson GSON = new Gson();
 
     @Override
     public String apply(RangeHash input) {
-      if (gson == null) {
-        gson = new Gson();
-      }
-      return gson.toJson(input);
+      return GSON.toJson(input);
     }
   }
 }

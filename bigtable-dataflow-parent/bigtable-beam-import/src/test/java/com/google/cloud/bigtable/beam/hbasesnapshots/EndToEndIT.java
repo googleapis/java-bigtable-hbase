@@ -166,6 +166,8 @@ public class EndToEndIT {
       for (GcsPath path : paths) {
         pathStrs.add(path.toString());
       }
+      // TODO: cleanup fails when tests time out. Add a orphan cleaner in the setup()
+      // https://github.com/googleapis/java-bigtable/blob/35588d89b9b243eb691a29d3aff16b9f5a08fbb8/google-cloud-bigtable/src/test/java/com/google/cloud/bigtable/test_helpers/env/AbstractTestEnv.java#L108-L119
       this.gcsUtil.remove(pathStrs);
     }
 
@@ -309,7 +311,7 @@ public class EndToEndIT {
 
     List<GcsPath> outputs = gcsUtil.expand(GcsPath.fromUri(syncTableOutputDir + "*"));
 
-    System.out.println("OUTPUTS: " + outputs);
+    LOG.warn("OUTPUTS: " + outputs);
     // FileSink will shard the outputs and will created >1 files.
     Assert.assertTrue(outputs.size() > 1);
     // TODO read the files and validate that the ranges are there instead of size check.

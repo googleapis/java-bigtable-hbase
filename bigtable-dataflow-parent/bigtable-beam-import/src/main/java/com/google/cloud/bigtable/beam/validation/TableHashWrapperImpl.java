@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google Inc. All Rights Reserved.
+ * Copyright 2021 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,11 +36,10 @@ class TableHashWrapperImpl implements TableHashWrapper {
     TableHashWrapper tableHashWrapper = new TableHashWrapperImpl(tableHash);
     Preconditions.checkArgument(
         tableHashWrapper.getNumHashFiles() == (tableHashWrapper.getPartitions().size() + 1),
-        String.format(
-            "Corrupt hashtable output. %d hash files for %d partitions. Expected %d files.",
-            tableHashWrapper.getNumHashFiles(),
-            tableHashWrapper.getPartitions().size(),
-            tableHashWrapper.getPartitions().size() + 1));
+        "Corrupt hashtable output. %d hash files for %d partitions. Expected %d files.",
+        tableHashWrapper.getNumHashFiles(),
+        tableHashWrapper.getPartitions().size(),
+        tableHashWrapper.getPartitions().size() + 1);
     return tableHashWrapper;
   }
 

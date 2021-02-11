@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google Inc. All Rights Reserved.
+ * Copyright 2021 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.beam.validation;
 
 import static com.google.cloud.bigtable.beam.validation.SyncTableUtils.immutableBytesToString;
 
-import com.google.api.core.InternalApi;
+import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.cloud.bigtable.beam.AbstractCloudBigtableTableDoFn;
 import com.google.cloud.bigtable.beam.CloudBigtableConfiguration;
 import com.google.cloud.bigtable.beam.TemplateUtils;
@@ -45,7 +45,6 @@ import org.apache.hadoop.hbase.mapreduce.BigtableTableHashAccessor.BigtableResul
  * A {@link DoFn} that takes a row range and hash from HBase and validates the hash from rows read
  * from Cloud Bigtable.
  */
-@InternalApi
 class ComputeAndValidateHashFromBigtableDoFn
     extends AbstractCloudBigtableTableDoFn<KV<String, Iterable<List<RangeHash>>>, RangeHash> {
 
@@ -91,7 +90,7 @@ class ComputeAndValidateHashFromBigtableDoFn
     for (List<RangeHash> rangeHashes : context.element().getValue()) {
       if (rangeHashes.isEmpty()) {
         // No rows ranges found, return;
-        return;
+        continue;
       }
 
       ImmutableBytesWritable rangeStartInclusive = rangeHashes.get(0).startInclusive;
@@ -126,19 +125,16 @@ class ComputeAndValidateHashFromBigtableDoFn
         // rangeHashes until rowKey's range is found.
         while (!isWithinUpperBound(currentRangeHash.stopExclusive, rowKey)) {
           validateBatchHash(context, resultHasher, currentRangeHash);
-          if (!rangeHashIterator.hasNext()) {
-            // THIS SHOULD NEVER HAPPEN. Bigtable is being scanned till the last
-            // RangeHash.endKeyExclusive(), so bigtable's result should not outlast the
-            // rangeHashes.
-            throw new IllegalStateException(
-                "Buffer reached to end while scan is still active at row :"
-                    + immutableBytesToString(result.getRow())
-                    + ". Affected Range: ["
-                    + immutableBytesToString(rangeStartInclusive)
-                    + ", "
-                    + immutableBytesToString(rangeEndExclusive)
-                    + ").");
-          }
+          // THIS SHOULD NEVER HAPPEN. Bigtable is being scanned till the last
+          // RangeHash.endKeyExclusive(), so bigtable's result should not outlast the
+          // rangeHashes.
+          Preconditions.checkState(
+              rangeHashIterator.hasNext(),
+              "Buffer reached to end while scan is still active at row : %s. "
+                  + "Affected Range: [%s, %s)."
+                  + immutableBytesToString(result.getRow())
+                  + immutableBytesToString(rangeStartInclusive)
+                  + immutableBytesToString(rangeEndExclusive));
           currentRangeHash = rangeHashIterator.next();
         }
 
@@ -195,10 +191,6 @@ class ComputeAndValidateHashFromBigtableDoFn
   /**
    * Determines if row >= stopExclusive for a row range (start, stopExclusive). Empty stopExclusive
    * represents a range with no upper bound.
-   *
-   * @param stopExclusive
-   * @param row
-   * @return
    */
   private boolean isWithinUpperBound(
       ImmutableBytesWritable stopExclusive, ImmutableBytesWritable row) {
@@ -216,7 +208,7 @@ class ComputeAndValidateHashFromBigtableDoFn
       matches.inc();
     }
     // Start a new batch
-    resultHasher.startBatch(new ImmutableBytesWritable(currentRangeHash.stopExclusive));
+    resultHasher.startBatch(currentRangeHash.stopExclusive);
   }
 
   private void reportMismatch(ProcessContext context, RangeHash currentRangeHash) {

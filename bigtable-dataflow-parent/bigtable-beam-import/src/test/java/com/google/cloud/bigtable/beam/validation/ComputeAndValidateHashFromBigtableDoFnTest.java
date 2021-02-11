@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google Inc. All Rights Reserved.
+ * Copyright 2021 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import org.apache.beam.sdk.PipelineResult;
+import org.apache.beam.sdk.metrics.MetricQueryResults;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
@@ -47,6 +52,7 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.BigtableTableHashAccessor.BigtableResultHasher;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -192,6 +198,20 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
         hasher.getBatchHash());
   }
 
+  private void validateCounters(
+      PipelineResult result, Long expectedMatches, Long expectedMismatches) {
+    MetricQueryResults metrics = result.metrics().allMetrics();
+    Map<String, Long> counters =
+        StreamSupport.stream(metrics.getCounters().spliterator(), false)
+            .collect(Collectors.toMap((m) -> m.getName().getName(), (m) -> m.getAttempted()));
+    if (expectedMatches > 0) {
+      Assert.assertEquals(expectedMatches, counters.get("ranges_matched"));
+    }
+    if (expectedMismatches > 0) {
+      Assert.assertEquals(expectedMismatches, counters.get("ranges_not_matched"));
+    }
+  }
+
   ////////// Happy case tests for various setups//////////////////////
   @Test
   public void testHashMatchesForMultipleRange() throws Exception {
@@ -203,7 +223,8 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
 
     PCollection<RangeHash> output = input.apply(ParDo.of(doFn));
     PAssert.that(output).empty();
-    p.run();
+    PipelineResult result = p.run();
+    validateCounters(result, 2L, 0L);
   }
 
   @Test
@@ -215,7 +236,8 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
 
     PCollection<RangeHash> output = input.apply(ParDo.of(doFn));
     PAssert.that(output).containsInAnyOrder();
-    p.run();
+    PipelineResult result = p.run();
+    validateCounters(result, 1L, 0L);
   }
 
   @Test
@@ -228,7 +250,8 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
 
     PCollection<RangeHash> output = input.apply(ParDo.of(doFn));
     PAssert.that(output).empty();
-    p.run();
+    PipelineResult result = p.run();
+    validateCounters(result, 2L, 0L);
   }
 
   @Test
@@ -242,7 +265,31 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
 
     PCollection<RangeHash> output = input.apply(ParDo.of(doFn));
     PAssert.that(output).empty();
-    p.run();
+    PipelineResult result = p.run();
+    validateCounters(result, 3L, 0L);
+  }
+
+  ///////////////// Test mismatches with multiple ranges per Key in KV<> ////////////////////
+  @Test
+  public void testHashMisMatchesForMultipleRangeAcrossKV() throws Exception {
+    hashes.add(createHash(getRowKey(21), getRowKey(24)));
+    hashes.add(createHash(getRowKey(24), getRowKey(28)));
+
+    // Corrupt both the ranges
+    table.delete(new Delete(getRowKey(21)).addColumns(CF, COL, TS));
+    table.put(new Put(getRowKey(24)).addColumn(CF2, COL, TS, getValue(20, 0)));
+
+    PCollection<KV<String, Iterable<List<RangeHash>>>> input =
+        p.apply(
+            Create.of(
+                KV.of(
+                    new String(getRowKey(21)),
+                    Arrays.asList(Arrays.asList(hashes.get(0)), Arrays.asList(hashes.get(1))))));
+
+    PCollection<RangeHash> output = input.apply(ParDo.of(doFn));
+    PAssert.that(output).containsInAnyOrder(hashes);
+    PipelineResult result = p.run();
+    validateCounters(result, 0L, 2L);
   }
 
   ///////////////// Test mismatches when Bigtable has extra rows ////////////////////
@@ -260,7 +307,8 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
 
     PCollection<RangeHash> output = input.apply(ParDo.of(doFn));
     PAssert.that(output).containsInAnyOrder(hashes.get(1));
-    p.run();
+    PipelineResult result = p.run();
+    validateCounters(result, 2L, 1L);
   }
 
   @Test
@@ -280,7 +328,8 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
 
     PCollection<RangeHash> output = input.apply(ParDo.of(doFn));
     PAssert.that(output).containsInAnyOrder(hashes.get(0), hashes.get(2));
-    p.run();
+    PipelineResult result = p.run();
+    validateCounters(result, 1L, 2L);
   }
 
   ///////////////////// Test different values ///////////////////////////
@@ -314,7 +363,8 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
     PCollection<RangeHash> output = input.apply(ParDo.of(doFn));
     PAssert.that(output)
         .containsInAnyOrder(hashes.get(0), hashes.get(1), hashes.get(2), hashes.get(3));
-    p.run();
+    PipelineResult result = p.run();
+    validateCounters(result, 1L, 4L);
   }
 
   ////////////////// Tests with CBT missing data //////////////////////////////
@@ -340,7 +390,8 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
 
     PCollection<RangeHash> output = input.apply(ParDo.of(doFn));
     PAssert.that(output).containsInAnyOrder(hashes.get(0), hashes.get(2), hashes.get(4));
-    p.run();
+    PipelineResult result = p.run();
+    validateCounters(result, 2L, 3L);
   }
 
   @Test
@@ -368,7 +419,8 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
     PCollection<RangeHash> output = input.apply(ParDo.of(doFn));
     PAssert.that(output)
         .containsInAnyOrder(hashes.get(0), hashes.get(2), hashes.get(4), hashes.get(5));
-    p.run();
+    PipelineResult result = p.run();
+    validateCounters(result, 2L, 4L);
   }
 
   @Test
@@ -385,7 +437,8 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
 
     PCollection<RangeHash> output = input.apply(ParDo.of(doFn));
     PAssert.that(output).containsInAnyOrder(hashes);
-    p.run();
+    PipelineResult result = p.run();
+    validateCounters(result, 0L, 3L);
   }
 
   ////////////////////// Test that scan is used from TableHash.////////////////////////
@@ -404,7 +457,8 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
 
     PCollection<RangeHash> output = input.apply(ParDo.of(doFn));
     PAssert.that(output).containsInAnyOrder(hashes);
-    p.run();
+    PipelineResult result = p.run();
+    validateCounters(result, 0L, 3L);
   }
 
   ////////////////////// Combination of different cases //////////////////////////////////
@@ -436,6 +490,7 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
     PCollection<RangeHash> output = input.apply(ParDo.of(doFn));
     PAssert.that(output)
         .containsInAnyOrder(hashes.get(0), hashes.get(2), hashes.get(4), hashes.get(5));
-    p.run();
+    PipelineResult result = p.run();
+    validateCounters(result, 2L, 4L);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google Inc. All Rights Reserved.
+ * Copyright 2021 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,10 @@ package com.google.cloud.bigtable.beam.validation;
 
 import static com.google.cloud.bigtable.beam.validation.SyncTableUtils.immutableBytesToString;
 
-import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.beam.validation.HadoopHashTableSource.RangeHash;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.beam.sdk.coders.Coder;
@@ -33,8 +30,6 @@ import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.values.KV;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
@@ -45,19 +40,20 @@ import org.apache.hadoop.hbase.util.Bytes;
  * <p>Hadoop HashTable output is sorted by row-key and contains a row-range and hash. Beam
  * Pcollection do not guarantee any ordering. To fetch a batch of ranges in 1 ReadRows operation,
  * this source buffers then and outputs a List<RangeHash> guaranteeing the sorted order of ranges.
+ *
+ * <p>Emits a batch of sorted RangeHashes keyed by the start key of the first range.
  */
-@InternalApi
 class BufferedHadoopHashTableSource extends BoundedSource<KV<String, List<RangeHash>>> {
 
   private static final long serialVersionUID = 39842743L;
 
-  public static final Log LOG = LogFactory.getLog(BufferedHadoopHashTableSource.class);
   private static final int DEFAULT_BATCH_SIZE = 50;
+  private static final Coder<KV<String, List<RangeHash>>> CODER =
+      KvCoder.of(StringUtf8Coder.of(), ListCoder.of(RangeHashCoder.of()));;
 
   // Max number of RangeHashes to buffer.
-  private int maxBufferSize;
-  private HadoopHashTableSource hashTableSource;
-  private Coder<KV<String, List<RangeHash>>> coder;
+  private final int maxBufferSize;
+  private final HadoopHashTableSource hashTableSource;
 
   public BufferedHadoopHashTableSource(HadoopHashTableSource source) {
     this(source, DEFAULT_BATCH_SIZE);
@@ -65,7 +61,6 @@ class BufferedHadoopHashTableSource extends BoundedSource<KV<String, List<RangeH
 
   public BufferedHadoopHashTableSource(HadoopHashTableSource hashTableSource, int maxBufferSize) {
     this.hashTableSource = hashTableSource;
-    this.coder = KvCoder.of(StringUtf8Coder.of(), ListCoder.of(RangeHashCoder.of()));
     this.maxBufferSize = maxBufferSize;
   }
 
@@ -88,13 +83,13 @@ class BufferedHadoopHashTableSource extends BoundedSource<KV<String, List<RangeH
 
   @Override
   public Coder<KV<String, List<RangeHash>>> getOutputCoder() {
-    return coder;
+    return CODER;
   }
 
   @Override
   public long getEstimatedSizeBytes(PipelineOptions options) throws Exception {
     // HashTable data files don't expose a method to estimate size or lineCount.
-    return 0;
+    return hashTableSource.getEstimatedSizeBytes(options);
   }
 
   @Override
@@ -130,21 +125,10 @@ class BufferedHadoopHashTableSource extends BoundedSource<KV<String, List<RangeH
         + maxBufferSize;
   }
 
-  private void writeObject(ObjectOutputStream s) throws IOException {
-    s.writeObject(hashTableSource);
-    s.writeInt(maxBufferSize);
-  }
-
-  private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
-    this.hashTableSource = (HadoopHashTableSource) s.readObject();
-    this.coder = KvCoder.of(StringUtf8Coder.of(), ListCoder.of(RangeHashCoder.of()));
-    this.maxBufferSize = s.readInt();
-  }
-
   private static class BufferedHashBasedReader extends BoundedReader<KV<String, List<RangeHash>>> {
 
-    private BoundedReader<RangeHash> hashReader;
-    private BufferedHadoopHashTableSource source;
+    private final BoundedReader<RangeHash> hashReader;
+    private final BufferedHadoopHashTableSource source;
 
     private List<RangeHash> buffer;
 
@@ -181,6 +165,9 @@ class BufferedHadoopHashTableSource extends BoundedSource<KV<String, List<RangeH
 
     @Override
     public boolean advance() throws IOException {
+      // Reset the buffer for next batch.
+      buffer = new ArrayList<>(source.maxBufferSize);
+
       return bufferRangeHashes();
     }
 
@@ -188,15 +175,12 @@ class BufferedHadoopHashTableSource extends BoundedSource<KV<String, List<RangeH
     public KV<String, List<RangeHash>> getCurrent() {
       // getCurrent only gets called when buffer is not empty.
       Preconditions.checkArgument(!buffer.isEmpty(), "Can not get current on empty buffer.");
-      List<RangeHash> hashes = buffer;
-      // Reset the buffer for next batch.
-      buffer = new ArrayList<>(source.maxBufferSize);
       // GroupBy key is a string and not ImmutableBytesWritable because the WritableCoder is not
       // deterministic. The outputted PCollection is grouped by the K and needs a deterministic
       // coder. Having a String K leads to an unfortunate double encoding, ImmutableBytesWritable->
       // HEX string -> UTF8 encoded string. The number of batches are significantly smaller than
       // data fetched from Bigtable and should not have meaningful impact on the job performance.
-      return KV.of(Bytes.toStringBinary(hashes.get(0).startInclusive.copyBytes()), hashes);
+      return KV.of(Bytes.toStringBinary(buffer.get(0).startInclusive.copyBytes()), buffer);
     }
 
     @Override
