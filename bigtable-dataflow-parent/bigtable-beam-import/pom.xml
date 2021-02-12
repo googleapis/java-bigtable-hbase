@@ -76,7 +76,6 @@ limitations under the License.
         </exclusion>
       </exclusions>
     </dependency>
-
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-core</artifactId>
@@ -139,12 +138,18 @@ limitations under the License.
       </exclusions>
     </dependency>
 
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+      <version>${jsr305.version}</version>
+    </dependency>
+
     <!-- TODO: remove these dependencies when upgraded through transitive dependency (beam-runners-google-cloud-dataflow-java)
         these are not used directly, but upgrading due to transitive vulnerabilities in older versions-->
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
-      <version>1.15</version>
+      <version>1.14</version>
     </dependency>
     <dependency>
       <groupId>com.squareup.okhttp</groupId>
@@ -215,6 +220,18 @@ limitations under the License.
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-testing-util</artifactId>
       <version>${hbase.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.truth</groupId>
+      <artifactId>truth</artifactId>
+      <version>1.0.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-bigtable-emulator</artifactId>
+      <version>0.124.0</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -381,7 +398,7 @@ limitations under the License.
                 <configuration>
                   <forkCount>1</forkCount>
                   <includes>
-                    <include>**/*IT.java</include>
+                    <include>**/sequencefiles/*IT.java</include>
                   </includes>
                   <!-- Use Isolated Classloader so that dataflow can find all files
                        that must be staged.
@@ -395,6 +412,7 @@ limitations under the License.
       </build>
     </profile>
 
+    <!-- profile to run all integration tests -->
     <profile>
       <id>beamIntegrationTest</id>
       <build>
@@ -413,6 +431,7 @@ limitations under the License.
                   <forkCount>1</forkCount>
                   <includes>
                     <include>**/CloudBigtableBeamITTest.java</include>
+                    <include>**/*IT.java</include>
                   </includes>
                   <reportNameSuffix>bigtable-beam</reportNameSuffix>
                 </configuration>
@@ -425,6 +444,11 @@ limitations under the License.
 
     <profile>
       <id>hbasesnapshotsIntegrationTest</id>
+      <properties>
+        <!-- Needed to enable integration tests before we figure out -->
+        <!-- possible misconfiguration of Failsafe plugin -->
+        <skipITs>false</skipITs>
+      </properties>
       <build>
         <plugins>
           <plugin>
