@@ -187,7 +187,7 @@ class ComputeAndValidateHashFromBigtableDoFn
    * Determines if row >= stopExclusive for a row range (start, stopExclusive). Empty stopExclusive
    * represents a range with no upper bound.
    */
-  private boolean isWithinUpperBound(
+  private static boolean isWithinUpperBound(
       ImmutableBytesWritable stopExclusive, ImmutableBytesWritable row) {
     return stopExclusive.equals(HConstants.EMPTY_END_ROW) || row.compareTo(stopExclusive) < 0;
   }

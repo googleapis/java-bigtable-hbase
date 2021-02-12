@@ -18,10 +18,12 @@ package com.google.cloud.bigtable.beam.validation;
 
 import static com.google.cloud.bigtable.beam.validation.SyncTableUtils.createConfiguration;
 
+import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import java.io.IOException;
 import java.io.Serializable;
 
 /** Factory to create a TableHashWrapper. */
+@InternalApi
 public class TableHashWrapperFactory implements Serializable {
 
   private static final long serialVersionUID = 265433454L;
