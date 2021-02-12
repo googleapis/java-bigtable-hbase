@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.beam.validation;
 import static com.google.cloud.bigtable.beam.validation.SyncTableUtils.createConfiguration;
 import static com.google.cloud.bigtable.beam.validation.SyncTableUtils.immutableBytesToString;
 
+import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.cloud.bigtable.beam.validation.HadoopHashTableSource.RangeHash;
 import com.google.cloud.bigtable.beam.validation.TableHashWrapper.TableHashReader;
@@ -45,7 +46,8 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
  * A beam source to read output of Hadoop HashTable job. The source creates 1 workitem per HashTable
  * data file and emits a row-range/hash pair.
  */
-class HadoopHashTableSource extends BoundedSource<RangeHash> implements Serializable {
+@InternalApi
+public class HadoopHashTableSource extends BoundedSource<RangeHash> implements Serializable {
 
   private static final long serialVersionUID = 2383724L;
 
