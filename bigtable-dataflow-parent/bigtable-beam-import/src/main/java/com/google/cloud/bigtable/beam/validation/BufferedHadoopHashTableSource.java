@@ -68,6 +68,7 @@ class BufferedHadoopHashTableSource extends BoundedSource<KV<String, List<RangeH
   public List<? extends BoundedSource<KV<String, List<RangeHash>>>> split(
       long desiredBundleSizeBytes, PipelineOptions options) throws IOException {
 
+    @SuppressWarnings("unchecked")
     List<HadoopHashTableSource> splitHashTableSources =
         (List<HadoopHashTableSource>) hashTableSource.split(desiredBundleSizeBytes, options);
 
@@ -93,7 +94,8 @@ class BufferedHadoopHashTableSource extends BoundedSource<KV<String, List<RangeH
   }
 
   @Override
-  public BoundedReader createReader(PipelineOptions options) throws IOException {
+  public BoundedReader<KV<String, List<RangeHash>>> createReader(PipelineOptions options)
+      throws IOException {
     return new BufferedHashBasedReader(this, hashTableSource.createReader(options));
   }
 
@@ -174,7 +176,8 @@ class BufferedHadoopHashTableSource extends BoundedSource<KV<String, List<RangeH
     @Override
     public KV<String, List<RangeHash>> getCurrent() {
       // getCurrent only gets called when buffer is not empty.
-      Preconditions.checkArgument(!buffer.isEmpty(), "Can not get current on empty buffer.");
+      Preconditions.checkState(
+          !buffer.isEmpty(), "getCurrent() should only be called when start/advance return true.");
       // GroupBy key is a string and not ImmutableBytesWritable because the WritableCoder is not
       // deterministic. The outputted PCollection is grouped by the K and needs a deterministic
       // coder. Having a String K leads to an unfortunate double encoding, ImmutableBytesWritable->

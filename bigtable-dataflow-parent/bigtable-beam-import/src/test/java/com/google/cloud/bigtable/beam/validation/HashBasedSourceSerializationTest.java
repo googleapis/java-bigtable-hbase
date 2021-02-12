@@ -47,11 +47,6 @@ public class HashBasedSourceSerializationTest extends TestCase {
   }
 
   @Test
-  public void testSerializeDefaultConstructor() throws IOException {
-    checkSerialization(new HadoopHashTableSource());
-  }
-
-  @Test
   public void testSerializeWithValueProviders() throws IOException {
     checkSerialization(
         new HadoopHashTableSource(

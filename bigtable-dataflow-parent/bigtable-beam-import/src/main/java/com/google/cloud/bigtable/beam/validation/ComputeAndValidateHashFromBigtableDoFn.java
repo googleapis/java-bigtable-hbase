@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.beam.validation;
 import static com.google.cloud.bigtable.beam.validation.SyncTableUtils.immutableBytesToString;
 
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
+import com.google.bigtable.repackaged.com.google.common.collect.Lists;
 import com.google.cloud.bigtable.beam.AbstractCloudBigtableTableDoFn;
 import com.google.cloud.bigtable.beam.CloudBigtableConfiguration;
 import com.google.cloud.bigtable.beam.TemplateUtils;
@@ -85,87 +86,81 @@ class ComputeAndValidateHashFromBigtableDoFn
 
   @ProcessElement
   public void processElement(ProcessContext context) throws Exception {
-    // BufferedHadoopHashTableSource generates only 1 item per groupby key, but iterate just in
-    // case.
-    for (List<RangeHash> rangeHashes : context.element().getValue()) {
-      if (rangeHashes.isEmpty()) {
-        // No rows ranges found, return;
-        continue;
+    List<List<RangeHash>> wrapperdRangeHashes = Lists.newArrayList(context.element().getValue());
+    // BufferedHadoopHashTableSource generates only 1 item per groupby key, key is startKey for the
+    // Sorted ranges.
+    Preconditions.checkState(
+        wrapperdRangeHashes.size() == 1, "Can not have muiple entries for a key");
+    List<RangeHash> rangeHashes = wrapperdRangeHashes.get(0);
+    Preconditions.checkState(!rangeHashes.isEmpty(), "Can not have empty ranges in DO_FN");
+
+    ImmutableBytesWritable rangeStartInclusive = rangeHashes.get(0).startInclusive;
+    ImmutableBytesWritable rangeEndExclusive =
+        rangeHashes.get(rangeHashes.size() - 1).stopExclusive;
+
+    BigtableResultHasher resultHasher = new BigtableResultHasher();
+    resultHasher.startBatch(rangeStartInclusive);
+
+    // Since all the row-ranges are sorted in HashTable's data files, 1 big scan can be used
+    // to read all the row ranges. Parallelism is achieved by splitting the HashTable's data
+    // files into smaller bundle of row-ranges in GroupBy.
+    ResultScanner scanner =
+        createBigtableScan(rangeStartInclusive.copyBytes(), rangeEndExclusive.copyBytes());
+
+    Iterator<RangeHash> rangeHashIterator = rangeHashes.iterator();
+    long numRows = 0;
+
+    RangeHash currentRangeHash = rangeHashIterator.next();
+
+    // Process each row and validate hashes
+    for (Result result : scanner) {
+      numRows++;
+      if (numRows % 10_000 == 0) {
+        // Heartbeat in logs in case a large scan gets hung.
+        DOFN_LOG.debug("Processed " + numRows + " rows ");
       }
 
-      ImmutableBytesWritable rangeStartInclusive = rangeHashes.get(0).startInclusive;
-      ImmutableBytesWritable rangeEndExclusive =
-          rangeHashes.get(rangeHashes.size() - 1).stopExclusive;
+      ImmutableBytesWritable rowKey = new ImmutableBytesWritable(result.getRow());
 
-      BigtableResultHasher resultHasher = new BigtableResultHasher();
-      resultHasher.startBatch(rangeStartInclusive);
-
-      // Since all the row-ranges are sorted in HashTable's data files, 1 big scan can be used
-      // to read all the row ranges. Parallelism is achieved by splitting the HashTable's data
-      // files into smaller bundle of row-ranges in GroupBy.
-      ResultScanner scanner =
-          createBigtableScan(rangeStartInclusive.copyBytes(), rangeEndExclusive.copyBytes());
-
-      Iterator<RangeHash> rangeHashIterator = rangeHashes.iterator();
-      long numRows = 0;
-
-      RangeHash currentRangeHash = rangeHashIterator.next();
-
-      // Process each row and validate hashes
-      for (Result result : scanner) {
-        numRows++;
-        if (numRows % 10_000 == 0) {
-          // Heartbeat in logs in case a large scan gets hung.
-          DOFN_LOG.debug("Processed " + numRows + " rows ");
-        }
-
-        ImmutableBytesWritable rowKey = new ImmutableBytesWritable(result.getRow());
-
-        // Check if the rowKey belongs to current range, if not keep iterating through the
-        // rangeHashes until rowKey's range is found.
-        while (!isWithinUpperBound(currentRangeHash.stopExclusive, rowKey)) {
-          validateBatchHash(context, resultHasher, currentRangeHash);
-          // THIS SHOULD NEVER HAPPEN. Bigtable is being scanned till the last
-          // RangeHash.endKeyExclusive(), so bigtable's result should not outlast the
-          // rangeHashes.
-          Preconditions.checkState(
-              rangeHashIterator.hasNext(),
-              "Buffer reached to end while scan is still active at row : %s. "
-                  + "Affected Range: [%s, %s)."
-                  + immutableBytesToString(result.getRow())
-                  + immutableBytesToString(rangeStartInclusive)
-                  + immutableBytesToString(rangeEndExclusive));
-          currentRangeHash = rangeHashIterator.next();
-        }
-
-        // Always Hash the current row.
-        resultHasher.hashResult(result);
-      }
-
-      // Bigtable scan is finished at this point and rangeHashes may contain additional row ranges.
-      // Last range will always be unverified as the range end is exclusive and
-      // currentRow > rangeEndExclusive will never by true. Verify the last range.
-      validateBatchHash(context, resultHasher, currentRangeHash);
-
-      // If there are remaining ranges in the rangeHashes they all need to reported as mismatched as
-      // there is nothing in Cloud Bigtable for those row ranges.
-      // for (int i = bufferIndex; i < rangeHashes.size(); i++) {
-      while (rangeHashIterator.hasNext()) {
+      // Check if the rowKey belongs to current range, if not keep iterating through the
+      // rangeHashes until rowKey's range is found.
+      while (!isWithinUpperBound(currentRangeHash.stopExclusive, rowKey)) {
+        validateBatchHash(context, resultHasher, currentRangeHash);
+        // THIS SHOULD NEVER HAPPEN. Bigtable is being scanned till the last
+        // RangeHash.endKeyExclusive(), so bigtable's result should not outlast the
+        // rangeHashes.
+        Preconditions.checkState(
+            rangeHashIterator.hasNext(),
+            "Buffer reached to end while scan is still active at row : %s. "
+                + "Affected Range: [%s, %s)."
+                + immutableBytesToString(result.getRow())
+                + immutableBytesToString(rangeStartInclusive)
+                + immutableBytesToString(rangeEndExclusive));
         currentRangeHash = rangeHashIterator.next();
-        reportMismatch(context, currentRangeHash);
       }
 
-      DOFN_LOG.debug(
-          "Finishing context by outputting "
-              + rangeHashes.size()
-              + " keys in range ["
-              + ((!rangeHashes.isEmpty())
-                  ? immutableBytesToString(rangeStartInclusive)
-                      + ", "
-                      + immutableBytesToString(rangeEndExclusive)
-                      + ")."
-                  : ", )."));
+      // Always Hash the current row.
+      resultHasher.hashResult(result);
     }
+
+    // Bigtable scan is finished at this point and rangeHashes may contain additional row ranges.
+    // Last range will always be unverified as the range end is exclusive and
+    // currentRow > rangeEndExclusive will never by true. Verify the last range.
+    validateBatchHash(context, resultHasher, currentRangeHash);
+
+    // If there are remaining ranges in the rangeHashes they all need to reported as mismatched as
+    // there is nothing in Cloud Bigtable for those row ranges.
+    // for (int i = bufferIndex; i < rangeHashes.size(); i++) {
+    while (rangeHashIterator.hasNext()) {
+      currentRangeHash = rangeHashIterator.next();
+      reportMismatch(context, currentRangeHash);
+    }
+
+    DOFN_LOG.debug(
+        "Finishing context by outputting {}  keys in range [{}, {}).",
+        rangeHashes.size(),
+        immutableBytesToString(rangeStartInclusive),
+        immutableBytesToString(rangeEndExclusive));
   }
 
   private ResultScanner createBigtableScan(byte[] startKeyInclusive, byte[] stopKeyExclusive)
@@ -214,11 +209,9 @@ class ComputeAndValidateHashFromBigtableDoFn
   private void reportMismatch(ProcessContext context, RangeHash currentRangeHash) {
     mismatches.inc();
     DOFN_LOG.info(
-        "MISMATCH ON RANGE ["
-            + immutableBytesToString(currentRangeHash.startInclusive)
-            + ", "
-            + immutableBytesToString(currentRangeHash.stopExclusive)
-            + ").");
+        "MISMATCH ON RANGE [{}, {}).",
+        immutableBytesToString(currentRangeHash.startInclusive),
+        immutableBytesToString(currentRangeHash.stopExclusive));
     context.output(currentRangeHash);
   }
 }

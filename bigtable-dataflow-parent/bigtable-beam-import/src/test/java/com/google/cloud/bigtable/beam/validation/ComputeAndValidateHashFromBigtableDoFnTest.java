@@ -269,29 +269,6 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
     validateCounters(result, 3L, 0L);
   }
 
-  ///////////////// Test mismatches with multiple ranges per Key in KV<> ////////////////////
-  @Test
-  public void testHashMisMatchesForMultipleRangeAcrossKV() throws Exception {
-    hashes.add(createHash(getRowKey(21), getRowKey(24)));
-    hashes.add(createHash(getRowKey(24), getRowKey(28)));
-
-    // Corrupt both the ranges
-    table.delete(new Delete(getRowKey(21)).addColumns(CF, COL, TS));
-    table.put(new Put(getRowKey(24)).addColumn(CF2, COL, TS, getValue(20, 0)));
-
-    PCollection<KV<String, Iterable<List<RangeHash>>>> input =
-        p.apply(
-            Create.of(
-                KV.of(
-                    new String(getRowKey(21)),
-                    Arrays.asList(Arrays.asList(hashes.get(0)), Arrays.asList(hashes.get(1))))));
-
-    PCollection<RangeHash> output = input.apply(ParDo.of(doFn));
-    PAssert.that(output).containsInAnyOrder(hashes);
-    PipelineResult result = p.run();
-    validateCounters(result, 0L, 2L);
-  }
-
   ///////////////// Test mismatches when Bigtable has extra rows ////////////////////
   @Test
   public void testAdditionalCellInMiddle() throws Exception {
