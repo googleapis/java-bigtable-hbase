@@ -141,12 +141,6 @@ limitations under the License.
       <artifactId>google-auth-library-oauth2-http</artifactId>
     </dependency>
 
-    <!-- TODO: remove this is direct dep, its only used for its Clock interface -->
-    <dependency>
-      <groupId>com.google.http-client</groupId>
-      <artifactId>google-http-client</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
