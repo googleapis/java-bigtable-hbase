@@ -81,7 +81,8 @@ import org.mockito.stubbing.Answer;
 @RunWith(JUnit4.class)
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestBigtableDataGrpcClient {
-  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  // TODO: remove silent tighten mocks
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().silent();
 
   private static final String TABLE_NAME =
       new BigtableInstanceName("projectId", "instanceId").toTableNameStr("tableId");

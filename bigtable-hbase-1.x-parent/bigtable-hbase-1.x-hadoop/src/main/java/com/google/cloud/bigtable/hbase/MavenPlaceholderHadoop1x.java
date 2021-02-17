@@ -24,7 +24,7 @@ package com.google.cloud.bigtable.hbase;
  * @author sduskis
  * @version $Id: $Id
  */
-public final class MavenPlaceholder {
+public final class MavenPlaceholderHadoop1x {
 
-  private MavenPlaceholder() {}
+  private MavenPlaceholderHadoop1x() {}
 }
