@@ -32,10 +32,6 @@ limitations under the License.
     applications.
   </description>
 
-  <properties>
-    <hbase.version>${hbase.version.2}</hbase.version>
-  </properties>
-
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -92,7 +88,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase2.version}</version>
     </dependency>
 
     <dependency>

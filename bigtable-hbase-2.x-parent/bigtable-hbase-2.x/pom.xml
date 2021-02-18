@@ -24,7 +24,7 @@ limitations under the License.
   </parent>
 
   <properties>
-    <hbase.version>${hbase.version.2}</hbase.version>
+    <hbase.version>${hbase2.version}</hbase.version>
   </properties>
 
   <artifactId>bigtable-hbase-2.x</artifactId>
@@ -72,7 +72,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase2.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.slf4j</groupId>
