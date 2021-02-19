@@ -19,7 +19,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
-import com.google.api.client.util.NanoClock;
+import com.google.api.core.ApiClock;
 import com.google.api.core.SettableApiFuture;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -42,7 +42,7 @@ import org.mockito.stubbing.Answer;
 public class TestOperationAccountant {
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
-  @Mock NanoClock clock;
+  @Mock ApiClock clock;
 
   @Test
   public void testOnOperationCompletion() {

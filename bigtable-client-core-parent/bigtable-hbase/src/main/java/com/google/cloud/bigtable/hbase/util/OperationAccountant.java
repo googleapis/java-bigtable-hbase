@@ -15,11 +15,12 @@
  */
 package com.google.cloud.bigtable.hbase.util;
 
-import com.google.api.client.util.NanoClock;
+import com.google.api.core.ApiClock;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
+import com.google.api.core.NanoClock;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.util.concurrent.TimeUnit;
@@ -42,7 +43,7 @@ public class OperationAccountant {
   // Flush() will still wait to complete.
   private static final long INTERVAL_NO_SUCCESS_WARNING_NANOS = TimeUnit.SECONDS.toNanos(30);
 
-  private final NanoClock clock;
+  private final ApiClock clock;
   private final long finishWaitMillis;
 
   private final Object signal = new String("");
@@ -53,11 +54,11 @@ public class OperationAccountant {
 
   /** Constructor for {@link OperationAccountant}. */
   public OperationAccountant() {
-    this(NanoClock.SYSTEM, DEFAULT_FINISH_WAIT_MILLIS);
+    this(NanoClock.getDefaultClock(), DEFAULT_FINISH_WAIT_MILLIS);
   }
 
   @VisibleForTesting
-  OperationAccountant(NanoClock clock, long finishWaitMillis) {
+  OperationAccountant(ApiClock clock, long finishWaitMillis) {
     this.clock = clock;
     this.finishWaitMillis = finishWaitMillis;
     resetNoSuccessWarningDeadline();

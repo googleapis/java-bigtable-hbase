@@ -56,7 +56,6 @@ import static org.threeten.bp.Duration.ofMillis;
 import static org.threeten.bp.Duration.ofMinutes;
 import static org.threeten.bp.Duration.ofSeconds;
 
-import com.google.api.client.util.SecurityUtils;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.batching.BatchingSettings;
@@ -89,6 +88,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.util.Collections;
 import java.util.HashSet;
@@ -399,14 +399,15 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
   private Credentials buildCredentialFromPrivateKey(
       String serviceAccountEmail, String privateKeyFile) throws IOException {
+
     try {
+      KeyStore keyStore = KeyStore.getInstance("PKCS12");
+
+      try (FileInputStream fin = new FileInputStream(privateKeyFile)) {
+        keyStore.load(fin, "notasecret".toCharArray());
+      }
       PrivateKey privateKey =
-          SecurityUtils.loadPrivateKeyFromKeyStore(
-              SecurityUtils.getPkcs12KeyStore(),
-              new FileInputStream(privateKeyFile),
-              "notasecret",
-              "privatekey",
-              "notasecret");
+          (PrivateKey) keyStore.getKey("privatekey", "notasecret".toCharArray());
 
       return ServiceAccountJwtAccessCredentials.newBuilder()
           .setClientEmail(serviceAccountEmail)
