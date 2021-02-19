@@ -310,32 +310,22 @@ limitations under the License.
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>1.14.1-SNAPSHOT</version>
+
+        <goals>
+          <goal>enforce</goal>
+          <goal>verify-mirror-deps</goal>
+        </goals>
         <configuration>
-          <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-          <usedDependencies>
-            <usedDependency>
-              com.google.cloud.bigtable:bigtable-hbase-1.x
-            </usedDependency>
-            <usedDependency>
-              org.apache.hbase:hbase-shaded-client
-            </usedDependency>
-            <usedDependency>com.google.code.findbugs:jsr305</usedDependency>
-            <usedDependency>commons-logging:commons-logging</usedDependency>
-            <usedDependency>io.dropwizard.metrics:metrics-core</usedDependency>
-            <usedDependency>io.opencensus:opencensus-impl</usedDependency>
-            <usedDependency>
-              io.opencensus:opencensus-contrib-zpages
-            </usedDependency>
-            <usedDependency>
-              io.opencensus:opencensus-exporter-trace-stackdriver
-            </usedDependency>
-            <usedDependency>
-              io.opencensus:opencensus-exporter-stats-stackdriver
-            </usedDependency>
-            <usedDependency>io.grpc:grpc-census</usedDependency>
-          </usedDependencies>
+          <targetDependencies>
+            <dependency>org.apache.hbase:hbase-shaded-client:${hbase.version.1}</dependency>
+          </targetDependencies>
+          <allowedJarClassEntries>
+            <jarEntry>com/google/cloud/bigtable/</jarEntry>
+            <jarEntry>com/google/bigtable/repackaged/</jarEntry>
+          </allowedJarClassEntries>
         </configuration>
       </plugin>
       <plugin>
