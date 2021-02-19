@@ -10,28 +10,22 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.google.cloud.bigtable.test</groupId>
-  <artifactId>bigtable-hbase-dependency-enforcer</artifactId>
+  <artifactId>bigtable-build-helper</artifactId>
   <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
   <packaging>maven-plugin</packaging>
+  <description>
+    java-bigtable-hbase internal maven extensions.
+    This module is not meant for public, it's primary intention is to help
+    in maintenance of java-bigtable-hbase.
+  </description>
 
   <properties>
     <java.version>8</java.version>
     <maven.version>3.6.3</maven.version>
-    <maven-resolver-api.version>1.6.1</maven-resolver-api.version>
     <maven-plugin-tools.version>3.5.2</maven-plugin-tools.version>
+    <maven-resolver-api.version>1.6.1</maven-resolver-api.version>
     <slf4j.version>1.7.30</slf4j.version>
   </properties>
-
-
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
-        <version>${slf4jVersion}</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
 
   <dependencies>
     <dependency>
@@ -85,67 +79,77 @@
     </dependency>
   </dependencies>
 
-  <profiles>
-    <profile>
-      <id>run-its</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-invoker-plugin</artifactId>
-            <version>3.2.1</version>
-            <configuration>
-<!--              <debug>true</debug>-->
-              <projectsDirectory>src/it</projectsDirectory>
-              <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
-              <pomIncludes>
-                <pomInclude>*/pom.xml</pomInclude>
-              </pomIncludes>
-              <preBuildHookScript>setup</preBuildHookScript>
-              <postBuildHookScript>verify</postBuildHookScript>
-              <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
-              <settingsFile>src/it/settings.xml</settingsFile>
-              <goals>
-                <goal>clean</goal>
-                <goal>validate</goal>
-              </goals>
-            </configuration>
-            <executions>
-              <execution>
-                <id>integration-test</id>
-                <goals>
-                  <goal>install</goal>
-                  <goal>run</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
-
   <build>
+    <pluginManagement>
+      <plugins>
+        <!-- bump version of plugin-plugin, earlier versions had a bug with jdk11 -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-plugin-plugin</artifactId>
+          <version>3.6.0</version>
+        </plugin>
+
+        <!-- Configure java version -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.8.1</version>
+          <configuration>
+            <source>${java.version}</source>
+            <target>${java.version}</target>
+          </configuration>
+        </plugin>
+
+        <!-- Skip publishing -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>2.8.2</version>
+          <configuration>
+            <skip>true</skip>
+          </configuration>
+        </plugin>
+        <!-- Skip publishing -->
+        <plugin>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>nexus-staging-maven-plugin</artifactId>
+          <version>1.6.8</version>
+          <configuration>
+            <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
     <plugins>
       <plugin>
-        <artifactId>maven-plugin-plugin</artifactId>
-        <version>3.6.0</version>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-invoker-plugin</artifactId>
+        <version>3.2.1</version>
+        <configuration>
+          <projectsDirectory>src/it</projectsDirectory>
+          <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
+          <pomIncludes>
+            <pomInclude>*/pom.xml</pomInclude>
+          </pomIncludes>
+          <preBuildHookScript>setup</preBuildHookScript>
+          <postBuildHookScript>verify</postBuildHookScript>
+          <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
+          <settingsFile>src/it/settings.xml</settingsFile>
+          <goals>
+            <goal>clean</goal>
+            <goal>validate</goal>
+          </goals>
+        </configuration>
         <executions>
           <execution>
-            <id>mojo-descriptor</id>
+            <id>integration-test</id>
             <goals>
-              <goal>descriptor</goal>
+              <goal>install</goal>
+              <goal>run</goal>
             </goals>
           </execution>
         </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
-        </configuration>
       </plugin>
     </plugins>
   </build>

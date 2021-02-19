@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.test.dep_enforcer;
+package com.google.cloud.bigtable.test.plugins;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,11 +52,14 @@ import org.slf4j.LoggerFactory;
  * <p>This is specifically useful for drop in replacements like bigtable-hbase-*-hadoop where the
  * project's external dependencies should be a strict superset of hbase-client.
  */
-@Mojo(name = "enforce", defaultPhase = LifecyclePhase.VALIDATE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
-public class EnforceMojo extends AbstractMojo {
-  private static final Logger LOGGER = LoggerFactory.getLogger(EnforceMojo.class);
+@Mojo(
+    name = "verify-mirror-deps",
+    defaultPhase = LifecyclePhase.VALIDATE,
+    requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+public class VerifyMirrorDependencyVersions extends AbstractMojo {
+  private static final Logger LOGGER = LoggerFactory.getLogger(VerifyMirrorDependencyVersions.class);
 
-  @Parameter( defaultValue = "${project}", readonly = true, required = true )
+  @Parameter(defaultValue = "${project}", readonly = true, required = true)
   private MavenProject project;
 
   /** The entry point to Maven Artifact Resolver, i.e. the component doing all the work. */
@@ -71,11 +74,9 @@ public class EnforceMojo extends AbstractMojo {
   private List<RemoteRepository> remoteRepos;
 
   /** The dependencies that should be reflected in the project's dependencies */
-  @Parameter
-  private List<String> targetDependencies;
+  @Parameter private List<String> targetDependencies;
 
-  @Parameter
-  private List<String> ignoredDependencies;
+  @Parameter private List<String> ignoredDependencies;
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
@@ -98,7 +99,6 @@ public class EnforceMojo extends AbstractMojo {
       ignoredDependencies.forEach(targetVersionMap::remove);
     }
 
-
     // Make sure that the overlap between actual and target dependencies align
     List<String> mismatches = new ArrayList<>();
 
@@ -107,7 +107,9 @@ public class EnforceMojo extends AbstractMojo {
       String expectedVersion = targetVersionMap.get(entry.getKey());
 
       if (expectedVersion != null && !actualVersion.equals(expectedVersion)) {
-        mismatches.add(String.format("%s: expected %s, got %s", entry.getKey(), expectedVersion, actualVersion));
+        mismatches.add(
+            String.format(
+                "%s: expected %s, got %s", entry.getKey(), expectedVersion, actualVersion));
       }
     }
 
@@ -145,36 +147,35 @@ public class EnforceMojo extends AbstractMojo {
 
     return artifactResults.stream()
         .map(ArtifactResult::getArtifact)
-        .collect(Collectors.toMap(
-            EnforceMojo::extractKey, org.eclipse.aether.artifact.Artifact::getVersion));
+        .collect(
+            Collectors.toMap(
+                VerifyMirrorDependencyVersions::extractKey, org.eclipse.aether.artifact.Artifact::getVersion));
   }
 
   /** Resolve all of the project specified transitive dependencies */
   private Map<String, String> resolveProjectDependencyVersions() {
     return project.getArtifacts().stream()
-        .collect(Collectors.toMap(
-            EnforceMojo::extractKey, Artifact::getVersion
-        ));
+        .collect(Collectors.toMap(VerifyMirrorDependencyVersions::extractKey, Artifact::getVersion));
   }
 
   /** Create a key for a resolved target dependency */
   private static String extractKey(org.eclipse.aether.artifact.Artifact artifact) {
-    StringBuilder buffer = new StringBuilder( 128 );
-    buffer.append( artifact.getGroupId() );
-    buffer.append( ':' ).append( artifact.getArtifactId() );
-    if ( !artifact.getClassifier().isEmpty() ) {
-      buffer.append( ':' ).append( artifact.getClassifier() );
+    StringBuilder buffer = new StringBuilder(128);
+    buffer.append(artifact.getGroupId());
+    buffer.append(':').append(artifact.getArtifactId());
+    if (!artifact.getClassifier().isEmpty()) {
+      buffer.append(':').append(artifact.getClassifier());
     }
     return buffer.toString();
   }
 
   /** Create a key for a project specified dependency */
   private static String extractKey(Artifact artifact) {
-    StringBuilder buffer = new StringBuilder( 128 );
-    buffer.append( artifact.getGroupId() );
-    buffer.append( ':' ).append( artifact.getArtifactId() );
-    if ( artifact.getClassifier() != null && !artifact.getClassifier().isEmpty() ) {
-      buffer.append( ':' ).append( artifact.getClassifier() );
+    StringBuilder buffer = new StringBuilder(128);
+    buffer.append(artifact.getGroupId());
+    buffer.append(':').append(artifact.getArtifactId());
+    if (artifact.getClassifier() != null && !artifact.getClassifier().isEmpty()) {
+      buffer.append(':').append(artifact.getClassifier());
     }
     return buffer.toString();
   }

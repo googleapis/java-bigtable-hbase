@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright 2017 Google Inc. All Rights Reserved.
+Copyright 2021 Google Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,9 +39,8 @@ limitations under the License.
         <executions>
           <execution>
             <id>test</id>
-            <phase>validate</phase>
             <goals>
-              <goal>enforce</goal>
+              <goal>verify-mirror-deps</goal>
             </goals>
 
             <configuration>
@@ -59,12 +58,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-client</artifactId>
-      <version>1.4.3</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>30.1-jre</version>
+      <version>${hbase.version}</version>
     </dependency>
   </dependencies>
 </project>
