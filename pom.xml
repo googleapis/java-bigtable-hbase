@@ -47,6 +47,7 @@ limitations under the License.
     <module>bigtable-hbase-1.x-parent</module>
     <module>bigtable-hbase-2.x-parent</module>
     <module>bigtable-dataflow-parent</module>
+    <module>bigtable-hbase-mapreduce-parent</module>
     <module>bigtable-test</module>
   </modules>
 
@@ -223,7 +224,7 @@ limitations under the License.
                     com.google.clooud.*                             (Ignore, a hack/workaround for separate maven issue)
                 -->
                 <excludePackageNames>
-                  com.google.cloud.bigtable.beam:com.google.cloud.bigtable.beam.sequencefiles:com.google.cloud.bigtable.dataflow:com.google.cloud.bigtable.dataflowimport:com.google.clooud
+                  com.google.cloud.bigtable.beam:com.google.cloud.bigtable.beam.sequencefiles:com.google.cloud.bigtable.dataflow:com.google.cloud.bigtable.dataflowimport:com.google.clooud:com.google.cloud.bigtable.mapreduce
                 </excludePackageNames>
               </configuration>
             </execution>
