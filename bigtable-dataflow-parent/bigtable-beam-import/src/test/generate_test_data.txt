@@ -1,107 +1,133 @@
+// Run from HBase shell. Run `hbase shell` from unix terminal on HBase master.
 create 'test', 'cf', {SPLITS => ["1", "2", "3", "4", "5", "6", "7", "8", "9"]}
-put 'test','1', 'cf:a', 'value1'
-put 'test','2', 'cf:a', 'value2'
-put 'test','3', 'cf:a', 'value3'
-put 'test','4', 'cf:a', 'value4'
-put 'test','5', 'cf:a', 'value5'
-put 'test','6', 'cf:a', 'value6'
-put 'test','7', 'cf:a', 'value7'
-put 'test','8', 'cf:a', 'value8'
-put 'test','9', 'cf:a', 'value9'
-put 'test','10', 'cf:a', 'value10'
-put 'test','11', 'cf:a', 'value11'
-put 'test','12', 'cf:a', 'value12'
-put 'test','13', 'cf:a', 'value13'
-put 'test','14', 'cf:a', 'value14'
-put 'test','15', 'cf:a', 'value15'
-put 'test','16', 'cf:a', 'value16'
-put 'test','17', 'cf:a', 'value17'
-put 'test','18', 'cf:a', 'value18'
-put 'test','19', 'cf:a', 'value19'
-put 'test','20', 'cf:a', 'value20'
-put 'test','21', 'cf:a', 'value21'
-put 'test','22', 'cf:a', 'value22'
-put 'test','23', 'cf:a', 'value23'
-put 'test','24', 'cf:a', 'value24'
-put 'test','25', 'cf:a', 'value25'
-put 'test','26', 'cf:a', 'value26'
-put 'test','27', 'cf:a', 'value27'
-put 'test','28', 'cf:a', 'value28'
-put 'test','29', 'cf:a', 'value29'
-put 'test','30', 'cf:a', 'value30'
-put 'test','31', 'cf:a', 'value31'
-put 'test','32', 'cf:a', 'value32'
-put 'test','33', 'cf:a', 'value33'
-put 'test','34', 'cf:a', 'value34'
-put 'test','35', 'cf:a', 'value35'
-put 'test','36', 'cf:a', 'value36'
-put 'test','37', 'cf:a', 'value37'
-put 'test','38', 'cf:a', 'value38'
-put 'test','39', 'cf:a', 'value39'
-put 'test','40', 'cf:a', 'value40'
-put 'test','41', 'cf:a', 'value41'
-put 'test','42', 'cf:a', 'value42'
-put 'test','43', 'cf:a', 'value43'
-put 'test','44', 'cf:a', 'value44'
-put 'test','45', 'cf:a', 'value45'
-put 'test','46', 'cf:a', 'value46'
-put 'test','47', 'cf:a', 'value47'
-put 'test','48', 'cf:a', 'value48'
-put 'test','49', 'cf:a', 'value49'
-put 'test','50', 'cf:a', 'value50'
-put 'test','51', 'cf:a', 'value51'
-put 'test','52', 'cf:a', 'value52'
-put 'test','53', 'cf:a', 'value53'
-put 'test','54', 'cf:a', 'value54'
-put 'test','55', 'cf:a', 'value55'
-put 'test','56', 'cf:a', 'value56'
-put 'test','57', 'cf:a', 'value57'
-put 'test','58', 'cf:a', 'value58'
-put 'test','59', 'cf:a', 'value59'
-put 'test','60', 'cf:a', 'value60'
-put 'test','61', 'cf:a', 'value61'
-put 'test','62', 'cf:a', 'value62'
-put 'test','63', 'cf:a', 'value63'
-put 'test','64', 'cf:a', 'value64'
-put 'test','65', 'cf:a', 'value65'
-put 'test','66', 'cf:a', 'value66'
-put 'test','67', 'cf:a', 'value67'
-put 'test','68', 'cf:a', 'value68'
-put 'test','69', 'cf:a', 'value69'
-put 'test','70', 'cf:a', 'value70'
-put 'test','71', 'cf:a', 'value71'
-put 'test','72', 'cf:a', 'value72'
-put 'test','73', 'cf:a', 'value73'
-put 'test','74', 'cf:a', 'value74'
-put 'test','75', 'cf:a', 'value75'
-put 'test','76', 'cf:a', 'value76'
-put 'test','77', 'cf:a', 'value77'
-put 'test','78', 'cf:a', 'value78'
-put 'test','79', 'cf:a', 'value79'
-put 'test','80', 'cf:a', 'value80'
-put 'test','81', 'cf:a', 'value81'
-put 'test','82', 'cf:a', 'value82'
-put 'test','83', 'cf:a', 'value83'
-put 'test','84', 'cf:a', 'value84'
-put 'test','85', 'cf:a', 'value85'
-put 'test','86', 'cf:a', 'value86'
-put 'test','87', 'cf:a', 'value87'
-put 'test','88', 'cf:a', 'value88'
-put 'test','89', 'cf:a', 'value89'
-put 'test','90', 'cf:a', 'value90'
-put 'test','91', 'cf:a', 'value91'
-put 'test','92', 'cf:a', 'value92'
-put 'test','93', 'cf:a', 'value93'
-put 'test','94', 'cf:a', 'value94'
-put 'test','95', 'cf:a', 'value95'
-put 'test','96', 'cf:a', 'value96'
-put 'test','97', 'cf:a', 'value97'
-put 'test','98', 'cf:a', 'value98'
-put 'test','99', 'cf:a', 'value99'
-put 'test','100', 'cf:a', 'value100'
+put 'test','1', 'cf:a', 'value1', 100
+put 'test','2', 'cf:a', 'value2', 100
+put 'test','3', 'cf:a', 'value3', 100
+put 'test','4', 'cf:a', 'value4', 100
+put 'test','5', 'cf:a', 'value5', 100
+put 'test','6', 'cf:a', 'value6', 100
+put 'test','7', 'cf:a', 'value7', 100
+put 'test','8', 'cf:a', 'value8', 100
+put 'test','9', 'cf:a', 'value9', 100
+put 'test','10', 'cf:a', 'value10', 100
+put 'test','11', 'cf:a', 'value11', 100
+put 'test','12', 'cf:a', 'value12', 100
+put 'test','13', 'cf:a', 'value13', 100
+put 'test','14', 'cf:a', 'value14', 100
+put 'test','15', 'cf:a', 'value15', 100
+put 'test','16', 'cf:a', 'value16', 100
+put 'test','17', 'cf:a', 'value17', 100
+put 'test','18', 'cf:a', 'value18', 100
+put 'test','19', 'cf:a', 'value19', 100
+put 'test','20', 'cf:a', 'value20', 100
+put 'test','21', 'cf:a', 'value21', 100
+put 'test','22', 'cf:a', 'value22', 100
+put 'test','23', 'cf:a', 'value23', 100
+put 'test','24', 'cf:a', 'value24', 100
+put 'test','25', 'cf:a', 'value25', 100
+put 'test','26', 'cf:a', 'value26', 100
+put 'test','27', 'cf:a', 'value27', 100
+put 'test','28', 'cf:a', 'value28', 100
+put 'test','29', 'cf:a', 'value29', 100
+put 'test','30', 'cf:a', 'value30', 100
+put 'test','31', 'cf:a', 'value31', 100
+put 'test','32', 'cf:a', 'value32', 100
+put 'test','33', 'cf:a', 'value33', 100
+put 'test','34', 'cf:a', 'value34', 100
+put 'test','35', 'cf:a', 'value35', 100
+put 'test','36', 'cf:a', 'value36', 100
+put 'test','37', 'cf:a', 'value37', 100
+put 'test','38', 'cf:a', 'value38', 100
+put 'test','39', 'cf:a', 'value39', 100
+put 'test','40', 'cf:a', 'value40', 100
+put 'test','41', 'cf:a', 'value41', 100
+put 'test','42', 'cf:a', 'value42', 100
+put 'test','43', 'cf:a', 'value43', 100
+put 'test','44', 'cf:a', 'value44', 100
+put 'test','45', 'cf:a', 'value45', 100
+put 'test','46', 'cf:a', 'value46', 100
+put 'test','47', 'cf:a', 'value47', 100
+put 'test','48', 'cf:a', 'value48', 100
+put 'test','49', 'cf:a', 'value49', 100
+put 'test','50', 'cf:a', 'value50', 100
+put 'test','51', 'cf:a', 'value51', 100
+put 'test','52', 'cf:a', 'value52', 100
+put 'test','53', 'cf:a', 'value53', 100
+put 'test','54', 'cf:a', 'value54', 100
+put 'test','55', 'cf:a', 'value55', 100
+put 'test','56', 'cf:a', 'value56', 100
+put 'test','57', 'cf:a', 'value57', 100
+put 'test','58', 'cf:a', 'value58', 100
+put 'test','59', 'cf:a', 'value59', 100
+put 'test','60', 'cf:a', 'value60', 100
+put 'test','61', 'cf:a', 'value61', 100
+put 'test','62', 'cf:a', 'value62', 100
+put 'test','63', 'cf:a', 'value63', 100
+put 'test','64', 'cf:a', 'value64', 100
+put 'test','65', 'cf:a', 'value65', 100
+put 'test','66', 'cf:a', 'value66', 100
+put 'test','67', 'cf:a', 'value67', 100
+put 'test','68', 'cf:a', 'value68', 100
+put 'test','69', 'cf:a', 'value69', 100
+put 'test','70', 'cf:a', 'value70', 100
+put 'test','71', 'cf:a', 'value71', 100
+put 'test','72', 'cf:a', 'value72', 100
+put 'test','73', 'cf:a', 'value73', 100
+put 'test','74', 'cf:a', 'value74', 100
+put 'test','75', 'cf:a', 'value75', 100
+put 'test','76', 'cf:a', 'value76', 100
+put 'test','77', 'cf:a', 'value77', 100
+put 'test','78', 'cf:a', 'value78', 100
+put 'test','79', 'cf:a', 'value79', 100
+put 'test','80', 'cf:a', 'value80', 100
+put 'test','81', 'cf:a', 'value81', 100
+put 'test','82', 'cf:a', 'value82', 100
+put 'test','83', 'cf:a', 'value83', 100
+put 'test','84', 'cf:a', 'value84', 100
+put 'test','85', 'cf:a', 'value85', 100
+put 'test','86', 'cf:a', 'value86', 100
+put 'test','87', 'cf:a', 'value87', 100
+put 'test','88', 'cf:a', 'value88', 100
+put 'test','89', 'cf:a', 'value89', 100
+put 'test','90', 'cf:a', 'value90', 100
+put 'test','91', 'cf:a', 'value91', 100
+put 'test','92', 'cf:a', 'value92', 100
+put 'test','93', 'cf:a', 'value93', 100
+put 'test','94', 'cf:a', 'value94', 100
+put 'test','95', 'cf:a', 'value95', 100
+put 'test','96', 'cf:a', 'value96', 100
+put 'test','97', 'cf:a', 'value97', 100
+put 'test','98', 'cf:a', 'value98', 100
+put 'test','99', 'cf:a', 'value99', 100
+put 'test','100', 'cf:a', 'value100', 100
 snapshot 'test', 'test-snapshot'
 list_snapshots
 
+
+////////////////////Run from Unix shell on HBase master node//////////////////
+// Export the snapshot
+hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot test-snapshot -copy-to /integration-test/data -mappers 16
+
+// Create the hashes for the table. Run the command from unix shell on an HBase
+// node.
+hbase org.apache.hadoop.hbase.mapreduce.HashTable --batchsize=10 --numhashfiles=10 test /integration-test/hashtable
+
+// Export the data into GCS
+hadoop fs -copyToLocal /integration-test /tmp/
+gsutil cp -r /tmp/integration-test gs://<my-bucket>/
+
+// GCS bucket should look like this:
+$ gsutil ls gs://<my-bucket>/integration-test/data
+gs://<my-bucket>/integration-test/data/
+gs://<my-bucket>/integration-test/data/.hbase-snapshot/
+gs://<my-bucket>/integration-test/data/archive/
+$ gsutil ls gs://<my-bucket>/integration-test/hashtable
+gs://<my-bucket>/integration-test/hashtable/manifest
+gs://<my-bucket>/integration-test/hashtable/partitions
+gs://<my-bucket>/integration-test/hashtable/hashes/
+
+// Run from HBase shell. Run `hbase shell` from unix terminal on HBase master.
+// clean up the table
 disable 'test'
 drop 'test'
 exit

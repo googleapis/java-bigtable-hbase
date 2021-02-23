@@ -141,16 +141,10 @@ limitations under the License.
       <artifactId>google-auth-library-oauth2-http</artifactId>
     </dependency>
 
-    <!-- TODO: remove this is direct dep, its only used for its Clock interface -->
-    <dependency>
-      <groupId>com.google.http-client</groupId>
-      <artifactId>google-http-client</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase1.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.slf4j</groupId>
@@ -194,6 +188,19 @@ limitations under the License.
         <artifactId>clirr-maven-plugin</artifactId>
         <configuration>
           <skip>true</skip>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <trimStackTrace>false</trimStackTrace>
+          <systemProperties>
+            <property>
+              <name>java.util.logging.config.file</name>
+              <value>src/test/resources/logging.properties</value>
+            </property>
+          </systemProperties>
         </configuration>
       </plugin>
     </plugins>

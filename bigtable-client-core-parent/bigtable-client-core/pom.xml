@@ -274,6 +274,12 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <trimStackTrace>false</trimStackTrace>
+          <systemProperties>
+            <property>
+              <name>java.util.logging.config.file</name>
+              <value>src/test/resources/logging.properties</value>
+            </property>
+          </systemProperties>
         </configuration>
       </plugin>
       <plugin>
@@ -281,7 +287,7 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
         <artifactId>maven-dependency-plugin</artifactId>
         <configuration>
           <!-- commons-codec is not used directly, but upgrading due to transitive vulnerabilities in older versions.
-          grpc-grpclb is a runtime dep-->
+          grpc-grpclb is a runtime dep used via reflection -->
           <usedDependencies>
             <usedDependency>commons-codec:commons-codec</usedDependency>
             <usedDependency>io.grpc:grpc-grpclb</usedDependency>

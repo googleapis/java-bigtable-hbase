@@ -75,17 +75,17 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-annotations</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase1.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-client</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase1.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-common</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase1.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -96,7 +96,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-server</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase1.version}</version>
     </dependency>
   </dependencies>
 

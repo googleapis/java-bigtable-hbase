@@ -30,10 +30,6 @@ limitations under the License.
     bigtable-hbase-2.x.
   </description>
 
-  <properties>
-    <hbase.version>${hbase.version.2}</hbase.version>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
@@ -62,7 +58,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-client</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase2.version}</version>
     </dependency>
 
     <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
@@ -91,7 +87,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-common</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase2.version}</version>
     </dependency>
 
     <dependency>

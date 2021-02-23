@@ -76,7 +76,6 @@ limitations under the License.
         </exclusion>
       </exclusions>
     </dependency>
-
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-core</artifactId>
@@ -106,7 +105,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-server</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase1.version}</version>
     </dependency>
 
     <dependency>
@@ -214,8 +213,25 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-testing-util</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase1.version}</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.truth</groupId>
+      <artifactId>truth</artifactId>
+      <version>1.1.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-bigtable-emulator</artifactId>
+      <version>0.129.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+      <version>${jsr305.version}</version>
     </dependency>
   </dependencies>
 

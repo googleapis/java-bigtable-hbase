@@ -58,7 +58,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-client</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase1.version}</version>
     </dependency>
 
     <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
@@ -87,7 +87,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-common</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase1.version}</version>
     </dependency>
 
     <dependency>
