@@ -68,7 +68,8 @@ import org.mockito.stubbing.Answer;
 /** Test for the {@link RetryingReadRowsOperation} */
 @RunWith(JUnit4.class)
 public class RetryingReadRowsOperationTest {
-  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  // TODO: remove silent and tighten mocks
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().silent();
 
   private static final RetryOptions RETRY_OPTIONS = RetryOptions.getDefaultOptions();
 

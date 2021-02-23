@@ -103,7 +103,8 @@ public class TestBulkMutation {
         .build();
   }
 
-  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  // TODO: remove silent and tighten mocks
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().silent();
 
   @Mock private BigtableDataClient client;
   @Mock private IBigtableDataClient clientWrapper;

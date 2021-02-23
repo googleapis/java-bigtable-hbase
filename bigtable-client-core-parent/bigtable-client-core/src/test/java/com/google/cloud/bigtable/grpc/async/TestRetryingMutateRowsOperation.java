@@ -55,7 +55,8 @@ import org.mockito.stubbing.Answer;
 /** Tests for {@link RetryingMutateRowsOperation}. */
 @RunWith(JUnit4.class)
 public class TestRetryingMutateRowsOperation {
-  @Rule public MockitoRule rule = MockitoJUnit.rule();
+  // TODO: remove silent and tighten mocks
+  @Rule public MockitoRule rule = MockitoJUnit.rule().silent();
 
   private static final RetryOptions RETRY_OPTIONS = RetryOptions.getDefaultOptions();
 
