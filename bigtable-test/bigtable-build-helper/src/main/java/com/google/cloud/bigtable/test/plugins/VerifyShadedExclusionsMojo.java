@@ -21,11 +21,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
@@ -44,68 +42,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Mojo(
-    name = "verify-shading",
+    name = "verify-shaded-exclusions",
     defaultPhase = LifecyclePhase.VERIFY,
     requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
-public class VerifyShadingMojo extends AbstractMojo {
-  private static final Logger LOGGER = LoggerFactory.getLogger(VerifyMirrorDependencyVersions.class);
+public class VerifyShadedExclusionsMojo extends AbstractMojo {
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(VerifyMirrorDependencyVersions.class);
 
   @Parameter(defaultValue = "${project}", readonly = true, required = true)
   private MavenProject project;
-
-  @Parameter
-  private List<String> allowedJarClassEntries;
-
-  @Override
-  public void execute() throws MojoExecutionException, MojoFailureException {
-    // NOTE: non-short circuit & is intentional to get all the errors
-    boolean isOk = verifyShadedJarEntries() & verifyDependencyPromotion();
-
-    if (!isOk) {
-      throw new MojoFailureException("Shaded jar is invalid");
-    }
-  }
-
-  /**
-   * Verifies that all of the shaded files live under the specified package names
-   *
-   * @return true if all of the files are properly namespaced
-   */
-  private boolean verifyShadedJarEntries() throws MojoFailureException {
-    System.out.println("artifact: " + project.getArtifact());
-    System.out.println("file: " + project.getArtifact().getFile());
-
-    List<String> allowedClassPrefixes = new ArrayList<>();
-    allowedClassPrefixes.add("com/google/cloud/bigtable/");
-    allowedClassPrefixes.add("com/google/bigtable/repackaged/");
-
-    for (String allowedClassPrefix : allowedClassPrefixes) {
-      System.out.println("allowed prefix: " + allowedClassPrefix);
-    }
-
-    JarFile jarFile;
-    try {
-      jarFile = new JarFile(project.getArtifact().getFile(), false);
-    } catch (IOException e) {
-      throw new MojoFailureException("Failed to open shaded jar for inspect", e);
-    }
-    Enumeration<JarEntry> entries = jarFile.entries();
-
-    boolean isOk = true;
-
-    while (entries.hasMoreElements()) {
-      JarEntry entry = entries.nextElement();
-      String name = entry.getName();
-
-      // make sure all of the contents are relocated under bigtable
-      if (name.endsWith(".class") && allowedJarClassEntries.stream().noneMatch(name::startsWith)) {
-        System.out.println("Forbidden class path: " + name);
-        isOk = false;
-      }
-    }
-
-    return isOk;
-  }
 
   /**
    * Verifies that all of the dependencies that were excluded from shading, are added as external
@@ -116,7 +61,8 @@ public class VerifyShadingMojo extends AbstractMojo {
    *
    * @return true if all of the dependencies are accounted for
    */
-  private boolean verifyDependencyPromotion() throws MojoFailureException {
+  @Override
+  public void execute() throws MojoExecutionException, MojoFailureException {
     Set<String> excludedDeps = getShadingExclusions();
     Set<String> outputDeps = getOutputDependencies();
 
@@ -133,7 +79,9 @@ public class VerifyShadingMojo extends AbstractMojo {
           coordinate);
     }
 
-    return missingDeps.isEmpty();
+    if (!missingDeps.isEmpty()) {
+      throw new MojoFailureException("Found unpromoted dependencies");
+    }
   }
 
   /** Extracts the artifact names that we excluded from shading */
@@ -152,7 +100,10 @@ public class VerifyShadingMojo extends AbstractMojo {
     Xpp3Dom configuration = (Xpp3Dom) shadePlugin.getExecutions().get(0).getConfiguration();
 
     Xpp3Dom[] excludeNodes =
-        configuration.getChild("artifactSet").getChild("excludes").getChildren("exclude");
+        Optional.ofNullable(configuration.getChild("artifactSet"))
+            .map(n -> n.getChild("excludes"))
+            .map(n -> n.getChildren("exclude"))
+            .orElse(new Xpp3Dom[0]);
 
     return Arrays.stream(excludeNodes).map(Xpp3Dom::getValue).collect(Collectors.toSet());
   }

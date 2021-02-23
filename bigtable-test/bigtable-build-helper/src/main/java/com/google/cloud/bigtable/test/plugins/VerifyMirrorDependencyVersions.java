@@ -57,7 +57,8 @@ import org.slf4j.LoggerFactory;
     defaultPhase = LifecyclePhase.VALIDATE,
     requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class VerifyMirrorDependencyVersions extends AbstractMojo {
-  private static final Logger LOGGER = LoggerFactory.getLogger(VerifyMirrorDependencyVersions.class);
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(VerifyMirrorDependencyVersions.class);
 
   @Parameter(defaultValue = "${project}", readonly = true, required = true)
   private MavenProject project;
@@ -82,9 +83,6 @@ public class VerifyMirrorDependencyVersions extends AbstractMojo {
   public void execute() throws MojoExecutionException, MojoFailureException {
     // Grab the dependencies specified for the project
     Map<String, String> actualVersionMap = resolveProjectDependencyVersions();
-    for (Map.Entry<String, String> entry : actualVersionMap.entrySet()) {
-      System.out.println(String.format("%s: %s", entry.getKey(), entry.getValue()));
-    }
 
     // Resolve transitive dep versions for the target
     Map<String, String> targetVersionMap;
@@ -149,13 +147,15 @@ public class VerifyMirrorDependencyVersions extends AbstractMojo {
         .map(ArtifactResult::getArtifact)
         .collect(
             Collectors.toMap(
-                VerifyMirrorDependencyVersions::extractKey, org.eclipse.aether.artifact.Artifact::getVersion));
+                VerifyMirrorDependencyVersions::extractKey,
+                org.eclipse.aether.artifact.Artifact::getVersion));
   }
 
   /** Resolve all of the project specified transitive dependencies */
   private Map<String, String> resolveProjectDependencyVersions() {
     return project.getArtifacts().stream()
-        .collect(Collectors.toMap(VerifyMirrorDependencyVersions::extractKey, Artifact::getVersion));
+        .collect(
+            Collectors.toMap(VerifyMirrorDependencyVersions::extractKey, Artifact::getVersion));
   }
 
   /** Create a key for a resolved target dependency */
