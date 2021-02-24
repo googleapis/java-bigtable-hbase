@@ -23,6 +23,12 @@
     <java.version>8</java.version>
     <maven.version>3.6.3</maven.version>
     <maven-resolver-api.version>1.6.1</maven-resolver-api.version>
+
+    <!-- treat maven-invoker-plugin tests like integration tests, allowing
+    them to be disabled via skipTests & skipITs -->
+    <skipTests>false</skipTests>
+    <skipITs>${skipTests}</skipITs>
+    <invoker.skip>${skipITs}</invoker.skip>
   </properties>
 
   <dependencies>
@@ -137,7 +143,7 @@
               <goal>run</goal>
             </goals>
             <configuration>
-              <skipInvocation>${skipITs}</skipInvocation>
+              <skipInvocation>${invoker.skip}</skipInvocation>
               <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
               <settingsFile>src/it/settings.xml</settingsFile>
               <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
