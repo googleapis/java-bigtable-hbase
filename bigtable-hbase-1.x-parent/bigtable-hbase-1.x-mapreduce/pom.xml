@@ -34,10 +34,6 @@ limitations under the License.
     in order to work with Bigtable.
   </description>
 
-  <properties>
-    <hadoop.scope>provided</hadoop.scope>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
@@ -52,94 +48,38 @@ limitations under the License.
           <groupId>${project.groupId}</groupId>
           <artifactId>bigtable-hbase-1.x-shaded</artifactId>
         </exclusion>
+        <!-- replacing it with hbase-server -->
+        <exclusion>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-client</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
     <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>${commons-logging.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-common</artifactId>
-      <version>${hbase1-hadoop.version}</version>
-      <scope>${hadoop.scope}</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-mapreduce-client-core</artifactId>
-      <version>${hbase1-hadoop.version}</version>
-      <scope>${hadoop.scope}</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-annotations</artifactId>
-      <version>${hbase1.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-client</artifactId>
-      <version>${hbase1.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-common</artifactId>
-      <version>${hbase1.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-annotations</artifactId>
-      <version>${hbase1-hadoop.version}</version>
-      <scope>${hadoop.scope}</scope>
-    </dependency>
-    <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-server</artifactId>
       <version>${hbase1.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+      <version>3.1.2</version>
     </dependency>
   </dependencies>
 
   <build>
     <plugins>
       <plugin>
-        <!-- overriding the default config to add exclusions-->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>enforce</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <configuration>
-              <rules>
-                <requireMavenVersion>
-                  <version>[3.0,)</version>
-                </requireMavenVersion>
-                <requireJavaVersion>
-                  <version>[1.7,)</version>
-                </requireJavaVersion>
-                <requireUpperBoundDeps>
-                  <!-- todo(kolea2): fix these temporary exclusions-->
-                  <excludes>
-                    <exclude>com.google.guava:guava</exclude>
-                    <exclude>commons-codec:commons-codec</exclude>
-                    <exclude>org.apache.zookeeper:zookeeper</exclude>
-                    <exclude>org.apache.hadoop:hadoop-yarn-api</exclude>
-                  </excludes>
-                </requireUpperBoundDeps>
-                <banDuplicateClasses>
-                  <ignoreClasses>
-                    <!-- todo(kolea2): investigate transitive deps causing conflicts-->
-                    <ignoreClass>**</ignoreClass>
-                  </ignoreClasses>
-                </banDuplicateClasses>
-              </rules>
-            </configuration>
-          </execution>
-        </executions>
+        <configuration>
+          <!--  skipping due to hadoop upper deps bounds issues-->
+          <skip>true</skip>
+        </configuration>
       </plugin>
+
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
@@ -159,13 +99,7 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-eclipse-plugin</artifactId>
-        <configuration>
-          <useProjectReferences>false</useProjectReferences>
-        </configuration>
-      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
@@ -177,6 +111,7 @@ limitations under the License.
           </archive>
         </configuration>
       </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
@@ -187,8 +122,56 @@ limitations under the License.
               <goal>shade</goal>
             </goals>
             <configuration>
-              <shadeTestJar>true</shadeTestJar>
               <shadedArtifactAttached>true</shadedArtifactAttached>
+              <artifactSet>
+                <excludes>
+                  <exclude>tomcat:*</exclude>
+                  <exclude>javax.servlet.jsp:*</exclude>
+                  <exclude>javax.servlet:*</exclude>
+                </excludes>
+              </artifactSet>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                    <exclude>META-INF/**/pom.properties</exclude>
+                    <exclude>META-INF/**/pom.xml</exclude>
+                    <exclude>META-INF/NOTICE.txt</exclude>
+                    <exclude>META-INF/LICENSE.txt</exclude>
+                    <exclude>META-INF/NOTICE</exclude>
+                    <exclude>META-INF/DEPENDENCIES</exclude>
+                    <exclude>META-INF/LICENSE</exclude>
+                    <exclude>META-INF/jersey-module-version</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
+        <executions>
+          <execution>
+            <id>verify-mirror-deps</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-mirror-deps</goal>
+            </goals>
+            <configuration>
+              <targetDependencies>
+                <targetDependency>org.apache.hbase:hbase-server:${hbase1.version}</targetDependency>
+              </targetDependencies>
+              <ignoredDependencies>
+                <!-- Unfortunately we can't use hadoop's version of slf4j
+                because dropwizard metrics slf4j logger requires a higher version
+                we can't shade it either -->
+                <dependency>org.slf4j:slf4j-api</dependency>
+              </ignoredDependencies>
             </configuration>
           </execution>
         </executions>

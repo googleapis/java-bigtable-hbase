@@ -102,10 +102,6 @@ limitations under the License.
     </dependency>
 
     <dependency>
-      <groupId>com.google.code.findbugs</groupId>
-      <artifactId>jsr305</artifactId>
-    </dependency>
-    <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
       <version>${commons-logging.version}</version>
@@ -129,7 +125,6 @@ limitations under the License.
               <goal>shade</goal>
             </goals>
             <configuration>
-              <shadeTestJar>true</shadeTestJar>
               <shadedArtifactAttached>false</shadedArtifactAttached>
               <createDependencyReducedPom>true</createDependencyReducedPom>
               <!-- Need to manually promote to dependencies to keep the structure of hbase-shade-client.
@@ -162,7 +157,6 @@ limitations under the License.
                   <!-- exclude user visible deps -->
                   <exclude>io.dropwizard.metrics:metrics-core</exclude>
                   <exclude>commons-logging:commons-logging</exclude>
-                  <exclude>com.google.code.findbugs:jsr305</exclude>
                   <!-- exclude hbase-shaded-client & all of its dependencies -->
                   <exclude>org.apache.hbase:hbase-shaded-client</exclude>
                   <exclude>org.slf4j:slf4j-api</exclude>
@@ -174,10 +168,6 @@ limitations under the License.
                     com.github.stephenc.findbugs:findbugs-annotations
                   </exclude>
                   <exclude>log4j:log4j</exclude>
-                  <exclude>junit:junit</exclude>
-                  <exclude>org.hamcrest:hamcrest-core</exclude>
-                  <exclude>javax.inject:javax.inject</exclude>
-                  <exclude>javax.annotation:javax.annotation-api</exclude>
                 </excludes>
               </artifactSet>
               <relocations>
@@ -227,6 +217,11 @@ limitations under the License.
                     com.google.bigtable.repackaged.io.grpc
                   </shadedPattern>
                 </relocation>
+                <relocation>
+                  <pattern>io.perfmark</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.io.perfmark</shadedPattern>
+                </relocation>
+
 
                 <!-- Opencensus related shading -->
                 <relocation>
@@ -234,6 +229,10 @@ limitations under the License.
                   <shadedPattern>
                     com.google.bigtable.repackaged.io.opencensus
                   </shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>google.monitoring</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.google.monitoring</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>org.json</pattern>
@@ -310,42 +309,58 @@ limitations under the License.
                     com.google.bigtable.repackaged.org.codehaus
                   </shadedPattern>
                 </relocation>
+
+                <relocation>
+                  <pattern>org.checkerframework</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.checkerframework</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>android.annotation</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.android.annotation</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>javax.annotation</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.javax.annotation</shadedPattern>
+                </relocation>
               </relocations>
             </configuration>
           </execution>
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-          <usedDependencies>
-            <usedDependency>
-              com.google.cloud.bigtable:bigtable-hbase-1.x
-            </usedDependency>
-            <usedDependency>
-              org.apache.hbase:hbase-shaded-client
-            </usedDependency>
-            <usedDependency>com.google.code.findbugs:jsr305</usedDependency>
-            <usedDependency>commons-logging:commons-logging</usedDependency>
-            <usedDependency>io.dropwizard.metrics:metrics-core</usedDependency>
-            <usedDependency>io.opencensus:opencensus-impl</usedDependency>
-            <usedDependency>
-              io.opencensus:opencensus-contrib-zpages
-            </usedDependency>
-            <usedDependency>
-              io.opencensus:opencensus-exporter-trace-stackdriver
-            </usedDependency>
-            <usedDependency>
-              io.opencensus:opencensus-exporter-stats-stackdriver
-            </usedDependency>
-            <usedDependency>io.grpc:grpc-census</usedDependency>
-          </usedDependencies>
-        </configuration>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
+
+        <executions>
+          <execution>
+            <id>verify-shaded-jar-entries</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-shaded-jar-entries</goal>
+            </goals>
+            <configuration>
+              <allowedJarClassEntries>
+                <classEntry>com/google/bigtable</classEntry>
+                <classEntry>com/google/cloud/bigtable</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableAdmin</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableConnection</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/CommonConnection</classEntry>
+              </allowedJarClassEntries>
+            </configuration>
+          </execution>
+          <execution>
+            <id>verify-shaded-exclusions</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-shaded-exclusions</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
+
+      <!-- skip for shaded jar-->
       <plugin>
-        <!-- skip for shaded jar-->
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>clirr-maven-plugin</artifactId>
         <configuration>

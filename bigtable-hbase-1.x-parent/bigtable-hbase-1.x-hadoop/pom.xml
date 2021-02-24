@@ -53,6 +53,10 @@ limitations under the License.
           <groupId>io.opencensus</groupId>
           <artifactId>*</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>io.grpc</groupId>
+          <artifactId>grpc-census</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -63,11 +67,6 @@ limitations under the License.
 
     <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
     <dependency>
-      <groupId>com.google.code.findbugs</groupId>
-      <artifactId>jsr305</artifactId>
-      <version>${jsr305.version}</version>
-    </dependency>
-    <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
       <version>${commons-logging.version}</version>
@@ -76,18 +75,6 @@ limitations under the License.
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-core</artifactId>
       <version>${dropwizard.metrics.version}</version>
-    </dependency>
-
-    <!-- this is used only for test, but we need this as compile scope for repackaging-->
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-common</artifactId>
-      <version>${hbase1-hadoop.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-common</artifactId>
-      <version>${hbase1.version}</version>
     </dependency>
 
     <dependency>
@@ -118,7 +105,6 @@ limitations under the License.
               <goal>shade</goal>
             </goals>
             <configuration>
-              <shadeTestJar>true</shadeTestJar>
               <shadedArtifactAttached>false</shadedArtifactAttached>
               <createDependencyReducedPom>true</createDependencyReducedPom>
               <!-- Need to manually promote to dependencies to keep the structure of hbase-shade-client -->
@@ -155,20 +141,70 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
+
+      <plugin>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
+
+        <executions>
+          <execution>
+            <id>verify-shaded-jar-entries</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-shaded-jar-entries</goal>
+            </goals>
+            <configuration>
+              <allowedJarClassEntries>
+                <classEntry>com/google/bigtable</classEntry>
+                <classEntry>com/google/cloud/bigtable</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableAdmin</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableConnection</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/CommonConnection</classEntry>
+              </allowedJarClassEntries>
+            </configuration>
+          </execution>
+          <execution>
+            <id>verify-shaded-exclusions</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-shaded-exclusions</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>verify-mirror-deps</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-mirror-deps</goal>
+            </goals>
+            <configuration>
+              <targetDependencies>
+                <targetDependency>org.apache.hbase:hbase-client:${hbase1.version}</targetDependency>
+              </targetDependencies>
+              <ignoredDependencies>
+                <!-- Unfortunately we can't use hadoop's version of slf4j
+                because dropwizard metrics slf4j logger requires a higher version
+                we can't shade it either -->
+                <dependency>org.slf4j:slf4j-api</dependency>
+              </ignoredDependencies>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+
+      <!-- skip for shaded jar-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
         <configuration>
-          <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-          <usedDependencies>
-            <usedDependency>com.google.code.findbugs:jsr305</usedDependency>
-            <usedDependency>commons-logging:commons-logging</usedDependency>
-            <usedDependency>io.dropwizard.metrics:metrics-core</usedDependency>
-          </usedDependencies>
+          <ignoredDependencies>
+            <dependency>*</dependency>
+          </ignoredDependencies>
         </configuration>
       </plugin>
+      <!-- skip for shaded jar-->
       <plugin>
-        <!-- skip for shaded jar-->
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>clirr-maven-plugin</artifactId>
         <configuration>
