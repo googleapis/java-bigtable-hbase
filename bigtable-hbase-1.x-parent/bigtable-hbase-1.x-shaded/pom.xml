@@ -172,6 +172,7 @@ limitations under the License.
                   <exclude>org.hamcrest:hamcrest-core</exclude>
                   <exclude>javax.inject:javax.inject</exclude>
                   <exclude>javax.annotation:javax.annotation-api</exclude>
+                  <exclude>com.google.cloud.bigtable:bigtable-metrics-api</exclude>
                 </excludes>
               </artifactSet>
               <relocations>

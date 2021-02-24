@@ -27,14 +27,12 @@ public class MetricsApiTracerAdapter implements ApiTracer {
   private Context operationTimer;
   private Context rpcTimer;
 
-  private int attemptCount = 0;
-  private Stopwatch attemptTimer;
-  private long attemptResponseCount = 0;
-  private volatile RetryStatus call;
+  private volatile RetryStatus lastRetryStatus;
 
   public MetricsApiTracerAdapter(RpcMetrics rpcMetrics) {
     this.rpcMetrics = rpcMetrics;
     operationTimer = rpcMetrics.timeOperation();
+    lastRetryStatus = RetryStatus.PERMANENT_FAILURE;
   }
 
   @Override
@@ -55,11 +53,7 @@ public class MetricsApiTracerAdapter implements ApiTracer {
 
   @Override
   public void operationFailed(Throwable error) {
-    operationFailed(error, call);
-  }
-
-  public void operationFailed(Throwable error, RetryStatus retryStatus) {
-    switch (retryStatus) {
+    switch (lastRetryStatus) {
       case PERMANENT_FAILURE:
         rpcMetrics.markFailure();
         break;
@@ -77,8 +71,6 @@ public class MetricsApiTracerAdapter implements ApiTracer {
   @Override
   public void attemptStarted(int attemptNumber) {
     rpcTimer = rpcMetrics.timeRpc();
-    attemptCount++;
-    attemptResponseCount = 0;
   }
 
   @Override
@@ -100,13 +92,13 @@ public class MetricsApiTracerAdapter implements ApiTracer {
   @Override
   public void attemptFailedRetriesExhausted(Throwable error) {
     rpcTimer.close();
-    call = RetryStatus.RETRIES_EXHAUSTED;
+    lastRetryStatus = RetryStatus.RETRIES_EXHAUSTED;
     rpcMetrics.markRetriesExhausted();
   }
 
   @Override
   public void attemptPermanentFailure(Throwable error) {
-    call = RetryStatus.PERMANENT_FAILURE;
+    lastRetryStatus = RetryStatus.PERMANENT_FAILURE;
     rpcTimer.close();
   }
 
@@ -122,7 +114,6 @@ public class MetricsApiTracerAdapter implements ApiTracer {
 
   @Override
   public void responseReceived() {
-    attemptResponseCount++;
   }
 
   @Override

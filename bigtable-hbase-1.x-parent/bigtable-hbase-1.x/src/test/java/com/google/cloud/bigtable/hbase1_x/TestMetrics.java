@@ -22,13 +22,10 @@ import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings;
-import com.google.cloud.bigtable.hbase.wrappers.veneer.metrics.MetricsApiTracerAdapterFactory;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.Counter;
 import com.google.cloud.bigtable.metrics.Meter;
 import com.google.cloud.bigtable.metrics.MetricRegistry;
-import com.google.cloud.bigtable.metrics.RpcMetrics;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.collect.Queues;
 import io.grpc.Server;
@@ -112,9 +109,7 @@ public class TestMetrics {
     FakeMetricRegistry fakeMetricRegistry = new FakeMetricRegistry();
 
     BigtableClientMetrics.setMetricRegistry(fakeMetricRegistry);
-    long getTableStart = System.currentTimeMillis();
     Table table = connection.getTable(TABLE_NAME);
-    long getTableTime = System.currentTimeMillis() - getTableStart;
 
     long readRowsStart = System.currentTimeMillis();
     Result result = table.get(new Get(new byte[2]));
@@ -122,15 +117,6 @@ public class TestMetrics {
 
     ReadRowsRequest request = fakeDataService.popLastRequest();
     assertEquals(FULL_TABLE_NAME, request.getTableName());
-
-    BigtableHBaseVeneerSettings bigtableSettings =
-        (BigtableHBaseVeneerSettings) connection.getBigtableSettings();
-    MetricsApiTracerAdapterFactory tracerFactory =
-        (MetricsApiTracerAdapterFactory)
-            bigtableSettings.getDataSettings().getStubSettings().getTracerFactory();
-
-    RpcMetrics readRow = tracerFactory.getMetrics().get("ReadRow");
-    Assert.assertNotNull(readRow);
 
     AtomicLong readRowFailure =
         fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.method.ReadRow.failure");
@@ -142,9 +128,11 @@ public class TestMetrics {
 
     Assert.assertEquals(3, readRowFailure.get());
     Assert.assertTrue(
-        operationLatency.get() <= readRowsTime + 50 || operationLatency.get() >= readRowsTime - 50);
+        "operation latency for ReadRow took longer than expected",
+        operationLatency.get() >= readRowsTime + 50);
     Assert.assertTrue(
-        tableGetLatency.get() <= getTableTime + 50 || tableGetLatency.get() >= getTableTime - 50);
+        "operation latency for table.get took longer than expected",
+        tableGetLatency.get() <= readRowsTime + 50);
   }
 
   private static class FakeDataService extends BigtableGrpc.BigtableImplBase {
@@ -200,9 +188,9 @@ public class TestMetrics {
 
     @Override
     public Timer timer(final String name) {
-      final long start = System.currentTimeMillis();
-
       return new Timer() {
+        final long start = System.currentTimeMillis();
+
         @Override
         public Context time() {
           return new Context() {
