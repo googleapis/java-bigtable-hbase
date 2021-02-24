@@ -21,16 +21,19 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -38,6 +41,18 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.collection.CollectRequest;
+import org.eclipse.aether.graph.Dependency;
+import org.eclipse.aether.graph.DependencyFilter;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.resolution.ArtifactResult;
+import org.eclipse.aether.resolution.DependencyRequest;
+import org.eclipse.aether.resolution.DependencyResolutionException;
+import org.eclipse.aether.util.artifact.JavaScopes;
+import org.eclipse.aether.util.filter.DependencyFilterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +67,17 @@ public class VerifyShadedExclusionsMojo extends AbstractMojo {
   @Parameter(defaultValue = "${project}", readonly = true, required = true)
   private MavenProject project;
 
+  /** The entry point to Maven Artifact Resolver, i.e. the component doing all the work. */
+  @Component private RepositorySystem repoSystem;
+
+  /** The current repository/network configuration of Maven. */
+  @Parameter(defaultValue = "${repositorySystemSession}", readonly = true)
+  private RepositorySystemSession repoSession;
+
+  /** The project's remote repositories to use for the resolution. */
+  @Parameter(defaultValue = "${project.remoteProjectRepositories}", readonly = true)
+  private List<RemoteRepository> remoteRepos;
+
   /**
    * Verifies that all of the dependencies that were excluded from shading, are added as external
    * deps in the final dependency-reduced-pom.xml.
@@ -64,7 +90,13 @@ public class VerifyShadedExclusionsMojo extends AbstractMojo {
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     Set<String> excludedDeps = getShadingExclusions();
-    Set<String> outputDeps = getOutputDependencies();
+    Set<String> outputDeps;
+
+    try {
+      outputDeps = getOutputDependencies();
+    } catch (DependencyResolutionException e) {
+      throw new MojoFailureException(e.getMessage(), e);
+    }
 
     // Find all of the dependencies that were excluded but not specified in the
     // dependency-reduced-pom.xml
@@ -99,17 +131,44 @@ public class VerifyShadedExclusionsMojo extends AbstractMojo {
     }
     Xpp3Dom configuration = (Xpp3Dom) shadePlugin.getExecutions().get(0).getConfiguration();
 
-    Xpp3Dom[] excludeNodes =
+    // See the shaded jar has an allowlist
+    Set<String> includes =
         Optional.ofNullable(configuration.getChild("artifactSet"))
-            .map(n -> n.getChild("excludes"))
-            .map(n -> n.getChildren("exclude"))
-            .orElse(new Xpp3Dom[0]);
+            .map(n -> n.getChild("includes"))
+            .map(n -> n.getChildren("include"))
+            .map(Arrays::stream)
+            .orElse(Stream.empty())
+            .map(Xpp3Dom::getValue)
+            .collect(Collectors.toSet());
 
-    return Arrays.stream(excludeNodes).map(Xpp3Dom::getValue).collect(Collectors.toSet());
+    Set<String> deps;
+    if (includes.isEmpty()) {
+      // If there is no allowlist, then nothing is exclude by default
+      deps = new HashSet<>();
+    } else {
+      // If there is an allow list, then figure out whats left after the allow list is applied
+      deps =
+          project.getArtifacts().stream()
+              .map(a -> String.format("%s:%s", a.getGroupId(), a.getArtifactId()))
+              .collect(Collectors.toSet());
+      deps.removeAll(includes);
+    }
+
+    // Add everything thats explicitly excluded from the shaded jar
+    Optional.ofNullable(configuration.getChild("artifactSet"))
+        .map(n -> n.getChild("excludes"))
+        .map(n -> n.getChildren("exclude"))
+        .map(Arrays::stream)
+        .orElse(Stream.empty())
+        .map(Xpp3Dom::getValue)
+        .forEach(deps::add);
+
+    return deps;
   }
 
   /** Extract the dependencies that were explicitly specified in the dependency-reduced-pom.xml */
-  private Set<String> getOutputDependencies() throws MojoFailureException {
+  private Set<String> getOutputDependencies()
+      throws MojoFailureException, DependencyResolutionException {
     File reducedPom = new File(project.getBasedir(), "dependency-reduced-pom.xml");
     MavenXpp3Reader reader = new MavenXpp3Reader();
     Model reduceMavenModel;
@@ -119,8 +178,32 @@ public class VerifyShadedExclusionsMojo extends AbstractMojo {
       throw new MojoFailureException("Failed to read " + reducedPom.getName(), e);
     }
 
-    return reduceMavenModel.getDependencies().stream()
-        .map(d -> String.format("%s:%s", d.getGroupId(), d.getArtifactId()))
-        .collect(Collectors.toSet());
+    CollectRequest collectRequest = new CollectRequest();
+
+    reduceMavenModel.getDependencies().stream()
+        .map(d -> String.format("%s:%s:%s", d.getGroupId(), d.getArtifactId(), d.getVersion()))
+        .map(DefaultArtifact::new)
+        .map((a) -> new Dependency(a, JavaScopes.COMPILE))
+        .forEach(collectRequest::addDependency);
+
+    collectRequest.setRepositories(remoteRepos);
+
+    DependencyFilter classpathFlter =
+        DependencyFilterUtils.classpathFilter(
+            Arrays.asList(JavaScopes.COMPILE, JavaScopes.RUNTIME));
+
+    DependencyRequest dependencyRequest = new DependencyRequest(collectRequest, classpathFlter);
+
+    final List<ArtifactResult> artifactResults;
+    artifactResults =
+        repoSystem.resolveDependencies(repoSession, dependencyRequest).getArtifactResults();
+
+    Set<String> deps =
+        artifactResults.stream()
+            .map(ArtifactResult::getArtifact)
+            .map(a -> String.format("%s:%s", a.getGroupId(), a.getArtifactId()))
+            .collect(Collectors.toSet());
+
+    return deps;
   }
 }

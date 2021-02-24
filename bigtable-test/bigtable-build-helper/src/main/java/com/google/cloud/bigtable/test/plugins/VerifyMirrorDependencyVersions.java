@@ -94,7 +94,11 @@ public class VerifyMirrorDependencyVersions extends AbstractMojo {
 
     // Remove ignored deps
     if (ignoredDependencies != null) {
-      ignoredDependencies.forEach(targetVersionMap::remove);
+      for (String dep : ignoredDependencies) {
+        if (targetVersionMap.remove(dep) == null) {
+          LOGGER.warn("stale ignore value: " + dep);
+        }
+      }
     }
 
     // Make sure that the overlap between actual and target dependencies align

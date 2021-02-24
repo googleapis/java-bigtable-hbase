@@ -151,7 +151,8 @@
               <goals>
                 <goal>verify</goal>
               </goals>
-              <parallelThreads>2C</parallelThreads>
+              <!-- figure out why parallelism is causing flakes -->
+<!--              <parallelThreads>2C</parallelThreads>-->
             </configuration>
           </execution>
         </executions>
