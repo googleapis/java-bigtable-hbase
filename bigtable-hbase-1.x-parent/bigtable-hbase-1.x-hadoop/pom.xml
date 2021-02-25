@@ -77,6 +77,7 @@ limitations under the License.
       <version>${dropwizard.metrics.version}</version>
     </dependency>
 
+    <!-- test deps -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
