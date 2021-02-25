@@ -17,9 +17,12 @@ package com.google.cloud.bigtable.test.plugins;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
@@ -85,9 +88,12 @@ public class VerifyMirrorDependencyVersions extends AbstractMojo {
     Map<String, String> actualVersionMap = resolveProjectDependencyVersions();
 
     // Resolve transitive dep versions for the target
+    System.out.println("target deps: " + targetDependencies);
+    Collection<String> fullTargetDeps = patchProjectVersions(targetDependencies, actualVersionMap);
+    System.out.println("full targetdeps:" + fullTargetDeps);
     Map<String, String> targetVersionMap;
     try {
-      targetVersionMap = resolveTargetDependencyVersions(targetDependencies);
+      targetVersionMap = resolveTargetDependencyVersions(fullTargetDeps);
     } catch (IllegalArgumentException | DependencyResolutionException e) {
       throw new MojoFailureException(e.getMessage(), e);
     }
@@ -125,12 +131,30 @@ public class VerifyMirrorDependencyVersions extends AbstractMojo {
     }
   }
 
+  private Collection<String> patchProjectVersions(
+      Collection<String> targetDeps, Map<String, String> projectDeps) throws MojoFailureException {
+    Set<String> patched = new HashSet<>();
+    for (String s : targetDeps) {
+      String[] parts = s.split(":");
+      if (parts.length == 2) {
+        String version = projectDeps.get(s);
+        if (version == null) {
+          throw new MojoFailureException("failed to patch version for target dep " + s);
+        }
+        patched.add(s + ":" + version);
+      } else {
+        patched.add(s);
+      }
+    }
+    return patched;
+  }
+
   /** Resolve all of the desired transitive dependencies */
-  private Map<String, String> resolveTargetDependencyVersions(List<String> deps)
+  private Map<String, String> resolveTargetDependencyVersions(Collection<String> deps)
       throws DependencyResolutionException {
     CollectRequest collectRequest = new CollectRequest();
 
-    targetDependencies.stream()
+    deps.stream()
         .map(DefaultArtifact::new)
         .map((a) -> new Dependency(a, JavaScopes.COMPILE))
         .forEach(collectRequest::addDependency);
