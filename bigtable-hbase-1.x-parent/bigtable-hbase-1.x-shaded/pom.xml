@@ -111,6 +111,12 @@ limitations under the License.
       <artifactId>metrics-core</artifactId>
       <version>${dropwizard.metrics.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.conscrypt</groupId>
+      <artifactId>conscrypt-openjdk-uber</artifactId>
+      <version>${grpc-conscrypt.version}</version>
+      <scope>runtime</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -167,6 +173,9 @@ limitations under the License.
                     com.github.stephenc.findbugs:findbugs-annotations
                   </exclude>
                   <exclude>log4j:log4j</exclude>
+                  <!-- conscrypt is transitive dep of grpc-alts, it contains
+                  native binaries, so it cant be shaded -->
+                  <exclude>org.conscrypt:conscrypt-openjdk-uber</exclude>
                 </excludes>
               </artifactSet>
               <relocations>
@@ -288,12 +297,6 @@ limitations under the License.
                   <pattern>org.apache.commons.lang3</pattern>
                   <shadedPattern>
                     com.google.bigtable.repackaged.org.apache.commons.lang3
-                  </shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.conscrypt</pattern>
-                  <shadedPattern>
-                    com.google.bigtable.repackaged.org.conscrypt
                   </shadedPattern>
                 </relocation>
                 <relocation>

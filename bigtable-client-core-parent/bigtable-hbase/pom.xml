@@ -99,6 +99,18 @@ limitations under the License.
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
+      <artifactId>grpc-alts</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <!-- conscrypt is needed for directpath -->
+    <dependency>
+      <groupId>org.conscrypt</groupId>
+      <artifactId>conscrypt-openjdk-uber</artifactId>
+      <version>${grpc-conscrypt.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
       <artifactId>grpc-stub</artifactId>
     </dependency>
     <dependency>
@@ -202,6 +214,27 @@ limitations under the License.
             </property>
           </systemProperties>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
+
+        <executions>
+          <execution>
+            <id>verify-conscrypt-version</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-mirror-deps</goal>
+            </goals>
+            <configuration>
+              <targetDependencies>
+                <!-- make sure that we are a strict superset of veneer -->
+                <targetDependency>com.google.cloud:google-cloud-bigtable</targetDependency>
+              </targetDependencies>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
     <resources>
