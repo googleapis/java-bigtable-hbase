@@ -53,7 +53,6 @@ public class VerifyShadedJarEntriesMojo extends AbstractMojo {
     } catch (IOException e) {
       throw new MojoFailureException("Failed to open shaded jar for inspect", e);
     }
-    System.out.println(jarFile.getName());
 
     List<String> forbiddenPaths =
         Collections.list(jarFile.entries()).stream()
