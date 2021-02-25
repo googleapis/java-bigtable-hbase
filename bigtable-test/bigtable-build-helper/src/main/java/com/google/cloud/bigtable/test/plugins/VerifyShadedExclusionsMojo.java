@@ -118,6 +118,11 @@ public class VerifyShadedExclusionsMojo extends AbstractMojo {
 
   /** Extracts the artifact names that we excluded from shading */
   private Set<String> getShadingExclusions() throws MojoFailureException {
+    Set<String> allDeps =
+        project.getArtifacts().stream()
+            .map(a -> String.format("%s:%s", a.getGroupId(), a.getArtifactId()))
+            .collect(Collectors.toSet());
+
     List<Plugin> shadePlugins =
         project.getBuildPlugins().stream()
             .filter(p -> "maven-shade-plugin".equals(p.getArtifactId()))
@@ -131,7 +136,6 @@ public class VerifyShadedExclusionsMojo extends AbstractMojo {
     }
     Xpp3Dom configuration = (Xpp3Dom) shadePlugin.getExecutions().get(0).getConfiguration();
 
-    // See the shaded jar has an allowlist
     Set<String> includes =
         Optional.ofNullable(configuration.getChild("artifactSet"))
             .map(n -> n.getChild("includes"))
@@ -141,29 +145,36 @@ public class VerifyShadedExclusionsMojo extends AbstractMojo {
             .map(Xpp3Dom::getValue)
             .collect(Collectors.toSet());
 
-    Set<String> deps;
-    if (includes.isEmpty()) {
-      // If there is no allowlist, then nothing is exclude by default
-      deps = new HashSet<>();
-    } else {
-      // If there is an allow list, then figure out whats left after the allow list is applied
-      deps =
-          project.getArtifacts().stream()
-              .map(a -> String.format("%s:%s", a.getGroupId(), a.getArtifactId()))
-              .collect(Collectors.toSet());
-      deps.removeAll(includes);
+    Set<String> staleIncludes = new HashSet<>(includes);
+    staleIncludes.removeAll(allDeps);
+    if (!staleIncludes.isEmpty()) {
+      LOGGER.warn("Found stale includes in shading config:");
+      staleIncludes.forEach(LOGGER::warn);
     }
 
-    // Add everything thats explicitly excluded from the shaded jar
-    Optional.ofNullable(configuration.getChild("artifactSet"))
-        .map(n -> n.getChild("excludes"))
-        .map(n -> n.getChildren("exclude"))
-        .map(Arrays::stream)
-        .orElse(Stream.empty())
-        .map(Xpp3Dom::getValue)
-        .forEach(deps::add);
+    // Empty includes implies that everything is included
+    final Set<String> effectiveIncludes = includes.isEmpty() ? allDeps : includes;
 
-    return deps;
+    Set<String> excludes =
+        Optional.ofNullable(configuration.getChild("artifactSet"))
+            .map(n -> n.getChild("excludes"))
+            .map(n -> n.getChildren("exclude"))
+            .map(Arrays::stream)
+            .orElse(Stream.empty())
+            .map(Xpp3Dom::getValue)
+            .collect(Collectors.toSet());
+
+    Set<String> staleExcludes = new HashSet<>(excludes);
+    staleExcludes.removeAll(allDeps);
+    if (!staleExcludes.isEmpty()) {
+      LOGGER.warn("Found stale excludes in shading config:");
+      staleExcludes.forEach(LOGGER::warn);
+    }
+
+    // Compute all the deps that effectively excluded from the shaded jar
+    return allDeps.stream()
+        .filter(s -> !effectiveIncludes.contains(s) || excludes.contains(s))
+        .collect(Collectors.toSet());
   }
 
   /** Extract the dependencies that were explicitly specified in the dependency-reduced-pom.xml */
