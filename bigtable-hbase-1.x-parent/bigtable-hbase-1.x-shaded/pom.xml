@@ -161,7 +161,6 @@ limitations under the License.
                   <exclude>org.apache.hbase:hbase-shaded-client</exclude>
                   <exclude>org.slf4j:slf4j-api</exclude>
                   <exclude>org.slf4j:slf4j-log4j12</exclude>
-                  <exclude>org.slf4j:slf4j-api</exclude>
                   <exclude>log4j:log4j</exclude>
                   <exclude>org.apache.htrace:htrace-core</exclude>
                   <exclude>
