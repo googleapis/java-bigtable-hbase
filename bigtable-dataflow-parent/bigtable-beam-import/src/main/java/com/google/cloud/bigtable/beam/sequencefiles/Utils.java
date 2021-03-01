@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.beam.sequencefiles;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import org.apache.beam.runners.dataflow.DataflowRunner;
+import org.apache.beam.runners.dataflow.options.DataflowPipelineDebugOptions;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.PipelineResult.State;
@@ -51,7 +52,30 @@ public class Utils {
       dataflowOpts.setDiskSizeGb(25);
     }
 
-    return dataflowOpts;
+    /**
+     * Bigtable pipelines are very GC intensive, For each cell in Bigtable we create following
+     * objects: 1. Row key 2. Column qualifier 3. Timestamp 4. Value 5. A cell object that contains
+     * the above 4 objects.
+     *
+     * <p>So each cell has at least 5 objects. On top of that, each cell may represented by
+     * different kinds of objects. For example, import job creates HBase Result object and Mutation
+     * objects for all the cells. Same is the case with Snapshot related pipelines.
+     *
+     * <p>Given this abundance of objects, for cells with smaller values, the pipeline may lead to a
+     * high GC overhead, but it does make progress. The MemoryMonitor on dataflow worker kills the
+     * pipeline and results in wasted work.
+     *
+     * <p>The above is true for most dataflow pipeline, but this specific use case is different as
+     * the pipeline does nothing else. CPU is only used for object transformation and GC. So, we
+     * disable the memory monitor on Bigtable pipelines. If pipeline stalls, it will OOM and then
+     * human intervention will be required. As a mitigation, users should choose a worker machine
+     * with higher memory or reduce the parallelism on the workers (by setting
+     * --numberOfWorkerHarnessThreads).
+     */
+    DataflowPipelineDebugOptions debugOptions = dataflowOpts.as(DataflowPipelineDebugOptions.class);
+    debugOptions.setGCThrashingPercentagePerPeriod(100.00);
+
+    return debugOptions;
   }
 
   /** A default project id provider for bigtable that reads the default {@link GcpOptions} */
