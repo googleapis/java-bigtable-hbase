@@ -405,6 +405,8 @@ limitations under the License.
                 <ignoredDependency>org.apache.commons:commons-compress</ignoredDependency>
                 <!-- TODO: figure out how to resolve this -->
                 <ignoredDependency>com.google.errorprone:error_prone_annotations</ignoredDependency>
+                <!-- TODO: align conscrypt version of bigtable & beam -->
+                <ignoredDependency>org.conscrypt:conscrypt-openjdk-uber</ignoredDependency>
               </ignoredDependencies>
             </configuration>
           </execution>

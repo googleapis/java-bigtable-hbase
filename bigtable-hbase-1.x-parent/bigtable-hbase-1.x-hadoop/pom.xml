@@ -186,13 +186,17 @@ limitations under the License.
             </goals>
             <configuration>
               <targetDependencies>
-                <targetDependency>org.apache.hbase:hbase-client:${hbase1.version}</targetDependency>
+                <targetDependency>org.apache.hbase:hbase-client</targetDependency>
               </targetDependencies>
               <ignoredDependencies>
                 <!-- Unfortunately we can't use hadoop's version of slf4j
                 because dropwizard metrics slf4j logger requires a higher version
                 we can't shade it either -->
                 <dependency>org.slf4j:slf4j-api</dependency>
+
+                <!-- for some reason hbase-client exposes testing deps as a compile dep, just ignore them -->
+                <dependency>junit:junit</dependency>
+                <dependency>org.hamcrest:hamcrest-core</dependency>
               </ignoredDependencies>
             </configuration>
           </execution>
