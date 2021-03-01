@@ -209,12 +209,9 @@ public class VerifyShadedExclusionsMojo extends AbstractMojo {
     artifactResults =
         repoSystem.resolveDependencies(repoSession, dependencyRequest).getArtifactResults();
 
-    Set<String> deps =
-        artifactResults.stream()
-            .map(ArtifactResult::getArtifact)
-            .map(a -> String.format("%s:%s", a.getGroupId(), a.getArtifactId()))
-            .collect(Collectors.toSet());
-
-    return deps;
+    return artifactResults.stream()
+        .map(ArtifactResult::getArtifact)
+        .map(a -> String.format("%s:%s", a.getGroupId(), a.getArtifactId()))
+        .collect(Collectors.toSet());
   }
 }
