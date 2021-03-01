@@ -88,9 +88,7 @@ public class VerifyMirrorDependencyVersions extends AbstractMojo {
     Map<String, String> actualVersionMap = resolveProjectDependencyVersions();
 
     // Resolve transitive dep versions for the target
-    System.out.println("target deps: " + targetDependencies);
     Collection<String> fullTargetDeps = patchProjectVersions(targetDependencies, actualVersionMap);
-    System.out.println("full targetdeps:" + fullTargetDeps);
     Map<String, String> targetVersionMap;
     try {
       targetVersionMap = resolveTargetDependencyVersions(fullTargetDeps);
@@ -110,11 +108,11 @@ public class VerifyMirrorDependencyVersions extends AbstractMojo {
     // Make sure that the overlap between actual and target dependencies align
     List<String> mismatches = new ArrayList<>();
 
-    for (Map.Entry<String, String> entry : actualVersionMap.entrySet()) {
-      String actualVersion = entry.getValue();
-      String expectedVersion = targetVersionMap.get(entry.getKey());
+    for (Map.Entry<String, String> entry : targetVersionMap.entrySet()) {
+      String expectedVersion = entry.getValue();
+      String actualVersion = actualVersionMap.get(entry.getKey());
 
-      if (expectedVersion != null && !actualVersion.equals(expectedVersion)) {
+      if (!expectedVersion.equals(actualVersion)) {
         mismatches.add(
             String.format(
                 "%s: expected %s, got %s", entry.getKey(), expectedVersion, actualVersion));
