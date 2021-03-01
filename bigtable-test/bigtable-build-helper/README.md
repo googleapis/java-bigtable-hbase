@@ -23,10 +23,13 @@ during build.
 
  ## Testing
  
- Integration tests are bit nonstandard as they test maven itself. This module
- uses `maven-invoker-plugin` to test each goal. All of the tests live in the
- `src/it` directory. Each test consists of `pom.xml` that defines a scenario
- and an optional verification script. If the verification script is absent the
- build is only tested for a successful run. If a verification script is present,
- it tests the output of the build. Each test writes the output of each maven
- invocation under `target/it/{test-name}/build.log`.
+Integration tests are bit nonstandard as they test maven itself. This module
+uses `maven-invoker-plugin` to test each goal. All of the tests live in the
+`src/it` directory. Each test consists of `pom.xml` that defines a test scenario,
+and an optional verification script. If the verification script is absent, the
+build will only be tested for a successful run. If a verification script is 
+present, it tests the output of the build. Furthermore the test verification
+behavior can be modified via `invoker.properties` file. Each test writes the 
+output of each maven invocation under `target/it/{test-name}/build.log`.
+
+Information is available here: https://maven.apache.org/plugins/maven-invoker-plugin/.
