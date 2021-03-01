@@ -129,7 +129,7 @@ public class TestMetrics {
     Assert.assertEquals(3, readRowFailure.get());
     Assert.assertTrue(
         "operation latency for ReadRow took longer than expected",
-        operationLatency.get() >= readRowsTime + 50);
+        operationLatency.get() <= readRowsTime + 50);
     Assert.assertTrue(
         "operation latency for table.get took longer than expected",
         tableGetLatency.get() <= readRowsTime + 50);
