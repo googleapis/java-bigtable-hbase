@@ -83,7 +83,7 @@ limitations under the License.
     <beam-grpc.version>1.29.0</beam-grpc.version>
 
     <!-- Benchmarks related dependencies -->
-    <jmh.version>1.27</jmh.version>
+    <jmh.version>1.28</jmh.version>
   </properties>
 
   <distributionManagement>
