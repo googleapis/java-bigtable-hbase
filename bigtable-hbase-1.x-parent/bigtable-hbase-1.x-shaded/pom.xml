@@ -172,7 +172,6 @@ limitations under the License.
                   <exclude>org.hamcrest:hamcrest-core</exclude>
                   <exclude>javax.inject:javax.inject</exclude>
                   <exclude>javax.annotation:javax.annotation-api</exclude>
-                  <exclude>com.google.cloud.bigtable:bigtable-metrics-api</exclude>
                 </excludes>
               </artifactSet>
               <relocations>
@@ -187,7 +186,6 @@ limitations under the License.
                     -->
                     <exclude>com.google.cloud.bigtable.hbase*.**</exclude>
                     <exclude>com.google.cloud.bigtable.metrics.**</exclude>
-                    <exclude>com.google.cloud.bigtable.hbase.wrappers.veneer.metrics.**</exclude>
 
                     <!-- in case maven is called with overlapping goals (ie. mvn install verify),
                     avoid double relocation -->
