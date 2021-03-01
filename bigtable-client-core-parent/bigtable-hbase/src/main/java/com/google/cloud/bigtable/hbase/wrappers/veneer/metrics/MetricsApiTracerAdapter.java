@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.hbase.wrappers.veneer.metrics;
 import com.google.api.gax.tracing.ApiTracer;
 import com.google.cloud.bigtable.metrics.RpcMetrics;
 import com.google.cloud.bigtable.metrics.Timer.Context;
-import com.google.common.base.Stopwatch;
 import org.threeten.bp.Duration;
 
 public class MetricsApiTracerAdapter implements ApiTracer {
@@ -113,8 +112,7 @@ public class MetricsApiTracerAdapter implements ApiTracer {
   }
 
   @Override
-  public void responseReceived() {
-  }
+  public void responseReceived() {}
 
   @Override
   public void requestSent() {}
