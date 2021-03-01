@@ -28,6 +28,23 @@ limitations under the License.
     <mainClass>com.google.cloud.bigtable.beam.sequencefiles.Main</mainClass>
   </properties>
 
+  <!-- Adding this to resolve version conflict within beam sdk-->
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-api</artifactId>
+        <version>${beam-grpc.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-core</artifactId>
+        <version>${beam-grpc.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
