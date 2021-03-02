@@ -1,0 +1,38 @@
+/*
+ * Copyright 2021 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import java.nio.file.Files;
+
+File buildLog = new File(basedir, "build.log");
+String content = new String(Files.readAllBytes(buildLog.toPath()));
+
+boolean success = true;
+
+assertContains(s) {
+  if (!content.contains(s)) {
+    print( "FAILED: Expected build log to contain: " + s);
+    success = false;
+  }
+}
+
+assertContains("[ERROR] Found forbidden entries in the shaded jar:");
+assertContains("[ERROR] com/google/common/base/Strings.class");
+assertContains("[ERROR] javax/annotation/Nullable.class");
+assertContains("[ERROR] org/checkerframework/checker/nullness/compatqual/NullableDecl.class");
+
+if (!success) {
+  throw new IllegalStateException("Build output was missing expected details, "
+    + "see target/it/verify-shaded-jar-entries-leak/build.log for more details");
+}
