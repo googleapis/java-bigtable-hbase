@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.mapreduce;
 
+import com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportHBaseSnapshotJob;
 import org.apache.hadoop.classification.InterfaceStability.Evolving;
 import org.apache.hadoop.util.ProgramDriver;
 
@@ -34,7 +35,11 @@ public class Driver {
       programDriver.addClass(
           "export-table", Export.class, "A map/reduce program that exports a table to a file.");
       programDriver.addClass(
-          "import-table", Import.class, "A map/reduce program that imports a table to a file.");
+          "import-table", Import.class, "A map/reduce program that imports a file to a table.");
+      programDriver.addClass(
+          "import-snapshot",
+          ImportHBaseSnapshotJob.class,
+          "A map/reduce program that imports a table snapshot.");
       programDriver.driver(args);
       exitCode = programDriver.run(args);
     } catch (Throwable e) {
