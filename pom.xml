@@ -76,11 +76,12 @@ limitations under the License.
     <hamcrest.version>1.3</hamcrest.version>
     <mockito.version>3.6.0</mockito.version>
     <!-- TODO: check if commons-codec was transitively updated to 1.13 and okhttp was updated to 2.7.5 when upgrading-->
-    <beam.version>2.19.0</beam.version>
+    <beam.version>2.24.0</beam.version>
     <!-- referred from bigtable-beam-import and bigtable-emulator -->
     <guava.version>30.0-android</guava.version>
     <beam-guava.version>20.0</beam-guava.version>
     <beam-auto-value.version>1.7</beam-auto-value.version>
+    <beam-grpc.version>1.29.0</beam-grpc.version>
 
     <!-- Benchmarks related dependencies -->
     <jmh.version>1.23</jmh.version>
