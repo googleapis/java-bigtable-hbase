@@ -179,6 +179,7 @@ limitations under the License.
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-grpclb</artifactId>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
@@ -269,6 +270,7 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
           <skip>true</skip>
         </configuration>
       </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -286,11 +288,9 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
         <configuration>
-          <!-- commons-codec is not used directly, but upgrading due to transitive vulnerabilities in older versions.
-          grpc-grpclb is a runtime dep used via reflection -->
+          <!-- commons-codec is not used directly, but upgrading due to transitive vulnerabilities in older versions. -->
           <usedDependencies>
             <usedDependency>commons-codec:commons-codec</usedDependency>
-            <usedDependency>io.grpc:grpc-grpclb</usedDependency>
           </usedDependencies>
         </configuration>
       </plugin>

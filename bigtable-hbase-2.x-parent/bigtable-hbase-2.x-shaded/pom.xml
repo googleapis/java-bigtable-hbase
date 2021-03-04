@@ -72,11 +72,11 @@ limitations under the License.
     </dependency>
     <dependency>
       <groupId>io.opencensus</groupId>
-      <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
+      <artifactId>opencensus-exporter-stats-stackdriver</artifactId>
     </dependency>
     <dependency>
       <groupId>io.opencensus</groupId>
-      <artifactId>opencensus-exporter-stats-stackdriver</artifactId>
+      <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
     </dependency>
     <!-- grpc-census needed alongside opencensus-exporter-stats-stackdriver for GRPC stats exports to work -->
     <dependency>
@@ -101,6 +101,8 @@ limitations under the License.
       <artifactId>metrics-core</artifactId>
       <version>${dropwizard.metrics.version}</version>
     </dependency>
+
+    <!-- See notes in bigtable-client-core/bigtable-hbase/pom.xml#verify-conscrypt-version -->
     <dependency>
       <groupId>org.conscrypt</groupId>
       <artifactId>conscrypt-openjdk-uber</artifactId>
@@ -147,6 +149,12 @@ limitations under the License.
                     <exclude>META-INF/*.SF</exclude>
                     <exclude>META-INF/*.DSA</exclude>
                     <exclude>META-INF/*.RSA</exclude>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                    <exclude>META-INF/LICENSE</exclude>
+                    <exclude>META-INF/LICENSE.txt</exclude>
+                    <exclude>META-INF/NOTICE</exclude>
+                    <exclude>META-INF/DEPENDENCIES</exclude>
+                    <exclude>META-INF/NOTICE.txt</exclude>
                   </excludes>
                 </filter>
               </filters>
@@ -168,8 +176,7 @@ limitations under the License.
                     com.github.stephenc.findbugs:findbugs-annotations
                   </exclude>
                   <exclude>log4j:log4j</exclude>
-                  <!-- conscrypt is transitive dep of grpc-alts, it contains
-                  native binaries, so it cant be shaded -->
+                  <!-- See notes in bigtable-client-core/bigtable-hbase/pom.xml#verify-conscrypt-version -->
                   <exclude>org.conscrypt:conscrypt-openjdk-uber</exclude>
                 </excludes>
               </artifactSet>
@@ -204,7 +211,6 @@ limitations under the License.
                     com.google.bigtable.repackaged.com.twitter
                   </shadedPattern>
                 </relocation>
-
                 <!-- Take special care of grpc-netty-shaded, it uses the package
                      io.grpc.netty.shaded.io.grpc.netty, which will cause the
                      ServicesResourceTransformer to replace both occurrences of io.grpc
@@ -326,35 +332,6 @@ limitations under the License.
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-          <usedDependencies>
-            <usedDependency>
-              com.google.cloud.bigtable:bigtable-hbase-2.x
-            </usedDependency>
-            <usedDependency>
-              org.apache.hbase:hbase-shaded-client
-            </usedDependency>
-            <usedDependency>com.google.code.findbugs:jsr305</usedDependency>
-            <usedDependency>commons-logging:commons-logging</usedDependency>
-            <usedDependency>io.dropwizard.metrics:metrics-core</usedDependency>
-            <usedDependency>io.opencensus:opencensus-impl</usedDependency>
-            <usedDependency>
-              io.opencensus:opencensus-contrib-zpages
-            </usedDependency>
-            <usedDependency>
-              io.opencensus:opencensus-exporter-trace-stackdriver
-            </usedDependency>
-            <usedDependency>
-              io.opencensus:opencensus-exporter-stats-stackdriver
-            </usedDependency>
-            <usedDependency>io.grpc:grpc-census</usedDependency>
-          </usedDependencies>
-        </configuration>
-      </plugin>
-      <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>
         <artifactId>bigtable-build-helper</artifactId>
         <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
@@ -385,10 +362,32 @@ limitations under the License.
               <goal>verify-shaded-exclusions</goal>
             </goals>
           </execution>
+          <execution>
+            <id>verify-mirror-deps</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-mirror-deps</goal>
+            </goals>
+            <configuration>
+              <targetDependencies>
+                <targetDependency>org.apache.hbase:hbase-shaded-client</targetDependency>
+              </targetDependencies>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
+
+      <!-- This module just repackages existing code, so dependency analysis is not possible -->
       <plugin>
-        <!-- skip for shaded jar-->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <configuration>
+          <ignoredUnusedDeclaredDependencies>*</ignoredUnusedDeclaredDependencies>
+        </configuration>
+      </plugin>
+
+      <!-- skip for shaded jar-->
+      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>clirr-maven-plugin</artifactId>
         <configuration>

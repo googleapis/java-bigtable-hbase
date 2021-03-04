@@ -222,8 +222,8 @@ limitations under the License.
           </ignoredDependencies>
         </configuration>
       </plugin>
+      <!-- skip for shaded jar-->
       <plugin>
-        <!-- skip for shaded jar-->
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>clirr-maven-plugin</artifactId>
         <configuration>

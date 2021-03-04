@@ -203,7 +203,6 @@ limitations under the License.
         </executions>
       </plugin>
 
-
       <!-- skip for shaded jar-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
