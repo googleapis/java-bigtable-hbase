@@ -246,6 +246,22 @@ limitations under the License.
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>enforce</id>
+            <configuration>
+              <rules>
+                <requireUpperBoundDeps combine.self="override">
+                  <excludes>
+                    <!-- TODO: figure out what to about these mismatches -->
+                    <exclude>org.codehaus.mojo:animal-sniffer-annotation</exclude>
+                    <excude>com.google.errorprone:error_prone_annotations</excude>
+                  </excludes>
+                </requireUpperBoundDeps>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
         <configuration>
           <!--  todo(kolea2): align dependencies -->
           <skip>true</skip>
