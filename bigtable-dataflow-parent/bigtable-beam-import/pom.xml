@@ -251,7 +251,7 @@ limitations under the License.
             <id>enforce</id>
             <configuration>
               <rules>
-                <requireUpperBoundDeps combine.self="override">
+                <requireUpperBoundDeps>
                   <excludes>
                     <!-- TODO: figure out what to about these mismatches -->
                     <exclude>org.codehaus.mojo:animal-sniffer-annotation</exclude>
