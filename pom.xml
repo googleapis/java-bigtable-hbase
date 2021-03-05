@@ -331,6 +331,16 @@ limitations under the License.
                     <dependency>com.google.protobuf:*</dependency>
                   </dependencies>
                 </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>com.google.http-client:*</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>org.slf4j:*</dependency>
+                  </dependencies>
+                </requireSameVersions>
               </rules>
             </configuration>
           </execution>
