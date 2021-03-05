@@ -29,6 +29,8 @@ import com.google.api.gax.batching.Batcher;
 import com.google.api.gax.batching.BatcherImpl;
 import com.google.api.gax.batching.BatchingDescriptor;
 import com.google.api.gax.batching.BatchingSettings;
+import com.google.api.gax.batching.FlowControlSettings;
+import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
@@ -111,13 +113,18 @@ public class TestBulkMutationGCJClient {
 
   @Test
   public void testIsClosed() throws IOException {
+    BatchingSettings batchingSettings = mock(BatchingSettings.class);
+    FlowControlSettings flowControlSettings = mock(FlowControlSettings.class);
+    when(flowControlSettings.getLimitExceededBehavior()).thenReturn(LimitExceededBehavior.Ignore);
+    when(batchingSettings.getFlowControlSettings()).thenReturn(flowControlSettings);
+
     @SuppressWarnings("unchecked")
     Batcher<RowMutationEntry, Void> actualBatcher =
         new BatcherImpl(
             mock(BatchingDescriptor.class),
             mock(UnaryCallable.class),
             new Object(),
-            mock(BatchingSettings.class),
+            batchingSettings,
             mock(ScheduledExecutorService.class));
     IBulkMutation underTest = new BulkMutationGCJClient(actualBatcher);
     underTest.close();
