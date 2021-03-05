@@ -32,9 +32,16 @@ limitations under the License.
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>io.grpc</groupId>
-        <artifactId>grpc-bom</artifactId>
-        <version>${beam-grpc.version}</version>
+        <groupId>org.apache.beam</groupId>
+        <artifactId>beam-sdks-java-bom</artifactId>
+        <version>${beam.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.beam</groupId>
+        <artifactId>beam-sdks-java-google-cloud-platform-bom</artifactId>
+        <version>${beam.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -85,24 +92,18 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-core</artifactId>
-      <version>${beam.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.beam</groupId>
-      <artifactId>
-        beam-sdks-java-extensions-google-cloud-platform-core
-      </artifactId>
-      <version>${beam.version}</version>
+      <artifactId>beam-sdks-java-extensions-google-cloud-platform-core</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-io-hadoop-common</artifactId>
-      <version>${beam.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-io-hadoop-format</artifactId>
-      <version>${beam.version}</version>
     </dependency>
 
     <!-- For HBase 2.x, this should be hbase-mapreduce
@@ -117,21 +118,20 @@ limitations under the License.
     <dependency>
       <groupId>com.google.auto.value</groupId>
       <artifactId>auto-value</artifactId>
-      <version>${beam-auto-value.version}</version>
+      <version>1.7.4</version>
       <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>${gcs-guava.version}</version>
+      <version>30.1-jre</version>
     </dependency>
 
     <!-- TODO: check if commons-codec was transitively updated to 1.13 and okhttp was updated to 2.7.5 when upgrading-->
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
-      <version>${beam.version}</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.cloud.bigtable</groupId>
@@ -167,7 +167,7 @@ limitations under the License.
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>${slf4j.version}</version>
+      <version>${beam-slf4j.version}</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/com.google.cloud.bigdataoss/gcs-connector -->
     <dependency>
@@ -250,22 +250,11 @@ limitations under the License.
           <execution>
             <id>enforce</id>
             <configuration>
-              <rules>
-                <requireUpperBoundDeps>
-                  <excludes>
-                    <!-- TODO: figure out what to about these mismatches -->
-                    <exclude>org.codehaus.mojo:animal-sniffer-annotation</exclude>
-                    <excude>com.google.errorprone:error_prone_annotations</excude>
-                  </excludes>
-                </requireUpperBoundDeps>
-              </rules>
+              <!-- TODO: beam deps fail UpperBound enforcement -->
+              <skip>true</skip>
             </configuration>
           </execution>
         </executions>
-        <configuration>
-          <!--  todo(kolea2): align dependencies -->
-          <skip>true</skip>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

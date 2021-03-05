@@ -27,6 +27,16 @@ limitations under the License.
     and writers in Google Cloud Dataflow.
   </description>
 
+  <dependencyManagement>
+    <dependencies>
+      <!-- fix conflict between beam-sdks-java-core & beam-model-pipeline -->
+      <dependency>
+        <groupId>com.google.errorprone</groupId>
+        <artifactId>error_prone_annotations</artifactId>
+        <version>2.3.3</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
     <!-- to use HBaseCoderProviderRegistrar-->
     <dependency>
@@ -34,12 +44,6 @@ limitations under the License.
       <artifactId>beam-sdks-java-io-hbase</artifactId>
       <version>${beam.version}</version>
       <scope>runtime</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
@@ -85,7 +89,7 @@ limitations under the License.
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>${slf4j.version}</version>
+      <version>${beam-slf4j.version}</version>
     </dependency>
 
     <!--  TODO: remove this dependency when upgraded through transitive dependency (beam-sdks-java-core)
@@ -264,6 +268,8 @@ limitations under the License.
                 <dependency>org.apache.commons:commons-compress</dependency>
                 <!-- TODO: align conscrypt version of bigtable & beam -->
                 <ignoredDependency>org.conscrypt:conscrypt-openjdk-uber</ignoredDependency>
+                <!-- beam's deoendency tree has an older version closer higher in the tree -->
+                <dependency>com.google.errorprone:error_prone_annotations</dependency>
               </ignoredDependencies>
             </configuration>
           </execution>
