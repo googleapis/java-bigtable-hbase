@@ -254,7 +254,6 @@ limitations under the License.
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>3.0.0-M3</version>
         <executions>
           <execution>
             <id>enforce-version-consistency</id>
@@ -289,8 +288,8 @@ limitations under the License.
                 </requireSameVersions>
                 <requireSameVersions>
                   <dependencies>
-                    <dependency> com.google.api:gax</dependency>
-                    <dependency> com.google.api:gax-grpc</dependency>
+                    <dependency>com.google.api:gax</dependency>
+                    <dependency>com.google.api:gax-grpc</dependency>
                   </dependencies>
                 </requireSameVersions>
                 <requireSameVersions>
