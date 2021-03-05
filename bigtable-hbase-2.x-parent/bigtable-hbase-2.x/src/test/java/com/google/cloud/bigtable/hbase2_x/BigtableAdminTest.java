@@ -21,23 +21,19 @@ import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertNull;
 import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import java.io.IOException;
 import org.apache.hadoop.hbase.ClusterStatus;
-import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class BigtableAdminTest {
 
   @Test
   public void testGetClusterStatus() throws IOException {
     // test to verify compatibility between 1x and 2x
-    AbstractBigtableConnection connectionMock = mock(AbstractBigtableConnection.class);
-    BigtableApi bigtableApi = mock(BigtableApi.class);
-    Mockito.doReturn(bigtableApi).when(connectionMock).getBigtableApi();
-    BigtableAdmin bigtableAdmin = new BigtableAdmin(connectionMock);
+    BigtableAdmin bigtableAdmin = mock(BigtableAdmin.class);
+    when(bigtableAdmin.getClusterStatus()).thenCallRealMethod();
 
     ClusterStatus status = bigtableAdmin.getClusterStatus();
     assertNotNull(status);
