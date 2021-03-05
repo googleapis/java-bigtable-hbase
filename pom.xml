@@ -133,59 +133,6 @@ limitations under the License.
     </testResources>
     <pluginManagement>
       <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-enforcer-plugin</artifactId>
-          <version>3.0.0-M3</version>
-          <executions>
-            <execution>
-              <id>enforce-version-consistency</id>
-              <goals>
-                <goal>enforce</goal>
-              </goals>
-              <configuration>
-                <rules combine.self="append">
-                  <requireSameVersions>
-                    <dependencies>
-                      <dependency>io.grpc:*</dependency>
-                    </dependencies>
-                  </requireSameVersions>
-                  <requireSameVersions>
-                    <dependencies>
-                      <dependency>io.opencensus:*</dependency>
-                    </dependencies>
-                  </requireSameVersions>
-                  <requireSameVersions>
-                    <dependencies>
-                      <dependency>com.google.cloud:google-cloud-bigtable</dependency>
-                      <dependency>com.google.api.grpc:proto-google-cloud-bigtable-v2</dependency>
-                      <dependency>com.google.api.grpc:grpc-google-cloud-bigtable-v2</dependency>
-                      <dependency>com.google.api.grpc:proto-google-cloud-bigtable-admin-v2</dependency>
-                      <dependency>com.google.api.grpc:grpc-google-cloud-bigtable-admin-v2</dependency>
-                    </dependencies>
-                  </requireSameVersions>
-                  <requireSameVersions>
-                    <dependencies>
-                      <dependency>com.google.auth:*</dependency>
-                    </dependencies>
-                  </requireSameVersions>
-                  <requireSameVersions>
-                    <dependencies>
-                      <dependency> com.google.api:gax</dependency>
-                      <dependency> com.google.api:gax-grpc</dependency>
-                    </dependencies>
-                  </requireSameVersions>
-                  <requireSameVersions>
-                    <dependencies>
-                      <dependency>org.apache.beam:beam-sdks-*</dependency>
-                      <dependency>org.apache.beam:beam-model-*</dependency>
-                    </dependencies>
-                  </requireSameVersions>
-                </rules>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
         <!-- Augment google-cloud-shared-config config to exclude non-compile deps -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -303,6 +250,92 @@ limitations under the License.
         <configuration>
           <style>google</style>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.0.0-M3</version>
+        <executions>
+          <execution>
+            <id>enforce-version-consistency</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>io.grpc:*</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>io.opencensus:*</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>com.google.cloud:google-cloud-bigtable</dependency>
+                    <dependency>com.google.api.grpc:proto-google-cloud-bigtable-v2</dependency>
+                    <dependency>com.google.api.grpc:grpc-google-cloud-bigtable-v2</dependency>
+                    <dependency>com.google.api.grpc:proto-google-cloud-bigtable-admin-v2</dependency>
+                    <dependency>com.google.api.grpc:grpc-google-cloud-bigtable-admin-v2</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>com.google.auth:*</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency> com.google.api:gax</dependency>
+                    <dependency> com.google.api:gax-grpc</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>org.apache.beam:beam-sdks-*</dependency>
+                    <dependency>org.apache.beam:beam-model-*</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>io.netty:netty-all</dependency>
+                    <dependency>io.netty:netty-codec*</dependency>
+                    <dependency>io.netty:netty-handler*</dependency>
+                    <dependency>io.netty:netty-common</dependency>
+                    <dependency>io.netty:netty-resolver</dependency>
+                    <dependency>io.netty:netty-buffer</dependency>
+                    <dependency>io.netty:netty-transport</dependency>
+                    <!-- Everything but netty-tcnative-boringssl-static -->
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>com.fasterxml.jackson.core:*</dependency>
+                    <dependency>com.fasterxml.jackson:*</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>com.google.auto.value</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>org.hamcrest:*</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>com.google.protobuf:*</dependency>
+                  </dependencies>
+                </requireSameVersions>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
