@@ -69,14 +69,6 @@ limitations under the License.
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-eclipse-plugin</artifactId>
-        <configuration>
-          <useProjectReferences>false</useProjectReferences>
-        </configuration>
-      </plugin>
-
-      <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <skip>true</skip>

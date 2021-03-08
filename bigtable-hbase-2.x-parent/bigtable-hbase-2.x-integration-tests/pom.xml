@@ -460,13 +460,6 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-eclipse-plugin</artifactId>
-        <configuration>
-          <useProjectReferences>false</useProjectReferences>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <executions>
           <execution>
