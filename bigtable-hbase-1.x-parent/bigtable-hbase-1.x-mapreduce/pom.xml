@@ -135,7 +135,6 @@ limitations under the License.
               <goal>shade</goal>
             </goals>
             <configuration>
-              <shadeTestJar>true</shadeTestJar>
               <shadedArtifactAttached>true</shadedArtifactAttached>
             </configuration>
           </execution>
