@@ -78,18 +78,7 @@ limitations under the License.
       <version>${dropwizard.metrics.version}</version>
     </dependency>
 
-    <!-- this is used only for test, but we need this as compile scope for repackaging-->
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-common</artifactId>
-      <version>${hbase1-hadoop.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-common</artifactId>
-      <version>${hbase1.version}</version>
-    </dependency>
-
+    <!-- Test deps -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -100,13 +89,18 @@ limitations under the License.
 
   <build>
     <plugins>
+      <!-- override google-cloud-shared-config due to hbase issue -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <configuration>
-          <!--  skipping due to hadoop upper deps bounds issues-->
-          <skip>true</skip>
-        </configuration>
+        <executions>
+          <execution>
+            <id>enforce</id>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -155,20 +149,19 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
+
+      <!-- skip for shaded jar-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
         <configuration>
-          <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-          <usedDependencies>
-            <usedDependency>com.google.code.findbugs:jsr305</usedDependency>
-            <usedDependency>commons-logging:commons-logging</usedDependency>
-            <usedDependency>io.dropwizard.metrics:metrics-core</usedDependency>
-          </usedDependencies>
+          <ignoredDependencies>
+            <dependency>*</dependency>
+          </ignoredDependencies>
         </configuration>
       </plugin>
+      <!-- skip for shaded jar-->
       <plugin>
-        <!-- skip for shaded jar-->
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>clirr-maven-plugin</artifactId>
         <configuration>

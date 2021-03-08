@@ -313,37 +313,19 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
+
+      <!-- skip for shaded jar-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
         <configuration>
-          <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-          <usedDependencies>
-            <usedDependency>
-              com.google.cloud.bigtable:bigtable-hbase-2.x
-            </usedDependency>
-            <usedDependency>
-              org.apache.hbase:hbase-shaded-client
-            </usedDependency>
-            <usedDependency>com.google.code.findbugs:jsr305</usedDependency>
-            <usedDependency>commons-logging:commons-logging</usedDependency>
-            <usedDependency>io.dropwizard.metrics:metrics-core</usedDependency>
-            <usedDependency>io.opencensus:opencensus-impl</usedDependency>
-            <usedDependency>
-              io.opencensus:opencensus-contrib-zpages
-            </usedDependency>
-            <usedDependency>
-              io.opencensus:opencensus-exporter-trace-stackdriver
-            </usedDependency>
-            <usedDependency>
-              io.opencensus:opencensus-exporter-stats-stackdriver
-            </usedDependency>
-            <usedDependency>io.grpc:grpc-census</usedDependency>
-          </usedDependencies>
+          <ignoredDependencies>
+            <dependency>*</dependency>
+          </ignoredDependencies>
         </configuration>
       </plugin>
+      <!-- skip for shaded jar-->
       <plugin>
-        <!-- skip for shaded jar-->
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>clirr-maven-plugin</artifactId>
         <configuration>

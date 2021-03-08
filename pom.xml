@@ -130,6 +130,15 @@ limitations under the License.
     </testResources>
     <pluginManagement>
       <plugins>
+        <!-- Augment google-cloud-shared-config config to exclude non-compile deps -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <configuration>
+            <ignoreNonCompile>true</ignoreNonCompile>
+          </configuration>
+        </plugin>
+
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-enforcer-plugin</artifactId>
