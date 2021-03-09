@@ -72,11 +72,11 @@ limitations under the License.
     </dependency>
     <dependency>
       <groupId>io.opencensus</groupId>
-      <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
+      <artifactId>opencensus-exporter-stats-stackdriver</artifactId>
     </dependency>
     <dependency>
       <groupId>io.opencensus</groupId>
-      <artifactId>opencensus-exporter-stats-stackdriver</artifactId>
+      <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
     </dependency>
     <!-- grpc-census needed alongside opencensus-exporter-stats-stackdriver for GRPC stats exports to work -->
     <dependency>
@@ -91,10 +91,6 @@ limitations under the License.
       <version>${hbase2.version}</version>
     </dependency>
 
-    <dependency>
-      <groupId>com.google.code.findbugs</groupId>
-      <artifactId>jsr305</artifactId>
-    </dependency>
     <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
@@ -162,24 +158,16 @@ limitations under the License.
                   <!-- exclude user visible deps -->
                   <exclude>io.dropwizard.metrics:metrics-core</exclude>
                   <exclude>commons-logging:commons-logging</exclude>
-                  <exclude>com.google.code.findbugs:jsr305</exclude>
                   <!-- exclude hbase-shaded-client & all of its dependencies -->
                   <exclude>org.apache.hbase:hbase-shaded-client</exclude>
                   <exclude>org.slf4j:slf4j-api</exclude>
-                  <exclude>org.slf4j:slf4j-log4j12</exclude>
-                  <exclude>org.slf4j:slf4j-api</exclude>
                   <exclude>log4j:log4j</exclude>
-                  <exclude>org.apache.htrace:htrace-core</exclude>
+                  <exclude>org.apache.htrace:htrace-core4</exclude>
+                  <exclude>org.apache.yetus:audience-annotations</exclude>
                   <exclude>
                     com.github.stephenc.findbugs:findbugs-annotations
                   </exclude>
                   <exclude>log4j:log4j</exclude>
-                  <exclude>junit:junit</exclude>
-                  <exclude>org.hamcrest:hamcrest-core</exclude>
-                  <exclude>javax.inject:javax.inject</exclude>
-                  <exclude>org.apache.htrace:htrace-core4</exclude>
-                  <exclude>org.apache.yetus:audience-annotations</exclude>
-                  <exclude>javax.annotation:javax.annotation-api</exclude>
                   <exclude>org.conscrypt:conscrypt-openjdk-uber</exclude>
                 </excludes>
               </artifactSet>
@@ -231,6 +219,11 @@ limitations under the License.
                     com.google.bigtable.repackaged.io.grpc
                   </shadedPattern>
                 </relocation>
+                <relocation>
+                  <pattern>io.perfmark</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.io.perfmark</shadedPattern>
+                </relocation>
+
 
                 <!-- Opencensus related shading -->
                 <relocation>
@@ -238,6 +231,10 @@ limitations under the License.
                   <shadedPattern>
                     com.google.bigtable.repackaged.io.opencensus
                   </shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>google.monitoring</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.google.monitoring</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>org.json</pattern>
@@ -307,6 +304,19 @@ limitations under the License.
                   <shadedPattern>
                     com.google.bigtable.repackaged.org.codehaus
                   </shadedPattern>
+                </relocation>
+
+                <relocation>
+                  <pattern>org.checkerframework</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.checkerframework</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>android.annotation</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.android.annotation</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>javax.annotation</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.javax.annotation</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>
