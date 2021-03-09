@@ -78,7 +78,7 @@
     },
     {
       // pin to beam deps
-      "packagePatterns": ["^beam-grpc.version"],
+      "packagePatterns": ["^beam-grpc.version", "beam-import-netty.version", "beam-import-google-http-client"],
       "enabled": false
     },
     {
