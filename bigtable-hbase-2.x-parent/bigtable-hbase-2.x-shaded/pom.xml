@@ -297,12 +297,6 @@ limitations under the License.
                   </shadedPattern>
                 </relocation>
                 <relocation>
-                  <pattern>org.conscrypt</pattern>
-                  <shadedPattern>
-                    com.google.bigtable.repackaged.org.conscrypt
-                  </shadedPattern>
-                </relocation>
-                <relocation>
                   <pattern>org.threeten</pattern>
                   <shadedPattern>
                     com.google.bigtable.repackaged.org.threeten
