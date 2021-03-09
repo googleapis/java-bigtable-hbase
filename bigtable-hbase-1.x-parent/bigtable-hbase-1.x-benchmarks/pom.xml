@@ -9,19 +9,21 @@
 
   <artifactId>bigtable-hbase-1.x-benchmarks</artifactId>
 
-  <!--  TODO: remove this dependency when upgraded transitively to 1.34.2 -->
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>com.google.http-client</groupId>
-        <artifactId>google-http-client-jackson2</artifactId>
-        <version>1.39.0</version>
+        <groupId>com.google.cloud</groupId>
+        <artifactId>google-cloud-bigtable-bom</artifactId>
+        <version>${bigtable.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
-      <!--  todo(kolea2): temporary workaround until api-common and google-cloud-core are updated to 1.7.1-->
       <dependency>
-        <groupId>com.google.auto.value</groupId>
-        <artifactId>auto-value-annotations</artifactId>
-        <version>1.7.4</version>
+        <groupId>com.google.cloud</groupId>
+        <artifactId>google-cloud-bigtable-deps-bom</artifactId>
+        <version>${bigtable.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -32,6 +34,8 @@
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-1.x</artifactId>
       <version>${project.parent.version}</version>
+      <!-- This dynamically injected using reflection -->
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
@@ -69,7 +73,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.2.4</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -109,29 +112,8 @@
       <plugin>
         <groupId>org.sonatype.plugins</groupId>
         <artifactId>nexus-staging-maven-plugin</artifactId>
-        <version>1.6.8</version>
         <configuration>
           <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <usedDependencies>
-            <usedDependency>com.google.cloud.bigtable:bigtable-hbase-1.x
-            </usedDependency>
-            <usedDependency>
-              org.openjdk.jmh:jmh-generator-annprocess
-            </usedDependency>
-          </usedDependencies>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <configuration>
-          <skip>true</skip>
         </configuration>
       </plugin>
     </plugins>
