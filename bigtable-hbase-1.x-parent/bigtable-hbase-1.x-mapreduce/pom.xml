@@ -80,7 +80,7 @@ limitations under the License.
       </plugin>
 
       <plugin>
-        <!-- skip UpperBound enfrocement for hadoop jars -->
+        <!-- skip UpperBound enforcement for hadoop jars -->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
         <executions>

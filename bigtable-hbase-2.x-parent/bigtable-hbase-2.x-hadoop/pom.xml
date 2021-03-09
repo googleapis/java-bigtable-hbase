@@ -91,8 +91,8 @@ limitations under the License.
     <plugins>
       <plugin>
         <!-- disable google-cloud-shared-config enforcement checks because
-        hbase-client's dependency subtree doesn't follow the same rules and we are
-        powerless to fix it here -->
+        hbase-client's dependency subtree doesn't follow the same rules and is
+        unable to be fixed here -->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
         <executions>
