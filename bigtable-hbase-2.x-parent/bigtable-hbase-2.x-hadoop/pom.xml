@@ -30,6 +30,11 @@ limitations under the License.
     bigtable-hbase-2.x.
   </description>
 
+  <properties>
+    <!-- define a property that can be ignored by renovate -->
+    <hbase2-hadoop-slf4j.version>1.6.1</hbase2-hadoop-slf4j.version>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
@@ -92,7 +97,7 @@ limitations under the License.
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>1.6.1</version>
+      <version>${hbase2-hadoop-slf4j.version}</version>
     </dependency>
 
     <!-- Test deps -->
