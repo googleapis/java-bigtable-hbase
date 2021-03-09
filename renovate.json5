@@ -78,7 +78,7 @@
     },
     {
       // pin to beam deps
-      "packagePatterns": ["^beam-grpc.version"],
+      "packagePatterns": ["^beam-grpc.version", "beam-import-netty.version", "beam-import-google-http-client"],
       "enabled": false
     },
     {
@@ -88,12 +88,7 @@
     },
     {
       // pin to hbase deps
-      "packagePatterns": ["^hbase1-hadoop.version"],
-      "enabled": false
-    },
-    {
-      // pin to hbase deps
-      "packagePatterns": ["^hbase2-hadoop.version"],
+      "packagePatterns": ["^hbase1-hadoop-slf4j.version", "^hbase2-hadoop-slf4j.version"],
       "enabled": false
     },
     {
