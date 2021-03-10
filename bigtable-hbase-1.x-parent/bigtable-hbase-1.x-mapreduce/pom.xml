@@ -140,6 +140,34 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
+
+      <plugin>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
+        <executions>
+          <execution>
+            <id>verify-mirror-deps</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-mirror-deps</goal>
+            </goals>
+            <configuration>
+              <targetDependencies>
+                <targetDependency>org.apache.hbase:hbase-server:${hbase1.version}</targetDependency>
+              </targetDependencies>
+              <ignoredDependencies>
+                <!-- Unfortunately we can't use hadoop's version of slf4j
+                because dropwizard metrics slf4j logger requires a higher version
+                we can't shade it either -->
+                <dependency>org.slf4j:slf4j-api</dependency>
+                <!-- TODO: figure out what to do about metrics mismatch -->
+                <dependency>io.dropwizard.metrics:metrics-core</dependency>
+              </ignoredDependencies>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 </project>

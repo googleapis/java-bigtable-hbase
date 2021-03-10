@@ -333,6 +333,18 @@ limitations under the License.
                     <dependency>com.google.http-client:*</dependency>
                   </dependencies>
                 </requireSameVersions>
+              </rules>
+            </configuration>
+          </execution>
+          <!-- extract slf4 consistency check to own execution so it can be
+          disabled for hbase-client 2.x -->
+          <execution>
+            <id>enforce-version-consistency-slf4j</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
                 <requireSameVersions>
                   <dependencies>
                     <dependency>org.slf4j:*</dependency>
