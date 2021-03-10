@@ -193,6 +193,7 @@ public class EndToEndIT {
     syncTableOpts.setGcpTempLocation(dataflowStagingLocation);
     syncTableOpts.setNumWorkers(1);
     syncTableOpts.setProject(projectId);
+    syncTableOpts.setRegion(region);
 
     SyncTableOptions syncOpts = syncTableOpts.as(SyncTableOptions.class);
     // Setup Bigtable params
