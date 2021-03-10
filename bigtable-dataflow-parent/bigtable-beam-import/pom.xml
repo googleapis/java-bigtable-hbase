@@ -28,7 +28,7 @@ limitations under the License.
     <mainClass>com.google.cloud.bigtable.beam.Main</mainClass>
     <beam-import-netty.version>4.1.48.Final</beam-import-netty.version>
     <beam-import-google-http-client.version>1.34.1</beam-import-google-http-client.version>
-    <!-- Needed to enable integration tests before we figure -->
+    <!-- Needed to enable integration tests before we figure out -->
     <!-- possible misconfiguration of Failsafe plugin -->
     <skipITs>false</skipITs>
   </properties>
