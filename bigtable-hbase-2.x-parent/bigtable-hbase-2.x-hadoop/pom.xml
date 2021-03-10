@@ -32,7 +32,7 @@ limitations under the License.
 
   <properties>
     <!-- define a property that can be ignored by renovate -->
-    <hbase2-hadoop-slf4j.version>1.6.1</hbase2-hadoop-slf4j.version>
+    <hbase2-hadoop-slf4j.version>1.7.25</hbase2-hadoop-slf4j.version>
   </properties>
 
   <dependencies>
@@ -129,6 +129,13 @@ limitations under the License.
               <skip>true</skip>
             </configuration>
           </execution>
+          <!-- hbase-client doesnt align slf4j-api & slf4j-log4j -->
+          <execution>
+            <id>enforce-version-consistency-slf4j</id>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
       <plugin>
@@ -184,6 +191,58 @@ limitations under the License.
                   <shadedPattern>com.google.protobuf</shadedPattern>
                 </relocation>
               </relocations>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
+
+        <executions>
+          <execution>
+            <id>verify-shaded-jar-entries</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-shaded-jar-entries</goal>
+            </goals>
+            <configuration>
+              <allowedJarClassEntries>
+                <classEntry>com/google/bigtable</classEntry>
+                <classEntry>com/google/cloud/bigtable</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableAdmin</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableConnection</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/BigtableAsyncConnection</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/BigtableAsyncRegistry</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/CommonConnection</classEntry>
+              </allowedJarClassEntries>
+            </configuration>
+          </execution>
+          <execution>
+            <id>verify-shaded-exclusions</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-shaded-exclusions</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>verify-mirror-deps</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-mirror-deps</goal>
+            </goals>
+            <configuration>
+              <targetDependencies>
+                <targetDependency>org.apache.hbase:hbase-client:${hbase2.version}</targetDependency>
+              </targetDependencies>
+              <ignoredDependencies>
+                <!-- There are 3 users of this dep: us, httpclient & hbase2.
+                httpclient requires a higher version than hbase, so for now,
+                we are using that version -->
+                <ignoredDependency>commons-logging:commons-logging</ignoredDependency>
+              </ignoredDependencies>
             </configuration>
           </execution>
         </executions>

@@ -101,6 +101,8 @@ limitations under the License.
       <artifactId>metrics-core</artifactId>
       <version>${dropwizard.metrics.version}</version>
     </dependency>
+
+    <!-- See notes in bigtable-client-core/bigtable-hbase/pom.xml#verify-conscrypt-version -->
     <dependency>
       <groupId>org.conscrypt</groupId>
       <artifactId>conscrypt-openjdk-uber</artifactId>
@@ -168,6 +170,7 @@ limitations under the License.
                     com.github.stephenc.findbugs:findbugs-annotations
                   </exclude>
                   <exclude>log4j:log4j</exclude>
+                  <!-- See notes in bigtable-client-core/bigtable-hbase/pom.xml#verify-conscrypt-version -->
                   <exclude>org.conscrypt:conscrypt-openjdk-uber</exclude>
                 </excludes>
               </artifactSet>
@@ -319,6 +322,51 @@ limitations under the License.
                   <shadedPattern>com.google.bigtable.repackaged.javax.annotation</shadedPattern>
                 </relocation>
               </relocations>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
+
+        <executions>
+          <execution>
+            <id>verify-shaded-jar-entries</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-shaded-jar-entries</goal>
+            </goals>
+            <configuration>
+              <allowedJarClassEntries>
+                <classEntry>com/google/bigtable</classEntry>
+                <classEntry>com/google/cloud/bigtable</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableAdmin</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableConnection</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/BigtableAsyncConnection</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/BigtableAsyncRegistry</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/CommonConnection</classEntry>
+              </allowedJarClassEntries>
+            </configuration>
+          </execution>
+          <execution>
+            <id>verify-shaded-exclusions</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-shaded-exclusions</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>verify-mirror-deps</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-mirror-deps</goal>
+            </goals>
+            <configuration>
+              <targetDependencies>
+                <targetDependency>org.apache.hbase:hbase-shaded-client</targetDependency>
+              </targetDependencies>
             </configuration>
           </execution>
         </executions>

@@ -387,6 +387,35 @@ limitations under the License.
         </configuration>
       </plugin>
 
+      <plugin>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
+        <executions>
+          <execution>
+            <id>verify-mirror-deps</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-mirror-deps</goal>
+            </goals>
+            <configuration>
+              <targetDependencies>
+                <targetDependency>org.apache.beam:beam-sdks-java-core:${beam.version}</targetDependency>
+              </targetDependencies>
+              <ignoredDependencies>
+                <!-- Version of commons-compress shipped with beam had a security issue, we are forcing a newer version -->
+                <ignoredDependency>org.apache.commons:commons-compress</ignoredDependency>
+                <!-- TODO: figure out how to resolve this -->
+                <ignoredDependency>com.google.errorprone:error_prone_annotations</ignoredDependency>
+                <!-- TODO: align conscrypt with beam upgade -->
+                <ignoredDependency>org.conscrypt:conscrypt-openjdk-uber</ignoredDependency>
+              </ignoredDependencies>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+
     </plugins>
   </build>
 
