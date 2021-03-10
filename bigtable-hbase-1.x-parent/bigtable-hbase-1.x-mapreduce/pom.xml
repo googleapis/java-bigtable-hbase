@@ -34,10 +34,6 @@ limitations under the License.
     in order to work with Bigtable.
   </description>
 
-  <properties>
-    <hadoop.scope>provided</hadoop.scope>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>

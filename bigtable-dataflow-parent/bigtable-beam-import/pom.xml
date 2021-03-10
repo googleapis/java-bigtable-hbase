@@ -295,7 +295,6 @@ limitations under the License.
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <version>3.0.0</version>
         <executions>
           <execution>
             <goals>
@@ -383,9 +382,7 @@ limitations under the License.
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
         <configuration>
-          <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
           <usedDependencies>
-            <usedDependency>com.google.auto.value:auto-value</usedDependency>
             <usedDependency>commons-codec:commons-codec</usedDependency>
             <usedDependency>com.squareup.okhttp:okhttp</usedDependency>
             <usedDependency>org.apache.beam:beam-sdks-java-io-hadoop-common
