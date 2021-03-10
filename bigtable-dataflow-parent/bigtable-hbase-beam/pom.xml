@@ -28,11 +28,12 @@ limitations under the License.
   </description>
 
   <dependencies>
-    <!-- to use HBaseCoderProviderRegistrar-->
+    <!-- beam-sdks-java-io-hbase is used for HBaseCoderProviderRegistrar-->
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-io-hbase</artifactId>
       <version>${beam.version}</version>
+      <scope>runtime</scope>
       <exclusions>
         <exclusion>
           <groupId>org.slf4j</groupId>
@@ -233,12 +234,8 @@ limitations under the License.
         <artifactId>maven-dependency-plugin</artifactId>
         <configuration>
           <!-- commons-compress is not used directly, but upgrading due to transitive vulnerabilities in older versions-->
-          <!-- beam-sdks-java-io-hbase is to use HBaseCoderProviderRegistrar-->
           <usedDependencies>
             <usedDependency>org.apache.commons:commons-compress</usedDependency>
-            <usedDependency>
-              org.apache.beam:beam-sdks-java-io-hbase
-            </usedDependency>
           </usedDependencies>
         </configuration>
       </plugin>

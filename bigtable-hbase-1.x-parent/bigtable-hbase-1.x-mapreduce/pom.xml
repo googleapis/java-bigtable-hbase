@@ -132,6 +132,29 @@ limitations under the License.
             </goals>
             <configuration>
               <shadedArtifactAttached>true</shadedArtifactAttached>
+              <artifactSet>
+                <excludes>
+                  <exclude>tomcat:*</exclude>
+                  <exclude>javax.servlet.jsp:*</exclude>
+                  <exclude>javax.servlet:*</exclude>
+                </excludes>
+              </artifactSet>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                    <exclude>META-INF/**/pom.properties</exclude>
+                    <exclude>META-INF/**/pom.xml</exclude>
+                    <exclude>META-INF/NOTICE.txt</exclude>
+                    <exclude>META-INF/LICENSE.txt</exclude>
+                    <exclude>META-INF/NOTICE</exclude>
+                    <exclude>META-INF/DEPENDENCIES</exclude>
+                    <exclude>META-INF/LICENSE</exclude>
+                    <exclude>META-INF/jersey-module-version</exclude>
+                  </excludes>
+                </filter>
+              </filters>
             </configuration>
           </execution>
         </executions>
