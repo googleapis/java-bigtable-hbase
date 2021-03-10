@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.beam.sequencefiles;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
+import com.google.common.base.Strings;
 import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineDebugOptions;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
@@ -45,6 +46,21 @@ public class Utils {
       return opts;
     }
     DataflowPipelineOptions dataflowOpts = opts.as(DataflowPipelineOptions.class);
+
+    // Region is a newly added requirement in newer versions of dataflow runner.
+    // Make the pipeline backwards compatible by inferring the region from the zone.
+    // This is done by chopping off the last dash
+    if (Strings.isNullOrEmpty(dataflowOpts.getRegion())) {
+      String zone = dataflowOpts.getWorkerZone();
+      if (Strings.isNullOrEmpty(zone)) {
+        zone = dataflowOpts.getZone();
+      }
+
+      if (!Strings.isNullOrEmpty(zone)) {
+        String region = zone.replaceAll("-[^-]+]$", "");
+        dataflowOpts.setRegion(region);
+      }
+    }
 
     // By default, dataflow allocates 250 GB local disks, thats not necessary. Lower it unless the
     // user requested an explicit size

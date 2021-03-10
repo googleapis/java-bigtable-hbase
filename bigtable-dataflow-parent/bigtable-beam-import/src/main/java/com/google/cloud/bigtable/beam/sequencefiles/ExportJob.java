@@ -60,7 +60,6 @@ import org.apache.hadoop.io.serializer.WritableSerialization;
  *    -Dexec.args="--runner=dataflow \
  *    --project=[PROJECT_ID] \
  *    --tempLocation=gs://[BUCKET]/[TEMP_PATH] \
- *    --zone=[ZONE] \
  *    --bigtableInstanceId=[INSTANCE] \
  *    --bigtableTableId=[TABLE] \
  *    --destination=gs://[BUCKET]/[EXPORT_PATH] \
