@@ -88,14 +88,6 @@ limitations under the License.
       <version>${slf4j.version}</version>
     </dependency>
 
-    <!--  TODO: remove this dependency when upgraded through transitive dependency (beam-sdks-java-core)
-     this is not used directly, but upgrading due to transitive vulnerabilities in older versions-->
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-compress</artifactId>
-      <version>1.20</version>
-    </dependency>
-
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
@@ -233,16 +225,6 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <!-- commons-compress is not used directly, but upgrading due to transitive vulnerabilities in older versions-->
-          <usedDependencies>
-            <usedDependency>org.apache.commons:commons-compress</usedDependency>
-          </usedDependencies>
-        </configuration>
-      </plugin>
 
       <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>
@@ -260,8 +242,6 @@ limitations under the License.
                 <targetDependency>org.apache.beam:beam-sdks-java-core:${beam.version}</targetDependency>
               </targetDependencies>
               <ignoredDependencies>
-                <!-- Version of commons-compress shipped with beam had a security issue, we are forcing a newer version -->
-                <dependency>org.apache.commons:commons-compress</dependency>
                 <!-- beam's dependency tree has an older version closer higher in the tree -->
                 <dependency>com.google.errorprone:error_prone_annotations</dependency>
                 <!-- TODO: align conscrypt with beam upgade -->

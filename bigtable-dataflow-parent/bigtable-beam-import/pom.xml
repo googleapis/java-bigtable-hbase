@@ -403,8 +403,6 @@ limitations under the License.
                 <targetDependency>org.apache.beam:beam-sdks-java-core:${beam.version}</targetDependency>
               </targetDependencies>
               <ignoredDependencies>
-                <!-- Version of commons-compress shipped with beam had a security issue, we are forcing a newer version -->
-                <ignoredDependency>org.apache.commons:commons-compress</ignoredDependency>
                 <!-- TODO: figure out how to resolve this -->
                 <ignoredDependency>com.google.errorprone:error_prone_annotations</ignoredDependency>
                 <!-- TODO: align conscrypt with beam upgade -->
