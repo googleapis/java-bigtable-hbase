@@ -81,6 +81,12 @@ limitations under the License.
       <artifactId>bigtable-hbase-1.x-shaded</artifactId>
       <version>${project.version}</version>
       <exclusions>
+        <!-- exclude hbase-shaded-client since we are using hbase-shaded-server -->
+        <exclusion>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-shaded-client</artifactId>
+        </exclusion>
+
         <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
         pom.xml files when invoking the build from a parent project. So we have to manually exclude
         the dependencies. Note that this works in conjunction with the manually promoted dependencies
@@ -94,8 +100,8 @@ limitations under the License.
           <artifactId>*</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>org.apache.hbase</groupId>
-          <artifactId>hbase-shaded-client</artifactId>
+          <groupId>io.grpc</groupId>
+          <artifactId>grpc-census</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -345,7 +351,17 @@ limitations under the License.
 		      <exclude>META-INF/*.SF</exclude>
 		      <exclude>META-INF/*.DSA</exclude>
 		      <exclude>META-INF/*.RSA</exclude>
-		  </excludes>
+          <exclude>META-INF/**/pom.properties</exclude>
+          <exclude>META-INF/**/pom.xml</exclude>
+          <exclude>META-INF/MANIFEST.MF</exclude>
+          <exclude>META-INF/LICENSE</exclude>
+          <exclude>META-INF/NOTICE.txt</exclude>
+          <exclude>META-INF/NOTICE</exclude>
+          <exclude>META-INF/DEPENDENCIES</exclude>
+          <exclude>META-INF/ASL2.0</exclude>
+          <exclude>META-INF/LICENSE.txt</exclude>
+          <exclude>**/*.proto</exclude>
+      </excludes>
 	      </filter>
 	  </filters>
         </configuration>
