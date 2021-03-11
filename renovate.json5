@@ -73,17 +73,7 @@
     },
     {
       // pin to beam deps
-      "packagePatterns": ["^beam-auto-value.version"],
-      "enabled": false
-    },
-    {
-      // pin to beam deps
-      "packagePatterns": ["^beam-grpc.version", "beam-import-netty.version", "beam-import-google-http-client"],
-      "enabled": false
-    },
-    {
-      // pin to beam deps
-      "packagePatterns": ["^beam-guava.version"],
+      "packagePatterns": ["^beam-slf4j.version"],
       "enabled": false
     },
     {
