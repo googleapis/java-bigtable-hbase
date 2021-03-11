@@ -52,12 +52,13 @@ public class Utils {
     // This is done by chopping off the last dash
     if (Strings.isNullOrEmpty(dataflowOpts.getRegion())) {
       String zone = dataflowOpts.getWorkerZone();
+
       if (Strings.isNullOrEmpty(zone)) {
         zone = dataflowOpts.getZone();
       }
 
       if (!Strings.isNullOrEmpty(zone)) {
-        String region = zone.replaceAll("-[^-]+]$", "");
+        String region = zone.replaceAll("-[^-]+$", "");
         dataflowOpts.setRegion(region);
       }
     }
