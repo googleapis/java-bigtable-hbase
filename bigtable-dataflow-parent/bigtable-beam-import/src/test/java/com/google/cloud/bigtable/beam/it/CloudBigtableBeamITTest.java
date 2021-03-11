@@ -102,13 +102,13 @@ public class CloudBigtableBeamITTest {
 
   private final Log LOG = LogFactory.getLog(getClass());
 
-  private static final String STAGING_LOCATION_KEY = "dataflowStagingLocation";
-  private static final String ZONE_ID_KEY = "dataflowZoneId";
+  private static final String STAGING_LOCATION_KEY = "google.dataflow.stagingLocation";
+  private static final String REGION_KEY = "region";
 
   private static final String projectId = System.getProperty(PROJECT_ID_KEY);
   private static final String instanceId = System.getProperty(INSTANCE_ID_KEY);
   private static final String stagingLocation = System.getProperty(STAGING_LOCATION_KEY);
-  private static final String zoneId = System.getProperty(ZONE_ID_KEY);
+  private static final String region = System.getProperty(REGION_KEY);
 
   private static final String workerMachineType =
       System.getProperty("workerMachineType", "n1" + "-standard-8");
@@ -129,7 +129,7 @@ public class CloudBigtableBeamITTest {
   @BeforeClass
   public static void setUpConfiguration() {
     Preconditions.checkArgument(stagingLocation != null, "Set -D" + STAGING_LOCATION_KEY + ".");
-    Preconditions.checkArgument(zoneId != null, "Set -D" + ZONE_ID_KEY + ".");
+    Preconditions.checkArgument(region != null, "Set -D" + REGION_KEY + ".");
     Preconditions.checkArgument(projectId != null, "Set -D" + PROJECT_ID_KEY + ".");
     Preconditions.checkArgument(instanceId != null, "Set -D" + INSTANCE_ID_KEY + ".");
   }
@@ -255,7 +255,7 @@ public class CloudBigtableBeamITTest {
   private DataflowPipelineOptions createOptions() {
     DataflowPipelineOptions options = PipelineOptionsFactory.as(DataflowPipelineOptions.class);
     options.setProject(projectId);
-    options.setZone(zoneId);
+    options.setRegion(region);
     options.setStagingLocation(stagingLocation + "/stage");
     options.setTempLocation(stagingLocation + "/temp");
     options.setRunner(DataflowRunner.class);

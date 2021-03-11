@@ -460,7 +460,7 @@ limitations under the License.
                 <configuration>
                   <forkCount>1</forkCount>
                   <includes>
-                    <include>**/*IT.java</include>
+                    <include>**/sequencefiles/*IT.java</include>
                   </includes>
                   <!-- Use Isolated Classloader so that dataflow can find all files
                        that must be staged.
@@ -474,6 +474,7 @@ limitations under the License.
       </build>
     </profile>
 
+    <!-- profile to run all integration tests -->
     <profile>
       <id>beamIntegrationTest</id>
       <build>
@@ -492,6 +493,7 @@ limitations under the License.
                   <forkCount>1</forkCount>
                   <includes>
                     <include>**/CloudBigtableBeamITTest.java</include>
+                    <include>**/*IT.java</include>
                   </includes>
                   <reportNameSuffix>bigtable-beam</reportNameSuffix>
                 </configuration>
@@ -504,6 +506,11 @@ limitations under the License.
 
     <profile>
       <id>hbasesnapshotsIntegrationTest</id>
+      <properties>
+        <!-- Needed to enable integration tests before we figure out -->
+        <!-- possible misconfiguration of Failsafe plugin -->
+        <skipITs>false</skipITs>
+      </properties>
       <build>
         <plugins>
           <plugin>
