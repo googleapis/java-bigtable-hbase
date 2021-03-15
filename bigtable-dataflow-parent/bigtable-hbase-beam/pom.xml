@@ -39,11 +39,18 @@ limitations under the License.
   </dependencyManagement>
 
   <dependencies>
-    <!-- beam-sdks-java-io-hbase is used for HBaseCoderProviderRegistrar-->
+    <!-- Beam Group: should come first since we will be running in the beam ecosystem -->
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-sdks-java-core</artifactId>
+      <version>${beam.version}</version>
+    </dependency>
+
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-io-hbase</artifactId>
       <version>${beam.version}</version>
+      <!-- HBaseCoderProviderRegistrar discovered during runtime -->
       <scope>runtime</scope>
       <!-- Let the beam pipeline choose the appropriate slf4j impl.
               Since this is the beam universe, we don't have be a drop in replacement
@@ -57,6 +64,7 @@ limitations under the License.
       </exclusions>
     </dependency>
 
+    <!-- Bigtable Group: ordering doesn't matter since everything is shaded -->
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-1.x-shaded</artifactId>
@@ -89,11 +97,7 @@ limitations under the License.
       </exclusions>
     </dependency>
 
-    <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>beam-sdks-java-core</artifactId>
-      <version>${beam.version}</version>
-    </dependency>
+    <!-- HBase Group: contains interfaces bigtable-hbase implement -->
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
@@ -110,25 +114,27 @@ limitations under the License.
       </exclusions>
     </dependency>
 
+    <!-- Misc Group -->
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
       <version>${jsr305.version}</version>
     </dependency>
+
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>${beam-slf4j.version}</version>
     </dependency>
 
-    <!--  TODO: remove this dependency when upgraded through transitive dependency (beam-sdks-java-core)
-     this is not used directly, but upgrading due to transitive vulnerabilities in older versions-->
+    <!-- CVE Group: force update transitive deps to exclude CVEs -->
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-compress</artifactId>
       <version>1.20</version>
     </dependency>
 
+    <!-- Test Group -->
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
@@ -160,6 +166,7 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
   </dependencies>
+
   <profiles>
     <profile>
       <id>bigtableDataflowIntegrationTest</id>
