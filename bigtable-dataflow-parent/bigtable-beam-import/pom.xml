@@ -49,6 +49,41 @@ limitations under the License.
   </dependencyManagement>
 
   <dependencies>
+    <!-- Beam Group: should come first since we will be running in the beam ecosystem -->
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-sdks-java-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>
+        beam-sdks-java-extensions-google-cloud-platform-core
+      </artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.cloud.bigtable</groupId>
+          <artifactId>bigtable-client-core</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.google.api.grpc</groupId>
+          <artifactId>grpc-google-cloud-bigtable-v2</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-sdks-java-io-hadoop-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-sdks-java-io-hadoop-format</artifactId>
+    </dependency>
+
+    <!-- Bigtable Group: ordering doesn't matter since everything is shaded -->
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-beam</artifactId>
@@ -60,6 +95,7 @@ limitations under the License.
         </exclusion>
       </exclusions>
     </dependency>
+
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-1.x-shaded</artifactId>
@@ -89,76 +125,49 @@ limitations under the License.
         </exclusion>
       </exclusions>
     </dependency>
-    <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>beam-sdks-java-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>
-        beam-sdks-java-extensions-google-cloud-platform-core
-      </artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>beam-sdks-java-io-hadoop-common</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>beam-sdks-java-io-hadoop-format</artifactId>
-    </dependency>
 
-    <!-- For HBase 2.x, this should be hbase-mapreduce
-    https://hbase.apache.org/2.1/book.html#export
-    -->
+
+    <!-- HBase Group: contains interfaces bigtable-hbase implement + serializers -->
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-server</artifactId>
       <version>${hbase1.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.google.cloud.bigdataoss</groupId>
+      <artifactId>gcs-connector</artifactId>
+      <version>hadoop2-2.1.4</version>
+      <classifier>shaded</classifier>
+    </dependency>
 
+
+    <!-- Misc Group -->
+    <dependency>
+      <groupId>com.google.apis</groupId>
+      <artifactId>google-api-services-storage</artifactId>
+      <version>v1-rev171-1.25.0</version>
+    </dependency>
     <dependency>
       <groupId>com.google.auto.value</groupId>
       <artifactId>auto-value</artifactId>
       <version>1.7.4</version>
       <scope>provided</scope>
     </dependency>
-
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+      <version>${jsr305.version}</version>
+    </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>30.1-jre</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.cloud.bigtable</groupId>
-          <artifactId>bigtable-client-core</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.google.api.grpc</groupId>
-          <artifactId>grpc-google-cloud-bigtable-v2</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <!-- TODO: remove these dependencies when upgraded through transitive dependency (beam-runners-google-cloud-dataflow-java)
-        these are not used directly, but upgrading due to transitive vulnerabilities in older versions-->
-    <dependency>
-      <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
-      <version>1.15</version>
-    </dependency>
-
-    <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
       <version>${commons-logging.version}</version>
     </dependency>
-
-
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
@@ -170,32 +179,43 @@ limitations under the License.
       <version>${beam-slf4j.version}</version>
       <scope>runtime</scope>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/com.google.cloud.bigdataoss/gcs-connector -->
-    <dependency>
-      <groupId>com.google.cloud.bigdataoss</groupId>
-      <artifactId>gcs-connector</artifactId>
-      <version>hadoop2-2.1.4</version>
-      <classifier>shaded</classifier>
-    </dependency>
 
-    <!-- https://mvnrepository.com/artifact/com.google.apis/google-api-services-storage -->
+
+    <!-- CVE Group: force update transitive deps to exclude CVEs -->
     <dependency>
-      <groupId>com.google.apis</groupId>
-      <artifactId>google-api-services-storage</artifactId>
-      <version>v1-rev171-1.25.0</version>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>1.15</version>
     </dependency>
 
 
-    <!-- Test -->
+    <!-- Test Group -->
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-runners-direct-java</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <version>${mockito.version}</version>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-bigtable-emulator</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-shaded-testing-util</artifactId>
+      <version>${hbase1.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.truth</groupId>
+      <artifactId>truth</artifactId>
+      <version>1.1.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -211,32 +231,10 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>${junit.version}</version>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>${mockito.version}</version>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-testing-util</artifactId>
-      <version>${hbase1.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.google.truth</groupId>
-      <artifactId>truth</artifactId>
-      <version>1.1.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.google.cloud</groupId>
-      <artifactId>google-cloud-bigtable-emulator</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.google.code.findbugs</groupId>
-      <artifactId>jsr305</artifactId>
-      <version>${jsr305.version}</version>
     </dependency>
   </dependencies>
 
