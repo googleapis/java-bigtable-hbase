@@ -23,6 +23,7 @@ java.common_templates(excludes=[
   'CONTRIBUTING.md',
   '.github/ISSUE_TEMPLATE/bug_report.md',
   '.github/snippet-bot.yml',
+  '.github/release-please.yml',
   '.github/workflows/*',
   '.kokoro/presubmit/integration.cfg',
   '.kokoro/nightly/integration.cfg',
@@ -32,5 +33,6 @@ java.common_templates(excludes=[
   '.kokoro/dependencies.sh',
   '.kokoro/build.sh',
   '.kokoro/build.bat',
-  'samples/*'
+  'samples/*',
+  'renovate.json'
 ])

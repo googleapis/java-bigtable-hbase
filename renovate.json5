@@ -1,0 +1,97 @@
+{
+  "extends": [
+    ":separateMajorReleases",
+    ":combinePatchMinorReleases",
+    ":ignoreUnstable",
+    ":prImmediately",
+    ":updateNotScheduled",
+    ":automergeDisabled",
+    ":ignoreModulesAndTests",
+    ":maintainLockFilesDisabled",
+    ":autodetectPinVersions"
+  ],
+  "ignorePaths": [
+    // ignore pom.xmls that are used as test subjects
+    "bigtable-test/bigtable-build-helper/src/it/**"
+  ],
+  "packageRules": [
+    {
+      "packagePatterns": [
+        "^com.google.guava:"
+      ],
+      "versionScheme": "docker"
+    },
+    {
+      "packagePatterns": [
+        "*"
+      ],
+      "semanticCommitType": "deps",
+      "semanticCommitScope": null
+    },
+    {
+      "packagePatterns": [
+        "^org.apache.maven",
+        "^org.jacoco:",
+        "^org.codehaus.mojo:",
+        "^org.sonatype.plugins:",
+        "^com.coveo:",
+        "^com.google.cloud:google-cloud-shared-config"
+      ],
+      "semanticCommitType": "build",
+      "semanticCommitScope": "deps"
+    },
+    {
+      "packagePatterns": [
+        "^com.google.cloud.bigtable:bigtable-client-parent",
+        "^com.google.cloud:libraries-bom",
+        "^com.google.cloud.samples:shared-configuration"
+      ],
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "deps"
+    },
+    {
+      "packagePatterns": [
+        "^junit:junit",
+        "^com.google.truth:truth",
+        "^org.mockito:mockito-core",
+        "^org.objenesis:objenesis"
+      ],
+      "semanticCommitType": "test",
+      "semanticCommitScope": "deps"
+    },
+    {
+      "packagePatterns": [
+        "^com.google.cloud:google-cloud-"
+      ],
+      "ignoreUnstable": false
+    },
+    {
+      "packagePatterns": [
+        "^com.fasterxml.jackson.core"
+      ],
+      "groupName": "jackson dependencies"
+    },
+    {
+      // pin to beam deps
+      "packagePatterns": ["^beam-slf4j.version"],
+      "enabled": false
+    },
+    {
+      // pin to hbase deps
+      "packagePatterns": ["^hbase1-hadoop-slf4j.version", "^hbase2-hadoop-slf4j.version"],
+      "enabled": false
+    },
+    {
+      // pin to bigtable version
+      "excludePackagePatterns" : ["^grpc-conscrypt.version"],
+      "enabled": false
+    },
+    {
+      // this is temporary as we currently get renovate updates when we do a release from bigtable-1.x
+      "packagePatterns": ["^com.google.cloud.bigtable"],
+      "enabled": false
+    }
+  ],
+  "semanticCommits": true,
+  "masterIssue": true
+}

@@ -33,7 +33,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-testing-util</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase1.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -68,14 +68,6 @@ limitations under the License.
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-eclipse-plugin</artifactId>
-        <configuration>
-          <useProjectReferences>false</useProjectReferences>
-        </configuration>
-      </plugin>
-
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>

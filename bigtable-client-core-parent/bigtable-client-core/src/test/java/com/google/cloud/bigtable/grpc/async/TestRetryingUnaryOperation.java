@@ -55,7 +55,8 @@ import org.mockito.stubbing.Answer;
 @RunWith(JUnit4.class)
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestRetryingUnaryOperation {
-  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  // TODO: remove silent and tighten mocks
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().silent();
 
   private static final RetryOptions RETRY_OPTIONS = RetryOptions.getDefaultOptions();
 

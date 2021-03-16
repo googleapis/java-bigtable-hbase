@@ -1,2 +1,6 @@
 releaseType: java-yoshi
 bumpMinorPreMajor: true
+branches:
+  - branch: bigtable-1.x
+    releaseType: java-yoshi
+    bumpMinorPreMajor: true
