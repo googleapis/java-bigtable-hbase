@@ -1,8 +1,8 @@
 # Map/Reduce jobs to import from/export to Bigtable
 
 This module provides a work alike to some of the jobs implemented in hbase-server.
-Specifically this currently the ability to export and import SequenceFile from/to
-Cloud Bigtable using a Map Reduce cluster (ie. dataproc).
+Specifically this currently has the ability to export and import SequenceFile
+from/to     Cloud Bigtable using a Map Reduce cluster (ie. dataproc).
 
 ## Expected Usage 
 
@@ -11,9 +11,7 @@ Cloud Bigtable using a Map Reduce cluster (ie. dataproc).
 
 1. Download or build bigtable-hbase-1.x-mapreduce-1.14.0-shaded-byo-hadoop.jar
 2. Download service account credentials json from Google Cloud Console.
-2. Download hadoop-client binary distribution.
-3. Configure hadoop's core-site.xml for your cluster.
-4. Submit the job. 
+3. Submit the job using your edge node's hadoop installation. 
    ```bash
    # Export
    GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json \
@@ -41,23 +39,29 @@ Cloud Bigtable using a Map Reduce cluster (ie. dataproc).
 2. Download the gcloud sdk.
 4. Submit the job. 
    ```bash
-   # Export
-   gcloud dataproc jobs submit hadoop \
-       --jar bigtable-hbase-1.x-mapreduce-1.14.0-shaded-byo-hadoop.jar \
-           export-table \
-           -Dgoogle.bigtable.project.id=<project-id> \
-           -Dgoogle.bigtable.instance.id=<instance-id> \
-           <table-id> \
-           <outputdir>
+    # Export
+    gcloud dataproc jobs submit hadoop \
+        --cluster <dataproc-cluster> \
+        --region <dataproc-region> \
+        --jar bigtable-hbase-1.x-mapreduce-1.14.0-shaded-byo-hadoop.jar \
+        -- \
+        export-table \
+        -Dgoogle.bigtable.project.id=<project-id> \
+        -Dgoogle.bigtable.instance.id=<instance-id> \
+        <table-id> \
+        <outputdir>
    
-   # Import
-      gcloud dataproc jobs submit hadoop \
-         --jar bigtable-hbase-1.x-mapreduce-1.14.0-shaded-byo-hadoop.jar \
-          import-table \
-          -Dgoogle.bigtable.project.id=<project-id> \
-          -Dgoogle.bigtable.instance.id=<instance-id> \
-          <table-id> \
-          <inputdir>
+    # Import
+    gcloud dataproc jobs submit hadoop \
+        --cluster <dataproc-cluster> \
+        --region <dataproc-region> \
+        --jar bigtable-hbase-1.x-mapreduce-1.14.0-shaded-byo-hadoop.jar \
+        -- \
+        import-table \
+        -Dgoogle.bigtable.project.id=<project-id> \
+        -Dgoogle.bigtable.instance.id=<instance-id> \
+        <table-id> \
+        <inputdir>
    ```
 
 [//]: # ({x-version-update-end})

@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathConstants;
@@ -36,6 +37,8 @@ import org.xml.sax.SAXException;
 
 @RunWith(JUnit4.class)
 public class AssemblyConfigTest {
+  private static final Pattern ARTIFACT_FILENAME_RE =
+      Pattern.compile("(.*)-\\d+\\.\\d+(\\.\\d+)?(?:-(?:incubating|alpha|beta)|\\.Final)?\\.jar$");
 
   /**
    * This test ensures that assembly/shaded-byo-hadoop.xml {@code includes} match the expected HBase
@@ -101,9 +104,7 @@ public class AssemblyConfigTest {
 
       String filename = new File(pathStr).getName();
       // extract the artifact base name from the filename, stripping version and extension
-      String artifactId =
-          filename.replaceAll(
-              "(.*)-\\d+\\.\\d+(\\.\\d+)?(?:-(?:incubating|alpha|beta)|\\.Final)?\\.jar$", "$1");
+      String artifactId = ARTIFACT_FILENAME_RE.matcher(filename).replaceAll("$1");
       expectedIncludeIds.add(artifactId);
     }
     return expectedIncludeIds;
