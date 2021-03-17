@@ -78,6 +78,8 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-io-hadoop-common</artifactId>
+      <!-- used at runtime via WritableCoderProviderRegistrar service -->
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.beam</groupId>
