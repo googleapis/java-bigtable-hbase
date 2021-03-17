@@ -208,6 +208,9 @@ limitations under the License.
               <ignoredDependencies>
                 <!-- TODO: figure out why this diverges from hbase-client -->
                 <ignoredDependency>org.slf4j:slf4j-api</ignoredDependency>
+                <!-- For some reason, hbase-server pulls in test deps -->
+                <ignoredDependency>junit:junit</ignoredDependency>
+                <ignoredDependency>org.hamcrest:hamcrest-core</ignoredDependency>
               </ignoredDependencies>
             </configuration>
           </execution>
