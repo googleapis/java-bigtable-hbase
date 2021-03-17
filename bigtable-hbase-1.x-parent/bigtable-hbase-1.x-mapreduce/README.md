@@ -67,4 +67,12 @@ from/to     Cloud Bigtable using a Map Reduce cluster (ie. dataproc).
         <inputdir>
    ```
 
+### Backwards compatibility
+
+To maintain backwards compatibility of this artifact, we still provide
+`bigtable-hbase-1.x-mapreduce-1.14.0-shaded.jar` artifact that includes
+hadoop jars. However we encourage our users to migrate to 
+`bigtable-hbase-1.x-mapreduce-1.14.0-shaded-byo-hadoop.jar` to avoid dependency
+conflicts with the existing classpath on Hadoop workers.
+
 [//]: # ({x-version-update-end})
