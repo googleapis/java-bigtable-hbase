@@ -352,6 +352,22 @@ limitations under the License.
               </rules>
             </configuration>
           </execution>
+          <execution>
+            <id>enforce-banned-deps</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <bannedDependencies>
+                  <excludes>
+                    <exclude>commons-codec:commons-codec:[,1.15)</exclude>
+                    <exclude>org.apache.commons:commons-compress:[,1.20)</exclude>
+                  </excludes>
+                </bannedDependencies>
+              </rules>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
     </plugins>

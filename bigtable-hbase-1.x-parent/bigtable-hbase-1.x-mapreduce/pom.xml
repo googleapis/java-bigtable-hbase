@@ -35,6 +35,7 @@ limitations under the License.
   </description>
 
   <dependencies>
+    <!-- Primary Group -->
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
@@ -55,6 +56,20 @@ limitations under the License.
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-server</artifactId>
       <version>${hbase1.version}</version>
+    </dependency>
+
+    <!-- CVE Group: force update transitive deps to exclude CVEs -->
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>1.15</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+      <version>1.20</version>
+      <scope>runtime</scope>
     </dependency>
   </dependencies>
 
@@ -189,6 +204,12 @@ limitations under the License.
                 <dependency>org.slf4j:slf4j-api</dependency>
                 <!-- TODO: figure out what to do about metrics mismatch -->
                 <dependency>io.dropwizard.metrics:metrics-core</dependency>
+
+                <!-- BEGIN: force upgrade transitive deps due to security reports -->
+                <dependency>org.apache.commons:commons-compress</dependency>
+                <dependency>org.tukaani:xz</dependency>
+                <dependency>commons-codec:commons-codec</dependency>
+                <!-- END: force upgrade transitive deps due to security reports -->
               </ignoredDependencies>
             </configuration>
           </execution>

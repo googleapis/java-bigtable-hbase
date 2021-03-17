@@ -130,6 +130,17 @@ limitations under the License.
               <skip>true</skip>
             </configuration>
           </execution>
+          <!-- This must be a drop in replacement for hbase-client, so can't
+            manage hbase's deps -->
+          <execution>
+            <id>enforce-banned-deps</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
       <plugin>
