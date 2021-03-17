@@ -42,9 +42,10 @@ public class AssemblyConfigTest {
    * marpreduce classpath. It parses the file to find the coordinates and compares them to the
    * classpath that {@link TableMapReduceUtil} generates.
    *
-   * <p>This test expects that shaded-byu-hadoop will only have a single {@code dependencySet} to represent
-   * the deps required to run hbase mapreduce jars. It identifies the correct {@code dependencySet}
-   * by finding an {@code include} for {@code hbase-common} in the {@code provided} {@code scope}.
+   * <p>This test expects that shaded-byu-hadoop will only have a single {@code dependencySet} to
+   * represent the deps required to run hbase mapreduce jars. It identifies the correct {@code
+   * dependencySet} by finding an {@code include} for {@code hbase-common} in the {@code provided}
+   * {@code scope}.
    */
   @Test
   public void verifyBYOHadoopIncludes() throws Exception {
@@ -60,12 +61,15 @@ public class AssemblyConfigTest {
       throws ParserConfigurationException, XPathExpressionException, IOException, SAXException {
     Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file);
     XPathFactory xPathFactory = XPathFactory.newInstance();
-    XPathExpression depSetPath = xPathFactory.newXPath().compile(
-        "/assembly/dependencySets/dependencySet[scope='provided' and includes/include='org.apache.hbase:hbase-common']");
+    XPathExpression depSetPath =
+        xPathFactory
+            .newXPath()
+            .compile(
+                "/assembly/dependencySets/dependencySet[scope='provided' and includes/include='org.apache.hbase:hbase-common']");
 
     NodeList depSetNodes = (NodeList) depSetPath.evaluate(doc, XPathConstants.NODESET);
-    Assert.assertEquals("Expected single dependencySet with provided hbase-common", 1,
-        depSetNodes.getLength());
+    Assert.assertEquals(
+        "Expected single dependencySet with provided hbase-common", 1, depSetNodes.getLength());
 
     Node depSetNode = depSetNodes.item(0);
     depSetPath = xPathFactory.newXPath().compile("includes/include");
@@ -97,8 +101,9 @@ public class AssemblyConfigTest {
 
       String filename = new File(pathStr).getName();
       // extract the artifact base name from the filename, stripping version and extension
-      String artifactId = filename.replaceAll(
-          "(.*)-\\d+\\.\\d+(\\.\\d+)?(?:-(?:incubating|alpha|beta)|\\.Final)?\\.jar$", "$1");
+      String artifactId =
+          filename.replaceAll(
+              "(.*)-\\d+\\.\\d+(\\.\\d+)?(?:-(?:incubating|alpha|beta)|\\.Final)?\\.jar$", "$1");
       expectedIncludeIds.add(artifactId);
     }
     return expectedIncludeIds;
