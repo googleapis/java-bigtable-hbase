@@ -34,7 +34,9 @@
       <unpack>true</unpack>
       <scope>provided</scope>
       <!-- These are populated from TableMapReduceUtil.addHBaseDependencyJars() -->
-      <!-- TODO: enforce the consistency -->
+      <!-- This is necessary because hbase 1x doesn't have a mapreduce artifact,
+      so we need to rely on extracting the relevant bits ourselves. hbase 2x,
+      ships with a mapreduce jar that properly marks hadoop deps are provided -->
       <includes>
         <include>org.apache.hbase:hbase-common</include>
         <include>org.apache.hbase:hbase-protocol</include>

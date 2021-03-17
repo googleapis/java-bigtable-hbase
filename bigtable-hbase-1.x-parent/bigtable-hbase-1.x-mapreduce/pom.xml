@@ -82,6 +82,14 @@ limitations under the License.
         </exclusion>
       </exclusions>
     </dependency>
+
+    <!-- Test Group -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
