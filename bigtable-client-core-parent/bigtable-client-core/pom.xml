@@ -214,11 +214,11 @@ limitations under the License.
 
     <!-- Test -->
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <!-- align version with veneer's flattened dep -->
-      <version>2.12.1</version>
-      <scope>test</scope>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <!-- bigtable-client-core uses gson for test only, however
+      google-cloud-bigtable needs its for compilation. -->
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
