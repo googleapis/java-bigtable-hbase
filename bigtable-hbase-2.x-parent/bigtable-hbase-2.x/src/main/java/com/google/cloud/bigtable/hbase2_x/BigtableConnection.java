@@ -155,8 +155,15 @@ public class BigtableConnection extends AbstractBigtableConnection {
     return createUnsupportedProxy(Hbck.class);
   }
 
+  /**
+   * Create a dynamic proxy for the passed in interface.
+   *
+   * <p>The proxy will implement all methods by throwing an {@link UnsupportedOperationException}.
+   * This is useful for deferring the exception being thrown. For example hbase shell will acquire a
+   * reference toHbck, but wont actually use it. So it would be useful to allow hbase shell to
+   * initialize and defer the UnsupportOperationExcetion on Hbck is actually invoked.
+   */
   private <T> T createUnsupportedProxy(Class<T> cls) {
-
     @SuppressWarnings("unchecked")
     T proxy =
         (T)
