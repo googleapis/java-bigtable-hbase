@@ -1,0 +1,50 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.1.0 http://maven.apache.org/xsd/assembly-2.1.0.xsd">
+
+  <id>shaded</id>
+  <formats>
+    <format>jar</format>
+  </formats>
+  <includeBaseDirectory>false</includeBaseDirectory>
+
+  <containerDescriptorHandlers>
+    <containerDescriptorHandler>
+      <handlerName>metaInf-services</handlerName>
+    </containerDescriptorHandler>
+  </containerDescriptorHandlers>
+
+  <dependencySets>
+    <!-- include project + runtime deps -->
+    <dependencySet>
+      <outputDirectory>/</outputDirectory>
+      <useProjectArtifact>true</useProjectArtifact>
+      <unpack>true</unpack>
+      <scope>runtime</scope>
+      <unpackOptions>
+        <!-- TODO: figure out how to deal with conflicts -->
+        <excludes>
+          <!-- Some deps put their licenses into a directory which causes hadoop
+          jar to fail -->
+          <exclude>META-INF/license/**</exclude>
+          <exclude>META-INF/license</exclude>
+        </excludes>
+      </unpackOptions>
+    </dependencySet>
+    <!-- include provided deps -->
+    <dependencySet>
+      <outputDirectory>/</outputDirectory>
+      <useProjectArtifact>true</useProjectArtifact>
+      <unpack>true</unpack>
+      <scope>provided</scope>
+      <unpackOptions>
+        <!-- TODO: figure out how to deal with conflicts -->
+        <excludes>
+          <!-- Some deps put their licenses into a directory which causes hadoop
+          jar to fail -->
+          <exclude>META-INF/license/**</exclude>
+          <exclude>META-INF/license</exclude>
+        </excludes>
+      </unpackOptions>
+    </dependencySet>
+  </dependencySets>
+</assembly>

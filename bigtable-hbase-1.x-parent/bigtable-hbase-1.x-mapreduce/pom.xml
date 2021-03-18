@@ -34,13 +34,44 @@ limitations under the License.
     in order to work with Bigtable.
   </description>
 
+  <properties>
+    <hbase1-mapreduce-slfj.version>1.7.10</hbase1-mapreduce-slfj.version>
+  </properties>
+
+  <!-- NOTE: this artifact is designed to be used alongside hbase-server via
+  the bin/hbase script. Its primary intention is to produce a single jar that can
+  be added to hbase's classpath to kick off mapreduce jobs targeted at bigtable.
+  A secondary goal is for some java orchestration program to kick off the jobs.
+
+  Thus the dependencies here must be exactly:
+  - bigtable-hbase-1.x-hadoop
+  - any hbase provided jars
+
+  In the primary usecase we will shade bigtable-hbase-1.x-hadoop allowing the
+  enduser to drop a single jar in the hbase classpath. In the secondary case,
+  the enduser can explcitly add their own version hbase-server.
+  -->
+
   <dependencies>
     <!-- Primary Group -->
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-server</artifactId>
+      <version>${hbase1.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
       <version>${project.version}</version>
       <exclusions>
+        <!-- we need hbase-server instead of hbase-client -->
+        <exclusion>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-client</artifactId>
+        </exclusion>
+
         <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
         pom.xml files when invoking the build from a parent project. So we have to manually exclude
         the dependencies. Note that this works in conjunction with the manually promoted dependencies
@@ -52,24 +83,12 @@ limitations under the License.
       </exclusions>
     </dependency>
 
+    <!-- Test Group -->
     <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-server</artifactId>
-      <version>${hbase1.version}</version>
-    </dependency>
-
-    <!-- CVE Group: force update transitive deps to exclude CVEs -->
-    <dependency>
-      <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
-      <version>1.15</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-compress</artifactId>
-      <version>1.20</version>
-      <scope>runtime</scope>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -100,6 +119,14 @@ limitations under the License.
             <goals>
               <goal>enforce</goal>
             </goals>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
+          <!-- We are not introducing any new deps here. We expect to be
+          running in hadoop's provided classpath -->
+          <execution>
+            <id>enforce-banned-deps</id>
             <configuration>
               <skip>true</skip>
             </configuration>
@@ -136,47 +163,28 @@ limitations under the License.
           </archive>
         </configuration>
       </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.3.0</version>
         <executions>
           <execution>
-            <phase>package</phase>
+            <id>shaded</id>
             <goals>
-              <goal>shade</goal>
+              <goal>single</goal>
             </goals>
+            <phase>package</phase>
             <configuration>
-              <shadedArtifactAttached>true</shadedArtifactAttached>
-              <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer" />
-              </transformers>
-              <artifactSet>
-                <excludes>
-                  <exclude>tomcat:*</exclude>
-                  <exclude>javax.servlet.jsp:*</exclude>
-                  <exclude>javax.servlet:*</exclude>
-                </excludes>
-              </artifactSet>
-              <filters>
-                <filter>
-                  <artifact>*:*</artifact>
-                  <excludes>
-                    <exclude>META-INF/MANIFEST.MF</exclude>
-                    <exclude>META-INF/*.SF</exclude>
-                    <exclude>META-INF/*.DSA</exclude>
-                    <exclude>META-INF/*.RSA</exclude>
-                    <exclude>META-INF/**/pom.properties</exclude>
-                    <exclude>META-INF/**/pom.xml</exclude>
-                    <exclude>META-INF/NOTICE.txt</exclude>
-                    <exclude>META-INF/LICENSE.txt</exclude>
-                    <exclude>META-INF/NOTICE</exclude>
-                    <exclude>META-INF/DEPENDENCIES</exclude>
-                    <exclude>META-INF/LICENSE</exclude>
-                    <exclude>META-INF/jersey-module-version</exclude>
-                  </excludes>
-                </filter>
-              </filters>
+              <archive>
+                <manifest>
+                  <mainClass>com.google.cloud.bigtable.mapreduce.Driver</mainClass>
+                </manifest>
+              </archive>
+              <descriptors>
+                <descriptor>assembly/shaded-byo-hadoop.xml</descriptor>
+                <descriptor>assembly/shaded.xml</descriptor>
+              </descriptors>
             </configuration>
           </execution>
         </executions>
@@ -198,18 +206,11 @@ limitations under the License.
                 <targetDependency>org.apache.hbase:hbase-server:${hbase1.version}</targetDependency>
               </targetDependencies>
               <ignoredDependencies>
-                <!-- Unfortunately we can't use hadoop's version of slf4j
-                because dropwizard metrics slf4j logger requires a higher version
-                we can't shade it either -->
-                <dependency>org.slf4j:slf4j-api</dependency>
-                <!-- TODO: figure out what to do about metrics mismatch -->
-                <dependency>io.dropwizard.metrics:metrics-core</dependency>
-
-                <!-- BEGIN: force upgrade transitive deps due to security reports -->
-                <dependency>org.apache.commons:commons-compress</dependency>
-                <dependency>org.tukaani:xz</dependency>
-                <dependency>commons-codec:commons-codec</dependency>
-                <!-- END: force upgrade transitive deps due to security reports -->
+                <!-- TODO: figure out why this diverges from hbase-client -->
+                <ignoredDependency>org.slf4j:slf4j-api</ignoredDependency>
+                <!-- For some reason, hbase-server pulls in test deps -->
+                <ignoredDependency>junit:junit</ignoredDependency>
+                <ignoredDependency>org.hamcrest:hamcrest-core</ignoredDependency>
               </ignoredDependencies>
             </configuration>
           </execution>
