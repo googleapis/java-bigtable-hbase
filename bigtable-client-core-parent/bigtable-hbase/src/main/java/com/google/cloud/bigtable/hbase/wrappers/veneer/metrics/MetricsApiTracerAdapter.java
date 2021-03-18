@@ -15,15 +15,22 @@
  */
 package com.google.cloud.bigtable.hbase.wrappers.veneer.metrics;
 
+import com.google.api.core.InternalApi;
 import com.google.api.gax.tracing.ApiTracer;
 import com.google.cloud.bigtable.metrics.RpcMetrics;
 import com.google.cloud.bigtable.metrics.Timer.Context;
 import org.threeten.bp.Duration;
 
+/*
+ * Implementation of ApiTracer to trace the logical flow of java-bigtable-hbase calls.
+ * A single instance of a tracer represents a logical operation that can be annotated throughout
+ * its lifecycle.
+ */
+@InternalApi
 public class MetricsApiTracerAdapter implements ApiTracer {
 
   private final RpcMetrics rpcMetrics;
-  private Context operationTimer;
+  private final Context operationTimer;
   private Context rpcTimer;
 
   private volatile RetryStatus lastRetryStatus;
@@ -48,7 +55,9 @@ public class MetricsApiTracerAdapter implements ApiTracer {
   }
 
   @Override
-  public void operationCancelled() {}
+  public void operationCancelled() {
+    operationTimer.close();
+  }
 
   @Override
   public void operationFailed(Throwable error) {
@@ -97,8 +106,9 @@ public class MetricsApiTracerAdapter implements ApiTracer {
 
   @Override
   public void attemptPermanentFailure(Throwable error) {
-    lastRetryStatus = RetryStatus.PERMANENT_FAILURE;
     rpcTimer.close();
+    lastRetryStatus = RetryStatus.PERMANENT_FAILURE;
+    rpcMetrics.markFailure();
   }
 
   @Override

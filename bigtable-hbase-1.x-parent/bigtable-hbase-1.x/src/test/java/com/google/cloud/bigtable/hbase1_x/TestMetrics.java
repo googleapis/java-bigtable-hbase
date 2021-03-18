@@ -27,7 +27,7 @@ import com.google.cloud.bigtable.metrics.Counter;
 import com.google.cloud.bigtable.metrics.Meter;
 import com.google.cloud.bigtable.metrics.MetricRegistry;
 import com.google.cloud.bigtable.metrics.Timer;
-import com.google.common.collect.Queues;
+import com.google.common.base.Stopwatch;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.Status;
@@ -37,7 +37,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -67,11 +67,17 @@ public class TestMetrics {
   private static int dataPort;
   private static final AtomicInteger callCount = new AtomicInteger(1);
 
+  private MetricRegistry originalMetricRegistry;
+  private BigtableClientMetrics.MetricLevel originalLevelToLog;
+
   private static final FakeDataService fakeDataService = new FakeDataService();
   private BigtableConnection connection;
 
   @Before
   public void setUp() throws IOException {
+    originalLevelToLog = BigtableClientMetrics.getLevelToLog();
+    originalMetricRegistry = BigtableClientMetrics.getMetricRegistry(originalLevelToLog);
+
     Configuration configuration = new Configuration(false);
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE_ID);
@@ -102,8 +108,14 @@ public class TestMetrics {
   @After
   public void tearDown() throws IOException {
     connection.close();
+    BigtableClientMetrics.setMetricRegistry(originalMetricRegistry);
+    BigtableClientMetrics.setLevelToLog(originalLevelToLog);
   }
 
+  /*
+   * This tests metric instrumentation by using a fake service to inject failures.
+   * The fake service will fail the first 3 readrows requests, causing the client to start exponential retries.
+   */
   @Test
   public void readRows() throws IOException, InterruptedException {
     FakeMetricRegistry fakeMetricRegistry = new FakeMetricRegistry();
@@ -111,9 +123,9 @@ public class TestMetrics {
     BigtableClientMetrics.setMetricRegistry(fakeMetricRegistry);
     Table table = connection.getTable(TABLE_NAME);
 
-    long readRowsStart = System.currentTimeMillis();
+    Stopwatch readRowsStopwatch = Stopwatch.createStarted();
     Result result = table.get(new Get(new byte[2]));
-    long readRowsTime = System.currentTimeMillis() - readRowsStart;
+    long readRowsTime = readRowsStopwatch.elapsed(TimeUnit.MILLISECONDS);
 
     ReadRowsRequest request = fakeDataService.popLastRequest();
     assertEquals(FULL_TABLE_NAME, request.getTableName());
@@ -129,25 +141,30 @@ public class TestMetrics {
     Assert.assertEquals(3, readRowFailure.get());
     Assert.assertTrue(
         "operation latency for ReadRow took longer than expected",
-        operationLatency.get() <= readRowsTime + 50);
+        operationLatency.get() <= readRowsTime + 20);
     Assert.assertTrue(
         "operation latency for table.get took longer than expected",
-        tableGetLatency.get() <= readRowsTime + 50);
+        tableGetLatency.get() <= readRowsTime + 20);
   }
 
   private static class FakeDataService extends BigtableGrpc.BigtableImplBase {
 
-    final BlockingQueue<Object> requests = Queues.newLinkedBlockingDeque();
+    final ConcurrentLinkedQueue requests = new ConcurrentLinkedQueue();
 
     @SuppressWarnings("unchecked")
     <T> T popLastRequest() throws InterruptedException {
-      return (T) requests.poll(1, TimeUnit.SECONDS);
+      return (T) requests.poll();
     }
 
     @Override
     public void readRows(
         ReadRowsRequest request, StreamObserver<ReadRowsResponse> responseObserver) {
       requests.add(request);
+      try {
+        Thread.sleep(5);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
       if (callCount.getAndIncrement() < 4) {
         responseObserver.onError(new StatusRuntimeException(Status.UNAVAILABLE));
       } else {
@@ -158,6 +175,7 @@ public class TestMetrics {
   }
 
   private static class FakeMetricRegistry implements MetricRegistry {
+    private final Object lock = new Object();
 
     private final Map<String, AtomicLong> results = new HashMap<>();
 
@@ -166,20 +184,24 @@ public class TestMetrics {
       return new Counter() {
         @Override
         public void inc() {
-          AtomicLong atomicLong = results.get(name);
-          if (atomicLong == null) {
-            AtomicLong value = new AtomicLong();
-            results.put(name, value);
+          synchronized (lock) {
+            AtomicLong atomicLong = results.get(name);
+            if (atomicLong == null) {
+              AtomicLong value = new AtomicLong();
+              results.put(name, value);
+            }
           }
           results.get(name).getAndIncrement();
         }
 
         @Override
         public void dec() {
-          AtomicLong atomicLong = results.get(name);
-          if (atomicLong == null) {
-            AtomicLong value = new AtomicLong();
-            results.put(name, value);
+          synchronized (lock) {
+            AtomicLong atomicLong = results.get(name);
+            if (atomicLong == null) {
+              AtomicLong value = new AtomicLong();
+              results.put(name, value);
+            }
           }
           results.get(name).getAndDecrement();
         }
@@ -189,21 +211,25 @@ public class TestMetrics {
     @Override
     public Timer timer(final String name) {
       return new Timer() {
-        final long start = System.currentTimeMillis();
+        final Stopwatch stopwatch = Stopwatch.createStarted();
 
         @Override
         public Context time() {
           return new Context() {
             @Override
             public void close() {
-              results.put(name, new AtomicLong(System.currentTimeMillis() - start));
+              synchronized (lock) {
+                results.put(name, new AtomicLong(stopwatch.elapsed(TimeUnit.MILLISECONDS)));
+              }
             }
           };
         }
 
         @Override
         public void update(long duration, TimeUnit unit) {
-          results.put(name, new AtomicLong(duration));
+          synchronized (lock) {
+            results.put(name, new AtomicLong(duration));
+          }
         }
       };
     }
@@ -213,17 +239,21 @@ public class TestMetrics {
       return new Meter() {
         @Override
         public void mark() {
-          AtomicLong atomicLong = results.get(name);
-          if (atomicLong == null) {
-            AtomicLong value = new AtomicLong();
-            results.put(name, value);
+          synchronized (lock) {
+            AtomicLong atomicLong = results.get(name);
+            if (atomicLong == null) {
+              AtomicLong value = new AtomicLong();
+              results.put(name, value);
+            }
           }
           results.get(name).getAndIncrement();
         }
 
         @Override
         public void mark(long size) {
-          results.put(name, new AtomicLong(size));
+          synchronized (lock) {
+            results.put(name, new AtomicLong(size));
+          }
         }
       };
     }

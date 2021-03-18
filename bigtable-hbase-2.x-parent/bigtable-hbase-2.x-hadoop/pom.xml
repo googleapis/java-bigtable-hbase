@@ -69,6 +69,11 @@ limitations under the License.
       <artifactId>hbase-client</artifactId>
       <version>${hbase2.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-metrics-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
     <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
     <dependency>
@@ -87,11 +92,6 @@ limitations under the License.
           <artifactId>slf4j-api</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-metrics-api</artifactId>
-      <version>${project.version}</version>
     </dependency>
 
     <!-- unlike hbase-shaded-client, hbase-client depends on slf4j 1.6.1.

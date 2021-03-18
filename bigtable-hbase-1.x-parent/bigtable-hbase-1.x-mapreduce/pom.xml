@@ -56,11 +56,6 @@ limitations under the License.
       <artifactId>hbase-server</artifactId>
       <version>${hbase1.version}</version>
     </dependency>
-    <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-metrics-api</artifactId>
-      <version>${project.version}</version> <!-- {x-version-update:bigtable-client-core-parent:current} -->
-    </dependency>
   </dependencies>
 
   <build>
@@ -198,16 +193,6 @@ limitations under the License.
             </configuration>
           </execution>
         </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-          <usedDependencies>
-            <usedDependency>com.google.cloud.bigtable:bigtable-metrics-api</usedDependency>
-          </usedDependencies>
-        </configuration>
       </plugin>
     </plugins>
   </build>

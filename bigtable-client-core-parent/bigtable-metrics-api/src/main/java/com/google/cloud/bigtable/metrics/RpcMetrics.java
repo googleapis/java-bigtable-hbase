@@ -20,43 +20,33 @@ import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 
 @InternalApi
 public class RpcMetrics {
-  private final String methodName;
   private final Timer operationTimer;
   private final Timer rpcTimer;
   private final Meter retryMeter;
   private final Meter failureMeter;
   private final Meter retriesExhaustedMeter;
-  private final Timer readRowsFirstResponseTimer;
 
   public static RpcMetrics createRpcMetrics(String methodName) {
     String prefix = "grpc.method." + methodName;
     return new RpcMetrics(
-        methodName,
         BigtableClientMetrics.timer(MetricLevel.Info, prefix + ".operation.latency"),
         BigtableClientMetrics.timer(MetricLevel.Debug, prefix + ".rpc.latency"),
         BigtableClientMetrics.meter(MetricLevel.Info, prefix + ".retries.performed"),
         BigtableClientMetrics.meter(MetricLevel.Info, prefix + ".failure"),
-        BigtableClientMetrics.meter(MetricLevel.Info, prefix + ".retries.exhausted"),
-        BigtableClientMetrics.timer(MetricLevel.Info, prefix + ".firstResponse.latency"),
-        BigtableClientMetrics.timer(MetricLevel.Info, prefix + ".results.latency"));
+        BigtableClientMetrics.meter(MetricLevel.Info, prefix + ".retries.exhausted"));
   }
 
   private RpcMetrics(
-      String methodName,
       Timer operationTimer,
       Timer rpcTimer,
       Meter retryCounter,
       Meter failureCounter,
-      Meter retriesExhaustedCounter,
-      Timer readRowsFirstResponseTimer,
-      Timer scannerResultsTimer) {
-    this.methodName = methodName;
+      Meter retriesExhaustedCounter) {
     this.operationTimer = operationTimer;
     this.rpcTimer = rpcTimer;
     this.retryMeter = retryCounter;
     this.failureMeter = failureCounter;
     this.retriesExhaustedMeter = retriesExhaustedCounter;
-    this.readRowsFirstResponseTimer = readRowsFirstResponseTimer;
   }
 
   public Timer.Context timeOperation() {
