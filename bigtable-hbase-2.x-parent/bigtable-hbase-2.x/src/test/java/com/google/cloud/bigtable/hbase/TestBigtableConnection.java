@@ -21,6 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.BufferedMutator;
+import org.apache.hadoop.hbase.client.Hbck;
 import org.apache.hadoop.hbase.client.Table;
 import org.junit.Assert;
 import org.junit.Test;
@@ -65,9 +66,44 @@ public class TestBigtableConnection {
     Configuration conf = BigtableConfiguration.configure("projectId", "instanceId", "appProfileId");
     conf.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
     conf.set(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, "false");
-    BigtableConnection connection = new BigtableConnection(conf);
-    Admin admin = connection.getAdmin();
-    Table table = connection.getTable(TableName.valueOf("someTable"));
-    BufferedMutator mutator = connection.getBufferedMutator(TableName.valueOf("someTable"));
+    try (BigtableConnection connection = new BigtableConnection(conf)) {
+      Admin admin = connection.getAdmin();
+      Table table = connection.getTable(TableName.valueOf("someTable"));
+      BufferedMutator mutator = connection.getBufferedMutator(TableName.valueOf("someTable"));
+    }
+  }
+
+  @Test
+  public void testHbckErrorDeferred() throws IOException {
+    Configuration conf = BigtableConfiguration.configure("projectId", "instanceId", "appProfileId");
+    conf.setInt(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, 1);
+    conf.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
+    conf.set(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, "false");
+
+    try (BigtableConnection c1 = new BigtableConnection(conf);
+        BigtableConnection c2 = new BigtableConnection(conf)) {
+
+      // Should not throw
+      Hbck hbck1 = c1.getHbck();
+      Hbck hbck2 = c2.getHbck();
+
+      Assert.assertThrows(
+          UnsupportedOperationException.class,
+          () -> {
+            try {
+              hbck1.runHbckChore();
+            } catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          });
+
+      Assert.assertEquals(hbck1, hbck1);
+      Assert.assertNotEquals(hbck1, hbck2);
+
+      Assert.assertEquals(hbck1.hashCode(), hbck1.hashCode());
+      Assert.assertNotEquals(hbck1.hashCode(), hbck2.hashCode());
+
+      Assert.assertTrue(hbck1.toString().contains("Unsupported"));
+    }
   }
 }
