@@ -184,7 +184,9 @@ public class BigtableConnection extends AbstractBigtableConnection {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-      if (args.length == 1
+      int argCount = (args == null) ? 0 : args.length;
+
+      if (argCount == 1
           && method.getName().equals("equals")
           && method.getParameterTypes()[0] == Object.class) {
         Object arg = args[0];
@@ -193,10 +195,10 @@ public class BigtableConnection extends AbstractBigtableConnection {
         }
         return proxy == arg;
       }
-      if (args.length == 1 && method.getName().equals("hashCode")) {
+      if (argCount == 0 && method.getName().equals("hashCode")) {
         return super.hashCode();
       }
-      if (args.length == 0 && method.getName().equals("toString")) {
+      if (argCount == 0 && method.getName().equals("toString")) {
         return name;
       }
 
