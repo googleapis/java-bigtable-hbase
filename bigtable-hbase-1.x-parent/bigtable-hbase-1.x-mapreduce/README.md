@@ -39,7 +39,7 @@ from/to     Cloud Bigtable using a Map Reduce cluster (ie. dataproc).
 2. Download the gcloud sdk.
 3. Configure [Bigtable IAM roles](https://cloud.google.com/bigtable/docs/access-control#roles) 
     for the [Dataproc Service Account](https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/service-accounts#what_are_service_accounts) 
-    when running on Dataproc. Alternatively, download service account credentials json from Google Cloud Console.
+    when running on Dataproc.
 4. Submit the job. 
    ```bash
     # Export
