@@ -78,7 +78,10 @@
     },
     {
       // pin to hbase deps
-      "packagePatterns": ["^hbase1-hadoop-slf4j.version", "^hbase2-hadoop-slf4j.version"],
+      "packagePatterns": [
+        "^hbase.-hadoop-slf4j.version",
+        "^hbase.-mapreduce-slfj.version",
+      ],
       "enabled": false
     },
     {

@@ -57,7 +57,6 @@ limitations under the License.
 
     <!-- core dependency versions -->
     <bigtable.version>1.21.0</bigtable.version>
-    <dropwizard.metrics.version>3.2.6</dropwizard.metrics.version>
     <grpc-conscrypt.version>2.5.1</grpc-conscrypt.version>
     <!--  keeping at this version to align with hbase-->
     <slf4j.version>1.7.25</slf4j.version>
@@ -66,7 +65,9 @@ limitations under the License.
 
     <!-- hbase dependency versions -->
     <hbase1.version>1.4.12</hbase1.version>
+    <hbase1-metrics.version>3.1.2</hbase1-metrics.version>
     <hbase2.version>2.2.3</hbase2.version>
+    <hbase2-metrics.version>3.2.6</hbase2-metrics.version>
 
     <!-- testing dependency versions -->
     <commons-lang.version>2.6</commons-lang.version>
@@ -349,6 +350,22 @@ limitations under the License.
                     <dependency>org.slf4j:*</dependency>
                   </dependencies>
                 </requireSameVersions>
+              </rules>
+            </configuration>
+          </execution>
+          <execution>
+            <id>enforce-banned-deps</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <bannedDependencies>
+                  <excludes>
+                    <exclude>commons-codec:commons-codec:[,1.15)</exclude>
+                    <exclude>org.apache.commons:commons-compress:[,1.20)</exclude>
+                  </excludes>
+                </bannedDependencies>
               </rules>
             </configuration>
           </execution>

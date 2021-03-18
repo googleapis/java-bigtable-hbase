@@ -84,7 +84,7 @@ limitations under the License.
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-core</artifactId>
-      <version>${dropwizard.metrics.version}</version>
+      <version>${hbase2-metrics.version}</version>
       <exclusions>
         <!-- see slf4j notes below -->
         <exclusion>
@@ -137,6 +137,17 @@ limitations under the License.
           <!-- hbase-client doesnt align slf4j-api & slf4j-log4j -->
           <execution>
             <id>enforce-version-consistency-slf4j</id>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
+          <!-- This must be a drop in replacement for hbase-client, so can't
+            manage hbase's deps -->
+          <execution>
+            <id>enforce-banned-deps</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
             <configuration>
               <skip>true</skip>
             </configuration>
