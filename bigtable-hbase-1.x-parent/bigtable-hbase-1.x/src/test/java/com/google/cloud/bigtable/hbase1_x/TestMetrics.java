@@ -141,10 +141,10 @@ public class TestMetrics {
     Assert.assertEquals(3, readRowFailure.get());
     Assert.assertTrue(
         "operation latency for ReadRow took longer than expected",
-        operationLatency.get() <= readRowsTime + 20);
+        operationLatency.get() <= readRowsTime + 20 && operationLatency.get() >= readRowsTime - 50);
     Assert.assertTrue(
         "operation latency for table.get took longer than expected",
-        tableGetLatency.get() <= readRowsTime + 20);
+        tableGetLatency.get() <= readRowsTime + 20 && operationLatency.get() >= readRowsTime - 50);
   }
 
   private static class FakeDataService extends BigtableGrpc.BigtableImplBase {
@@ -152,7 +152,7 @@ public class TestMetrics {
     final ConcurrentLinkedQueue requests = new ConcurrentLinkedQueue();
 
     @SuppressWarnings("unchecked")
-    <T> T popLastRequest() throws InterruptedException {
+    <T> T popLastRequest() {
       return (T) requests.poll();
     }
 
