@@ -100,10 +100,12 @@ public class TestBigtableConnection {
       Assert.assertEquals(hbck1, hbck1);
       Assert.assertNotEquals(hbck1, hbck2);
 
+      // Make sure that the hashCode is stable
       Assert.assertEquals(hbck1.hashCode(), hbck1.hashCode());
+      // And differs for different instances
       Assert.assertNotEquals(hbck1.hashCode(), hbck2.hashCode());
 
-      Assert.assertTrue(hbck1.toString().contains("Unsupported"));
+      Assert.assertEquals("UnsupportedHbck", hbck1.toString());
     }
   }
 }

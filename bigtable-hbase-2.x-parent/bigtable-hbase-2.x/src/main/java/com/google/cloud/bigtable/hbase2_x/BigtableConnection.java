@@ -170,7 +170,7 @@ public class BigtableConnection extends AbstractBigtableConnection {
             Proxy.newProxyInstance(
                 cls.getClassLoader(),
                 new Class<?>[] {cls},
-                new UnsupportedInvocationHandler("Unsupported" + cls.getName()));
+                new UnsupportedInvocationHandler("Unsupported" + cls.getSimpleName()));
 
     return proxy;
   }
