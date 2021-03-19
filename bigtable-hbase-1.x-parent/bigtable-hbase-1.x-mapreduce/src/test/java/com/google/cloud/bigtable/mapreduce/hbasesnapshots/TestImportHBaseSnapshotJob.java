@@ -19,6 +19,7 @@ import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon
 import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon.SNAPSHOT_RESTOREDIR_KEY;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -42,18 +43,20 @@ public class TestImportHBaseSnapshotJob {
   @Test
   public void testSetConfFromArgs() {
     Configuration conf = HBaseConfiguration.create();
+    conf.set(BigtableOptionsFactory.PROJECT_ID_KEY, "test-proj-id");
+    conf.set(BigtableOptionsFactory.INSTANCE_ID_KEY, "test-instance-id");
     String[] args = {
       "table1-snapshot",
-      "table1",
       "gs://hbase-migration-table1-bucket/export/table1-snapshot",
+      "table1",
       "gs://hbase-migration-table1-bucket/export/table1-restore"
     };
 
     ImportHBaseSnapshotJob.setConfFromArgs(conf, args);
 
     Assert.assertEquals(args[0], conf.get(SNAPSHOTNAME_KEY));
-    Assert.assertEquals(args[1], conf.get(TableOutputFormat.OUTPUT_TABLE));
-    Assert.assertEquals(args[2], conf.get(HConstants.HBASE_DIR));
+    Assert.assertEquals(args[1], conf.get(HConstants.HBASE_DIR));
+    Assert.assertEquals(args[2], conf.get(TableOutputFormat.OUTPUT_TABLE));
     Assert.assertEquals(args[3], conf.get(SNAPSHOT_RESTOREDIR_KEY));
 
     Assert.assertEquals(

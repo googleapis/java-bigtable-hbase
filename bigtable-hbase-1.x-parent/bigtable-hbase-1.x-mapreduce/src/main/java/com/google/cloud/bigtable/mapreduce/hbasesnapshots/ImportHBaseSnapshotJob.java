@@ -36,7 +36,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.client.ClusterConnection;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
@@ -68,7 +67,7 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
       System.out.println("ERROR: " + errorMsg);
     }
     System.out.println(
-        "Usage: hadoop jar <JAR> <CLASS> <properties> <snapshot-name> <tablename> <snapshot-root-dir> <restore-base-dir> <gs-default-fs>\n"
+        "Usage: hadoop jar <JAR> <CLASS> <properties> <snapshot-name> <snapshot-dir> <tablename> <temp-dir>\n"
             + "Required properties: \n"
             + "  -D"
             + BigtableOptionsFactory.PROJECT_ID_KEY
@@ -78,9 +77,9 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
             + "=<bigtable-instance-id>\n"
             + "Required arguments:\n"
             + "  snapshot-name     - name of hbase snapshot to read\n"
+            + "  snapshot-dir      - directory of snapshot, e.g., gs://hbase-migration-table1-bucket/export/table1-snapshot\n"
             + "  tablename         - bigtable table to import into\n"
-            + "  snapshot-root-dir - directory of snapshot, e.g., gs://hbase-migration-table1-bucket/export/table1-snapshot\n"
-            + "  restore-base-dir  - a temporary base directory to restore hlinks of the snapshot into for read, e.g., gs://hbase-migration-table1-bucket/export/table1-restore\n");
+            + "  temp-dir          - a temporary base directory to restore hlinks of the snapshot into for read, e.g., gs://hbase-migration-table1-bucket/export/table1-restore\n");
 
     System.exit(1);
   }
@@ -97,20 +96,7 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
     Configuration conf = HBaseConfiguration.create(getConf());
     String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
 
-    if (otherArgs.length < 4) {
-      usage("Wrong number of arguments: " + otherArgs.length);
-      return -1;
-    }
-    if (conf.get(BigtableOptionsFactory.PROJECT_ID_KEY) == null) {
-      usage("Must specify the property " + BigtableOptionsFactory.PROJECT_ID_KEY);
-      return -1;
-    }
-    if (conf.get(BigtableOptionsFactory.INSTANCE_ID_KEY) == null) {
-      usage("Must specify the property " + BigtableOptionsFactory.INSTANCE_ID_KEY);
-      return -1;
-    }
-
-    setConfFromArgs(conf, otherArgs);
+    if (setConfFromArgs(conf, otherArgs) != 0) return -1;
 
     LOG.info(
         "Using Arguments: "
@@ -118,13 +104,13 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
             + "snapshotName = "
             + conf.get(SNAPSHOTNAME_KEY)
             + "\n"
-            + "bigtableName = "
-            + conf.get(TableOutputFormat.OUTPUT_TABLE)
-            + "\n"
             + "snapshotDir = "
             + conf.get(HConstants.HBASE_DIR)
             + "\n"
-            + "restorePath = "
+            + "bigtableName = "
+            + conf.get(TableOutputFormat.OUTPUT_TABLE)
+            + "\n"
+            + "tempDir = "
             + conf.get(SNAPSHOT_RESTOREDIR_KEY)
             + "\n"
             + CommonConfigurationKeysPublic.FS_DEFAULT_NAME_KEY
@@ -145,11 +131,25 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
     return successStatus;
   }
 
-  protected static void setConfFromArgs(Configuration conf, String[] args) {
+  protected static int setConfFromArgs(Configuration conf, String[] args) {
+    // basic pre-condition check
+    if (args.length < 4) {
+      usage("Wrong number of arguments: " + args.length);
+      return -1;
+    }
+    if (conf.get(BigtableOptionsFactory.PROJECT_ID_KEY) == null) {
+      usage("Must specify the property " + BigtableOptionsFactory.PROJECT_ID_KEY);
+      return -1;
+    }
+    if (conf.get(BigtableOptionsFactory.INSTANCE_ID_KEY) == null) {
+      usage("Must specify the property " + BigtableOptionsFactory.INSTANCE_ID_KEY);
+      return -1;
+    }
+
     // set arguments in configuration for ease of use
     conf.set(SNAPSHOTNAME_KEY, args[0]);
-    conf.set(TABLENAME_KEY, args[1]);
-    conf.set(HConstants.HBASE_DIR, args[2]);
+    conf.set(HConstants.HBASE_DIR, args[1]);
+    conf.set(TABLENAME_KEY, args[2]);
     conf.set(SNAPSHOT_RESTOREDIR_KEY, args[3]);
 
     // set default fs
@@ -165,21 +165,25 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
             + conf.get(TABLENAME_KEY));
 
     // implicit bigtable configs
-    conf.setIfUnset(
-        ClusterConnection.HBASE_CLIENT_CONNECTION_IMPL,
-        BigtableConfiguration.getConnectionClass().getName());
+    BigtableConfiguration.configure(
+        conf,
+        conf.get(BigtableOptionsFactory.PROJECT_ID_KEY),
+        conf.get(BigtableOptionsFactory.INSTANCE_ID_KEY),
+        conf.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY, ""));
     conf.setBooleanIfUnset(BigtableOptionsFactory.BIGTABLE_USE_TIMEOUTS_KEY, true);
     conf.setIfUnset(
         BigtableOptionsFactory.BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY,
         String.valueOf(BIGTABLE_MUTATE_RPC_TIMEOUT_MS_DEFAULT));
 
-    // implicit table outputformat configs
+    // implicit table outputformat configs that are used in the job to write map output to a table
     conf.set(TableOutputFormat.OUTPUT_TABLE, conf.get(TABLENAME_KEY));
     conf.setStrings(
         "io.serializations",
         conf.get("io.serializations"),
         MutationSerialization.class.getName(),
         ResultSerialization.class.getName());
+
+    return 0;
   }
 
   /**
