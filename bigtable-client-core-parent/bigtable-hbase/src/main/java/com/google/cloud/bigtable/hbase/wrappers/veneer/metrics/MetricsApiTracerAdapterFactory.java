@@ -51,12 +51,14 @@ public class MetricsApiTracerAdapterFactory implements ApiTracerFactory {
       return metrics;
     }
 
-    metrics = this.metrics.get(key);
-    if (metrics != null) {
+    synchronized (this) {
+      metrics = this.metrics.get(key);
+      if (metrics != null) {
+        return metrics;
+      }
+      metrics = RpcMetrics.createRpcMetrics(key);
+      this.metrics.put(key, metrics);
       return metrics;
     }
-    metrics = RpcMetrics.createRpcMetrics(key);
-    this.metrics.put(key, metrics);
-    return metrics;
   }
 }

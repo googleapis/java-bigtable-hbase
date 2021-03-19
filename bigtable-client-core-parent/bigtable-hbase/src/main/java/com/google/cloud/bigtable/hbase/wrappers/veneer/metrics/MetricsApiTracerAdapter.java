@@ -31,8 +31,8 @@ public class MetricsApiTracerAdapter implements ApiTracer {
 
   private final RpcMetrics rpcMetrics;
   private final Context operationTimer;
-  private Context rpcTimer;
 
+  private volatile Context rpcTimer;
   private volatile RetryStatus lastRetryStatus;
 
   public MetricsApiTracerAdapter(RpcMetrics rpcMetrics) {
@@ -68,6 +68,8 @@ public class MetricsApiTracerAdapter implements ApiTracer {
       case RETRIES_EXHAUSTED:
         rpcMetrics.markRetriesExhausted();
         break;
+      case ATTEMPT_RETRYABLE_FAILURE:
+        rpcMetrics.markFailure();
       default:
         rpcMetrics.markFailure();
     }
@@ -94,7 +96,8 @@ public class MetricsApiTracerAdapter implements ApiTracer {
   @Override
   public void attemptFailed(Throwable error, Duration delay) {
     rpcTimer.close();
-    rpcMetrics.markFailure();
+    lastRetryStatus = RetryStatus.ATTEMPT_RETRYABLE_FAILURE;
+    rpcMetrics.markRetry();
   }
 
   @Override
@@ -132,6 +135,7 @@ public class MetricsApiTracerAdapter implements ApiTracer {
 
   private enum RetryStatus {
     PERMANENT_FAILURE,
-    RETRIES_EXHAUSTED
+    RETRIES_EXHAUSTED,
+    ATTEMPT_RETRYABLE_FAILURE
   }
 }

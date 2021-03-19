@@ -131,7 +131,8 @@ public class TestMetrics {
     assertEquals(FULL_TABLE_NAME, request.getTableName());
 
     AtomicLong readRowFailure =
-        fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.method.ReadRow.failure");
+        fakeMetricRegistry.results.get(
+            "google-cloud-bigtable.grpc.method.ReadRow.retries.performed");
     AtomicLong operationLatency =
         fakeMetricRegistry.results.get(
             "google-cloud-bigtable.grpc.method.ReadRow.operation.latency");
@@ -181,6 +182,7 @@ public class TestMetrics {
 
     @Override
     public Counter counter(final String name) {
+      // counter operations either increment or decrement a key's value
       return new Counter() {
         @Override
         public void inc() {
@@ -210,6 +212,7 @@ public class TestMetrics {
 
     @Override
     public Timer timer(final String name) {
+      // timer operations overwrite a key's value
       return new Timer() {
         final Stopwatch stopwatch = Stopwatch.createStarted();
 
@@ -227,6 +230,7 @@ public class TestMetrics {
 
         @Override
         public void update(long duration, TimeUnit unit) {
+          // update operations overwrite a key's value
           synchronized (lock) {
             results.put(name, new AtomicLong(duration));
           }
@@ -236,6 +240,7 @@ public class TestMetrics {
 
     @Override
     public Meter meter(final String name) {
+      // meter operations increment the current key's value
       return new Meter() {
         @Override
         public void mark() {
@@ -249,6 +254,7 @@ public class TestMetrics {
           results.get(name).getAndIncrement();
         }
 
+        // unless a size is specified, in which case it is overridden
         @Override
         public void mark(long size) {
           synchronized (lock) {

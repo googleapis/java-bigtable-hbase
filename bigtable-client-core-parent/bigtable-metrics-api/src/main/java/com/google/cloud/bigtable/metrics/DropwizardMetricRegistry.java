@@ -107,7 +107,7 @@ public class DropwizardMetricRegistry implements MetricRegistry {
     return new Timer() {
 
       @Override
-      public Context time() {
+      public Timer.Context time() {
         final com.codahale.metrics.Timer.Context timerContext = timer.time();
         return new Context() {
           @Override
