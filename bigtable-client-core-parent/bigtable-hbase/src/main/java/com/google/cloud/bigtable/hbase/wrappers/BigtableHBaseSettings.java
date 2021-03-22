@@ -41,7 +41,7 @@ public abstract class BigtableHBaseSettings {
 
   public static BigtableHBaseSettings create(Configuration configuration) throws IOException {
     if (configuration.getBoolean(BIGTABLE_USE_GCJ_CLIENT, false)) {
-      return new BigtableHBaseVeneerSettings(configuration);
+      return BigtableHBaseVeneerSettings.create(configuration);
     } else {
       return new BigtableHBaseClassicSettings(configuration);
     }

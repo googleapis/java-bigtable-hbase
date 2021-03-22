@@ -215,19 +215,11 @@ public class BigtableOptionsFactory {
   /**
    * Turn on a feature that will reduce the likelihood of BufferedMutator overloading a Cloud
    * Bigtable cluster.
-   *
-   * @deprecated Bulk mutation throttling will be removed in the future
    */
-  @Deprecated
   public static final String BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING =
       "google.bigtable.buffered.mutator.throttling.enable";
 
-  /**
-   * Tweak the throttling
-   *
-   * @deprecated Bulk mutation throttling will be removed in the future
-   */
-  @Deprecated
+  /** Tweak the throttling */
   public static final String BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS =
       "google.bigtable.buffered.mutator.throttling.threshold.ms";
 
