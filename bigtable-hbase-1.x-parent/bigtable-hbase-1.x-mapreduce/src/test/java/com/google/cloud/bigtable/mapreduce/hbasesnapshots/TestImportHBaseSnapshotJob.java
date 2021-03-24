@@ -22,27 +22,18 @@ import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.ClusterConnection;
 import org.apache.hadoop.hbase.mapreduce.TableOutputFormat;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /** test driver function */
 public class TestImportHBaseSnapshotJob {
 
-  private Configuration conf;
-
-  @Before
-  public void setup() {
-    this.conf = HBaseConfiguration.create();
-  }
-
   @Test
   public void testSetConfFromArgs() {
-    Configuration conf = HBaseConfiguration.create();
+    Configuration conf = new Configuration(false);
     conf.set(BigtableOptionsFactory.PROJECT_ID_KEY, "test-proj-id");
     conf.set(BigtableOptionsFactory.INSTANCE_ID_KEY, "test-instance-id");
     String[] args = {

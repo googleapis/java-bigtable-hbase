@@ -19,6 +19,8 @@ import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon
 import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon.IMPORT_SNAPSHOT_JOBNAME_KEY;
 import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon.SNAPSHOTNAME_KEY;
 import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon.SNAPSHOT_RESTOREDIR_KEY;
+import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon.SNAPSHOT_SPLITS_PER_REGION_DEFAULT;
+import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon.SNAPSHOT_SPLITS_PER_REGION_KEY;
 import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon.TABLENAME_KEY;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
@@ -42,9 +44,9 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.MutationSerialization;
 import org.apache.hadoop.hbase.mapreduce.ResultSerialization;
-import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.hbase.mapreduce.TableOutputFormat;
+import org.apache.hadoop.hbase.util.RegionSplitter.UniformSplit;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.Job;
@@ -79,7 +81,14 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
             + "  snapshot-name     - name of hbase snapshot to read\n"
             + "  snapshot-dir      - directory of snapshot, e.g., gs://hbase-migration-table1-bucket/export/table1-snapshot\n"
             + "  tablename         - bigtable table to import into\n"
-            + "  temp-dir          - a temporary base directory to restore hlinks of the snapshot into for read, e.g., gs://hbase-migration-table1-bucket/export/table1-restore\n");
+            + "  temp-dir          - a temporary base directory to restore hlinks of the snapshot into for read, e.g., gs://hbase-migration-table1-bucket/export/table1-restore\n"
+            + "Optional properties: \n"
+            + "  -D"
+            + BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING
+            + "=(true|false)\n"
+            + "  -D"
+            + BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS
+            + "=<throttling-threshold-ms>\n");
 
     System.exit(1);
   }
@@ -155,6 +164,11 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
     // set default fs
     conf.set(CommonConfigurationKeysPublic.FS_DEFAULT_NAME_KEY, conf.get(HConstants.HBASE_DIR));
 
+    // set default splits per region and default if not set (not required, set for consistency)
+    conf.setInt(
+        SNAPSHOT_SPLITS_PER_REGION_KEY,
+        conf.getInt(SNAPSHOT_SPLITS_PER_REGION_KEY, SNAPSHOT_SPLITS_PER_REGION_DEFAULT));
+
     // default job name
     conf.setIfUnset(
         IMPORT_SNAPSHOT_JOBNAME_KEY,
@@ -196,7 +210,7 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
   protected static Job createSubmittableJob(Configuration conf) throws IOException {
     Job job = Job.getInstance(conf, conf.get(IMPORT_SNAPSHOT_JOBNAME_KEY));
     job.setJarByClass(ImportHBaseSnapshotJob.class);
-    TableMapReduceUtil.initTableSnapshotMapperJob(
+    ShuffledTableMapReduceUtil.initTableSnapshotMapperJob(
         conf.get(SNAPSHOTNAME_KEY),
         new Scan().setMaxVersions(),
         SnapshotMapper.class,
@@ -204,7 +218,9 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
         Writable.class,
         job,
         true,
-        new Path(conf.get(SNAPSHOT_RESTOREDIR_KEY)));
+        new Path(conf.get(SNAPSHOT_RESTOREDIR_KEY)),
+        new UniformSplit(),
+        conf.getInt(SNAPSHOT_SPLITS_PER_REGION_KEY, SNAPSHOT_SPLITS_PER_REGION_DEFAULT));
 
     job.setNumReduceTasks(0);
     job.setOutputFormatClass(TableOutputFormat.class);
@@ -274,6 +290,17 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
       }
       return cells;
     }
+  }
+
+  /**
+   * Call this method to avoid the {@link #main(String[])} System.exit.
+   *
+   * @param args
+   * @return exitCode
+   * @throws Exception
+   */
+  public static int innerMain(final Configuration conf, final String[] args) throws Exception {
+    return ToolRunner.run(conf, new ImportHBaseSnapshotJob(), args);
   }
 
   public static void main(String[] args) throws Exception {
