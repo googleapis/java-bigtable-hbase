@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase1_x;
 
-
 import com.google.bigtable.v2.*;
 import com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
