@@ -30,7 +30,7 @@ import java.util.Map;
 @InternalApi
 public class MetricsApiTracerAdapterFactory implements ApiTracerFactory {
 
-  private final Map<String, RpcMetrics> metrics = new HashMap<>();
+  private final Map<String, RpcMetrics> methodMetrics = new HashMap<>();
 
   @Override
   public ApiTracer newTracer(ApiTracer parent, SpanName spanName, OperationType operationType) {
@@ -39,26 +39,26 @@ public class MetricsApiTracerAdapterFactory implements ApiTracerFactory {
   }
 
   @VisibleForTesting
-  public Map<String, RpcMetrics> getMetrics() {
-    return metrics;
+  public Map<String, RpcMetrics> getMethodMetrics() {
+    return methodMetrics;
   }
 
   private RpcMetrics getRpcMetrics(SpanName spanName) {
     String key = spanName.getMethodName();
 
-    RpcMetrics metrics = this.metrics.get(key);
-    if (metrics != null) {
-      return metrics;
+    RpcMetrics rpcMetrics = this.methodMetrics.get(key);
+    if (rpcMetrics != null) {
+      return rpcMetrics;
     }
 
     synchronized (this) {
-      metrics = this.metrics.get(key);
-      if (metrics != null) {
-        return metrics;
+      rpcMetrics = this.methodMetrics.get(key);
+      if (rpcMetrics != null) {
+        return rpcMetrics;
       }
-      metrics = RpcMetrics.createRpcMetrics(key);
-      this.metrics.put(key, metrics);
-      return metrics;
+      rpcMetrics = RpcMetrics.createRpcMetrics(key);
+      this.methodMetrics.put(key, rpcMetrics);
+      return rpcMetrics;
     }
   }
 }

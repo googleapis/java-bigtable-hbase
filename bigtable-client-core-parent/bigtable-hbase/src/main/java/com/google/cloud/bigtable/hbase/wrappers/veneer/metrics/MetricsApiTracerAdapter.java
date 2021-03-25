@@ -61,18 +61,12 @@ public class MetricsApiTracerAdapter implements ApiTracer {
 
   @Override
   public void operationFailed(Throwable error) {
-    switch (lastRetryStatus) {
-      case PERMANENT_FAILURE:
-        rpcMetrics.markFailure();
-        break;
-      case RETRIES_EXHAUSTED:
-        rpcMetrics.markRetriesExhausted();
-        break;
-      case ATTEMPT_RETRYABLE_FAILURE:
-        rpcMetrics.markFailure();
-      default:
-        rpcMetrics.markFailure();
+    if (lastRetryStatus == RetryStatus.RETRIES_EXHAUSTED) {
+      rpcMetrics.markRetriesExhausted();
+    } else {
+      rpcMetrics.markFailure();
     }
+    operationTimer.close();
   }
 
   @Override
@@ -104,14 +98,12 @@ public class MetricsApiTracerAdapter implements ApiTracer {
   public void attemptFailedRetriesExhausted(Throwable error) {
     rpcTimer.close();
     lastRetryStatus = RetryStatus.RETRIES_EXHAUSTED;
-    rpcMetrics.markRetriesExhausted();
   }
 
   @Override
   public void attemptPermanentFailure(Throwable error) {
     rpcTimer.close();
     lastRetryStatus = RetryStatus.PERMANENT_FAILURE;
-    rpcMetrics.markFailure();
   }
 
   @Override

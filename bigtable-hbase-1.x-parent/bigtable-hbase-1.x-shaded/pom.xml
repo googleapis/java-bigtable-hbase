@@ -197,7 +197,6 @@ limitations under the License.
                     -->
                     <exclude>com.google.cloud.bigtable.hbase*.**</exclude>
                     <exclude>com.google.cloud.bigtable.metrics.**</exclude>
-                    <exclude>com.google.cloud.bigtable.hbase.wrappers.veneer.metrics.**</exclude>
 
                     <!-- in case maven is called with overlapping goals (ie. mvn install verify),
                     avoid double relocation -->

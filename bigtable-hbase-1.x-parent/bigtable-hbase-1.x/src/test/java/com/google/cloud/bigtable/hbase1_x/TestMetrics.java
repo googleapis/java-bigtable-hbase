@@ -15,11 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase1_x;
 
-import static org.junit.Assert.assertEquals;
 
-import com.google.bigtable.v2.BigtableGrpc;
-import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.v2.ReadRowsResponse;
+import com.google.bigtable.v2.*;
 import com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
@@ -43,9 +40,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -66,12 +62,18 @@ public class TestMetrics {
   private static Server server;
   private static int dataPort;
   private static final AtomicInteger callCount = new AtomicInteger(1);
+  private FakeMetricRegistry fakeMetricRegistry;
 
   private MetricRegistry originalMetricRegistry;
   private BigtableClientMetrics.MetricLevel originalLevelToLog;
 
   private static final FakeDataService fakeDataService = new FakeDataService();
   private BigtableConnection connection;
+
+  private final byte[] rowKey = Bytes.toBytes("row");
+  private final byte[] columnFamily = Bytes.toBytes("cf");
+  private final byte[] qualifier = Bytes.toBytes("q");
+  private final byte[] value = Bytes.toBytes("value");
 
   @Before
   public void setUp() throws IOException {
@@ -86,6 +88,10 @@ public class TestMetrics {
     configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + dataPort);
     configuration.set(BigtableOptionsFactory.BIGTABLE_USE_GCJ_CLIENT, "true");
     connection = new BigtableConnection(configuration);
+
+    fakeMetricRegistry = new FakeMetricRegistry();
+    BigtableClientMetrics.setMetricRegistry(fakeMetricRegistry);
+    BigtableClientMetrics.setLevelToLog(BigtableClientMetrics.MetricLevel.Debug);
   }
 
   @BeforeClass
@@ -118,17 +124,13 @@ public class TestMetrics {
    */
   @Test
   public void readRows() throws IOException, InterruptedException {
-    FakeMetricRegistry fakeMetricRegistry = new FakeMetricRegistry();
-
-    BigtableClientMetrics.setMetricRegistry(fakeMetricRegistry);
     Table table = connection.getTable(TABLE_NAME);
 
     Stopwatch readRowsStopwatch = Stopwatch.createStarted();
     Result result = table.get(new Get(new byte[2]));
     long readRowsTime = readRowsStopwatch.elapsed(TimeUnit.MILLISECONDS);
 
-    ReadRowsRequest request = fakeDataService.popLastRequest();
-    assertEquals(FULL_TABLE_NAME, request.getTableName());
+    fakeDataService.popLastRequest();
 
     AtomicLong readRowFailure =
         fakeMetricRegistry.results.get(
@@ -140,12 +142,58 @@ public class TestMetrics {
         fakeMetricRegistry.results.get("google-cloud-bigtable.table.get.latency");
 
     Assert.assertEquals(3, readRowFailure.get());
+
+    long operationLatencyResult = operationLatency.get();
     Assert.assertTrue(
-        "operation latency for ReadRow took longer than expected",
-        operationLatency.get() <= readRowsTime + 20 && operationLatency.get() >= readRowsTime - 50);
+        "operation latency for ReadRow took longer than expected, readRowsTime: "
+            + readRowsTime
+            + ", operationLatency: "
+            + operationLatencyResult
+            + " difference: "
+            + Math.abs(readRowsTime - operationLatencyResult),
+        operationLatencyResult <= readRowsTime + 50 && operationLatencyResult >= readRowsTime - 50);
     Assert.assertTrue(
         "operation latency for table.get took longer than expected",
-        tableGetLatency.get() <= readRowsTime + 20 && operationLatency.get() >= readRowsTime - 50);
+        tableGetLatency.get() <= readRowsTime + 50 && operationLatencyResult >= readRowsTime - 50);
+  }
+
+  @Test
+  public void rowMutations() throws IOException {
+    Table table = connection.getTable(TABLE_NAME);
+
+    RowMutations row = new RowMutations(rowKey);
+    row.add(new Put(rowKey).addColumn(columnFamily, qualifier, value));
+
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    table.mutateRow(row);
+    long elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+
+    fakeDataService.popLastRequest();
+    long latency =
+        fakeMetricRegistry
+            .results
+            .get("google-cloud-bigtable.grpc.method.MutateRow.rpc.latency")
+            .get();
+    Assert.assertTrue(latency <= elapsed + 50 && latency >= elapsed - 50);
+  }
+
+  @Test
+  public void appendFailure() throws IOException {
+    Table table = connection.getTable(TABLE_NAME);
+    Append append = new Append(rowKey);
+    append.add(columnFamily, qualifier, value);
+    try {
+      table.append(append);
+      Assert.fail("operation should have failed");
+    } catch (Exception e) {
+      fakeDataService.popLastRequest();
+      long failureCount =
+          fakeMetricRegistry
+              .results
+              .get("google-cloud-bigtable.grpc.method.ReadModifyWriteRow.failure")
+              .get();
+      Assert.assertEquals(1, failureCount);
+    }
   }
 
   private static class FakeDataService extends BigtableGrpc.BigtableImplBase {
@@ -161,17 +209,36 @@ public class TestMetrics {
     public void readRows(
         ReadRowsRequest request, StreamObserver<ReadRowsResponse> responseObserver) {
       requests.add(request);
-      try {
-        Thread.sleep(5);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
+
       if (callCount.getAndIncrement() < 4) {
         responseObserver.onError(new StatusRuntimeException(Status.UNAVAILABLE));
       } else {
+        try {
+          Thread.sleep(20);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+
         responseObserver.onNext(ReadRowsResponse.newBuilder().build());
         responseObserver.onCompleted();
       }
+    }
+
+    @Override
+    public void readModifyWriteRow(
+        ReadModifyWriteRowRequest request,
+        StreamObserver<ReadModifyWriteRowResponse> responseObserver) {
+      requests.add(request);
+
+      responseObserver.onError(new StatusRuntimeException(Status.FAILED_PRECONDITION));
+    }
+
+    @Override
+    public void mutateRow(
+        MutateRowRequest request, StreamObserver<MutateRowResponse> responseObserver) {
+      requests.add(request);
+      responseObserver.onNext(MutateRowResponse.newBuilder().build());
+      responseObserver.onCompleted();
     }
   }
 
@@ -185,25 +252,21 @@ public class TestMetrics {
       // counter operations either increment or decrement a key's value
       return new Counter() {
         @Override
-        public void inc() {
-          synchronized (lock) {
-            AtomicLong atomicLong = results.get(name);
-            if (atomicLong == null) {
-              AtomicLong value = new AtomicLong();
-              results.put(name, value);
-            }
+        public synchronized void inc() {
+          AtomicLong atomicLong = results.get(name);
+          if (atomicLong == null) {
+            AtomicLong value = new AtomicLong();
+            results.put(name, value);
           }
           results.get(name).getAndIncrement();
         }
 
         @Override
-        public void dec() {
-          synchronized (lock) {
-            AtomicLong atomicLong = results.get(name);
-            if (atomicLong == null) {
-              AtomicLong value = new AtomicLong();
-              results.put(name, value);
-            }
+        public synchronized void dec() {
+          AtomicLong atomicLong = results.get(name);
+          if (atomicLong == null) {
+            AtomicLong value = new AtomicLong();
+            results.put(name, value);
           }
           results.get(name).getAndDecrement();
         }
@@ -217,49 +280,41 @@ public class TestMetrics {
         final Stopwatch stopwatch = Stopwatch.createStarted();
 
         @Override
-        public Context time() {
+        public synchronized Context time() {
           return new Context() {
             @Override
             public void close() {
-              synchronized (lock) {
-                results.put(name, new AtomicLong(stopwatch.elapsed(TimeUnit.MILLISECONDS)));
-              }
+              results.put(name, new AtomicLong(stopwatch.elapsed(TimeUnit.MILLISECONDS)));
             }
           };
         }
 
         @Override
-        public void update(long duration, TimeUnit unit) {
+        public synchronized void update(long duration, TimeUnit unit) {
           // update operations overwrite a key's value
-          synchronized (lock) {
-            results.put(name, new AtomicLong(duration));
-          }
+          results.put(name, new AtomicLong(duration));
         }
       };
     }
 
     @Override
-    public Meter meter(final String name) {
+    public synchronized Meter meter(final String name) {
       // meter operations increment the current key's value
       return new Meter() {
         @Override
         public void mark() {
-          synchronized (lock) {
-            AtomicLong atomicLong = results.get(name);
-            if (atomicLong == null) {
-              AtomicLong value = new AtomicLong();
-              results.put(name, value);
-            }
+          AtomicLong atomicLong = results.get(name);
+          if (atomicLong == null) {
+            AtomicLong value = new AtomicLong();
+            results.put(name, value);
           }
           results.get(name).getAndIncrement();
         }
 
         // unless a size is specified, in which case it is overridden
         @Override
-        public void mark(long size) {
-          synchronized (lock) {
-            results.put(name, new AtomicLong(size));
-          }
+        public synchronized void mark(long size) {
+          results.put(name, new AtomicLong(size));
         }
       };
     }
