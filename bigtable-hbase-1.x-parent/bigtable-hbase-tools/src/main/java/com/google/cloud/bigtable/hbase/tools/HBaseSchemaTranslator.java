@@ -21,6 +21,7 @@ import com.google.cloud.bigtable.hbase.tools.ClusterSchemaDefinition.TableSchema
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,10 +46,11 @@ public class HBaseSchemaTranslator {
   public static final String OUTPUT_FILE_KEY = "google.bigtable.output.filepath";
   public static final String TABLE_NAME_FILTER_KEY = "google.bigtable.table.filter";
 
-  private SchemaReadingStrategy readingStrategy;
-  private SchemaWritingStrategy writingStrategy;
-  // TODO Add a customizing strategy.
+  private final SchemaReader schemaReader;
+  private final SchemaWriter schemaWriter;
+  // TODO Add a schemaOverrider
 
+  @VisibleForTesting
   static class SchemaTranslationOptions {
 
     String projectId;
@@ -127,17 +129,16 @@ public class HBaseSchemaTranslator {
     }
   }
 
-  // All strategies should be static and stateless.
-  interface SchemaReadingStrategy {
+  interface SchemaReader {
 
     ClusterSchemaDefinition readSchema() throws IOException;
   }
 
-  static class FileBasedSchemaReadingStrategy implements SchemaReadingStrategy {
+  static class FileBasedSchemaReader implements SchemaReader {
 
     String schemaFilePath;
 
-    public FileBasedSchemaReadingStrategy(String schemaFilePath) {
+    public FileBasedSchemaReader(String schemaFilePath) {
       this.schemaFilePath = schemaFilePath;
     }
 
@@ -147,12 +148,12 @@ public class HBaseSchemaTranslator {
     }
   }
 
-  static class HBaseSchemaReadingStrategy implements SchemaReadingStrategy {
+  static class HBaseSchemaReader implements SchemaReader {
     private final String tableFilterPattern;
     private final Admin hbaseAdmin;
 
-    public HBaseSchemaReadingStrategy(
-        String zookeeperQuorum, int zookeeperPort, String tableFilterPattern) throws IOException {
+    public HBaseSchemaReader(String zookeeperQuorum, int zookeeperPort, String tableFilterPattern)
+        throws IOException {
 
       // If no filter is provided, use `.*` to match all the tables.
       this.tableFilterPattern = tableFilterPattern == null ? ".*" : tableFilterPattern;
@@ -166,7 +167,7 @@ public class HBaseSchemaTranslator {
     }
 
     @VisibleForTesting
-    HBaseSchemaReadingStrategy(Admin admin, String tableFilterPattern) {
+    HBaseSchemaReader(Admin admin, String tableFilterPattern) {
       this.hbaseAdmin = admin;
       // If no filter is provided, use `.*` to match all the tables.
       this.tableFilterPattern = tableFilterPattern == null ? ".*" : tableFilterPattern;
@@ -239,16 +240,16 @@ public class HBaseSchemaTranslator {
     }
   }
 
-  interface SchemaWritingStrategy {
+  interface SchemaWriter {
 
     void writeSchema(ClusterSchemaDefinition schemaDefinition) throws IOException;
   }
 
-  static class FileBasedSchemaWritingStrategy implements SchemaWritingStrategy {
+  static class FileBasedSchemaWriter implements SchemaWriter {
 
     String outputFilePath;
 
-    public FileBasedSchemaWritingStrategy(String outputFilePath) {
+    public FileBasedSchemaWriter(String outputFilePath) {
       this.outputFilePath = outputFilePath;
     }
 
@@ -260,23 +261,23 @@ public class HBaseSchemaTranslator {
     }
   }
 
-  static class BigtableBasedSchemaWritingStrategy implements SchemaWritingStrategy {
+  static class BigtableBasedSchemaWriter implements SchemaWriter {
 
     private final Admin btAdmin;
 
-    public BigtableBasedSchemaWritingStrategy(String projectId, String instanceId)
-        throws IOException {
+    public BigtableBasedSchemaWriter(String projectId, String instanceId) throws IOException {
       Configuration btConf = BigtableConfiguration.configure(projectId, instanceId);
       this.btAdmin = ConnectionFactory.createConnection(btConf).getAdmin();
     }
 
     @VisibleForTesting
-    BigtableBasedSchemaWritingStrategy(Admin btAdmin) {
+    BigtableBasedSchemaWriter(Admin btAdmin) {
       this.btAdmin = btAdmin;
     }
 
     @Override
     public void writeSchema(ClusterSchemaDefinition schemaDefinition) throws IOException {
+      List<String> failedTables = new ArrayList<>();
       for (TableSchemaDefinition tableSchemaDefinition : schemaDefinition.tableSchemaDefinitions) {
         String tableName = tableSchemaDefinition.name;
         try {
@@ -284,11 +285,16 @@ public class HBaseSchemaTranslator {
               tableSchemaDefinition.getHbaseTableDescriptor(), tableSchemaDefinition.splits);
           System.out.println("Successfully created table " + tableName + "  in Bigtable cluster.");
         } catch (Exception e) {
+          failedTables.add(tableName);
           System.err.println("failed to create table " + tableName);
           e.printStackTrace();
           // Continue creating tables in BT. Skipping creation failures makes the script idempotent
           // as BT will throw TableExistsException for a table that is already present.
         }
+      }
+      if (!failedTables.isEmpty()) {
+        throw new RuntimeException(
+            "Failed to create some tables in Cloud Bigtable: " + failedTables);
       }
     }
   }
@@ -296,32 +302,30 @@ public class HBaseSchemaTranslator {
   public HBaseSchemaTranslator(SchemaTranslationOptions options) throws IOException {
     Preconditions.checkNotNull(options, "SchemaTranslationOptions can not be null.");
     if (options.inputFilePath != null) {
-      this.readingStrategy = new FileBasedSchemaReadingStrategy(options.inputFilePath);
+      this.schemaReader = new FileBasedSchemaReader(options.inputFilePath);
     } else {
-      this.readingStrategy =
-          new HBaseSchemaReadingStrategy(
+      this.schemaReader =
+          new HBaseSchemaReader(
               options.zookeeperQuorum, options.zookeeperPort, options.tableNameFilter);
     }
 
     if (options.outputFilePath != null) {
-      this.writingStrategy = new FileBasedSchemaWritingStrategy(options.outputFilePath);
+      this.schemaWriter = new FileBasedSchemaWriter(options.outputFilePath);
     } else {
-      this.writingStrategy =
-          new BigtableBasedSchemaWritingStrategy(options.projectId, options.instanceId);
+      this.schemaWriter = new BigtableBasedSchemaWriter(options.projectId, options.instanceId);
     }
   }
 
   @VisibleForTesting
-  HBaseSchemaTranslator(
-      SchemaReadingStrategy readingStrategy, SchemaWritingStrategy writingStrategy) {
-    this.readingStrategy = readingStrategy;
-    this.writingStrategy = writingStrategy;
+  HBaseSchemaTranslator(SchemaReader schemaReader, SchemaWriter schemaWriter) {
+    this.schemaReader = schemaReader;
+    this.schemaWriter = schemaWriter;
   }
 
   public void translate() throws IOException {
-    ClusterSchemaDefinition schemaDefinition = readingStrategy.readSchema();
+    ClusterSchemaDefinition schemaDefinition = schemaReader.readSchema();
     System.out.println("Found schema: " + schemaDefinition);
-    this.writingStrategy.writeSchema(schemaDefinition);
+    this.schemaWriter.writeSchema(schemaDefinition);
   }
 
   // -Dgoogle.bigtable.project.id="google.com:cloud-bigtable-dev"

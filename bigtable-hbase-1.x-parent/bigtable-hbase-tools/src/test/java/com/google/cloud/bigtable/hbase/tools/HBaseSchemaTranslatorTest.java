@@ -15,13 +15,14 @@
  */
 package com.google.cloud.bigtable.hbase.tools;
 
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.eq;
 
 import com.google.cloud.bigtable.hbase.tools.ClusterSchemaDefinition.TableSchemaDefinition;
-import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.BigtableBasedSchemaWritingStrategy;
-import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.FileBasedSchemaReadingStrategy;
-import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.FileBasedSchemaWritingStrategy;
-import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.HBaseSchemaReadingStrategy;
+import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.BigtableBasedSchemaWriter;
+import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.FileBasedSchemaReader;
+import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.FileBasedSchemaWriter;
+import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.HBaseSchemaReader;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,7 +36,6 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -57,13 +57,9 @@ public class HBaseSchemaTranslatorTest {
 
   @Rule public TemporaryFolder tempFolder = new TemporaryFolder();
 
-  ClusterSchemaDefinition schemaDefinition;
+  private final ClusterSchemaDefinition schemaDefinition;
 
-  public void showUsage() {}
-
-  @Before
-  public void setUp() throws IOException, DeserializationException {
-
+  public HBaseSchemaTranslatorTest() {
     schemaDefinition = new ClusterSchemaDefinition();
     TableSchemaDefinition tableSchemaDefinition = new TableSchemaDefinition();
     tableSchemaDefinition.name = "test-table1";
@@ -85,63 +81,9 @@ public class HBaseSchemaTranslatorTest {
     tableSchemaDefinition2.splits = new byte[0][];
     tableSchemaDefinition2.tableDescriptor = tableDescriptor2.toByteArray();
     schemaDefinition.tableSchemaDefinitions.add(tableSchemaDefinition2);
-
-    // Setup expectations on mocks.
-    Mockito.when(hbaseAdmin.listTables(eq(".*"))).thenReturn(getTables());
-    Mockito.when(hbaseAdmin.getTableRegions(eq(TableName.valueOf("test-table1"))))
-        .thenReturn(getRegions(0));
-    Mockito.when(hbaseAdmin.getTableRegions(eq(TableName.valueOf("test-table2"))))
-        .thenReturn(getRegions(1));
   }
 
-  @After
-  public void tearDown() throws Exception {
-    Mockito.verify(btAdmin)
-        .createTable(
-            eq(schemaDefinition.tableSchemaDefinitions.get(0).getHbaseTableDescriptor()),
-            eq(schemaDefinition.tableSchemaDefinitions.get(0).splits));
-    Mockito.verify(btAdmin)
-        .createTable(
-            eq(schemaDefinition.tableSchemaDefinitions.get(1).getHbaseTableDescriptor()),
-            eq(schemaDefinition.tableSchemaDefinitions.get(1).splits));
-    Mockito.verify(hbaseAdmin).listTables(".*");
-    Mockito.verify(hbaseAdmin).getTableRegions(TableName.valueOf("test-table1"));
-    Mockito.verify(hbaseAdmin).getTableRegions(TableName.valueOf("test-table2"));
-    Mockito.validateMockitoUsage();
-    Mockito.reset(btAdmin, hbaseAdmin);
-  }
-
-  // This test only validates that the object received from HBase is passed to Bigtable client.
-  // The acutal translation is performed by Bigtable HBase client and hence not validated here.
-  @Test
-  public void testTranslateFromHBaseToBigtable() throws IOException, DeserializationException {
-    // Create a translator;
-    HBaseSchemaTranslator translator =
-        new HBaseSchemaTranslator(
-            new HBaseSchemaReadingStrategy(hbaseAdmin, ".*"),
-            new BigtableBasedSchemaWritingStrategy(btAdmin));
-
-    translator.translate();
-  }
-
-  @Test
-  public void testTranslateHBaseToBigtableViaFile() throws IOException {
-
-    File schemaFile = tempFolder.newFile("schema.json");
-    HBaseSchemaTranslator translator1 =
-        new HBaseSchemaTranslator(
-            new HBaseSchemaReadingStrategy(hbaseAdmin, ".*"),
-            new FileBasedSchemaWritingStrategy(schemaFile.getPath()));
-
-    translator1.translate();
-
-    HBaseSchemaTranslator translator2 =
-        new HBaseSchemaTranslator(
-            new FileBasedSchemaReadingStrategy(schemaFile.getPath()),
-            new BigtableBasedSchemaWritingStrategy(btAdmin));
-
-    translator2.translate();
-  }
+  public void showUsage() {}
 
   private List<HRegionInfo> getRegions(int tableIndex) {
     List<HRegionInfo> regions = new ArrayList<>();
@@ -173,5 +115,159 @@ public class HBaseSchemaTranslatorTest {
     }
     System.out.println("Created tables " + Arrays.asList(tables));
     return tables;
+  }
+
+  private void setUpHBaseAdmin() throws IOException, DeserializationException {
+
+    // Setup expectations on mocks.
+    Mockito.when(hbaseAdmin.listTables(eq(".*"))).thenReturn(getTables());
+    Mockito.when(hbaseAdmin.getTableRegions(eq(TableName.valueOf("test-table1"))))
+        .thenReturn(getRegions(0));
+    Mockito.when(hbaseAdmin.getTableRegions(eq(TableName.valueOf("test-table2"))))
+        .thenReturn(getRegions(1));
+  }
+
+  private void verifyMocks() throws DeserializationException, IOException {
+    Mockito.verify(btAdmin)
+        .createTable(
+            eq(schemaDefinition.tableSchemaDefinitions.get(0).getHbaseTableDescriptor()),
+            eq(schemaDefinition.tableSchemaDefinitions.get(0).splits));
+    Mockito.verify(btAdmin)
+        .createTable(
+            eq(schemaDefinition.tableSchemaDefinitions.get(1).getHbaseTableDescriptor()),
+            eq(schemaDefinition.tableSchemaDefinitions.get(1).splits));
+    Mockito.verify(hbaseAdmin).listTables(".*");
+    Mockito.verify(hbaseAdmin).getTableRegions(TableName.valueOf("test-table1"));
+    Mockito.verify(hbaseAdmin).getTableRegions(TableName.valueOf("test-table2"));
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    Mockito.validateMockitoUsage();
+    Mockito.reset(btAdmin, hbaseAdmin);
+  }
+
+  ///////////////////////////////////// Happy Cases ///////////////////////////////////////////////
+
+  // These tests only validates that the object received from HBase is passed to Bigtable client.
+  // The actual translation is performed by Bigtable HBase client and hence not validated here.
+  @Test
+  public void testTranslateFromHBaseToBigtable() throws IOException, DeserializationException {
+    // Setup HBase admin client.
+    setUpHBaseAdmin();
+
+    // Create a translator;
+    HBaseSchemaTranslator translator =
+        new HBaseSchemaTranslator(
+            new HBaseSchemaReader(hbaseAdmin, ".*"), new BigtableBasedSchemaWriter(btAdmin));
+
+    translator.translate();
+
+    // Validate that everything was called properly.
+    verifyMocks();
+  }
+
+  @Test
+  public void testTranslateHBaseToBigtableViaFile() throws IOException, DeserializationException {
+    // Setup HBase admin client.
+    setUpHBaseAdmin();
+
+    File schemaFile = tempFolder.newFile("schema.json");
+    HBaseSchemaTranslator translator1 =
+        new HBaseSchemaTranslator(
+            new HBaseSchemaReader(hbaseAdmin, ".*"),
+            new FileBasedSchemaWriter(schemaFile.getPath()));
+
+    translator1.translate();
+
+    HBaseSchemaTranslator translator2 =
+        new HBaseSchemaTranslator(
+            new FileBasedSchemaReader(schemaFile.getPath()),
+            new BigtableBasedSchemaWriter(btAdmin));
+
+    translator2.translate();
+
+    // Validate that everything was called properly.
+    verifyMocks();
+  }
+
+  ///////////////////////////////////// Exception Tests ///////////////////////////////////////////
+
+  @Test
+  public void testHBaseListTableFails() throws IOException {
+
+    Mockito.when(hbaseAdmin.listTables(eq(".*"))).thenThrow(new IOException("List table failed"));
+
+    // Create a translator;
+    HBaseSchemaTranslator translator =
+        new HBaseSchemaTranslator(
+            new HBaseSchemaReader(hbaseAdmin, ".*"), new BigtableBasedSchemaWriter(btAdmin));
+    try {
+      translator.translate();
+      fail("Expected IOException here.");
+    } catch (IOException e) {
+      // Expected.
+      e.printStackTrace();
+    } catch (Exception e) {
+      fail("Expected IOException but found: " + e.toString());
+    } finally {
+      // Verify that the listTables was called.
+      Mockito.verify(hbaseAdmin).listTables(".*");
+    }
+  }
+
+  @Test
+  public void testHBaseGetTableRegionFails() throws IOException, DeserializationException {
+
+    Mockito.when(hbaseAdmin.listTables(eq(".*"))).thenReturn(getTables());
+    Mockito.when(hbaseAdmin.getTableRegions(eq(TableName.valueOf("test-table1"))))
+        .thenThrow(new IOException("getTableRegions failed."));
+
+    // Create a translator;
+    HBaseSchemaTranslator translator =
+        new HBaseSchemaTranslator(
+            new HBaseSchemaReader(hbaseAdmin, ".*"), new BigtableBasedSchemaWriter(btAdmin));
+    try {
+      translator.translate();
+      fail("Expected IOException here.");
+    } catch (IOException e) {
+      // Expected.
+      e.printStackTrace();
+    } catch (Exception e) {
+      fail("Expected IOException but found: " + e.toString());
+    } finally {
+      // Verify that the HBase admin was called.
+      Mockito.verify(hbaseAdmin).listTables(".*");
+      Mockito.verify(hbaseAdmin).getTableRegions(TableName.valueOf("test-table1"));
+    }
+  }
+
+  @Test
+  public void testBigtableCreateTableFails() throws IOException, DeserializationException {
+    // Setup HBase to return the tables.
+    setUpHBaseAdmin();
+
+    Mockito.doThrow(new IOException("CBT create table failed."))
+        .when(btAdmin)
+        .createTable(
+            eq(schemaDefinition.tableSchemaDefinitions.get(0).getHbaseTableDescriptor()),
+            eq(schemaDefinition.tableSchemaDefinitions.get(0).splits));
+
+    // Create a translator;
+    HBaseSchemaTranslator translator =
+        new HBaseSchemaTranslator(
+            new HBaseSchemaReader(hbaseAdmin, ".*"), new BigtableBasedSchemaWriter(btAdmin));
+    try {
+      translator.translate();
+      fail("Expected IOException here.");
+    } catch (RuntimeException e) {
+      // Expected.
+      e.printStackTrace();
+    } catch (Exception e) {
+      fail("Expected IOException but found: " + e.toString());
+    } finally {
+      // Verify that the listTables was called.
+      verifyMocks();
+    }
   }
 }
