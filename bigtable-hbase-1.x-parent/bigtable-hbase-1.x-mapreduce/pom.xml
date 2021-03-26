@@ -90,18 +90,7 @@ limitations under the License.
       <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-client</artifactId>
-      <version>2.2.3</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.google.auto.value</groupId>
-      <artifactId>auto-value-annotations</artifactId>
-      <version>1.7.4</version>
-    </dependency>
-</dependencies>
+  </dependencies>
 
   <build>
     <plugins>
