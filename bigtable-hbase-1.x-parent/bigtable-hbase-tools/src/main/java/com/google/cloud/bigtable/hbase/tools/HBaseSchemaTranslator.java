@@ -112,8 +112,7 @@ public class HBaseSchemaTranslator {
             INSTANCE_ID_KEY + "/" + PROJECT_ID_KEY + " can not be set when output file is set.");
       } else {
         Preconditions.checkArgument(
-            projectId != null && instanceId != null,
-            "Schema destination not specified.");
+            projectId != null && instanceId != null, "Schema destination not specified.");
       }
 
       if (inputFilePath != null) {
@@ -130,8 +129,7 @@ public class HBaseSchemaTranslator {
                 + "TableFilter should be used when writing the schema to the file.");
       } else {
         Preconditions.checkArgument(
-            zookeeperQuorum != null && zookeeperPort != null,
-            "Schema source not specified. ");
+            zookeeperQuorum != null && zookeeperPort != null, "Schema source not specified. ");
       }
     }
 

@@ -48,7 +48,6 @@ limitations under the License.
     <module>bigtable-hbase-2.x-parent</module>
     <module>bigtable-dataflow-parent</module>
     <module>bigtable-test</module>
-    <module>bigtable-hbase-tools</module>
   </modules>
 
   <properties>
