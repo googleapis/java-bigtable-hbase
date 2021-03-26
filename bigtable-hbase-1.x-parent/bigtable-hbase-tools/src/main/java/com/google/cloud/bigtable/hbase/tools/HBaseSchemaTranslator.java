@@ -21,6 +21,7 @@ import com.google.cloud.bigtable.hbase.tools.ClusterSchemaDefinition.TableSchema
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -36,6 +37,45 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.htrace.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.htrace.fasterxml.jackson.databind.ObjectWriter;
 
+/**
+ * A utility to create tables in Cloud Bigtable based on the tables in an HBase cluster.
+ *
+ * <p>Execute the following command to copy the schema from HBase to Cloud Bigtable:
+ *
+ * <pre>
+ * java -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator \
+ *  -Dhbase.zookeeper.quorum=$ZOOKEEPER_QUORUM \
+ *  -Dhbase.zookeeper.property.clientPort=$ZOOKEEPER_PORT \
+ *  -Dgoogle.bigtable.table.filter=$TABLE_NAME_REGEX \
+ *  -Dgoogle.bigtable.project.id=$PROJECT_ID \
+ *  -Dgoogle.bigtable.instance.id=$INSTANCE_ID
+ * </pre>
+ *
+ * <p>There are 2 ways to run this tool. If you can connect to both HBase and Cloud Bigtable, you
+ * can use the above method to create tables in Cloud Bigtable directly. However, if HBase master is
+ * in a private VPC or can't connect to internet, you can dump HBase schema in a file and create
+ * tables in Cloud Bigtable using that file.
+ *
+ * <p>Run the tool from a host that can connect to HBase. Store HBase schema in a file:
+ *
+ * <pre>
+ * java -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator \
+ *  -Dhbase.zookeeper.quorum=$ZOOKEEPER_QUORUM \
+ *  -Dhbase.zookeeper.property.clientPort=$ZOOKEEPER_PORT \
+ *  -Dgoogle.bigtable.table.filter=$TABLE_NAME_REGEX \
+ *  -Dgoogle.bigtable.output.filepath=$SCHEMA_FILE_PATH
+ * </pre>
+ *
+ * <p>Copy the schema file to a host which can connect to Google Cloud. Create tables in Cloud
+ * Bigtable using the schema file:
+ *
+ * <pre>
+ * java -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator \
+ *  -Dgoogle.bigtable.input.filepath=$SCHEMA_FILE_PATH \
+ *  -Dgoogle.bigtable.project.id=$PROJECT_ID \
+ *  -Dgoogle.bigtable.instance.id=$INSTANCE_ID
+ * </pre>
+ */
 public class HBaseSchemaTranslator {
 
   public static final String PROJECT_ID_KEY = "google.bigtable.project.id";
@@ -73,13 +113,7 @@ public class HBaseSchemaTranslator {
       } else {
         Preconditions.checkArgument(
             projectId != null && instanceId != null,
-            "Schema destination not specified. "
-                + PROJECT_ID_KEY
-                + " and "
-                + INSTANCE_ID_KEY
-                + " are both required for creating table in Cloud Bigtable. "
-                + INPUT_FILE_KEY
-                + " is required for writing schema to a file.");
+            "Schema destination not specified.");
       }
 
       if (inputFilePath != null) {
@@ -97,13 +131,7 @@ public class HBaseSchemaTranslator {
       } else {
         Preconditions.checkArgument(
             zookeeperQuorum != null && zookeeperPort != null,
-            "No schema source specified. "
-                + ZOOKEEPER_PORT_KEY
-                + " and "
-                + ZOOKEEPER_QUORUM_KEY
-                + " are both required for reading schema from HBase. "
-                + INPUT_FILE_KEY
-                + " is required to read schema from a file.");
+            "Schema source not specified. ");
       }
     }
 
@@ -123,7 +151,12 @@ public class HBaseSchemaTranslator {
       // Ensure that the options are set properly
       // TODO It is possible to validate the options without creating the object, but its less
       // readable. See if we can make it readable and validate before calling the constructor.
-      options.validateOptions();
+      try {
+        options.validateOptions();
+      } catch (Exception e) {
+        usage(e.getMessage());
+        throw e;
+      }
 
       return options;
     }
@@ -328,12 +361,53 @@ public class HBaseSchemaTranslator {
     this.schemaWriter.writeSchema(schemaDefinition);
   }
 
-  // -Dgoogle.bigtable.project.id="google.com:cloud-bigtable-dev"
-  // -Dgoogle.bigtable.instance.id="shitanshu-test"
-  // -Dgoogle.bigtable.input.filepath="/tmp/schemaHbase.json"
-  // -Dgoogle.bigtable.output.filepath="/tmp/schemaHbase.json"
-  // -Dgoogle.bigtable.table.filter="hbase.*" -Dhbase.zookeeper.property.clientPort="2181"
-  // -Dhbase.zookeeper.quorum="127.0.0.1"
+  /*
+   * @param errorMsg Error message.  Can be null.
+   */
+  private static void usage(final String errorMsg) {
+    if (errorMsg != null && errorMsg.length() > 0) {
+      System.err.println("ERROR: " + errorMsg);
+    }
+    String jarName = null;
+    try {
+      jarName =
+          new File(
+                  HBaseSchemaTranslator.class
+                      .getProtectionDomain()
+                      .getCodeSource()
+                      .getLocation()
+                      .toURI()
+                      .getPath())
+              .getName();
+    } catch (URISyntaxException e) {
+      jarName = "<jar>";
+    }
+
+    System.err.printf(
+        "Usage: java -jar %s com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator "
+            + "<schema_source> <schema_destination> <table-name-regex> \n\n",
+        jarName);
+    System.err.println("  Schema Source can be 1 of the following:");
+    System.err.println(
+        "   -D "
+            + ZOOKEEPER_QUORUM_KEY
+            + "=<zookeeper quorum> -D "
+            + ZOOKEEPER_PORT_KEY
+            + "=<zookeeper port>");
+    System.err.println("   -D " + INPUT_FILE_KEY + "=<schema file path>");
+    System.err.println("  Schema destination can be 1 of the following:");
+    System.err.println(
+        "   -D "
+            + PROJECT_ID_KEY
+            + "=<bigtable project id> -D "
+            + INSTANCE_ID_KEY
+            + "=<bigtable instance id>");
+    System.err.println("   -D " + OUTPUT_FILE_KEY + "=<schema file path>");
+    System.err.println(
+        "  Additionally, you can filter tables to create when using HBase as source");
+    System.err.println("   -D " + TABLE_NAME_FILTER_KEY + "=<table name regex>");
+  }
+
   public static void main(String[] args) throws IOException {
     SchemaTranslationOptions options = SchemaTranslationOptions.loadOptionsFromSystemProperties();
     HBaseSchemaTranslator translator = new HBaseSchemaTranslator(options);
