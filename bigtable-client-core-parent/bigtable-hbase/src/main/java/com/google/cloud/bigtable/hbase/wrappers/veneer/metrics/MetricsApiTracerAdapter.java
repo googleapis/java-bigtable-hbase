@@ -74,6 +74,7 @@ public class MetricsApiTracerAdapter implements ApiTracer {
 
   @Override
   public void attemptStarted(int attemptNumber) {
+    lastRetryStatus = RetryStatus.PERMANENT_FAILURE;
     rpcTimer = rpcMetrics.timeRpc();
   }
 
