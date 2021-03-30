@@ -18,6 +18,9 @@ package com.google.cloud.bigtable.hbase2_x;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import java.io.IOException;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -28,6 +31,7 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Hbck;
 import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.client.RegionInfoBuilder;
 import org.apache.hadoop.hbase.client.Table;
@@ -139,5 +143,66 @@ public class BigtableConnection extends AbstractBigtableConnection {
       regionInfos.add(location.getRegionInfo());
     }
     return regionInfos;
+  }
+
+  @Override
+  public Hbck getHbck() throws IOException {
+    return createUnsupportedProxy(Hbck.class);
+  }
+
+  @Override
+  public Hbck getHbck(ServerName masterServer) throws IOException {
+    return createUnsupportedProxy(Hbck.class);
+  }
+
+  /**
+   * Create a dynamic proxy for the passed in interface.
+   *
+   * <p>The proxy will implement all methods by throwing an {@link UnsupportedOperationException}.
+   * This is useful for deferring the exception being thrown. For example hbase shell will acquire a
+   * reference toHbck, but wont actually use it. So it would be useful to allow hbase shell to
+   * initialize and defer the UnsupportOperationExcetion on Hbck is actually invoked.
+   */
+  private <T> T createUnsupportedProxy(Class<T> cls) {
+    @SuppressWarnings("unchecked")
+    T proxy =
+        (T)
+            Proxy.newProxyInstance(
+                cls.getClassLoader(),
+                new Class<?>[] {cls},
+                new UnsupportedInvocationHandler("Unsupported" + cls.getSimpleName()));
+
+    return proxy;
+  }
+
+  private static class UnsupportedInvocationHandler implements InvocationHandler {
+    private final String name;
+
+    private UnsupportedInvocationHandler(String name) {
+      this.name = name;
+    }
+
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+      int argCount = (args == null) ? 0 : args.length;
+
+      if (argCount == 1
+          && method.getName().equals("equals")
+          && method.getParameterTypes()[0] == Object.class) {
+        Object arg = args[0];
+        if (arg == null) {
+          return false;
+        }
+        return proxy == arg;
+      }
+      if (argCount == 0 && method.getName().equals("hashCode")) {
+        return super.hashCode();
+      }
+      if (argCount == 0 && method.getName().equals("toString")) {
+        return name;
+      }
+
+      throw new UnsupportedOperationException(name + "." + method.getName());
+    }
   }
 }
