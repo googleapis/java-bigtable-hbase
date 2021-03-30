@@ -50,10 +50,8 @@ import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.retrying.RetrySettings;
-import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.auth.Credentials;
-import com.google.cloud.bigtable.admin.v2.BigtableInstanceAdminSettings;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
@@ -63,7 +61,6 @@ import com.google.cloud.bigtable.hbase.wrappers.veneer.metrics.MetricsApiTracerA
 import io.grpc.internal.GrpcUtil;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.Collections;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Before;
@@ -71,7 +68,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
-import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class TestBigtableHBaseVeneerSettings {
@@ -171,12 +167,13 @@ public class TestBigtableHBaseVeneerSettings {
     configuration.setBoolean(BIGTABLE_USE_TIMEOUTS_KEY, true);
     configuration.setInt(INITIAL_ELAPSED_BACKOFF_MILLIS_KEY, initialElapsedMs);
     configuration.setInt(MAX_ELAPSED_BACKOFF_MILLIS_KEY, maxElapsedMs);
-    configuration.setInt(BIGTABLE_RPC_TIMEOUT_MS_KEY, rpcTimeoutMs);;
+    configuration.setInt(BIGTABLE_RPC_TIMEOUT_MS_KEY, rpcTimeoutMs);
+    ;
     configuration.setInt(READ_PARTIAL_ROW_TIMEOUT_MS, perRowTimeoutMs);
     configuration.setLong(MAX_SCAN_TIMEOUT_RETRIES, maxAttempt);
     configuration.setInt(BIGTABLE_READ_RPC_TIMEOUT_MS_KEY, readRowStreamTimeout);
-    BigtableDataSettings settings = BigtableHBaseVeneerSettings.create(configuration)
-            .getDataSettings();
+    BigtableDataSettings settings =
+        BigtableHBaseVeneerSettings.create(configuration).getDataSettings();
 
     RetrySettings readRowRetrySettings =
         settings.getStubSettings().readRowSettings().getRetrySettings();

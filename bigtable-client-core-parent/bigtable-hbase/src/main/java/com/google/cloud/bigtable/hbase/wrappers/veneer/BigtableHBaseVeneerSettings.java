@@ -39,7 +39,6 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_SE
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_BATCH;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_PLAINTEXT_NEGOTIATION;
-import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_TIMEOUTS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ENABLE_GRPC_RETRIES_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY;
@@ -67,21 +66,22 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountJwtAccessCredentials;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
+import com.google.cloud.bigtable.data.v2.BigtableDataSettings.Builder;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.stub.BigtableBatchingCallSettings;
 import com.google.cloud.bigtable.data.v2.stub.BigtableBulkReadRowsCallSettings;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
-import com.google.cloud.bigtable.data.v2.BigtableDataSettings.Builder;
-import com.google.cloud.bigtable.data.v2.stub.EnhancedBigtableStubSettings;
 import com.google.cloud.bigtable.hbase.BigtableExtendedConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableHBaseVersion;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
-import com.google.common.base.Optional;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.metrics.MetricsApiTracerAdapterFactory;
+import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import io.grpc.ManagedChannelBuilder;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
@@ -92,6 +92,7 @@ import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
@@ -244,37 +245,30 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     // Configure metrics
     configureMetricsBridge(dataBuilder);
 
-    // RPC methods - common
-    boolean isTimeoutEnabled = configuration.getBoolean(BIGTABLE_USE_TIMEOUTS_KEY, false);
-
     // Complex RPC method settings
-    Optional<Duration> bulkMutateTimeout = Optional.absent();
-    if (isTimeoutEnabled) {
-      //noinspection deprecation
-      bulkMutateTimeout =
-          extractDuration(
-              BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY,
-              BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY);
-    }
+    @SuppressWarnings("deprecation")
+    Optional<Duration> bulkMutateTimeout =
+        extractDuration(
+            BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY,
+            BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY);
+
     configureBulkMutationSettings(
         dataBuilder.stubSettings().bulkMutateRowsSettings(), bulkMutateTimeout);
 
-    Optional<Duration> scanTimeout = Optional.absent();
-    if (isTimeoutEnabled) {
-      //noinspection deprecation
-      scanTimeout =
-          extractDuration(
-              BIGTABLE_READ_RPC_TIMEOUT_MS_KEY,
-              BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY);
-    }
+    // NOTE: MAX_ELAPSED_BACKOFF_MILLIS_KEY is not used for scans
+    @SuppressWarnings("deprecation")
+    Optional<Duration> scanTimeout =
+        extractDuration(
+            BIGTABLE_READ_RPC_TIMEOUT_MS_KEY,
+            BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY);
+
     configureBulkReadRowsSettings(dataBuilder.stubSettings().bulkReadRowsSettings(), scanTimeout);
     configureReadRowsSettings(dataBuilder.stubSettings().readRowsSettings(), scanTimeout);
 
     // RPC methods - simple
-    Optional<Duration> shortTimeout = extractDuration(MAX_ELAPSED_BACKOFF_MILLIS_KEY);
-    if (isTimeoutEnabled) {
-      shortTimeout = extractDuration(BIGTABLE_RPC_TIMEOUT_MS_KEY).or(shortTimeout);
-    }
+    Optional<Duration> shortTimeout =
+        extractDuration(BIGTABLE_RPC_TIMEOUT_MS_KEY, MAX_ELAPSED_BACKOFF_MILLIS_KEY);
+
     configureNonRetryableCallSettings(
         dataBuilder.stubSettings().checkAndMutateRowSettings(), shortTimeout);
     configureNonRetryableCallSettings(
@@ -379,21 +373,18 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   }
 
   private void configureHeaderProvider(StubSettings.Builder<?, ?> stubSettings) {
-    StringBuilder agentBuilder = new StringBuilder();
-    agentBuilder
-        .append("hbase-")
-        .append(VersionInfo.getVersion())
-        .append(",")
-        .append("java-bigtable-hbase-")
-        .append(BigtableHBaseVersion.getVersion());
+    List<String> userAgentParts = Lists.newArrayList();
+    userAgentParts.add("hbase-" + VersionInfo.getVersion());
+    userAgentParts.add("java-bigtable-hbase-" + BigtableHBaseVersion.getVersion());
 
     String customUserAgent = configuration.get(CUSTOM_USER_AGENT_KEY);
     if (customUserAgent != null) {
-      agentBuilder.append(',').append(customUserAgent);
+      userAgentParts.add(customUserAgent);
     }
 
-    stubSettings.setHeaderProvider(
-        FixedHeaderProvider.create(USER_AGENT_KEY.name(), agentBuilder.toString()));
+    String userAgent = Joiner.on(",").join(userAgentParts);
+
+    stubSettings.setHeaderProvider(FixedHeaderProvider.create(USER_AGENT_KEY.name(), userAgent));
   }
 
   private void configureCredentialProvider(StubSettings.Builder<?, ?> stubSettings)
@@ -406,11 +397,9 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
     } else if (Boolean.parseBoolean(configuration.get(BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY))) {
       stubSettings.setCredentialsProvider(NoCredentialsProvider.create());
-      LOG.info("Enabling the use of null credentials. This should not be used in production.");
 
     } else if (!Strings.isNullOrEmpty(configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY))) {
       String jsonValue = configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY);
-      LOG.debug("Using json value");
       stubSettings.setCredentialsProvider(
           FixedCredentialsProvider.create(
               GoogleCredentials.fromStream(
@@ -420,19 +409,16 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
         configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY))) {
       String keyFileLocation =
           configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY);
-      LOG.debug("Using json keyfile: %s", keyFileLocation);
       stubSettings.setCredentialsProvider(
           FixedCredentialsProvider.create(
               GoogleCredentials.fromStream(new FileInputStream(keyFileLocation))));
 
     } else if (!Strings.isNullOrEmpty(configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY))) {
       String serviceAccount = configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY);
-      LOG.debug("Service account %s specified.", serviceAccount);
       String keyFileLocation = configuration.get(BIGTABLE_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY);
       Preconditions.checkState(
           !Strings.isNullOrEmpty(keyFileLocation),
           "Key file location must be specified when setting service account email");
-      LOG.debug("Using p12 keyfile: %s", keyFileLocation);
       stubSettings.setCredentialsProvider(
           FixedCredentialsProvider.create(
               buildCredentialFromPrivateKey(serviceAccount, keyFileLocation)));
@@ -548,8 +534,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       Optional<Duration> scanTimeout) {
     // Configure retries
     // NOTE: that similar but not the same as unary retry settings: per attempt timeouts don't
-    // exist,
-    // instead we use READ_PARTIAL_ROW_TIMEOUT_MS as the intra-row timeout
+    // exist, instead we use READ_PARTIAL_ROW_TIMEOUT_MS as the intra-row timeout
     if (!configuration.getBoolean(ENABLE_GRPC_RETRIES_KEY, true)) {
       // user explicitly disabled retries, treat it as a non-idempotent method
       readRowsSettings.setRetryableCodes(Collections.<StatusCode.Code>emptySet());
@@ -585,16 +570,14 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       readRowsSettings.retrySettings().setTotalTimeout(scanTimeout.get());
     }
 
-    // Configure intra-row timeouts
-    if (configuration.getBoolean(BIGTABLE_USE_TIMEOUTS_KEY, false)) {
-      String perRowTimeout = configuration.get(READ_PARTIAL_ROW_TIMEOUT_MS);
-      if (!Strings.isNullOrEmpty(perRowTimeout)) {
-        Duration rpcTimeoutMs = Duration.ofMillis(Long.parseLong(perRowTimeout));
-        readRowsSettings
-            .retrySettings()
-            .setInitialRpcTimeout(rpcTimeoutMs)
-            .setMaxRpcTimeout(rpcTimeoutMs);
-      }
+    // No request deadlines for scans, instead we use intra-row timeouts
+    String perRowTimeout = configuration.get(READ_PARTIAL_ROW_TIMEOUT_MS);
+    if (!Strings.isNullOrEmpty(perRowTimeout)) {
+      Duration rpcTimeoutMs = Duration.ofMillis(Long.parseLong(perRowTimeout));
+      readRowsSettings
+          .retrySettings()
+          .setInitialRpcTimeout(rpcTimeoutMs)
+          .setMaxRpcTimeout(rpcTimeoutMs);
     }
   }
 
@@ -655,9 +638,6 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   }
 
   private Set<StatusCode.Code> extractRetryCodesFromConfig(Set<StatusCode.Code> defaultCodes) {
-    if (isRetriesDisabled()) {
-      return Collections.emptySet();
-    }
     Set<StatusCode.Code> codes = new HashSet<>(defaultCodes);
 
     String retryCodes = configuration.get(ADDITIONAL_RETRY_CODES, "");
@@ -683,9 +663,5 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     }
 
     return codes;
-  }
-
-  private boolean isRetriesDisabled() {
-    return !configuration.getBoolean(ENABLE_GRPC_RETRIES_KEY, true);
   }
 }

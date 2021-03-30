@@ -241,7 +241,12 @@ public class BigtableOptionsFactory {
   public static final String BIGTABLE_ASYNC_MUTATOR_COUNT_KEY =
       "google.bigtable.buffered.mutator.async.worker.count";
 
-  /** Should timeouts be used? Currently, this feature is experimental. */
+  /**
+   * Should timeouts be used? Currently, this feature is experimental.
+   *
+   * @deprecated This is no longer used, timeouts are always enabled now
+   */
+  @Deprecated
   public static final String BIGTABLE_USE_TIMEOUTS_KEY = "google.bigtable.rpc.use.timeouts";
 
   /**
