@@ -449,6 +449,11 @@ limitations under the License.
     <!-- profile to run all integration tests -->
     <profile>
       <id>beamIntegrationTest</id>
+      <properties>
+        <!-- Needed to enable integration tests before we figure out -->
+        <!-- possible misconfiguration of Failsafe plugin -->
+        <skipITs>false</skipITs>
+      </properties>
       <build>
         <plugins>
           <plugin>
