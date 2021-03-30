@@ -60,7 +60,7 @@ limitations under the License.
     </dependency>
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-client-core</artifactId>
+      <artifactId>bigtable-metrics-api</artifactId>
       <version>${project.version}</version>
     </dependency>
 

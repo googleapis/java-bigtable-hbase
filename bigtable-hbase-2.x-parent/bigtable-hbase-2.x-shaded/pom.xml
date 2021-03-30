@@ -86,6 +86,12 @@ limitations under the License.
 
     <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
     <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-metrics-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
       <version>${hbase2.version}</version>
@@ -164,6 +170,7 @@ limitations under the License.
               <artifactSet>
                 <excludes>
                   <!-- exclude user visible deps -->
+                  <exclude>com.google.cloud.bigtable:bigtable-metrics-api</exclude>
                   <exclude>io.dropwizard.metrics:metrics-core</exclude>
                   <exclude>commons-logging:commons-logging</exclude>
                   <!-- exclude hbase-shaded-client & all of its dependencies -->
