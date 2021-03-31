@@ -39,6 +39,7 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.lang.time.StopWatch;
@@ -219,7 +220,10 @@ public abstract class TestRpcRetryBehavior {
     final BigtableGrpc.BigtableImplBase rpcBase = setupRpcCall();
     BigtableGrpc.BigtableImplBase rpcSleepWrapper = setupRpcServerWithSleepHandler(rpcBase);
 
-    int portNum = 54128; // Pick a port arbitrarily.
+    int portNum;
+    try (ServerSocket ss = new ServerSocket(0)) {
+      portNum = ss.getLocalPort();
+    }
     Server fakeBigtableServer = ServerBuilder.forPort(portNum).addService(rpcSleepWrapper).build();
     fakeBigtableServer.start();
     return fakeBigtableServer;
