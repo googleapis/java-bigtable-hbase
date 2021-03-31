@@ -338,6 +338,20 @@ public class TestBigtableHBaseVeneerSettings {
     BigtableDataSettings settings = settingUtils.getDataSettings();
 
     assertTrue(settings.getStubSettings().readRowsSettings().getRetryableCodes().isEmpty());
+
+    BigtableDataSettings defaultSettings =
+        BigtableDataSettings.newBuilder()
+            .setProjectId(TEST_PROJECT_ID)
+            .setInstanceId(TEST_INSTANCE_ID)
+            .build();
+
+    assertEquals(
+        settings.getStubSettings().readRowsSettings().getRetrySettings().toString(),
+        defaultSettings.getStubSettings().readRowsSettings().getRetrySettings().toString());
+
+    assertEquals(
+        settings.getStubSettings().mutateRowSettings().getRetrySettings().toString(),
+        defaultSettings.getStubSettings().mutateRowSettings().getRetrySettings().toString());
   }
 
   private void assertRetriableOperation(UnaryCallSettings expected, UnaryCallSettings actual) {

@@ -349,6 +349,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
         ((InstantiatingGrpcChannelProvider) stubSettings.getTransportChannelProvider()).toBuilder();
 
     if (configuration.getBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, false)) {
+      // Make sure to avoid clobbering the old Configurator
       @SuppressWarnings("rawtypes")
       final ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> prevConfigurator =
           channelProvider.getChannelConfigurator();
