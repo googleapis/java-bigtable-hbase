@@ -289,10 +289,10 @@ public class BigtableOptionsFactory {
 
   /**
    * A flag to decide which implementation to use for data & admin operation.
+   *
    * <p>This will be removed after the transition to java-bigtable.
    */
-  @BetaApi
-  public static final String BIGTABLE_USE_GCJ_CLIENT = "google.bigtable.use.gcj.client";
+  @BetaApi public static final String BIGTABLE_USE_GCJ_CLIENT = "google.bigtable.use.gcj.client";
   /**
    * fromConfiguration.
    *
