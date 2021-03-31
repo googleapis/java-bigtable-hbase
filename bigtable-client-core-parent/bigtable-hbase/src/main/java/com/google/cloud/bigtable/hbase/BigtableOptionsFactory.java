@@ -25,14 +25,16 @@ import static com.google.cloud.bigtable.config.CallOptionsConfig.SHORT_TIMEOUT_M
 import static com.google.cloud.bigtable.config.CallOptionsConfig.USE_TIMEOUT_DEFAULT;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
+import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.CallOptionsConfig;
 import com.google.cloud.bigtable.config.CredentialOptions;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.hbase.util.Logger;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import io.grpc.Status;
 import java.io.FileInputStream;
@@ -259,6 +261,16 @@ public class BigtableOptionsFactory {
   public static final String BIGTABLE_RPC_TIMEOUT_MS_KEY = "google.bigtable.rpc.timeout.ms";
 
   /**
+   * If timeouts are set, how many milliseconds should pass before a DEADLINE_EXCEEDED for an
+   * individual RPC attempt? Note that multiple attempts may happen within an overall operation,
+   * whose timeout is governed by {@link #BIGTABLE_RPC_TIMEOUT_MS_KEY}. Currently, this feature is
+   * experimental.
+   */
+  @BetaApi("The API for setting attempt timeouts is not yet stable and may change in the future")
+  public static final String BIGTABLE_RPC_ATTEMPT_TIMEOUT_MS_KEY =
+      "google.bigtable.rpc.attempt.timeout.ms";
+
+  /**
    * If timeouts are set, how many milliseconds should pass before a DEADLINE_EXCEEDED for a long
    * read? Currently, this feature is experimental.
    *
@@ -277,11 +289,31 @@ public class BigtableOptionsFactory {
       "google.bigtable.mutate.rpc.timeout.ms";
 
   /**
+   * If timeouts are set, how many milliseconds should pass before a DEADLINE_EXCEEDED for an RPC
+   * attempt within a long mutation. Note that multiple attempts may happen within an overall
+   * operation, whose timeout is governed by {@link #BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY}. Currently,
+   * this feature is experimental.
+   */
+  @BetaApi("The API for setting attempt timeouts is not yet stable and may change in the future")
+  public static final String BIGTABLE_MUTATE_RPC_ATTEMPT_TIMEOUT_MS_KEY =
+      "google.bigtable.mutate.rpc.attempt.timeout.ms";
+
+  /**
    * If timeouts are set, how many milliseconds should pass before a DEADLINE_EXCEEDED for a long
    * read. Currently, this feature is experimental.
    */
   public static final String BIGTABLE_READ_RPC_TIMEOUT_MS_KEY =
       "google.bigtable.read.rpc.timeout.ms";
+
+  /**
+   * If timeouts are set, how many milliseconds should pass before a DEADLINE_EXCEEDED for an RPC
+   * attempt within a long mutation. Note that multiple attempts may happen within an overall
+   * operation, whose timeout is governed by {@link #BIGTABLE_READ_RPC_TIMEOUT_MS_KEY}. Currently,
+   * this feature is experimental.
+   */
+  @BetaApi("The API for setting attempt timeouts is not yet stable and may change in the future")
+  public static final String BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY =
+      "google.bigtable.read.rpc.attempt.timeout.ms";
 
   /** Allow namespace methods to be no-ops */
   public static final String BIGTABLE_NAMESPACE_WARNING_KEY = "google.bigtable.namespace.warnings";
@@ -487,13 +519,43 @@ public class BigtableOptionsFactory {
         configuration.getBoolean(BIGTABLE_USE_TIMEOUTS_KEY, USE_TIMEOUT_DEFAULT));
     clientCallOptionsBuilder.setShortRpcTimeoutMs(
         configuration.getInt(BIGTABLE_RPC_TIMEOUT_MS_KEY, SHORT_TIMEOUT_MS_DEFAULT));
+
+    Optional<Integer> rpcAttemptTimeoutMs =
+        getOptionalIntConfig(configuration, BIGTABLE_RPC_ATTEMPT_TIMEOUT_MS_KEY);
+    if (rpcAttemptTimeoutMs.isPresent()) {
+      clientCallOptionsBuilder.setShortRpcAttemptTimeoutMs(rpcAttemptTimeoutMs.get());
+    }
+
     int longTimeoutMs =
         configuration.getInt(BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY, LONG_TIMEOUT_MS_DEFAULT);
     clientCallOptionsBuilder.setMutateRpcTimeoutMs(
         configuration.getInt(BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY, longTimeoutMs));
+
+    Optional<Integer> mutateRpcAttemptTimeoutMs =
+        getOptionalIntConfig(configuration, BIGTABLE_MUTATE_RPC_ATTEMPT_TIMEOUT_MS_KEY);
+    if (mutateRpcAttemptTimeoutMs.isPresent()) {
+      clientCallOptionsBuilder.setMutateRpcAttemptTimeoutMs(mutateRpcAttemptTimeoutMs.get());
+    }
+
     clientCallOptionsBuilder.setReadRowsRpcTimeoutMs(
         configuration.getInt(BIGTABLE_READ_RPC_TIMEOUT_MS_KEY, longTimeoutMs));
+
+    Optional<Integer> readRpcAttemptTimeoutMs =
+        getOptionalIntConfig(configuration, BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY);
+    if (readRpcAttemptTimeoutMs.isPresent()) {
+      clientCallOptionsBuilder.setReadRowsRpcAttemptTimeoutMs(readRpcAttemptTimeoutMs.get());
+    }
     bigtableOptionsBuilder.setCallOptionsConfig(clientCallOptionsBuilder.build());
+  }
+
+  private static Optional<Integer> getOptionalIntConfig(
+      Configuration configuration, String property) {
+    String value = configuration.getTrimmed(property);
+    if (value != null) {
+      return Optional.of(Integer.parseInt(value));
+    } else {
+      return Optional.absent();
+    }
   }
 
   private static RetryOptions createRetryOptions(Configuration configuration) {

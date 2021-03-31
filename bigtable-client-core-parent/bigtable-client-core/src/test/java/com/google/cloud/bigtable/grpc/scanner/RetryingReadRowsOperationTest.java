@@ -32,6 +32,8 @@ import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
 import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.DeadlineGenerator;
+import com.google.cloud.bigtable.grpc.TestDeadlineGeneratorFactory;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.async.OperationClock;
 import com.google.cloud.bigtable.grpc.io.Watchdog;
@@ -141,18 +143,21 @@ public class RetryingReadRowsOperationTest {
   }
 
   protected RetryingReadRowsOperation createOperation() {
-    return createOperation(CallOptions.DEFAULT, READ_ENTIRE_TABLE_REQUEST, mockFlatRowObserver);
+    return createOperation(
+        DeadlineGenerator.DEFAULT, READ_ENTIRE_TABLE_REQUEST, mockFlatRowObserver);
   }
 
   protected RetryingReadRowsOperation createOperation(
-      CallOptions options, ReadRowsRequest request, StreamObserver<FlatRow> observer) {
+      DeadlineGenerator deadlineGenerator,
+      ReadRowsRequest request,
+      StreamObserver<FlatRow> observer) {
     RetryingReadRowsOperation operation =
         new RetryingReadRowsOperation(
             observer,
             RETRY_OPTIONS,
             request,
             mockRetryableRpc,
-            options,
+            deadlineGenerator,
             mockRetryExecutorService,
             metaData,
             clock);
@@ -222,16 +227,18 @@ public class RetryingReadRowsOperationTest {
 
   @Test
   public void testFailure_default() throws Exception {
-    testFailure(RETRY_OPTIONS.getMaxElapsedBackoffMillis(), CallOptions.DEFAULT);
+    testFailure(RETRY_OPTIONS.getMaxElapsedBackoffMillis(), DeadlineGenerator.DEFAULT);
   }
 
   @Test
   public void testFailure_deadline() throws Exception {
-    CallOptions options = DeadlineUtil.optionsWithDeadline(1, TimeUnit.SECONDS, clock);
-    testFailure(TimeUnit.SECONDS.toMillis(1), options);
+    DeadlineGenerator deadlineGenerator =
+        TestDeadlineGeneratorFactory.mockCallOptionsFactory(
+            DeadlineUtil.optionsWithDeadline(1, TimeUnit.SECONDS, clock));
+    testFailure(TimeUnit.SECONDS.toMillis(1), deadlineGenerator);
   }
 
-  private void testFailure(long expectedTimeMs, CallOptions options)
+  private void testFailure(long expectedTimeMs, DeadlineGenerator deadlineGenerator)
       throws InterruptedException, java.util.concurrent.TimeoutException {
     doAnswer(
             new Answer<Void>() {
@@ -251,7 +258,7 @@ public class RetryingReadRowsOperationTest {
             any(ClientCall.class));
 
     RetryingReadRowsOperation underTest =
-        createOperation(options, READ_ENTIRE_TABLE_REQUEST, mockFlatRowObserver);
+        createOperation(deadlineGenerator, READ_ENTIRE_TABLE_REQUEST, mockFlatRowObserver);
     try {
       underTest.getAsyncResult().get(100, TimeUnit.MILLISECONDS);
     } catch (ExecutionException e) {
@@ -435,7 +442,7 @@ public class RetryingReadRowsOperationTest {
             .setRows(RowSet.newBuilder().addRowKeys(key1).addRowKeys(key2))
             .build();
     RetryingReadRowsOperation underTest =
-        createOperation(CallOptions.DEFAULT, req, mockFlatRowObserver);
+        createOperation(DeadlineGenerator.DEFAULT, req, mockFlatRowObserver);
 
     start(underTest);
     underTest.onMessage(buildResponse(key1));

@@ -183,11 +183,10 @@ public interface BigtableDataClient {
   ListenableFuture<List<FlatRow>> readFlatRowsAsync(ReadRowsRequest request);
 
   /**
-   * Sets a {@link com.google.cloud.bigtable.grpc.CallOptionsFactory} which creates {@link
-   * io.grpc.CallOptions}
+   * Sets a {@link DeadlineGeneratorFactory} which creates {@link io.grpc.CallOptions}
    *
    * <p>For internal use only - public for technical reasons.
    */
   @InternalApi("For internal usage only")
-  void setCallOptionsFactory(CallOptionsFactory callOptionsFactory);
+  void setDeadlineGeneratorFactory(DeadlineGeneratorFactory deadlineGeneratorFactory);
 }
