@@ -288,7 +288,6 @@ public class BigtableOptionsFactory {
 
   /** A flag to decide which implementation to use for data & admin operation */
   public static final String BIGTABLE_USE_GCJ_CLIENT = "google.bigtable.use.gcj.client";
-
   /**
    * fromConfiguration.
    *
@@ -345,10 +344,6 @@ public class BigtableOptionsFactory {
       bigtableOptionsBuilder.setUseBatch(Boolean.parseBoolean(useBatchStr));
     }
 
-    String useGcjClientStr = configuration.get(BIGTABLE_USE_GCJ_CLIENT);
-    if (useGcjClientStr != null) {
-      bigtableOptionsBuilder.setUseGCJClient(Boolean.parseBoolean(useGcjClientStr));
-    }
     return bigtableOptionsBuilder.build();
   }
 

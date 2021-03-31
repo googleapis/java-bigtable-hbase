@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,7 +46,11 @@ public class IntegrationBigtableSessionTest {
             .setUserAgent("Test")
             .build();
     try (BigtableSession bs = new BigtableSession(options)) {
-      bs.getTableAdminClientWrapper().listTables();
+      bs.getTableAdminClient()
+          .listTables(
+              ListTablesRequest.newBuilder()
+                  .setParent("projects/" + projectId + "/instances/" + instanceId)
+                  .build());
     } catch (Exception e) {
       e.printStackTrace();
     }
