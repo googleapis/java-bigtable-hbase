@@ -366,9 +366,11 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
           });
     }
 
-    String channelCount = configuration.get(BIGTABLE_DATA_CHANNEL_COUNT_KEY);
-    if (!Strings.isNullOrEmpty(channelCount)) {
-      channelProvider.setPoolSize(Integer.parseInt(channelCount));
+    if (endpointKey.equals(BIGTABLE_HOST_KEY)) {
+      String channelCount = configuration.get(BIGTABLE_DATA_CHANNEL_COUNT_KEY);
+      if (!Strings.isNullOrEmpty(channelCount)) {
+        channelProvider.setPoolSize(Integer.parseInt(channelCount));
+      }
     }
     stubSettings.setTransportChannelProvider(channelProvider.build());
   }
