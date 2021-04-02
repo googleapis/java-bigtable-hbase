@@ -49,6 +49,7 @@ import static org.threeten.bp.Duration.ofMillis;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
+import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.auth.Credentials;
@@ -99,7 +100,6 @@ public class TestBigtableHBaseVeneerSettings {
     configuration.set(APP_PROFILE_ID_KEY, appProfileId);
     configuration.setBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, true);
     configuration.set(CUSTOM_USER_AGENT_KEY, userAgent);
-    configuration.setInt(BIGTABLE_DATA_CHANNEL_COUNT_KEY, 3);
     configuration.set(BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL, "true");
     configuration.set(BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, "true");
     configuration.set(ALLOW_NO_TIMESTAMP_RETRIES_KEY, "true");
@@ -131,6 +131,20 @@ public class TestBigtableHBaseVeneerSettings {
   }
 
   @Test
+  public void testDataSettingsChannelPool() throws IOException {
+    configuration.setInt(BIGTABLE_DATA_CHANNEL_COUNT_KEY, 3);
+
+    BigtableHBaseVeneerSettings settings =
+        (BigtableHBaseVeneerSettings) BigtableHBaseSettings.create(configuration);
+    BigtableDataSettings dataSettings = settings.getDataSettings();
+    InstantiatingGrpcChannelProvider transportChannelProvider =
+        (InstantiatingGrpcChannelProvider)
+            dataSettings.getStubSettings().getTransportChannelProvider();
+
+    assertEquals(3, transportChannelProvider.toBuilder().getPoolSize());
+  }
+
+  @Test
   public void testAdminSettingsBasicKeys() throws IOException {
     String adminHost = "testadmin.example.com";
     String userAgent = "test-user-agent";
@@ -154,6 +168,21 @@ public class TestBigtableHBaseVeneerSettings {
     assertTrue(headers.get(GrpcUtil.USER_AGENT_KEY.name()).contains(userAgent));
     assertEquals(
         credentials, adminSettings.getStubSettings().getCredentialsProvider().getCredentials());
+  }
+
+  @Test
+  public void testAdminSettingsChannelPool() throws IOException {
+    // should be ignored
+    configuration.setInt(BIGTABLE_DATA_CHANNEL_COUNT_KEY, 3);
+
+    BigtableHBaseVeneerSettings settings =
+        (BigtableHBaseVeneerSettings) BigtableHBaseSettings.create(configuration);
+    BigtableTableAdminSettings adminSettings = settings.getTableAdminSettings();
+    InstantiatingGrpcChannelProvider transportChannelProvider =
+        (InstantiatingGrpcChannelProvider)
+            adminSettings.getStubSettings().getTransportChannelProvider();
+
+    assertEquals(1, transportChannelProvider.toBuilder().getPoolSize());
   }
 
   @Test
