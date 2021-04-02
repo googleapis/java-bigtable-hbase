@@ -30,7 +30,10 @@ import org.apache.hadoop.hbase.client.Table;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
+@RunWith(JUnit4.class)
 public class TestRpcRetryBehaviorGetSingle extends TestRpcRetryBehavior {
   private final AtomicInteger numReadRowsInvocations = new AtomicInteger();
 

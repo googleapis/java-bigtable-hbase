@@ -30,7 +30,10 @@ import org.apache.commons.lang.time.StopWatch;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Table;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
+@RunWith(JUnit4.class)
 public class TestRpcRetryBehaviorGetMultiple extends TestRpcRetryBehavior {
   private final AtomicInteger numReadRowsInvocations = new AtomicInteger();
 

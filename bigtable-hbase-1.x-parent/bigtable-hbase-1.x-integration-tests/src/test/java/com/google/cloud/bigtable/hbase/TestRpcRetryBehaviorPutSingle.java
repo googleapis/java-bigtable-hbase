@@ -28,7 +28,10 @@ import org.apache.commons.lang.time.StopWatch;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.hamcrest.CoreMatchers;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
+@RunWith(JUnit4.class)
 public class TestRpcRetryBehaviorPutSingle extends TestRpcRetryBehavior {
   private final AtomicInteger numMutateRowInvocations = new AtomicInteger();
 

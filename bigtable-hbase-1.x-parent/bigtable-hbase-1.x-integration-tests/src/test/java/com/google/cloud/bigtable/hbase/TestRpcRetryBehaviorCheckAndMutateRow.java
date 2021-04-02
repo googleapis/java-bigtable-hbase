@@ -32,7 +32,10 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
+@RunWith(JUnit4.class)
 public class TestRpcRetryBehaviorCheckAndMutateRow extends TestRpcRetryBehavior {
   private final AtomicInteger numCheckAndMutateRowInvocations = new AtomicInteger();
 
