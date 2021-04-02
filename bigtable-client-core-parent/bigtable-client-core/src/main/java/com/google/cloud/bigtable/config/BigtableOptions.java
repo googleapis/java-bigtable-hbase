@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.config;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
@@ -157,7 +156,6 @@ public class BigtableOptions implements Serializable, Cloneable {
       options.dataChannelCount = BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT;
       options.usePlaintextNegotiation = false;
       options.useCachedDataPool = false;
-      options.useGCJClient = false;
 
       options.bulkOptions =
           BulkOptions.builder().setMaxInflightRpcs(getDefaultMaxInflightRpcCount()).build();
@@ -284,12 +282,6 @@ public class BigtableOptions implements Serializable, Cloneable {
       return this;
     }
 
-    @BetaApi("Will be removed after hbase transitions away from bigtable-client-core")
-    public Builder setUseGCJClient(boolean useGCJClient) {
-      options.useGCJClient = useGCJClient;
-      return this;
-    }
-
     /** Apply emulator settings from the relevant environment variable, if set. */
     private void applyEmulatorEnvironment() {
       // Look for a host:port for the emulator.
@@ -393,7 +385,6 @@ public class BigtableOptions implements Serializable, Cloneable {
   private int dataChannelCount;
   private boolean usePlaintextNegotiation;
   private boolean useCachedDataPool;
-  private boolean useGCJClient;
   private ChannelConfigurator channelConfigurator;
 
   private BigtableInstanceName instanceName;
@@ -541,16 +532,6 @@ public class BigtableOptions implements Serializable, Cloneable {
     return callOptionsConfig;
   }
 
-  /**
-   * useGCJClient
-   *
-   * @return a boolean flag to decide which client to use for Data & Admin Operations.
-   */
-  @BetaApi("Will be removed after hbase transitions away from bigtable-client-core")
-  public boolean useGCJClient() {
-    return useGCJClient;
-  }
-
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
@@ -576,7 +557,6 @@ public class BigtableOptions implements Serializable, Cloneable {
         && Objects.equals(bulkOptions, other.bulkOptions)
         && Objects.equals(callOptionsConfig, other.callOptionsConfig)
         && Objects.equals(useBatch, other.useBatch)
-        && Objects.equals(useGCJClient, other.useGCJClient)
         && Objects.equals(channelConfigurator, other.channelConfigurator);
   }
 
@@ -600,7 +580,6 @@ public class BigtableOptions implements Serializable, Cloneable {
         .add("usePlaintextNegotiation", usePlaintextNegotiation)
         .add("useCachedDataPool", useCachedDataPool)
         .add("useBatch", useBatch)
-        .add("useGCJClient", useGCJClient)
         .toString();
   }
 

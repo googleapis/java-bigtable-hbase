@@ -31,16 +31,12 @@ import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialOptions;
-import com.google.cloud.bigtable.core.IBulkMutation;
-import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
-import com.google.cloud.bigtable.data.v2.models.Mutation;
 import com.google.cloud.bigtable.data.v2.models.Query;
-import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
-import com.google.cloud.bigtable.data.v2.models.RowMutation;
-import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
+import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Queues;
+import com.google.protobuf.ByteString;
 import com.google.rpc.Code;
 import com.google.rpc.Status;
 import io.grpc.Server;
@@ -59,8 +55,6 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class TestAppProfile {
-  private static final String TABLE_ID = "fake-table";
-
   private FakeDataService fakeDataService;
   private Server server;
 
@@ -114,34 +108,33 @@ public class TestAppProfile {
 
   @Test
   public void testReadRows() throws Exception {
-    defaultSession.getDataClientWrapper().readRows(Query.create(TABLE_ID)).next();
+    defaultSession.getDataClient().readRows(ReadRowsRequest.getDefaultInstance()).next();
     ReadRowsRequest req = fakeDataService.popLastRequest();
     Preconditions.checkState(req.getAppProfileId().isEmpty());
 
-    profileSession.getDataClientWrapper().readRows(Query.create(TABLE_ID));
+    profileSession.getDataClient().readRows(ReadRowsRequest.getDefaultInstance());
     ReadRowsRequest req2 = fakeDataService.popLastRequest();
     Assert.assertEquals(req2.getAppProfileId(), "my-app-profile");
   }
 
   @Test
   public void testSampleRowKeys() throws Exception {
-    defaultSession.getDataClientWrapper().sampleRowKeys(TABLE_ID);
+    defaultSession.getDataClient().sampleRowKeys(SampleRowKeysRequest.getDefaultInstance());
     SampleRowKeysRequest req = fakeDataService.popLastRequest();
     Preconditions.checkState(req.getAppProfileId().isEmpty());
 
-    profileSession.getDataClientWrapper().sampleRowKeys(TABLE_ID);
+    profileSession.getDataClient().sampleRowKeys(SampleRowKeysRequest.getDefaultInstance());
     SampleRowKeysRequest req2 = fakeDataService.popLastRequest();
     Assert.assertEquals(req2.getAppProfileId(), "my-app-profile");
   }
 
   @Test
   public void testMutateRow() throws Exception {
-    RowMutation rowMutation = RowMutation.create(TABLE_ID, "fake-key");
-    defaultSession.getDataClientWrapper().mutateRow(rowMutation);
+    defaultSession.getDataClient().mutateRow(MutateRowRequest.getDefaultInstance());
     MutateRowRequest req = fakeDataService.popLastRequest();
     Preconditions.checkState(req.getAppProfileId().isEmpty());
 
-    profileSession.getDataClientWrapper().mutateRow(rowMutation);
+    profileSession.getDataClient().mutateRow(MutateRowRequest.getDefaultInstance());
     MutateRowRequest req2 = fakeDataService.popLastRequest();
     Assert.assertEquals(req2.getAppProfileId(), "my-app-profile");
   }
@@ -159,26 +152,26 @@ public class TestAppProfile {
 
   @Test
   public void testCheckAndMutateRow() throws Exception {
-    ConditionalRowMutation checkAndMuate =
-        ConditionalRowMutation.create(TABLE_ID, "fake-key")
-            .then(Mutation.create().setCell("fakeFamily", "qualifer", "value"));
-    defaultSession.getDataClientWrapper().checkAndMutateRow(checkAndMuate);
+    defaultSession.getDataClient().checkAndMutateRow(CheckAndMutateRowRequest.getDefaultInstance());
     CheckAndMutateRowRequest req = fakeDataService.popLastRequest();
     Preconditions.checkState(req.getAppProfileId().isEmpty());
 
-    profileSession.getDataClientWrapper().checkAndMutateRow(checkAndMuate);
+    profileSession.getDataClient().checkAndMutateRow(CheckAndMutateRowRequest.getDefaultInstance());
     CheckAndMutateRowRequest req2 = fakeDataService.popLastRequest();
     Assert.assertEquals(req2.getAppProfileId(), "my-app-profile");
   }
 
   @Test
   public void testReadModifyWrite() throws Exception {
-    ReadModifyWriteRow readModifyRow = ReadModifyWriteRow.create(TABLE_ID, "fake-key");
-    defaultSession.getDataClientWrapper().readModifyWriteRow(readModifyRow);
+    defaultSession
+        .getDataClient()
+        .readModifyWriteRow(ReadModifyWriteRowRequest.getDefaultInstance());
     ReadModifyWriteRowRequest req = fakeDataService.popLastRequest();
     Preconditions.checkState(req.getAppProfileId().isEmpty());
 
-    profileSession.getDataClientWrapper().readModifyWriteRow(readModifyRow);
+    profileSession
+        .getDataClient()
+        .readModifyWriteRow(ReadModifyWriteRowRequest.getDefaultInstance());
     ReadModifyWriteRowRequest req2 = fakeDataService.popLastRequest();
     Assert.assertEquals(req2.getAppProfileId(), "my-app-profile");
   }
@@ -188,17 +181,18 @@ public class TestAppProfile {
     BigtableTableName fakeTableName =
         new BigtableTableName("projects/fake-project/instances/fake-instance/tables/fake-table");
 
-    RowMutationEntry rowMutation = RowMutationEntry.create("fake-key");
+    MutateRowsRequest.Entry entry =
+        MutateRowsRequest.Entry.newBuilder().setRowKey(ByteString.copyFromUtf8("fake-key")).build();
 
-    IBulkMutation bulkMutation = defaultSession.createBulkMutationWrapper(fakeTableName);
-    bulkMutation.add(rowMutation);
+    BulkMutation bulkMutation = defaultSession.createBulkMutation(fakeTableName);
+    bulkMutation.add(entry);
     bulkMutation.flush();
 
     MutateRowsRequest req = fakeDataService.popLastRequest();
     Preconditions.checkState(req.getAppProfileId().isEmpty());
 
-    IBulkMutation bulkMutation2 = profileSession.createBulkMutationWrapper(fakeTableName);
-    bulkMutation2.add(rowMutation);
+    BulkMutation bulkMutation2 = profileSession.createBulkMutation(fakeTableName);
+    bulkMutation2.add(entry);
     bulkMutation2.flush();
 
     MutateRowsRequest req2 = fakeDataService.popLastRequest();
