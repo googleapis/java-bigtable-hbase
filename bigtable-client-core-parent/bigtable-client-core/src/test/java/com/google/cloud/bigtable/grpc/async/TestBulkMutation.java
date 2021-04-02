@@ -33,7 +33,6 @@ import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BulkOptions;
-import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
@@ -107,7 +106,6 @@ public class TestBulkMutation {
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().silent();
 
   @Mock private BigtableDataClient client;
-  @Mock private IBigtableDataClient clientWrapper;
   @Mock private ScheduledExecutorService retryExecutorService;
   @Mock private ScheduledFuture mockScheduledFuture;
   @Mock private ResourceLimiter fakeResourceLimiter;

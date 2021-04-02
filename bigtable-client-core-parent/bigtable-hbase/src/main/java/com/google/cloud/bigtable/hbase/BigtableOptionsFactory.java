@@ -25,6 +25,7 @@ import static com.google.cloud.bigtable.config.CallOptionsConfig.SHORT_TIMEOUT_M
 import static com.google.cloud.bigtable.config.CallOptionsConfig.USE_TIMEOUT_DEFAULT;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
+import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.auth.Credentials;
@@ -284,9 +285,12 @@ public class BigtableOptionsFactory {
   /** Allow namespace methods to be no-ops */
   public static final String BIGTABLE_NAMESPACE_WARNING_KEY = "google.bigtable.namespace.warnings";
 
-  /** A flag to decide which implementation to use for data & admin operation */
-  public static final String BIGTABLE_USE_GCJ_CLIENT = "google.bigtable.use.gcj.client";
-
+  /**
+   * A flag to decide which implementation to use for data & admin operation.
+   *
+   * <p>This will be removed after the transition to java-bigtable.
+   */
+  @BetaApi public static final String BIGTABLE_USE_GCJ_CLIENT = "google.bigtable.use.gcj.client";
   /**
    * fromConfiguration.
    *
@@ -344,10 +348,6 @@ public class BigtableOptionsFactory {
       bigtableOptionsBuilder.setUseBatch(Boolean.parseBoolean(useBatchStr));
     }
 
-    String useGcjClientStr = configuration.get(BIGTABLE_USE_GCJ_CLIENT);
-    if (useGcjClientStr != null) {
-      bigtableOptionsBuilder.setUseGCJClient(Boolean.parseBoolean(useGcjClientStr));
-    }
     return bigtableOptionsBuilder.build();
   }
 

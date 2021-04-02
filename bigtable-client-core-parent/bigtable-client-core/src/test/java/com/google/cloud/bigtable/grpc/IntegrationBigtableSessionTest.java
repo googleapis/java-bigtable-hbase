@@ -15,7 +15,9 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import java.io.IOException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -30,13 +32,14 @@ import org.junit.runners.JUnit4;
 public class IntegrationBigtableSessionTest {
 
   @Test
-  public void connectivityTest() {
+  public void connectivityTest() throws IOException {
     String property = System.getProperty("bigtableSession-int-test");
     if (!"true".equals(property)) {
       return;
     }
     String projectId = System.getProperty("google.bigtable.project.id");
     String instanceId = System.getProperty("google.bigtable.instance.id");
+    BigtableInstanceName instanceName = new BigtableInstanceName(projectId, instanceId);
 
     BigtableOptions options =
         BigtableOptions.builder()
@@ -44,10 +47,10 @@ public class IntegrationBigtableSessionTest {
             .setInstanceId(instanceId)
             .setUserAgent("Test")
             .build();
-    try (BigtableSession bs = new BigtableSession(options)) {
-      bs.getTableAdminClientWrapper().listTables();
-    } catch (Exception e) {
-      e.printStackTrace();
+    try (BigtableSession session = new BigtableSession(options)) {
+      session
+          .getTableAdminClient()
+          .listTables(ListTablesRequest.newBuilder().setParent(instanceName.toString()).build());
     }
   }
 }
