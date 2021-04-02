@@ -16,11 +16,16 @@
 package com.google.cloud.bigtable.hbase.tools;
 
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
+import com.google.bigtable.repackaged.com.google.gson.Gson;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.tools.ClusterSchemaDefinition.TableSchemaDefinition;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,8 +39,6 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.apache.htrace.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.htrace.fasterxml.jackson.databind.ObjectWriter;
 
 /**
  * A utility to create tables in Cloud Bigtable based on the tables in an HBase cluster.
@@ -160,14 +163,19 @@ public class HBaseSchemaTranslator {
     }
   }
 
+  /** Interface for reading HBase schema. */
   interface SchemaReader {
 
     ClusterSchemaDefinition readSchema() throws IOException;
   }
 
+  /**
+   * Reads HBase schema from a JSON file. JSON file should be representation of a {@link
+   * ClusterSchemaDefinition} object.
+   */
   static class FileBasedSchemaReader implements SchemaReader {
 
-    String schemaFilePath;
+    private final String schemaFilePath;
 
     public FileBasedSchemaReader(String schemaFilePath) {
       this.schemaFilePath = schemaFilePath;
@@ -175,11 +183,14 @@ public class HBaseSchemaTranslator {
 
     @Override
     public ClusterSchemaDefinition readSchema() throws IOException {
-      return new ObjectMapper().readValue(new File(schemaFilePath), ClusterSchemaDefinition.class);
+      Reader jsonReader = new FileReader(schemaFilePath);
+      return new Gson().fromJson(jsonReader, ClusterSchemaDefinition.class);
     }
   }
 
+  /** Reads the HBase schema by connecting to an HBase cluster. */
   static class HBaseSchemaReader implements SchemaReader {
+
     private final String tableFilterPattern;
     private final Admin hbaseAdmin;
 
@@ -208,51 +219,29 @@ public class HBaseSchemaTranslator {
 
       System.out.println("Reading tables from " + hbaseAdmin.getClass().getCanonicalName());
       // Read the table definitions
-      HTableDescriptor[] tables = null;
-      try {
-        // tables = hbaseAdmin.listTables(".*");
-        // TODO reuse the patterns.
-        tables = hbaseAdmin.listTables(tableFilterPattern);
-      } catch (Exception e) {
-        System.out.println(" ERROR in Getting tables from Hbase: " + e.getMessage());
-        throw e;
-      }
+      HTableDescriptor[] tables = hbaseAdmin.listTables(tableFilterPattern);
+
       if (tables == null) {
         System.out.println(" Found no tables");
         return new LinkedList<>();
       }
-      System.out.println("Listing tables " + Arrays.asList(tables));
+      System.out.println("Found " + tables.length + " tables from HBase.");
       return Arrays.asList(tables);
     }
 
     private byte[][] getSplits(TableName table) throws IOException {
-      List<HRegionInfo> regions = null;
-      try {
-        regions = hbaseAdmin.getTableRegions(table);
-      } catch (IOException e) {
-        System.out.println(" ERROR in Getting splits from Hbase: " + e.getMessage());
-        throw e;
-      }
+      List<HRegionInfo> regions = hbaseAdmin.getTableRegions(table);
 
       if (regions == null || regions.isEmpty()) {
         return new byte[0][];
       }
 
-      // An Infinity (EMPTY_BYTE_ARRAY) region split is not required. Bigtable splits will always
-      // start from EMPTY_BYTE_ARRAY.
-      // TODO: is the regions list always sorted? If not, the first region with "" start key will
-      // not always be the first element.
-      int numSplits = regions.get(0).getStartKey().length > 0 ? regions.size() : regions.size() - 1;
-      byte[][] splits = new byte[numSplits][];
+      byte[][] splits = new byte[regions.size()][];
       int i = 0;
       for (HRegionInfo region : regions) {
-        // TODO If regions are sorted then no need to check it every time.
-        if (region.getStartKey().length > 0) {
-          splits[i] = region.getStartKey();
-          i++;
-        }
+        splits[i] = region.getStartKey();
+        i++;
       }
-      System.out.println("Listing splits " + Arrays.asList(splits));
       return splits;
     }
 
@@ -261,7 +250,7 @@ public class HBaseSchemaTranslator {
       System.out.println("Reading schema from HBase: ");
       ClusterSchemaDefinition schemaDefinition = new ClusterSchemaDefinition();
       List<HTableDescriptor> tables = getTables();
-      System.out.println("Found tables: " + tables);
+      System.out.println("Found " + tables.size() + " tables.");
       for (HTableDescriptor table : tables) {
         byte[][] splits = getSplits(table.getTableName());
         // TODO Maybe create a addTableSchema(table, splits) method?
@@ -271,14 +260,21 @@ public class HBaseSchemaTranslator {
     }
   }
 
+  /**
+   * Interface for writing the HBase schema represented by a {@link ClusterSchemaDefinition} object.
+   */
   interface SchemaWriter {
 
     void writeSchema(ClusterSchemaDefinition schemaDefinition) throws IOException;
   }
 
+  /**
+   * Writes the HBase schema into a file. File contains the JSON representation of the {@link
+   * ClusterSchemaDefinition} object.
+   */
   static class FileBasedSchemaWriter implements SchemaWriter {
 
-    String outputFilePath;
+    private final String outputFilePath;
 
     public FileBasedSchemaWriter(String outputFilePath) {
       this.outputFilePath = outputFilePath;
@@ -286,28 +282,37 @@ public class HBaseSchemaTranslator {
 
     @Override
     public void writeSchema(ClusterSchemaDefinition schemaDefinition) throws IOException {
-      ObjectWriter writer = new ObjectMapper().writerWithDefaultPrettyPrinter();
-      writer.writeValue(new File(outputFilePath), schemaDefinition);
-      System.out.println("Wrote schema to file " + outputFilePath);
+      Preconditions.checkNotNull(schemaDefinition, "SchemaDefinitions can not be null.");
+      try (Writer writer = new FileWriter(outputFilePath)) {
+        new Gson().toJson(schemaDefinition, writer);
+        // new Gson().toJson(schemaDefinition, new
+        // FileWriter("/Users/shitanshu/unitTestSchema.json"));
+        System.out.println("Wrote schema to file " + outputFilePath);
+      }
     }
   }
 
-  static class BigtableBasedSchemaWriter implements SchemaWriter {
+  /**
+   * Creates tables in Cloud Bigtable based on the schema provided by the {@link
+   * ClusterSchemaDefinition} object.
+   */
+  static class BigtableSchemaWriter implements SchemaWriter {
 
     private final Admin btAdmin;
 
-    public BigtableBasedSchemaWriter(String projectId, String instanceId) throws IOException {
+    public BigtableSchemaWriter(String projectId, String instanceId) throws IOException {
       Configuration btConf = BigtableConfiguration.configure(projectId, instanceId);
       this.btAdmin = ConnectionFactory.createConnection(btConf).getAdmin();
     }
 
     @VisibleForTesting
-    BigtableBasedSchemaWriter(Admin btAdmin) {
+    BigtableSchemaWriter(Admin btAdmin) {
       this.btAdmin = btAdmin;
     }
 
     @Override
-    public void writeSchema(ClusterSchemaDefinition schemaDefinition) throws IOException {
+    public void writeSchema(ClusterSchemaDefinition schemaDefinition) {
+      Preconditions.checkNotNull(schemaDefinition, "SchemaDefinitions can not be null.");
       List<String> failedTables = new ArrayList<>();
       for (TableSchemaDefinition tableSchemaDefinition : schemaDefinition.tableSchemaDefinitions) {
         String tableName = tableSchemaDefinition.name;
@@ -343,7 +348,7 @@ public class HBaseSchemaTranslator {
     if (options.outputFilePath != null) {
       this.schemaWriter = new FileBasedSchemaWriter(options.outputFilePath);
     } else {
-      this.schemaWriter = new BigtableBasedSchemaWriter(options.projectId, options.instanceId);
+      this.schemaWriter = new BigtableSchemaWriter(options.projectId, options.instanceId);
     }
   }
 
@@ -355,7 +360,8 @@ public class HBaseSchemaTranslator {
 
   public void translate() throws IOException {
     ClusterSchemaDefinition schemaDefinition = schemaReader.readSchema();
-    System.out.println("Found schema: " + schemaDefinition);
+    System.out.println(
+        "Found schema with " + schemaDefinition.tableSchemaDefinitions.size() + " tables.");
     this.schemaWriter.writeSchema(schemaDefinition);
   }
 
@@ -366,7 +372,7 @@ public class HBaseSchemaTranslator {
     if (errorMsg != null && errorMsg.length() > 0) {
       System.err.println("ERROR: " + errorMsg);
     }
-    String jarName = null;
+    String jarName;
     try {
       jarName =
           new File(

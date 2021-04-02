@@ -19,7 +19,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.eq;
 
 import com.google.cloud.bigtable.hbase.tools.ClusterSchemaDefinition.TableSchemaDefinition;
-import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.BigtableBasedSchemaWriter;
+import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.BigtableSchemaWriter;
 import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.FileBasedSchemaReader;
 import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.FileBasedSchemaWriter;
 import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.HBaseSchemaReader;
@@ -63,9 +63,10 @@ public class HBaseSchemaTranslatorTest {
     schemaDefinition = new ClusterSchemaDefinition();
     TableSchemaDefinition tableSchemaDefinition = new TableSchemaDefinition();
     tableSchemaDefinition.name = "test-table1";
-    tableSchemaDefinition.splits = new byte[2][];
-    tableSchemaDefinition.splits[0] = "first-split".getBytes();
-    tableSchemaDefinition.splits[1] = "second-split".getBytes();
+    tableSchemaDefinition.splits = new byte[3][];
+    tableSchemaDefinition.splits[0] = HConstants.EMPTY_BYTE_ARRAY;
+    tableSchemaDefinition.splits[1] = "first-split".getBytes();
+    tableSchemaDefinition.splits[2] = "second-split".getBytes();
     HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf("test-table1"));
     HColumnDescriptor columnDescriptor = new HColumnDescriptor("cf");
     columnDescriptor.setMaxVersions(2).setTimeToLive(1000);
@@ -95,11 +96,13 @@ public class HBaseSchemaTranslatorTest {
 
     TableName tableName =
         TableName.valueOf(schemaDefinition.tableSchemaDefinitions.get(tableIndex).name);
-    byte[] currentStart = HConstants.EMPTY_START_ROW;
-    for (byte[] splitPoint : schemaDefinition.tableSchemaDefinitions.get(tableIndex).splits) {
-      HRegionInfo regionInfo = new HRegionInfo(tableName, currentStart, splitPoint);
+    byte[][] splits = schemaDefinition.tableSchemaDefinitions.get(tableIndex).splits;
+    byte[] currentStart = splits[0];
+    for (int i = 1; i < splits.length; i++) {
+      byte[] currentEnd = splits[i];
+      HRegionInfo regionInfo = new HRegionInfo(tableName, currentStart, currentEnd);
       regions.add(regionInfo);
-      currentStart = splitPoint;
+      currentStart = currentEnd;
     }
     regions.add(new HRegionInfo(tableName, currentStart, HConstants.EMPTY_END_ROW));
     return regions;
@@ -136,7 +139,7 @@ public class HBaseSchemaTranslatorTest {
 
     HBaseSchemaTranslator translator =
         new HBaseSchemaTranslator(
-            new HBaseSchemaReader(hbaseAdmin, ".*"), new BigtableBasedSchemaWriter(btAdmin));
+            new HBaseSchemaReader(hbaseAdmin, ".*"), new BigtableSchemaWriter(btAdmin));
 
     // Call
     translator.translate();
@@ -175,8 +178,7 @@ public class HBaseSchemaTranslatorTest {
 
     HBaseSchemaTranslator translator2 =
         new HBaseSchemaTranslator(
-            new FileBasedSchemaReader(schemaFile.getPath()),
-            new BigtableBasedSchemaWriter(btAdmin));
+            new FileBasedSchemaReader(schemaFile.getPath()), new BigtableSchemaWriter(btAdmin));
 
     translator2.translate();
 
@@ -203,7 +205,7 @@ public class HBaseSchemaTranslatorTest {
 
     HBaseSchemaTranslator translator =
         new HBaseSchemaTranslator(
-            new HBaseSchemaReader(hbaseAdmin, ".*"), new BigtableBasedSchemaWriter(btAdmin));
+            new HBaseSchemaReader(hbaseAdmin, ".*"), new BigtableSchemaWriter(btAdmin));
 
     // Call
     try {
@@ -230,7 +232,7 @@ public class HBaseSchemaTranslatorTest {
     // Create a translator;
     HBaseSchemaTranslator translator =
         new HBaseSchemaTranslator(
-            new HBaseSchemaReader(hbaseAdmin, ".*"), new BigtableBasedSchemaWriter(btAdmin));
+            new HBaseSchemaReader(hbaseAdmin, ".*"), new BigtableSchemaWriter(btAdmin));
     // Call
     try {
       translator.translate();
@@ -264,7 +266,7 @@ public class HBaseSchemaTranslatorTest {
 
     HBaseSchemaTranslator translator =
         new HBaseSchemaTranslator(
-            new HBaseSchemaReader(hbaseAdmin, ".*"), new BigtableBasedSchemaWriter(btAdmin));
+            new HBaseSchemaReader(hbaseAdmin, ".*"), new BigtableSchemaWriter(btAdmin));
 
     // Call
     try {
