@@ -16,9 +16,10 @@
 package com.google.cloud.bigtable.batch.common;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.BigtableDataClient;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
+import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings;
 import java.io.IOException;
 import java.util.List;
 
@@ -29,8 +30,12 @@ public class CloudBigtableServiceImpl implements CloudBigtableService {
   @Override
   public List<KeyOffset> getSampleRowKeys(CloudBigtableTableConfiguration config)
       throws IOException {
-    try (BigtableSession session = new BigtableSession(config.toBigtableOptions())) {
-      return session.getDataClientWrapper().sampleRowKeys(config.getTableId());
+
+    // TODO: figure out how to stick to HBase api here
+    BigtableHBaseVeneerSettings settings =
+        (BigtableHBaseVeneerSettings) BigtableHBaseVeneerSettings.create(config.toHBaseConfig());
+    try (BigtableDataClient client = BigtableDataClient.create(settings.getDataSettings())) {
+      return client.sampleRowKeys(config.getTableId());
     }
   }
 }
