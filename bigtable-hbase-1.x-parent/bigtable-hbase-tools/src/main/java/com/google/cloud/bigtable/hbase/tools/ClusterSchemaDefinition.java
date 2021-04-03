@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.tools;
 
+import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,10 +24,18 @@ import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.htrace.fasterxml.jackson.annotation.JsonIgnore;
 
 // TODO Maybe use AutoValue here?
+
+/** A simple POJO representing the HBase schema for a whole cluster. */
+@InternalApi
 public class ClusterSchemaDefinition {
+
+  /** POJO containing all the information about a table schema including the splits. */
   public static class TableSchemaDefinition {
+    // The name of the table
     public String name;
+    // Serialized HTableDescriptor object.
     public byte[] tableDescriptor;
+    // Start key for all the regions in the table.
     public byte[][] splits;
 
     public TableSchemaDefinition() {}
@@ -43,9 +52,14 @@ public class ClusterSchemaDefinition {
     }
   }
 
+  /** Schema definitions for the tables in the cluster. */
+  public List<TableSchemaDefinition> tableSchemaDefinitions;
+
   public ClusterSchemaDefinition() {
     tableSchemaDefinitions = new ArrayList<>();
   }
 
-  public List<TableSchemaDefinition> tableSchemaDefinitions;
+  public void addTableSchemaDefinition(HTableDescriptor tableDescriptor, byte[][] splits) {
+    tableSchemaDefinitions.add(new TableSchemaDefinition(tableDescriptor, splits));
+  }
 }

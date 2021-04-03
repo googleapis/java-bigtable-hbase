@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.tools;
 
+import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.gson.Gson;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import javax.annotation.Nullable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -39,6 +41,9 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.log4j.BasicConfigurator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A utility to create tables in Cloud Bigtable based on the tables in an HBase cluster.
@@ -79,6 +84,7 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
  *  -Dgoogle.bigtable.instance.id=$INSTANCE_ID
  * </pre>
  */
+@InternalApi
 public class HBaseSchemaTranslator {
 
   public static final String PROJECT_ID_KEY = "google.bigtable.project.id";
@@ -88,6 +94,8 @@ public class HBaseSchemaTranslator {
   public static final String INPUT_FILE_KEY = "google.bigtable.input.filepath";
   public static final String OUTPUT_FILE_KEY = "google.bigtable.output.filepath";
   public static final String TABLE_NAME_FILTER_KEY = "google.bigtable.table.filter";
+
+  private static Logger LOG = LoggerFactory.getLogger(HBaseSchemaTranslator.class);
 
   private final SchemaReader schemaReader;
   private final SchemaWriter schemaWriter;
@@ -158,7 +166,6 @@ public class HBaseSchemaTranslator {
         usage(e.getMessage());
         throw e;
       }
-
       return options;
     }
   }
@@ -194,7 +201,8 @@ public class HBaseSchemaTranslator {
     private final String tableFilterPattern;
     private final Admin hbaseAdmin;
 
-    public HBaseSchemaReader(String zookeeperQuorum, int zookeeperPort, String tableFilterPattern)
+    public HBaseSchemaReader(
+        String zookeeperQuorum, int zookeeperPort, @Nullable String tableFilterPattern)
         throws IOException {
 
       // If no filter is provided, use `.*` to match all the tables.
@@ -202,30 +210,27 @@ public class HBaseSchemaTranslator {
 
       // Create the HBase admin client.
       Configuration conf = HBaseConfiguration.create();
-      conf.set(ZOOKEEPER_PORT_KEY, zookeeperPort + "");
+      conf.setInt(ZOOKEEPER_PORT_KEY, zookeeperPort);
       conf.set(ZOOKEEPER_QUORUM_KEY, zookeeperQuorum);
       Connection connection = ConnectionFactory.createConnection(conf);
       this.hbaseAdmin = connection.getAdmin();
     }
 
     @VisibleForTesting
-    HBaseSchemaReader(Admin admin, String tableFilterPattern) {
+    HBaseSchemaReader(Admin admin, @Nullable String tableFilterPattern) {
       this.hbaseAdmin = admin;
       // If no filter is provided, use `.*` to match all the tables.
       this.tableFilterPattern = tableFilterPattern == null ? ".*" : tableFilterPattern;
     }
 
     private List<HTableDescriptor> getTables() throws IOException {
-
-      System.out.println("Reading tables from " + hbaseAdmin.getClass().getCanonicalName());
       // Read the table definitions
       HTableDescriptor[] tables = hbaseAdmin.listTables(tableFilterPattern);
 
       if (tables == null) {
-        System.out.println(" Found no tables");
+        LOG.info(" Found no tables");
         return new LinkedList<>();
       }
-      System.out.println("Found " + tables.length + " tables from HBase.");
       return Arrays.asList(tables);
     }
 
@@ -242,19 +247,20 @@ public class HBaseSchemaTranslator {
         splits[i] = region.getStartKey();
         i++;
       }
+      LOG.debug("Found {} splits for table {}.", splits.length, table.getNameAsString());
       return splits;
     }
 
     @Override
     public ClusterSchemaDefinition readSchema() throws IOException {
-      System.out.println("Reading schema from HBase: ");
+      LOG.info("Reading schema from HBase.");
       ClusterSchemaDefinition schemaDefinition = new ClusterSchemaDefinition();
       List<HTableDescriptor> tables = getTables();
-      System.out.println("Found " + tables.size() + " tables.");
       for (HTableDescriptor table : tables) {
-        byte[][] splits = getSplits(table.getTableName());
-        // TODO Maybe create a addTableSchema(table, splits) method?
-        schemaDefinition.tableSchemaDefinitions.add(new TableSchemaDefinition(table, splits));
+        LOG.debug("Found table {} in HBase.", table.getNameAsString());
+        LOG.trace("Table details: {}", table);
+
+        schemaDefinition.addTableSchemaDefinition(table, getSplits(table.getTableName()));
       }
       return schemaDefinition;
     }
@@ -285,9 +291,7 @@ public class HBaseSchemaTranslator {
       Preconditions.checkNotNull(schemaDefinition, "SchemaDefinitions can not be null.");
       try (Writer writer = new FileWriter(outputFilePath)) {
         new Gson().toJson(schemaDefinition, writer);
-        // new Gson().toJson(schemaDefinition, new
-        // FileWriter("/Users/shitanshu/unitTestSchema.json"));
-        System.out.println("Wrote schema to file " + outputFilePath);
+        LOG.info("Wrote schema to file " + outputFilePath);
       }
     }
   }
@@ -319,11 +323,10 @@ public class HBaseSchemaTranslator {
         try {
           btAdmin.createTable(
               tableSchemaDefinition.getHbaseTableDescriptor(), tableSchemaDefinition.splits);
-          System.out.println("Successfully created table " + tableName + "  in Bigtable cluster.");
+          LOG.info("Created table {} in Bigtable.", tableName);
         } catch (Exception e) {
           failedTables.add(tableName);
-          System.err.println("failed to create table " + tableName);
-          e.printStackTrace();
+          LOG.error("Failed to create table {}.", e, tableName);
           // Continue creating tables in BT. Skipping creation failures makes the script idempotent
           // as BT will throw TableExistsException for a table that is already present.
         }
@@ -360,8 +363,7 @@ public class HBaseSchemaTranslator {
 
   public void translate() throws IOException {
     ClusterSchemaDefinition schemaDefinition = schemaReader.readSchema();
-    System.out.println(
-        "Found schema with " + schemaDefinition.tableSchemaDefinitions.size() + " tables.");
+    LOG.info("Read schema with {} tables.", schemaDefinition.tableSchemaDefinitions.size());
     this.schemaWriter.writeSchema(schemaDefinition);
   }
 
@@ -369,6 +371,7 @@ public class HBaseSchemaTranslator {
    * @param errorMsg Error message.  Can be null.
    */
   private static void usage(final String errorMsg) {
+    // Print usage on system.err instead of logger.
     if (errorMsg != null && errorMsg.length() > 0) {
       System.err.println("ERROR: " + errorMsg);
     }
@@ -413,6 +416,9 @@ public class HBaseSchemaTranslator {
   }
 
   public static void main(String[] args) throws IOException {
+    // Configure the logger.
+    BasicConfigurator.configure();
+
     SchemaTranslationOptions options = SchemaTranslationOptions.loadOptionsFromSystemProperties();
     HBaseSchemaTranslator translator = new HBaseSchemaTranslator(options);
     translator.translate();
