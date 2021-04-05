@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
-import org.apache.htrace.fasterxml.jackson.annotation.JsonIgnore;
 
 // TODO Maybe use AutoValue here?
 
@@ -46,7 +45,6 @@ public class ClusterSchemaDefinition {
       this.splits = splits;
     }
 
-    @JsonIgnore
     public HTableDescriptor getHbaseTableDescriptor() throws DeserializationException, IOException {
       return HTableDescriptor.parseFrom(tableDescriptor);
     }
