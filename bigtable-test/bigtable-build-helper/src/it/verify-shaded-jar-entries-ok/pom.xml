@@ -81,7 +81,7 @@ limitations under the License.
       <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>
         <artifactId>bigtable-build-helper</artifactId>
-        <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
+        <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
         <executions>
           <execution>
             <id>test</id>

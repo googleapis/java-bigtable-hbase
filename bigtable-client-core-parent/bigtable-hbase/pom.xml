@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-client-core-parent</artifactId>
-    <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-core-parent:current} -->
+    <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-core-parent:current} -->
   </parent>
 
   <artifactId>bigtable-hbase</artifactId>
@@ -219,7 +219,7 @@ limitations under the License.
       <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>
         <artifactId>bigtable-build-helper</artifactId>
-        <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
+        <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
 
         <executions>
           <!-- TODO: Remove this once we can properly shade conscrypt:

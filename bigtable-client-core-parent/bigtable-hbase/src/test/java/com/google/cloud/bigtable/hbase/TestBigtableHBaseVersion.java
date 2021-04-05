@@ -30,18 +30,19 @@ public class TestBigtableHBaseVersion {
   @Test
   public void testVersionNumber() {
     // Version must have 3 parts i.e. x.y.z and can have an optional of -SNAPSHOT suffixed.
-    Pattern versionPattern = Pattern.compile("^(\\d+)\\.(\\d+)\\.(\\d+)(-\\w+)?");
+    Pattern versionPattern = Pattern.compile("^(\\d+)\\.(\\d+)\\.(\\d+)([-\\w]+)?");
     Matcher versionMatcher = versionPattern.matcher(BigtableHBaseVersion.getVersion());
 
     assertTrue("incorrect version format", versionMatcher.matches());
 
     int result =
         ComparisonChain.start()
-            .compare(1, Integer.parseInt(versionMatcher.group(1)))
-            .compare(14, Integer.parseInt(versionMatcher.group(2)))
-            .compare(1, Integer.parseInt(versionMatcher.group(3)))
+            .compare(2, Integer.parseInt(versionMatcher.group(1)))
+            .compare(0, Integer.parseInt(versionMatcher.group(2)))
+            .compare(0, Integer.parseInt(versionMatcher.group(3)))
             .result();
 
-    assertTrue("Expected BigtableHBaseVersion.getVersion() to be at least 1.14.1", result <= 0);
+    assertTrue(
+        "Expected BigtableHBaseVersion.getVersion() to be at least 2.0.0-alpha-1", result <= 0);
   }
 }
