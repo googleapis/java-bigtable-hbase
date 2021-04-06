@@ -26,6 +26,7 @@ import static com.google.cloud.bigtable.config.CallOptionsConfig.USE_TIMEOUT_DEF
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -328,6 +329,7 @@ public class BigtableOptionsFactory {
    * @return a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
    * @throws java.io.IOException if any.
    */
+  @InternalApi("For internal use only")
   public static BigtableOptions fromConfiguration(final Configuration configuration)
       throws IOException {
 
