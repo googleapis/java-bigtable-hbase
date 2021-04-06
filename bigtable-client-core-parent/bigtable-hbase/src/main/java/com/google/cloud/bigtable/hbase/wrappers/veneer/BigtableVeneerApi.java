@@ -26,14 +26,20 @@ import java.io.IOException;
 /** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
 public class BigtableVeneerApi extends BigtableApi {
-
+  private static final SharedDataClientWrapperFactory sharedClientFactory =
+      new SharedDataClientWrapperFactory();
   private final DataClientWrapper dataClientWrapper;
   private final AdminClientWrapper adminClientWrapper;
 
   public BigtableVeneerApi(BigtableHBaseVeneerSettings settings) throws IOException {
     super(settings);
-    dataClientWrapper =
-        new DataClientVeneerApi(BigtableDataClient.create(settings.getDataSettings()));
+
+    if (settings.isChannelPoolCachingEnabled()) {
+      dataClientWrapper = sharedClientFactory.createDataClient(settings);
+    } else {
+      dataClientWrapper =
+          new DataClientVeneerApi(BigtableDataClient.create(settings.getDataSettings()));
+    }
     adminClientWrapper =
         new AdminClientVeneerApi(BigtableTableAdminClient.create(settings.getTableAdminSettings()));
   }
