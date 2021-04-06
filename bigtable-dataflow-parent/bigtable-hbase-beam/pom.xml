@@ -16,7 +16,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-dataflow-parent</artifactId>
-    <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-dataflow-parent:current} -->
+    <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-dataflow-parent:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-beam</artifactId>
@@ -270,7 +270,7 @@ limitations under the License.
       <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>
         <artifactId>bigtable-build-helper</artifactId>
-        <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
+        <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
         <executions>
           <execution>
             <id>verify-mirror-deps</id>

@@ -5,13 +5,13 @@
   <parent>
     <artifactId>bigtable-test</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
+    <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.google.cloud.bigtable.test</groupId>
   <artifactId>bigtable-build-helper</artifactId>
-  <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
+  <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
   <packaging>maven-plugin</packaging>
   <description>
     java-bigtable-hbase internal maven extensions.
