@@ -35,12 +35,12 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 
 /** Simple wrapper around a {@link DataClientWrapper} that will release resources on close. */
-class SharedDataClentWrapper implements DataClientWrapper {
+class SharedDataClientWrapper implements DataClientWrapper {
   private final SharedDataClientWrapperFactory owner;
   private final SharedDataClientWrapperFactory.Key key;
   private final DataClientWrapper delegate;
 
-  public SharedDataClentWrapper(
+  public SharedDataClientWrapper(
       SharedDataClientWrapperFactory owner, Key key, DataClientWrapper delegate) {
     this.owner = owner;
     this.key = key;

@@ -75,7 +75,7 @@ class SharedDataClientWrapperFactory {
           .setClock(sharedCtx.getClock());
 
       // Create a reference counted client wrapper
-      return new SharedDataClentWrapper(
+      return new SharedDataClientWrapper(
           this, key, new DataClientVeneerApi(BigtableDataClient.create(builder.build())));
     } catch (IOException | RuntimeException e) {
       release(key);
