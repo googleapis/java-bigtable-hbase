@@ -195,7 +195,15 @@ Bigtable [scaling limitations](https://cloud.google.com/bigtable/docs/scaling#li
 
 Additional options: 
 
-1. Latency based throttling may reduce the impact the import batch job may have on 
+1. Set client based timeouts for the buffered mutator requests (default 600000ms).
+For example:
+
+    ```bash
+    -Dgoogle.bigtable.rpc.use.timeouts=true
+    -Dgoogle.bigtable.mutate.rpc.timeout.ms=600000
+    ```
+
+2. Latency based throttling may reduce the impact the import batch job may have on 
 other workloads. Throttling should be tested for the use-case and can be enabled by 
 setting the properties for the job. For example:
 
@@ -203,14 +211,14 @@ setting the properties for the job. For example:
     -Dgoogle.bigtable.buffered.mutator.throttling.enable=true
     -Dgoogle.bigtable.buffered.mutator.throttling.threshold.ms=100
     ```
-   
-2. The number of splits per region (default 2). For example:
+
+3. The number of splits per region (default 2). For example:
 
     ```bash
     -Dgoogle.bigtable.import.snapshot.splits.per.region=3
     ```
-   
-3. Other mapreduce configurations can be set as properties. For example:
+
+4. Other mapreduce configurations can be set as properties. For example:
 
     ```bash
     -Dmapreduce.map.maxattempts=4

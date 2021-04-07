@@ -29,6 +29,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /** test driver function */
+// TODO - parameterize this to run against prod in future
 public class TestImportHBaseSnapshotJob {
 
   @Test

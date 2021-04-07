@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.mapreduce.hbasesnapshots;
 
-import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon.BIGTABLE_MUTATE_RPC_TIMEOUT_MS_DEFAULT;
 import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon.IMPORT_SNAPSHOT_JOBNAME_KEY;
 import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon.SNAPSHOTNAME_KEY;
 import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon.SNAPSHOT_RESTOREDIR_KEY;
@@ -134,8 +133,8 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
     long numRows = counters.findCounter(ScanCounter.NUM_ROWS).getValue();
     long numCells = counters.findCounter(ScanCounter.NUM_CELLS).getValue();
 
-    System.out.println(("############# Num of ROWS imported= " + numRows));
-    System.out.println(("############# Num of CELLS imported= " + numCells));
+    LOG.info("############# Num of ROWS imported= " + numRows);
+    LOG.info("############# Num of CELLS imported= " + numCells);
 
     return successStatus;
   }
@@ -184,10 +183,6 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
         conf.get(BigtableOptionsFactory.PROJECT_ID_KEY),
         conf.get(BigtableOptionsFactory.INSTANCE_ID_KEY),
         conf.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY, ""));
-    conf.setBooleanIfUnset(BigtableOptionsFactory.BIGTABLE_USE_TIMEOUTS_KEY, true);
-    conf.setIfUnset(
-        BigtableOptionsFactory.BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY,
-        String.valueOf(BIGTABLE_MUTATE_RPC_TIMEOUT_MS_DEFAULT));
 
     // implicit table outputformat configs that are used in the job to write map output to a table
     conf.set(TableOutputFormat.OUTPUT_TABLE, conf.get(TABLENAME_KEY));
@@ -248,6 +243,13 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
     }
 
     @Override
+    /**
+     * convert result to puts. deleted cells are not handled as Scan will not read through
+     * tombstones (see {@link org.apache.hadoop.hbase.client.Scan#setRaw(boolean)} if required).
+     * Additionally @see <a
+     * href="https://cloud.google.com/bigtable/docs/reference/data/rpc/google.bigtable.v2#mutaterowrequest">google.bigtable.v2#mutaterowrequest</a>
+     * for details on splitting result to MAX_CELLS.
+     */
     protected void map(ImmutableBytesWritable key, Result result, Context ctx)
         throws IOException, InterruptedException {
 
@@ -265,6 +267,8 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
       while (cellIt.hasNext()) {
         Put put = new Put(key.get());
 
+        // splitting the result across puts for atomic mutations is unsafe. careful handling for
+        // this scenario may be required when hitting condition.
         for (int i = 0; i < MAX_CELLS && cellIt.hasNext(); i++) {
           put.add(cellIt.next());
         }

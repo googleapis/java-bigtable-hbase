@@ -52,6 +52,8 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
+/** end to end integration test * */
+// TODO - parameterize this to run against prod in future
 public class EndToEndIT {
 
   private static final Log LOG = LogFactory.getLog(EndToEndIT.class);

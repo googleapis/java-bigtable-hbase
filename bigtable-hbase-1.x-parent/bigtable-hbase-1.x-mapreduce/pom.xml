@@ -55,18 +55,6 @@ limitations under the License.
   the enduser can explcitly add their own version hbase-server.
   -->
 
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>com.google.cloud</groupId>
-        <artifactId>google-cloud-bom</artifactId>
-        <version>${google-cloud-bom.version}</version>
-        <type>pom</type>
-        <scope>test</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
   <dependencies>
     <!-- Primary Group -->
     <dependency>
@@ -117,16 +105,6 @@ limitations under the License.
       <artifactId>google-cloud-bigtable-emulator</artifactId>
       <version>${google-cloud-bigtable-emulator.version}</version>
       <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.protobuf</groupId>
-          <artifactId>protobuf-java</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.google.protobuf</groupId>
-          <artifactId>protobuf-java-util</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
@@ -134,10 +112,12 @@ limitations under the License.
       <version>${hbase1.version}</version>
       <scope>test</scope>
       <exclusions>
+        <!-- exclusion to avoid version conflict with existing artifact  -->
         <exclusion>
           <groupId>org.slf4j</groupId>
           <artifactId>slf4j-api</artifactId>
         </exclusion>
+        <!-- exclusion to avoid version conflict with existing artifact  -->
         <exclusion>
           <groupId>org.slf4j</groupId>
           <artifactId>slf4j-log4j12</artifactId>

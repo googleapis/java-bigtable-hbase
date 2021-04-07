@@ -26,8 +26,6 @@ public class ImportJobCommon {
 
   public static final String IMPORT_SNAPSHOT_JOBNAME_KEY = "google.bigtable.import.jobname";
 
-  public static final Integer BIGTABLE_MUTATE_RPC_TIMEOUT_MS_DEFAULT = 600_000;
-
   public static final String SNAPSHOT_SPLITS_PER_REGION_KEY =
       "google.bigtable.import.snapshot.splits.per.region";
 
