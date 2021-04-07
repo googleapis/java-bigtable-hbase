@@ -35,8 +35,6 @@ limitations under the License.
   </description>
 
   <properties>
-    <hbase1-mapreduce-slfj.version>1.7.10</hbase1-mapreduce-slfj.version>
-    <google-cloud-bom.version>0.150.0</google-cloud-bom.version>
     <mrunit.version>1.1.0</mrunit.version>
     <google-cloud-bigtable-emulator.version>0.130.2</google-cloud-bigtable-emulator.version>
   </properties>
