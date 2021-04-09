@@ -81,8 +81,7 @@ public class TestRpcRetryBehaviorGetSingle extends TestRpcRetryBehavior {
         assertThat(status.toString(), hasDeadlineExceededMessage);
       } else {
         assertThat(
-            status.toString(),
-            Matchers.either(hasDeadlineExceededMessage).or(hasAbortedMessage));
+            status.toString(), Matchers.either(hasDeadlineExceededMessage).or(hasAbortedMessage));
       }
     }
   }
