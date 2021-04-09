@@ -22,6 +22,7 @@ import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.common.collect.ImmutableMap;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.lang.time.StopWatch;
@@ -50,7 +51,8 @@ public class TestRpcRetryBehaviorPutSingle extends TestRpcRetryBehavior {
 
       String expectedExceptionMessage =
           serverRpcAbortsForTest && !timeoutEnabled ? "ABORTED" : "DEADLINE_EXCEEDED";
-      assertThat(e.getCause().getMessage(), CoreMatchers.containsString(expectedExceptionMessage));
+      Status status = Status.fromThrowable(e);
+      assertThat(status.toString(), CoreMatchers.containsString(expectedExceptionMessage));
     }
   }
 
