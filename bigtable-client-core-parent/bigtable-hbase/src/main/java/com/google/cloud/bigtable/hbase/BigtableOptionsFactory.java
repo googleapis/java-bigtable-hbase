@@ -305,7 +305,7 @@ public class BigtableOptionsFactory {
 
   /**
    * If timeouts are set, how many milliseconds should pass before a DEADLINE_EXCEEDED for an RPC
-   * attempt within a long mutation. Note that multiple attempts may happen within an overall
+   * attempt within a long read. Note that multiple attempts may happen within an overall
    * operation, whose timeout is governed by {@link #BIGTABLE_READ_RPC_TIMEOUT_MS_KEY}. Currently,
    * this feature is experimental.
    */

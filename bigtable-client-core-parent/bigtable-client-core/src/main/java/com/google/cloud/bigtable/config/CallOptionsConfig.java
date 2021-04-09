@@ -58,7 +58,7 @@ public class CallOptionsConfig implements Serializable {
     private int longRpcTimeoutMs = LONG_TIMEOUT_MS_DEFAULT;
     private int mutateRpcTimeoutMs = LONG_TIMEOUT_MS_DEFAULT;
     private Optional<Integer> mutateRpcAttemptTimeoutMs = Optional.absent();
-    private int readRowsRpcTimeoutMs = LONG_TIMEOUT_MS_DEFAULT;
+    private int readStreamRpcTimeoutMs = LONG_TIMEOUT_MS_DEFAULT;
     private Optional<Integer> readRowsRpcAttemptTimeoutMs = Optional.absent();
 
     /** @deprecated Please use {@link CallOptionsConfig#builder()} */
@@ -72,7 +72,7 @@ public class CallOptionsConfig implements Serializable {
       this.longRpcTimeoutMs = original.longRpcTimeoutMs;
       this.mutateRpcTimeoutMs = original.mutateRpcTimeoutMs;
       this.mutateRpcAttemptTimeoutMs = original.mutateRpcAttemptTimeoutMs;
-      this.readRowsRpcTimeoutMs = original.readStreamRpcTimeoutMs;
+      this.readStreamRpcTimeoutMs = original.readStreamRpcTimeoutMs;
       this.readRowsRpcAttemptTimeoutMs = original.readStreamRpcAttemptTimeoutMs;
     }
 
@@ -206,7 +206,7 @@ public class CallOptionsConfig implements Serializable {
     public Builder setReadRowsRpcTimeoutMs(int readStreamRpcTimeoutMs) {
       Preconditions.checkArgument(
           readStreamRpcTimeoutMs > 0, "Read Stream RPC Timeout ms has to be greater than 0");
-      this.readRowsRpcTimeoutMs = readStreamRpcTimeoutMs;
+      this.readStreamRpcTimeoutMs = readStreamRpcTimeoutMs;
       return this;
     }
 
@@ -268,7 +268,7 @@ public class CallOptionsConfig implements Serializable {
     this.shortRpcAttemptTimeoutMs = builder.shortRpcAttemptTimeoutMs;
     this.longRpcTimeoutMs = builder.longRpcTimeoutMs;
     int mutateTimeout = builder.mutateRpcTimeoutMs;
-    int readRowsTimeout = builder.readRowsRpcTimeoutMs;
+    int readRowsTimeout = builder.readStreamRpcTimeoutMs;
 
     if (mutateTimeout == LONG_TIMEOUT_MS_DEFAULT && longRpcTimeoutMs != LONG_TIMEOUT_MS_DEFAULT) {
       mutateTimeout = longRpcTimeoutMs;
@@ -319,7 +319,7 @@ public class CallOptionsConfig implements Serializable {
    *
    * @return an Optional int, populated if the property was present.
    */
-  @BetaApi("The API for setting attempt timeouts is not yet stable and may change in the future")
+  @BetaApi("The API for getting attempt timeouts is not yet stable and may change in the future")
   public Optional<Integer> getShortRpcAttemptTimeoutMs() {
     return shortRpcAttemptTimeoutMs;
   }
@@ -353,7 +353,7 @@ public class CallOptionsConfig implements Serializable {
    *
    * @return an Optional int, populated if the property was present.
    */
-  @BetaApi("The API for setting attempt timeouts is not yet stable and may change in the future")
+  @BetaApi("The API for getting attempt timeouts is not yet stable and may change in the future")
   public Optional<Integer> getMutateRpcAttemptTimeoutMs() {
     return mutateRpcAttemptTimeoutMs;
   }
@@ -375,7 +375,7 @@ public class CallOptionsConfig implements Serializable {
    *
    * @return an Optional int, populated if the property was present.
    */
-  @BetaApi("The API for setting attempt timeouts is not yet stable and may change in the future")
+  @BetaApi("The API for getting attempt timeouts is not yet stable and may change in the future")
   public Optional<Integer> getReadStreamRpcAttemptTimeoutMs() {
     return readStreamRpcAttemptTimeoutMs;
   }

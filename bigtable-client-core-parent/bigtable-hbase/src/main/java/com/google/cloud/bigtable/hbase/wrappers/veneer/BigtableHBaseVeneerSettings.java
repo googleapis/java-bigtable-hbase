@@ -601,7 +601,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     }
 
     // NOTE: java-bigtable doesn't currently support attempt timeouts for streaming operations
-    // so we use it as a fallbacj to limit per row timeout instead.
+    // so we use it as a fallback to limit per row timeout instead.
     perRowTimeout = perRowTimeout.or(readRowsAttemptTimeout);
 
     if (perRowTimeout.isPresent()) {
