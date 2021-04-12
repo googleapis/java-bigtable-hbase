@@ -269,13 +269,13 @@ public class BigtableSession implements Closeable {
 
     BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
 
-    CallOptionsFactory.ConfiguredCallOptionsFactory callOptionsFactory =
-        new CallOptionsFactory.ConfiguredCallOptionsFactory(options.getCallOptionsConfig());
+    ConfiguredDeadlineGeneratorFactory callOptionsFactory =
+        new ConfiguredDeadlineGeneratorFactory(options.getCallOptionsConfig());
 
     // More often than not, users want the dataClient. Create a new one in the constructor.
     this.dataClient =
         new BigtableDataGrpcClient(dataChannel, sharedPools.getRetryExecutor(), options);
-    this.dataClient.setCallOptionsFactory(callOptionsFactory);
+    this.dataClient.setDeadlineGeneratorFactory(callOptionsFactory);
 
     // Async operations can run amok, so they need to have some throttling. The throttling is
     // achieved through a ThrottlingClientInterceptor.  gRPC wraps ClientInterceptors in Channels,
@@ -289,7 +289,7 @@ public class BigtableSession implements Closeable {
         ClientInterceptors.intercept(dataChannel, new ThrottlingClientInterceptor(resourceLimiter));
     throttlingDataClient =
         new BigtableDataGrpcClient(asyncDataChannel, sharedPools.getRetryExecutor(), options);
-    throttlingDataClient.setCallOptionsFactory(callOptionsFactory);
+    throttlingDataClient.setDeadlineGeneratorFactory(callOptionsFactory);
 
     ManagedChannel rawAdminChannel = createNettyChannel(options.getAdminHost(), options);
     managedChannels.add(rawAdminChannel);

@@ -27,7 +27,9 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_DA
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_PORT_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_READ_RPC_TIMEOUT_MS_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_RPC_ATTEMPT_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_RPC_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_PLAINTEXT_NEGOTIATION;
@@ -188,19 +190,23 @@ public class TestBigtableHBaseVeneerSettings {
   @Test
   public void testTimeoutBeingPassed() throws IOException {
     int initialElapsedMs = 100;
+    int rpcAttemptTimeoutMs = 100;
     int rpcTimeoutMs = 500;
     int perRowTimeoutMs = 1001;
     int maxElapsedMs = 1000;
     int maxAttempt = 10;
     int readRowStreamTimeout = 30000;
+    int readRowStreamAttemptTimeout = 3000;
     configuration.setBoolean(BIGTABLE_USE_TIMEOUTS_KEY, true);
     configuration.setInt(INITIAL_ELAPSED_BACKOFF_MILLIS_KEY, initialElapsedMs);
     configuration.setInt(MAX_ELAPSED_BACKOFF_MILLIS_KEY, maxElapsedMs);
+    configuration.setInt(BIGTABLE_RPC_ATTEMPT_TIMEOUT_MS_KEY, rpcAttemptTimeoutMs);
     configuration.setInt(BIGTABLE_RPC_TIMEOUT_MS_KEY, rpcTimeoutMs);
-    ;
+
     configuration.setInt(READ_PARTIAL_ROW_TIMEOUT_MS, perRowTimeoutMs);
     configuration.setLong(MAX_SCAN_TIMEOUT_RETRIES, maxAttempt);
     configuration.setInt(BIGTABLE_READ_RPC_TIMEOUT_MS_KEY, readRowStreamTimeout);
+    configuration.setInt(BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY, readRowStreamAttemptTimeout);
     BigtableDataSettings settings =
         BigtableHBaseVeneerSettings.create(configuration).getDataSettings();
 
@@ -208,15 +214,21 @@ public class TestBigtableHBaseVeneerSettings {
         settings.getStubSettings().readRowSettings().getRetrySettings();
     assertEquals(initialElapsedMs, readRowRetrySettings.getInitialRetryDelay().toMillis());
     assertEquals(rpcTimeoutMs, readRowRetrySettings.getTotalTimeout().toMillis());
+    assertEquals(rpcAttemptTimeoutMs, readRowRetrySettings.getInitialRpcTimeout().toMillis());
+    assertEquals(rpcAttemptTimeoutMs, readRowRetrySettings.getMaxRpcTimeout().toMillis());
 
     RetrySettings checkAndMutateRetrySettings =
         settings.getStubSettings().checkAndMutateRowSettings().getRetrySettings();
     assertEquals(rpcTimeoutMs, checkAndMutateRetrySettings.getTotalTimeout().toMillis());
+    // CheckAndMutate is non-retriable so its rpc timeout = overall timeout
+    assertEquals(rpcTimeoutMs, checkAndMutateRetrySettings.getInitialRpcTimeout().toMillis());
+    assertEquals(rpcTimeoutMs, checkAndMutateRetrySettings.getMaxRpcTimeout().toMillis());
 
     RetrySettings readRowsRetrySettings =
         settings.getStubSettings().readRowsSettings().getRetrySettings();
     assertEquals(initialElapsedMs, readRowsRetrySettings.getInitialRetryDelay().toMillis());
     assertEquals(perRowTimeoutMs, readRowsRetrySettings.getInitialRpcTimeout().toMillis());
+    assertEquals(perRowTimeoutMs, readRowsRetrySettings.getMaxRpcTimeout().toMillis());
     assertEquals(maxAttempt, readRowsRetrySettings.getMaxAttempts());
     assertEquals(readRowStreamTimeout, readRowsRetrySettings.getTotalTimeout().toMillis());
   }

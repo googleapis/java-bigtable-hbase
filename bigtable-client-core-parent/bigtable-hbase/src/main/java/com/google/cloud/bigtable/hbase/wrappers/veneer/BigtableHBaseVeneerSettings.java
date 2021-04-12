@@ -27,10 +27,13 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BU
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_HOST_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_MUTATE_RPC_ATTEMPT_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_PORT_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_READ_RPC_TIMEOUT_MS_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_RPC_ATTEMPT_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_RPC_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY;
@@ -246,6 +249,8 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     configureMetricsBridge(dataBuilder);
 
     // Complex RPC method settings
+    Optional<Duration> bulkMutateAttemptTimeout =
+        extractDuration(BIGTABLE_MUTATE_RPC_ATTEMPT_TIMEOUT_MS_KEY);
     @SuppressWarnings("deprecation")
     Optional<Duration> bulkMutateTimeout =
         extractDuration(
@@ -253,8 +258,12 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
             BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY);
 
     configureBulkMutationSettings(
-        dataBuilder.stubSettings().bulkMutateRowsSettings(), bulkMutateTimeout);
+        dataBuilder.stubSettings().bulkMutateRowsSettings(),
+        bulkMutateAttemptTimeout,
+        bulkMutateTimeout);
 
+    Optional<Duration> readRowsAttemptTimeout =
+        extractDuration(BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY);
     // NOTE: MAX_ELAPSED_BACKOFF_MILLIS_KEY is not used for scans
     @SuppressWarnings("deprecation")
     Optional<Duration> scanTimeout =
@@ -262,10 +271,13 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
             BIGTABLE_READ_RPC_TIMEOUT_MS_KEY,
             BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY);
 
-    configureBulkReadRowsSettings(dataBuilder.stubSettings().bulkReadRowsSettings(), scanTimeout);
-    configureReadRowsSettings(dataBuilder.stubSettings().readRowsSettings(), scanTimeout);
+    configureBulkReadRowsSettings(
+        dataBuilder.stubSettings().bulkReadRowsSettings(), readRowsAttemptTimeout, scanTimeout);
+    configureReadRowsSettings(
+        dataBuilder.stubSettings().readRowsSettings(), readRowsAttemptTimeout, scanTimeout);
 
     // RPC methods - simple
+    Optional<Duration> shortAttemptTimeout = extractDuration(BIGTABLE_RPC_ATTEMPT_TIMEOUT_MS_KEY);
     Optional<Duration> shortTimeout =
         extractDuration(BIGTABLE_RPC_TIMEOUT_MS_KEY, MAX_ELAPSED_BACKOFF_MILLIS_KEY);
 
@@ -274,10 +286,12 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     configureNonRetryableCallSettings(
         dataBuilder.stubSettings().readModifyWriteRowSettings(), shortTimeout);
 
-    configureRetryableCallSettings(dataBuilder.stubSettings().mutateRowSettings(), shortTimeout);
-    configureRetryableCallSettings(dataBuilder.stubSettings().readRowSettings(), shortTimeout);
     configureRetryableCallSettings(
-        dataBuilder.stubSettings().sampleRowKeysSettings(), shortTimeout);
+        dataBuilder.stubSettings().mutateRowSettings(), shortAttemptTimeout, shortTimeout);
+    configureRetryableCallSettings(
+        dataBuilder.stubSettings().readRowSettings(), shortAttemptTimeout, shortTimeout);
+    configureRetryableCallSettings(
+        dataBuilder.stubSettings().sampleRowKeysSettings(), shortAttemptTimeout, shortTimeout);
 
     return dataBuilder.build();
   }
@@ -450,11 +464,13 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   }
 
   private void configureBulkMutationSettings(
-      BigtableBatchingCallSettings.Builder builder, Optional<Duration> bulkMutateTimeout) {
+      BigtableBatchingCallSettings.Builder builder,
+      Optional<Duration> attemptTimeout,
+      Optional<Duration> overallTimeout) {
     BatchingSettings.Builder batchingSettingsBuilder = builder.getBatchingSettings().toBuilder();
 
     // Start configure retries & timeouts
-    configureRetryableCallSettings(builder, bulkMutateTimeout);
+    configureRetryableCallSettings(builder, attemptTimeout, overallTimeout);
     // End configure retries & timeouts
 
     // Start configure flush triggers
@@ -514,11 +530,13 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   }
 
   private void configureBulkReadRowsSettings(
-      BigtableBulkReadRowsCallSettings.Builder builder, Optional<Duration> scanTimeout) {
+      BigtableBulkReadRowsCallSettings.Builder builder,
+      Optional<Duration> attemptTimeout,
+      Optional<Duration> overallTimeout) {
     BatchingSettings.Builder bulkReadBatchingBuilder = builder.getBatchingSettings().toBuilder();
 
     // Start configure retries & timeouts
-    configureRetryableCallSettings(builder, scanTimeout);
+    configureRetryableCallSettings(builder, attemptTimeout, overallTimeout);
     // End configure retries & timeouts
 
     // Start config batch settings
@@ -534,7 +552,8 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
   private void configureReadRowsSettings(
       ServerStreamingCallSettings.Builder<Query, Row> readRowsSettings,
-      Optional<Duration> scanTimeout) {
+      Optional<Duration> readRowsAttemptTimeout,
+      Optional<Duration> overallTimeout) {
     // Configure retries
     // NOTE: that similar but not the same as unary retry settings: per attempt timeouts don't
     // exist, instead we use READ_PARTIAL_ROW_TIMEOUT_MS as the intra-row timeout
@@ -569,23 +588,34 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     }
 
     // overall timeout
-    if (scanTimeout.isPresent()) {
-      readRowsSettings.retrySettings().setTotalTimeout(scanTimeout.get());
+    if (overallTimeout.isPresent()) {
+      readRowsSettings.retrySettings().setTotalTimeout(overallTimeout.get());
     }
 
+    Optional<Duration> perRowTimeout = Optional.absent();
+
     // No request deadlines for scans, instead we use intra-row timeouts
-    String perRowTimeout = configuration.get(READ_PARTIAL_ROW_TIMEOUT_MS);
-    if (!Strings.isNullOrEmpty(perRowTimeout)) {
-      Duration rpcTimeoutMs = Duration.ofMillis(Long.parseLong(perRowTimeout));
+    String perRowTimeoutStr = configuration.get(READ_PARTIAL_ROW_TIMEOUT_MS);
+    if (!Strings.isNullOrEmpty(perRowTimeoutStr)) {
+      perRowTimeout = Optional.of(Duration.ofMillis(Long.parseLong(perRowTimeoutStr)));
+    }
+
+    // NOTE: java-bigtable doesn't currently support attempt timeouts for streaming operations
+    // so we use it as a fallback to limit per row timeout instead.
+    perRowTimeout = perRowTimeout.or(readRowsAttemptTimeout);
+
+    if (perRowTimeout.isPresent()) {
       readRowsSettings
           .retrySettings()
-          .setInitialRpcTimeout(rpcTimeoutMs)
-          .setMaxRpcTimeout(rpcTimeoutMs);
+          .setInitialRpcTimeout(perRowTimeout.get())
+          .setMaxRpcTimeout(perRowTimeout.get());
     }
   }
 
   private void configureRetryableCallSettings(
-      UnaryCallSettings.Builder<?, ?> unaryCallSettings, Optional<Duration> overallTimeout) {
+      UnaryCallSettings.Builder<?, ?> unaryCallSettings,
+      Optional<Duration> attemptTimeout,
+      Optional<Duration> overallTimeout) {
     if (!configuration.getBoolean(ENABLE_GRPC_RETRIES_KEY, true)) {
       // user explicitly disabled retries, treat it as a non-idempotent method
       configureNonRetryableCallSettings(unaryCallSettings, overallTimeout);
@@ -617,7 +647,13 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       unaryCallSettings.retrySettings().setTotalTimeout(overallTimeout.get());
     }
 
-    // TODO: configure per attempt timeouts
+    // Configure attempt timeout - if the user hasn't explicitly configured it, then fallback to
+    // overall timeout to match previous behavior
+    Optional<Duration> effectiveAttemptTimeout = attemptTimeout.or(overallTimeout);
+    if (effectiveAttemptTimeout.isPresent()) {
+      unaryCallSettings.retrySettings().setInitialRpcTimeout(effectiveAttemptTimeout.get());
+      unaryCallSettings.retrySettings().setMaxRpcTimeout(effectiveAttemptTimeout.get());
+    }
   }
 
   private void configureNonRetryableCallSettings(
