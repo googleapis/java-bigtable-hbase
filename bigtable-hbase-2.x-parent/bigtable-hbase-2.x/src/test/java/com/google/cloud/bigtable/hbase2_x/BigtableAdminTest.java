@@ -22,10 +22,8 @@ import static junit.framework.TestCase.assertNull;
 import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Mockito.mock;
 
-import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import java.io.IOException;
 import org.apache.hadoop.hbase.ClusterStatus;
-import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.junit.Test;
 import org.mockito.Mockito;
 
