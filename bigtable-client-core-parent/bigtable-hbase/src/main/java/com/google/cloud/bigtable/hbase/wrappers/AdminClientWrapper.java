@@ -25,7 +25,6 @@ import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.RestoreTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.RestoredTableResult;
 import com.google.cloud.bigtable.admin.v2.models.Table;
-import com.google.cloud.bigtable.admin.v2.models.UpdateBackupRequest;
 import com.google.longrunning.Operation;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
@@ -70,12 +69,6 @@ public interface AdminClientWrapper extends AutoCloseable {
    * @return The long running {@link Operation} for the request.
    */
   ApiFuture<Backup> createBackupAsync(CreateBackupRequest request);
-
-  /** Gets metadata information about the specified backup. */
-  ApiFuture<Backup> getBackupAsync(String clusterId, String backupId);
-
-  /** Update the specified backup. */
-  ApiFuture<Backup> updateBackupAsync(UpdateBackupRequest request);
 
   /** Lists all backups associated with the specified cluster. */
   ApiFuture<List<String>> listBackupsAsync(String clusterId);

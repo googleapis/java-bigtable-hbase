@@ -17,18 +17,16 @@ package com.google.cloud.bigtable.hbase.wrappers.veneer;
 
 import static org.junit.Assert.assertEquals;
 
-import com.google.bigtable.admin.v2.BigtableTableAdminGrpc;
-import com.google.bigtable.admin.v2.DeleteTableRequest;
-import com.google.bigtable.admin.v2.DropRowRangeRequest;
-import com.google.bigtable.admin.v2.GetTableRequest;
-import com.google.bigtable.admin.v2.ListTablesRequest;
-import com.google.bigtable.admin.v2.ListTablesResponse;
+import com.google.bigtable.admin.v2.*;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminClient;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.admin.v2.internal.NameUtil;
+import com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
+import com.google.cloud.bigtable.grpc.BigtableClusterName;
+import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.common.collect.Queues;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
@@ -39,6 +37,7 @@ import java.net.ServerSocket;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
@@ -54,6 +53,14 @@ public class TestAdminClientVeneerApi {
   private static final String INSTANCE_ID = "fake-instance-id";
   private static final String TABLE_ID_1 = "fake-Table-id-1";
   private static final String TABLE_ID_2 = "fake-Table-id-2";
+  private static final String TABLE_NAME =
+      NameUtil.formatTableName(PROJECT_ID, INSTANCE_ID, TABLE_ID_1);
+  private static final BigtableInstanceName INSTANCE_NAME =
+      new BigtableInstanceName(PROJECT_ID, INSTANCE_ID);
+  private static final String CLUSTER_ID = "fake-cluster-id";
+  private static final String BACKUP_ID = "fake-backup-id";
+  private static final BigtableClusterName CLUSTER_NAME = INSTANCE_NAME.toClusterName(CLUSTER_ID);
+  private static final String BACKUP_NAME = CLUSTER_NAME.toBackupName(BACKUP_ID);
 
   private FakeBigtableAdmin fakeAdminService = new FakeBigtableAdmin();
   private Server server;
@@ -145,6 +152,23 @@ public class TestAdminClientVeneerApi {
     assertEquals(tableId, NameUtil.extractTableIdFromTableName(rangeRequest.getName()));
   }
 
+  @Test
+  public void listBackupsAsync() throws ExecutionException, InterruptedException {
+    List<String> listApiFuture = adminClientWrapper.listBackupsAsync(CLUSTER_ID).get();
+    assertEquals(1, listApiFuture.size());
+    assertEquals("fake-backup-id", listApiFuture.get(0));
+  }
+
+  @Test
+  public void testDeleteBackupAsync() throws Exception {
+    Future<Void> deleteResponse = adminClientWrapper.deleteBackupAsync(CLUSTER_ID, BACKUP_ID);
+    deleteResponse.get();
+    DeleteBackupRequest deleteBackupRequest = fakeAdminService.popLastRequest();
+    assertEquals(
+        "projects/fake-project-id/instances/fake-instance-id/clusters/fake-cluster-id/backups/fake-backup-id",
+        deleteBackupRequest.getName());
+  }
+
   private static class FakeBigtableAdmin extends BigtableTableAdminGrpc.BigtableTableAdminImplBase {
 
     final BlockingQueue<Object> requests = Queues.newLinkedBlockingDeque();
@@ -216,6 +240,24 @@ public class TestAdminClientVeneerApi {
 
     @Override
     public void dropRowRange(DropRowRangeRequest request, StreamObserver<Empty> responseObserver) {
+      requests.add(request);
+      responseObserver.onNext(Empty.newBuilder().build());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void listBackups(
+        ListBackupsRequest request, StreamObserver<ListBackupsResponse> responseObserver) {
+      requests.add(request);
+      responseObserver.onNext(
+          ListBackupsResponse.newBuilder()
+              .addBackups(com.google.bigtable.admin.v2.Backup.newBuilder().setName(BACKUP_NAME))
+              .build());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void deleteBackup(DeleteBackupRequest request, StreamObserver<Empty> responseObserver) {
       requests.add(request);
       responseObserver.onNext(Empty.newBuilder().build());
       responseObserver.onCompleted();

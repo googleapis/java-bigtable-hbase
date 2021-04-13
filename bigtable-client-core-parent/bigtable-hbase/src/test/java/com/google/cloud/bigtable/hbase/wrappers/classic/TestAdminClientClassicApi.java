@@ -21,26 +21,27 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.bigtable.admin.v2.*;
 import com.google.bigtable.admin.v2.Cluster;
 import com.google.bigtable.admin.v2.ColumnFamily;
-import com.google.bigtable.admin.v2.DeleteTableRequest;
-import com.google.bigtable.admin.v2.DropRowRangeRequest;
-import com.google.bigtable.admin.v2.GetTableRequest;
-import com.google.bigtable.admin.v2.ListClustersRequest;
-import com.google.bigtable.admin.v2.ListClustersResponse;
 import com.google.bigtable.admin.v2.ListClustersResponse.Builder;
-import com.google.bigtable.admin.v2.ListTablesRequest;
-import com.google.bigtable.admin.v2.ListTablesResponse;
 import com.google.cloud.bigtable.admin.v2.internal.NameUtil;
+import com.google.cloud.bigtable.admin.v2.models.*;
+import com.google.cloud.bigtable.admin.v2.models.Backup;
+import com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
-import com.google.cloud.bigtable.admin.v2.models.GCRules;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
+import com.google.cloud.bigtable.admin.v2.models.RestoreTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
+import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceClient;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.hbase.wrappers.AdminClientWrapper;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Futures;
+import com.google.longrunning.Operation;
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import java.util.ArrayList;
@@ -70,6 +71,9 @@ public class TestAdminClientClassicApi {
   private static final String COLUMN_FAMILY = "myColumnFamily";
   private static final String ROW_KEY_PREFIX = "row-key-val";
   private static final String UPDATE_FAMILY = "update-family";
+  private static final String BACKUP_ID = "fake-backup-id";
+  private static final BigtableClusterName CLUSTER_NAME = INSTANCE_NAME.toClusterName(CLUSTER_ID);
+  private static final String BACKUP_NAME = CLUSTER_NAME.toBackupName(BACKUP_ID);
 
   private BigtableTableAdminClient tableDelegate;
   private BigtableInstanceClient instanceDelegate;
@@ -194,6 +198,76 @@ public class TestAdminClientClassicApi {
     List<com.google.cloud.bigtable.admin.v2.models.Cluster> actual =
         adminClientWrapper.listClusters(INSTANCE_ID);
     assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testCreateBackupAsync() throws Exception {
+    CreateBackupRequest request =
+        CreateBackupRequest.of(CLUSTER_ID, BACKUP_ID).setSourceTableId(TABLE_NAME);
+    com.google.bigtable.admin.v2.CreateBackupRequest requestProto =
+        request.toProto(PROJECT_ID, INSTANCE_ID);
+    Operation op =
+        Operation.newBuilder()
+            .setMetadata(Any.pack(CreateBackupMetadata.getDefaultInstance()))
+            .setResponse(
+                Any.pack(
+                    com.google.bigtable.admin.v2.Backup.newBuilder()
+                        .setName(BACKUP_NAME)
+                        .setSourceTable(TABLE_NAME)
+                        .build()))
+            .build();
+    when(tableDelegate.waitForOperation(op)).thenReturn(op);
+    when(tableDelegate.createBackupAsync(requestProto)).thenReturn(Futures.immediateFuture(op));
+    Future<Backup> actualResponse = adminClientWrapper.createBackupAsync(request);
+    assertEquals(BACKUP_ID, actualResponse.get().getId());
+    verify(tableDelegate).createBackupAsync(requestProto);
+  }
+
+  @Test
+  public void testListBackupsAsync() throws Exception {
+    ListBackupsRequest request =
+        ListBackupsRequest.newBuilder().setParent(CLUSTER_NAME.toString()).build();
+    ListBackupsResponse response =
+        ListBackupsResponse.newBuilder()
+            .addBackups(
+                com.google.bigtable.admin.v2.Backup.newBuilder()
+                    .setName(BACKUP_NAME)
+                    .setSourceTable(TABLE_NAME)
+                    .build())
+            .build();
+    when(tableDelegate.listBackupsAsync(request)).thenReturn(Futures.immediateFuture(response));
+    Future<List<String>> actualResponse = adminClientWrapper.listBackupsAsync(CLUSTER_ID);
+    assertEquals(response.getBackupsCount(), actualResponse.get().size());
+    verify(tableDelegate).listBackupsAsync(request);
+  }
+
+  @Test
+  public void testDeleteBackupAsync() {
+    DeleteBackupRequest request = DeleteBackupRequest.newBuilder().setName(BACKUP_NAME).build();
+    when(tableDelegate.deleteBackupAsync(request))
+        .thenReturn(Futures.immediateFuture(Empty.getDefaultInstance()));
+    adminClientWrapper.deleteBackupAsync(CLUSTER_ID, BACKUP_ID);
+    verify(tableDelegate).deleteBackupAsync(request);
+  }
+
+  @Test
+  public void testRestoreTableAsync() throws Exception {
+    RestoreTableRequest request =
+        RestoreTableRequest.of(CLUSTER_ID, BACKUP_ID).setTableId(TABLE_ID);
+    com.google.bigtable.admin.v2.RestoreTableRequest requestProto =
+        request.toProto(PROJECT_ID, INSTANCE_ID);
+    Operation op =
+        Operation.newBuilder()
+            .setMetadata(Any.pack(RestoreTableMetadata.newBuilder().setName(BACKUP_NAME).build()))
+            .setResponse(
+                Any.pack(
+                    com.google.bigtable.admin.v2.Table.newBuilder().setName(TABLE_NAME).build()))
+            .build();
+    when(tableDelegate.waitForOperation(op)).thenReturn(op);
+    when(tableDelegate.restoreTableAsync(requestProto)).thenReturn(Futures.immediateFuture(op));
+    Future<RestoredTableResult> actualResponse = adminClientWrapper.restoreTableAsync(request);
+    assertEquals(TABLE_ID, actualResponse.get().getTable().getId());
+    verify(tableDelegate).restoreTableAsync(requestProto);
   }
 
   private static com.google.bigtable.admin.v2.Table createTableData() {

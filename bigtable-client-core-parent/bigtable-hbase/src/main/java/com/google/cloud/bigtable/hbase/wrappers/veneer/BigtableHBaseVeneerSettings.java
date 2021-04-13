@@ -67,7 +67,9 @@ import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountJwtAccessCredentials;
+import com.google.cloud.bigtable.admin.v2.BigtableInstanceAdminSettings;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
+import com.google.cloud.bigtable.admin.v2.stub.BigtableInstanceAdminStubSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings.Builder;
 import com.google.cloud.bigtable.data.v2.models.Query;
@@ -110,6 +112,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   private final Configuration configuration;
   private final BigtableDataSettings dataSettings;
   private final BigtableTableAdminSettings tableAdminSettings;
+  private final BigtableInstanceAdminSettings instanceAdminSettings;
 
   private final String dataHost;
   private final String adminHost;
@@ -136,6 +139,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     // Build configs for veneer
     this.dataSettings = buildBigtableDataSettings();
     this.tableAdminSettings = buildBigtableTableAdminSettings();
+    this.instanceAdminSettings = buildBigtableInstanceAdminSettings();
 
     // Veneer settings are finalized, now we need to extract java-bigtable-hbase
     // specific settings
@@ -216,6 +220,11 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   /** Utility to convert {@link Configuration} to {@link BigtableTableAdminSettings}. */
   public BigtableTableAdminSettings getTableAdminSettings() {
     return tableAdminSettings;
+  }
+
+  /** Utility to convert {@link Configuration} to {@link BigtableInstanceAdminSettings}. */
+  public BigtableInstanceAdminSettings getInstanceAdminSettings() {
+    return instanceAdminSettings;
   }
 
   // ************** Private Helpers **************
@@ -333,6 +342,41 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     // change the defaults
     // if it turns out that the timeout & retry behavior needs to be configurable, we will expose
     // separate settings
+
+    return adminBuilder.build();
+  }
+
+  private BigtableInstanceAdminSettings buildBigtableInstanceAdminSettings() throws IOException {
+    BigtableInstanceAdminSettings.Builder adminBuilder;
+
+    // Configure connection
+    String emulatorEndpoint = configuration.get(BIGTABLE_EMULATOR_HOST_KEY);
+    if (!Strings.isNullOrEmpty(emulatorEndpoint)) {
+      // todo switch to newBuilderForEmulator once available
+      adminBuilder = BigtableInstanceAdminSettings.newBuilder();
+      adminBuilder
+          .stubSettings()
+          .setEndpoint(emulatorEndpoint)
+          .setCredentialsProvider(NoCredentialsProvider.create())
+          .setTransportChannelProvider(
+              BigtableInstanceAdminStubSettings.defaultGrpcTransportProviderBuilder()
+                  .setChannelConfigurator(
+                      new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+                        @Override
+                        public ManagedChannelBuilder apply(
+                            ManagedChannelBuilder managedChannelBuilder) {
+                          return managedChannelBuilder.usePlaintext();
+                        }
+                      })
+                  .build());
+    } else {
+      adminBuilder = BigtableInstanceAdminSettings.newBuilder();
+      configureConnection(adminBuilder.stubSettings(), BIGTABLE_ADMIN_HOST_KEY);
+      configureCredentialProvider(adminBuilder.stubSettings());
+    }
+    configureHeaderProvider(adminBuilder.stubSettings());
+
+    adminBuilder.setProjectId(getProjectId());
 
     return adminBuilder.build();
   }

@@ -19,9 +19,9 @@ import com.google.api.core.InternalApi;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.regex.Pattern;
@@ -140,7 +140,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public List<HBaseProtos.SnapshotDescription> listSnapshots() throws IOException {
     List<String> backups =
         Futures.getChecked(
-            tableAdminClientWrapper.listBackupsAsync(getBackupClusterName().getClusterId()),
+            adminClientWrapper.listBackupsAsync(getBackupClusterName().getClusterId()),
             IOException.class);
 
     List<HBaseProtos.SnapshotDescription> response = new ArrayList<>();

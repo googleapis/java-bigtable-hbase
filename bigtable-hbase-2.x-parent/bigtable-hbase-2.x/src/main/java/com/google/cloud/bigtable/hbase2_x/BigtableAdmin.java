@@ -143,7 +143,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public List<SnapshotDescription> listSnapshots() throws IOException {
     List<String> backups =
         Futures.getChecked(
-            tableAdminClientWrapper.listBackupsAsync(getBackupClusterName().getClusterId()),
+            adminClientWrapper.listBackupsAsync(getBackupClusterName().getClusterId()),
             IOException.class);
     List<SnapshotDescription> response = new ArrayList<>();
     for (String backup : backups) {
@@ -260,7 +260,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   protected CompletableFuture<Void> deleteTableAsyncInternal(TableName tableName) {
     return FutureUtils.toCompletableFuture(
-        tableAdminClientWrapper.deleteTableAsync(tableName.getNameAsString()));
+        adminClientWrapper.deleteTableAsync(tableName.getNameAsString()));
   }
 
   @Override
@@ -364,7 +364,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
       LOG.info("truncate will preserveSplits. The passed in variable is ignored.");
     }
     return FutureUtils.toCompletableFuture(
-        tableAdminClientWrapper.dropAllRowsAsync(tableName.getNameAsString()));
+        adminClientWrapper.dropAllRowsAsync(tableName.getNameAsString()));
   }
   /* ******* Unsupported methods *********** */
 

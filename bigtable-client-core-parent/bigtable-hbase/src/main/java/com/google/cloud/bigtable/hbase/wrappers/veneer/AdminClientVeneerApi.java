@@ -27,7 +27,6 @@ import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.RestoreTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.RestoredTableResult;
 import com.google.cloud.bigtable.admin.v2.models.Table;
-import com.google.cloud.bigtable.admin.v2.models.UpdateBackupRequest;
 import com.google.cloud.bigtable.hbase.wrappers.AdminClientWrapper;
 import com.google.protobuf.ByteString;
 import java.util.List;
@@ -84,17 +83,6 @@ public class AdminClientVeneerApi implements AdminClientWrapper {
   @Override
   public ApiFuture<Backup> createBackupAsync(CreateBackupRequest request) {
     return delegate.createBackupAsync(request);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public ApiFuture<Backup> getBackupAsync(String clusterId, String backupId) {
-    return delegate.getBackupAsync(clusterId, backupId);
-  }
-
-  @Override
-  public ApiFuture<Backup> updateBackupAsync(UpdateBackupRequest request) {
-    return delegate.updateBackupAsync(request);
   }
 
   /** {@inheritDoc} */

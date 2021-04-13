@@ -20,7 +20,6 @@ import com.google.api.core.InternalApi;
 import com.google.bigtable.admin.v2.DeleteBackupRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
-import com.google.bigtable.admin.v2.GetBackupRequest;
 import com.google.bigtable.admin.v2.GetTableRequest;
 import com.google.bigtable.admin.v2.ListBackupsRequest;
 import com.google.bigtable.admin.v2.ListBackupsResponse;
@@ -37,7 +36,6 @@ import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.RestoreTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.RestoredTableResult;
 import com.google.cloud.bigtable.admin.v2.models.Table;
-import com.google.cloud.bigtable.admin.v2.models.UpdateBackupRequest;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceClient;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
@@ -231,34 +229,6 @@ public class AdminClientClassicApi implements AdminClientWrapper {
           }
         };
     return ApiFutureUtil.transformAndAdapt(backupAsync, function);
-  }
-
-  @Override
-  public ApiFuture<Backup> getBackupAsync(String clusterId, String backupId) {
-    BigtableClusterName clusterName = instanceName.toClusterName(clusterId);
-    GetBackupRequest request =
-        GetBackupRequest.newBuilder().setName(clusterName.toBackupName(backupId)).build();
-    return ApiFutureUtil.transformAndAdapt(
-        tableDelegate.getBackupAsync(request),
-        new Function<com.google.bigtable.admin.v2.Backup, Backup>() {
-          @Override
-          public Backup apply(com.google.bigtable.admin.v2.Backup backup) {
-            return Backup.fromProto(backup);
-          }
-        });
-  }
-
-  @Override
-  public ApiFuture<Backup> updateBackupAsync(UpdateBackupRequest request) {
-    return ApiFutureUtil.transformAndAdapt(
-        tableDelegate.updateBackupAsync(
-            request.toProto(instanceName.getProjectId(), instanceName.getInstanceId())),
-        new Function<com.google.bigtable.admin.v2.Backup, Backup>() {
-          @Override
-          public Backup apply(com.google.bigtable.admin.v2.Backup backup) {
-            return Backup.fromProto(backup);
-          }
-        });
   }
 
   @Override
