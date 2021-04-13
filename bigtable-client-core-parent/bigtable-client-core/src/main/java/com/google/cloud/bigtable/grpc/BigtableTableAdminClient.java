@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.grpc;
 
 import com.google.api.core.InternalExtensionOnly;
-import com.google.bigtable.admin.v2.Backup;
 import com.google.bigtable.admin.v2.CreateBackupRequest;
 import com.google.bigtable.admin.v2.CreateTableRequest;
 import com.google.bigtable.admin.v2.DeleteBackupRequest;
@@ -31,7 +30,6 @@ import com.google.bigtable.admin.v2.ListTablesResponse;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
 import com.google.bigtable.admin.v2.RestoreTableRequest;
 import com.google.bigtable.admin.v2.Table;
-import com.google.bigtable.admin.v2.UpdateBackupRequest;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.iam.v1.GetIamPolicyRequest;
 import com.google.iam.v1.Policy;
@@ -195,21 +193,6 @@ public interface BigtableTableAdminClient {
    */
   ListenableFuture<Operation> createBackupAsync(
       com.google.bigtable.admin.v2.CreateBackupRequest request);
-
-  /**
-   * Gets metadata information about the specified backup.
-   *
-   * @param request a {@link GetBackupRequest} object.
-   * @return The {@link com.google.bigtable.admin.v2.Backup} defined by the request.
-   */
-  ListenableFuture<com.google.bigtable.admin.v2.Backup> getBackupAsync(GetBackupRequest request);
-
-  /**
-   * Updates the specified backup.
-   *
-   * @param request the request to update the Backup.
-   */
-  ListenableFuture<Backup> updateBackupAsync(UpdateBackupRequest request);
 
   /**
    * Lists all backups associated with the specified cluster.

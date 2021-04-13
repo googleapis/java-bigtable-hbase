@@ -30,7 +30,6 @@ import com.google.bigtable.admin.v2.DeleteBackupRequest;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
 import com.google.bigtable.admin.v2.GenerateConsistencyTokenRequest;
 import com.google.bigtable.admin.v2.GenerateConsistencyTokenResponse;
-import com.google.bigtable.admin.v2.GetBackupRequest;
 import com.google.bigtable.admin.v2.GetTableRequest;
 import com.google.bigtable.admin.v2.ListBackupsRequest;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
@@ -192,14 +191,6 @@ public class TestBigtableTableAdminGrpcClient {
             .build();
     complete();
     defaultClient.createBackupAsync(request).get(1, TimeUnit.SECONDS);
-    verifyRequestCalled(request);
-  }
-
-  @Test
-  public void testGetBackup() throws Exception {
-    GetBackupRequest request = GetBackupRequest.newBuilder().setName(TABLE_NAME).build();
-    complete();
-    defaultClient.getBackupAsync(request).get(1, TimeUnit.SECONDS);
     verifyRequestCalled(request);
   }
 
