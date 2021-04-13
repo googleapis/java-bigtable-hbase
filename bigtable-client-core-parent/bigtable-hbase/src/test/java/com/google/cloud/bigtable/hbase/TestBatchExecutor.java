@@ -83,7 +83,8 @@ import org.mockito.stubbing.Answer;
 /** Tests {@link BatchExecutor} */
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestBatchExecutor {
-  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  // TODO: remove silent and tighten mocks
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().silent();
 
   private static Put randomPut() {
     return new Put(randomBytes(8))

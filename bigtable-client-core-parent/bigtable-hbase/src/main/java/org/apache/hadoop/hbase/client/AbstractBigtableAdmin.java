@@ -50,8 +50,6 @@ import com.google.protobuf.ByteString;
 import io.grpc.Status;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +57,6 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.HBaseIOException;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -705,18 +702,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Deprecated
   public void deleteColumn(final String tableName, final String columnName) throws IOException {
     deleteColumn(TableName.valueOf(tableName), Bytes.toBytes(columnName));
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public ClusterStatus getClusterStatus() throws IOException {
-    return new ClusterStatus() {
-      @Override
-      public Collection<ServerName> getServers() {
-        // TODO(sduskis): Point the server name to options.getServerName()
-        return Collections.emptyList();
-      }
-    };
   }
 
   /** {@inheritDoc} */

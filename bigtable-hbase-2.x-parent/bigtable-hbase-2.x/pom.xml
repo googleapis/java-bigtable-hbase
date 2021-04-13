@@ -20,11 +20,11 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-2.x-parent</artifactId>
-    <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-2x-parent:current} -->
+    <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-2x-parent:current} -->
   </parent>
 
   <properties>
-    <hbase.version>${hbase.version.2}</hbase.version>
+    <hbase.version>${hbase2.version}</hbase.version>
   </properties>
 
   <artifactId>bigtable-hbase-2.x</artifactId>
@@ -70,9 +70,15 @@ limitations under the License.
     </dependency>
 
     <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-metrics-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase2.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.slf4j</groupId>
@@ -134,7 +140,7 @@ limitations under the License.
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-core</artifactId>
-      <version>${dropwizard.metrics.version}</version>
+      <version>${hbase2-metrics.version}</version>
     </dependency>
     <dependency>
       <groupId>org.threeten</groupId>
@@ -145,7 +151,7 @@ limitations under the License.
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-graphite</artifactId>
-      <version>3.2.6</version>
+      <version>${hbase2-metrics.version}</version>
       <scope>test</scope>
     </dependency>
 

@@ -53,20 +53,21 @@ import com.google.cloud.bigtable.grpc.scanner.RowMerger;
 import com.google.cloud.bigtable.grpc.scanner.ScanHandler;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
@@ -153,7 +154,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   private final ScheduledExecutorService retryExecutorService;
   private final RetryOptions retryOptions;
 
-  private CallOptionsFactory callOptionsFactory = new CallOptionsFactory.Default();
+  private DeadlineGeneratorFactory deadlineGeneratorFactory = DeadlineGeneratorFactory.DEFAULT;
 
   private final BigtableAsyncRpc<SampleRowKeysRequest, SampleRowKeysResponse> sampleRowKeysAsync;
   private final BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> readRowsAsync;
@@ -217,8 +218,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   /** {@inheritDoc} */
   @Override
-  public void setCallOptionsFactory(CallOptionsFactory callOptionsFactory) {
-    this.callOptionsFactory = callOptionsFactory;
+  public void setDeadlineGeneratorFactory(DeadlineGeneratorFactory deadlineGeneratorFactory) {
+    this.deadlineGeneratorFactory = deadlineGeneratorFactory;
   }
 
   private <T> Predicate<T> getMutationRetryableFunction(Predicate<T> isRetryableMutation) {
@@ -274,10 +275,18 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     if (shouldOverrideAppProfile(request.getAppProfileId())) {
       request = request.toBuilder().setAppProfileId(clientDefaultAppProfileId).build();
     }
-    CallOptions callOptions = getCallOptions(mutateRowsRpc.getMethodDescriptor(), request);
+    DeadlineGenerator deadlineGenerator =
+        deadlineGeneratorFactory.getRequestDeadlineGenerator(
+            request, mutateRowsRpc.isRetryable(request));
     Metadata metadata = createMetadata(request.getTableName());
     return new RetryingMutateRowsOperation(
-        retryOptions, request, mutateRowsRpc, callOptions, retryExecutorService, metadata, CLOCK);
+        retryOptions,
+        request,
+        mutateRowsRpc,
+        deadlineGenerator,
+        retryExecutorService,
+        metadata,
+        CLOCK);
   }
 
   /** {@inheritDoc} */
@@ -351,13 +360,14 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   /** {@inheritDoc} */
   @Override
   public ListenableFuture<List<Row>> readRowsAsync(ReadRowsRequest request) {
-    if (shouldOverrideAppProfile(request.getAppProfileId())) {
-      request = request.toBuilder().setAppProfileId(clientDefaultAppProfileId).build();
-    }
-
     return Futures.transform(
-        createStreamingListener(request, readRowsAsync, request.getTableName()).getAsyncResult(),
-        ROW_LIST_TRANSFORMER,
+        readFlatRowsAsync(request),
+        new Function<List<FlatRow>, List<Row>>() {
+          @Override
+          public List<Row> apply(List<FlatRow> input) {
+            return Lists.transform(input, FLAT_ROW_TRANSFORMER);
+          }
+        },
         MoreExecutors.directExecutor());
   }
 
@@ -367,10 +377,17 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     if (shouldOverrideAppProfile(request.getAppProfileId())) {
       request = request.toBuilder().setAppProfileId(clientDefaultAppProfileId).build();
     }
+    final StreamCollector<FlatRow> rowCollector = new StreamCollector<>();
+    RetryingReadRowsOperation operation = createReadRowsRetryListener(request, rowCollector);
 
     return Futures.transform(
-        createStreamingListener(request, readRowsAsync, request.getTableName()).getAsyncResult(),
-        FLAT_ROW_LIST_TRANSFORMER,
+        operation.getAsyncResult(),
+        new Function<String, List<FlatRow>>() {
+          @Override
+          public List<FlatRow> apply(String ignored) {
+            return rowCollector.getResults();
+          }
+        },
         MoreExecutors.directExecutor());
   }
 
@@ -380,31 +397,28 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     if (shouldOverrideAppProfile(request.getAppProfileId())) {
       request = request.toBuilder().setAppProfileId(clientDefaultAppProfileId).build();
     }
-
-    return FLAT_ROW_LIST_TRANSFORMER.apply(
-        createStreamingListener(request, readRowsAsync, request.getTableName())
-            .getBlockingResult());
+    final StreamCollector<FlatRow> rowCollector = new StreamCollector<>();
+    RetryingReadRowsOperation operation = createReadRowsRetryListener(request, rowCollector);
+    operation.getBlockingResult();
+    return rowCollector.getResults();
   }
 
   private <ReqT, RespT> RetryingUnaryOperation<ReqT, RespT> createUnaryListener(
       ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
-    CallOptions callOptions = getCallOptions(rpc.getMethodDescriptor(), request);
+    DeadlineGenerator deadlineGenerator =
+        deadlineGeneratorFactory.getRequestDeadlineGenerator(request, rpc.isRetryable(request));
     Metadata metadata = createMetadata(tableName);
     return new RetryingUnaryOperation<>(
-        retryOptions, request, rpc, callOptions, retryExecutorService, metadata, CLOCK);
+        retryOptions, request, rpc, deadlineGenerator, retryExecutorService, metadata, CLOCK);
   }
 
   private <ReqT, RespT> RetryingStreamOperation<ReqT, RespT> createStreamingListener(
       ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
-    CallOptions callOptions = getCallOptions(rpc.getMethodDescriptor(), request);
+    DeadlineGenerator deadlineGenerator =
+        deadlineGeneratorFactory.getRequestDeadlineGenerator(request, rpc.isRetryable(request));
     Metadata metadata = createMetadata(tableName);
     return new RetryingStreamOperation<>(
-        retryOptions, request, rpc, callOptions, retryExecutorService, metadata, CLOCK);
-  }
-
-  private <ReqT> CallOptions getCallOptions(
-      final MethodDescriptor<ReqT, ?> methodDescriptor, ReqT request) {
-    return callOptionsFactory.create(methodDescriptor, request);
+        retryOptions, request, rpc, deadlineGenerator, retryExecutorService, metadata, CLOCK);
   }
 
   /** Creates a {@link Metadata} that contains pertinent headers. */
@@ -512,7 +526,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         retryOptions,
         request,
         readRowsAsync,
-        getCallOptions(readRowsAsync.getMethodDescriptor(), request),
+        deadlineGeneratorFactory.getRequestDeadlineGenerator(
+            request, readRowsAsync.isRetryable(request)),
         retryExecutorService,
         createMetadata(request.getTableName()),
         CLOCK);
@@ -520,5 +535,49 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
 
   private boolean shouldOverrideAppProfile(String requestProfile) {
     return !this.clientDefaultAppProfileId.isEmpty() && requestProfile.isEmpty();
+  }
+
+  /**
+   * Helper to buffer rows from a RetryingReadRowsOperation.
+   *
+   * <p>Each row will be buffered in a list.
+   *
+   * <p>This class assumes that the {@link StreamObserver} methods will be called by a single gRPC
+   * thread at a time.
+   */
+  private static class StreamCollector<T> implements StreamObserver<T> {
+    private enum State {
+      BUFFERING,
+      OK,
+      ERROR
+    };
+
+    private final ImmutableList.Builder<T> results = ImmutableList.builder();
+    private final AtomicReference<State> state = new AtomicReference(State.BUFFERING);
+
+    @Override
+    public void onNext(T item) {
+      results.add(item);
+    }
+
+    @Override
+    public void onError(Throwable ignored) {
+      // note: we dont need to save the error here because it will be bubbled (possibly wrapped)
+      // by the Operation's getAsyncResult. This check is mainly a sanity check to ensure that the
+      // caller doesn't ignore that error and try to fetch partial results.
+      state.set(State.ERROR);
+    }
+
+    @Override
+    public void onCompleted() {
+      state.compareAndSet(State.BUFFERING, State.OK);
+    }
+
+    public List<T> getResults() {
+      Preconditions.checkState(
+          state.get() == State.OK,
+          "Unexpected state, stream must be complete before fetching the results");
+      return results.build();
+    }
   }
 }

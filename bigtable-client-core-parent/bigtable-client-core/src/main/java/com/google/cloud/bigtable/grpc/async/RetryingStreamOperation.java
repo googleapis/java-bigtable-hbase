@@ -18,8 +18,8 @@ package com.google.cloud.bigtable.grpc.async;
 import com.google.api.core.ApiClock;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.DeadlineGenerator;
 import com.google.common.collect.ImmutableList;
-import io.grpc.CallOptions;
 import io.grpc.Metadata;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -42,7 +42,7 @@ public class RetryingStreamOperation<RequestT, ResponseT>
    * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
    * @param request a RequestT object.
    * @param retryableRpc a {@link com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc} object.
-   * @param callOptions a {@link io.grpc.CallOptions} object.
+   * @param deadlineGenerator a {@link DeadlineGenerator} object.
    * @param executorService a {@link java.util.concurrent.ScheduledExecutorService} object.
    * @param metadata a {@link io.grpc.Metadata} object.
    * @param clock a {@link ApiClock} object
@@ -51,11 +51,11 @@ public class RetryingStreamOperation<RequestT, ResponseT>
       RetryOptions retryOptions,
       RequestT request,
       BigtableAsyncRpc<RequestT, ResponseT> retryableRpc,
-      CallOptions callOptions,
+      DeadlineGenerator deadlineGenerator,
       ScheduledExecutorService executorService,
       Metadata metadata,
       ApiClock clock) {
-    super(retryOptions, request, retryableRpc, callOptions, executorService, metadata, clock);
+    super(retryOptions, request, retryableRpc, deadlineGenerator, executorService, metadata, clock);
   }
 
   /** {@inheritDoc} */

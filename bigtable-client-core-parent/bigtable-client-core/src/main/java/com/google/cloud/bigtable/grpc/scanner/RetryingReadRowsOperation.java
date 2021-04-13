@@ -20,7 +20,9 @@ import com.google.api.core.ApiClock;
 import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
+import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.DeadlineGenerator;
 import com.google.cloud.bigtable.grpc.async.AbstractRetryingOperation;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
 import com.google.cloud.bigtable.grpc.async.CallController;
@@ -28,7 +30,6 @@ import com.google.cloud.bigtable.grpc.io.Watchdog.StreamWaitTimeoutException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
-import io.grpc.CallOptions;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.stub.ClientResponseObserver;
@@ -84,7 +85,7 @@ public class RetryingReadRowsOperation
       RetryOptions retryOptions,
       ReadRowsRequest request,
       BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> retryableRpc,
-      CallOptions callOptions,
+      DeadlineGenerator deadlineGenerator,
       ScheduledExecutorService retryExecutorService,
       Metadata originalMetadata,
       ApiClock clock) {
@@ -92,7 +93,7 @@ public class RetryingReadRowsOperation
         retryOptions,
         request,
         retryableRpc,
-        callOptions,
+        deadlineGenerator,
         retryExecutorService,
         originalMetadata,
         clock);
@@ -197,6 +198,21 @@ public class RetryingReadRowsOperation
   /** {@inheritDoc} */
   @Override
   public void onClose(Status status, Metadata trailers) {
+    // Edgecase: it possible to receive the full ReadRows stream, but still receive a non-ok status.
+    // In that case, there is a high chance that the retry request will be empty, as all of the
+    // received keys & ranges will be pruned. This will cause the retry request to do a full table
+    // scan. To mitigate this, we will just mask the status as an ok after we are certain that we
+    // have received all of the data.
+    // This mitigation must only be activated after at least one row is received so that we can
+    // distinguish from a perfectly valid initial full table scan.
+    if (!status.isOk() && requestManager.getLastFoundKey() != null) {
+      ReadRowsRequest retryRequest = requestManager.buildUpdatedRequest();
+      boolean isFullTableScan = retryRequest.getRows().equals(RowSet.getDefaultInstance());
+      if (isFullTableScan) {
+        status = Status.OK;
+      }
+    }
+
     if (status.getCause() instanceof StreamWaitTimeoutException) {
       StreamWaitTimeoutException timeoutException = (StreamWaitTimeoutException) status.getCause();
       switch (timeoutException.getState()) {

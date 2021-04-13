@@ -19,7 +19,7 @@ limitations under the License.
 
   <groupId>com.google.cloud.bigtable</groupId>
   <artifactId>bigtable-client-parent</artifactId>
-  <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+  <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   <packaging>pom</packaging>
   <name>${project.groupId}:${project.artifactId}</name>
   <url>https://cloud.google.com/bigtable/</url>
@@ -32,7 +32,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud</groupId>
     <artifactId>google-cloud-shared-config</artifactId>
-    <version>0.4.0</version>
+    <version>0.10.0</version>
   </parent>
 
   <licenses>
@@ -56,34 +56,33 @@ limitations under the License.
     <compileSource.1.8>1.8</compileSource.1.8>
 
     <!-- core dependency versions -->
-    <bigtable.version>1.15.0</bigtable.version>
-    <dropwizard.metrics.version>3.2.6</dropwizard.metrics.version>
+    <bigtable.version>1.21.0</bigtable.version>
+    <grpc-conscrypt.version>2.5.1</grpc-conscrypt.version>
     <!--  keeping at this version to align with hbase-->
     <slf4j.version>1.7.25</slf4j.version>
     <commons-logging.version>1.2</commons-logging.version>
     <jsr305.version>3.0.2</jsr305.version>
 
     <!-- hbase dependency versions -->
-    <hbase.version.1>1.4.12</hbase.version.1>
-    <hbase.version.2>2.2.3</hbase.version.2>
-    <hbase.version>${hbase.version.1}</hbase.version>
-    <hbase1-hadoop.version>2.7.4</hbase1-hadoop.version>
-    <hbase2-hadoop.version>2.8.5</hbase2-hadoop.version>
+    <hbase1.version>1.4.12</hbase1.version>
+    <hbase1-metrics.version>3.1.2</hbase1-metrics.version>
+    <hbase2.version>2.2.3</hbase2.version>
+    <hbase2-metrics.version>3.2.6</hbase2-metrics.version>
 
     <!-- testing dependency versions -->
     <commons-lang.version>2.6</commons-lang.version>
-    <junit.version>4.13</junit.version>
+    <junit.version>4.13.2</junit.version>
     <hamcrest.version>1.3</hamcrest.version>
-    <mockito.version>3.5.7</mockito.version>
+    <mockito.version>3.8.0</mockito.version>
     <!-- TODO: check if commons-codec was transitively updated to 1.13 and okhttp was updated to 2.7.5 when upgrading-->
-    <beam.version>2.19.0</beam.version>
+    <beam.version>2.28.0</beam.version>
     <!-- referred from bigtable-beam-import and bigtable-emulator -->
-    <guava.version>29.0-android</guava.version>
-    <beam-guava.version>20.0</beam-guava.version>
-    <beam-auto-value.version>1.7.4</beam-auto-value.version>
+    <guava.version>30.1-android</guava.version>
+    <gcs-guava.version>29.0-jre</gcs-guava.version>
+    <beam-slf4j.version>1.7.30</beam-slf4j.version>
 
     <!-- Benchmarks related dependencies -->
-    <jmh.version>1.23</jmh.version>
+    <jmh.version>1.28</jmh.version>
   </properties>
 
   <distributionManagement>
@@ -130,11 +129,15 @@ limitations under the License.
     </testResources>
     <pluginManagement>
       <plugins>
+        <!-- Augment google-cloud-shared-config config to exclude non-compile deps -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-enforcer-plugin</artifactId>
-          <version>3.0.0-M3</version>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <configuration>
+            <ignoreNonCompile>true</ignoreNonCompile>
+          </configuration>
         </plugin>
+
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.1</version>
@@ -160,11 +163,6 @@ limitations under the License.
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
           <version>3.2.4</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-eclipse-plugin</artifactId>
-          <version>2.10</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -249,6 +247,129 @@ limitations under the License.
         <configuration>
           <style>google</style>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>enforce-version-consistency</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>io.grpc:*</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>io.opencensus:*</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>com.google.cloud:google-cloud-bigtable</dependency>
+                    <dependency>com.google.api.grpc:proto-google-cloud-bigtable-v2</dependency>
+                    <dependency>com.google.api.grpc:grpc-google-cloud-bigtable-v2</dependency>
+                    <dependency>com.google.api.grpc:proto-google-cloud-bigtable-admin-v2</dependency>
+                    <dependency>com.google.api.grpc:grpc-google-cloud-bigtable-admin-v2</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>com.google.auth:*</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>com.google.api:gax</dependency>
+                    <dependency>com.google.api:gax-grpc</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>org.apache.beam:beam-sdks-*</dependency>
+                    <dependency>org.apache.beam:beam-model-*</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>io.netty:netty-all</dependency>
+                    <dependency>io.netty:netty-codec*</dependency>
+                    <dependency>io.netty:netty-handler*</dependency>
+                    <dependency>io.netty:netty-common</dependency>
+                    <dependency>io.netty:netty-resolver</dependency>
+                    <dependency>io.netty:netty-buffer</dependency>
+                    <dependency>io.netty:netty-transport</dependency>
+                    <!-- Everything but netty-tcnative-boringssl-static -->
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>com.fasterxml.jackson.core:*</dependency>
+                    <dependency>com.fasterxml.jackson:*</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>com.google.auto.value</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>org.hamcrest:*</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>com.google.protobuf:*</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>com.google.http-client:*</dependency>
+                  </dependencies>
+                </requireSameVersions>
+              </rules>
+            </configuration>
+          </execution>
+          <!-- extract slf4 consistency check to own execution so it can be
+          disabled for hbase-client 2.x -->
+          <execution>
+            <id>enforce-version-consistency-slf4j</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>org.slf4j:*</dependency>
+                  </dependencies>
+                </requireSameVersions>
+              </rules>
+            </configuration>
+          </execution>
+          <execution>
+            <id>enforce-banned-deps</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <bannedDependencies>
+                  <excludes>
+                    <exclude>commons-codec:commons-codec:[,1.15)</exclude>
+                    <exclude>org.apache.commons:commons-compress:[,1.20)</exclude>
+                  </excludes>
+                </bannedDependencies>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

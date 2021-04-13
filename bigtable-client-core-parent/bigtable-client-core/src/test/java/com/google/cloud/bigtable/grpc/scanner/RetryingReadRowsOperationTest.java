@@ -32,11 +32,13 @@ import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
 import com.google.bigtable.v2.RowRange;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.grpc.DeadlineGenerator;
+import com.google.cloud.bigtable.grpc.TestDeadlineGeneratorFactory;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
-import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc.RpcMetrics;
 import com.google.cloud.bigtable.grpc.async.OperationClock;
 import com.google.cloud.bigtable.grpc.io.Watchdog;
 import com.google.cloud.bigtable.grpc.io.Watchdog.StreamWaitTimeoutException;
+import com.google.cloud.bigtable.metrics.RpcMetrics;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.BytesValue;
@@ -68,7 +70,8 @@ import org.mockito.stubbing.Answer;
 /** Test for the {@link RetryingReadRowsOperation} */
 @RunWith(JUnit4.class)
 public class RetryingReadRowsOperationTest {
-  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  // TODO: remove silent and tighten mocks
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().silent();
 
   private static final RetryOptions RETRY_OPTIONS = RetryOptions.getDefaultOptions();
 
@@ -140,18 +143,21 @@ public class RetryingReadRowsOperationTest {
   }
 
   protected RetryingReadRowsOperation createOperation() {
-    return createOperation(CallOptions.DEFAULT, mockFlatRowObserver);
+    return createOperation(
+        DeadlineGenerator.DEFAULT, READ_ENTIRE_TABLE_REQUEST, mockFlatRowObserver);
   }
 
   protected RetryingReadRowsOperation createOperation(
-      CallOptions options, StreamObserver<FlatRow> observer) {
+      DeadlineGenerator deadlineGenerator,
+      ReadRowsRequest request,
+      StreamObserver<FlatRow> observer) {
     RetryingReadRowsOperation operation =
         new RetryingReadRowsOperation(
             observer,
             RETRY_OPTIONS,
-            READ_ENTIRE_TABLE_REQUEST,
+            request,
             mockRetryableRpc,
-            options,
+            deadlineGenerator,
             mockRetryExecutorService,
             metaData,
             clock);
@@ -221,16 +227,18 @@ public class RetryingReadRowsOperationTest {
 
   @Test
   public void testFailure_default() throws Exception {
-    testFailure(RETRY_OPTIONS.getMaxElapsedBackoffMillis(), CallOptions.DEFAULT);
+    testFailure(RETRY_OPTIONS.getMaxElapsedBackoffMillis(), DeadlineGenerator.DEFAULT);
   }
 
   @Test
   public void testFailure_deadline() throws Exception {
-    CallOptions options = DeadlineUtil.optionsWithDeadline(1, TimeUnit.SECONDS, clock);
-    testFailure(TimeUnit.SECONDS.toMillis(1), options);
+    DeadlineGenerator deadlineGenerator =
+        TestDeadlineGeneratorFactory.mockCallOptionsFactory(
+            DeadlineUtil.optionsWithDeadline(1, TimeUnit.SECONDS, clock));
+    testFailure(TimeUnit.SECONDS.toMillis(1), deadlineGenerator);
   }
 
-  private void testFailure(long expectedTimeMs, CallOptions options)
+  private void testFailure(long expectedTimeMs, DeadlineGenerator deadlineGenerator)
       throws InterruptedException, java.util.concurrent.TimeoutException {
     doAnswer(
             new Answer<Void>() {
@@ -249,7 +257,8 @@ public class RetryingReadRowsOperationTest {
             any(Metadata.class),
             any(ClientCall.class));
 
-    RetryingReadRowsOperation underTest = createOperation(options, mockFlatRowObserver);
+    RetryingReadRowsOperation underTest =
+        createOperation(deadlineGenerator, READ_ENTIRE_TABLE_REQUEST, mockFlatRowObserver);
     try {
       underTest.getAsyncResult().get(100, TimeUnit.MILLISECONDS);
     } catch (ExecutionException e) {
@@ -423,6 +432,28 @@ public class RetryingReadRowsOperationTest {
     Assert.assertTrue(underTest.getRowMerger().isComplete());
   }
 
+  @Test
+  public void testErrorAfterComplete() throws UnsupportedEncodingException {
+    ByteString key1 = ByteString.copyFromUtf8("SomeKey1");
+    ByteString key2 = ByteString.copyFromUtf8("SomeKey2");
+
+    ReadRowsRequest req =
+        ReadRowsRequest.newBuilder()
+            .setRows(RowSet.newBuilder().addRowKeys(key1).addRowKeys(key2))
+            .build();
+    RetryingReadRowsOperation underTest =
+        createOperation(DeadlineGenerator.DEFAULT, req, mockFlatRowObserver);
+
+    start(underTest);
+    underTest.onMessage(buildResponse(key1));
+    underTest.onMessage(buildResponse(key2));
+    underTest.onClose(Status.DEADLINE_EXCEEDED, new Metadata());
+
+    verify(mockFlatRowObserver, times(1)).onCompleted();
+    Assert.assertFalse(underTest.inRetryMode());
+    Assert.assertTrue(underTest.getRowMerger().isComplete());
+  }
+
   @SuppressWarnings("unchecked")
   @Test
   public void testImmediateOnClose() {
@@ -476,16 +507,14 @@ public class RetryingReadRowsOperationTest {
   }
 
   private void start(RetryingReadRowsOperation underTest) {
+    ReadRowsRequest initialRequest = underTest.getRetryRequest();
+
     underTest.getAsyncResult();
     verify(mockRpcMetrics, times(1)).timeOperation();
     verify(mockRpcMetrics, times(1)).timeRpc();
     verify(mockRetryableRpc, times(1)).newCall(eq(CallOptions.DEFAULT));
     verify(mockRetryableRpc, times(1))
-        .start(
-            eq(READ_ENTIRE_TABLE_REQUEST),
-            same(underTest),
-            any(Metadata.class),
-            same(mockClientCall));
+        .start(eq(initialRequest), same(underTest), any(Metadata.class), same(mockClientCall));
   }
 
   private void finishOK(RetryingReadRowsOperation underTest, int expectedRetryCount) {

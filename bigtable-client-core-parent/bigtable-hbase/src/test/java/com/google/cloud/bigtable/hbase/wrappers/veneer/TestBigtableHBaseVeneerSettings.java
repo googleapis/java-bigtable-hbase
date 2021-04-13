@@ -27,7 +27,9 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_DA
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_PORT_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_READ_RPC_TIMEOUT_MS_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_RPC_ATTEMPT_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_RPC_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_PLAINTEXT_NEGOTIATION;
@@ -49,15 +51,16 @@ import static org.threeten.bp.Duration.ofMillis;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
+import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.auth.Credentials;
-import com.google.cloud.bigtable.admin.v2.BigtableInstanceAdminSettings;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
+import com.google.cloud.bigtable.hbase.wrappers.veneer.metrics.MetricsApiTracerAdapterFactory;
 import io.grpc.internal.GrpcUtil;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -68,7 +71,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
-import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class TestBigtableHBaseVeneerSettings {
@@ -100,7 +102,6 @@ public class TestBigtableHBaseVeneerSettings {
     configuration.set(APP_PROFILE_ID_KEY, appProfileId);
     configuration.setBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, true);
     configuration.set(CUSTOM_USER_AGENT_KEY, userAgent);
-    configuration.setInt(BIGTABLE_DATA_CHANNEL_COUNT_KEY, 3);
     configuration.set(BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL, "true");
     configuration.set(BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, "true");
     configuration.set(ALLOW_NO_TIMESTAMP_RETRIES_KEY, "true");
@@ -126,6 +127,23 @@ public class TestBigtableHBaseVeneerSettings {
 
     assertTrue(settingUtils.isChannelPoolCachingEnabled());
     assertTrue(settingUtils.isRetriesWithoutTimestampAllowed());
+    assertTrue(
+        dataSettings.getStubSettings().getTracerFactory()
+            instanceof MetricsApiTracerAdapterFactory);
+  }
+
+  @Test
+  public void testDataSettingsChannelPool() throws IOException {
+    configuration.setInt(BIGTABLE_DATA_CHANNEL_COUNT_KEY, 3);
+
+    BigtableHBaseVeneerSettings settings =
+        (BigtableHBaseVeneerSettings) BigtableHBaseSettings.create(configuration);
+    BigtableDataSettings dataSettings = settings.getDataSettings();
+    InstantiatingGrpcChannelProvider transportChannelProvider =
+        (InstantiatingGrpcChannelProvider)
+            dataSettings.getStubSettings().getTransportChannelProvider();
+
+    assertEquals(3, transportChannelProvider.toBuilder().getPoolSize());
   }
 
   @Test
@@ -156,59 +174,62 @@ public class TestBigtableHBaseVeneerSettings {
   }
 
   @Test
-  public void testInstanceAdminSettingsBasicKeys() throws IOException {
-    String userAgent = "test-user-agent";
-    Credentials credentials = Mockito.mock(Credentials.class);
-
-    configuration.set(CUSTOM_USER_AGENT_KEY, userAgent);
-    configuration.set(BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, "true");
-    configuration = BigtableConfiguration.withCredentials(configuration, credentials);
+  public void testAdminSettingsChannelPool() throws IOException {
+    // should be ignored
+    configuration.setInt(BIGTABLE_DATA_CHANNEL_COUNT_KEY, 3);
 
     BigtableHBaseVeneerSettings settings =
         (BigtableHBaseVeneerSettings) BigtableHBaseSettings.create(configuration);
-    BigtableInstanceAdminSettings instanceAdminSettings = settings.getInstanceAdminSettings();
-    assertEquals(TEST_PROJECT_ID, instanceAdminSettings.getProjectId());
+    BigtableTableAdminSettings adminSettings = settings.getTableAdminSettings();
+    InstantiatingGrpcChannelProvider transportChannelProvider =
+        (InstantiatingGrpcChannelProvider)
+            adminSettings.getStubSettings().getTransportChannelProvider();
 
-    Map<String, String> headers =
-        instanceAdminSettings.getStubSettings().getHeaderProvider().getHeaders();
-    assertTrue(headers.get(GrpcUtil.USER_AGENT_KEY.name()).contains(userAgent));
-    assertEquals(
-        credentials,
-        instanceAdminSettings.getStubSettings().getCredentialsProvider().getCredentials());
+    assertEquals(1, transportChannelProvider.toBuilder().getPoolSize());
   }
 
   @Test
   public void testTimeoutBeingPassed() throws IOException {
     int initialElapsedMs = 100;
+    int rpcAttemptTimeoutMs = 100;
     int rpcTimeoutMs = 500;
+    int perRowTimeoutMs = 1001;
     int maxElapsedMs = 1000;
     int maxAttempt = 10;
     int readRowStreamTimeout = 30000;
+    int readRowStreamAttemptTimeout = 3000;
     configuration.setBoolean(BIGTABLE_USE_TIMEOUTS_KEY, true);
     configuration.setInt(INITIAL_ELAPSED_BACKOFF_MILLIS_KEY, initialElapsedMs);
-    configuration.setInt(BIGTABLE_RPC_TIMEOUT_MS_KEY, rpcTimeoutMs);
     configuration.setInt(MAX_ELAPSED_BACKOFF_MILLIS_KEY, maxElapsedMs);
-    configuration.setInt(READ_PARTIAL_ROW_TIMEOUT_MS, rpcTimeoutMs);
+    configuration.setInt(BIGTABLE_RPC_ATTEMPT_TIMEOUT_MS_KEY, rpcAttemptTimeoutMs);
+    configuration.setInt(BIGTABLE_RPC_TIMEOUT_MS_KEY, rpcTimeoutMs);
+
+    configuration.setInt(READ_PARTIAL_ROW_TIMEOUT_MS, perRowTimeoutMs);
     configuration.setLong(MAX_SCAN_TIMEOUT_RETRIES, maxAttempt);
     configuration.setInt(BIGTABLE_READ_RPC_TIMEOUT_MS_KEY, readRowStreamTimeout);
+    configuration.setInt(BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY, readRowStreamAttemptTimeout);
     BigtableDataSettings settings =
-        ((BigtableHBaseVeneerSettings) BigtableHBaseVeneerSettings.create(configuration))
-            .getDataSettings();
+        BigtableHBaseVeneerSettings.create(configuration).getDataSettings();
 
     RetrySettings readRowRetrySettings =
         settings.getStubSettings().readRowSettings().getRetrySettings();
     assertEquals(initialElapsedMs, readRowRetrySettings.getInitialRetryDelay().toMillis());
-    assertEquals(rpcTimeoutMs, readRowRetrySettings.getInitialRpcTimeout().toMillis());
-    assertEquals(maxElapsedMs, readRowRetrySettings.getTotalTimeout().toMillis());
+    assertEquals(rpcTimeoutMs, readRowRetrySettings.getTotalTimeout().toMillis());
+    assertEquals(rpcAttemptTimeoutMs, readRowRetrySettings.getInitialRpcTimeout().toMillis());
+    assertEquals(rpcAttemptTimeoutMs, readRowRetrySettings.getMaxRpcTimeout().toMillis());
 
     RetrySettings checkAndMutateRetrySettings =
         settings.getStubSettings().checkAndMutateRowSettings().getRetrySettings();
-    assertEquals(0, checkAndMutateRetrySettings.getInitialRetryDelay().toMillis());
     assertEquals(rpcTimeoutMs, checkAndMutateRetrySettings.getTotalTimeout().toMillis());
+    // CheckAndMutate is non-retriable so its rpc timeout = overall timeout
+    assertEquals(rpcTimeoutMs, checkAndMutateRetrySettings.getInitialRpcTimeout().toMillis());
+    assertEquals(rpcTimeoutMs, checkAndMutateRetrySettings.getMaxRpcTimeout().toMillis());
 
     RetrySettings readRowsRetrySettings =
         settings.getStubSettings().readRowsSettings().getRetrySettings();
     assertEquals(initialElapsedMs, readRowsRetrySettings.getInitialRetryDelay().toMillis());
+    assertEquals(perRowTimeoutMs, readRowsRetrySettings.getInitialRpcTimeout().toMillis());
+    assertEquals(perRowTimeoutMs, readRowsRetrySettings.getMaxRpcTimeout().toMillis());
     assertEquals(maxAttempt, readRowsRetrySettings.getMaxAttempts());
     assertEquals(readRowStreamTimeout, readRowsRetrySettings.getTotalTimeout().toMillis());
   }
@@ -355,17 +376,24 @@ public class TestBigtableHBaseVeneerSettings {
   @Test
   public void testRpcMethodWithoutRetry() throws IOException {
     configuration.set(ENABLE_GRPC_RETRIES_KEY, "false");
-    BigtableHBaseVeneerSettings settingUtils =
-        ((BigtableHBaseVeneerSettings) BigtableHBaseVeneerSettings.create(configuration));
+    BigtableHBaseVeneerSettings settingUtils = BigtableHBaseVeneerSettings.create(configuration);
     BigtableDataSettings settings = settingUtils.getDataSettings();
 
     assertTrue(settings.getStubSettings().readRowsSettings().getRetryableCodes().isEmpty());
 
-    assertRpcWithoutTimeout(settings.getStubSettings().bulkReadRowsSettings());
-    assertRpcWithoutTimeout(settings.getStubSettings().bulkMutateRowsSettings());
-    assertRpcWithoutTimeout(settings.getStubSettings().readRowSettings());
-    assertRpcWithoutTimeout(settings.getStubSettings().mutateRowSettings());
-    assertRpcWithoutTimeout(settings.getStubSettings().sampleRowKeysSettings());
+    BigtableDataSettings defaultSettings =
+        BigtableDataSettings.newBuilder()
+            .setProjectId(TEST_PROJECT_ID)
+            .setInstanceId(TEST_INSTANCE_ID)
+            .build();
+
+    assertEquals(
+        settings.getStubSettings().readRowsSettings().getRetrySettings().toString(),
+        defaultSettings.getStubSettings().readRowsSettings().getRetrySettings().toString());
+
+    assertEquals(
+        settings.getStubSettings().mutateRowSettings().getRetrySettings().toString(),
+        defaultSettings.getStubSettings().mutateRowSettings().getRetrySettings().toString());
   }
 
   private void assertRetriableOperation(UnaryCallSettings expected, UnaryCallSettings actual) {
@@ -389,13 +417,5 @@ public class TestBigtableHBaseVeneerSettings {
     assertEquals(expected.getInitialRpcTimeout(), actual.getInitialRpcTimeout());
     assertEquals(expected.getMaxRpcTimeout(), actual.getMaxRpcTimeout());
     assertEquals(expected.getTotalTimeout(), actual.getTotalTimeout());
-  }
-
-  private void assertRpcWithoutTimeout(UnaryCallSettings unaryCallSettings) {
-    assertTrue(unaryCallSettings.getRetryableCodes().isEmpty());
-
-    assertEquals(Duration.ofHours(12), unaryCallSettings.getRetrySettings().getInitialRpcTimeout());
-    assertEquals(Duration.ofHours(12), unaryCallSettings.getRetrySettings().getMaxRpcTimeout());
-    assertEquals(Duration.ofHours(12), unaryCallSettings.getRetrySettings().getTotalTimeout());
   }
 }

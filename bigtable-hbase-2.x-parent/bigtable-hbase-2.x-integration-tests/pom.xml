@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-2.x-parent</artifactId>
-    <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-2x-parent:current} -->
+    <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-2x-parent:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-2.x-integration-tests</artifactId>
@@ -32,7 +32,7 @@ limitations under the License.
   </description>
 
   <properties>
-    <hbase.version>${hbase.version.2}</hbase.version>
+    <hbase.version>${hbase2.version}</hbase.version>
     <google.bigtable.connection.impl>
       com.google.cloud.bigtable.hbase2_x.BigtableConnection
     </google.bigtable.connection.impl>
@@ -383,7 +383,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-testing-util</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase2.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -414,14 +414,6 @@ limitations under the License.
       <artifactId>slf4j-log4j12</artifactId>
       <version>${slf4j.version}</version>
       <scope>test</scope>
-    </dependency>
-
-    <!--  TODO: remove this dependency when upgraded through transitive dependency (http-client -> org.apache.httpcomponents:httpclient)
-this is not used directly, but upgrading due to transitive vulnerabilities in older versions-->
-    <dependency>
-      <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
-      <version>1.14</version>
     </dependency>
 
     <!-- Testing deps -->
@@ -460,13 +452,6 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-eclipse-plugin</artifactId>
-        <configuration>
-          <useProjectReferences>false</useProjectReferences>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <executions>
           <execution>
@@ -483,18 +468,6 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
             </configuration>
           </execution>
         </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <usedDependencies>
-            <usedDependency>${project.groupId}:bigtable-hbase-2.x</usedDependency>
-            <usedDependency>org.slf4j:slf4j-log4j12</usedDependency>
-            <!-- commons-codec is not used directly, but upgrading due to transitive vulnerabilities in older versions. -->
-            <usedDependency>commons-codec:commons-codec</usedDependency>
-          </usedDependencies>
-        </configuration>
       </plugin>
     </plugins>
   </build>

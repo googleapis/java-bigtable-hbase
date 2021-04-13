@@ -68,11 +68,6 @@ public class TestPut extends AbstractTestPut {
     }
 
     Assert.assertNotNull("Exception should have been thrown", thrownException);
-    // Assert.assertEquals("Expecting one exception", 1, thrownException.getNumExceptions());
-    // Assert.assertArrayEquals("Row key", rowKey, thrownException.getRow.getRow());
-    // Assert.assertTrue("Cause: NoSuchColumnFamilyException",
-    //    thrownException.getCause() instanceof NoSuchColumnFamilyException);
-
     Get get = new Get(rowKey);
     Result result = table.get(get);
     Assert.assertEquals("Atomic behavior means there should be nothing here", 0, result.size());

@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-client-core-parent</artifactId>
-    <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-core-parent:current} -->
+    <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-core-parent:current} -->
   </parent>
 
   <artifactId>bigtable-client-core</artifactId>
@@ -90,11 +90,6 @@ limitations under the License.
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${slf4j.version}</version>
     </dependency>
     <dependency>
       <groupId>commons-logging</groupId>
@@ -183,6 +178,7 @@ limitations under the License.
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-grpclb</artifactId>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
@@ -200,6 +196,12 @@ limitations under the License.
 
     <!-- Metrics -->
     <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-metrics-api</artifactId>
+      <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-core-parent:current} -->
+    </dependency>
+
+    <dependency>
       <groupId>io.opencensus</groupId>
       <artifactId>opencensus-api</artifactId>
     </dependency>
@@ -212,24 +214,16 @@ limitations under the License.
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-core</artifactId>
-      <version>${dropwizard.metrics.version}</version>
-    </dependency>
-
-    <!--  TODO: remove this dependency when upgraded through transitive dependency (http-client -> org.apache.httpcomponents:httpclient)
-this is not used directly, but upgrading due to transitive vulnerabilities in older versions-->
-    <dependency>
-      <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
-      <version>1.14</version>
+      <version>${hbase1-metrics.version}</version>
     </dependency>
 
     <!-- Test -->
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <!-- align version with veneer's flattened dep -->
-      <version>2.11.1</version>
-      <scope>test</scope>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <!-- bigtable-client-core uses gson for test only, however
+      google-cloud-bigtable needs its for compilation. -->
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
@@ -245,6 +239,12 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
     <dependency>
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest-core</artifactId>
+      <version>${hamcrest.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-library</artifactId>
       <version>${hamcrest.version}</version>
       <scope>test</scope>
     </dependency>
@@ -278,18 +278,12 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <trimStackTrace>false</trimStackTrace>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <!-- commons-codec is not used directly, but upgrading due to transitive vulnerabilities in older versions.
-          grpc-grpclb is a runtime dep-->
-          <usedDependencies>
-            <usedDependency>commons-codec:commons-codec</usedDependency>
-            <usedDependency>io.grpc:grpc-grpclb</usedDependency>
-          </usedDependencies>
+          <systemProperties>
+            <property>
+              <name>java.util.logging.config.file</name>
+              <value>src/test/resources/logging.properties</value>
+            </property>
+          </systemProperties>
         </configuration>
       </plugin>
     </plugins>

@@ -61,7 +61,6 @@ import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsGrpc;
 import com.google.protobuf.Empty;
-import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.Metadata;
 import java.io.IOException;
@@ -76,6 +75,8 @@ import java.util.concurrent.TimeoutException;
  */
 @InternalApi("For internal usage only")
 public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
+  private final DeadlineGeneratorFactory deadlineGeneratorFactory =
+      DeadlineGeneratorFactory.DEFAULT;
 
   private final OperationUtil operationUtil;
 
@@ -359,13 +360,12 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
 
   private <ReqT, RespT> RetryingUnaryOperation<ReqT, RespT> createUnaryListener(
       ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String resource) {
-    CallOptions callOptions = CallOptions.DEFAULT;
     Metadata metadata = createMetadata(resource);
     return new RetryingUnaryOperation<>(
         retryOptions,
         request,
         rpc,
-        callOptions,
+        deadlineGeneratorFactory.getRequestDeadlineGenerator(request, rpc.isRetryable(request)),
         retryExecutorService,
         metadata,
         NanoClock.getDefaultClock());

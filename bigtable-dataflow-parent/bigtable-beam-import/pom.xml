@@ -18,27 +18,98 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-dataflow-parent</artifactId>
-    <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-dataflow-parent:current} -->
+    <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-dataflow-parent:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>bigtable-beam-import</artifactId>
 
   <properties>
-    <mainClass>com.google.cloud.bigtable.beam.sequencefiles.Main</mainClass>
+    <mainClass>com.google.cloud.bigtable.beam.Main</mainClass>
   </properties>
 
+  <!-- Adding this to resolve version conflict within beam sdk-->
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.apache.beam</groupId>
+        <artifactId>beam-sdks-java-bom</artifactId>
+        <version>${beam.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.beam</groupId>
+        <artifactId>beam-sdks-java-google-cloud-platform-bom</artifactId>
+        <version>${beam.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
+    <!-- Beam Group: should come first since we will be running in the beam ecosystem -->
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-sdks-java-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>
+        beam-sdks-java-extensions-google-cloud-platform-core
+      </artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
+      <exclusions>
+        <!-- Exclude BigtableIO deps, we don't need them since we are using CloudBigtableIO -->
+        <exclusion>
+          <groupId>com.google.cloud.bigtable</groupId>
+          <artifactId>bigtable-client-core</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.google.api.grpc</groupId>
+          <artifactId>grpc-google-cloud-bigtable-v2</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-sdks-java-io-hadoop-common</artifactId>
+      <!-- used at runtime via WritableCoderProviderRegistrar service -->
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-sdks-java-io-hadoop-format</artifactId>
+    </dependency>
+
+    <!-- Bigtable Group: ordering doesn't matter since everything is shaded -->
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-beam</artifactId>
       <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-shaded-client</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
+
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-1.x-shaded</artifactId>
       <version>${project.version}</version>
       <exclusions>
+        <!-- exclude hbase-shaded-client since we are using hbase-shaded-server -->
+        <exclusion>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-shaded-client</artifactId>
+        </exclusion>
+
         <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
         pom.xml files when invoking the build from a parent project. So we have to manually exclude
         the dependencies. Note that this works in conjunction with the manually promoted dependencies
@@ -51,100 +122,110 @@ limitations under the License.
           <groupId>io.opencensus</groupId>
           <artifactId>*</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>io.grpc</groupId>
+          <artifactId>grpc-census</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
-    <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>beam-sdks-java-core</artifactId>
-      <version>${beam.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>
-        beam-sdks-java-extensions-google-cloud-platform-core
-      </artifactId>
-      <version>${beam.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>beam-sdks-java-io-hadoop-common</artifactId>
-      <version>${beam.version}</version>
-    </dependency>
 
+    <!-- HBase Group: contains interfaces bigtable-hbase implement + serializers -->
     <dependency>
       <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-client</artifactId>
-      <version>${hbase.version}</version>
+      <artifactId>hbase-shaded-server</artifactId>
+      <version>${hbase1.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud.bigdataoss</groupId>
+      <artifactId>gcs-connector</artifactId>
+      <version>hadoop2-2.1.4</version>
+      <classifier>shaded</classifier>
     </dependency>
 
+
+    <!-- Misc Group -->
+    <dependency>
+      <groupId>com.google.apis</groupId>
+      <artifactId>google-api-services-storage</artifactId>
+      <version>v1-rev171-1.25.0</version>
+    </dependency>
     <dependency>
       <groupId>com.google.auto.value</groupId>
       <artifactId>auto-value</artifactId>
-      <version>${beam-auto-value.version}</version>
+      <version>1.7.4</version>
       <scope>provided</scope>
     </dependency>
-
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+      <version>${jsr305.version}</version>
+    </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>${beam-guava.version}</version>
+      <version>30.1-jre</version>
     </dependency>
-
-    <!-- TODO: check if commons-codec was transitively updated to 1.13 and okhttp was updated to 2.7.5 when upgrading-->
-    <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
-      <version>${beam.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.cloud.bigtable</groupId>
-          <artifactId>bigtable-client-core</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.google.api.grpc</groupId>
-          <artifactId>grpc-google-cloud-bigtable-v2</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <!-- TODO: remove these dependencies when upgraded through transitive dependency (beam-runners-google-cloud-dataflow-java)
-        these are not used directly, but upgrading due to transitive vulnerabilities in older versions-->
-    <dependency>
-      <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
-      <version>1.14</version>
-    </dependency>
-    <dependency>
-      <groupId>com.squareup.okhttp</groupId>
-      <artifactId>okhttp</artifactId>
-      <version>2.7.5</version>
-    </dependency>
-
     <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
       <version>${commons-logging.version}</version>
     </dependency>
-
-
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>${slf4j.version}</version>
+      <version>${beam-slf4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>${beam-slf4j.version}</version>
+      <scope>runtime</scope>
     </dependency>
 
-    <!-- Test -->
+
+    <!-- CVE Group: force update transitive deps to exclude CVEs -->
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>1.15</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+      <version>1.20</version>
+      <scope>runtime</scope>
+    </dependency>
+
+
+    <!-- Test Group -->
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-runners-direct-java</artifactId>
-      <version>${beam.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <version>${mockito.version}</version>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-bigtable-emulator</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-shaded-testing-util</artifactId>
+      <version>${hbase1.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.truth</groupId>
+      <artifactId>truth</artifactId>
+      <version>1.1.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -160,9 +241,9 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>${junit.version}</version>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -172,10 +253,14 @@ limitations under the License.
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <configuration>
-          <!--  todo(kolea2): align dependencies -->
-          <skip>true</skip>
-        </configuration>
+        <executions>
+          <execution>
+            <id>enforce</id>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -200,7 +285,6 @@ limitations under the License.
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <version>3.0.0</version>
         <executions>
           <execution>
             <goals>
@@ -248,7 +332,28 @@ limitations under the License.
           <shadedArtifactAttached>true</shadedArtifactAttached>
           <transformers>
             <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+            <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer" />
           </transformers>
+	  <filters>
+	      <filter>
+		  <artifact>*:*</artifact>
+		  <excludes>
+		      <exclude>META-INF/*.SF</exclude>
+		      <exclude>META-INF/*.DSA</exclude>
+		      <exclude>META-INF/*.RSA</exclude>
+          <exclude>META-INF/**/pom.properties</exclude>
+          <exclude>META-INF/**/pom.xml</exclude>
+          <exclude>META-INF/MANIFEST.MF</exclude>
+          <exclude>META-INF/LICENSE</exclude>
+          <exclude>META-INF/NOTICE.txt</exclude>
+          <exclude>META-INF/NOTICE</exclude>
+          <exclude>META-INF/DEPENDENCIES</exclude>
+          <exclude>META-INF/ASL2.0</exclude>
+          <exclude>META-INF/LICENSE.txt</exclude>
+          <exclude>**/*.proto</exclude>
+      </excludes>
+	      </filter>
+	  </filters>
         </configuration>
       </plugin>
 
@@ -275,21 +380,29 @@ limitations under the License.
       </plugin>
 
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-          <usedDependencies>
-            <usedDependency>com.google.auto.value:auto-value</usedDependency>
-            <usedDependency>commons-codec:commons-codec</usedDependency>
-            <usedDependency>com.squareup.okhttp:okhttp</usedDependency>
-            <usedDependency>org.apache.beam:beam-sdks-java-io-hadoop-common
-            </usedDependency>
-            <usedDependency>org.apache.beam:beam-runners-direct-java
-            </usedDependency>
-          </usedDependencies>
-        </configuration>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-test:current} -->
+        <executions>
+          <execution>
+            <id>verify-mirror-deps</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-mirror-deps</goal>
+            </goals>
+            <configuration>
+              <targetDependencies>
+                <targetDependency>org.apache.beam:beam-sdks-java-core:${beam.version}</targetDependency>
+              </targetDependencies>
+              <ignoredDependencies>
+                <!-- beam's dependency tree has an older version closer higher in the tree -->
+                <dependency>org.apache.commons:commons-compress</dependency>
+              </ignoredDependencies>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
+
 
     </plugins>
   </build>
@@ -319,7 +432,7 @@ limitations under the License.
                 <configuration>
                   <forkCount>1</forkCount>
                   <includes>
-                    <include>**/*IT.java</include>
+                    <include>**/sequencefiles/*IT.java</include>
                   </includes>
                   <!-- Use Isolated Classloader so that dataflow can find all files
                        that must be staged.
@@ -333,6 +446,7 @@ limitations under the License.
       </build>
     </profile>
 
+    <!-- profile to run all integration tests -->
     <profile>
       <id>beamIntegrationTest</id>
       <build>
@@ -351,8 +465,42 @@ limitations under the License.
                   <forkCount>1</forkCount>
                   <includes>
                     <include>**/CloudBigtableBeamITTest.java</include>
+                    <include>**/*IT.java</include>
                   </includes>
                   <reportNameSuffix>bigtable-beam</reportNameSuffix>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>hbasesnapshotsIntegrationTest</id>
+      <properties>
+        <!-- Needed to enable integration tests before we figure out -->
+        <!-- possible misconfiguration of Failsafe plugin -->
+        <skipITs>false</skipITs>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>hbasesnapshots-integration-test</id>
+                <goals>
+                  <goal>integration-test</goal>
+                </goals>
+                <phase>integration-test</phase>
+                <configuration>
+                  <forkCount>1</forkCount>
+                  <includes>
+                    <include>**/hbasesnapshots/*IT.java</include>
+                  </includes>
+                  <useSystemClassLoader>false</useSystemClassLoader>
                 </configuration>
               </execution>
             </executions>

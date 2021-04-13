@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-client-parent</artifactId>
-    <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <artifactId>bigtable-client-core-parent</artifactId>
@@ -35,5 +35,6 @@ limitations under the License.
     <module>bigtable-client-core</module>
     <module>bigtable-hbase</module>
     <module>bigtable-hbase-integration-tests-common</module>
+    <module>bigtable-metrics-api</module>
   </modules>
 </project>

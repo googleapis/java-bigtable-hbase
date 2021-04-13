@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x-parent</artifactId>
-    <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-1x-parent:current} -->
+    <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-1x-parent:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-1.x-integration-tests</artifactId>
@@ -374,6 +374,11 @@ limitations under the License.
 
     <dependency>
       <groupId>com.google.api.grpc</groupId>
+      <artifactId>grpc-google-cloud-bigtable-v2</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.api.grpc</groupId>
       <artifactId>proto-google-cloud-bigtable-v2</artifactId>
       <scope>test</scope>
     </dependency>
@@ -383,7 +388,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-testing-util</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase1.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -433,6 +438,11 @@ limitations under the License.
       <artifactId>grpc-alts</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-stub</artifactId>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>io.grpc</groupId>
@@ -462,6 +472,13 @@ limitations under the License.
     </dependency>
 
     <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-library</artifactId>
+      <version>${hamcrest.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>${junit.version}</version>
@@ -471,13 +488,6 @@ limitations under the License.
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-eclipse-plugin</artifactId>
-        <configuration>
-          <useProjectReferences>false</useProjectReferences>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -496,16 +506,6 @@ limitations under the License.
             </configuration>
           </execution>
         </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <usedDependencies>
-            <usedDependency>${project.groupId}:bigtable-hbase-1.x</usedDependency>
-            <usedDependency>io.grpc:grpc-grpclb</usedDependency>
-          </usedDependencies>
-        </configuration>
       </plugin>
     </plugins>
   </build>

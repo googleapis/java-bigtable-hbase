@@ -26,6 +26,7 @@ import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.beam.sequencefiles.ExportJob.ExportOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob.ImportOptions;
+import com.google.cloud.bigtable.beam.validation.SyncTableJob.SyncTableOptions;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
@@ -69,6 +70,19 @@ public class TemplateUtils {
         BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS,
         ValueProvider.NestedValueProvider.of(opts.getMutationThrottleLatencyMs(), String::valueOf));
 
+    return builder.build();
+  }
+
+  /** Builds CloudBigtableTableConfiguration from input runtime parameters for import job. */
+  public static CloudBigtableTableConfiguration BuildSyncTableConfig(SyncTableOptions opts) {
+    CloudBigtableTableConfiguration.Builder builder =
+        new CloudBigtableTableConfiguration.Builder()
+            .withProjectId(opts.getBigtableProject())
+            .withInstanceId(opts.getBigtableInstanceId())
+            .withTableId(opts.getBigtableTableId());
+    if (opts.getBigtableAppProfileId() != null) {
+      builder.withAppProfileId(opts.getBigtableAppProfileId());
+    }
     return builder.build();
   }
 

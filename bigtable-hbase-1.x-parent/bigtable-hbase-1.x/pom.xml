@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x-parent</artifactId>
-    <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-1x-parent:current} -->
+    <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-1x-parent:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-1.x</artifactId>
@@ -60,14 +60,14 @@ limitations under the License.
     </dependency>
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-client-core</artifactId>
+      <artifactId>bigtable-metrics-api</artifactId>
       <version>${project.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase1.version}</version>
     </dependency>
 
     <dependency>
@@ -85,7 +85,7 @@ limitations under the License.
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-core</artifactId>
-      <version>${dropwizard.metrics.version}</version>
+      <version>${hbase1-metrics.version}</version>
     </dependency>
 
     <!-- These are direct dependencies of TestBigtableConnection.java which is in test scope,
@@ -141,7 +141,7 @@ limitations under the License.
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-graphite</artifactId>
-      <version>${dropwizard.metrics.version}</version>
+      <version>${hbase1-metrics.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

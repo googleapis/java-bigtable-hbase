@@ -16,10 +16,7 @@
 package com.google.cloud.bigtable.grpc.async;
 
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
-import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
-import com.google.cloud.bigtable.metrics.Meter;
-import com.google.cloud.bigtable.metrics.Timer;
+import com.google.cloud.bigtable.metrics.RpcMetrics;
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.ClientCall.Listener;
@@ -34,57 +31,6 @@ import io.grpc.MethodDescriptor;
  */
 @InternalApi("For internal usage only")
 public interface BigtableAsyncRpc<REQUEST, RESPONSE> {
-
-  public static class RpcMetrics {
-    private final Timer operationTimer;
-    private final Timer rpcTimer;
-    private final Meter retryMeter;
-    private final Meter failureMeter;
-    private final Meter retriesExhaustedMeter;
-
-    public static RpcMetrics createRpcMetrics(MethodDescriptor<?, ?> descriptor) {
-      String prefix = "grpc.method." + descriptor.getFullMethodName().split("/")[1];
-      return new RpcMetrics(
-          BigtableClientMetrics.timer(MetricLevel.Info, prefix + ".operation.latency"),
-          BigtableClientMetrics.timer(MetricLevel.Debug, prefix + ".rpc.latency"),
-          BigtableClientMetrics.meter(MetricLevel.Info, prefix + ".retries.performed"),
-          BigtableClientMetrics.meter(MetricLevel.Info, prefix + ".failure"),
-          BigtableClientMetrics.meter(MetricLevel.Info, prefix + ".retries.exhausted"));
-    }
-
-    private RpcMetrics(
-        Timer operationTimer,
-        Timer rpcTimer,
-        Meter retryCounter,
-        Meter failureCounter,
-        Meter retriesExhaustedCounter) {
-      this.operationTimer = operationTimer;
-      this.rpcTimer = rpcTimer;
-      this.retryMeter = retryCounter;
-      this.failureMeter = failureCounter;
-      this.retriesExhaustedMeter = retriesExhaustedCounter;
-    }
-
-    public Timer.Context timeOperation() {
-      return operationTimer.time();
-    }
-
-    public Timer.Context timeRpc() {
-      return rpcTimer.time();
-    }
-
-    public void markRetry() {
-      retryMeter.mark();
-    }
-
-    public void markFailure() {
-      failureMeter.mark();
-    }
-
-    public void markRetriesExhasted() {
-      retriesExhaustedMeter.mark();
-    }
-  }
 
   /**
    * Creates a {@link io.grpc.ClientCall} it.

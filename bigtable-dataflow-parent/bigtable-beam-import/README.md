@@ -22,7 +22,6 @@ java -jar bigtable-beam-import-1.14.1-shaded.jar export \
     --destinationPath=gs://[bucket_name]/[export_directory]/ \
     --tempLocation=gs://[bucket_name]/[temp_work_directory]/ \
     --maxNumWorkers=[10x number of nodes] \
-    --zone=[zone of your cluster]
 ```
 
 ## Import

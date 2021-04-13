@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-client-parent</artifactId>
-    <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <artifactId>bigtable-test</artifactId>
@@ -32,5 +32,6 @@ limitations under the License.
 
   <modules>
     <module>bigtable-emulator-maven-plugin</module>
+    <module>bigtable-build-helper</module>
   </modules>
 </project>
