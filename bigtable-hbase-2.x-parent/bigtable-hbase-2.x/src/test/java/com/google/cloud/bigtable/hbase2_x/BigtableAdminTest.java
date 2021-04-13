@@ -34,10 +34,8 @@ public class BigtableAdminTest {
   @Test
   public void testGetClusterStatus() throws IOException {
     // test to verify compatibility between 1x and 2x
-    AbstractBigtableConnection connectionMock = mock(AbstractBigtableConnection.class);
-    BigtableApi bigtableApi = mock(BigtableApi.class);
-    Mockito.doReturn(bigtableApi).when(connectionMock).getBigtableApi();
-    BigtableAdmin bigtableAdmin = new BigtableAdmin(connectionMock);
+    BigtableAdmin bigtableAdmin = mock(BigtableAdmin.class);
+    Mockito.when(bigtableAdmin.getClusterStatus()).thenCallRealMethod();
 
     ClusterStatus status = bigtableAdmin.getClusterStatus();
     assertNotNull(status);
