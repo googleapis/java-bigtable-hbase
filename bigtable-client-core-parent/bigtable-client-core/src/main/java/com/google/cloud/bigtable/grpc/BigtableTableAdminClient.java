@@ -238,7 +238,6 @@ public interface BigtableTableAdminClient {
    * Waits for the long running operation to complete by polling with exponential backoff. A default
    * timeout of 10 minutes is used.
    *
-   * @param operation
    * @throws IOException
    * @throws TimeoutException If the timeout is exceeded.
    */
@@ -247,9 +246,6 @@ public interface BigtableTableAdminClient {
   /**
    * Waits for the long running operation to complete by polling with exponential backoff.
    *
-   * @param operation
-   * @param timeout
-   * @param timeUnit
    * @throws IOException
    * @throws TimeoutException If the timeout is exceeded.
    */

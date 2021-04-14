@@ -925,74 +925,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
         IOException.class);
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>The snapshots will be deleted serially and the first failure will prevent the deletion of
-   * the remaining snapshots.
-   */
-  @Override
-  public void deleteSnapshots(String regex) throws IOException {
-    throw new UnsupportedOperationException("use deleteSnapshot instead");
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * <p>The snapshots will be deleted serially and the first failure will prevent the deletion of
-   * the remaining snapshots.
-   */
-  @Override
-  public void deleteSnapshots(Pattern pattern) throws IOException {
-    throw new UnsupportedOperationException("use deleteSnapshot instead");
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void deleteTableSnapshots(String tableNameRegex, String snapshotNameRegex)
-      throws IOException {
-    throw new UnsupportedOperationException("Unsupported - please use deleteSnapshots");
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * <p>The snapshots will be deleted serially and the first failure will prevent the deletion of
-   * the remaining snapshots.
-   */
-  @Override
-  public void deleteTableSnapshots(Pattern tableNamePattern, Pattern snapshotNamePattern)
-      throws IOException {
-    throw new UnsupportedOperationException("Unsupported - please use deleteSnapshots");
-  }
-
-  // ------------- Unsupported snapshot methods.
-  /** {@inheritDoc} */
-  @Override
-  public void restoreSnapshot(byte[] snapshotName) throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot"); // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void restoreSnapshot(String snapshotName) throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot"); // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void restoreSnapshot(byte[] snapshotName, boolean takeFailSafeSnapshot)
-      throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot"); // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void restoreSnapshot(String snapshotName, boolean takeFailSafeSnapshot)
-      throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot"); // TODO
-  }
-
   protected Backup snapshotTable(String snapshotId, TableName tableName) throws IOException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(snapshotId));
     Preconditions.checkArgument(!Strings.isNullOrEmpty(tableName.getNameAsString()));
@@ -1001,19 +933,60 @@ public abstract class AbstractBigtableAdmin implements Admin {
         CreateBackupRequest.of(getBackupClusterName().getClusterId(), snapshotId)
             .setSourceTableId(tableName.getNameAsString());
 
-    int ttlSecs =
-        configuration.getInt(
-            BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY,
-            BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_VALUE);
+    int ttlSecondsForBackup = settings.getTtlSecondsForBackup();
 
-    if (ttlSecs <= 0) {
+    if (ttlSecondsForBackup <= 0) {
       throw new IllegalArgumentException(
           BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY + " must be > 0");
     }
-    Instant expireTime = Instant.now().plus(ttlSecs, ChronoUnit.SECONDS);
+    Instant expireTime = Instant.now().plus(ttlSecondsForBackup, ChronoUnit.SECONDS);
     request.setExpireTime(expireTime);
 
     return Futures.getChecked(adminClientWrapper.createBackupAsync(request), IOException.class);
+  }
+
+  @Override
+  public void deleteSnapshots(String regex) throws IOException {
+    throw new UnsupportedOperationException("use deleteSnapshot instead");
+  }
+
+  @Override
+  public void deleteSnapshots(Pattern pattern) throws IOException {
+    throw new UnsupportedOperationException("use deleteSnapshot instead");
+  }
+
+  @Override
+  public void deleteTableSnapshots(String tableNameRegex, String snapshotNameRegex)
+      throws IOException {
+    throw new UnsupportedOperationException("Unsupported - please use deleteSnapshots");
+  }
+
+  @Override
+  public void deleteTableSnapshots(Pattern tableNamePattern, Pattern snapshotNamePattern)
+      throws IOException {
+    throw new UnsupportedOperationException("Unsupported - please use deleteSnapshots");
+  }
+
+  @Override
+  public void restoreSnapshot(byte[] snapshotName) throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot"); // TODO
+  }
+
+  @Override
+  public void restoreSnapshot(String snapshotName) throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot"); // TODO
+  }
+
+  @Override
+  public void restoreSnapshot(byte[] snapshotName, boolean takeFailSafeSnapshot)
+      throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot"); // TODO
+  }
+
+  @Override
+  public void restoreSnapshot(String snapshotName, boolean takeFailSafeSnapshot)
+      throws IOException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("restoreSnapshot"); // TODO
   }
 
   protected synchronized BigtableClusterName getBackupClusterName() {
@@ -1031,8 +1004,6 @@ public abstract class AbstractBigtableAdmin implements Admin {
     }
     return bigtableSnapshotClusterName;
   }
-
-  // ------------- Snapshot method end
 
   /** {@inheritDoc} */
   @Override

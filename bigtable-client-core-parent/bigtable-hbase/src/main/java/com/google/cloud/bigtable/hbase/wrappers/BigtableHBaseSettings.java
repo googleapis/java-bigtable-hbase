@@ -38,6 +38,7 @@ public abstract class BigtableHBaseSettings {
   private final Configuration configuration;
   private final String projectId;
   private final String instanceId;
+  private final int ttlSecondsForBackup;
 
   public static BigtableHBaseSettings create(Configuration configuration) throws IOException {
     if (configuration.getBoolean(BIGTABLE_USE_GCJ_CLIENT, false)) {
@@ -51,6 +52,10 @@ public abstract class BigtableHBaseSettings {
     this.configuration = new Configuration(configuration);
     this.projectId = getRequiredValue(PROJECT_ID_KEY, "Project ID");
     this.instanceId = getRequiredValue(INSTANCE_ID_KEY, "Instance ID");
+    this.ttlSecondsForBackup =
+        configuration.getInt(
+            BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY,
+            BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_VALUE);
   }
 
   public Configuration getConfiguration() {
@@ -63,6 +68,10 @@ public abstract class BigtableHBaseSettings {
 
   public String getInstanceId() {
     return instanceId;
+  }
+
+  public int getTtlSecondsForBackup() {
+    return ttlSecondsForBackup;
   }
 
   public abstract String getDataHost();
