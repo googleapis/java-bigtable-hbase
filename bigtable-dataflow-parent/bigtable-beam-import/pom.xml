@@ -478,11 +478,6 @@ limitations under the License.
 
     <profile>
       <id>hbasesnapshotsIntegrationTest</id>
-      <properties>
-        <!-- Needed to enable integration tests before we figure out -->
-        <!-- possible misconfiguration of Failsafe plugin -->
-        <skipITs>false</skipITs>
-      </properties>
       <build>
         <plugins>
           <plugin>
