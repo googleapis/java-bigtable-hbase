@@ -27,10 +27,15 @@ import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.common.collect.Queues;
+import com.google.longrunning.GetOperationRequest;
+import com.google.longrunning.Operation;
+import com.google.longrunning.OperationsGrpc;
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import java.net.ServerSocket;
 import java.util.Arrays;
@@ -39,6 +44,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -60,8 +66,10 @@ public class TestAdminClientVeneerApi {
   private static final String BACKUP_ID = "fake-backup-id";
   private static final BigtableClusterName CLUSTER_NAME = INSTANCE_NAME.toClusterName(CLUSTER_ID);
   private static final String BACKUP_NAME = CLUSTER_NAME.toBackupName(BACKUP_ID);
+  private static final AtomicInteger callCount = new AtomicInteger(1);
 
   private FakeBigtableAdmin fakeAdminService = new FakeBigtableAdmin();
+  private FakeOperationsGrpc fakeOperationsGrpc = new FakeOperationsGrpc();
   private Server server;
   private BigtableTableAdminClient adminClientV2;
   private AdminClientVeneerApi adminClientWrapper;
@@ -73,7 +81,11 @@ public class TestAdminClientVeneerApi {
       port = serverSocket.getLocalPort();
     }
 
-    server = ServerBuilder.forPort(port).addService(fakeAdminService).build();
+    server =
+        ServerBuilder.forPort(port)
+            .addService(fakeOperationsGrpc)
+            .addService(fakeAdminService)
+            .build();
     server.start();
     adminClientV2 =
         BigtableTableAdminClient.create(
@@ -152,6 +164,20 @@ public class TestAdminClientVeneerApi {
   }
 
   @Test
+  public void createBackupAsync() throws ExecutionException, InterruptedException {
+    com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest request =
+        com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest.of(CLUSTER_ID, BACKUP_ID)
+            .setSourceTableId(TABLE_NAME);
+
+    adminClientWrapper.createBackupAsync(request).get();
+    com.google.bigtable.admin.v2.CreateBackupRequest backupRequest =
+        fakeAdminService.popLastRequest();
+    assertEquals(
+        "projects/fake-project-id/instances/fake-instance-id/tables/projects/fake-project-id/instances/fake-instance-id/tables/fake-Table-id-1",
+        backupRequest.getBackup().getSourceTable());
+  }
+
+  @Test
   public void listBackupsAsync() throws ExecutionException, InterruptedException {
     List<String> listApiFuture = adminClientWrapper.listBackupsAsync(CLUSTER_ID).get();
     assertEquals(1, listApiFuture.size());
@@ -166,6 +192,30 @@ public class TestAdminClientVeneerApi {
     assertEquals(
         "projects/fake-project-id/instances/fake-instance-id/clusters/fake-cluster-id/backups/fake-backup-id",
         deleteBackupRequest.getName());
+  }
+
+  private static class FakeOperationsGrpc extends OperationsGrpc.OperationsImplBase {
+    @Override
+    public void getOperation(
+        GetOperationRequest request, StreamObserver<Operation> responseObserver) {
+      if (callCount.getAndIncrement() < 3) {
+        responseObserver.onError(Status.DEADLINE_EXCEEDED.asException());
+      } else {
+        Operation op =
+            Operation.newBuilder()
+                .setMetadata(Any.pack(CreateBackupMetadata.getDefaultInstance()))
+                .setResponse(
+                    Any.pack(
+                        com.google.bigtable.admin.v2.Backup.newBuilder()
+                            .setName(BACKUP_NAME)
+                            .setSourceTable(TABLE_NAME)
+                            .build()))
+                .setDone(true)
+                .build();
+        responseObserver.onNext(op);
+        responseObserver.onCompleted();
+      }
+    }
   }
 
   private static class FakeBigtableAdmin extends BigtableTableAdminGrpc.BigtableTableAdminImplBase {
@@ -259,6 +309,24 @@ public class TestAdminClientVeneerApi {
     public void deleteBackup(DeleteBackupRequest request, StreamObserver<Empty> responseObserver) {
       requests.add(request);
       responseObserver.onNext(Empty.newBuilder().build());
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void createBackup(
+        CreateBackupRequest request, StreamObserver<Operation> responseObserver) {
+      requests.add(request);
+      Operation op =
+          Operation.newBuilder()
+              .setMetadata(Any.pack(CreateBackupMetadata.getDefaultInstance()))
+              .setResponse(
+                  Any.pack(
+                      com.google.bigtable.admin.v2.Backup.newBuilder()
+                          .setName(BACKUP_NAME)
+                          .setSourceTable(TABLE_NAME)
+                          .build()))
+              .build();
+      responseObserver.onNext(op);
       responseObserver.onCompleted();
     }
   }
