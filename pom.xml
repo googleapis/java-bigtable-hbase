@@ -129,6 +129,12 @@ limitations under the License.
     </testResources>
     <pluginManagement>
       <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>3.0.0-M1</version>
+        </plugin>
+
         <!-- Augment google-cloud-shared-config config to exclude non-compile deps -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
