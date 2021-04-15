@@ -143,8 +143,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public List<SnapshotDescription> listSnapshots() throws IOException {
     List<String> backups =
         Futures.getChecked(
-            adminClientWrapper.listBackupsAsync(getBackupClusterName().getClusterId()),
-            IOException.class);
+            adminClientWrapper.listBackupsAsync(getBackupClusterId()), IOException.class);
     List<SnapshotDescription> response = new ArrayList<>();
     for (String backup : backups) {
       response.add(new SnapshotDescription(backup));

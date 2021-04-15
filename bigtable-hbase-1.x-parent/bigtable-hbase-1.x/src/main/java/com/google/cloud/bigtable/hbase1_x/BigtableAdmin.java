@@ -140,8 +140,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public List<HBaseProtos.SnapshotDescription> listSnapshots() throws IOException {
     List<String> backups =
         Futures.getChecked(
-            adminClientWrapper.listBackupsAsync(getBackupClusterName().getClusterId()),
-            IOException.class);
+            adminClientWrapper.listBackupsAsync(getBackupClusterId()), IOException.class);
 
     List<HBaseProtos.SnapshotDescription> response = new ArrayList<>();
 

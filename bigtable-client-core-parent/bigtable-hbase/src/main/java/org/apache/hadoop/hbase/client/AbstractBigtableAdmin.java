@@ -901,7 +901,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   public void cloneSnapshot(String snapshotId, TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException {
     RestoreTableRequest request =
-        RestoreTableRequest.of(getBackupClusterName().getClusterId(), snapshotId)
+        RestoreTableRequest.of(getBackupClusterId(), snapshotId)
             .setTableId(tableName.getNameAsString());
     Futures.getChecked(adminClientWrapper.restoreTableAsync(request), IOException.class);
   }
@@ -989,7 +989,11 @@ public abstract class AbstractBigtableAdmin implements Admin {
     throw new UnsupportedOperationException("restoreSnapshot"); // TODO
   }
 
-  protected synchronized BigtableClusterName getBackupClusterName() {
+  protected synchronized String getBackupClusterId() {
+    return getBackupClusterName().getClusterId();
+  }
+
+  private synchronized BigtableClusterName getBackupClusterName() {
     if (this.bigtableSnapshotClusterName == null) {
       List<Cluster> clusters = adminClientWrapper.listClusters(settings.getInstanceId());
       Preconditions.checkState(
