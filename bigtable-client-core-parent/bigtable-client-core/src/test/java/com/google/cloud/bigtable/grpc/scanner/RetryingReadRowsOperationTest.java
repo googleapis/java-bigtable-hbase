@@ -449,6 +449,41 @@ public class RetryingReadRowsOperationTest {
     Assert.assertTrue(underTest.getRowMerger().isComplete());
   }
 
+  @Test
+  public void testErrorAfterCompleteWithRowsLimit() throws UnsupportedEncodingException {
+    ByteString key1 = ByteString.copyFromUtf8("SomeKey1");
+    ByteString key2 = ByteString.copyFromUtf8("SomeKey2");
+
+    ReadRowsRequest req =
+        ReadRowsRequest.newBuilder()
+            .setRows(RowSet.newBuilder().addRowKeys(key1).addRowKeys(key2))
+            .setRowsLimit(1)
+            .build();
+    RetryingReadRowsOperation underTest =
+        createOperation(DeadlineGenerator.DEFAULT, req, mockFlatRowObserver);
+
+    start(underTest);
+    // Not all the rows are read yet, but because the rows limit has reached, this will still return
+    // an OK status
+    underTest.onMessage(buildResponse(key1));
+    underTest.onClose(Status.CANCELLED, new Metadata());
+
+    verify(mockFlatRowObserver, times(1)).onCompleted();
+    Assert.assertFalse(underTest.inRetryMode());
+    Assert.assertTrue(underTest.getRowMerger().isComplete());
+  }
+
+  @Test
+  public void testFullTableScanRetried() {
+    ReadRowsRequest req = ReadRowsRequest.newBuilder().build();
+    RetryingReadRowsOperation underTest =
+        createOperation(DeadlineGenerator.DEFAULT, req, mockFlatRowObserver);
+
+    start(underTest);
+    underTest.onClose(Status.DEADLINE_EXCEEDED, new Metadata());
+    Assert.assertTrue(underTest.inRetryMode());
+  }
+
   @SuppressWarnings("unchecked")
   @Test
   public void testImmediateOnClose() {

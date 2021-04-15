@@ -20,7 +20,6 @@ import com.google.api.core.ApiClock;
 import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
-import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.DeadlineGenerator;
 import com.google.cloud.bigtable.grpc.async.AbstractRetryingOperation;
@@ -204,13 +203,11 @@ public class RetryingReadRowsOperation
     // scan. To mitigate this, we will just mask the status as an ok after we are certain that we
     // have received all of the data.
     // This mitigation must only be activated after at least one row is received so that we can
-    // distinguish from a perfectly valid initial full table scan.
-    if (!status.isOk() && requestManager.getLastFoundKey() != null) {
-      ReadRowsRequest retryRequest = requestManager.buildUpdatedRequest();
-      boolean isFullTableScan = retryRequest.getRows().equals(RowSet.getDefaultInstance());
-      if (isFullTableScan) {
-        status = Status.OK;
-      }
+    // distinguish from a perfectly valid initial full table scan. And we verify the ReadRows stream
+    // is done by checking if all the keys in the request are read, or the number of rows returned
+    // reached the rowsLimit.
+    if (!status.isOk() && requestManager.isConsumed()) {
+      status = Status.OK;
     }
 
     if (status.getCause() instanceof StreamWaitTimeoutException) {

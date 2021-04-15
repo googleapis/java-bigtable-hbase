@@ -52,16 +52,25 @@ class ReadRowsRequestManager {
     this.originalRequest = originalRequest;
   }
 
-  public ByteString getLastFoundKey() {
-    return lastFoundKey;
-  }
-
   void updateLastFoundKey(ByteString key) {
     this.lastFoundKey = key;
   }
 
   void incrementRowCount(int count) {
     rowCount += count;
+  }
+
+  boolean isConsumed() {
+    if (this.lastFoundKey == null) {
+      return false;
+    }
+    if (filterRows().equals(RowSet.getDefaultInstance())) {
+      return true;
+    }
+    if (originalRequest.getRowsLimit() > 0 && originalRequest.getRowsLimit() == rowCount) {
+      return true;
+    }
+    return false;
   }
 
   ReadRowsRequest buildUpdatedRequest() {
