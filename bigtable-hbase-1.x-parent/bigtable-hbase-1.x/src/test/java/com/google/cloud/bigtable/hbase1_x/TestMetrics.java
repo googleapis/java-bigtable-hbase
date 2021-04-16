@@ -150,10 +150,10 @@ public class TestMetrics {
             + operationLatencyResult
             + " difference: "
             + Math.abs(readRowsTime - operationLatencyResult),
-        operationLatencyResult <= readRowsTime + 50 && operationLatencyResult >= readRowsTime - 50);
+        operationLatencyResult <= readRowsTime + 55 && operationLatencyResult >= readRowsTime - 20);
     Assert.assertTrue(
         "operation latency for table.get took longer than expected",
-        tableGetLatency.get() <= readRowsTime + 50 && operationLatencyResult >= readRowsTime - 50);
+        tableGetLatency.get() <= readRowsTime + 55 && operationLatencyResult >= readRowsTime - 20);
   }
 
   @Test
@@ -173,7 +173,7 @@ public class TestMetrics {
             .results
             .get("google-cloud-bigtable.grpc.method.MutateRow.rpc.latency")
             .get();
-    Assert.assertTrue(latency <= elapsed + 50 && latency >= elapsed - 50);
+    Assert.assertTrue(latency <= elapsed + 55 && latency >= elapsed - 20);
   }
 
   @Test
