@@ -96,10 +96,8 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
   private final BigtableAsyncRpc<SetIamPolicyRequest, Policy> setIamPolicyRpc;
   private final BigtableAsyncRpc<TestIamPermissionsRequest, TestIamPermissionsResponse>
       testIamPermissionsRpc;
-  private final BigtableAsyncRpc<GetBackupRequest, Backup> getBackupRpc;
   private final BigtableAsyncRpc<ListBackupsRequest, ListBackupsResponse> listBackupRpc;
   private final BigtableAsyncRpc<CreateBackupRequest, Operation> createBackupRpc;
-  private final BigtableAsyncRpc<UpdateBackupRequest, Backup> updateBackupRpc;
   private final BigtableAsyncRpc<DeleteBackupRequest, Empty> deleteBackupRpc;
   private final BigtableAsyncRpc<RestoreTableRequest, Operation> restoreTableRpc;
 
@@ -128,9 +126,6 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
         asyncUtilities.createAsyncRpc(
             BigtableTableAdminGrpc.getListBackupsMethod(),
             Predicates.<ListBackupsRequest>alwaysTrue());
-    this.getBackupRpc =
-        asyncUtilities.createAsyncRpc(
-            BigtableTableAdminGrpc.getGetBackupMethod(), Predicates.<GetBackupRequest>alwaysTrue());
 
     // Write methods. These are only retried for UNAVAILABLE or UNAUTHORIZED
     this.createTableRpc =
@@ -173,10 +168,6 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
         asyncUtilities.createAsyncRpc(
             BigtableTableAdminGrpc.getCreateBackupMethod(),
             Predicates.<CreateBackupRequest>alwaysFalse());
-    this.updateBackupRpc =
-        asyncUtilities.createAsyncRpc(
-            BigtableTableAdminGrpc.getUpdateBackupMethod(),
-            Predicates.<UpdateBackupRequest>alwaysFalse());
     this.deleteBackupRpc =
         asyncUtilities.createAsyncRpc(
             BigtableTableAdminGrpc.getDeleteBackupMethod(),
