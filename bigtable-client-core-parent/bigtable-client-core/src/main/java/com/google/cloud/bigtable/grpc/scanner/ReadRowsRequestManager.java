@@ -62,12 +62,12 @@ class ReadRowsRequestManager {
 
   boolean isConsumed() {
     // A non-null lastFoundKey implies that we had at least one row that was returned and the
-    // filtered request should be truncated. In this case an empty filtered row set or rowCount
-    // equals to rowsLimit imply that all the rows have been seen and this stream is complete.
-    if (this.lastFoundKey != null
-        && (filterRows().equals(RowSet.getDefaultInstance())
-            || (originalRequest.getRowsLimit() > 0
-                && originalRequest.getRowsLimit() == rowCount))) {
+    // filtered request should be truncated. In this case an empty filtered row set implies that all
+    // the rows have been seen and this stream is complete.
+    if (this.lastFoundKey != null && filterRows().equals(RowSet.getDefaultInstance())) {
+      return true;
+    }
+    if (originalRequest.getRowsLimit() > 0 && originalRequest.getRowsLimit() == rowCount) {
       return true;
     }
     return false;
