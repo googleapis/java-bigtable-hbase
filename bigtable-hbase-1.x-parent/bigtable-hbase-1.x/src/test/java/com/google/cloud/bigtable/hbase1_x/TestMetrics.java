@@ -251,21 +251,25 @@ public class TestMetrics {
       // counter operations either increment or decrement a key's value
       return new Counter() {
         @Override
-        public synchronized void inc() {
-          AtomicLong atomicLong = results.get(name);
-          if (atomicLong == null) {
-            AtomicLong value = new AtomicLong();
-            results.put(name, value);
+        public void inc() {
+          synchronized (lock) {
+            AtomicLong atomicLong = results.get(name);
+            if (atomicLong == null) {
+              AtomicLong value = new AtomicLong();
+              results.put(name, value);
+            }
           }
           results.get(name).getAndIncrement();
         }
 
         @Override
-        public synchronized void dec() {
-          AtomicLong atomicLong = results.get(name);
-          if (atomicLong == null) {
-            AtomicLong value = new AtomicLong();
-            results.put(name, value);
+        public void dec() {
+          synchronized (lock) {
+            AtomicLong atomicLong = results.get(name);
+            if (atomicLong == null) {
+              AtomicLong value = new AtomicLong();
+              results.put(name, value);
+            }
           }
           results.get(name).getAndDecrement();
         }
@@ -279,41 +283,49 @@ public class TestMetrics {
         final Stopwatch stopwatch = Stopwatch.createStarted();
 
         @Override
-        public synchronized Context time() {
+        public Context time() {
           return new Context() {
             @Override
             public void close() {
-              results.put(name, new AtomicLong(stopwatch.elapsed(TimeUnit.MILLISECONDS)));
+              synchronized (lock) {
+                results.put(name, new AtomicLong(stopwatch.elapsed(TimeUnit.MILLISECONDS)));
+              }
             }
           };
         }
 
         @Override
-        public synchronized void update(long duration, TimeUnit unit) {
+        public void update(long duration, TimeUnit unit) {
           // update operations overwrite a key's value
-          results.put(name, new AtomicLong(duration));
+          synchronized (lock) {
+            results.put(name, new AtomicLong(duration));
+          }
         }
       };
     }
 
     @Override
-    public synchronized Meter meter(final String name) {
+    public Meter meter(final String name) {
       // meter operations increment the current key's value
       return new Meter() {
         @Override
         public void mark() {
-          AtomicLong atomicLong = results.get(name);
-          if (atomicLong == null) {
-            AtomicLong value = new AtomicLong();
-            results.put(name, value);
+          synchronized (lock) {
+            AtomicLong atomicLong = results.get(name);
+            if (atomicLong == null) {
+              AtomicLong value = new AtomicLong();
+              results.put(name, value);
+            }
           }
           results.get(name).getAndIncrement();
         }
 
         // unless a size is specified, in which case it is overridden
         @Override
-        public synchronized void mark(long size) {
-          results.put(name, new AtomicLong(size));
+        public void mark(long size) {
+          synchronized (lock) {
+            results.put(name, new AtomicLong(size));
+          }
         }
       };
     }
