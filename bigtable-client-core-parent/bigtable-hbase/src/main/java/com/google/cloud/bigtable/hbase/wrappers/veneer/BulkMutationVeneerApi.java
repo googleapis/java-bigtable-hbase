@@ -42,13 +42,13 @@ public class BulkMutationVeneerApi implements BulkMutationWrapper {
 
   /** {@inheritDoc} */
   @Override
-  public void sendUnsent() {
+  public synchronized void sendUnsent() {
     bulkMutateBatcher.sendOutstanding();
   }
 
   /** {@inheritDoc} */
   @Override
-  public void flush() {
+  public synchronized void flush() {
     try {
       bulkMutateBatcher.flush();
     } catch (InterruptedException ex) {
@@ -57,7 +57,7 @@ public class BulkMutationVeneerApi implements BulkMutationWrapper {
   }
 
   @Override
-  public void close() throws IOException {
+  public synchronized void close() throws IOException {
     try {
       bulkMutateBatcher.close();
     } catch (InterruptedException e) {
