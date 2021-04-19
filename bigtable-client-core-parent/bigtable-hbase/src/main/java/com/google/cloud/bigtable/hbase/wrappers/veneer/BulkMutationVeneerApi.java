@@ -35,7 +35,7 @@ public class BulkMutationVeneerApi implements BulkMutationWrapper {
 
   /** {@inheritDoc} */
   @Override
-  public ApiFuture<Void> add(RowMutationEntry rowMutation) {
+  public synchronized ApiFuture<Void> add(RowMutationEntry rowMutation) {
     Preconditions.checkNotNull(rowMutation, "mutation details cannot be null");
     return bulkMutateBatcher.add(rowMutation);
   }
