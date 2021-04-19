@@ -130,7 +130,7 @@ public class BulkRead {
    * Sends all remaining requests to the server. This method does not wait for the method to
    * complete.
    */
-  public void flush() {
+  public synchronized void flush() {
     for (Batch batch : batches.values()) {
       Collection<Batch> subbatches = batch.split();
       for (Batch miniBatch : subbatches) {
