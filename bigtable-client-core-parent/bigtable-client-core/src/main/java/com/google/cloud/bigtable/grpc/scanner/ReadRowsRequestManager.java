@@ -52,16 +52,27 @@ class ReadRowsRequestManager {
     this.originalRequest = originalRequest;
   }
 
-  public ByteString getLastFoundKey() {
-    return lastFoundKey;
-  }
-
   void updateLastFoundKey(ByteString key) {
     this.lastFoundKey = key;
   }
 
   void incrementRowCount(int count) {
     rowCount += count;
+  }
+
+  boolean isConsumed() {
+    // A non-null lastFoundKey implies that we had at least one row that was returned and the
+    // filtered request should be truncated. In this case an empty filtered row set implies that all
+    // the rows have been seen and this stream is complete.
+    if (this.lastFoundKey != null && filterRows().equals(RowSet.getDefaultInstance())) {
+      return true;
+    }
+    // If the request has a rowsLimit and rowCount has reached the limit, it implies that the
+    // stream is complete.
+    if (originalRequest.getRowsLimit() > 0 && originalRequest.getRowsLimit() == rowCount) {
+      return true;
+    }
+    return false;
   }
 
   ReadRowsRequest buildUpdatedRequest() {
