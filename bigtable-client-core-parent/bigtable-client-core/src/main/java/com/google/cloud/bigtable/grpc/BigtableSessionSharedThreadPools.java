@@ -58,6 +58,9 @@ public class BigtableSessionSharedThreadPools {
   /**
    * Getter for the field <code>batchThreadPool</code>.
    *
+   * <p>This needs to be a cached thread pool because long running operations could tie up the
+   * thread pool indefinitely
+   *
    * @return a {@link java.util.concurrent.ExecutorService} object.
    */
   public synchronized ExecutorService getBatchThreadPool() {

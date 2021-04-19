@@ -33,9 +33,10 @@ public class TestBigtableClusterName {
   }
 
   @Test
-  public void createSnapshotName() throws Exception {
+  public void createBackupName() throws Exception {
     String clusterName = "projects/proj/instances/inst/clusters/cluster1";
     Assert.assertEquals(
-        clusterName + "/snapshots/snp", new BigtableClusterName(clusterName).toSnapshotName("snp"));
+        clusterName + "/backups/backup",
+        new BigtableClusterName(clusterName).toBackupName("backup"));
   }
 }

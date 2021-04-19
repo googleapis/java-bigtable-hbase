@@ -17,9 +17,15 @@ package com.google.cloud.bigtable.hbase.wrappers;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.admin.v2.models.Backup;
+import com.google.cloud.bigtable.admin.v2.models.Cluster;
+import com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
+import com.google.cloud.bigtable.admin.v2.models.RestoreTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.RestoredTableResult;
 import com.google.cloud.bigtable.admin.v2.models.Table;
+import com.google.longrunning.Operation;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.List;
@@ -55,6 +61,29 @@ public interface AdminClientWrapper extends AutoCloseable {
 
   /** Asynchronously drops all data in the table */
   ApiFuture<Void> dropAllRowsAsync(String tableId);
+
+  /**
+   * Creates a new backup from a table in a specific cluster.
+   *
+   * @param request a {@link CreateBackupRequest} object.
+   * @return The long running {@link Operation} for the request.
+   */
+  ApiFuture<Backup> createBackupAsync(CreateBackupRequest request);
+
+  /** Lists all backups associated with the specified cluster. */
+  ApiFuture<List<String>> listBackupsAsync(String clusterId);
+
+  /** Permanently deletes the specified backup. */
+  ApiFuture<Void> deleteBackupAsync(String clusterId, String backupId);
+
+  /**
+   * Creates a new table from a backup.
+   *
+   * @return The long running {@link Operation} for the request.
+   */
+  ApiFuture<RestoredTableResult> restoreTableAsync(RestoreTableRequest request);
+
+  List<Cluster> listClusters(String instanceId);
 
   @Override
   void close() throws IOException;

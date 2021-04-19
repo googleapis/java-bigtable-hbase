@@ -164,6 +164,7 @@ public class TestBigtableHBaseVeneerSettings {
     BigtableTableAdminSettings adminSettings = settings.getTableAdminSettings();
     assertEquals(TEST_PROJECT_ID, adminSettings.getProjectId());
     assertEquals(TEST_INSTANCE_ID, adminSettings.getInstanceId());
+    assertEquals(TEST_INSTANCE_ID, settings.getInstanceId());
 
     assertEquals(adminHost + ":" + TEST_PORT, adminSettings.getStubSettings().getEndpoint());
     Map<String, String> headers = adminSettings.getStubSettings().getHeaderProvider().getHeaders();
