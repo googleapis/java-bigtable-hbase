@@ -67,6 +67,8 @@ class ReadRowsRequestManager {
     if (this.lastFoundKey != null && filterRows().equals(RowSet.getDefaultInstance())) {
       return true;
     }
+    // If the request has a rowsLimit and rowCount has reached the limit, it implies that the
+    // stream is complete.
     if (originalRequest.getRowsLimit() > 0 && originalRequest.getRowsLimit() == rowCount) {
       return true;
     }
