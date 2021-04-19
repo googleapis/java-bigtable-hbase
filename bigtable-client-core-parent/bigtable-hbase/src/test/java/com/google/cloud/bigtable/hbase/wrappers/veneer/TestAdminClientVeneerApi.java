@@ -35,7 +35,6 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
-import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import java.net.ServerSocket;
 import java.util.Arrays;
@@ -199,7 +198,20 @@ public class TestAdminClientVeneerApi {
     public void getOperation(
         GetOperationRequest request, StreamObserver<Operation> responseObserver) {
       if (callCount.getAndIncrement() < 3) {
-        responseObserver.onError(Status.DEADLINE_EXCEEDED.asException());
+        // done == false
+        Operation op =
+            Operation.newBuilder()
+                .setMetadata(Any.pack(CreateBackupMetadata.getDefaultInstance()))
+                .setResponse(
+                    Any.pack(
+                        com.google.bigtable.admin.v2.Backup.newBuilder()
+                            .setName(BACKUP_NAME)
+                            .setSourceTable(TABLE_NAME)
+                            .build()))
+                .setDone(false)
+                .build();
+        responseObserver.onNext(op);
+        responseObserver.onCompleted();
       } else {
         Operation op =
             Operation.newBuilder()
