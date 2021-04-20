@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.19.2](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.19.1...v1.19.2) (2021-04-20)
+
+
+### Bug Fixes
+
+* fix retry so it won't fail when rows read == rows limit ([#2925](https://www.github.com/googleapis/java-bigtable-hbase/issues/2925)) ([b6fb4c7](https://www.github.com/googleapis/java-bigtable-hbase/commit/b6fb4c70a0c4bd5b8d20efff408800592e147cf8))
+* multithreaded batch operations ([#2932](https://www.github.com/googleapis/java-bigtable-hbase/issues/2932)) ([d6dc825](https://www.github.com/googleapis/java-bigtable-hbase/commit/d6dc825551a35e2623874a95f5812ca7863ee46d))
+
 ### [1.19.1](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.19.0...v1.19.1) (2021-03-18)
 
 
