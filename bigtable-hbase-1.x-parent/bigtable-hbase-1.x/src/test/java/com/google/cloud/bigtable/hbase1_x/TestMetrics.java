@@ -126,7 +126,7 @@ public class TestMetrics {
 
     Stopwatch stopwatch = Stopwatch.createStarted();
     Result result = table.get(new Get(new byte[2]));
-    long readRowsTime = readRowsStopwatch.elapsed(TimeUnit.MILLISECONDS);
+    long methodInvocationLatency = stopwatch.elapsed(TimeUnit.MILLISECONDS);
 
     fakeDataService.popLastRequest();
 
