@@ -4,14 +4,14 @@
       "git": {
         "name": ".",
         "remote": "https://github.com/googleapis/java-bigtable-hbase.git",
-        "sha": "8b98a28be0e9b9804ffa166d90dcea76588cc63a"
+        "sha": "6096d60d21d5ff86ded8948eaab8c94af3ca28ee"
       }
     },
     {
       "git": {
         "name": "synthtool",
         "remote": "https://github.com/googleapis/synthtool.git",
-        "sha": "5de29e9434b63ea6d7e46dc348521c62969af1a1"
+        "sha": "27b2d4f4674840628d0b75c5941e89c12af4764f"
       }
     }
   ],
@@ -30,7 +30,6 @@
     ".kokoro/continuous/common.cfg",
     ".kokoro/continuous/java8.cfg",
     ".kokoro/continuous/readme.cfg",
-    ".kokoro/linkage-monitor.sh",
     ".kokoro/nightly/common.cfg",
     ".kokoro/nightly/java11.cfg",
     ".kokoro/nightly/java8-osx.cfg",
@@ -45,7 +44,6 @@
     ".kokoro/presubmit/java8-osx.cfg",
     ".kokoro/presubmit/java8-win.cfg",
     ".kokoro/presubmit/java8.cfg",
-    ".kokoro/presubmit/linkage-monitor.cfg",
     ".kokoro/presubmit/lint.cfg",
     ".kokoro/presubmit/samples.cfg",
     ".kokoro/readme.sh",
