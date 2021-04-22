@@ -25,6 +25,8 @@ java.common_templates(excludes=[
   '.github/snippet-bot.yml',
   '.github/release-please.yml',
   '.github/workflows/*',
+  '.kokoro/linkage-monitor.sh',
+  '.kokoro/presubmit/linkage-monitor.cfg',
   '.kokoro/presubmit/integration.cfg',
   '.kokoro/nightly/integration.cfg',
   '.kokoro/presubmit/java7.cfg',
