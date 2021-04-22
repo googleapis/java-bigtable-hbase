@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase1_x;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.bigtable.v2.*;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
@@ -24,7 +26,6 @@ import com.google.cloud.bigtable.metrics.MetricRegistry;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Range;
-import com.google.common.truth.Truth;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.Status;
@@ -36,7 +37,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -59,7 +59,6 @@ public class TestMetrics {
   private static final TableName TABLE_NAME = TableName.valueOf("fake-table");
   private static Server server;
   private static int dataPort;
-  private static AtomicInteger callCount = new AtomicInteger(1);
   private FakeMetricRegistry fakeMetricRegistry;
 
   private MetricRegistry originalMetricRegistry;
@@ -130,25 +129,24 @@ public class TestMetrics {
 
     fakeDataService.popLastRequest();
 
-    long readRowRetriesPerformed =
+    long retriesPerformedMetric =
         fakeMetricRegistry
             .results
             .get("google-cloud-bigtable.grpc.method.ReadRow.retries.performed")
             .get();
-    long tableGetLatency =
+    long tableGetLatencyMetric =
         fakeMetricRegistry.results.get("google-cloud-bigtable.table.get.latency").get();
-    long readRowClientOperationLatency =
+    long clientOperationLatencyMetric =
         fakeMetricRegistry
             .results
             .get("google-cloud-bigtable.grpc.method.ReadRow.operation.latency")
             .get();
 
-    Assert.assertEquals(3, readRowRetriesPerformed);
-
-    Truth.assertThat(tableGetLatency)
-        .isIn(Range.closed(FakeDataService.getReadRowServerSideLatency(), methodInvocationLatency));
-    Truth.assertThat(readRowClientOperationLatency)
-        .isIn(Range.closed(FakeDataService.getReadRowServerSideLatency(), methodInvocationLatency));
+    assertThat(retriesPerformedMetric).isEqualTo(3);
+    assertThat(tableGetLatencyMetric)
+        .isIn(Range.closed(fakeDataService.getReadRowServerSideLatency(), methodInvocationLatency));
+    assertThat(clientOperationLatencyMetric)
+        .isIn(Range.closed(fakeDataService.getReadRowServerSideLatency(), methodInvocationLatency));
   }
 
   @Test
@@ -168,9 +166,9 @@ public class TestMetrics {
             .results
             .get("google-cloud-bigtable.grpc.method.MutateRow.rpc.latency")
             .get();
-    Truth.assertThat(latency)
+    assertThat(latency)
         .isIn(
-            Range.closed(FakeDataService.getMutateRowServerSideLatency(), methodInvocationLatency));
+            Range.closed(fakeDataService.getMutateRowServerSideLatency(), methodInvocationLatency));
   }
 
   @Test
@@ -197,24 +195,27 @@ public class TestMetrics {
               .get("google-cloud-bigtable.grpc.method.ReadModifyWriteRow.operation.latency")
               .get();
 
-      Assert.assertEquals(1, failureCount);
-      Truth.assertThat(operationLatency)
+      assertThat(failureCount).isEqualTo(1);
+      assertThat(operationLatency)
           .isIn(
               Range.closed(
-                  FakeDataService.getReadModifyWriteRowServerSideLatency(),
+                  fakeDataService.getReadModifyWriteRowServerSideLatency(),
                   methodInvocationLatency));
     }
   }
 
   private static class FakeDataService extends BigtableGrpc.BigtableImplBase {
+    private final AtomicLong callCount = new AtomicLong(1);
 
-    private Stopwatch readRowsStopwatch = Stopwatch.createUnstarted();
-    private Stopwatch readModifyWriteRowStopwatch = Stopwatch.createUnstarted();
-    private Stopwatch mutateRowStopwatch = Stopwatch.createUnstarted();
+    private final Stopwatch readRowsStopwatch = Stopwatch.createUnstarted();
+    private final Stopwatch readModifyWriteRowStopwatch = Stopwatch.createUnstarted();
+    private final Stopwatch mutateRowStopwatch = Stopwatch.createUnstarted();
 
-    private static long readRowServerSideLatency;
-    private static long readModifyWriteRowServerSideLatency;
-    private static long mutateRowServerSideLatency;
+    private long readRowServerSideLatency;
+    private long readModifyWriteRowServerSideLatency;
+    private long mutateRowServerSideLatency;
+
+    private final Object lock = new Object();
 
     final ConcurrentLinkedQueue requests = new ConcurrentLinkedQueue();
 
@@ -223,15 +224,15 @@ public class TestMetrics {
       return (T) requests.poll();
     }
 
-    public static long getReadRowServerSideLatency() {
+    public synchronized long getReadRowServerSideLatency() {
       return readRowServerSideLatency;
     }
 
-    public static long getMutateRowServerSideLatency() {
+    public synchronized long getMutateRowServerSideLatency() {
       return mutateRowServerSideLatency;
     }
 
-    public static long getReadModifyWriteRowServerSideLatency() {
+    public synchronized long getReadModifyWriteRowServerSideLatency() {
       return readModifyWriteRowServerSideLatency;
     }
 
@@ -240,20 +241,22 @@ public class TestMetrics {
         ReadRowsRequest request, StreamObserver<ReadRowsResponse> responseObserver) {
       requests.add(request);
 
-      if (!readRowsStopwatch.isRunning()) {
-        readRowsStopwatch.start();
-      }
-      if (callCount.getAndIncrement() < 4) {
-        responseObserver.onError(new StatusRuntimeException(Status.UNAVAILABLE));
-      } else {
-        try {
-          Thread.sleep(20);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
+      synchronized (lock) {
+        if (!readRowsStopwatch.isRunning()) {
+          readRowsStopwatch.start();
         }
-        responseObserver.onNext(ReadRowsResponse.newBuilder().build());
-        readRowServerSideLatency = readRowsStopwatch.elapsed(TimeUnit.MILLISECONDS);
-        responseObserver.onCompleted();
+        if (callCount.getAndIncrement() < 4) {
+          responseObserver.onError(new StatusRuntimeException(Status.UNAVAILABLE));
+        } else {
+          try {
+            Thread.sleep(20);
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          }
+          responseObserver.onNext(ReadRowsResponse.newBuilder().build());
+          readRowServerSideLatency = readRowsStopwatch.elapsed(TimeUnit.MILLISECONDS);
+          responseObserver.onCompleted();
+        }
       }
     }
 
