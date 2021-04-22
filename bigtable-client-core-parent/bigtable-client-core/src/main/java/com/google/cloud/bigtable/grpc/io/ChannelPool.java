@@ -198,8 +198,9 @@ public class ChannelPool extends ManagedChannel {
         public void onClose(Status status, Metadata trailers) {
           try {
             if (trailers != null) {
-              // Be extra defensive since this is only used for logging
-              trailers.put(CHANNEL_ID_KEY, Integer.toString(channelId));
+              trailers.put(
+                  CHANNEL_ID_KEY,
+                  String.format("{cbt:%d,grpc:%s}", channelId, InstrumentedChannel.this.delegate));
             }
             if (!decremented.getAndSet(true)) {
               getStats().ACTIVE_RPC_COUNTER.dec();
