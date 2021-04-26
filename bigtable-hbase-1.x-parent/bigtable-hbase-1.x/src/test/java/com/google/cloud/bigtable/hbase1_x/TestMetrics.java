@@ -250,7 +250,8 @@ public class TestMetrics {
           try {
             Thread.sleep(20);
           } catch (InterruptedException e) {
-            e.printStackTrace();
+            responseObserver.onError(e);
+            return;
           }
           responseObserver.onNext(ReadRowsResponse.newBuilder().build());
           readRowServerSideLatency = readRowsStopwatch.elapsed(TimeUnit.MILLISECONDS);
