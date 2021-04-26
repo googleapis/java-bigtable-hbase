@@ -54,11 +54,10 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class TestMetrics {
 
-  private static final String TEST_PROJECT_ID = "fake-project-id";
-  private static final String TEST_INSTANCE_ID = "fake-instance-id";
-  private static final TableName TABLE_NAME = TableName.valueOf("fake-table");
-  private static Server server;
-  private static int dataPort;
+  private final String TEST_PROJECT_ID = "fake-project-id";
+  private final String TEST_INSTANCE_ID = "fake-instance-id";
+  private final TableName TABLE_NAME = TableName.valueOf("fake-table");
+  private Server server;
   private FakeMetricRegistry fakeMetricRegistry;
 
   private MetricRegistry originalMetricRegistry;
@@ -74,6 +73,13 @@ public class TestMetrics {
 
   @Before
   public void setUp() throws IOException {
+    int dataPort;
+    try (ServerSocket s = new ServerSocket(0)) {
+      dataPort = s.getLocalPort();
+    }
+    server = ServerBuilder.forPort(dataPort).addService(fakeDataService).build();
+    server.start();
+
     originalLevelToLog = BigtableClientMetrics.getLevelToLog();
     originalMetricRegistry = BigtableClientMetrics.getMetricRegistry(originalLevelToLog);
 
@@ -91,25 +97,12 @@ public class TestMetrics {
     BigtableClientMetrics.setLevelToLog(BigtableClientMetrics.MetricLevel.Debug);
   }
 
-  @BeforeClass
-  public static void setUpServer() throws IOException {
-    try (ServerSocket s = new ServerSocket(0)) {
-      dataPort = s.getLocalPort();
-    }
-    server = ServerBuilder.forPort(dataPort).addService(fakeDataService).build();
-    server.start();
-  }
-
-  @AfterClass
-  public static void tearDownServer() throws InterruptedException {
+  @After
+  public void tearDown() throws IOException, InterruptedException {
     if (server != null) {
       server.shutdownNow();
       server.awaitTermination();
     }
-  }
-
-  @After
-  public void tearDown() throws IOException {
     connection.close();
     BigtableClientMetrics.setMetricRegistry(originalMetricRegistry);
     BigtableClientMetrics.setLevelToLog(originalLevelToLog);
@@ -224,16 +217,22 @@ public class TestMetrics {
       return (T) requests.poll();
     }
 
-    public synchronized long getReadRowServerSideLatency() {
-      return readRowServerSideLatency;
+    public long getReadRowServerSideLatency() {
+      synchronized (lock) {
+        return readRowServerSideLatency;
+      }
     }
 
-    public synchronized long getMutateRowServerSideLatency() {
-      return mutateRowServerSideLatency;
+    public long getMutateRowServerSideLatency() {
+      synchronized (lock) {
+        return mutateRowServerSideLatency;
+      }
     }
 
-    public synchronized long getReadModifyWriteRowServerSideLatency() {
-      return readModifyWriteRowServerSideLatency;
+    public long getReadModifyWriteRowServerSideLatency() {
+      synchronized (lock) {
+        return readModifyWriteRowServerSideLatency;
+      }
     }
 
     @Override
