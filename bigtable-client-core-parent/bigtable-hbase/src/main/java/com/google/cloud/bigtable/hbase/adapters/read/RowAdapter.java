@@ -42,7 +42,7 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
   @Override
   public Result adaptResponse(Row response) {
     if (response == null) {
-      return new Result();
+      return Result.EMPTY_RESULT;
     }
 
     SortedSet<Cell> hbaseCells = new TreeSet<>(KeyValue.COMPARATOR);
