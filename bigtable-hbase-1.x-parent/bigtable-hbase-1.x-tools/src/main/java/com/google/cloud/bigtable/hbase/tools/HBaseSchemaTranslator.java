@@ -404,6 +404,7 @@ public class HBaseSchemaTranslator {
    */
   static class JsonBasedSchemaTransformer implements SchemaTransformer {
 
+    // ':' is a good choice since it can not be present in either tableName or column family name.
     public static final String COLUMN_FAMILY_SEPARATOR = ":";
     private final String mappingFilePath;
 
@@ -429,7 +430,7 @@ public class HBaseSchemaTranslator {
             "SchemaMapping file does not contain valid schema mappings");
       }
 
-      // Raed the mapping file and organize the transformations in a structured way.
+      // Read the mapping file and organize the transformations in a structured way.
       // Please note that we consciously chose a flat JSON file to make it easy for users to
       // configure the schema translator.
       for (Map.Entry<String, String> entry : schemaMapping.entrySet()) {
