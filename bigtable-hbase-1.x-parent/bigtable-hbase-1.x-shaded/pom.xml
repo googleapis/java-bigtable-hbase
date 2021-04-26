@@ -180,7 +180,6 @@ limitations under the License.
                     com.github.stephenc.findbugs:findbugs-annotations
                   </exclude>
                   <exclude>log4j:log4j</exclude>
-                  <exclude>com.google.cloud.bigtable:bigtable-metrics-api</exclude>
                   <!-- See notes in bigtable-client-core/bigtable-hbase/pom.xml#verify-conscrypt-version -->
                   <exclude>org.conscrypt:conscrypt-openjdk-uber</exclude>
                 </excludes>
