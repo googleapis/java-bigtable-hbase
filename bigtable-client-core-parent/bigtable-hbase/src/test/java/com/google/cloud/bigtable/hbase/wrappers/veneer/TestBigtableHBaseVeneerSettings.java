@@ -349,6 +349,15 @@ public class TestBigtableHBaseVeneerSettings {
   }
 
   @Test
+  public void testDefaultThrottlingDisabled() throws IOException {
+    BigtableHBaseVeneerSettings settingUtils = BigtableHBaseVeneerSettings.create(configuration);
+    BigtableDataSettings settings = settingUtils.getDataSettings();
+    assertFalse(
+        settings.getStubSettings().bulkMutateRowsSettings().isLatencyBasedThrottlingEnabled());
+    assertEquals(settings.getStubSettings().bulkMutateRowsSettings().getTargetRpcLatencyMs(), null);
+  }
+
+  @Test
   public void testDataSettingsWithEmulator() throws IOException {
     ServerSocket serverSocket = new ServerSocket(0);
     final int availablePort = serverSocket.getLocalPort();
