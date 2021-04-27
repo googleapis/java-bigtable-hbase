@@ -882,6 +882,13 @@ public abstract class AbstractBigtableAdmin implements Admin {
   }
 
   /**
+   * This is needed for the hbase shell.
+   */
+  public void cloneSnapshot(byte[] snapshotId, byte[] tableName) throws IOException {
+    cloneSnapshot(snapshotId, TableName.valueOf(tableName));
+  }
+
+  /**
    * @param snapshotName a {@link String} object.
    * @param tableName a {@link TableName} object.
    * @throws IOException if any.
