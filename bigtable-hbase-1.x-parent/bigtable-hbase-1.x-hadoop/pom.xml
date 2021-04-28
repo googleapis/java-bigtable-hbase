@@ -56,6 +56,10 @@ limitations under the License.
           <artifactId>bigtable-hbase-1.x</artifactId>
         </exclusion>
         <exclusion>
+          <groupId>com.google.cloud.bigtable</groupId>
+          <artifactId>bigtable-metrics-api</artifactId>
+        </exclusion>
+        <exclusion>
           <groupId>io.opencensus</groupId>
           <artifactId>*</artifactId>
         </exclusion>
@@ -72,11 +76,6 @@ limitations under the License.
     </dependency>
 
     <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-    <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-metrics-api</artifactId>
-      <version>${project.version}</version>
-    </dependency>
     <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>

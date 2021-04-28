@@ -35,6 +35,10 @@
           <artifactId>bigtable-hbase-1.x</artifactId>
         </exclusion>
         <exclusion>
+          <groupId>com.google.cloud.bigtable</groupId>
+          <artifactId>bigtable-metrics-api</artifactId>
+        </exclusion>
+        <exclusion>
           <groupId>io.opencensus</groupId>
           <artifactId>*</artifactId>
         </exclusion>
