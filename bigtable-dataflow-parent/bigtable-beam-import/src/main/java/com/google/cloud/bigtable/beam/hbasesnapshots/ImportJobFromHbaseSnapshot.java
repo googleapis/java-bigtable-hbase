@@ -118,7 +118,7 @@ public class ImportJobFromHbaseSnapshot {
         .apply("Create Mutations", ParDo.of(new HBaseResultToMutationFn()))
         .apply(
             "Write to Bigtable",
-            CloudBigtableIO.writeToTable(TemplateUtils.BuildImportConfig(opts)));
+            CloudBigtableIO.writeToTable(TemplateUtils.BuildImportConfig(opts, "HBaseSnapshotImportJob")));
 
     final List<KV<String, String>> sourceAndRestoreFolders =
         Arrays.asList(
