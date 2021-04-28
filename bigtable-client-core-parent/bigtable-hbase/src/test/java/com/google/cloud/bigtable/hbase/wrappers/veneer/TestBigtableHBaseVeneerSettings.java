@@ -322,6 +322,10 @@ public class TestBigtableHBaseVeneerSettings {
     configuration.setLong(BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES, bulkMaxReqSize);
     configuration.setLong(MAX_ELAPSED_BACKOFF_MILLIS_KEY, autoFlushMs);
     configuration.setLong(BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY, maxMemory);
+    configuration.setBoolean(
+        BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING, true);
+    configuration.setInt(
+        BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS, 1234);
 
     BigtableHBaseVeneerSettings settingUtils =
         ((BigtableHBaseVeneerSettings) BigtableHBaseVeneerSettings.create(configuration));
@@ -337,6 +341,20 @@ public class TestBigtableHBaseVeneerSettings {
         Long.valueOf(maxInflightRPC * maxRowKeyCount),
         batchingSettings.getFlowControlSettings().getMaxOutstandingElementCount());
     assertEquals(maxMemory, settingUtils.getBatchingMaxRequestSize());
+
+    assertTrue(
+        settings.getStubSettings().bulkMutateRowsSettings().isLatencyBasedThrottlingEnabled());
+    assertEquals(
+        (long) settings.getStubSettings().bulkMutateRowsSettings().getTargetRpcLatencyMs(), 1234L);
+  }
+
+  @Test
+  public void testDefaultThrottlingDisabled() throws IOException {
+    BigtableHBaseVeneerSettings settingUtils = BigtableHBaseVeneerSettings.create(configuration);
+    BigtableDataSettings settings = settingUtils.getDataSettings();
+    assertFalse(
+        settings.getStubSettings().bulkMutateRowsSettings().isLatencyBasedThrottlingEnabled());
+    assertEquals(settings.getStubSettings().bulkMutateRowsSettings().getTargetRpcLatencyMs(), null);
   }
 
   @Test

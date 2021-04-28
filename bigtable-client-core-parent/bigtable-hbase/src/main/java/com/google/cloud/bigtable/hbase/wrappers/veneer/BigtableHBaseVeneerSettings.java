@@ -15,12 +15,14 @@
  */
 package com.google.cloud.bigtable.hbase.wrappers.veneer;
 
+import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ADDITIONAL_RETRY_CODES;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ALLOW_NO_TIMESTAMP_RETRIES_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.APP_PROFILE_ID_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_AUTOFLUSH_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_MAX_ROW_KEY_COUNT;
@@ -564,14 +566,19 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       flowControl.setMaxOutstandingRequestBytes(Long.valueOf(maxMemory));
     }
 
-    // TODO: enable this once dynamic flow control lands in veneer
-    if (Boolean.parseBoolean(configuration.get(BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING))) {
-      throw new UnsupportedOperationException("Buffered mutator throttling is not supported.");
-    }
     batchingSettingsBuilder.setFlowControlSettings(flowControl.build());
     // End configure flow control
 
     builder.setBatchingSettings(batchingSettingsBuilder.build());
+
+    if (Boolean.parseBoolean(configuration.get(BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING))) {
+      int latencyMs =
+          configuration.getInt(
+              BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS,
+              BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT);
+
+      builder.enableLatencyBasedThrottling(latencyMs);
+    }
   }
 
   private void configureBulkReadRowsSettings(
