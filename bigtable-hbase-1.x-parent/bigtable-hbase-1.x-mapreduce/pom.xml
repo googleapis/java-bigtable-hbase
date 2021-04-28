@@ -35,7 +35,8 @@ limitations under the License.
   </description>
 
   <properties>
-    <hbase1-mapreduce-slfj.version>1.7.10</hbase1-mapreduce-slfj.version>
+    <mrunit.version>1.1.0</mrunit.version>
+    <google-cloud-bigtable-emulator.version>0.130.2</google-cloud-bigtable-emulator.version>
   </properties>
 
   <!-- NOTE: this artifact is designed to be used alongside hbase-server via
@@ -89,6 +90,37 @@ limitations under the License.
       <artifactId>junit</artifactId>
       <version>${junit.version}</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.mrunit</groupId>
+      <artifactId>mrunit</artifactId>
+      <version>${mrunit.version}</version>
+      <classifier>hadoop2</classifier>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-bigtable-emulator</artifactId>
+      <version>${google-cloud-bigtable-emulator.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-testing-util</artifactId>
+      <version>${hbase1.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <!-- exclusion to avoid version conflict with existing artifact  -->
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+        <!-- exclusion to avoid version conflict with existing artifact  -->
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 
