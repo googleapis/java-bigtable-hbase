@@ -116,8 +116,10 @@ public class TestBulkMutationVeneerApi {
   @Test
   public void testWhenBatcherIsClosed() throws IOException {
     BatchingSettings batchingSettings = mock(BatchingSettings.class);
-    FlowControlSettings flowControlSettings = mock(FlowControlSettings.class);
-    when(flowControlSettings.getLimitExceededBehavior()).thenReturn(LimitExceededBehavior.Ignore);
+    FlowControlSettings flowControlSettings =
+        FlowControlSettings.newBuilder()
+            .setLimitExceededBehavior(LimitExceededBehavior.Ignore)
+            .build();
     when(batchingSettings.getFlowControlSettings()).thenReturn(flowControlSettings);
 
     @SuppressWarnings("unchecked")
