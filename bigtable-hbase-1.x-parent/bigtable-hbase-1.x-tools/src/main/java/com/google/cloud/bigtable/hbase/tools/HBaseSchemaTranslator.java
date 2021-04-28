@@ -25,7 +25,6 @@ import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.tools.ClusterSchemaDefinition.TableSchemaDefinition;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -124,7 +123,8 @@ public class HBaseSchemaTranslator {
     String schemaMappingFilePath;
 
     @VisibleForTesting
-    SchemaTranslationOptions() {}
+    SchemaTranslationOptions() {
+    }
 
     @VisibleForTesting
     void validateOptions() {
@@ -182,7 +182,9 @@ public class HBaseSchemaTranslator {
     }
   }
 
-  /** Interface for reading HBase schema. */
+  /**
+   * Interface for reading HBase schema.
+   */
   interface SchemaReader {
 
     ClusterSchemaDefinition readSchema() throws IOException;
@@ -207,7 +209,9 @@ public class HBaseSchemaTranslator {
     }
   }
 
-  /** Reads the HBase schema by connecting to an HBase cluster. */
+  /**
+   * Reads the HBase schema by connecting to an HBase cluster.
+   */
   static class HBaseSchemaReader implements SchemaReader {
 
     private final String tableFilterPattern;
@@ -281,7 +285,8 @@ public class HBaseSchemaTranslator {
   }
 
   /**
-   * Interface for writing the HBase schema represented by a {@link ClusterSchemaDefinition} object.
+   * Interface for writing the HBase schema represented by a {@link ClusterSchemaDefinition}
+   * object.
    */
   interface SchemaWriter {
 
@@ -386,7 +391,9 @@ public class HBaseSchemaTranslator {
         throws IOException, DeserializationException;
   }
 
-  /** No-op implementation of @{@link SchemaTransformer}. Returns the original schema definition. */
+  /**
+   * No-op implementation of @{@link SchemaTransformer}. Returns the original schema definition.
+   */
   static class NoopSchemaTransformer implements SchemaTransformer {
 
     @Override
@@ -409,9 +416,11 @@ public class HBaseSchemaTranslator {
     private final String mappingFilePath;
 
     // Map from old-tableName -> new-tableName
-    @VisibleForTesting Map<String, String> tableNameMappings;
+    @VisibleForTesting
+    Map<String, String> tableNameMappings;
     // Map of column families mapping scoped by a table. {tableName -> {old-family -> new-family}}
-    @VisibleForTesting Map<String, Map<String, String>> tableScopedColumnFamilyMappings;
+    @VisibleForTesting
+    Map<String, Map<String, String>> tableScopedColumnFamilyMappings;
 
     public JsonBasedSchemaTransformer(String mappingFilePath) {
       this.mappingFilePath = mappingFilePath;
@@ -420,10 +429,14 @@ public class HBaseSchemaTranslator {
     }
 
     @VisibleForTesting
-    void parseMappingFile() throws FileNotFoundException {
-      Reader jsonReader = new FileReader(mappingFilePath);
+    void parseMappingFile() throws IOException {
+
       Type mapType = new TypeToken<Map<String, String>>() {}.getType();
-      Map<String, String> schemaMapping = new Gson().fromJson(jsonReader, mapType);
+      Map<String, String> schemaMapping = null;
+
+      try (Reader jsonReader = new FileReader(mappingFilePath)) {
+        schemaMapping = new Gson().fromJson(jsonReader, mapType);
+      }
 
       if (schemaMapping == null) {
         throw new IllegalStateException(
@@ -460,32 +473,35 @@ public class HBaseSchemaTranslator {
 
       // Apply the transformations.
       for (TableSchemaDefinition tableSchemaDefinition : originalSchema.tableSchemaDefinitions) {
-        String tableName = tableSchemaDefinition.name;
+        String newTableName = tableSchemaDefinition.name;
         HTableDescriptor tableDescriptor = tableSchemaDefinition.getHbaseTableDescriptor();
 
         // Override the table name if its present in the mapping file
-        if (tableNameMappings.containsKey(tableName)) {
-          tableName = tableNameMappings.get(tableName);
+        if (tableNameMappings.containsKey(newTableName)) {
+          newTableName = tableNameMappings.get(newTableName);
         }
         // Rename the table and copy all the other configs, including the column families.
         HTableDescriptor newTableDescriptor =
-            new HTableDescriptor(TableName.valueOf(tableName), tableDescriptor);
+            new HTableDescriptor(TableName.valueOf(newTableName), tableDescriptor);
 
         // For all the column families that need renaming, replace them.
         if (tableScopedColumnFamilyMappings.containsKey(tableSchemaDefinition.name)) {
           Map<String, String> cfMap =
               tableScopedColumnFamilyMappings.get(tableSchemaDefinition.name);
           for (Map.Entry<String, String> cfEntry : cfMap.entrySet()) {
+            HColumnDescriptor sourceFamily = newTableDescriptor.getFamily(cfEntry.getKey().getBytes());
+
+            if(sourceFamily == null){
+              throw new IllegalStateException("Requested rename of a non existent column family: '"+ cfEntry.getKey() + "', please make sure that there are no typos." );
+            }
             // Its not possible to rename a columnFamily using the HColumnDescriptor interface
             // So create a new family with same config and replace it in the HTableDescriptor.
-            newTableDescriptor.addFamily(
-                renameFamily(
-                    cfEntry.getValue(), newTableDescriptor.getFamily(cfEntry.getKey().getBytes())));
             newTableDescriptor.removeFamily(cfEntry.getKey().getBytes());
+            newTableDescriptor.addFamily(renameFamily(cfEntry.getValue(), sourceFamily));
           }
-        } else {
-          // All the column families are copied already, nothing else to do.
         }
+
+       // finalize the transformed schema
         transformedSchema.addTableSchemaDefinition(
             newTableDescriptor, tableSchemaDefinition.splits);
       }
@@ -534,12 +550,12 @@ public class HBaseSchemaTranslator {
     try {
       jarName =
           new File(
-                  HBaseSchemaTranslator.class
-                      .getProtectionDomain()
-                      .getCodeSource()
-                      .getLocation()
-                      .toURI()
-                      .getPath())
+              HBaseSchemaTranslator.class
+                  .getProtectionDomain()
+                  .getCodeSource()
+                  .getLocation()
+                  .toURI()
+                  .getPath())
               .getName();
     } catch (URISyntaxException e) {
       jarName = "<jar>";

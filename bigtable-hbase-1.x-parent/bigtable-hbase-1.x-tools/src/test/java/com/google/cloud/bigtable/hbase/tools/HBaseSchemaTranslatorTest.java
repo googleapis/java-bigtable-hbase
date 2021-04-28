@@ -182,6 +182,8 @@ public class HBaseSchemaTranslatorTest {
     Map<String, String> schemaMapping = new HashMap<>();
     schemaMapping.put("test-table1", "new-test-table1");
     schemaMapping.put("test-table1:cf", "new-cf");
+    // NO Op renaming
+    schemaMapping.put("test-table2", "test-table2");
     // Not found in the schema, should get discarded.
     schemaMapping.put("test", "new-test");
     schemaMapping.put("test:family", "new-family");
@@ -356,14 +358,14 @@ public class HBaseSchemaTranslatorTest {
           .createTable(
               eq(schemaDefinition.tableSchemaDefinitions.get(0).getHbaseTableDescriptor()),
               eq(schemaDefinition.tableSchemaDefinitions.get(0).splits));
+      // Validate that translator calls createTable for  test-table-2 even after creation of
+      // test-table1 failed.
       Mockito.verify(btAdmin)
           .createTable(
               eq(schemaDefinition.tableSchemaDefinitions.get(1).getHbaseTableDescriptor()),
               eq(schemaDefinition.tableSchemaDefinitions.get(1).splits));
       Mockito.verify(hbaseAdmin).listTables(".*");
       Mockito.verify(hbaseAdmin).getTableRegions(TableName.valueOf("test-table1"));
-      // Validate that translator calls createTable for  test-table-2 even after creation of
-      // test-table1 failed.
       Mockito.verify(hbaseAdmin).getTableRegions(TableName.valueOf("test-table2"));
     }
   }
@@ -400,8 +402,51 @@ public class HBaseSchemaTranslatorTest {
       // Verify
       Mockito.verify(hbaseAdmin).listTables(".*");
       Mockito.verify(hbaseAdmin).getTableRegions(TableName.valueOf("test-table1"));
-      // Validate that translator calls createTable for  test-table-2 even after creation of
-      // test-table1 failed.
+      Mockito.verify(hbaseAdmin).getTableRegions(TableName.valueOf("test-table2"));
+    }
+  }
+
+  @Test
+  public void testTranslateWithTransformationFailsForNonExistentRename()
+      throws IOException, DeserializationException {
+    // Setup
+    Mockito.when(hbaseAdmin.listTables(eq(".*"))).thenReturn(getTables());
+    Mockito.when(hbaseAdmin.getTableRegions(eq(TableName.valueOf("test-table1"))))
+        .thenReturn(getRegions(0));
+    Mockito.when(hbaseAdmin.getTableRegions(eq(TableName.valueOf("test-table2"))))
+        .thenReturn(getRegions(1));
+    ArgumentCaptor<HTableDescriptor> tableCaptor = ArgumentCaptor.forClass(HTableDescriptor.class);
+
+    Map<String, String> schemaMapping = new HashMap<>();
+    schemaMapping.put("test-table1", "new-test-table1");
+    schemaMapping.put("test-table1:cf", "new-cf");
+    // this family does not exist, possibly a typo in the config. Fail the translation.
+    schemaMapping.put("test-table1:non-existent-family", "new-family");
+
+    File schemaFile = tempFolder.newFile("schema_mapping.json");
+    try (Writer writer = new FileWriter(schemaFile.getPath())) {
+      new com.google.bigtable.repackaged.com.google.gson.Gson().toJson(schemaMapping, writer);
+    }
+
+    HBaseSchemaTranslator translator =
+        new HBaseSchemaTranslator(
+            new HBaseSchemaReader(hbaseAdmin, ".*"),
+            new BigtableSchemaWriter(btAdmin),
+            new JsonBasedSchemaTransformer(schemaFile.getPath()));
+
+    // Call
+    try {
+      translator.translate();
+      fail("Expected IOException here.");
+    } catch (IllegalStateException e) {
+      // Expected.
+      e.printStackTrace();
+    } catch (Exception e) {
+      fail("Expected DeserializationException but found: " + e.toString());
+    } finally {
+      // Verify
+      Mockito.verify(hbaseAdmin).listTables(".*");
+      Mockito.verify(hbaseAdmin).getTableRegions(TableName.valueOf("test-table1"));
       Mockito.verify(hbaseAdmin).getTableRegions(TableName.valueOf("test-table2"));
     }
   }
