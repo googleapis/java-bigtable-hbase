@@ -436,7 +436,8 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   private void configureHeaderProvider(StubSettings.Builder<?, ?> stubSettings) {
     List<String> userAgentParts = Lists.newArrayList();
     userAgentParts.add("hbase-" + VersionInfo.getVersion());
-    userAgentParts.add("java-bigtable-hbase-" + BigtableHBaseVersion.getVersion());
+    userAgentParts.add("bigtable-" + BigtableHBaseVersion.getVersion());
+    userAgentParts.add("jdk-" + System.getProperty("java.specification.version"));
 
     String customUserAgent = configuration.get(CUSTOM_USER_AGENT_KEY);
     if (customUserAgent != null) {
