@@ -177,7 +177,7 @@ public class ImportJob {
 
   static PTransform<PCollection<Mutation>, PDone> createSink(ImportOptions opts) {
     CloudBigtableTableConfiguration config =
-        TemplateUtils.BuildImportConfig(opts, "SequenceFileImportJob");
+        TemplateUtils.BuildImportConfigWithCustomUserAgent(opts, "SequenceFileImportJob");
     return CloudBigtableIO.writeToTable(config);
   }
 }

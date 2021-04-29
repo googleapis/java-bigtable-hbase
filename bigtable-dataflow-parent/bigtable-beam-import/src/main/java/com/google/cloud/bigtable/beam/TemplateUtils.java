@@ -48,26 +48,23 @@ import org.apache.hadoop.hbase.filter.ParseFilter;
  */
 @InternalApi("For internal usage only")
 public class TemplateUtils {
-  /**
-   * Builds CloudBigtableTableConfiguration from input runtime parameters for import job with
-   * default userAgent.
-   */
+  /** Builds CloudBigtableTableConfiguration from input runtime parameters for import job. */
   public static CloudBigtableTableConfiguration BuildImportConfig(ImportOptions opts) {
-    return BuildImportConfig(opts, "ImportJob");
+    return BuildImportConfigWithCustomUserAgent(opts, "ImportJob");
   }
 
   /**
    * Builds CloudBigtableTableConfiguration from input runtime parameters for import job with with
-   * custom user agent of jobName.
+   * custom user agent.
    */
-  public static CloudBigtableTableConfiguration BuildImportConfig(
-      ImportOptions opts, String jobName) {
+  public static CloudBigtableTableConfiguration BuildImportConfigWithCustomUserAgent(
+      ImportOptions opts, String customUserAgent) {
     CloudBigtableTableConfiguration.Builder builder =
         new CloudBigtableTableConfiguration.Builder()
             .withProjectId(opts.getBigtableProject())
             .withInstanceId(opts.getBigtableInstanceId())
             .withTableId(opts.getBigtableTableId())
-            .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, jobName);
+            .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, customUserAgent);
     if (opts.getBigtableAppProfileId() != null) {
       builder.withAppProfileId(opts.getBigtableAppProfileId());
     }

@@ -119,7 +119,7 @@ public class ImportJobFromHbaseSnapshot {
         .apply(
             "Write to Bigtable",
             CloudBigtableIO.writeToTable(
-                TemplateUtils.BuildImportConfig(opts, "HBaseSnapshotImportJob")));
+                TemplateUtils.BuildImportConfigWithCustomUserAgent(opts, "HBaseSnapshotImportJob")));
 
     final List<KV<String, String>> sourceAndRestoreFolders =
         Arrays.asList(
