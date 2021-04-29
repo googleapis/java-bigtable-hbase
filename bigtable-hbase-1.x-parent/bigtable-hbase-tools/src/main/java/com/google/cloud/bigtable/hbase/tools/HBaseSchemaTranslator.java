@@ -20,6 +20,7 @@ import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.gson.Gson;
 import com.google.bigtable.repackaged.javax.annotation.Nullable;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.tools.ClusterSchemaDefinition.TableSchemaDefinition;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
@@ -306,6 +307,7 @@ public class HBaseSchemaTranslator {
 
     public BigtableSchemaWriter(String projectId, String instanceId) throws IOException {
       Configuration btConf = BigtableConfiguration.configure(projectId, instanceId);
+      btConf.set(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "HBaseSchemaTranslator");
       this.btAdmin = ConnectionFactory.createConnection(btConf).getAdmin();
     }
 
