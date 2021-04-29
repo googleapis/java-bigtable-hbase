@@ -49,8 +49,8 @@ import org.apache.hadoop.hbase.filter.ParseFilter;
 @InternalApi("For internal usage only")
 public class TemplateUtils {
   /** Builds CloudBigtableTableConfiguration from input runtime parameters for import job. */
-  public static CloudBigtableTableConfiguration BuildImportConfig(ImportOptions opts,
-      String jobName) {
+  public static CloudBigtableTableConfiguration BuildImportConfig(
+      ImportOptions opts, String jobName) {
     CloudBigtableTableConfiguration.Builder builder =
         new CloudBigtableTableConfiguration.Builder()
             .withProjectId(opts.getBigtableProject())
@@ -166,7 +166,8 @@ public class TemplateUtils {
             .withInstanceId(options.getBigtableInstanceId())
             .withTableId(options.getBigtableTableId())
             .withAppProfileId(options.getBigtableAppProfileId())
-            .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "SequenceFileExportJob")
+            .withConfiguration(
+                BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "SequenceFileExportJob")
             .withRequest(request);
 
     return configBuilder.build();
