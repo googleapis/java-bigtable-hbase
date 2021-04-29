@@ -21,6 +21,7 @@ import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.core.InternalApi;
 import com.google.api.core.NanoClock;
+import com.google.bigtable.admin.v2.Backup;
 import com.google.bigtable.admin.v2.BigtableTableAdminGrpc;
 import com.google.bigtable.admin.v2.CheckConsistencyRequest;
 import com.google.bigtable.admin.v2.CheckConsistencyResponse;
@@ -31,6 +32,7 @@ import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
 import com.google.bigtable.admin.v2.GenerateConsistencyTokenRequest;
 import com.google.bigtable.admin.v2.GenerateConsistencyTokenResponse;
+import com.google.bigtable.admin.v2.GetBackupRequest;
 import com.google.bigtable.admin.v2.GetTableRequest;
 import com.google.bigtable.admin.v2.ListBackupsRequest;
 import com.google.bigtable.admin.v2.ListBackupsResponse;
@@ -39,6 +41,7 @@ import com.google.bigtable.admin.v2.ListTablesResponse;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
 import com.google.bigtable.admin.v2.RestoreTableRequest;
 import com.google.bigtable.admin.v2.Table;
+import com.google.bigtable.admin.v2.UpdateBackupRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.async.BigtableAsyncRpc;
@@ -93,8 +96,10 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
   private final BigtableAsyncRpc<SetIamPolicyRequest, Policy> setIamPolicyRpc;
   private final BigtableAsyncRpc<TestIamPermissionsRequest, TestIamPermissionsResponse>
       testIamPermissionsRpc;
+  private final BigtableAsyncRpc<GetBackupRequest, Backup> getBackupRpc;
   private final BigtableAsyncRpc<ListBackupsRequest, ListBackupsResponse> listBackupRpc;
   private final BigtableAsyncRpc<CreateBackupRequest, Operation> createBackupRpc;
+  private final BigtableAsyncRpc<UpdateBackupRequest, Backup> updateBackupRpc;
   private final BigtableAsyncRpc<DeleteBackupRequest, Empty> deleteBackupRpc;
   private final BigtableAsyncRpc<RestoreTableRequest, Operation> restoreTableRpc;
 
@@ -123,6 +128,9 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
         asyncUtilities.createAsyncRpc(
             BigtableTableAdminGrpc.getListBackupsMethod(),
             Predicates.<ListBackupsRequest>alwaysTrue());
+    this.getBackupRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableTableAdminGrpc.getGetBackupMethod(), Predicates.<GetBackupRequest>alwaysTrue());
 
     // Write methods. These are only retried for UNAVAILABLE or UNAUTHORIZED
     this.createTableRpc =
@@ -165,6 +173,10 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
         asyncUtilities.createAsyncRpc(
             BigtableTableAdminGrpc.getCreateBackupMethod(),
             Predicates.<CreateBackupRequest>alwaysFalse());
+    this.updateBackupRpc =
+        asyncUtilities.createAsyncRpc(
+            BigtableTableAdminGrpc.getUpdateBackupMethod(),
+            Predicates.<UpdateBackupRequest>alwaysFalse());
     this.deleteBackupRpc =
         asyncUtilities.createAsyncRpc(
             BigtableTableAdminGrpc.getDeleteBackupMethod(),
@@ -371,6 +383,17 @@ public class BigtableTableAdminGrpcClient implements BigtableTableAdminClient {
   @Override
   public ListenableFuture<Operation> createBackupAsync(CreateBackupRequest request) {
     return createUnaryListener(request, createBackupRpc, request.getParent()).getAsyncResult();
+  }
+
+  @Override
+  public ListenableFuture<Backup> getBackupAsync(GetBackupRequest request) {
+    return createUnaryListener(request, getBackupRpc, request.getName()).getAsyncResult();
+  }
+
+  @Override
+  public ListenableFuture<Backup> updateBackupAsync(UpdateBackupRequest request) {
+    return createUnaryListener(request, updateBackupRpc, request.getBackup().getName())
+        .getAsyncResult();
   }
 
   @Override

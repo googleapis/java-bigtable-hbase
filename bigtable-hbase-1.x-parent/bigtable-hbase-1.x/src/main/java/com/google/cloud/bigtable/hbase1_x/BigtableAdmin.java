@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.ProcedureInfo;
@@ -63,7 +64,13 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public MasterProtos.SnapshotResponse takeSnapshotAsync(HBaseProtos.SnapshotDescription snapshot)
       throws IOException, SnapshotCreationException {
-    throw new UnsupportedOperationException("takeSnapshotAsync");
+    snapshotTable(snapshot.getName(), TableName.valueOf(snapshot.getTable()));
+    LOG.warn(
+        "isSnapshotFinished() is not currently supported by BigtableAdmin.\n"
+            + "You may poll for existence of the snapshot with listSnapshots(snapshotName)");
+    return MasterProtos.SnapshotResponse.newBuilder()
+        .setExpectedTimeout(TimeUnit.MINUTES.toMillis(5))
+        .build();
   }
 
   /** {@inheritDoc} */
