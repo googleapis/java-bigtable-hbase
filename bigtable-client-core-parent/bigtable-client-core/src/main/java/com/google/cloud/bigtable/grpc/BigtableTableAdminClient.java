@@ -16,7 +16,22 @@
 package com.google.cloud.bigtable.grpc;
 
 import com.google.api.core.InternalExtensionOnly;
-import com.google.bigtable.admin.v2.*;
+import com.google.bigtable.admin.v2.Backup;
+import com.google.bigtable.admin.v2.CreateBackupRequest;
+import com.google.bigtable.admin.v2.CreateTableRequest;
+import com.google.bigtable.admin.v2.DeleteBackupRequest;
+import com.google.bigtable.admin.v2.DeleteTableRequest;
+import com.google.bigtable.admin.v2.DropRowRangeRequest;
+import com.google.bigtable.admin.v2.GetBackupRequest;
+import com.google.bigtable.admin.v2.GetTableRequest;
+import com.google.bigtable.admin.v2.ListBackupsRequest;
+import com.google.bigtable.admin.v2.ListBackupsResponse;
+import com.google.bigtable.admin.v2.ListTablesRequest;
+import com.google.bigtable.admin.v2.ListTablesResponse;
+import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
+import com.google.bigtable.admin.v2.RestoreTableRequest;
+import com.google.bigtable.admin.v2.Table;
+import com.google.bigtable.admin.v2.UpdateBackupRequest;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.iam.v1.GetIamPolicyRequest;
 import com.google.iam.v1.Policy;
