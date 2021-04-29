@@ -48,7 +48,18 @@ import org.apache.hadoop.hbase.filter.ParseFilter;
  */
 @InternalApi("For internal usage only")
 public class TemplateUtils {
-  /** Builds CloudBigtableTableConfiguration from input runtime parameters for import job. */
+  /**
+   * Builds CloudBigtableTableConfiguration from input runtime parameters for import job with
+   * default userAgent.
+   */
+  public static CloudBigtableTableConfiguration BuildImportConfig(ImportOptions opts) {
+    return BuildImportConfig(opts, "ImportJob");
+  }
+
+  /**
+   * Builds CloudBigtableTableConfiguration from input runtime parameters for import job with with
+   * custom user agent of jobName.
+   */
   public static CloudBigtableTableConfiguration BuildImportConfig(
       ImportOptions opts, String jobName) {
     CloudBigtableTableConfiguration.Builder builder =
