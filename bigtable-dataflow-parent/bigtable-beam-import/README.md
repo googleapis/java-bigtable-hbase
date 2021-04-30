@@ -34,30 +34,46 @@ your data from HBase to Bigtable using snapshots is the preferred method.
 
 ### Exporting snapshots from HBase
 
+Perofm these steps from Unix shell on HBase master node.
+
 1. Set the environment variables
     ```
-    SNAPSHOT_NAME=your-snapshot-name
+    TABLE_NAME=your-table-name
+    SNAPSHOT_NAME=your-snapshot-name 
+    SNAPSHOT_EXPORT_PATH=/hbase-migration-snap
+    BUCKET_NAME="gs://bucket-name"
     ```
 1. Export the snapshot   
     ```
     hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot $SNAPSHOT_NAME \
-        -copy-to /integration-test/data -mappers 16
-    ```    
+        -copy-to $SNAPSHOT_EXPORT_PATH/data -mappers 16
+    ```
+1. Create hashes for the table to be used during the data validation step.
+   ```
+   hbase org.apache.hadoop.hbase.mapreduce.HashTable --batchsize=10 --numhashfiles=10 \
+   $TABLE_NAME $SNAPSHOT_EXPORT_PATH/hashtable
+   ```
+1. Export the data and hashes to a GCS bucket using [gsutil](https://cloud.google.com/storage/docs/gsutil).
+   ```
+   hadoop fs -copyToLocal $SNAPSHOT_EXPORT_PATH /tmp/
+   gsutil -m cp -r /tmp$SNAPSHOT_EXPORT_PATH $BUCKET_NAME
+   ``` 
+    
 
 ### Exporting sequence files from HBase
 
 1. On your HDFS set the environment variables.
     ```
-    TABLENAME="my-new-table"
-    EXPORTDIR=/usr/[USERNAME]/hbase-${TABLENAME}-export
+    TABLE_NAME="my-new-table"
+    EXPORTDIR=/usr/[USERNAME]/hbase-${TABLE_NAME}-export
     hadoop fs -mkdir -p ${EXPORTDIR}
     MAXVERSIONS=2147483647
     ```
 1. In your HBase home directory run the export commands. 
     ```
     cd $HBASE_HOME
-    bin/hbase org.apache.hadoop.hbase.mapreduce.Export $TABLENAME \
-        /user/hbase-$TABLENAME \
+    bin/hbase org.apache.hadoop.hbase.mapreduce.Export $TABLE_NAME \
+        /user/hbase-$TABLE_NAME \
         -export $MAXVERSIONS
     bin/hbase org.apache.hadoop.hbase.mapreduce.Export \
         -Dmapred.output.compress=true \
@@ -66,7 +82,7 @@ your data from HBase to Bigtable using snapshots is the preferred method.
         -Dhbase.client.scanner.caching=100 \
         -Dmapred.map.tasks.speculative.execution=false \
         -Dmapred.reduce.tasks.speculative.execution=false \
-        $TABLENAME $EXPORTDIR $MAXVERSIONS
+        $TABLE_NAME $EXPORTDIR $MAXVERSIONS
     ```
 
 ### Exporting snapshots from Bigtable
@@ -92,7 +108,7 @@ Exporting HBase snapshots from Bigtable is not supported.
         --bigtableInstanceId=$INSTANCE_ID \
         --bigtableTableId=$TABLE_NAME \
         --destinationPath=$BUCKET_NAME/hbase_export/ \
-        --tempLocation=$BUCKET_NAME/hbase_temp]/ \
+        --tempLocation=$BUCKET_NAME/hbase_temp/ \
         --maxNumWorkers=$(expr 3 \* $CLUSTER_NUM_NODES)
    ```
 
@@ -120,7 +136,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
     TABLE_NAME=your-table-name
     REGION=us-central1
 
-    SNAPSHOT_PATH="gs://your-bucket/hbase-migration-snap"
+    SNAPSHOT_GCS_PATH="gs://your-bucket/hbase-migration-snap"
     SNAPSHOT_NAME=your-snapshot-name
     ```
     
@@ -131,10 +147,10 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
         --bigtableTableId=$TABLE_NAME \
-        --hbaseSnapshotSourceDir=$SNAPSHOT_PATH \
+        --hbaseSnapshotSourceDir=$SNAPSHOT_GCS_PATH \
         --snapshotName=$SNAPSHOT_NAME \
-        --stagingLocation=$SNAPSHOT_PATH/staging \
-        --tempLocation=$SNAPSHOT_PATH/temp \
+        --stagingLocation=$SNAPSHOT_GCS_PATH/staging \
+        --tempLocation=$SNAPSHOT_GCS_PATH/temp \
         --region=$REGION
     ```
 
@@ -177,21 +193,21 @@ check if there are any rows with mismatched data.
     TABLE_NAME=your-table-name
     REGION=us-central1
     
-    SNAPSHOT_PATH="gs://your-bucket/hbase-migration-snap"
+    SNAPSHOT_GCS_PATH="gs://your-bucket/hbase-migration-snap"
     ```
-1. Run the sync job. It will put the results into `$SNAPSHOT_PATH/schema-validator/output`,
+1. Run the sync job. It will put the results into `$SNAPSHOT_GCS_PATH/schema-validator/output`,
 so if you run the command multiple times, you might want to add a number to the output,
-like so `$SNAPSHOT_PATH/schema-validator/output-1`. 
+like so `$SNAPSHOT_GCS_PATH/schema-validator/output-1`. 
     ```
     java -jar bigtable-beam-import-1.14.1-SNAPSHOT-shaded.jar sync-table  \
         --runner=dataflow \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_D \
         --bigtableTableId=$TABLE_NAME \
-        --outputPrefix=$SNAPSHOT_PATH/schema-validator/output \
-        --stagingLocation=$SNAPSHOT_PATH/staging \
-        --hashTableOutputDir=$SNAPSHOT_PATH/hashtable \
-        --tempLocation=$SNAPSHOT_PATH/dataflow-test/temp \
+        --outputPrefix=$SNAPSHOT_GCS_PATH/schema-validator/output \
+        --stagingLocation=$SNAPSHOT_GCS_PATH/staging \
+        --hashTableOutputDir=$SNAPSHOT_GCS_PATH/hashtable \
+        --tempLocation=$SNAPSHOT_GCS_PATH/dataflow-test/temp \
         --region=$REGION
     ```
 

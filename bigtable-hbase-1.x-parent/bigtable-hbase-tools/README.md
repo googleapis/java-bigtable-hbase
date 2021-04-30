@@ -25,7 +25,7 @@ cd bigtable-hbase-1.x-parent/bigtable-hbase-tools
 ```
 
 ## Schema Translation tool 
-This utility tool will create tables in Cloud Bigtable based on the tables in an HBase cluster.
+This tool will create tables in Cloud Bigtable based on the tables in an HBase cluster.
 You specifiy a [name regex](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html?is-external=true)
 and it will copy column families, garbage collection rules,
 and table splits.
@@ -60,7 +60,7 @@ export the HBase schema to a file and use that to create tables in Cloud Bigtabl
 
 1. On a host that can connect to HBase, define the export location for your schema file.
     ```
-    $HBASE_EXPORT_PATH=/path/to/hbase-schema
+    HBASE_EXPORT_PATH=/path/to/hbase-schema
     ```
 1. Run the export tool from the host.
     ```
