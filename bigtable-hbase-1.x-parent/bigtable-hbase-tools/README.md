@@ -26,34 +26,29 @@ cd bigtable-hbase-1.x-parent/bigtable-hbase-tools
 
 ## Schema Translation tool 
 This utility tool will create tables in Cloud Bigtable based on the tables in an HBase cluster.
-You specifiy a name regex and it will copy column families, garbage collection rules,
+You specifiy a [name regex](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html?is-external=true)
+and it will copy column families, garbage collection rules,
 and table splits.
- 
-todo: confirm what it copies?   
 
-todo: what is the regex format?
-
-Define the environment variables to easily run the command.
-```shell
-PROJECT_ID=your-project-id
-INSTANCE_ID=your-instance-id
-TABLE_NAME_REGEX=your-table-name
-
-ZOOKEEPER_QUORUM=localhost
-ZOOKEEPER_PORT=2181
-```
-
-Execute the following command to copy the schema from HBase to Cloud Bigtable.
-
-```
-java -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar \
-  com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator \
- -Dgoogle.bigtable.project.id=$PROJECT_ID \
- -Dgoogle.bigtable.instance.id=$INSTANCE_ID \
- -Dgoogle.bigtable.table.filter=$TABLE_NAME_REGEX \
- -Dhbase.zookeeper.quorum=$ZOOKEEPER_QUORUM \
- -Dhbase.zookeeper.property.clientPort=$ZOOKEEPER_PORT
-```
+1. Define the environment variables to easily run the command.
+    ```
+    PROJECT_ID=your-project-id
+    INSTANCE_ID=your-instance-id
+    TABLE_NAME_REGEX=your-table-name
+    
+    ZOOKEEPER_QUORUM=localhost
+    ZOOKEEPER_PORT=2181
+    ```
+1. Execute the following command to copy the schema from HBase to Cloud Bigtable.
+    ```
+    java -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar \
+     -Dgoogle.bigtable.project.id=$PROJECT_ID \
+     -Dgoogle.bigtable.instance.id=$INSTANCE_ID \
+     -Dgoogle.bigtable.table.filter=$TABLE_NAME_REGEX \
+     -Dhbase.zookeeper.quorum=$ZOOKEEPER_QUORUM \
+     -Dhbase.zookeeper.property.clientPort=$ZOOKEEPER_PORT \
+      com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator
+    ```
 
 ### Alternative: Exporting Schema
 
@@ -63,42 +58,32 @@ export the HBase schema to a file and use that to create tables in Cloud Bigtabl
 
 #### Export schema
 
-On a host that can connect to HBase, define an additional environment variable for the
-export location for your schema file.
-
-```
-$HBASE_EXPORT_PATH=/path/to/hbase-schema
-```
-
-Run the export tool from the host.
-
-```
-java -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar \
-  com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator \
- -Dgoogle.bigtable.table.filter=$TABLE_NAME_REGEX \
- -Dgoogle.bigtable.output.filepath=$SCHEMA_FILE_PATH
- -Dhbase.zookeeper.quorum=$ZOOKEEPER_QUORUM \
- -Dhbase.zookeeper.property.clientPort=$ZOOKEEPER_PORT \
-```
-
+1. On a host that can connect to HBase, define the export location for your schema file.
+    ```
+    $HBASE_EXPORT_PATH=/path/to/hbase-schema
+    ```
+1. Run the export tool from the host.
+    ```
+    java -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar \
+     -Dgoogle.bigtable.table.filter=$TABLE_NAME_REGEX \
+     -Dgoogle.bigtable.output.filepath=$HBASE_EXPORT_PATH
+     -Dhbase.zookeeper.quorum=$ZOOKEEPER_QUORUM \
+     -Dhbase.zookeeper.property.clientPort=$ZOOKEEPER_PORT \
+      com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator
+    ```
 
 #### Import schema
 
-Copy the schema file to a host which can connect to Google Cloud. 
+1. Copy the schema file to a host which can connect to Google Cloud.
+   ```
+   SCHEMA_FILE_PATH=path/to/schema
+   ```
 
-todo: how to do if it can't connect to the internet?
-
-```
-$SCHEMA_FILE_PATH=/path/to/hbase-schema
-cp $HBASE_EXPORT_PATH $SCHEMA_FILE_PATH
-```
-
-Create tables in Cloud Bigtable using the schema file:
-
-```
-java -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar \
- com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator \
- -Dgoogle.bigtable.project.id=$PROJECT_ID \
- -Dgoogle.bigtable.instance.id=$INSTANCE_ID \
- -Dgoogle.bigtable.input.filepath=$SCHEMA_FILE_PATH \
-```
+1. Create tables in Cloud Bigtable using the schema file:
+    ```
+    java -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar \
+     -Dgoogle.bigtable.project.id=$PROJECT_ID \
+     -Dgoogle.bigtable.instance.id=$INSTANCE_ID \
+     -Dgoogle.bigtable.input.filepath=$SCHEMA_FILE_PATH \
+     com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator
+    ```
