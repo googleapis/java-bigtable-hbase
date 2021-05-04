@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.hbase.tools;
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.gson.Gson;
-import com.google.bigtable.repackaged.javax.annotation.Nullable;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.tools.ClusterSchemaDefinition.TableSchemaDefinition;
 import com.google.common.annotations.VisibleForTesting;
@@ -33,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import javax.annotation.Nullable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -95,7 +95,7 @@ public class HBaseSchemaTranslator {
   public static final String OUTPUT_FILE_KEY = "google.bigtable.output.filepath";
   public static final String TABLE_NAME_FILTER_KEY = "google.bigtable.table.filter";
 
-  private static Logger LOG = LoggerFactory.getLogger(HBaseSchemaTranslator.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseSchemaTranslator.class);
 
   private final SchemaReader schemaReader;
   private final SchemaWriter schemaWriter;
