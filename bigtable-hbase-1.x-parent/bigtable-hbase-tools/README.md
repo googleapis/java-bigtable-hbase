@@ -11,9 +11,7 @@ you can build them using Maven.
 [//]: # ({x-version-update-start:bigtable-dataflow-parent:released})
 ### Download the jars
 
-todo: get correct link, also should I provide a wget command?
-
-Download [the Bigtable tools jars](http://search.maven.org/remotecontent?filepath=com/google/cloud/bigtable/bigtable-beam-import/1.14.1/bigtable-beam-import-1.14.1-shaded.jar), which is an aggregation of all required jars.
+Download [the Bigtable tools jars](http://search.maven.org/remotecontent?filepath=com/google/cloud/bigtable/bigtable-hbase-tools/1.14.1/bigtable-hbase-tools-1.14.1-shaded.jar), which is an aggregation of all required jars.
 
 ### Build the jars
 Go to the top level directory and build the repo then return to this sub directory.
@@ -41,13 +39,13 @@ and table splits.
     ```
 1. Execute the following command to copy the schema from HBase to Cloud Bigtable.
     ```
-    java -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar \
+    java \
      -Dgoogle.bigtable.project.id=$PROJECT_ID \
      -Dgoogle.bigtable.instance.id=$INSTANCE_ID \
      -Dgoogle.bigtable.table.filter=$TABLE_NAME_REGEX \
      -Dhbase.zookeeper.quorum=$ZOOKEEPER_QUORUM \
      -Dhbase.zookeeper.property.clientPort=$ZOOKEEPER_PORT \
-      com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator
+     -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar
     ```
 
 ### Alternative: Exporting Schema
@@ -64,12 +62,12 @@ export the HBase schema to a file and use that to create tables in Cloud Bigtabl
     ```
 1. Run the export tool from the host.
     ```
-    java -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar \
+    java \
      -Dgoogle.bigtable.table.filter=$TABLE_NAME_REGEX \
      -Dgoogle.bigtable.output.filepath=$HBASE_EXPORT_PATH
      -Dhbase.zookeeper.quorum=$ZOOKEEPER_QUORUM \
      -Dhbase.zookeeper.property.clientPort=$ZOOKEEPER_PORT \
-      com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator
+     -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar
     ```
 
 #### Import schema
@@ -81,9 +79,9 @@ export the HBase schema to a file and use that to create tables in Cloud Bigtabl
 
 1. Create tables in Cloud Bigtable using the schema file:
     ```
-    java -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar \
+    java \
      -Dgoogle.bigtable.project.id=$PROJECT_ID \
      -Dgoogle.bigtable.instance.id=$INSTANCE_ID \
      -Dgoogle.bigtable.input.filepath=$SCHEMA_FILE_PATH \
-     com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator
+     -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar \
     ```

@@ -34,7 +34,7 @@ your data from HBase to Bigtable using snapshots is the preferred method.
 
 ### Exporting snapshots from HBase
 
-Perofm these steps from Unix shell on HBase master node.
+Perform these steps from Unix shell on HBase master node.
 
 1. Set the environment variables
     ```
@@ -43,6 +43,11 @@ Perofm these steps from Unix shell on HBase master node.
     SNAPSHOT_EXPORT_PATH=/hbase-migration-snap
     BUCKET_NAME="gs://bucket-name"
     ```
+1. Take the snapshot
+    ```
+    echo "snapshot '$TABLE_NAME', '$SNAPSHOT_NAME'" | hbase shell -n
+    ```
+
 1. Export the snapshot   
     ```
     hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot $SNAPSHOT_NAME \
@@ -136,7 +141,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
     TABLE_NAME=your-table-name
     REGION=us-central1
 
-    SNAPSHOT_GCS_PATH="gs://your-bucket/hbase-migration-snap"
+    SNAPSHOT_GCS_PATH="$BUCKET_NAME/hbase-migration-snap"
     SNAPSHOT_NAME=your-snapshot-name
     ```
     
@@ -147,7 +152,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
         --bigtableTableId=$TABLE_NAME \
-        --hbaseSnapshotSourceDir=$SNAPSHOT_GCS_PATH \
+        --hbaseSnapshotSourceDir=$SNAPSHOT_GCS_PATH/data \
         --snapshotName=$SNAPSHOT_NAME \
         --stagingLocation=$SNAPSHOT_GCS_PATH/staging \
         --tempLocation=$SNAPSHOT_GCS_PATH/temp \
@@ -193,7 +198,7 @@ check if there are any rows with mismatched data.
     TABLE_NAME=your-table-name
     REGION=us-central1
     
-    SNAPSHOT_GCS_PATH="gs://your-bucket/hbase-migration-snap"
+    SNAPSHOT_GCS_PATH="$BUCKET_NAME/hbase-migration-snap"
     ```
 1. Run the sync job. It will put the results into `$SNAPSHOT_GCS_PATH/schema-validator/output`,
 so if you run the command multiple times, you might want to add a number to the output,
@@ -204,10 +209,10 @@ like so `$SNAPSHOT_GCS_PATH/schema-validator/output-1`.
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_D \
         --bigtableTableId=$TABLE_NAME \
-        --outputPrefix=$SNAPSHOT_GCS_PATH/schema-validator/output \
-        --stagingLocation=$SNAPSHOT_GCS_PATH/staging \
+        --outputPrefix=$SNAPSHOT_GCS_PATH/sync-table/output \
+        --stagingLocation=$SNAPSHOT_GCS_PATH/sync-table/staging \
         --hashTableOutputDir=$SNAPSHOT_GCS_PATH/hashtable \
-        --tempLocation=$SNAPSHOT_GCS_PATH/dataflow-test/temp \
+        --tempLocation=$SNAPSHOT_GCS_PATH/sync-table/dataflow-test/temp \
         --region=$REGION
     ```
 
