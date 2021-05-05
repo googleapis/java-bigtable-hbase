@@ -434,7 +434,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     }
 
     // TODO: remove this once https://github.com/googleapis/gax-java/pull/1355 is resolved
-    // Workaround performance issues due default executor in gax
+    // Workaround performance issues due to the default executor in gax
     {
       final ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> prevConfigurator =
           channelProvider.getChannelConfigurator();
