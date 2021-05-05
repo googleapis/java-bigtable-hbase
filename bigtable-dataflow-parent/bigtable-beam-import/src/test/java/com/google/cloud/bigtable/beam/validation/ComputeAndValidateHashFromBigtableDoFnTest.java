@@ -204,12 +204,8 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
     Map<String, Long> counters =
         StreamSupport.stream(metrics.getCounters().spliterator(), false)
             .collect(Collectors.toMap((m) -> m.getName().getName(), (m) -> m.getAttempted()));
-    if (expectedMatches > 0) {
-      Assert.assertEquals(expectedMatches, counters.get("ranges_matched"));
-    }
-    if (expectedMismatches > 0) {
-      Assert.assertEquals(expectedMismatches, counters.get("ranges_not_matched"));
-    }
+    Assert.assertEquals(expectedMatches, counters.get("ranges_matched"));
+    Assert.assertEquals(expectedMismatches, counters.get("ranges_not_matched"));
   }
 
   ////////// Happy case tests for various setups//////////////////////
