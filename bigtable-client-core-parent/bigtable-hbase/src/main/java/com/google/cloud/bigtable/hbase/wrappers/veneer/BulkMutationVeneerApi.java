@@ -30,7 +30,7 @@ import java.io.IOException;
 @InternalApi("For internal usage only")
 public class BulkMutationVeneerApi implements BulkMutationWrapper {
 
-  private static final Meter MUTATION_ADDED =
+  private final Meter mutationAdded =
       BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.mutations.added");
   private final Batcher<RowMutationEntry, Void> bulkMutateBatcher;
 
@@ -42,7 +42,7 @@ public class BulkMutationVeneerApi implements BulkMutationWrapper {
   @Override
   public synchronized ApiFuture<Void> add(RowMutationEntry rowMutation) {
     Preconditions.checkNotNull(rowMutation, "mutation details cannot be null");
-    MUTATION_ADDED.mark();
+    mutationAdded.mark();
     return bulkMutateBatcher.add(rowMutation);
   }
 

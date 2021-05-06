@@ -150,8 +150,7 @@ public class MetricsApiTracerAdapter implements ApiTracer {
 
   @Override
   public void responseReceived() {
-    if (firstResponseTimer != null &&
-        firstResponseRecorded.compareAndSet(false, true)) {
+    if (firstResponseTimer != null && firstResponseRecorded.compareAndSet(false, true)) {
       firstResponseTimer.close();
     }
   }

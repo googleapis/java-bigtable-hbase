@@ -16,6 +16,7 @@
 
 package com.google.cloud.bigtable.hbase.wrappers.veneer.metrics;
 
+import com.google.api.core.InternalApi;
 import com.google.api.gax.grpc.GrpcInterceptorProvider;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
@@ -34,6 +35,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/** Interceptor to record rpc latency for each channel. */
+@InternalApi
 public class MetricsChannelInterceptorInterceptor implements GrpcInterceptorProvider {
 
   private final AtomicInteger id;

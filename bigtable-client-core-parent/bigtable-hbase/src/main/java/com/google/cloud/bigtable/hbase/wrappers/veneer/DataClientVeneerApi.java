@@ -158,9 +158,9 @@ public class DataClientVeneerApi implements DataClientWrapper {
   /** wraps {@link ServerStream} onto HBase {@link ResultScanner}. */
   private static class RowResultScanner extends AbstractClientScanner {
 
-    private static final Meter SCANNER_RESULT_METER =
+    private final Meter scannerResultMeter =
         BigtableClientMetrics.meter(BigtableClientMetrics.MetricLevel.Info, "scanner.results");
-    private static final Timer SCANNER_RESULT_TIMER =
+    private final Timer scannerResultTimer =
         BigtableClientMetrics.timer(
             BigtableClientMetrics.MetricLevel.Debug, "scanner.results.latency");
 
@@ -174,13 +174,13 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
     @Override
     public Result next() {
-      try (Context ignored = SCANNER_RESULT_TIMER.time()) {
+      try (Context ignored = scannerResultTimer.time()) {
         if (!iterator.hasNext()) {
           // null signals EOF
           return null;
         }
 
-        SCANNER_RESULT_METER.mark();
+        scannerResultMeter.mark();
         return iterator.next();
       }
     }
