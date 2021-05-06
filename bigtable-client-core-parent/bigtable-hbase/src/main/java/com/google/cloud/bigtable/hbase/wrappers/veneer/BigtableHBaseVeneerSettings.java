@@ -405,7 +405,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       LOG.debug("%s is configured at %s", endpointKey, endpointOverride);
     }
 
-    InstantiatingGrpcChannelProvider.Builder channelProvider =
+    final InstantiatingGrpcChannelProvider.Builder channelProvider =
         ((InstantiatingGrpcChannelProvider) stubSettings.getTransportChannelProvider()).toBuilder();
 
     if (configuration.getBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, false)) {
@@ -432,6 +432,25 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
         channelProvider.setPoolSize(Integer.parseInt(channelCount));
       }
     }
+
+    // TODO: remove this once https://github.com/googleapis/gax-java/pull/1355 is resolved
+    // Workaround performance issues due to the default executor in gax
+    {
+      final ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> prevConfigurator =
+          channelProvider.getChannelConfigurator();
+
+      channelProvider.setChannelConfigurator(
+          new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+            @Override
+            public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
+              if (prevConfigurator != null) {
+                channelBuilder = prevConfigurator.apply(channelBuilder);
+              }
+              return channelBuilder.executor(null);
+            }
+          });
+    }
+
     stubSettings.setTransportChannelProvider(channelProvider.build());
   }
 
