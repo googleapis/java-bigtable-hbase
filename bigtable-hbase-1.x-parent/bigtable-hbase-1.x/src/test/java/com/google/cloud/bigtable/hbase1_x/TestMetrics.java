@@ -18,14 +18,19 @@ package com.google.cloud.bigtable.hbase1_x;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.bigtable.v2.*;
+import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Counter;
 import com.google.cloud.bigtable.metrics.Meter;
 import com.google.cloud.bigtable.metrics.MetricRegistry;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Range;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.BytesValue;
+import com.google.protobuf.StringValue;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.Status;
@@ -33,7 +38,9 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +48,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.Row;
+import org.apache.hadoop.hbase.shaded.org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.Assert;
@@ -56,6 +65,7 @@ public class TestMetrics {
   private final String TEST_INSTANCE_ID = "fake-instance-id";
   private final TableName TABLE_NAME = TableName.valueOf("fake-table");
   private Server server;
+  private int dataPort;
   private FakeMetricRegistry fakeMetricRegistry;
 
   private MetricRegistry originalMetricRegistry;
@@ -64,14 +74,26 @@ public class TestMetrics {
   private static final FakeDataService fakeDataService = new FakeDataService();
   private BigtableConnection connection;
 
-  private final byte[] rowKey = Bytes.toBytes("row");
-  private final byte[] columnFamily = Bytes.toBytes("cf");
-  private final byte[] qualifier = Bytes.toBytes("q");
-  private final byte[] value = Bytes.toBytes("value");
+  private static final byte[] rowKey = Bytes.toBytes("row");
+  private static final byte[] columnFamily = Bytes.toBytes("cf");
+  private static final byte[] qualifier = Bytes.toBytes("q");
+  private static final byte[] value = Bytes.toBytes("value");
+  private static final ReadRowsResponse readRowsResponse =
+      ReadRowsResponse.newBuilder()
+          .addChunks(
+              CellChunk.newBuilder()
+                  .setRowKey(ByteString.copyFrom(rowKey))
+                  .setFamilyName(StringValue.of("cf"))
+                  .setQualifier(BytesValue.newBuilder().setValue(ByteString.copyFrom(qualifier)))
+                  .setTimestampMicros(1_000)
+                  .setValue(ByteString.copyFrom(value))
+                  .setCommitRow(true))
+          .build();
+  private static final Status fakeErrorStatus = Status.UNAVAILABLE;
+  private static final int fakeErrorCount = 3;
 
   @Before
   public void setUp() throws IOException {
-    int dataPort;
     try (ServerSocket s = new ServerSocket(0)) {
       dataPort = s.getLocalPort();
     }
@@ -88,11 +110,12 @@ public class TestMetrics {
     configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
     configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + dataPort);
     configuration.set(BigtableOptionsFactory.BIGTABLE_USE_GCJ_CLIENT, "true");
-    connection = new BigtableConnection(configuration);
 
     fakeMetricRegistry = new FakeMetricRegistry();
     BigtableClientMetrics.setMetricRegistry(fakeMetricRegistry);
-    BigtableClientMetrics.setLevelToLog(BigtableClientMetrics.MetricLevel.Debug);
+    BigtableClientMetrics.setLevelToLog(MetricLevel.Trace);
+
+    connection = new BigtableConnection(configuration);
   }
 
   @After
@@ -104,6 +127,7 @@ public class TestMetrics {
     connection.close();
     BigtableClientMetrics.setMetricRegistry(originalMetricRegistry);
     BigtableClientMetrics.setLevelToLog(originalLevelToLog);
+    fakeDataService.reset();
   }
 
   /*
@@ -120,24 +144,44 @@ public class TestMetrics {
 
     fakeDataService.popLastRequest();
 
+    long tableGetLatencyMetric =
+        fakeMetricRegistry.results.get("google-cloud-bigtable.table.get.latency").get();
     long retriesPerformedMetric =
         fakeMetricRegistry
             .results
             .get("google-cloud-bigtable.grpc.method.ReadRow.retries.performed")
             .get();
-    long tableGetLatencyMetric =
-        fakeMetricRegistry.results.get("google-cloud-bigtable.table.get.latency").get();
     long clientOperationLatencyMetric =
         fakeMetricRegistry
             .results
             .get("google-cloud-bigtable.grpc.method.ReadRow.operation.latency")
             .get();
+    long rpcErrorsMetric =
+        fakeMetricRegistry
+            .results
+            .get("google-cloud-bigtable.grpc.errors." + fakeErrorStatus.getCode().name())
+            .get();
+    long rpcPerformedMetric =
+        fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.rpc.performed").get();
 
-    assertThat(retriesPerformedMetric).isEqualTo(3);
+    assertThat(retriesPerformedMetric).isEqualTo(fakeErrorCount);
     assertThat(tableGetLatencyMetric)
         .isIn(Range.closed(fakeDataService.getReadRowServerSideLatency(), methodInvocationLatency));
     assertThat(clientOperationLatencyMetric)
         .isIn(Range.closed(fakeDataService.getReadRowServerSideLatency(), methodInvocationLatency));
+    assertThat(rpcErrorsMetric).isEqualTo(fakeErrorCount);
+    assertThat(rpcPerformedMetric).isEqualTo(fakeErrorCount + 1);
+
+    // ReadRows sleeps 40 milliseconds before returning the response. Wait for response to return
+    // and verify again there should have no more active rpc
+    Thread.sleep(40);
+    long activeRpcMetric =
+        fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.rpc.active").get();
+    assertThat(activeRpcMetric).isEqualTo(0);
+
+    long channelLatencyMetric =
+        fakeMetricRegistry.results.get("google-cloud-bigtable.channels.channel0.rpc.latency").get();
+    assertThat(channelLatencyMetric).isLessThan(fakeDataService.getReadRowServerSideLatency());
   }
 
   @Test
@@ -195,10 +239,91 @@ public class TestMetrics {
     }
   }
 
+  @Test
+  public void testScanMetrics() throws IOException {
+    Scan scan = new Scan().withStartRow(rowKey).withStopRow(rowKey, true);
+    Table table = connection.getTable(TABLE_NAME);
+    ResultScanner testScanner = table.getScanner(scan);
+    testScanner.next();
+
+    fakeDataService.popLastRequest();
+
+    long latency =
+        fakeMetricRegistry.results.get("google-cloud-bigtable.scanner.results.latency").get();
+    long results = fakeMetricRegistry.results.get("google-cloud-bigtable.scanner.results").get();
+    long firstResponseLatencyMetric =
+        fakeMetricRegistry
+            .results
+            .get("google-cloud-bigtable.grpc.method.ReadRows.firstResponse.latency")
+            .get();
+
+    assertThat(results).isEqualTo(1);
+    assertThat(latency).isAtLeast(fakeDataService.getReadRowServerSideLatency());
+    assertThat(firstResponseLatencyMetric).isLessThan(latency);
+  }
+
+  @Test
+  public void testActiveSessionsAndChannels() throws IOException {
+    // There should already be 1 active session and 1 channel from connection (connecting to
+    // emulator will set pool size to 1)
+    long currentActiveSessions =
+        fakeMetricRegistry.results.get("google-cloud-bigtable.session.active").get();
+    long currentActiveChannels =
+        fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.channel.active").get();
+
+    assertThat(currentActiveSessions).isEqualTo(1);
+    assertThat(currentActiveChannels).isEqualTo(1);
+
+    // Create a new session
+    int connectionCount = 10;
+    Configuration configuration = new Configuration(false);
+    configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
+    configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE_ID);
+    configuration.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
+    configuration.set(
+        BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, String.valueOf(connectionCount));
+    configuration.set(BigtableOptionsFactory.BIGTABLE_USE_GCJ_CLIENT, "true");
+
+    BigtableConnection newConnection = new BigtableConnection(configuration);
+    currentActiveSessions =
+        fakeMetricRegistry.results.get("google-cloud-bigtable.session.active").get();
+    currentActiveChannels =
+        fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.channel.active").get();
+    assertThat(currentActiveSessions).isEqualTo(2);
+    assertThat(currentActiveChannels).isEqualTo(connectionCount + 1);
+
+    newConnection.close();
+    currentActiveSessions =
+        fakeMetricRegistry.results.get("google-cloud-bigtable.session.active").get();
+    currentActiveChannels =
+        fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.channel.active").get();
+    assertThat(currentActiveSessions).isEqualTo(1);
+    assertThat(currentActiveChannels).isEqualTo(1);
+  }
+
+  @Test
+  public void testBulkMutationMetrics() throws IOException, InterruptedException {
+    Table table = connection.getTable(TABLE_NAME);
+    List<Row> rows = new ArrayList<>();
+    int entries = 20;
+    for (int i = 0; i < entries; i++) {
+      rows.add(
+          new Put(Bytes.toBytes(RandomStringUtils.random(8)))
+              .addColumn(Bytes.toBytes("cf"), Bytes.toBytes("q"), Bytes.toBytes("SomeValue")));
+    }
+    Object[] resultsOrErrors = new Object[rows.size()];
+    table.batch(rows, resultsOrErrors);
+
+    long mutationAdded =
+        fakeMetricRegistry.results.get("google-cloud-bigtable.bulk-mutator.mutations.added").get();
+    assertThat(mutationAdded).isEqualTo(entries);
+  }
+
   private static class FakeDataService extends BigtableGrpc.BigtableImplBase {
     private final AtomicLong callCount = new AtomicLong(1);
 
     private final Stopwatch readRowsStopwatch = Stopwatch.createUnstarted();
+    private final Stopwatch readRowsFirstRowStopWatch = Stopwatch.createUnstarted();
     private final Stopwatch readModifyWriteRowStopwatch = Stopwatch.createUnstarted();
     private final Stopwatch mutateRowStopwatch = Stopwatch.createUnstarted();
 
@@ -233,6 +358,14 @@ public class TestMetrics {
       }
     }
 
+    public void reset() {
+      readRowsStopwatch.reset();
+      readRowsFirstRowStopWatch.reset();
+      readModifyWriteRowStopwatch.reset();
+      mutateRowStopwatch.reset();
+      callCount.set(1);
+    }
+
     @Override
     public void readRows(
         ReadRowsRequest request, StreamObserver<ReadRowsResponse> responseObserver) {
@@ -242,8 +375,11 @@ public class TestMetrics {
         if (!readRowsStopwatch.isRunning()) {
           readRowsStopwatch.start();
         }
-        if (callCount.getAndIncrement() < 4) {
-          responseObserver.onError(new StatusRuntimeException(Status.UNAVAILABLE));
+        if (!readRowsFirstRowStopWatch.isRunning()) {
+          readRowsFirstRowStopWatch.start();
+        }
+        if (callCount.getAndIncrement() < fakeErrorCount + 1) {
+          responseObserver.onError(new StatusRuntimeException(fakeErrorStatus));
         } else {
           try {
             Thread.sleep(20);
@@ -251,7 +387,14 @@ public class TestMetrics {
             responseObserver.onError(e);
             return;
           }
-          responseObserver.onNext(ReadRowsResponse.newBuilder().build());
+          responseObserver.onNext(readRowsResponse);
+          try {
+            Thread.sleep(20);
+          } catch (InterruptedException e) {
+            responseObserver.onError(e);
+            return;
+          }
+          responseObserver.onNext(readRowsResponse);
           readRowServerSideLatency = readRowsStopwatch.elapsed(TimeUnit.MILLISECONDS);
           responseObserver.onCompleted();
         }
@@ -280,6 +423,13 @@ public class TestMetrics {
       requests.add(request);
       responseObserver.onNext(MutateRowResponse.newBuilder().build());
       mutateRowServerSideLatency = mutateRowStopwatch.elapsed(TimeUnit.MILLISECONDS);
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void mutateRows(
+        MutateRowsRequest request, StreamObserver<MutateRowsResponse> responseObserver) {
+      responseObserver.onNext(MutateRowsResponse.newBuilder().build());
       responseObserver.onCompleted();
     }
   }

@@ -34,6 +34,10 @@ import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.BulkReadWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.Meter;
+import com.google.cloud.bigtable.metrics.Timer;
+import com.google.cloud.bigtable.metrics.Timer.Context;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
@@ -154,6 +158,12 @@ public class DataClientVeneerApi implements DataClientWrapper {
   /** wraps {@link ServerStream} onto HBase {@link ResultScanner}. */
   private static class RowResultScanner extends AbstractClientScanner {
 
+    private static final Meter SCANNER_RESULT_METER =
+        BigtableClientMetrics.meter(BigtableClientMetrics.MetricLevel.Info, "scanner.results");
+    private static final Timer SCANNER_RESULT_TIMER =
+        BigtableClientMetrics.timer(
+            BigtableClientMetrics.MetricLevel.Debug, "scanner.results.latency");
+
     private final ServerStream<Result> serverStream;
     private final Iterator<Result> iterator;
 
@@ -164,12 +174,15 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
     @Override
     public Result next() {
-      if (!iterator.hasNext()) {
-        // null signals EOF
-        return null;
-      }
+      try (Context ignored = SCANNER_RESULT_TIMER.time()) {
+        if (!iterator.hasNext()) {
+          // null signals EOF
+          return null;
+        }
 
-      return iterator.next();
+        SCANNER_RESULT_METER.mark();
+        return iterator.next();
+      }
     }
 
     @Override
