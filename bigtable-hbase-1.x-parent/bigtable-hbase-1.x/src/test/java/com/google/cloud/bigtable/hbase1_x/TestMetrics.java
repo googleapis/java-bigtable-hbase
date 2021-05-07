@@ -165,10 +165,8 @@ public class TestMetrics {
         fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.rpc.performed").get();
 
     assertThat(retriesPerformedMetric).isEqualTo(fakeErrorCount);
-    assertThat(tableGetLatencyMetric)
-        .isIn(Range.closed(fakeDataService.getReadRowServerSideLatency(), methodInvocationLatency));
-    assertThat(clientOperationLatencyMetric)
-        .isIn(Range.closed(fakeDataService.getReadRowServerSideLatency(), methodInvocationLatency));
+    assertThat(tableGetLatencyMetric).isAtMost(methodInvocationLatency);
+    assertThat(clientOperationLatencyMetric).isAtMost(methodInvocationLatency);
     assertThat(rpcErrorsMetric).isEqualTo(fakeErrorCount);
     assertThat(rpcPerformedMetric).isEqualTo(fakeErrorCount + 1);
 
@@ -181,7 +179,7 @@ public class TestMetrics {
 
     long channelLatencyMetric =
         fakeMetricRegistry.results.get("google-cloud-bigtable.channels.channel0.rpc.latency").get();
-    assertThat(channelLatencyMetric).isLessThan(fakeDataService.getReadRowServerSideLatency());
+    assertThat(channelLatencyMetric).isAtMost(fakeDataService.getReadRowServerSideLatency());
   }
 
   @Test
@@ -258,8 +256,7 @@ public class TestMetrics {
         fakeMetricRegistry.results.get("google-cloud-bigtable.scanner.results").get();
 
     assertThat(scannerResultsMetric).isEqualTo(1);
-    assertThat(scannerResultsLatencyMetric)
-        .isIn(Range.closed(fakeDataService.getReadRowServerSideLatency(), methodInvocationLatency));
+    assertThat(scannerResultsLatencyMetric).isAtMost(methodInvocationLatency);
   }
 
   @Test
