@@ -84,7 +84,7 @@ import com.google.cloud.bigtable.hbase.BigtableHBaseVersion;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.metrics.MetricsApiTracerAdapterFactory;
-import com.google.cloud.bigtable.hbase.wrappers.veneer.metrics.MetricsChannelInterceptorInterceptor;
+import com.google.cloud.bigtable.hbase.wrappers.veneer.metrics.MetricsChannelInterceptorInterceptorProvider;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
@@ -318,7 +318,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       InstantiatingGrpcChannelProvider.Builder channelProvider =
           ((InstantiatingGrpcChannelProvider) settings.stubSettings().getTransportChannelProvider())
               .toBuilder();
-      channelProvider.setInterceptorProvider(new MetricsChannelInterceptorInterceptor());
+      channelProvider.setInterceptorProvider(new MetricsChannelInterceptorInterceptorProvider());
       settings.stubSettings().setTransportChannelProvider(channelProvider.build());
     }
   }
