@@ -35,7 +35,7 @@ public class MetricsApiTracerAdapterFactory implements ApiTracerFactory {
   @Override
   public ApiTracer newTracer(ApiTracer parent, SpanName spanName, OperationType operationType) {
     RpcMetrics rpcMetrics = getRpcMetrics(spanName);
-    return new MetricsApiTracerAdapter(rpcMetrics, spanName.getMethodName());
+    return new MetricsApiTracerAdapter(rpcMetrics, spanName.getMethodName(), operationType);
   }
 
   @VisibleForTesting

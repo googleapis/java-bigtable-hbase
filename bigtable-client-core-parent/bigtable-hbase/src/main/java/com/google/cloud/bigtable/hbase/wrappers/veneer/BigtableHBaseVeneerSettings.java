@@ -312,11 +312,15 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     MetricsApiTracerAdapterFactory metricsApiTracerAdapterFactory =
         new MetricsApiTracerAdapterFactory();
     settings.stubSettings().setTracerFactory(metricsApiTracerAdapterFactory);
-    InstantiatingGrpcChannelProvider.Builder channelProvider =
-        ((InstantiatingGrpcChannelProvider) settings.stubSettings().getTransportChannelProvider())
-            .toBuilder();
-    channelProvider.setInterceptorProvider(new MetricsChannelInterceptorInterceptor());
-    settings.stubSettings().setTransportChannelProvider(channelProvider.build());
+    // Set up channel interceptor to record channels.channel$id.rpc.latency metrics
+    if (settings.stubSettings().getTransportChannelProvider()
+        instanceof InstantiatingGrpcChannelProvider) {
+      InstantiatingGrpcChannelProvider.Builder channelProvider =
+          ((InstantiatingGrpcChannelProvider) settings.stubSettings().getTransportChannelProvider())
+              .toBuilder();
+      channelProvider.setInterceptorProvider(new MetricsChannelInterceptorInterceptor());
+      settings.stubSettings().setTransportChannelProvider(channelProvider.build());
+    }
   }
 
   private BigtableTableAdminSettings buildBigtableTableAdminSettings() throws IOException {

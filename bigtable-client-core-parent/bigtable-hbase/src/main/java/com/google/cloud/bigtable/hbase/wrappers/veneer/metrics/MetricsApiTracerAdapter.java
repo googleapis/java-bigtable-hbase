@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.wrappers.veneer.metrics;
 
 import com.google.api.core.InternalApi;
 import com.google.api.gax.tracing.ApiTracer;
+import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Counter;
@@ -52,11 +53,12 @@ public class MetricsApiTracerAdapter implements ApiTracer {
   private AtomicBoolean firstResponseRecorded;
   private volatile Context firstResponseTimer;
 
-  public MetricsApiTracerAdapter(RpcMetrics rpcMetrics, String methodName) {
+  public MetricsApiTracerAdapter(
+      RpcMetrics rpcMetrics, String methodName, OperationType operationType) {
     this.rpcMetrics = rpcMetrics;
     operationTimer = rpcMetrics.timeOperation();
     lastRetryStatus = RetryStatus.PERMANENT_FAILURE;
-    if (methodName.equals("ReadRows")) {
+    if (methodName.equals("ReadRows") && operationType == OperationType.ServerStreaming) {
       this.firstResponseTimer = firstResponseLatencyTimer.time();
     }
     firstResponseRecorded = new AtomicBoolean(false);
