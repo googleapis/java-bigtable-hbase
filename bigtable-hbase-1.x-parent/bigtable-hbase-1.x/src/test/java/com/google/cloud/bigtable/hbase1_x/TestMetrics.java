@@ -243,23 +243,45 @@ public class TestMetrics {
   public void testScanMetrics() throws IOException {
     Scan scan = new Scan().withStartRow(rowKey).withStopRow(rowKey, true);
     Table table = connection.getTable(TABLE_NAME);
+
+    Stopwatch stopwatch = Stopwatch.createStarted();
     ResultScanner testScanner = table.getScanner(scan);
     testScanner.next();
+    testScanner.close();
+    long methodInvocationLatency = stopwatch.elapsed(TimeUnit.MILLISECONDS);
 
     fakeDataService.popLastRequest();
 
-    long latency =
+    long scannerResultsLatencyMetric =
         fakeMetricRegistry.results.get("google-cloud-bigtable.scanner.results.latency").get();
-    long results = fakeMetricRegistry.results.get("google-cloud-bigtable.scanner.results").get();
+    long scannerResultsMetric =
+        fakeMetricRegistry.results.get("google-cloud-bigtable.scanner.results").get();
+
+    assertThat(scannerResultsMetric).isEqualTo(1);
+    assertThat(scannerResultsLatencyMetric)
+        .isIn(Range.closed(fakeDataService.getReadRowServerSideLatency(), methodInvocationLatency));
+  }
+
+  @Test
+  public void testFirstResponseLatency() throws IOException {
+    Scan scan = new Scan().withStartRow(rowKey).withStopRow(rowKey, true);
+    Table table = connection.getTable(TABLE_NAME);
+
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    ResultScanner testScanner = table.getScanner(scan);
+    testScanner.next();
+    testScanner.close();
+    long methodInvocationLatency = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+
+    fakeDataService.popLastRequest();
+
     long firstResponseLatencyMetric =
         fakeMetricRegistry
             .results
             .get("google-cloud-bigtable.grpc.method.ReadRows.firstResponse.latency")
             .get();
 
-    assertThat(results).isEqualTo(1);
-    assertThat(latency).isAtLeast(fakeDataService.getReadRowServerSideLatency());
-    assertThat(firstResponseLatencyMetric).isLessThan(latency);
+    assertThat(firstResponseLatencyMetric).isAtMost(methodInvocationLatency - 20 / 2);
   }
 
   @Test
@@ -323,7 +345,6 @@ public class TestMetrics {
     private final AtomicLong callCount = new AtomicLong(1);
 
     private final Stopwatch readRowsStopwatch = Stopwatch.createUnstarted();
-    private final Stopwatch readRowsFirstRowStopWatch = Stopwatch.createUnstarted();
     private final Stopwatch readModifyWriteRowStopwatch = Stopwatch.createUnstarted();
     private final Stopwatch mutateRowStopwatch = Stopwatch.createUnstarted();
 
@@ -360,7 +381,6 @@ public class TestMetrics {
 
     public void reset() {
       readRowsStopwatch.reset();
-      readRowsFirstRowStopWatch.reset();
       readModifyWriteRowStopwatch.reset();
       mutateRowStopwatch.reset();
       callCount.set(1);
@@ -375,9 +395,6 @@ public class TestMetrics {
         if (!readRowsStopwatch.isRunning()) {
           readRowsStopwatch.start();
         }
-        if (!readRowsFirstRowStopWatch.isRunning()) {
-          readRowsFirstRowStopWatch.start();
-        }
         if (callCount.getAndIncrement() < fakeErrorCount + 1) {
           responseObserver.onError(new StatusRuntimeException(fakeErrorStatus));
         } else {
@@ -388,13 +405,13 @@ public class TestMetrics {
             return;
           }
           responseObserver.onNext(readRowsResponse);
+          // sleep after the response to test first response latency
           try {
             Thread.sleep(20);
           } catch (InterruptedException e) {
             responseObserver.onError(e);
             return;
           }
-          responseObserver.onNext(readRowsResponse);
           readRowServerSideLatency = readRowsStopwatch.elapsed(TimeUnit.MILLISECONDS);
           responseObserver.onCompleted();
         }
