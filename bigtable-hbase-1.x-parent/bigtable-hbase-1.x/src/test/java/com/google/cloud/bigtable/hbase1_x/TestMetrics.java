@@ -338,6 +338,7 @@ public class TestMetrics {
     long mutationAdded =
         fakeMetricRegistry.results.get("google-cloud-bigtable.bulk-mutator.mutations.added").get();
     assertThat(mutationAdded).isEqualTo(entries);
+    table.close();
   }
 
   private static class FakeDataService extends BigtableGrpc.BigtableImplBase {
