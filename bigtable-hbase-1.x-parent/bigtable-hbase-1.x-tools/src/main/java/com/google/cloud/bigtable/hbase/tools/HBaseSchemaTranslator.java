@@ -51,7 +51,8 @@ import org.slf4j.LoggerFactory;
  * <p>Execute the following command to copy the schema from HBase to Cloud Bigtable:
  *
  * <pre>
- * java -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator \
+ *   mvn exec:java \
+ *  -Dexec.mainClass=com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator \
  *  -Dhbase.zookeeper.quorum=$ZOOKEEPER_QUORUM \
  *  -Dhbase.zookeeper.property.clientPort=$ZOOKEEPER_PORT \
  *  -Dgoogle.bigtable.table.filter=$TABLE_NAME_REGEX \
@@ -67,7 +68,8 @@ import org.slf4j.LoggerFactory;
  * <p>Run the tool from a host that can connect to HBase. Store HBase schema in a file:
  *
  * <pre>
- * java -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator \
+ *   mvn exec:java \
+ *  -Dexec.mainClass=com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator \
  *  -Dhbase.zookeeper.quorum=$ZOOKEEPER_QUORUM \
  *  -Dhbase.zookeeper.property.clientPort=$ZOOKEEPER_PORT \
  *  -Dgoogle.bigtable.table.filter=$TABLE_NAME_REGEX \
@@ -78,7 +80,8 @@ import org.slf4j.LoggerFactory;
  * Bigtable using the schema file:
  *
  * <pre>
- * java -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator \
+ *   mvn exec:java \
+ *  -Dexec.mainClass=com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator \
  *  -Dgoogle.bigtable.input.filepath=$SCHEMA_FILE_PATH \
  *  -Dgoogle.bigtable.project.id=$PROJECT_ID \
  *  -Dgoogle.bigtable.instance.id=$INSTANCE_ID
@@ -162,7 +165,7 @@ public class HBaseSchemaTranslator {
       // readable. See if we can make it readable and validate before calling the constructor.
       try {
         options.validateOptions();
-      } catch (Exception e) {
+      } catch (RuntimeException e) {
         usage(e.getMessage());
         throw e;
       }
