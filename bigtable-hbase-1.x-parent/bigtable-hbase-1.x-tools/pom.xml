@@ -10,11 +10,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <properties>
-  <mainclass>com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator</mainclass>
+    <mainclass>com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator</mainclass>
   </properties>
-  <artifactId>bigtable-hbase-tools</artifactId>
+  <artifactId>bigtable-hbase-1.x-tools</artifactId>
 
-  <packaging>jar</packaging>
   <name>${project.groupId}:${project.artifactId}</name>
   <description>
     This project contains tools for migrating to Cloud Bigtable from HBase 1.x.
@@ -24,7 +23,7 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-1.x-shaded</artifactId>
-      <version>${project.version}</version>
+      <version>${project.version}</version><!-- {x-version-update:bigtable-hbase-1x-parent:current} -->
       <exclusions>
         <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
        pom.xml files when invoking the build from a parent project. So we have to manually exclude
@@ -58,12 +57,12 @@
       <artifactId>guava</artifactId>
       <version>30.0-jre</version>
     </dependency>
-     <dependency>
+    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>1.7.25</version>
+      <version>${slf4j.version}</version>
     </dependency>
-     <dependency>
+    <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
       <version>1.2.17</version>
@@ -118,6 +117,14 @@
               </mainClass>
             </manifest>
           </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>${compileSource.1.8}</source>
+          <target>${compileSource.1.8}</target>
         </configuration>
       </plugin>
     </plugins>
