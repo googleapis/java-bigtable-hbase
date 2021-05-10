@@ -579,7 +579,9 @@ public abstract class AbstractBigtableTable implements Table {
   /** {@inheritDoc} */
   @Override
   public void close() throws IOException {
-    batchExecutor.close();
+    if (batchExecutor != null) {
+      batchExecutor.close();
+    }
     // TODO: shutdown the executor.
   }
 
