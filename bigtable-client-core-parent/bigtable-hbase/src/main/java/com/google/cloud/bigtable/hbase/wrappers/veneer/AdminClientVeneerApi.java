@@ -110,5 +110,8 @@ public class AdminClientVeneerApi implements AdminClientWrapper {
   @Override
   public void close() {
     delegate.close();
+    if (instanceDelegate != null) {
+      instanceDelegate.close();
+    }
   }
 }
