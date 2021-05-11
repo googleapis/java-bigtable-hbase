@@ -81,6 +81,7 @@ limitations under the License.
     <guava.version>30.0-android</guava.version>
     <beam-guava.version>20.0</beam-guava.version>
     <beam-auto-value.version>1.7</beam-auto-value.version>
+    <gcs-guava.version>29.0-jre</gcs-guava.version>
     <beam-grpc.version>1.29.0</beam-grpc.version>
 
     <!-- Benchmarks related dependencies -->
@@ -165,7 +166,7 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>3.2.2</version>
+          <version>3.2.4</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -175,7 +176,7 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.1.1</version>
+          <version>3.2.0</version>
           <configuration>
             <doclint>none</doclint>
             <windowtitle>

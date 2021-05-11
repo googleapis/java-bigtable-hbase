@@ -55,6 +55,7 @@ import org.junit.runners.JUnit4;
 public class EndToEndIT {
   // Location of test data hosted on Google Cloud Storage, for on-cloud dataflow tests.
   private static final String CLOUD_TEST_DATA_FOLDER = "cloud.test.data.folder";
+  private static final String DATAFLOW_REGION = "region";
 
   // Column family name used in all test bigtables.
   private static final String CF = "column_family";
@@ -66,6 +67,7 @@ public class EndToEndIT {
   private String projectId;
   private String instanceId;
   private String tableId;
+  private String region;
 
   private GcsUtil gcsUtil;
   private String cloudTestDataFolder;
@@ -76,7 +78,7 @@ public class EndToEndIT {
   public void setup() throws Exception {
     projectId = getTestProperty(BigtableOptionsFactory.PROJECT_ID_KEY);
     instanceId = getTestProperty(BigtableOptionsFactory.INSTANCE_ID_KEY);
-
+    region = getTestProperty(DATAFLOW_REGION);
     dataflowStagingLocation = getTestProperty(GOOGLE_DATAFLOW_STAGING_LOCATION);
 
     cloudTestDataFolder = getTestProperty(CLOUD_TEST_DATA_FOLDER);
@@ -152,6 +154,7 @@ public class EndToEndIT {
       pipelineOpts.setGcpTempLocation(dataflowStagingLocation);
       pipelineOpts.setNumWorkers(1);
       pipelineOpts.setProject(projectId);
+      pipelineOpts.setRegion(region);
 
       ExportOptions exportOpts = pipelineOpts.as(ExportOptions.class);
       exportOpts.setBigtableInstanceId(StaticValueProvider.of(instanceId));
@@ -172,6 +175,7 @@ public class EndToEndIT {
           PipelineOptionsFactory.as(DataflowPipelineOptions.class);
       createTablePipelineOpts.setRunner(DataflowRunner.class);
       createTablePipelineOpts.setProject(projectId);
+      createTablePipelineOpts.setRegion(region);
 
       CreateTableHelper.CreateTableOpts createOpts =
           createTablePipelineOpts.as(CreateTableHelper.CreateTableOpts.class);
@@ -188,6 +192,7 @@ public class EndToEndIT {
       importPipelineOpts.setGcpTempLocation(dataflowStagingLocation);
       importPipelineOpts.setNumWorkers(1);
       importPipelineOpts.setProject(projectId);
+      importPipelineOpts.setRegion(region);
 
       ImportJob.ImportOptions importOpts = importPipelineOpts.as(ImportJob.ImportOptions.class);
       importOpts.setBigtableProject(StaticValueProvider.of(projectId));
