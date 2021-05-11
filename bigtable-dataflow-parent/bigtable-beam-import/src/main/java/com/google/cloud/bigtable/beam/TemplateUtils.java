@@ -50,11 +50,21 @@ import org.apache.hadoop.hbase.filter.ParseFilter;
 public class TemplateUtils {
   /** Builds CloudBigtableTableConfiguration from input runtime parameters for import job. */
   public static CloudBigtableTableConfiguration BuildImportConfig(ImportOptions opts) {
+    return BuildImportConfigWithCustomUserAgent(opts, "ImportJob");
+  }
+
+  /**
+   * Builds CloudBigtableTableConfiguration from input runtime parameters for import job with with
+   * custom user agent.
+   */
+  public static CloudBigtableTableConfiguration BuildImportConfigWithCustomUserAgent(
+      ImportOptions opts, String customUserAgent) {
     CloudBigtableTableConfiguration.Builder builder =
         new CloudBigtableTableConfiguration.Builder()
             .withProjectId(opts.getBigtableProject())
             .withInstanceId(opts.getBigtableInstanceId())
-            .withTableId(opts.getBigtableTableId());
+            .withTableId(opts.getBigtableTableId())
+            .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, customUserAgent);
     if (opts.getBigtableAppProfileId() != null) {
       builder.withAppProfileId(opts.getBigtableAppProfileId());
     }
@@ -79,7 +89,8 @@ public class TemplateUtils {
         new CloudBigtableTableConfiguration.Builder()
             .withProjectId(opts.getBigtableProject())
             .withInstanceId(opts.getBigtableInstanceId())
-            .withTableId(opts.getBigtableTableId());
+            .withTableId(opts.getBigtableTableId())
+            .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "SyncTableJob");
     if (opts.getBigtableAppProfileId() != null) {
       builder.withAppProfileId(opts.getBigtableAppProfileId());
     }
@@ -163,6 +174,8 @@ public class TemplateUtils {
             .withInstanceId(options.getBigtableInstanceId())
             .withTableId(options.getBigtableTableId())
             .withAppProfileId(options.getBigtableAppProfileId())
+            .withConfiguration(
+                BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "SequenceFileExportJob")
             .withRequest(request);
 
     return configBuilder.build();
