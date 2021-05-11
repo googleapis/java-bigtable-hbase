@@ -37,11 +37,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /** Interceptor to record rpc latency for each channel. */
 @InternalApi
-public class MetricsChannelInterceptorInterceptorProvider implements GrpcInterceptorProvider {
+public class MetricsChannelInterceptorProvider implements GrpcInterceptorProvider {
 
   private final AtomicInteger id;
 
-  public MetricsChannelInterceptorInterceptorProvider() {
+  public MetricsChannelInterceptorProvider() {
     id = new AtomicInteger(0);
   }
 

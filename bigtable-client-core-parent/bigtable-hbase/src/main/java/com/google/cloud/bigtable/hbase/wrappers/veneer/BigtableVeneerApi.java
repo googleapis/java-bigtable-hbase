@@ -36,8 +36,6 @@ public class BigtableVeneerApi extends BigtableApi {
 
   private final Counter activeSessions =
       BigtableClientMetrics.counter(MetricLevel.Info, "session.active");
-  private final Counter activeChannels =
-      BigtableClientMetrics.counter(MetricLevel.Info, "grpc.channel.active");
 
   private static final SharedDataClientWrapperFactory sharedClientFactory =
       new SharedDataClientWrapperFactory();
@@ -48,11 +46,21 @@ public class BigtableVeneerApi extends BigtableApi {
   public BigtableVeneerApi(BigtableHBaseVeneerSettings settings) throws IOException {
     super(settings);
 
+    // active channel count is hard coded at client creation time based on the setting. If
+    // transportChannelProvider in the data setting is not InstantiatingGrpcChannelProvider, this
+    // count wil not be present. If channel pool caching is enabled, channel pool size is calculated
+    // in SharedDataClientWrapperFactory to avoid incrementing/decrementing the same channel
+    // multiple times for the same key.
     if (settings.isChannelPoolCachingEnabled()) {
       dataClientWrapper = sharedClientFactory.createDataClient(settings);
+      channelPoolSize = 0;
     } else {
       dataClientWrapper =
           new DataClientVeneerApi(BigtableDataClient.create(settings.getDataSettings()));
+      channelPoolSize = getChannelPoolSize(settings.getDataSettings().getStubSettings());
+      for (int i = 0; i < channelPoolSize; i++) {
+        BigtableClientMetrics.counter(MetricLevel.Info, "grpc.channel.active").inc();
+      }
     }
     BigtableInstanceAdminSettings instanceAdminSettings = settings.getInstanceAdminSettings();
     adminClientWrapper =
@@ -60,13 +68,6 @@ public class BigtableVeneerApi extends BigtableApi {
             BigtableTableAdminClient.create(settings.getTableAdminSettings()),
             BigtableInstanceAdminClient.create(instanceAdminSettings));
     activeSessions.inc();
-    // active channel count is hard coded at client creation time based on the setting. If
-    // transportChannelProvider in the data setting is not InstantiatingGrpcChannelProvider, this
-    // count wil not be present.
-    this.channelPoolSize = getConnectionCount(settings.getDataSettings().getStubSettings());
-    for (int i = 0; i < channelPoolSize; i++) {
-      activeChannels.inc();
-    }
   }
 
   @Override
@@ -85,11 +86,11 @@ public class BigtableVeneerApi extends BigtableApi {
     adminClientWrapper.close();
     activeSessions.dec();
     for (int i = 0; i < channelPoolSize; i++) {
-      activeChannels.dec();
+      BigtableClientMetrics.counter(MetricLevel.Info, "grpc.channel.active").dec();
     }
   }
 
-  private int getConnectionCount(EnhancedBigtableStubSettings stubSettings) {
+  static int getChannelPoolSize(EnhancedBigtableStubSettings stubSettings) {
     if (stubSettings.getTransportChannelProvider() instanceof InstantiatingGrpcChannelProvider) {
       InstantiatingGrpcChannelProvider channelProvider =
           (InstantiatingGrpcChannelProvider) stubSettings.getTransportChannelProvider();

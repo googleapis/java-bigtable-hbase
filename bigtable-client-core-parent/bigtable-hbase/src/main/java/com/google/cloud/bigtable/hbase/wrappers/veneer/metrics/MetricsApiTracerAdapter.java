@@ -50,7 +50,7 @@ public class MetricsApiTracerAdapter implements ApiTracer {
   private volatile Context rpcTimer;
   private volatile RetryStatus lastRetryStatus;
 
-  private AtomicBoolean firstResponseRecorded;
+  private final AtomicBoolean firstResponseRecorded;
   private volatile Context firstResponseTimer;
 
   public MetricsApiTracerAdapter(

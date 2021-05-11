@@ -17,8 +17,11 @@ package com.google.cloud.bigtable.hbase1_x;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.api.gax.core.NoCredentialsProvider;
+import com.google.auth.Credentials;
 import com.google.bigtable.v2.*;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
+import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
@@ -320,6 +323,43 @@ public class TestMetrics {
         fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.channel.active").get();
     assertThat(currentActiveSessions).isEqualTo(1);
     assertThat(currentActiveChannels).isEqualTo(1);
+  }
+
+  @Test
+  public void testChannelPoolCachingActiveChannel() throws Exception {
+    // Test channel pool caching
+    int connectionCount = 10;
+    Configuration configuration = new Configuration(false);
+    configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
+    configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE_ID);
+    configuration.set(
+        BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, String.valueOf(connectionCount));
+    configuration.set(BigtableOptionsFactory.BIGTABLE_USE_GCJ_CLIENT, "true");
+    configuration.set(BigtableOptionsFactory.BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL, "true");
+    Credentials credentials = NoCredentialsProvider.create().getCredentials();
+    configuration = BigtableConfiguration.withCredentials(configuration, credentials);
+
+    BigtableConnection sharedConnection1 = new BigtableConnection(configuration);
+    BigtableConnection sharedConnection2 = new BigtableConnection(configuration);
+
+    long currentActiveChannels =
+        fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.channel.active").get();
+    // sharedConnection1 and 2 should share channels, plus the 1 that's created in setup
+    assertThat(currentActiveChannels).isEqualTo(connectionCount + 1);
+
+    // closing one shared bigtable connection shouldn't decrement shared channels count
+    sharedConnection1.close();
+    currentActiveChannels =
+        fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.channel.active").get();
+    assertThat(currentActiveChannels).isEqualTo(connectionCount + 1);
+
+    // Active channels should be 1 after both shared bigtable connections are closed
+    sharedConnection2.close();
+    currentActiveChannels =
+        fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.channel.active").get();
+    assertThat(currentActiveChannels).isEqualTo(1);
+
+    Thread.sleep(100);
   }
 
   @Test
