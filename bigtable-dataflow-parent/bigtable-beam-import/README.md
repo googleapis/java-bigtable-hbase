@@ -34,7 +34,7 @@ your data from HBase to Bigtable using snapshots is the preferred method.
 
 ### Exporting snapshots from HBase
 
-Perform these steps from Unix shell on HBase master node.
+Perform these steps from Unix shell on an HBase edge node.
 
 1. Set the environment variables
     ```
@@ -51,19 +51,14 @@ Perform these steps from Unix shell on HBase master node.
 1. Export the snapshot   
     ```
     hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot $SNAPSHOT_NAME \
-        -copy-to $SNAPSHOT_EXPORT_PATH/data -mappers 16
+        -copy-to $BUCKET_NAME$SNAPSHOT_EXPORT_PATH/data -mappers 16
     ```
 1. Create hashes for the table to be used during the data validation step.
    ```
    hbase org.apache.hadoop.hbase.mapreduce.HashTable --batchsize=10 --numhashfiles=10 \
-   $TABLE_NAME $SNAPSHOT_EXPORT_PATH/hashtable
-   ```
-1. Export the data and hashes to a GCS bucket using [gsutil](https://cloud.google.com/storage/docs/gsutil).
-   ```
-   hadoop fs -copyToLocal $SNAPSHOT_EXPORT_PATH /tmp/
-   gsutil -m cp -r /tmp$SNAPSHOT_EXPORT_PATH $BUCKET_NAME
-   ``` 
-    
+   $TABLE_NAME $BUCKET_NAME$SNAPSHOT_EXPORT_PATH/hashtable
+   ```    
+   
 
 ### Exporting sequence files from HBase
 
@@ -200,9 +195,9 @@ check if there are any rows with mismatched data.
     
     SNAPSHOT_GCS_PATH="$BUCKET_NAME/hbase-migration-snap"
     ```
-1. Run the sync job. It will put the results into `$SNAPSHOT_GCS_PATH/schema-validator/output`,
+1. Run the sync job. It will put the results into `$SNAPSHOT_GCS_PATH/data-verification/output`,
 so if you run the command multiple times, you might want to add a number to the output,
-like so `$SNAPSHOT_GCS_PATH/schema-validator/output-1`. 
+like so `$SNAPSHOT_GCS_PATH/data-verification/output-1`. 
     ```
     java -jar bigtable-beam-import-1.14.1-SNAPSHOT-shaded.jar sync-table  \
         --runner=dataflow \

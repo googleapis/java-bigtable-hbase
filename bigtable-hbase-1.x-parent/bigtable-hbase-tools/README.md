@@ -64,7 +64,7 @@ export the HBase schema to a file and use that to create tables in Cloud Bigtabl
     ```
     java \
      -Dgoogle.bigtable.table.filter=$TABLE_NAME_REGEX \
-     -Dgoogle.bigtable.output.filepath=$HBASE_EXPORT_PATH
+     -Dgoogle.bigtable.output.filepath=$HBASE_EXPORT_PATH \
      -Dhbase.zookeeper.quorum=$ZOOKEEPER_QUORUM \
      -Dhbase.zookeeper.property.clientPort=$ZOOKEEPER_PORT \
      -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar
