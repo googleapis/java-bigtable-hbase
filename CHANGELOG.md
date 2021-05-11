@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.20.0](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.19.2...v1.20.0) (2021-05-11)
+
+
+### Features
+
+* Adding new dataflow pipelines to import HBase snapshot and import validation ([#2958](https://www.github.com/googleapis/java-bigtable-hbase/issues/2958)) ([d6f0604](https://www.github.com/googleapis/java-bigtable-hbase/commit/d6f06049b1c6a0653168d1c8814ac0367eb6a2ee))
+* HBase to Cloud Bigtable schema translator.  ([#2954](https://www.github.com/googleapis/java-bigtable-hbase/issues/2954)) ([a8b0d83](https://www.github.com/googleapis/java-bigtable-hbase/commit/a8b0d837daa651fe9539c8f963d71a5c9338d7c4))
+
 ### [1.19.2](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.19.1...v1.19.2) (2021-04-20)
 
 
