@@ -39,6 +39,7 @@ import org.junit.runners.Suite;
   TestGet.class,
   TestGetTable.class,
   TestScan.class,
+  TestSnapshots.class,
   TestIncrement.class,
   TestListTables.class,
   TestPut.class,

@@ -142,6 +142,10 @@ limitations under the License.
       <artifactId>metrics-core</artifactId>
       <version>${hbase2-metrics.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.threeten</groupId>
+      <artifactId>threetenbp</artifactId>
+    </dependency>
 
     <!-- Test dependencies-->
     <dependency>

@@ -16,29 +16,33 @@
 package com.google.cloud.bigtable.grpc;
 
 import com.google.api.core.InternalExtensionOnly;
-import com.google.bigtable.admin.v2.CreateTableFromSnapshotRequest;
+import com.google.bigtable.admin.v2.Backup;
+import com.google.bigtable.admin.v2.CreateBackupRequest;
 import com.google.bigtable.admin.v2.CreateTableRequest;
-import com.google.bigtable.admin.v2.DeleteSnapshotRequest;
+import com.google.bigtable.admin.v2.DeleteBackupRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
-import com.google.bigtable.admin.v2.GetSnapshotRequest;
+import com.google.bigtable.admin.v2.GetBackupRequest;
 import com.google.bigtable.admin.v2.GetTableRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsRequest;
-import com.google.bigtable.admin.v2.ListSnapshotsResponse;
+import com.google.bigtable.admin.v2.ListBackupsRequest;
+import com.google.bigtable.admin.v2.ListBackupsResponse;
 import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.ListTablesResponse;
 import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
-import com.google.bigtable.admin.v2.Snapshot;
-import com.google.bigtable.admin.v2.SnapshotTableRequest;
+import com.google.bigtable.admin.v2.RestoreTableRequest;
 import com.google.bigtable.admin.v2.Table;
+import com.google.bigtable.admin.v2.UpdateBackupRequest;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.iam.v1.GetIamPolicyRequest;
 import com.google.iam.v1.Policy;
 import com.google.iam.v1.SetIamPolicyRequest;
 import com.google.iam.v1.TestIamPermissionsRequest;
 import com.google.iam.v1.TestIamPermissionsResponse;
+import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /** A client for the Cloud Bigtable Table Admin API. */
@@ -183,24 +187,85 @@ public interface BigtableTableAdminClient {
    */
   TestIamPermissionsResponse testIamPermissions(TestIamPermissionsRequest request);
 
-  // ////////////// SNAPSHOT methods /////////////
-  /** @deprecated Snapshots will be removed in the future */
-  @Deprecated
-  ListenableFuture<Operation> snapshotTableAsync(SnapshotTableRequest request);
+  /**
+   * Creates a new backup from a table in a specific cluster.
+   *
+   * @param request a {@link com.google.bigtable.admin.v2.CreateBackupRequest} object.
+   * @return The long running {@link Operation} for the request.
+   */
+  ListenableFuture<Operation> createBackupAsync(
+      com.google.bigtable.admin.v2.CreateBackupRequest request);
 
-  /** @deprecated Snapshots will be removed in the future */
-  @Deprecated
-  ListenableFuture<Snapshot> getSnapshotAsync(GetSnapshotRequest request);
+  /**
+   * Gets metadata information about the specified backup.
+   *
+   * @param request a {@link GetBackupRequest} object.
+   * @return The {@link Backup} defined by the request.
+   */
+  ListenableFuture<Backup> getBackupAsync(GetBackupRequest request);
 
-  /** @deprecated Snapshots will be removed in the future */
-  @Deprecated
-  ListenableFuture<ListSnapshotsResponse> listSnapshotsAsync(ListSnapshotsRequest request);
+  /**
+   * Updates the specified backup.
+   *
+   * @param request the request to update the Backup.
+   */
+  ListenableFuture<Backup> updateBackupAsync(UpdateBackupRequest request);
 
-  /** @deprecated Snapshots will be removed in the future */
-  @Deprecated
-  ListenableFuture<Empty> deleteSnapshotAsync(DeleteSnapshotRequest request);
+  /**
+   * Lists all backups associated with the specified cluster.
+   *
+   * @param request a {@link GetBackupRequest} object.
+   * @return The {@link ListBackupsResponse} which has the list of the backups in the cluster.
+   */
+  ListenableFuture<ListBackupsResponse> listBackupsAsync(ListBackupsRequest request);
 
-  /** @deprecated Snapshots will be removed in the future */
-  @Deprecated
-  ListenableFuture<Operation> createTableFromSnapshotAsync(CreateTableFromSnapshotRequest request);
+  /**
+   * Permanently deletes the specified backup.
+   *
+   * @param request a {@link DeleteBackupRequest} object.
+   */
+  ListenableFuture<Empty> deleteBackupAsync(DeleteBackupRequest request);
+
+  /**
+   * Creates a new table from a backup.
+   *
+   * @param request a {@link com.google.bigtable.admin.v2.RestoreTableRequest} object.
+   * @return The long running {@link Operation} for the request.
+   */
+  ListenableFuture<Operation> restoreTableAsync(
+      com.google.bigtable.admin.v2.RestoreTableRequest request);
+
+  /**
+   * Gets the latest state of a long-running operation. Clients may use this method to poll the
+   * operation result at intervals as recommended by the API service.
+   *
+   * <p>{@link #createBackupAsync(CreateBackupRequest)} and {@link
+   * #restoreTableAsync(RestoreTableRequest)} will return a {@link
+   * com.google.longrunning.Operation}. Use this method and pass in the {@link
+   * com.google.longrunning.Operation}'s name in the request to see if the Operation is done via
+   * {@link com.google.longrunning.Operation#getDone()}. The backup will not be available until that
+   * happens.
+   *
+   * @param request a {@link com.google.longrunning.GetOperationRequest} object.
+   * @return a {@link com.google.longrunning.Operation} object.
+   */
+  Operation getOperation(GetOperationRequest request);
+
+  /**
+   * Waits for the long running operation to complete by polling with exponential backoff. A default
+   * timeout of 10 minutes is used.
+   *
+   * @throws IOException
+   * @throws TimeoutException If the timeout is exceeded.
+   */
+  Operation waitForOperation(Operation operation) throws TimeoutException, IOException;
+
+  /**
+   * Waits for the long running operation to complete by polling with exponential backoff.
+   *
+   * @throws IOException
+   * @throws TimeoutException If the timeout is exceeded.
+   */
+  Operation waitForOperation(Operation operation, long timeout, TimeUnit timeUnit)
+      throws IOException, TimeoutException;
 }

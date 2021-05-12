@@ -119,6 +119,10 @@ limitations under the License.
           <artifactId>bigtable-hbase-1.x</artifactId>
         </exclusion>
         <exclusion>
+          <groupId>com.google.cloud.bigtable</groupId>
+          <artifactId>bigtable-metrics-api</artifactId>
+        </exclusion>
+        <exclusion>
           <groupId>io.opencensus</groupId>
           <artifactId>*</artifactId>
         </exclusion>
@@ -153,7 +157,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.auto.value</groupId>
       <artifactId>auto-value</artifactId>
-      <version>1.7.4</version>
+      <version>1.8.1</version>
       <scope>provided</scope>
     </dependency>
     <dependency>

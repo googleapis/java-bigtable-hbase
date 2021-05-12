@@ -4,14 +4,14 @@
       "git": {
         "name": ".",
         "remote": "https://github.com/googleapis/java-bigtable-hbase.git",
-        "sha": "5b3ab2b9b4a751d1b16bba04e1e08e2604d73faa"
+        "sha": "7e769cdffce9c1670f029c1e7e4a559bb6ea0f07"
       }
     },
     {
       "git": {
         "name": "synthtool",
         "remote": "https://github.com/googleapis/synthtool.git",
-        "sha": "5de29e9434b63ea6d7e46dc348521c62969af1a1"
+        "sha": "046994f491c02806aea60118e214a9edd67f5ab7"
       }
     }
   ],
@@ -23,6 +23,7 @@
     ".github/blunderbuss.yml",
     ".github/generated-files-bot.yml",
     ".github/readme/synth.py",
+    ".github/sync-repo-settings.yaml",
     ".github/trusted-contribution.yml",
     ".kokoro/coerce_logs.sh",
     ".kokoro/common.cfg",
@@ -30,7 +31,6 @@
     ".kokoro/continuous/common.cfg",
     ".kokoro/continuous/java8.cfg",
     ".kokoro/continuous/readme.cfg",
-    ".kokoro/linkage-monitor.sh",
     ".kokoro/nightly/common.cfg",
     ".kokoro/nightly/java11.cfg",
     ".kokoro/nightly/java8-osx.cfg",
@@ -45,7 +45,6 @@
     ".kokoro/presubmit/java8-osx.cfg",
     ".kokoro/presubmit/java8-win.cfg",
     ".kokoro/presubmit/java8.cfg",
-    ".kokoro/presubmit/linkage-monitor.cfg",
     ".kokoro/presubmit/lint.cfg",
     ".kokoro/presubmit/samples.cfg",
     ".kokoro/readme.sh",

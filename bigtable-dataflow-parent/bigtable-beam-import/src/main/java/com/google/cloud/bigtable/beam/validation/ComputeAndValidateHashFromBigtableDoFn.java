@@ -62,7 +62,7 @@ class ComputeAndValidateHashFromBigtableDoFn
   private final Counter mismatches = Metrics.counter("cbt-dataflow-validate", "ranges_not_matched");
 
   public ComputeAndValidateHashFromBigtableDoFn(SyncTableOptions options) {
-    super(TemplateUtils.BuildSyncTableConfig(options));
+    super(TemplateUtils.buildSyncTableConfig(options));
     this.tableName = options.getBigtableTableId();
     // Create a local copy of ValueProviders, PipelineOptions are not serializable.
     projectId = options.getBigtableProject();
@@ -90,9 +90,14 @@ class ComputeAndValidateHashFromBigtableDoFn
     // BufferedHadoopHashTableSource generates only 1 item per groupby key, key is startKey for the
     // Sorted ranges.
     Preconditions.checkState(
-        wrapperdRangeHashes.size() == 1, "Can not have muiple entries for a key");
+        wrapperdRangeHashes.size() == 1, "Can not have multiple entries for a key");
     List<RangeHash> rangeHashes = wrapperdRangeHashes.get(0);
     Preconditions.checkState(!rangeHashes.isEmpty(), "Can not have empty ranges in DO_FN");
+
+    // If a metric is not logged, it is absent from all the metrics (as opposed to being
+    // 0). By logging a 0 value for the metrics we guarantee that they shows up on Dataflow UIs.
+    mismatches.inc(0);
+    matches.inc(0);
 
     ImmutableBytesWritable rangeStartInclusive = rangeHashes.get(0).startInclusive;
     ImmutableBytesWritable rangeEndExclusive =

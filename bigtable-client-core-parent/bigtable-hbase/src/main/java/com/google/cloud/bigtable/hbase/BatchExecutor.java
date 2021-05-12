@@ -299,4 +299,8 @@ public class BatchExecutor {
     }
     return exists;
   }
+
+  public void close() throws IOException {
+    bufferedMutatorHelper.close();
+  }
 }

@@ -15,12 +15,14 @@
  */
 package com.google.cloud.bigtable.hbase.wrappers.veneer;
 
+import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ADDITIONAL_RETRY_CODES;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ALLOW_NO_TIMESTAMP_RETRIES_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.APP_PROFILE_ID_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_AUTOFLUSH_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_MAX_ROW_KEY_COUNT;
@@ -67,7 +69,9 @@ import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountJwtAccessCredentials;
+import com.google.cloud.bigtable.admin.v2.BigtableInstanceAdminSettings;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
+import com.google.cloud.bigtable.admin.v2.stub.BigtableInstanceAdminStubSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings.Builder;
 import com.google.cloud.bigtable.data.v2.models.Query;
@@ -110,6 +114,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   private final Configuration configuration;
   private final BigtableDataSettings dataSettings;
   private final BigtableTableAdminSettings tableAdminSettings;
+  private final BigtableInstanceAdminSettings instanceAdminSettings;
 
   private final String dataHost;
   private final String adminHost;
@@ -136,6 +141,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     // Build configs for veneer
     this.dataSettings = buildBigtableDataSettings();
     this.tableAdminSettings = buildBigtableTableAdminSettings();
+    this.instanceAdminSettings = buildBigtableInstanceAdminSettings();
 
     // Veneer settings are finalized, now we need to extract java-bigtable-hbase
     // specific settings
@@ -216,6 +222,11 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   /** Utility to convert {@link Configuration} to {@link BigtableTableAdminSettings}. */
   public BigtableTableAdminSettings getTableAdminSettings() {
     return tableAdminSettings;
+  }
+
+  /** Utility to convert {@link Configuration} to {@link BigtableInstanceAdminSettings}. */
+  public BigtableInstanceAdminSettings getInstanceAdminSettings() {
+    return instanceAdminSettings;
   }
 
   // ************** Private Helpers **************
@@ -337,6 +348,41 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     return adminBuilder.build();
   }
 
+  private BigtableInstanceAdminSettings buildBigtableInstanceAdminSettings() throws IOException {
+    BigtableInstanceAdminSettings.Builder adminBuilder;
+
+    // Configure connection
+    String emulatorEndpoint = configuration.get(BIGTABLE_EMULATOR_HOST_KEY);
+    if (!Strings.isNullOrEmpty(emulatorEndpoint)) {
+      // todo switch to newBuilderForEmulator once available
+      adminBuilder = BigtableInstanceAdminSettings.newBuilder();
+      adminBuilder
+          .stubSettings()
+          .setEndpoint(emulatorEndpoint)
+          .setCredentialsProvider(NoCredentialsProvider.create())
+          .setTransportChannelProvider(
+              BigtableInstanceAdminStubSettings.defaultGrpcTransportProviderBuilder()
+                  .setChannelConfigurator(
+                      new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+                        @Override
+                        public ManagedChannelBuilder apply(
+                            ManagedChannelBuilder managedChannelBuilder) {
+                          return managedChannelBuilder.usePlaintext();
+                        }
+                      })
+                  .build());
+    } else {
+      adminBuilder = BigtableInstanceAdminSettings.newBuilder();
+      configureConnection(adminBuilder.stubSettings(), BIGTABLE_ADMIN_HOST_KEY);
+      configureCredentialProvider(adminBuilder.stubSettings());
+    }
+    configureHeaderProvider(adminBuilder.stubSettings());
+
+    adminBuilder.setProjectId(getProjectId());
+
+    return adminBuilder.build();
+  }
+
   private void configureConnection(StubSettings.Builder<?, ?> stubSettings, String endpointKey) {
     String defaultEndpoint = stubSettings.getEndpoint();
     String defaultHostname = defaultEndpoint.substring(0, defaultEndpoint.lastIndexOf(':'));
@@ -359,7 +405,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       LOG.debug("%s is configured at %s", endpointKey, endpointOverride);
     }
 
-    InstantiatingGrpcChannelProvider.Builder channelProvider =
+    final InstantiatingGrpcChannelProvider.Builder channelProvider =
         ((InstantiatingGrpcChannelProvider) stubSettings.getTransportChannelProvider()).toBuilder();
 
     if (configuration.getBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, false)) {
@@ -386,13 +432,33 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
         channelProvider.setPoolSize(Integer.parseInt(channelCount));
       }
     }
+
+    // TODO: remove this once https://github.com/googleapis/gax-java/pull/1355 is resolved
+    // Workaround performance issues due to the default executor in gax
+    {
+      final ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> prevConfigurator =
+          channelProvider.getChannelConfigurator();
+
+      channelProvider.setChannelConfigurator(
+          new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+            @Override
+            public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
+              if (prevConfigurator != null) {
+                channelBuilder = prevConfigurator.apply(channelBuilder);
+              }
+              return channelBuilder.executor(null);
+            }
+          });
+    }
+
     stubSettings.setTransportChannelProvider(channelProvider.build());
   }
 
   private void configureHeaderProvider(StubSettings.Builder<?, ?> stubSettings) {
     List<String> userAgentParts = Lists.newArrayList();
     userAgentParts.add("hbase-" + VersionInfo.getVersion());
-    userAgentParts.add("java-bigtable-hbase-" + BigtableHBaseVersion.getVersion());
+    userAgentParts.add("bigtable-" + BigtableHBaseVersion.getVersion());
+    userAgentParts.add("jdk-" + System.getProperty("java.specification.version"));
 
     String customUserAgent = configuration.get(CUSTOM_USER_AGENT_KEY);
     if (customUserAgent != null) {
@@ -519,14 +585,19 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       flowControl.setMaxOutstandingRequestBytes(Long.valueOf(maxMemory));
     }
 
-    // TODO: enable this once dynamic flow control lands in veneer
-    if (Boolean.parseBoolean(configuration.get(BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING))) {
-      throw new UnsupportedOperationException("Buffered mutator throttling is not supported.");
-    }
     batchingSettingsBuilder.setFlowControlSettings(flowControl.build());
     // End configure flow control
 
     builder.setBatchingSettings(batchingSettingsBuilder.build());
+
+    if (Boolean.parseBoolean(configuration.get(BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING))) {
+      int latencyMs =
+          configuration.getInt(
+              BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS,
+              BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT);
+
+      builder.enableLatencyBasedThrottling(latencyMs);
+    }
   }
 
   private void configureBulkReadRowsSettings(

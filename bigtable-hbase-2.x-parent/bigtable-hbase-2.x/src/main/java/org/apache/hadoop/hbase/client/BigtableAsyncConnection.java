@@ -382,7 +382,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
     SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
     request.setTableName(
         NameUtil.formatTableName(
-            settings.getProjectId(), settings.getInstanceId(), tableName.getQualifierAsString()));
+            settings.getProjectId(), settings.getInstanceId(), tableName.getNameAsString()));
     List<KeyOffset> sampleRowKeyResponse =
         ApiExceptions.callAndTranslateApiException(
             this.bigtableApi.getDataClient().sampleRowKeysAsync(tableName.getNameAsString()));

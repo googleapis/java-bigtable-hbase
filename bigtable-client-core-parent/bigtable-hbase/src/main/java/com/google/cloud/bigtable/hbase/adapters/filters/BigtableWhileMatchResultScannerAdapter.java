@@ -121,6 +121,7 @@ public class BigtableWhileMatchResultScannerAdapter {
           filteredCells.add(rowCell);
         }
       } else {
+        // TODO: figure out if this can be removed
         filteredCells.add(cell);
       }
     }

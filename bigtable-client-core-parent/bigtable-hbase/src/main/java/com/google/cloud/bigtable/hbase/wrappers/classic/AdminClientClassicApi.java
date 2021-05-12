@@ -17,15 +17,29 @@ package com.google.cloud.bigtable.hbase.wrappers.classic;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.InternalApi;
+import com.google.bigtable.admin.v2.DeleteBackupRequest;
 import com.google.bigtable.admin.v2.DeleteTableRequest;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
 import com.google.bigtable.admin.v2.GetTableRequest;
+import com.google.bigtable.admin.v2.ListBackupsRequest;
+import com.google.bigtable.admin.v2.ListBackupsResponse;
+import com.google.bigtable.admin.v2.ListClustersRequest;
+import com.google.bigtable.admin.v2.ListClustersResponse;
 import com.google.bigtable.admin.v2.ListTablesRequest;
 import com.google.bigtable.admin.v2.ListTablesResponse;
+import com.google.cloud.bigtable.admin.v2.internal.NameUtil;
+import com.google.cloud.bigtable.admin.v2.models.Backup;
+import com.google.cloud.bigtable.admin.v2.models.Cluster;
+import com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
+import com.google.cloud.bigtable.admin.v2.models.RestoreTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.RestoredTableResult;
 import com.google.cloud.bigtable.admin.v2.models.Table;
+import com.google.cloud.bigtable.grpc.BigtableClusterName;
+import com.google.cloud.bigtable.grpc.BigtableInstanceClient;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
+import com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
 import com.google.cloud.bigtable.grpc.BigtableTableAdminClient;
 import com.google.cloud.bigtable.hbase.wrappers.AdminClientWrapper;
 import com.google.cloud.bigtable.util.ApiFutureUtil;
@@ -33,22 +47,36 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.longrunning.Operation;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
+import com.google.protobuf.InvalidProtocolBufferException;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import javax.annotation.Nonnull;
 
 /** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
 public class AdminClientClassicApi implements AdminClientWrapper {
 
-  private final BigtableTableAdminClient delegate;
+  private final BigtableTableAdminClient tableDelegate;
+  private final BigtableInstanceClient instanceDelegate;
   private final BigtableInstanceName instanceName;
+  private final ExecutorService batchThreadPool;
 
   AdminClientClassicApi(
-      @Nonnull BigtableTableAdminClient delegate, @Nonnull BigtableInstanceName instanceName) {
-    this.delegate = delegate;
+      @Nonnull BigtableTableAdminClient tableDelegate,
+      @Nonnull BigtableInstanceName instanceName,
+      BigtableInstanceClient instanceDelegate) {
+    this.tableDelegate = tableDelegate;
     this.instanceName = instanceName;
+    this.batchThreadPool = BigtableSessionSharedThreadPools.getInstance().getBatchThreadPool();
+    this.instanceDelegate = instanceDelegate;
   }
 
   @Override
@@ -57,7 +85,7 @@ public class AdminClientClassicApi implements AdminClientWrapper {
         request.toProto(instanceName.getProjectId(), instanceName.getInstanceId());
 
     return ApiFutureUtil.transformAndAdapt(
-        delegate.createTableAsync(requestProto),
+        tableDelegate.createTableAsync(requestProto),
         new Function<com.google.bigtable.admin.v2.Table, Table>() {
           @Override
           public Table apply(com.google.bigtable.admin.v2.Table tableProto) {
@@ -72,7 +100,7 @@ public class AdminClientClassicApi implements AdminClientWrapper {
         GetTableRequest.newBuilder().setName(instanceName.toTableNameStr(tableId)).build();
 
     return ApiFutureUtil.transformAndAdapt(
-        delegate.getTableAsync(requestProto),
+        tableDelegate.getTableAsync(requestProto),
         new Function<com.google.bigtable.admin.v2.Table, Table>() {
           @Override
           public Table apply(com.google.bigtable.admin.v2.Table tableProto) {
@@ -85,7 +113,7 @@ public class AdminClientClassicApi implements AdminClientWrapper {
   public ApiFuture<List<String>> listTablesAsync() {
     ListTablesRequest request =
         ListTablesRequest.newBuilder().setParent(instanceName.toString()).build();
-    ListenableFuture<ListTablesResponse> response = delegate.listTablesAsync(request);
+    ListenableFuture<ListTablesResponse> response = tableDelegate.listTablesAsync(request);
 
     return ApiFutureUtil.transformAndAdapt(
         response,
@@ -108,7 +136,7 @@ public class AdminClientClassicApi implements AdminClientWrapper {
         DeleteTableRequest.newBuilder().setName(instanceName.toTableNameStr(tableId)).build();
 
     return ApiFutureUtil.transformAndAdapt(
-        delegate.deleteTableAsync(request),
+        tableDelegate.deleteTableAsync(request),
         new Function<Empty, Void>() {
           @Override
           public Void apply(Empty empty) {
@@ -123,7 +151,7 @@ public class AdminClientClassicApi implements AdminClientWrapper {
         request.toProto(instanceName.getProjectId(), instanceName.getInstanceId());
 
     return ApiFutureUtil.transformAndAdapt(
-        delegate.modifyColumnFamilyAsync(modifyColumnRequestProto),
+        tableDelegate.modifyColumnFamilyAsync(modifyColumnRequestProto),
         new Function<com.google.bigtable.admin.v2.Table, Table>() {
           @Override
           public Table apply(com.google.bigtable.admin.v2.Table tableProto) {
@@ -142,7 +170,7 @@ public class AdminClientClassicApi implements AdminClientWrapper {
             .setRowKeyPrefix(rowKeyPrefix)
             .build();
     return ApiFutureUtil.transformAndAdapt(
-        delegate.dropRowRangeAsync(protoRequest),
+        tableDelegate.dropRowRangeAsync(protoRequest),
         new Function<Empty, Void>() {
           @Override
           public Void apply(Empty empty) {
@@ -159,13 +187,134 @@ public class AdminClientClassicApi implements AdminClientWrapper {
             .setDeleteAllDataFromTable(true)
             .build();
     return ApiFutureUtil.transformAndAdapt(
-        delegate.dropRowRangeAsync(protoRequest),
+        tableDelegate.dropRowRangeAsync(protoRequest),
         new Function<Empty, Void>() {
           @Override
           public Void apply(Empty empty) {
             return null;
           }
         });
+  }
+
+  @Override
+  public ApiFuture<Backup> createBackupAsync(CreateBackupRequest request) {
+    ListenableFuture<Operation> backupAsync =
+        tableDelegate.createBackupAsync(
+            request.toProto(instanceName.getProjectId(), instanceName.getInstanceId()));
+    Function<Operation, Backup> function =
+        new Function<Operation, Backup>() {
+          @Override
+          public Backup apply(final Operation operation) {
+            try {
+              Future<Operation> operationFuture =
+                  batchThreadPool.submit(
+                      new Callable<Operation>() {
+                        @Override
+                        public Operation call() throws Exception {
+                          return tableDelegate.waitForOperation(operation);
+                        }
+                      });
+
+              return Backup.fromProto(
+                  operationFuture
+                      .get()
+                      .getResponse()
+                      .unpack(com.google.bigtable.admin.v2.Backup.class));
+            } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
+              throw new RuntimeException("Interrupted while waiting for operation to finish");
+            } catch (ExecutionException | InvalidProtocolBufferException e) {
+              throw new IllegalStateException(e);
+            }
+          }
+        };
+    return ApiFutureUtil.transformAndAdapt(backupAsync, function);
+  }
+
+  @Override
+  public ApiFuture<List<String>> listBackupsAsync(String clusterId) {
+    BigtableClusterName clusterName = instanceName.toClusterName(clusterId);
+    ListBackupsRequest request =
+        ListBackupsRequest.newBuilder().setParent(clusterName.getClusterName()).build();
+
+    // pagination is not required as page_size in the request is not set - everything will be
+    // returned
+    return ApiFutureUtil.transformAndAdapt(
+        tableDelegate.listBackupsAsync(request),
+        new Function<ListBackupsResponse, List<String>>() {
+          @Override
+          public List<String> apply(ListBackupsResponse response) {
+            List<String> backups = new ArrayList<>();
+            for (com.google.bigtable.admin.v2.Backup backup : response.getBackupsList()) {
+              backups.add(NameUtil.extractBackupIdFromBackupName(backup.getName()));
+            }
+            return backups;
+          }
+        });
+  }
+
+  @Override
+  public ApiFuture<Void> deleteBackupAsync(String clusterId, String backupId) {
+    BigtableClusterName clusterName = instanceName.toClusterName(clusterId);
+    DeleteBackupRequest request =
+        DeleteBackupRequest.newBuilder().setName(clusterName.toBackupName(backupId)).build();
+    return ApiFutureUtil.transformAndAdapt(
+        tableDelegate.deleteBackupAsync(request),
+        new Function<Empty, Void>() {
+          @Override
+          public Void apply(Empty empty) {
+            return null;
+          }
+        });
+  }
+
+  @Override
+  public ApiFuture<RestoredTableResult> restoreTableAsync(RestoreTableRequest request) {
+    return ApiFutureUtil.transformAndAdapt(
+        tableDelegate.restoreTableAsync(
+            request.toProto(instanceName.getProjectId(), instanceName.getInstanceId())),
+        new Function<Operation, RestoredTableResult>() {
+          @Override
+          public RestoredTableResult apply(final Operation operation) {
+            try {
+              Future<Operation> operationFuture =
+                  batchThreadPool.submit(
+                      new Callable<Operation>() {
+                        @Override
+                        public Operation call() throws Exception {
+                          return tableDelegate.waitForOperation(operation);
+                        }
+                      });
+
+              return new RestoredTableResult(
+                  Table.fromProto(
+                      operationFuture
+                          .get()
+                          .getResponse()
+                          .unpack(com.google.bigtable.admin.v2.Table.class)),
+                  operation
+                      .getMetadata()
+                      .unpack(com.google.bigtable.admin.v2.RestoreTableMetadata.class)
+                      .getOptimizeTableOperationName());
+            } catch (IOException | InterruptedException | ExecutionException e) {
+              throw new IllegalStateException(e);
+            }
+          }
+        });
+  }
+
+  @Override
+  public List<Cluster> listClusters(String instanceId) {
+    ListClustersRequest request =
+        ListClustersRequest.newBuilder().setParent(instanceName.getInstanceName()).build();
+    ListClustersResponse listClustersResponse = instanceDelegate.listCluster(request);
+    List<com.google.bigtable.admin.v2.Cluster> protoList = listClustersResponse.getClustersList();
+
+    List<Cluster> clusters = new ArrayList<>(protoList.size());
+    for (com.google.bigtable.admin.v2.Cluster value : protoList) {
+      clusters.add(Cluster.fromProto(value));
+    }
+    return clusters;
   }
 
   @Override
