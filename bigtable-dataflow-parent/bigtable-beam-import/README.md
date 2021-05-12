@@ -117,7 +117,7 @@ Exporting HBase snapshots from Bigtable is not supported.
 
 
 You can import data into Bigtable from a snapshot or sequence files. Before you begin your import you must create
-the tables and column families in Bigtable via the [schema translation tool](bigtable-hbase-1.x-parent/bigtable-hbase-tools/README.md)
+the tables and column families in Bigtable via the [schema translation tool](bigtable-hbase-1.x-parent/bigtable-hbase-1.x-tools/README.md)
 or using the Bigtable command line tool and running the following: 
 
     cbt createtable your-table-name

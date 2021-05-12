@@ -11,7 +11,7 @@ you can build them using Maven.
 [//]: # ({x-version-update-start:bigtable-dataflow-parent:released})
 ### Download the jars
 
-Download [the Bigtable tools jars](http://search.maven.org/remotecontent?filepath=com/google/cloud/bigtable/bigtable-hbase-tools/1.14.1/bigtable-hbase-tools-1.14.1-shaded.jar), which is an aggregation of all required jars.
+Download [the Bigtable tools jars](http://search.maven.org/remotecontent?filepath=com/google/cloud/bigtable/bigtable-hbase-1.x-tools/1.14.1/bigtable-hbase-1.x-tools-1.14.1-shaded.jar), which is an aggregation of all required jars.
 
 ### Build the jars
 Go to the top level directory and build the repo then return to this sub directory.
@@ -19,7 +19,7 @@ Go to the top level directory and build the repo then return to this sub directo
 ```
 cd ../../
 mvn clean install -DskipTests=true
-cd bigtable-hbase-1.x-parent/bigtable-hbase-tools
+cd bigtable-hbase-1.x-parent/bigtable-hbase-1.x-tools
 ```
 
 ## Schema Translation tool 
@@ -45,7 +45,7 @@ and table splits.
      -Dgoogle.bigtable.table.filter=$TABLE_NAME_REGEX \
      -Dhbase.zookeeper.quorum=$ZOOKEEPER_QUORUM \
      -Dhbase.zookeeper.property.clientPort=$ZOOKEEPER_PORT \
-     -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar
+     -jar bigtable-hbase-1.x-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar
     ```
 
 ### Alternative: Exporting Schema
@@ -67,7 +67,7 @@ export the HBase schema to a file and use that to create tables in Cloud Bigtabl
      -Dgoogle.bigtable.output.filepath=$HBASE_EXPORT_PATH \
      -Dhbase.zookeeper.quorum=$ZOOKEEPER_QUORUM \
      -Dhbase.zookeeper.property.clientPort=$ZOOKEEPER_PORT \
-     -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar
+     -jar bigtable-hbase-1.x-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar
     ```
 
 #### Import schema
@@ -83,5 +83,5 @@ export the HBase schema to a file and use that to create tables in Cloud Bigtabl
      -Dgoogle.bigtable.project.id=$PROJECT_ID \
      -Dgoogle.bigtable.instance.id=$INSTANCE_ID \
      -Dgoogle.bigtable.input.filepath=$SCHEMA_FILE_PATH \
-     -jar bigtable-hbase-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar \
+     -jar bigtable-hbase-1.x-tools-1.14.1-SNAPSHOT-jar-with-dependencies.jar \
     ```
