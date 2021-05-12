@@ -52,7 +52,7 @@ public class TemplateUtils {
    * Builds CloudBigtableTableConfiguration from input runtime parameters for import job with with
    * custom user agent.
    */
-  public static CloudBigtableTableConfiguration buildImportConfigWithCustomUserAgent(
+  public static CloudBigtableTableConfiguration buildImportConfig(
       ImportOptions opts, String customUserAgent) {
     CloudBigtableTableConfiguration.Builder builder =
         new CloudBigtableTableConfiguration.Builder()
