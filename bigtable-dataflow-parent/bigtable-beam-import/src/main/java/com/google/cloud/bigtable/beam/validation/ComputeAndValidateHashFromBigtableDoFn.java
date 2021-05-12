@@ -62,7 +62,7 @@ class ComputeAndValidateHashFromBigtableDoFn
   private final Counter mismatches = Metrics.counter("cbt-dataflow-validate", "ranges_not_matched");
 
   public ComputeAndValidateHashFromBigtableDoFn(SyncTableOptions options) {
-    super(TemplateUtils.BuildSyncTableConfig(options));
+    super(TemplateUtils.buildSyncTableConfig(options));
     this.tableName = options.getBigtableTableId();
     // Create a local copy of ValueProviders, PipelineOptions are not serializable.
     projectId = options.getBigtableProject();

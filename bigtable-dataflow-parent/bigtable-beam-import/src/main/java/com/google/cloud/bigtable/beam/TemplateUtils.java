@@ -84,7 +84,7 @@ public class TemplateUtils {
   }
 
   /** Builds CloudBigtableTableConfiguration from input runtime parameters for import job. */
-  public static CloudBigtableTableConfiguration BuildSyncTableConfig(SyncTableOptions opts) {
+  public static CloudBigtableTableConfiguration buildSyncTableConfig(SyncTableOptions opts) {
     CloudBigtableTableConfiguration.Builder builder =
         new CloudBigtableTableConfiguration.Builder()
             .withProjectId(opts.getBigtableProject())
