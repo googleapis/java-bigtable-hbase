@@ -48,16 +48,11 @@ import org.apache.hadoop.hbase.filter.ParseFilter;
  */
 @InternalApi("For internal usage only")
 public class TemplateUtils {
-  /** Builds CloudBigtableTableConfiguration from input runtime parameters for import job. */
-  public static CloudBigtableTableConfiguration BuildImportConfig(ImportOptions opts) {
-    return BuildImportConfigWithCustomUserAgent(opts, "ImportJob");
-  }
-
   /**
    * Builds CloudBigtableTableConfiguration from input runtime parameters for import job with with
    * custom user agent.
    */
-  public static CloudBigtableTableConfiguration BuildImportConfigWithCustomUserAgent(
+  public static CloudBigtableTableConfiguration buildImportConfig(
       ImportOptions opts, String customUserAgent) {
     CloudBigtableTableConfiguration.Builder builder =
         new CloudBigtableTableConfiguration.Builder()
@@ -166,7 +161,7 @@ public class TemplateUtils {
   }
 
   /** Builds CloudBigtableScanConfiguration from input runtime parameters for export job. */
-  public static CloudBigtableScanConfiguration BuildExportConfig(ExportOptions options) {
+  public static CloudBigtableScanConfiguration buildExportConfig(ExportOptions options) {
     ValueProvider<ReadRowsRequest> request = new RequestValueProvider(options);
     CloudBigtableScanConfiguration.Builder configBuilder =
         new CloudBigtableScanConfiguration.Builder()
