@@ -205,7 +205,7 @@ public class ExportJob {
 
     Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
 
-    CloudBigtableScanConfiguration config = TemplateUtils.BuildExportConfig(opts);
+    CloudBigtableScanConfiguration config = TemplateUtils.buildExportConfig(opts);
     pipeline
         .apply("Read table", Read.from(CloudBigtableIO.read(config)))
         .apply("Format results", MapElements.via(new ResultToKV()))
