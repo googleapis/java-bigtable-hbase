@@ -84,7 +84,6 @@ import com.google.cloud.bigtable.hbase.BigtableHBaseVersion;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.metrics.MetricsApiTracerAdapterFactory;
-import com.google.cloud.bigtable.hbase.wrappers.veneer.metrics.MetricsChannelInterceptorProvider;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
@@ -124,7 +123,6 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   private final long batchingMaxMemory;
   private final boolean isChannelPoolCachingEnabled;
   private final boolean allowRetriesWithoutTimestamp;
-  private final MetricsChannelInterceptorProvider metricsChannelInterceptorProvider;
 
   public static BigtableHBaseVeneerSettings create(Configuration configuration) throws IOException {
     Configuration copy = new Configuration(configuration);
@@ -179,8 +177,6 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
     this.allowRetriesWithoutTimestamp =
         configuration.getBoolean(ALLOW_NO_TIMESTAMP_RETRIES_KEY, false);
-
-    this.metricsChannelInterceptorProvider = new MetricsChannelInterceptorProvider();
   }
 
   @Override
@@ -315,26 +311,6 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     MetricsApiTracerAdapterFactory metricsApiTracerAdapterFactory =
         new MetricsApiTracerAdapterFactory();
     settings.stubSettings().setTracerFactory(metricsApiTracerAdapterFactory);
-    // Set up channel interceptor to record channels.channel$id.rpc.latency metrics
-    if (settings.stubSettings().getTransportChannelProvider()
-        instanceof InstantiatingGrpcChannelProvider) {
-      InstantiatingGrpcChannelProvider.Builder channelProvider =
-          ((InstantiatingGrpcChannelProvider) settings.stubSettings().getTransportChannelProvider())
-              .toBuilder();
-      final ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> prevConfigurator =
-          channelProvider.getChannelConfigurator();
-      channelProvider.setChannelConfigurator(
-          new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-            @Override
-            public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-              if (prevConfigurator != null) {
-                channelBuilder = prevConfigurator.apply(channelBuilder);
-              }
-              return channelBuilder.intercept(metricsChannelInterceptorProvider.getInterceptors());
-            }
-          });
-      settings.stubSettings().setTransportChannelProvider(channelProvider.build());
-    }
   }
 
   private BigtableTableAdminSettings buildBigtableTableAdminSettings() throws IOException {

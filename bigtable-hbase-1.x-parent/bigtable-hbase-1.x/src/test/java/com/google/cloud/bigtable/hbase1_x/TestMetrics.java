@@ -179,10 +179,6 @@ public class TestMetrics {
     long activeRpcMetric =
         fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.rpc.active").get();
     assertThat(activeRpcMetric).isEqualTo(0);
-
-    long channelLatencyMetric =
-        fakeMetricRegistry.results.get("google-cloud-bigtable.channels.channel0.rpc.latency").get();
-    assertThat(channelLatencyMetric).isAtMost(fakeDataService.getReadRowServerSideLatency());
   }
 
   @Test
