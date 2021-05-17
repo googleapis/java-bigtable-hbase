@@ -4,14 +4,14 @@
       "git": {
         "name": ".",
         "remote": "https://github.com/googleapis/java-bigtable-hbase.git",
-        "sha": "7e769cdffce9c1670f029c1e7e4a559bb6ea0f07"
+        "sha": "b597b3c1cd8e6492d26ee5033a2f9ec7a112b758"
       }
     },
     {
       "git": {
         "name": "synthtool",
         "remote": "https://github.com/googleapis/synthtool.git",
-        "sha": "046994f491c02806aea60118e214a9edd67f5ab7"
+        "sha": "c86c7a60985644eab557949363a38301d40d78d2"
       }
     }
   ],
