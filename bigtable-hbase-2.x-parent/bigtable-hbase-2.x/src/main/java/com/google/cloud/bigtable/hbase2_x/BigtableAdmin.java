@@ -258,7 +258,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   protected CompletableFuture<Void> deleteTableAsyncInternal(TableName tableName) {
-    return FutureUtils.toCompletableFuture(
+    return ApiFutureUtils.toCompletableFuture(
         adminClientWrapper.deleteTableAsync(tableName.getNameAsString()));
   }
 
@@ -362,7 +362,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     if (!preserveSplits) {
       LOG.info("truncate will preserveSplits. The passed in variable is ignored.");
     }
-    return FutureUtils.toCompletableFuture(
+    return ApiFutureUtils.toCompletableFuture(
         adminClientWrapper.dropAllRowsAsync(tableName.getNameAsString()));
   }
   /* ******* Unsupported methods *********** */
