@@ -163,7 +163,7 @@ public abstract class AbstractBigtableTable implements Table {
           Adapters.GET_ADAPTER.buildFilter(GetAdapter.setCheckExistenceOnly(get));
 
       try {
-        return FutureUtil.unwrap(
+        return !FutureUtil.unwrap(
                 clientWrapper.readRowAsync(
                     tableName.getNameAsString(), ByteStringer.wrap(get.getRow()), filter))
             .isEmpty();
