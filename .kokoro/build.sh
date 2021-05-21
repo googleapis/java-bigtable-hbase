@@ -38,24 +38,24 @@ set +e
 case ${JOB_TYPE} in
 test)
 # this will not run IT tests, to run IT tests a profile must be enabled (see below)
-    mvn verify -B -Dclirr.skip=true
+    mvn --no-transfer-progress verify -B -Dclirr.skip=true
     RETURN_CODE=$?
     ;;
 lint)
-    mvn com.coveo:fmt-maven-plugin:check
+    mvn --no-transfer-progress com.coveo:fmt-maven-plugin:check
     RETURN_CODE=$?
     ;;
 javadoc)
-    mvn javadoc:javadoc javadoc:test-javadoc
+    mvn --no-transfer-progress javadoc:javadoc javadoc:test-javadoc
     RETURN_CODE=$?
     ;;
 integration)
 # clean needed when running more than one IT profile
-    mvn clean verify -B ${INTEGRATION_TEST_ARGS} -Penable-integration-tests -DtrimStackTrace=false -Dclirr.skip=true -fae
+    mvn --no-transfer-progress clean verify -B ${INTEGRATION_TEST_ARGS} -Penable-integration-tests -DtrimStackTrace=false -Dclirr.skip=true -fae
     RETURN_CODE=$?
     ;;
 clirr)
-    mvn install -B -Denforcer.skip=true clirr:check
+    mvn --no-transfer-progress install -B -Denforcer.skip=true clirr:check
     RETURN_CODE=$?
     ;;
 *)
