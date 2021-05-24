@@ -99,10 +99,6 @@ limitations under the License.
       <artifactId>grpc-core</artifactId>
       <scope>compile</scope>
     </dependency>
-    <dependency>
-      <groupId>com.google.api</groupId>
-      <artifactId>gax</artifactId>
-    </dependency>
 
     <dependency>
       <groupId>com.google.api</groupId>
