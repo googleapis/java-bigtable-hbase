@@ -80,6 +80,11 @@ class BigtableEnv extends SharedTestEnv {
       }
     }
 
+    // Auto expire orphaned snapshots. Minimum ttl is 6h
+    configuration.setIfUnset(
+        "google.bigtable.snapshot.default.ttl.secs",
+        String.valueOf(TimeUnit.HOURS.toSeconds(6) + 1));
+
     // Garbage collect tables that previous runs failed to clean up
     ListeningExecutorService executor = MoreExecutors.listeningDecorator(getExecutor());
     try (Connection connection = ConnectionFactory.createConnection(configuration);
