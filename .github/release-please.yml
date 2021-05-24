@@ -6,3 +6,7 @@ branches:
     releaseType: java-yoshi
     bumpMinorPreMajor: true
     handleGHRelease: true
+  - releaseType: java-lts
+    bumpMinorPreMajor: true
+    handleGHRelease: true
+    branch: 1.20.0-sp
