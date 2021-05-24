@@ -88,6 +88,16 @@ limitations under the License.
       <version>${hbase1-metrics.version}</version>
     </dependency>
 
+    <!-- deps for metrics instrumentation, these should be removed once we expose more hooks in veneer metrics -->
+    <dependency>
+      <groupId>com.google.api</groupId>
+      <artifactId>gax</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.auth</groupId>
+      <artifactId>google-auth-library-credentials</artifactId>
+    </dependency>
+
     <!-- These are direct dependencies of TestBigtableConnection.java which is in test scope,
      but they are transitive dependencies of bigtable-client-core, which needs them during runtime.
      For more information please see https://github.com/googleapis/java-bigtable-hbase/pull/2447 -->

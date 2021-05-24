@@ -28,6 +28,8 @@ import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings.Builder;
 import com.google.cloud.bigtable.data.v2.stub.EnhancedBigtableStubSettings;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -43,6 +45,8 @@ class SharedDataClientWrapperFactory {
   private final Map<Key, ClientContext> cachedContexts = new HashMap<>();
   private final Map<Key, Integer> refCounts = new HashMap<>();
 
+  private final Map<Key, Integer> channelPoolSizes = new HashMap<>();
+
   synchronized DataClientWrapper createDataClient(BigtableHBaseVeneerSettings settings)
       throws IOException {
     Preconditions.checkArgument(
@@ -54,9 +58,15 @@ class SharedDataClientWrapperFactory {
     // Get or create ClientContext that will contained the shared resources
     ClientContext sharedCtx = cachedContexts.get(key);
     if (sharedCtx == null) {
-      sharedCtx = ClientContext.create(settings.getDataSettings().getStubSettings());
+      EnhancedBigtableStubSettings stubSettings = settings.getDataSettings().getStubSettings();
+      sharedCtx = ClientContext.create(stubSettings);
       cachedContexts.put(key, sharedCtx);
       refCounts.put(key, 0);
+      int channelPoolSize = BigtableVeneerApi.getChannelPoolSize(stubSettings);
+      for (int i = 0; i < channelPoolSize; i++) {
+        BigtableClientMetrics.counter(MetricLevel.Info, "grpc.channel.active").inc();
+      }
+      channelPoolSizes.put(key, channelPoolSize);
     }
     // Increment the count
     refCounts.put(key, refCounts.get(key) + 1);
@@ -92,6 +102,10 @@ class SharedDataClientWrapperFactory {
 
     refCounts.remove(key);
     ClientContext clientContext = cachedContexts.remove(key);
+    for (int i = 0; i < channelPoolSizes.get(key); i++) {
+      BigtableClientMetrics.counter(MetricLevel.Info, "grpc.channel.active").dec();
+    }
+    channelPoolSizes.remove(key);
     for (BackgroundResource resource : clientContext.getBackgroundResources()) {
       resource.shutdown();
     }
