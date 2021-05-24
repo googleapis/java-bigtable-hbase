@@ -15,8 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
-import static com.google.cloud.bigtable.hbase2_x.FutureUtils.failedFuture;
-import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture;
+import static com.google.cloud.bigtable.hbase2_x.ApiFutureUtils.failedFuture;
+import static com.google.cloud.bigtable.hbase2_x.ApiFutureUtils.toCompletableFuture;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.admin.v2.internal.NameUtil;

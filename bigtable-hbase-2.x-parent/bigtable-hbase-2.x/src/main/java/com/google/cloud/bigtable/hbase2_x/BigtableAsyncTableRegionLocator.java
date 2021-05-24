@@ -51,7 +51,7 @@ public class BigtableAsyncTableRegionLocator extends AbstractBigtableRegionLocat
 
   @Override
   public CompletableFuture<HRegionLocation> getRegionLocation(byte[] row, boolean reload) {
-    return FutureUtils.toCompletableFuture(getRegionsAsync(reload))
+    return ApiFutureUtils.toCompletableFuture(getRegionsAsync(reload))
         .thenApplyAsync(
             result -> {
               for (HRegionLocation region : result) {
