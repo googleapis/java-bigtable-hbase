@@ -53,15 +53,24 @@ limitations under the License.
                   <goal>verify</goal>
                 </goals>
                 <configuration>
-                  <forkCount>1</forkCount>
                   <includes>
                     <include>**/IntegrationTests.java</include>
                   </includes>
                   <excludedGroups>KnownGap</excludedGroups>
+
+                  <redirectTestOutputToFile>true</redirectTestOutputToFile>
+
+                  <!-- Run tests in parallel -->
+                  <parallel>classes</parallel>
+                  <threadCount>4</threadCount>
+
+                  <!-- Fork & set system properties -->
+                  <forkCount>1</forkCount>
                   <systemPropertyVariables>
                     <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
                   </systemPropertyVariables>
                   <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
+
                   <!-- Make sure to fail the build when the suite fails to initialize -->
                   <failIfNoTests>true</failIfNoTests>
 
