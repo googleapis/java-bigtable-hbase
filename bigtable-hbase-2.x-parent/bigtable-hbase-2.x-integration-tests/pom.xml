@@ -491,6 +491,7 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
               <excludes>
                 <exclude>**/*.java</exclude>
               </excludes>
+              <forkedProcessTimeoutInSeconds>3000</forkedProcessTimeoutInSeconds>
             </configuration>
           </execution>
         </executions>
