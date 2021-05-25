@@ -19,6 +19,7 @@ import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -42,14 +43,6 @@ import org.junit.runners.JUnit4;
 @SuppressWarnings("deprecation")
 @RunWith(JUnit4.class)
 public abstract class AbstractTestSnapshot extends AbstractTest {
-  protected final Logger LOG = new Logger(getClass());
-
-  protected static String prefix;
-
-  protected static final int[] BACKOFF_DURATION = {2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
-
-  protected static final String TEST_BACKUP_SUFFIX = "backup-it";
-
   protected final TableName tableName = sharedTestEnv.newTestTableName();
   protected Map<String, Long> values;
 
@@ -74,22 +67,23 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
 
   @Test
   public void testSnapshot() throws IOException, InterruptedException, ExecutionException {
-    String snapshotName = generateId("test-snapshot");
+    String snapshotId = newSnapshotId();
     try {
-      snapshot(snapshotName, tableName);
-      Assert.assertEquals(1, listSnapshotsSize(snapshotName));
+      snapshot(snapshotId, tableName);
+      Assert.assertEquals(1, listSnapshotsSize(snapshotId));
     } finally {
-      deleteSnapshot(snapshotName);
-      Assert.assertEquals(0, listSnapshotsSize(snapshotName));
+      deleteSnapshot(snapshotId);
+      Assert.assertEquals(0, listSnapshotsSize(snapshotId));
     }
   }
 
   @Test
   public void testListAndDeleteSnapshots()
       throws IOException, InterruptedException, ExecutionException {
-    String snapshotName = generateId("list-1");
-    String snapshotName2 = generateId("list-2");
-    Pattern allSnapshots = Pattern.compile(prefix + ".*" + "list" + ".*");
+    String prefix = newSnapshotId();
+    String snapshotName = prefix + "-1";
+    String snapshotName2 = prefix + "-2";
+    Pattern allSnapshots = Pattern.compile(prefix + ".*");
 
     try {
       snapshot(snapshotName, tableName);
@@ -108,7 +102,7 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
 
   @Test
   public void testCloneSnapshot() throws IOException, InterruptedException {
-    String cloneSnapshotName = generateId("clone-test");
+    String cloneSnapshotName = newSnapshotId();
     snapshot(cloneSnapshotName, tableName);
 
     // Wait 2 minutes so that the RestoreTable API will trigger an optimize restored
@@ -119,10 +113,6 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
     TableName clonedTableName = TableName.valueOf(tableName.getNameAsString() + "_clne");
     try {
       cloneSnapshot(cloneSnapshotName, clonedTableName);
-
-      // give table time to create
-      Thread.sleep(60 * 1000);
-
       validateClone(clonedTableName, values);
     } finally {
       deleteSnapshot(cloneSnapshotName);
@@ -166,8 +156,6 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
   protected abstract Map<String, Long> createAndPopulateTable(TableName tableName)
       throws IOException, ExecutionException, InterruptedException;
 
-  protected abstract int listSnapshotsSize() throws IOException;
-
   protected abstract int listSnapshotsSize(String regEx) throws IOException;
 
   protected abstract int listSnapshotsSize(Pattern pattern) throws IOException;
@@ -184,7 +172,7 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
 
   protected abstract void deleteTable(final TableName tableName) throws IOException;
 
-  protected static String generateId(String name) {
-    return prefix + "-" + name + "-" + TEST_BACKUP_SUFFIX;
+  protected static String newSnapshotId() {
+    return UUID.randomUUID().toString();
   }
 }
