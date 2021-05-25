@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -47,28 +46,13 @@ public class TestSnapshots extends AbstractTestSnapshot {
   @Before
   public void setUp() throws IOException {
     try (Admin admin = getConnection().getAdmin()) {
-      // Setup a prefix to avoid collisions between concurrent test runs
-      prefix = String.format("020%d", System.currentTimeMillis());
-
-      // clean up stale backups
-      String stalePrefix =
-          String.format("020%d", System.currentTimeMillis() - TimeUnit.HOURS.toMillis(2));
-
-      for (SnapshotDescription snapshotDescription : admin.listSnapshots()) {
-        int i = snapshotDescription.getName().lastIndexOf("/");
-        String backupId = snapshotDescription.getName().substring(i + 1);
-        if (backupId.endsWith(TEST_BACKUP_SUFFIX) && stalePrefix.compareTo(backupId) > 0) {
-          LOG.info("Deleting old snapshot: " + backupId);
-          admin.deleteSnapshot(backupId);
-        }
-      }
       values = createAndPopulateTable(tableName);
     }
   }
 
   @Test
   public void testSnapshotDescription() throws IOException, InterruptedException {
-    String snapshotName = generateId("test-snapshot");
+    String snapshotName = newSnapshotId();
     try {
       SnapshotDescription snapshotDescription =
           new SnapshotDescription(snapshotName, tableName, SnapshotType.FLUSH);
@@ -82,10 +66,10 @@ public class TestSnapshots extends AbstractTestSnapshot {
 
   @Test
   public void listSnapshots() throws IOException, InterruptedException {
-    String snapshot1 = generateId("snapshot-1");
+    String snapshot1 = newSnapshotId();
     snapshot(snapshot1, tableName);
 
-    String snapshot2 = generateId("snapshot-2");
+    String snapshot2 = newSnapshotId();
     snapshot(snapshot2, tableName);
 
     try (Admin admin = getConnection().getAdmin()) {
@@ -113,13 +97,6 @@ public class TestSnapshots extends AbstractTestSnapshot {
       throws IOException, InterruptedException {
     try (Admin admin = getConnection().getAdmin()) {
       admin.snapshot(snapshotDescription);
-    }
-  }
-
-  @Override
-  protected int listSnapshotsSize() throws IOException {
-    try (Admin admin = getConnection().getAdmin()) {
-      return admin.listSnapshots().size();
     }
   }
 

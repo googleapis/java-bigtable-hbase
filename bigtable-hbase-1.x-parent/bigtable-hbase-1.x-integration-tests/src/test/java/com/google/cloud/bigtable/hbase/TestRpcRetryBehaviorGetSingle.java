@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.hbase;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.ReadRowsRequest;
@@ -27,10 +27,13 @@ import io.grpc.stub.StreamObserver;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Table;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
+import org.junit.Assert;
+import org.junit.function.ThrowingRunnable;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -63,26 +66,33 @@ public class TestRpcRetryBehaviorGetSingle extends TestRpcRetryBehavior {
   }
 
   @Override
-  protected void executeLogic(Table table, StopWatch sw) throws Exception {
-    try {
-      sw.start();
-      table.get(new Get("mykey".getBytes()));
+  protected void executeLogic(final Table table, StopWatch sw) throws Exception {
+    sw.start();
+    RetriesExhaustedWithDetailsException e =
+        assertThrows(
+            RetriesExhaustedWithDetailsException.class,
+            new ThrowingRunnable() {
+              @Override
+              public void run() throws Throwable {
+                table.get(new Get("mykey".getBytes()));
+              }
+            });
 
-      fail("Should have errored out");
-    } catch (Exception e) {
-      // Stop ASAP to reduce potential flakiness (due to adding ms to measured query times).
-      sw.stop();
+    // Stop ASAP to reduce potential flakiness (due to adding ms to measured query times).
+    sw.stop();
 
-      Matcher<String> hasAbortedMessage = CoreMatchers.containsString("ABORTED");
-      Matcher<String> hasDeadlineExceededMessage = CoreMatchers.containsString("DEADLINE_EXCEEDED");
+    Assert.assertEquals(1, e.getCauses().size());
+    Throwable cause = e.getCause(0);
 
-      Status status = Status.fromThrowable(e);
-      if (timeoutEnabled) {
-        assertThat(status.toString(), hasDeadlineExceededMessage);
-      } else {
-        assertThat(
-            status.toString(), Matchers.either(hasDeadlineExceededMessage).or(hasAbortedMessage));
-      }
+    Matcher<String> hasAbortedMessage = CoreMatchers.containsString("ABORTED");
+    Matcher<String> hasDeadlineExceededMessage = CoreMatchers.containsString("DEADLINE_EXCEEDED");
+
+    Status status = Status.fromThrowable(cause);
+    if (timeoutEnabled) {
+      assertThat(status.toString(), hasDeadlineExceededMessage);
+    } else {
+      assertThat(
+          status.toString(), Matchers.either(hasDeadlineExceededMessage).or(hasAbortedMessage));
     }
   }
 

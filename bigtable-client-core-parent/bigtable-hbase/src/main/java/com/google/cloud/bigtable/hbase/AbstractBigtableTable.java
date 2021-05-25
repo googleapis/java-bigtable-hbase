@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.api.core.InternalApi;
-import com.google.api.gax.rpc.ApiExceptions;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
@@ -26,6 +25,7 @@ import com.google.cloud.bigtable.hbase.adapters.CheckAndMutateUtil;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
+import com.google.cloud.bigtable.hbase.util.FutureUtil;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
@@ -162,10 +162,14 @@ public abstract class AbstractBigtableTable implements Table {
       Filters.Filter filter =
           Adapters.GET_ADAPTER.buildFilter(GetAdapter.setCheckExistenceOnly(get));
 
-      return !ApiExceptions.callAndTranslateApiException(
-              clientWrapper.readRowAsync(
-                  tableName.getNameAsString(), ByteStringer.wrap(get.getRow()), filter))
-          .isEmpty();
+      try {
+        return !FutureUtil.unwrap(
+                clientWrapper.readRowAsync(
+                    tableName.getNameAsString(), ByteStringer.wrap(get.getRow()), filter))
+            .isEmpty();
+      } catch (Exception e) {
+        throw createRetriesExhaustedWithDetailsException(e, get);
+      }
     }
   }
 
@@ -266,9 +270,13 @@ public abstract class AbstractBigtableTable implements Table {
         Timer.Context ignored = metrics.getTimer.time()) {
 
       Filters.Filter filter = Adapters.GET_ADAPTER.buildFilter(get);
-      return ApiExceptions.callAndTranslateApiException(
-          clientWrapper.readRowAsync(
-              tableName.getNameAsString(), ByteStringer.wrap(get.getRow()), filter));
+      try {
+        return FutureUtil.unwrap(
+            clientWrapper.readRowAsync(
+                tableName.getNameAsString(), ByteStringer.wrap(get.getRow()), filter));
+      } catch (Exception e) {
+        throw createRetriesExhaustedWithDetailsException(e, get);
+      }
     }
   }
 
@@ -454,8 +462,7 @@ public abstract class AbstractBigtableTable implements Table {
       throws IOException {
     Span span = TRACER.spanBuilder("BigtableTable." + type).startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      Boolean wasApplied =
-          ApiExceptions.callAndTranslateApiException(clientWrapper.checkAndMutateRowAsync(request));
+      Boolean wasApplied = FutureUtil.unwrap(clientWrapper.checkAndMutateRowAsync(request));
       return CheckAndMutateUtil.wasMutationApplied(request, wasApplied);
     } catch (Throwable t) {
       span.setStatus(Status.UNKNOWN);
@@ -469,7 +476,7 @@ public abstract class AbstractBigtableTable implements Table {
       throws IOException {
     Span span = TRACER.spanBuilder("BigtableTable." + type).startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      ApiExceptions.callAndTranslateApiException(clientWrapper.mutateRowAsync(rowMutation));
+      FutureUtil.unwrap(clientWrapper.mutateRowAsync(rowMutation));
     } catch (Throwable t) {
       span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException(type, mutation.getRow(), t);
@@ -487,8 +494,7 @@ public abstract class AbstractBigtableTable implements Table {
     }
     Span span = TRACER.spanBuilder("BigtableTable.mutateRow").startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      ApiExceptions.callAndTranslateApiException(
-          clientWrapper.mutateRowAsync(hbaseAdapter.adapt(rowMutations)));
+      FutureUtil.unwrap(clientWrapper.mutateRowAsync(hbaseAdapter.adapt(rowMutations)));
     } catch (Throwable t) {
       span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException("mutateRow", rowMutations.getRow(), t);
@@ -504,8 +510,7 @@ public abstract class AbstractBigtableTable implements Table {
     Span span = TRACER.spanBuilder("BigtableTable.append").startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
       Result response =
-          ApiExceptions.callAndTranslateApiException(
-              clientWrapper.readModifyWriteRowAsync(hbaseAdapter.adapt(append)));
+          FutureUtil.unwrap(clientWrapper.readModifyWriteRowAsync(hbaseAdapter.adapt(append)));
       // The bigtable API will always return the mutated results. In order to maintain
       // compatibility, simply return null when results were not requested.
       if (append.isReturnResults()) {
@@ -528,8 +533,7 @@ public abstract class AbstractBigtableTable implements Table {
     Span span = TRACER.spanBuilder("BigtableTable.increment").startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
       ReadModifyWriteRow request = hbaseAdapter.adapt(increment);
-      return ApiExceptions.callAndTranslateApiException(
-          clientWrapper.readModifyWriteRowAsync(request));
+      return FutureUtil.unwrap(clientWrapper.readModifyWriteRowAsync(request));
     } catch (Throwable t) {
       span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException("increment", increment.getRow(), t);
