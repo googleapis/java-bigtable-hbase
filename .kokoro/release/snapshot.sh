@@ -25,6 +25,7 @@ grep SNAPSHOT versions.txt
 setup_environment_secrets
 create_settings_xml_file "settings.xml"
 
+# only release bigtable-hbase-beam and its dependents for sp branch
 mvn clean deploy -B \
   --settings ${MAVEN_SETTINGS_FILE} \
   -am -pl  bigtable-dataflow-parent/bigtable-hbase-beam \
