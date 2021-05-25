@@ -1,8 +1,9 @@
 # Format:
 # module:released-version:current-version
 
-bigtable-client-parent:1.20.0:1.20.1-SNAPSHOT
+bigtable-client-parent:1.20.0:2.0.0-alpha-1-SNAPSHOT
 bigtable-client-core-parent:1.20.0:2.0.0-alpha-1-SNAPSHOT
+bigtable-client-core:1.20.0:1.20.1-SNAPSHOT
 bigtable-hbase-1x-parent:1.20.0:2.0.0-alpha-1-SNAPSHOT
 bigtable-hbase-2x-parent:1.20.0:2.0.0-alpha-1-SNAPSHOT
 bigtable-dataflow-parent:1.20.0:2.0.0-alpha-1-SNAPSHOT
