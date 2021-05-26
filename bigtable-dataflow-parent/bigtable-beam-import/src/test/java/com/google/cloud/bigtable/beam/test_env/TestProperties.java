@@ -15,12 +15,14 @@
  */
 package com.google.cloud.bigtable.beam.test_env;
 
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.common.base.Preconditions;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
+import org.apache.hadoop.conf.Configuration;
 
 public class TestProperties {
   private final String projectId;
@@ -31,8 +33,13 @@ public class TestProperties {
   private final Optional<String> dataEndpoint;
   private final Optional<String> adminEndpoint;
 
-  public TestProperties(String projectId, String instanceId, String dataflowRegion,
-      String workdir, String cloudDataDir, Optional<String> dataEndpoint,
+  public TestProperties(
+      String projectId,
+      String instanceId,
+      String dataflowRegion,
+      String workdir,
+      String cloudDataDir,
+      Optional<String> dataEndpoint,
       Optional<String> adminEndpoint) {
     this.projectId = projectId;
     this.instanceId = instanceId;
@@ -42,7 +49,6 @@ public class TestProperties {
     this.dataEndpoint = dataEndpoint;
     this.adminEndpoint = adminEndpoint;
   }
-
 
   public String getProjectId() {
     return projectId;
@@ -91,8 +97,6 @@ public class TestProperties {
   }
 
   /** Contains persistent fixture data */
-
-
   public static TestProperties fromSystem() {
     // TODO: once all of the kokoro configs are updated replace this with
     // getProp("dataflow.work-dir")
@@ -110,7 +114,7 @@ public class TestProperties {
         getProp("region"),
         ensureTrailingSlash(workDir),
         ensureTrailingSlash(getProp("cloud.test.data.folder")),
-        Optional.ofNullable(System.getProperty(" google.bigtable.endpoint.host")),
+        Optional.ofNullable(System.getProperty("google.bigtable.endpoint.host")),
         Optional.ofNullable(System.getProperty("google.bigtable.admin.endpoint.host")));
   }
 
@@ -124,6 +128,15 @@ public class TestProperties {
   public void applyTo(GcpOptions opts) {
     opts.setRunner(DataflowRunner.class);
     opts.setProject(getProjectId());
+  }
+
+  public void applyTo(Configuration configuration) {
+    configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, getProjectId());
+    configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, getInstanceId());
+
+    dataEndpoint.ifPresent(e -> configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, e));
+    adminEndpoint.ifPresent(
+        e -> configuration.set(BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY, e));
   }
 
   private static String getProp(String name) {
