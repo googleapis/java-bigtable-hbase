@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.beam.test_env;
 
-import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,13 +22,39 @@ import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
 
-@AutoValue
-public abstract class TestProperties {
-  public abstract String getProjectId();
+public class TestProperties {
+  private final String projectId;
+  private final String instanceId;
+  private final String dataflowRegion;
+  private final String workdir;
+  private final String cloudDataDir;
+  private final Optional<String> dataEndpoint;
+  private final Optional<String> adminEndpoint;
 
-  public abstract String getInstanceId();
+  public TestProperties(String projectId, String instanceId, String dataflowRegion,
+      String workdir, String cloudDataDir, Optional<String> dataEndpoint,
+      Optional<String> adminEndpoint) {
+    this.projectId = projectId;
+    this.instanceId = instanceId;
+    this.dataflowRegion = dataflowRegion;
+    this.workdir = workdir;
+    this.cloudDataDir = cloudDataDir;
+    this.dataEndpoint = dataEndpoint;
+    this.adminEndpoint = adminEndpoint;
+  }
 
-  public abstract String getDataflowRegion();
+
+  public String getProjectId() {
+    return projectId;
+  }
+
+  public String getInstanceId() {
+    return instanceId;
+  }
+
+  public String getDataflowRegion() {
+    return dataflowRegion;
+  }
 
   /**
    * Directory that will store ephemeral data that can be re-populated but the test
@@ -40,7 +65,9 @@ public abstract class TestProperties {
    *   <li>staging - dataflow staged jars
    *   <li>workdir-${uuid} - temporary workdir directory for the a test
    */
-  public abstract String getWorkdir();
+  public String getWorkdir() {
+    return workdir;
+  }
 
   public String getDataflowStagingDir() {
     return ensureTrailingSlash(getWorkdir()) + "staging/";
@@ -51,18 +78,20 @@ public abstract class TestProperties {
   }
 
   // TODO: make this ephemeral
+  public String getCloudDataDir() {
+    return cloudDataDir;
+  }
+
+  public Optional<String> getDataEndpoint() {
+    return dataEndpoint;
+  }
+
+  public Optional<String> getAdminEndpoint() {
+    return adminEndpoint;
+  }
+
   /** Contains persistent fixture data */
-  public abstract String getCloudDataDir();
 
-  public abstract Optional<String> getDataEndpoint();
-
-  public abstract Optional<String> getAdminEndpoint();
-
-  public abstract Optional<Integer> getCellSize();
-
-  public abstract Optional<Integer> getTotalRowCount();
-
-  public abstract Optional<Integer> getPrefixCount();
 
   public static TestProperties fromSystem() {
     // TODO: once all of the kokoro configs are updated replace this with
@@ -75,17 +104,14 @@ public abstract class TestProperties {
     }
     Preconditions.checkNotNull(workDir, "The system property " + workDirKey + " must be specified");
 
-    return new AutoValue_TestProperties(
+    return new TestProperties(
         getProp("google.bigtable.project.id"),
         getProp("google.bigtable.instance.id"),
         getProp("region"),
         ensureTrailingSlash(workDir),
         ensureTrailingSlash(getProp("cloud.test.data.folder")),
         Optional.ofNullable(System.getProperty(" google.bigtable.endpoint.host")),
-        Optional.ofNullable(System.getProperty("google.bigtable.admin.endpoint.host")),
-        Optional.ofNullable(System.getProperty("cell_size")).map(Integer::parseInt),
-        Optional.ofNullable(System.getProperty("total_row_count")).map(Integer::parseInt),
-        Optional.ofNullable(System.getProperty("prefix_count")).map(Integer::parseInt));
+        Optional.ofNullable(System.getProperty("google.bigtable.admin.endpoint.host")));
   }
 
   public void applyTo(DataflowPipelineOptions opts) {

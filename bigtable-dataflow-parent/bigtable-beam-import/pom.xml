@@ -86,6 +86,19 @@ limitations under the License.
       <artifactId>beam-sdks-java-io-hadoop-format</artifactId>
     </dependency>
 
+    <!-- Used transitively by beam, and directly in tests -->
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-runners-core-construction-java</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-vendor-guava-26_0-jre</artifactId>
+      <version>0.1</version>
+      <scope>runtime</scope>
+    </dependency>
+
     <!-- Bigtable Group: ordering doesn't matter since everything is shaded -->
     <dependency>
       <groupId>${project.groupId}</groupId>
@@ -366,6 +379,7 @@ limitations under the License.
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <trimStackTrace>false</trimStackTrace>
+          <skip>true</skip>
         </configuration>
         <executions>
           <execution>
@@ -485,7 +499,7 @@ limitations under the License.
                   <useSystemClassLoader>false</useSystemClassLoader>
 
                   <!-- Run tests in parallel -->
-                  <parallel>methods</parallel>
+                  <parallel>all</parallel>
                   <threadCount>10</threadCount>
                 </configuration>
               </execution>
