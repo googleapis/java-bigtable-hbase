@@ -267,7 +267,10 @@ public class EndToEndIT {
     String nextToken;
     do {
       Objects objects = gcsUtil.listObjects(bucket, restorePathPrefix, null);
-      allObjects.addAll(objects.getItems());
+      List<StorageObject> items = objects.getItems();
+      if (items != null) {
+        allObjects.addAll(items);
+      }
       nextToken = objects.getNextPageToken();
     } while (nextToken != null);
 
