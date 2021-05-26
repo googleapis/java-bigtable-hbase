@@ -203,7 +203,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     String channelId = ChannelPool.extractIdentifier(trailers);
     // Non retry scenario
     if (!retryOptions.enableRetries()
-        || !retryOptions.isRetryable(code)
+        // Rst stream error has INTERNAL code but it's retryable
+        || !(retryOptions.isRetryable(code) || isRstStream(status))
         // Unauthenticated is special because the request never made it to
         // to the server, so all requests are retryable
         || !(isRequestRetryable() || code == Code.UNAUTHENTICATED || code == Code.UNAVAILABLE)) {
@@ -261,6 +262,19 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   protected boolean isRequestRetryable() {
     return rpc.isRetryable(getRetryRequest());
+  }
+
+  private boolean isRstStream(Status status) {
+    if (status.getCode() != Code.INTERNAL) {
+      return false;
+    }
+    String description = status.getDescription();
+    if (description != null) {
+      return description.contains("Received Rst stream")
+          || description.contains("RST_STREAM closed stream")
+          || description.contains("Received RST_STREAM");
+    }
+    return false;
   }
 
   protected void setException(Exception exception) {
