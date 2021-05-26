@@ -376,11 +376,20 @@ limitations under the License.
             </goals>
             <configuration>
               <excludes>
-                <exclude>com.google.cloud.bigtable.beam.it*/*.java</exclude>
+                <exclude>**/*IT.java</exclude>
               </excludes>
             </configuration>
           </execution>
         </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <!-- disable integration tests by default, opt-in via profile -->
+          <skip>true</skip>
+        </configuration>
       </plugin>
 
       <plugin>
@@ -406,20 +415,13 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
-
-
     </plugins>
   </build>
 
   <profiles>
+    <!-- TODO: remove the sequence file profile after kokoro jobs are migrated -->
     <profile>
       <id>sequencefileIntegrationTest</id>
-      <!-- Required properties:
-         google.bigtable.project.id
-         google.bigtable.instance.id
-         google.dataflow.stagingLocation
-         cloud.test.data.folder
-     -->
       <build>
         <plugins>
           <plugin>
@@ -432,16 +434,20 @@ limitations under the License.
                   <goal>integration-test</goal>
                   <goal>verify</goal>
                 </goals>
-                <phase>integration-test</phase>
                 <configuration>
-                  <forkCount>1</forkCount>
+                  <skip>false</skip>
                   <includes>
                     <include>**/sequencefiles/*IT.java</include>
                   </includes>
                   <!-- Use Isolated Classloader so that dataflow can find all files
-                       that must be staged.
-                  -->
+                                         that must be staged.
+                                    -->
+                  <forkCount>1</forkCount>
                   <useSystemClassLoader>false</useSystemClassLoader>
+
+                  <!-- prevent multiple executions from clobering each other -->
+                  <summaryFile>${project.build.directory}/failsafe-reports/sequencefile-tests/failsafe-summary.xml</summaryFile>
+                  <reportsDirectory>${project.build.directory}/failsafe-reports/sequencefile-tests</reportsDirectory>
                 </configuration>
               </execution>
             </executions>
@@ -450,56 +456,37 @@ limitations under the License.
       </build>
     </profile>
 
-    <!-- profile to run all integration tests -->
     <profile>
       <id>beamIntegrationTest</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>beam-integration-test</id>
-                <goals>
-                  <goal>test</goal>
-                </goals>
-                <phase>integration-test</phase>
-                <configuration>
-                  <forkCount>1</forkCount>
-                  <includes>
-                    <include>**/CloudBigtableBeamITTest.java</include>
-                    <include>**/*IT.java</include>
-                  </includes>
-                  <reportNameSuffix>bigtable-beam</reportNameSuffix>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-
-    <profile>
-      <id>hbasesnapshotsIntegrationTest</id>
+      <!-- Requires system properties to be set, see TestProperties.java -->
       <build>
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-failsafe-plugin</artifactId>
+            <version>3.0.0-M4</version>
             <executions>
               <execution>
-                <id>hbasesnapshots-integration-test</id>
+                <id>beam-integration-test</id>
                 <goals>
                   <goal>integration-test</goal>
+                  <goal>verify</goal>
                 </goals>
-                <phase>integration-test</phase>
+
                 <configuration>
-                  <forkCount>1</forkCount>
+                  <skip>false</skip>
                   <includes>
-                    <include>**/hbasesnapshots/*IT.java</include>
+                    <include>**/*IT.java</include>
                   </includes>
+                  <!-- Use Isolated Classloader so that dataflow can find all files
+                       that must be staged.
+                  -->
+                  <forkCount>1</forkCount>
                   <useSystemClassLoader>false</useSystemClassLoader>
+
+                  <!-- Run tests in parallel -->
+                  <parallel>methods</parallel>
+                  <threadCount>10</threadCount>
                 </configuration>
               </execution>
             </executions>
