@@ -25,6 +25,7 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.DeadlineGenerator;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
+import com.google.cloud.bigtable.grpc.scanner.RetryingReadRowsOperation;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
@@ -265,7 +266,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
   }
 
   private boolean isRstStream(Status status) {
-    if (status.getCode() != Code.INTERNAL) {
+    if (!(this instanceof RetryingReadRowsOperation) || status.getCode() != Code.INTERNAL) {
       return false;
     }
     String description = status.getDescription();
