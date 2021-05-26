@@ -49,14 +49,17 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
+import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.shaded.org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -79,11 +82,12 @@ public class CloudBigtableBeamIT {
 
   private TestProperties properties;
   private TableName tableName;
+  private Connection connection;
 
   private static final byte[] FAMILY = Bytes.toBytes("test-family");
   private static final byte[] QUALIFIER = Bytes.toBytes("test-qualifier");
   private static final int CELL_SIZE = Integer.getInteger("cell_size", 1_000);
-  private static final long TOTAL_ROW_COUNT = Integer.getInteger("total_row_count", 1_000_000);
+  private static final long TOTAL_ROW_COUNT = Integer.getInteger("total_row_count", 100_000);
   private static final int PREFIX_COUNT = Integer.getInteger("prefix_count", 1_000);
 
   @Before
@@ -96,13 +100,19 @@ public class CloudBigtableBeamIT {
     properties.getDataEndpoint().ifPresent(s -> config.set(BIGTABLE_HOST_KEY, s));
     properties.getAdminEndpoint().ifPresent(s -> config.set(BIGTABLE_ADMIN_HOST_KEY, s));
 
+    connection = BigtableConfiguration.connect(config);
+
     // TODO: use timebased names to enable GC
     tableName = TableName.valueOf("test-" + UUID.randomUUID());
-    try (Connection conn = BigtableConfiguration.connect(config);
-        Admin admin = conn.getAdmin()) {
-      admin.createTable(new HTableDescriptor(tableName).addFamily(new HColumnDescriptor(FAMILY)));
-      LOG.info(String.format("Created a table to perform batching: %s", tableName));
-    }
+    Admin admin = connection.getAdmin();
+    admin.createTable(new HTableDescriptor(tableName).addFamily(new HColumnDescriptor(FAMILY)));
+    LOG.info(String.format("Created a table to perform batching: %s", tableName));
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    connection.getAdmin().deleteTable(tableName);
+    connection.close();
   }
 
   private static final DoFn<String, Mutation> WRITE_ONE_TENTH_PERCENT =
@@ -125,7 +135,8 @@ public class CloudBigtableBeamIT {
         }
       };
 
-  private void testWriteToBigtable() {
+  @Test
+  public void testWriteToBigtable() throws IOException {
     DataflowPipelineOptions options = PipelineOptionsFactory.as(DataflowPipelineOptions.class);
     properties.applyTo(options);
     options.setAppName("testWriteToBigtable-" + System.currentTimeMillis());
@@ -162,9 +173,34 @@ public class CloudBigtableBeamIT {
             .waitUntilFinish();
 
     Assert.assertEquals(PipelineResult.State.DONE, result);
+
+    try (ResultScanner scanner =
+        connection.getTable(tableName).getScanner(new Scan().setFilter(new KeyOnlyFilter()))) {
+      int count = 0;
+      while (scanner.next() != null) {
+        count++;
+      }
+      Assert.assertEquals(TOTAL_ROW_COUNT, count);
+    }
   }
 
-  private Pipeline testReadFromBigtable() {
+  @Test
+  public void testReadFromBigtable() throws IOException {
+    // Populate the data
+    try (BufferedMutator batcher = connection.getBufferedMutator(tableName)) {
+      int rowCount = 0;
+      for (int i = 0; i < PREFIX_COUNT; i++) {
+        String prefix = RandomStringUtils.randomAlphanumeric(10);
+
+        int max = (int) (TOTAL_ROW_COUNT / PREFIX_COUNT);
+        for (int j = 0; j < max && rowCount < TOTAL_ROW_COUNT; j++) {
+          batcher.mutate(
+              new Put(Bytes.toBytes(prefix + (rowCount++)))
+                  .addColumn(FAMILY, QUALIFIER, createRandomValue()));
+        }
+      }
+    }
+
     DataflowPipelineOptions options = PipelineOptionsFactory.as(DataflowPipelineOptions.class);
     properties.applyTo(options);
     options.setJobName("testReadFromBigtable-" + System.currentTimeMillis());
@@ -194,26 +230,12 @@ public class CloudBigtableBeamIT {
     PCollection<Long> count =
         pipeLine
             .apply("Read from BT", Read.from(CloudBigtableIO.read(config)))
-            .apply("Count", Count.<Result>globally());
+            .apply("Count", Count.globally());
 
     PAssert.thatSingleton(count).isEqualTo(TOTAL_ROW_COUNT);
-    return pipeLine;
-  }
 
-  @Test
-  public void testRunner() {
-    try {
-      // Submitted write pipeline to mutate the Bigtable.
-      testWriteToBigtable();
-
-      Pipeline result = testReadFromBigtable();
-      PipelineResult.State readJobStatue = result.run().waitUntilFinish();
-
-      Assert.assertEquals(PipelineResult.State.DONE, readJobStatue);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-      throw new AssertionError("Exception occurred while pipeline execution");
-    }
+    PipelineResult.State result = pipeLine.run().waitUntilFinish();
+    Assert.assertEquals(PipelineResult.State.DONE, result);
   }
 
   private static byte[] createRandomValue() {
