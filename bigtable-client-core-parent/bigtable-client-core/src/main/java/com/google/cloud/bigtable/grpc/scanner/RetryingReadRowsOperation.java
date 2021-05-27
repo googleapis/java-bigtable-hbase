@@ -247,18 +247,17 @@ public class RetryingReadRowsOperation
   /** Read rows requests are retryable if the status is a rst stream error. */
   @Override
   protected boolean isStatusRetryable(Status status) {
-    return isRstStream(status);
+    return retryOptions.isRetryable(status.getCode()) || isRstStream(status);
   }
 
   private boolean isRstStream(Status status) {
-    if (!(this instanceof RetryingReadRowsOperation) || status.getCode() != Code.INTERNAL) {
-      return false;
-    }
-    String description = status.getDescription();
-    if (description != null) {
-      return description.contains("Received Rst stream")
-          || description.contains("RST_STREAM closed stream")
-          || description.contains("Received RST_STREAM");
+    if (status.getCode() == Code.INTERNAL) {
+      String description = status.getDescription();
+      if (description != null) {
+        return description.contains("Received Rst stream")
+            || description.contains("RST_STREAM closed stream")
+            || description.contains("Received RST_STREAM");
+      }
     }
     return false;
   }
