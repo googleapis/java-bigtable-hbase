@@ -97,8 +97,10 @@ public class CloudBigtableBeamIT {
 
     Configuration config =
         BigtableConfiguration.configure(properties.getProjectId(), properties.getInstanceId());
-    properties.getDataEndpoint().ifPresent(s -> config.set(BIGTABLE_HOST_KEY, s));
-    properties.getAdminEndpoint().ifPresent(s -> config.set(BIGTABLE_ADMIN_HOST_KEY, s));
+    properties.getDataEndpoint().ifPresent(endpoint -> config.set(BIGTABLE_HOST_KEY, endpoint));
+    properties
+        .getAdminEndpoint()
+        .ifPresent(endpoint -> config.set(BIGTABLE_ADMIN_HOST_KEY, endpoint));
 
     connection = BigtableConfiguration.connect(config);
 
@@ -151,10 +153,10 @@ public class CloudBigtableBeamIT {
 
     properties
         .getDataEndpoint()
-        .ifPresent(s -> configBuilder.withConfiguration(BIGTABLE_HOST_KEY, s));
+        .ifPresent(endpoint -> configBuilder.withConfiguration(BIGTABLE_HOST_KEY, endpoint));
     properties
         .getAdminEndpoint()
-        .ifPresent(s -> configBuilder.withConfiguration(BIGTABLE_ADMIN_HOST_KEY, s));
+        .ifPresent(endpoint -> configBuilder.withConfiguration(BIGTABLE_ADMIN_HOST_KEY, endpoint));
 
     CloudBigtableTableConfiguration config = configBuilder.build();
 
@@ -219,10 +221,10 @@ public class CloudBigtableBeamIT {
 
     properties
         .getDataEndpoint()
-        .ifPresent(s -> configBuilder.withConfiguration(BIGTABLE_HOST_KEY, s));
+        .ifPresent(endpoint -> configBuilder.withConfiguration(BIGTABLE_HOST_KEY, endpoint));
     properties
         .getAdminEndpoint()
-        .ifPresent(s -> configBuilder.withConfiguration(BIGTABLE_ADMIN_HOST_KEY, s));
+        .ifPresent(endpoint -> configBuilder.withConfiguration(BIGTABLE_ADMIN_HOST_KEY, endpoint));
 
     CloudBigtableScanConfiguration config = configBuilder.build();
 
