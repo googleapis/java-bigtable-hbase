@@ -25,7 +25,6 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.DeadlineGenerator;
 import com.google.cloud.bigtable.grpc.io.ChannelPool;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
-import com.google.cloud.bigtable.grpc.scanner.RetryingReadRowsOperation;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
@@ -204,8 +203,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     String channelId = ChannelPool.extractIdentifier(trailers);
     // Non retry scenario
     if (!retryOptions.enableRetries()
-        // Rst stream error has INTERNAL code but it's retryable
-        || !(retryOptions.isRetryable(code) || isRstStream(status))
+        || !(retryOptions.isRetryable(code) || isStatusRetryable(status))
         // Unauthenticated is special because the request never made it to
         // to the server, so all requests are retryable
         || !(isRequestRetryable() || code == Code.UNAUTHENTICATED || code == Code.UNAVAILABLE)) {
@@ -265,16 +263,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     return rpc.isRetryable(getRetryRequest());
   }
 
-  private boolean isRstStream(Status status) {
-    if (!(this instanceof RetryingReadRowsOperation) || status.getCode() != Code.INTERNAL) {
-      return false;
-    }
-    String description = status.getDescription();
-    if (description != null) {
-      return description.contains("Received Rst stream")
-          || description.contains("RST_STREAM closed stream")
-          || description.contains("Received RST_STREAM");
-    }
+  protected boolean isStatusRetryable(Status status) {
     return false;
   }
 
