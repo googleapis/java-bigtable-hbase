@@ -1,5 +1,14 @@
 # Changelog
 
+### [1.20.1](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.20.0...v1.20.1) (2021-06-01)
+
+
+### Bug Fixes
+
+* fix buildSyncTableConfig naming ([#2968](https://www.github.com/googleapis/java-bigtable-hbase/issues/2968)) ([df30fb2](https://www.github.com/googleapis/java-bigtable-hbase/commit/df30fb210138ec2216c6e2034755dc32292317df))
+* Refactoring methods in TemplateUtils. Using CamelCasing for names. ([#2967](https://www.github.com/googleapis/java-bigtable-hbase/issues/2967)) ([#2970](https://www.github.com/googleapis/java-bigtable-hbase/issues/2970)) ([cedd6d8](https://www.github.com/googleapis/java-bigtable-hbase/commit/cedd6d80aaf15ffa16f76978f3e14204b224de83))
+* retry rst stream ([#3000](https://www.github.com/googleapis/java-bigtable-hbase/issues/3000)) ([914d65f](https://www.github.com/googleapis/java-bigtable-hbase/commit/914d65fb032d6069b7266fd439d29a8ad0c74777))
+
 ## [1.20.0](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.19.2...v1.20.0) (2021-05-11)
 
 
