@@ -11,7 +11,7 @@ you can build them using Maven.
 
 [//]: # ({x-version-update-start:bigtable-dataflow-parent:released})
 ### Download the jars
-Download [the import/export jars](http://search.maven.org/remotecontent?filepath=com/google/cloud/bigtable/bigtable-beam-import/1.14.1/bigtable-beam-import-1.14.1-shaded.jar), which is an aggregation of all required jars.
+Download [the import/export jars](http://search.maven.org/remotecontent?filepath=com/google/cloud/bigtable/bigtable-beam-import/1.20.0/bigtable-beam-import-1.20.0-shaded.jar), which is an aggregation of all required jars.
 
 ### Build the jars yourself
 
@@ -30,7 +30,7 @@ cd bigtable-dataflow-parent/bigtable-beam-import
 ## Data export pipeline
 
 You can export data into a snapshot or into sequence files. If you're migrating
-your data from HBase to Bigtable using snapshots is the preferred method. 
+your data from HBase to Bigtable, using snapshots is the preferred method. 
 
 ### Exporting snapshots from HBase
 
@@ -42,6 +42,8 @@ Perform these steps from Unix shell on an HBase edge node.
     SNAPSHOT_NAME=your-snapshot-name 
     SNAPSHOT_EXPORT_PATH=/hbase-migration-snap
     BUCKET_NAME="gs://bucket-name"
+   
+    NUM_MAPPERS=16
     ```
 1. Take the snapshot
     ```
@@ -51,9 +53,10 @@ Perform these steps from Unix shell on an HBase edge node.
 1. Export the snapshot   
     ```
     hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot $SNAPSHOT_NAME \
-        -copy-to $BUCKET_NAME$SNAPSHOT_EXPORT_PATH/data -mappers 16
+        -copy-to $BUCKET_NAME$SNAPSHOT_EXPORT_PATH/data -mappers NUM_MAPPERS
     ```
 1. Create hashes for the table to be used during the data validation step.
+[Visit the HBase documentation for more information on each parameter](http://hbase.apache.org/book.html#_step_1_hashtable).
    ```
    hbase org.apache.hadoop.hbase.mapreduce.HashTable --batchsize=10 --numhashfiles=10 \
    $TABLE_NAME $BUCKET_NAME$SNAPSHOT_EXPORT_PATH/hashtable
@@ -69,7 +72,7 @@ Perform these steps from Unix shell on an HBase edge node.
     hadoop fs -mkdir -p ${EXPORTDIR}
     MAXVERSIONS=2147483647
     ```
-1. In your HBase home directory run the export commands. 
+1. On an edge node, that has HBase classpath configured, run the export commands. 
     ```
     cd $HBASE_HOME
     bin/hbase org.apache.hadoop.hbase.mapreduce.Export $TABLE_NAME \
@@ -102,7 +105,7 @@ Exporting HBase snapshots from Bigtable is not supported.
     ```
 1. Run the export.
    ```
-   java -jar bigtable-beam-import-1.14.1-shaded.jar export \
+   java -jar bigtable-beam-import-1.20.0-shaded.jar export \
         --runner=dataflow \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
@@ -142,7 +145,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
     
 1. Run the import.
     ```
-    java -jar bigtable-beam-import-1.14.1-SNAPSHOT-shaded.jar importsnapshot \
+    java -jar bigtable-beam-import-1.20.0-SNAPSHOT-shaded.jar importsnapshot \
         --runner=DataflowRunner \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
@@ -151,6 +154,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
         --snapshotName=$SNAPSHOT_NAME \
         --stagingLocation=$SNAPSHOT_GCS_PATH/staging \
         --tempLocation=$SNAPSHOT_GCS_PATH/temp \
+        --maxWorkerNodes= \
         --region=$REGION
     ```
 
@@ -169,7 +173,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
     ```
 1. Run the import.
     ```
-    java -jar bigtable-beam-import-1.14.1-shaded.jar import \
+    java -jar bigtable-beam-import-1.20.0-shaded.jar import \
         --runner=dataflow \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_D \
@@ -199,7 +203,7 @@ check if there are any rows with mismatched data.
 so if you run the command multiple times, you might want to add a number to the output,
 like so `$SNAPSHOT_GCS_PATH/data-verification/output-1`. 
     ```
-    java -jar bigtable-beam-import-1.14.1-SNAPSHOT-shaded.jar sync-table  \
+    java -jar bigtable-beam-import-1.20.0-SNAPSHOT-shaded.jar sync-table  \
         --runner=dataflow \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_D \
