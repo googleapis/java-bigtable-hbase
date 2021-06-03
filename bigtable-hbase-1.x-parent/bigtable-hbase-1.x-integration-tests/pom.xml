@@ -398,12 +398,14 @@ limitations under the License.
     <dependency>
       <groupId>com.google.auth</groupId>
       <artifactId>google-auth-library-credentials</artifactId>
+      <version>0.25.2-sp.1</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>com.google.auth</groupId>
       <artifactId>google-auth-library-oauth2-http</artifactId>
+      <version>0.25.2-sp.1</version>
       <scope>test</scope>
     </dependency>
 
@@ -425,6 +427,7 @@ limitations under the License.
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
       <scope>test</scope>
+      <version>3.16.0</version>
     </dependency>
 
     <dependency>
@@ -438,30 +441,35 @@ limitations under the License.
       <groupId>io.grpc</groupId>
       <artifactId>grpc-alts</artifactId>
       <scope>test</scope>
+      <version>1.36.1</version>
     </dependency>
 
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-api</artifactId>
       <scope>test</scope>
+      <version>1.36.1</version>
     </dependency>
 
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-grpclb</artifactId>
       <scope>test</scope>
+      <version>1.36.1</version>
     </dependency>
 
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-netty-shaded</artifactId>
       <scope>test</scope>
+      <version>1.36.1</version>
     </dependency>
 
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-stub</artifactId>
       <scope>test</scope>
+      <version>1.36.1</version>
     </dependency>
 
 

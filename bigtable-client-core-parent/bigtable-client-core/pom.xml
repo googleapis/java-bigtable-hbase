@@ -104,6 +104,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.api</groupId>
       <artifactId>gax</artifactId>
+      <version>1.64.0-sp.1</version>
     </dependency>
     <dependency>
       <groupId>com.google.cloud</groupId>
@@ -122,6 +123,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.auth</groupId>
       <artifactId>google-auth-library-oauth2-http</artifactId>
+      <version>0.25.2-sp.1</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.guava</groupId>
@@ -132,10 +134,12 @@ limitations under the License.
     <dependency>
       <groupId>com.google.auth</groupId>
       <artifactId>google-auth-library-credentials</artifactId>
+      <version>0.25.2-sp.1</version>
     </dependency>
     <dependency>
       <groupId>com.google.http-client</groupId>
       <artifactId>google-http-client</artifactId>
+      <version>1.39.2-sp.1</version>
     </dependency>
     <dependency>
       <groupId>com.google.cloud</groupId>
@@ -146,56 +150,69 @@ limitations under the License.
     <dependency>
       <groupId>com.google.api</groupId>
       <artifactId>api-common</artifactId>
+      <version>1.10.1-sp.1</version>
     </dependency>
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
+      <version>3.16.0</version>
     </dependency>
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java-util</artifactId>
+      <version>3.16.0</version>
     </dependency>
 
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-protobuf</artifactId>
+      <version>1.36.1</version>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-api</artifactId>
+      <version>1.36.1</version>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-alts</artifactId>
+      <version>1.36.1</version>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-core</artifactId>
+      <version>1.36.1</version>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-context</artifactId>
+      <version>1.36.1</version>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-stub</artifactId>
+      <version>1.36.1</version>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-grpclb</artifactId>
+      <version>1.36.1</version>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-netty-shaded</artifactId>
+      <version>1.36.1</version>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-auth</artifactId>
+      <version>1.36.1</version>
     </dependency>
 
     <dependency>
       <groupId>com.google.api</groupId>
       <artifactId>gax-grpc</artifactId>
+      <version>1.64.0-sp.1</version>
     </dependency>
 
     <!-- Metrics -->
@@ -234,6 +251,7 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-testing</artifactId>
+      <version>1.36.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>

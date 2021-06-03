@@ -83,11 +83,13 @@ limitations under the License.
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-stub</artifactId>
+      <version>1.36.1</version>
     </dependency>
 
     <dependency>
       <groupId>com.google.api</groupId>
       <artifactId>api-common</artifactId>
+      <version>1.10.1-sp.1</version>
     </dependency>
     <dependency>
       <groupId>com.google.api.grpc</groupId>
@@ -117,6 +119,7 @@ limitations under the License.
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-api</artifactId>
+      <version>1.36.1</version>
     </dependency>
     <dependency>
       <groupId>com.google.api.grpc</groupId>

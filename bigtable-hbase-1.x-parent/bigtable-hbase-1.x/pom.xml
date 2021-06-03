@@ -73,6 +73,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.api</groupId>
       <artifactId>api-common</artifactId>
+      <version>1.10.1-sp.1</version>
     </dependency>
     <dependency>
       <groupId>com.google.api.grpc</groupId>
@@ -81,6 +82,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
+      <version>3.16.0</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -100,6 +102,7 @@ limitations under the License.
       <groupId>io.grpc</groupId>
       <artifactId>grpc-api</artifactId>
       <scope>compile</scope>
+      <version>1.36.1</version>
     </dependency>
 
     <!-- These are direct dependencies of TestBigtableConnection.java which is in test scope,
@@ -109,11 +112,13 @@ limitations under the License.
       <groupId>io.grpc</groupId>
       <artifactId>grpc-api</artifactId>
       <scope>compile</scope>
+      <version>1.36.1</version>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-stub</artifactId>
       <scope>compile</scope>
+      <version>1.36.1</version>
     </dependency>
     <dependency>
       <groupId>com.google.api.grpc</groupId>
