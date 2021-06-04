@@ -75,13 +75,9 @@ Perform these steps from Unix shell on an HBase edge node.
 1. On an edge node, that has HBase classpath configured, run the export commands. 
     ```
     cd $HBASE_HOME
-    bin/hbase org.apache.hadoop.hbase.mapreduce.Export $TABLE_NAME \
-        /user/hbase-$TABLE_NAME \
-        -export $MAXVERSIONS
     bin/hbase org.apache.hadoop.hbase.mapreduce.Export \
         -Dmapred.output.compress=true \
         -Dmapred.output.compression.codec=org.apache.hadoop.io.compress.GzipCodec \
-        -DRAW_SCAN=true \
         -Dhbase.client.scanner.caching=100 \
         -Dmapred.map.tasks.speculative.execution=false \
         -Dmapred.reduce.tasks.speculative.execution=false \
@@ -154,7 +150,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
         --snapshotName=$SNAPSHOT_NAME \
         --stagingLocation=$SNAPSHOT_GCS_PATH/staging \
         --tempLocation=$SNAPSHOT_GCS_PATH/temp \
-        --maxWorkerNodes= \
+        --maxWorkerNodes=$(expr 3 \* $CLUSTER_NUM_NODES) \
         --region=$REGION
     ```
 
@@ -199,16 +195,14 @@ check if there are any rows with mismatched data.
     
     SNAPSHOT_GCS_PATH="$BUCKET_NAME/hbase-migration-snap"
     ```
-1. Run the sync job. It will put the results into `$SNAPSHOT_GCS_PATH/data-verification/output`,
-so if you run the command multiple times, you might want to add a number to the output,
-like so `$SNAPSHOT_GCS_PATH/data-verification/output-1`. 
+1. Run the sync job. It will put the results into `$SNAPSHOT_GCS_PATH/data-verification/output-TIMESTAMP`. 
     ```
     java -jar bigtable-beam-import-1.20.0-SNAPSHOT-shaded.jar sync-table  \
         --runner=dataflow \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_D \
         --bigtableTableId=$TABLE_NAME \
-        --outputPrefix=$SNAPSHOT_GCS_PATH/sync-table/output \
+        --outputPrefix=$SNAPSHOT_GCS_PATH/sync-table/output-${date +"%s"} \
         --stagingLocation=$SNAPSHOT_GCS_PATH/sync-table/staging \
         --hashTableOutputDir=$SNAPSHOT_GCS_PATH/hashtable \
         --tempLocation=$SNAPSHOT_GCS_PATH/sync-table/dataflow-test/temp \
