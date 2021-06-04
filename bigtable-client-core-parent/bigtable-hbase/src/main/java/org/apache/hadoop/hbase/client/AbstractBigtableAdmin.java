@@ -21,7 +21,6 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
-import com.google.api.gax.rpc.ApiExceptions;
 import com.google.api.gax.rpc.FailedPreconditionException;
 import com.google.cloud.bigtable.admin.v2.internal.NameUtil;
 import com.google.cloud.bigtable.admin.v2.models.Backup;
@@ -35,6 +34,7 @@ import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
+import com.google.cloud.bigtable.hbase.util.FutureUtil;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase.wrappers.AdminClientWrapper;
@@ -42,7 +42,6 @@ import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
@@ -271,8 +270,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public TableName[] listTableNames() throws IOException {
     // tablesList contains list of tableId.
-    List<String> tablesList =
-        ApiExceptions.callAndTranslateApiException(adminClientWrapper.listTablesAsync());
+    List<String> tablesList = FutureUtil.unwrap(adminClientWrapper.listTablesAsync());
 
     TableName[] result = new TableName[tablesList.size()];
     for (int i = 0; i < tablesList.size(); i++) {
@@ -290,8 +288,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
 
     try {
       return TableAdapter.adapt(
-          ApiExceptions.callAndTranslateApiException(
-              adminClientWrapper.getTableAsync(tableName.getNameAsString())));
+          FutureUtil.unwrap(adminClientWrapper.getTableAsync(tableName.getNameAsString())));
     } catch (Throwable throwable) {
       if (Status.fromThrowable(throwable).getCode() == Status.Code.NOT_FOUND) {
         throw new TableNotFoundException(tableName);
@@ -365,7 +362,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
    */
   protected void createTable(TableName tableName, CreateTableRequest request) throws IOException {
     try {
-      ApiExceptions.callAndTranslateApiException(adminClientWrapper.createTableAsync(request));
+      FutureUtil.unwrap(adminClientWrapper.createTableAsync(request));
     } catch (Throwable throwable) {
       throw convertToTableExistsException(tableName, throwable);
     }
@@ -418,8 +415,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void deleteTable(TableName tableName) throws IOException {
     try {
-      ApiExceptions.callAndTranslateApiException(
-          adminClientWrapper.deleteTableAsync(tableName.getNameAsString()));
+      FutureUtil.unwrap(adminClientWrapper.deleteTableAsync(tableName.getNameAsString()));
     } catch (Throwable throwable) {
       throw new IOException(
           String.format("Failed to delete table '%s'", tableName.getNameAsString()), throwable);
@@ -620,7 +616,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
       try {
         ModifyColumnFamiliesRequest request =
             buildModifications(newDescriptor, getTableDescriptor(tableName)).build();
-        ApiExceptions.callAndTranslateApiException(adminClientWrapper.modifyFamiliesAsync(request));
+        FutureUtil.unwrap(adminClientWrapper.modifyFamiliesAsync(request));
       } catch (Throwable throwable) {
         throw new IOException(
             String.format("Failed to modify table '%s'", tableName.getNameAsString()), throwable);
@@ -643,8 +639,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
       TableName tableName, String columnName, String modificationType, ModifyTableBuilder builder)
       throws IOException {
     try {
-      ApiExceptions.callAndTranslateApiException(
-          adminClientWrapper.modifyFamiliesAsync(builder.build()));
+      FutureUtil.unwrap(adminClientWrapper.modifyFamiliesAsync(builder.build()));
       return null;
     } catch (Throwable throwable) {
       throw new IOException(
@@ -785,8 +780,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
       LOG.info("truncate will preserveSplits. The passed in variable is ignored.");
     }
     try {
-      ApiExceptions.callAndTranslateApiException(
-          adminClientWrapper.dropAllRowsAsync(tableName.getNameAsString()));
+      FutureUtil.unwrap(adminClientWrapper.dropAllRowsAsync(tableName.getNameAsString()));
     } catch (Throwable throwable) {
       throw new IOException(
           String.format("Failed to truncate table '%s'", tableName.getNameAsString()), throwable);
@@ -803,7 +797,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
    */
   public void deleteRowRangeByPrefix(TableName tableName, byte[] prefix) throws IOException {
     try {
-      ApiExceptions.callAndTranslateApiException(
+      FutureUtil.unwrap(
           adminClientWrapper.dropRowRangeAsync(
               tableName.getNameAsString(), ByteString.copyFrom(prefix)));
     } catch (Throwable throwable) {
@@ -908,7 +902,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     RestoreTableRequest request =
         RestoreTableRequest.of(getBackupClusterId(), snapshotId)
             .setTableId(tableName.getNameAsString());
-    Futures.getChecked(adminClientWrapper.restoreTableAsync(request), IOException.class);
+    FutureUtil.unwrap(adminClientWrapper.restoreTableAsync(request));
   }
 
   /** {@inheritDoc} */
@@ -925,9 +919,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
       return;
     }
 
-    Futures.getChecked(
-        adminClientWrapper.deleteBackupAsync(getBackupClusterName().getClusterId(), snapshotId),
-        IOException.class);
+    FutureUtil.unwrap(
+        adminClientWrapper.deleteBackupAsync(getBackupClusterName().getClusterId(), snapshotId));
   }
 
   protected Backup snapshotTable(String snapshotId, TableName tableName) throws IOException {
@@ -947,7 +940,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     Instant expireTime = Instant.now().plus(ttlSecondsForBackup, ChronoUnit.SECONDS);
     request.setExpireTime(expireTime);
 
-    return Futures.getChecked(adminClientWrapper.createBackupAsync(request), IOException.class);
+    return FutureUtil.unwrap(adminClientWrapper.createBackupAsync(request));
   }
 
   @Override

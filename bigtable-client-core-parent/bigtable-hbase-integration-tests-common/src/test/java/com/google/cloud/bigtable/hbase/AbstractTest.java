@@ -20,10 +20,6 @@ import java.io.IOException;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.AssumptionViolatedException;
-import org.junit.Rule;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 
 public abstract class AbstractTest {
 
@@ -31,39 +27,6 @@ public abstract class AbstractTest {
 
   protected static DataGenerationHelper dataHelper = new DataGenerationHelper();
   protected Logger logger = new Logger(this.getClass());
-
-  @Rule
-  public TestWatcher loggingRule =
-      new TestWatcher() {
-        private long start;
-
-        @Override
-        public void starting(Description description) {
-          this.start = System.currentTimeMillis();
-          logger.info("Starting: %s", description.getDisplayName());
-        }
-
-        @Override
-        protected void failed(Throwable e, Description description) {
-          logger.warn(
-              "Test: %s failed in %d ms.",
-              e, description.getDisplayName(), System.currentTimeMillis() - start);
-        }
-
-        @Override
-        protected void succeeded(Description description) {
-          logger.info(
-              "Test: %s succeeded in %d ms.",
-              description.getDisplayName(), System.currentTimeMillis() - start);
-        }
-
-        @Override
-        protected void skipped(AssumptionViolatedException e, Description description) {
-          logger.info(
-              "Test: %s skipped in %d ms.",
-              description.getDisplayName(), System.currentTimeMillis() - start);
-        }
-      };
 
   // This is for when we need to look at the results outside of the current connection
   protected Connection createNewConnection() throws IOException {

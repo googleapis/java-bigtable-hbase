@@ -16,37 +16,58 @@
 package com.google.cloud.bigtable.hbase.wrappers.veneer;
 
 import com.google.api.core.InternalApi;
+import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.cloud.bigtable.admin.v2.BigtableInstanceAdminClient;
 import com.google.cloud.bigtable.admin.v2.BigtableInstanceAdminSettings;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminClient;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
+import com.google.cloud.bigtable.data.v2.stub.EnhancedBigtableStubSettings;
 import com.google.cloud.bigtable.hbase.wrappers.AdminClientWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
+import com.google.cloud.bigtable.metrics.Counter;
 import java.io.IOException;
 
 /** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
 public class BigtableVeneerApi extends BigtableApi {
+
+  private final Counter activeSessions =
+      BigtableClientMetrics.counter(MetricLevel.Info, "session.active");
+
   private static final SharedDataClientWrapperFactory sharedClientFactory =
       new SharedDataClientWrapperFactory();
   private final DataClientWrapper dataClientWrapper;
   private final AdminClientWrapper adminClientWrapper;
+  private final int channelPoolSize;
 
   public BigtableVeneerApi(BigtableHBaseVeneerSettings settings) throws IOException {
     super(settings);
 
+    // active channel count is hard coded at client creation time based on the setting. If
+    // transportChannelProvider in the data setting is not InstantiatingGrpcChannelProvider, this
+    // count wil not be present. If channel pool caching is enabled, channel pool size is calculated
+    // in SharedDataClientWrapperFactory to avoid incrementing/decrementing the same channel
+    // multiple times for the same key.
     if (settings.isChannelPoolCachingEnabled()) {
       dataClientWrapper = sharedClientFactory.createDataClient(settings);
+      channelPoolSize = 0;
     } else {
       dataClientWrapper =
           new DataClientVeneerApi(BigtableDataClient.create(settings.getDataSettings()));
+      channelPoolSize = getChannelPoolSize(settings.getDataSettings().getStubSettings());
+      for (int i = 0; i < channelPoolSize; i++) {
+        BigtableClientMetrics.counter(MetricLevel.Info, "grpc.channel.active").inc();
+      }
     }
     BigtableInstanceAdminSettings instanceAdminSettings = settings.getInstanceAdminSettings();
     adminClientWrapper =
         new AdminClientVeneerApi(
             BigtableTableAdminClient.create(settings.getTableAdminSettings()),
             BigtableInstanceAdminClient.create(instanceAdminSettings));
+    activeSessions.inc();
   }
 
   @Override
@@ -63,5 +84,18 @@ public class BigtableVeneerApi extends BigtableApi {
   public void close() throws IOException {
     dataClientWrapper.close();
     adminClientWrapper.close();
+    activeSessions.dec();
+    for (int i = 0; i < channelPoolSize; i++) {
+      BigtableClientMetrics.counter(MetricLevel.Info, "grpc.channel.active").dec();
+    }
+  }
+
+  static int getChannelPoolSize(EnhancedBigtableStubSettings stubSettings) {
+    if (stubSettings.getTransportChannelProvider() instanceof InstantiatingGrpcChannelProvider) {
+      InstantiatingGrpcChannelProvider channelProvider =
+          (InstantiatingGrpcChannelProvider) stubSettings.getTransportChannelProvider();
+      return channelProvider.toBuilder().getPoolSize();
+    }
+    return 0;
   }
 }

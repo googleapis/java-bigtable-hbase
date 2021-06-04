@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 import io.grpc.Metadata;
 import io.grpc.Status;
+import io.grpc.Status.Code;
 import io.grpc.stub.ClientResponseObserver;
 import io.grpc.stub.StreamObserver;
 import io.opencensus.trace.AttributeValue;
@@ -241,6 +242,24 @@ public class RetryingReadRowsOperation
   @Override
   protected boolean isRequestRetryable() {
     return true;
+  }
+
+  /** Read rows requests are retryable if the status is a rst stream error. */
+  @Override
+  protected boolean isStatusRetryable(Status status) {
+    return retryOptions.isRetryable(status.getCode()) || isRstStream(status);
+  }
+
+  private boolean isRstStream(Status status) {
+    if (status.getCode() == Code.INTERNAL) {
+      String description = status.getDescription();
+      if (description != null) {
+        return description.contains("Received Rst stream")
+            || description.contains("RST_STREAM closed stream")
+            || description.contains("Received RST_STREAM");
+      }
+    }
+    return false;
   }
 
   /** {@inheritDoc} */

@@ -518,6 +518,26 @@ public class RetryingReadRowsOperationTest {
     Assert.assertTrue(underTest.getRowMerger().isComplete());
   }
 
+  @Test
+  public void testRetryRstStream() throws Exception {
+    RetryingReadRowsOperation underTest = createOperation();
+    start(underTest);
+
+    ByteString key1 = ByteString.copyFrom("SomeKey1", "UTF-8");
+    ByteString key2 = ByteString.copyFrom("SomeKey2", "UTF-8");
+    underTest.onMessage(buildResponse(key1));
+    underTest.onClose(
+        Status.INTERNAL.withDescription("HTTP/2 error code: INTERNAL_ERROR\nReceived Rst stream"),
+        null);
+    Assert.assertFalse(underTest.getRowMerger().isComplete());
+    underTest.onMessage(buildResponse(key2));
+    verify(mockFlatRowObserver, times(2)).onNext(any(FlatRow.class));
+    checkRetryRequest(underTest, key2, 8);
+    verify(mockClientCall, times(4)).request(eq(1));
+
+    finishOK(underTest, 1);
+  }
+
   protected void performTimeout(RetryingReadRowsOperation underTest) {
     underTest.onClose(
         Status.CANCELLED.withCause(
