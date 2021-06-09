@@ -405,6 +405,15 @@ public class TestBulkMutation {
   }
 
   @Test
+  public void testMaxMutations() {
+    MutateRowsRequest.Entry.Builder bigRequest = createRequestEntry().toBuilder();
+    bigRequest.addAllMutations(
+        Collections.nCopies(
+            (int) BulkMutation.MAX_NUMBER_OF_MUTATIONS - 1, bigRequest.getMutations(0)));
+    underTest.add(bigRequest.build());
+  }
+
+  @Test
   public void testConcurrentFlush() throws Exception {
     // Test the behavior when a scheduled auto flush is run around the same time of a buffered batch
     // is sent. After the buffered batch is sent, it'll cancel the scheduled job. Test that the
