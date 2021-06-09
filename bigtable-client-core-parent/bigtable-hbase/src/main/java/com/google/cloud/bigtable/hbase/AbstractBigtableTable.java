@@ -404,7 +404,7 @@ public abstract class AbstractBigtableTable implements Table {
   public void delete(List<Delete> deletes) throws IOException {
     LOG.trace("delete(List<Delete>)");
     try (Scope scope = TRACER.spanBuilder("BigtableTable.delete").startScopedSpan()) {
-      getBatchExecutor().batch(deletes);
+      getBatchExecutor().batch(deletes, true);
     }
   }
 

@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
+import com.google.api.client.util.Lists;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.cloud.bigtable.config.BigtableOptions;
@@ -315,6 +316,46 @@ public class TestBatchExecutor {
               + Bytes.toString(results[i].getRow()),
           Bytes.equals(results[i].getRow(), gets.get(i).getRow()));
     }
+  }
+
+  @Test
+  public void testBatchRemoveSucceededActions() throws Exception {
+    when(mockFuture.get())
+        .thenThrow(new RuntimeException("fake exception 1"))
+        .thenReturn(Empty.getDefaultInstance())
+        .thenThrow(new RuntimeException("fake exception 2"));
+    when(mockFuture.isDone()).thenReturn(true);
+    Delete delete1 = new Delete(randomBytes(8));
+    Delete delete2 = new Delete(randomBytes(8));
+    Delete delete3 = new Delete(randomBytes(8));
+    List<Delete> deletes = Lists.newArrayList();
+    deletes.add(delete1);
+    deletes.add(delete2);
+    deletes.add(delete3);
+    try {
+      createExecutor(options).batch(deletes, true);
+    } catch (RetriesExhaustedWithDetailsException exception) {
+      Assert.assertEquals(exception.getNumExceptions(), 2);
+    }
+    // Only failed delete (delete1) is left in deletes, and are in the original order
+    Assert.assertEquals(2, deletes.size());
+    Assert.assertEquals(delete1, deletes.get(0));
+    Assert.assertEquals(delete3, deletes.get(1));
+  }
+
+  @Test
+  public void testBatchRemoveSucceededActionsNoFailure() throws Exception {
+    when(mockFuture.get())
+        .thenReturn(Empty.getDefaultInstance())
+        .thenReturn(Empty.getDefaultInstance());
+    when(mockFuture.isDone()).thenReturn(true);
+    Delete delete1 = new Delete(randomBytes(8));
+    Delete delete2 = new Delete(randomBytes(8));
+    List<Delete> deletes = Lists.newArrayList();
+    deletes.add(delete1);
+    deletes.add(delete2);
+    createExecutor(options).batch(deletes, true);
+    Assert.assertEquals(0, deletes.size());
   }
 
   // HELPERS
