@@ -1,4 +1,4 @@
-#HBase Tools
+# HBase Tools
 
 This folder contains tools to help HBase users with migrations to Cloud Bigtable.
 Pipelines to import and export data are under [bigtable-beam-import](bigtable-dataflow-parent/bigtable-beam-import/README.md).
