@@ -168,7 +168,7 @@ public class BigtableVeneerSettingsFactory {
   private static HeaderProvider buildDataHeaderProvider(BigtableOptions options) {
     ImmutableMap.Builder<String, String> mapBuilder =
         ImmutableMap.<String, String>builder()
-            .put(USER_AGENT_KEY.name(), options.getTracingCookie());
+            .put(USER_AGENT_KEY.name(), VENEER_ADAPTER + options.getUserAgent());
     if (options.getTracingCookie() != null) {
       mapBuilder.put("cookie", options.getTracingCookie());
     }
