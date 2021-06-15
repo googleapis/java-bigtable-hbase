@@ -44,7 +44,6 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import org.threeten.bp.Duration;
@@ -91,21 +90,12 @@ public class BigtableVeneerSettingsFactory {
 
     dataSettingStub
         .setEndpoint(options.getDataHost() + ":" + options.getPort())
-        .setHeaderProvider(buildHeaderProvider(options.getUserAgent()))
+        .setHeaderProvider(buildDataHeaderProvider(options))
         .setCredentialsProvider(buildCredentialProvider(options.getCredentialOptions()));
 
     if (options.usePlaintextNegotiation()) {
       dataSettingStub.setTransportChannelProvider(
           buildChannelProvider(dataSettingStub.getEndpoint(), options));
-    }
-
-    if (options.getTracingCookie() != null) {
-      Map<String, String> headers =
-          ImmutableMap.<String, String>builder()
-              .putAll(dataSettingStub.getHeaderProvider().getHeaders())
-              .put("cookie", options.getTracingCookie())
-              .build();
-      dataSettingStub.setHeaderProvider(FixedHeaderProvider.create(headers));
     }
 
     // Configuration for rpcTimeout & totalTimeout for non-streaming operations.
@@ -143,7 +133,7 @@ public class BigtableVeneerSettingsFactory {
     adminBuilder.setProjectId(options.getProjectId()).setInstanceId(options.getInstanceId());
 
     adminStub
-        .setHeaderProvider(buildHeaderProvider(options.getUserAgent()))
+        .setHeaderProvider(buildAdminHeaderProvider(options.getUserAgent()))
         .setEndpoint(options.getAdminHost() + ":" + options.getPort())
         .setCredentialsProvider(buildCredentialProvider(options.getCredentialOptions()));
 
@@ -171,8 +161,18 @@ public class BigtableVeneerSettingsFactory {
   }
 
   /** Creates {@link HeaderProvider} with VENEER_ADAPTER as prefix for user agent */
-  private static HeaderProvider buildHeaderProvider(String userAgent) {
+  private static HeaderProvider buildAdminHeaderProvider(String userAgent) {
     return FixedHeaderProvider.create(USER_AGENT_KEY.name(), VENEER_ADAPTER + userAgent);
+  }
+
+  private static HeaderProvider buildDataHeaderProvider(BigtableOptions options) {
+    ImmutableMap.Builder<String, String> mapBuilder =
+        ImmutableMap.<String, String>builder()
+            .put(USER_AGENT_KEY.name(), options.getTracingCookie());
+    if (options.getTracingCookie() != null) {
+      mapBuilder.put("cookie", options.getTracingCookie());
+    }
+    return FixedHeaderProvider.create(mapBuilder.build());
   }
 
   /** Builds {@link BatchingSettings} based on {@link BulkOptions} configuration. */

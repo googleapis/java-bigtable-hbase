@@ -269,6 +269,7 @@ public class BigtableOptions implements Serializable, Cloneable {
       return this;
     }
 
+    @BetaApi("The API for setting tracing cookie is not yet stable and may change in the future")
     public Builder setTracingCookie(String tracingCookie) {
       options.tracingCookie = tracingCookie;
       return this;
@@ -537,6 +538,12 @@ public class BigtableOptions implements Serializable, Cloneable {
     return useGCJClient;
   }
 
+  /**
+   * Getter for tracing cookie
+   *
+   * @return return the tracing cookie.
+   */
+  @BetaApi("The API for tracing cookie is not yet stable and may change in the future")
   public String getTracingCookie() {
     return tracingCookie;
   }
