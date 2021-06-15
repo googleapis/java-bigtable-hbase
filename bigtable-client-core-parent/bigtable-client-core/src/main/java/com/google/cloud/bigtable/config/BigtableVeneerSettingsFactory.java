@@ -38,11 +38,13 @@ import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.admin.v2.stub.BigtableTableAdminStubSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.data.v2.stub.EnhancedBigtableStubSettings.Builder;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import org.threeten.bp.Duration;
@@ -95,6 +97,15 @@ public class BigtableVeneerSettingsFactory {
     if (options.usePlaintextNegotiation()) {
       dataSettingStub.setTransportChannelProvider(
           buildChannelProvider(dataSettingStub.getEndpoint(), options));
+    }
+
+    if (options.getTracingCookie() != null) {
+      Map<String, String> headers =
+          ImmutableMap.<String, String>builder()
+              .putAll(dataSettingStub.getHeaderProvider().getHeaders())
+              .put("cookie", options.getTracingCookie())
+              .build();
+      dataSettingStub.setHeaderProvider(FixedHeaderProvider.create(headers));
     }
 
     // Configuration for rpcTimeout & totalTimeout for non-streaming operations.

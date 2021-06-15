@@ -60,7 +60,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** This class tests value present in User-Agent's on netty server. */
+/** This class tests value present in User-Agent's on netty server and tracing cookie is sent. */
 @RunWith(JUnit4.class)
 public class TestHeaders {
 
@@ -79,6 +79,7 @@ public class TestHeaders {
   private Server server;
   private AtomicBoolean serverPasses = new AtomicBoolean(false);
   private Pattern xGoogApiPattern;
+  private String tracingCookie;
 
   @After
   public void tearDown() throws Exception {
@@ -209,6 +210,72 @@ public class TestHeaders {
     }
   }
 
+  @Test
+  public void testGCJ_tracingCookie() throws Exception {
+    ServerSocket serverSocket = new ServerSocket(0);
+    final int availablePort = serverSocket.getLocalPort();
+    serverSocket.close();
+
+    // Creates non-ssl server.
+    createServer(availablePort);
+
+    String fakeTracingCookie = "fake-cookie";
+    BigtableOptions bigtableOptions =
+        BigtableOptions.builder()
+            .setDataHost("localhost")
+            .setAdminHost("localhost")
+            .setProjectId(TEST_PROJECT_ID)
+            .setInstanceId(TEST_INSTANCE_ID)
+            .setUserAgent(TEST_USER_AGENT)
+            .setUsePlaintextNegotiation(true)
+            .setCredentialOptions(CredentialOptions.nullCredential())
+            .setPort(availablePort)
+            .setTracingCookie(fakeTracingCookie)
+            .build();
+
+    xGoogApiPattern = Pattern.compile(".* cbt/.*");
+    try (BigtableSession session = new BigtableSession(bigtableOptions)) {
+      session.getDataClientWrapper().readFlatRows(Query.create("fake-table")).next();
+      Assert.assertTrue(serverPasses.get());
+      Assert.assertNotNull(fakeTracingCookie);
+      Assert.assertEquals(fakeTracingCookie, tracingCookie);
+    }
+  }
+
+  @Test
+  public void testCBC_tracingCookie() throws Exception {
+    ServerSocket serverSocket = new ServerSocket(0);
+    final int availablePort = serverSocket.getLocalPort();
+    serverSocket.close();
+
+    // Creates non-ssl server.
+    createServer(availablePort);
+
+    String fakeTracingCookie = "fake-cookie";
+    BigtableOptions bigtableOptions =
+        BigtableOptions.builder()
+            .setDataHost("localhost")
+            .setAdminHost("localhost")
+            .setProjectId(TEST_PROJECT_ID)
+            .setInstanceId(TEST_INSTANCE_ID)
+            .setUserAgent(TEST_USER_AGENT)
+            .setUsePlaintextNegotiation(true)
+            .setCredentialOptions(CredentialOptions.nullCredential())
+            .setPort(availablePort)
+            .setTracingCookie(fakeTracingCookie)
+            .build();
+
+    dataSettings = BigtableVeneerSettingsFactory.createBigtableDataSettings(bigtableOptions);
+
+    xGoogApiPattern = Pattern.compile(".* gapic/.*");
+    try (BigtableDataClient dataClient = BigtableDataClient.create(dataSettings)) {
+      dataClient.readRow(TABLE_ID, ROWKEY);
+      Assert.assertTrue(serverPasses.get());
+      Assert.assertNotNull(tracingCookie);
+      Assert.assertEquals(fakeTracingCookie, tracingCookie);
+    }
+  }
+
   /** Creates simple server to intercept plainText Negotiation RPCs. */
   private void createServer(int port) throws Exception {
     server =
@@ -296,6 +363,8 @@ public class TestHeaders {
       // header than google-cloud-java
 
       serverPasses.set(true);
+      tracingCookie =
+          requestHeaders.get(Metadata.Key.of("cookie", Metadata.ASCII_STRING_MARSHALLER));
 
       return next.startCall(
           new ForwardingServerCall.SimpleForwardingServerCall<ReqT, RespT>(call) {},

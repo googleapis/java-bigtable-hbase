@@ -269,6 +269,11 @@ public class BigtableOptions implements Serializable, Cloneable {
       return this;
     }
 
+    public Builder setTracingCookie(String tracingCookie) {
+      options.tracingCookie = tracingCookie;
+      return this;
+    }
+
     /** Apply emulator settings from the relevant environment variable, if set. */
     private void applyEmulatorEnvironment() {
       // Look for a host:port for the emulator.
@@ -383,6 +388,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   private CredentialOptions credentialOptions;
   private RetryOptions retryOptions;
   private boolean useBatch;
+  private String tracingCookie;
 
   @VisibleForTesting
   BigtableOptions() {}
@@ -531,6 +537,10 @@ public class BigtableOptions implements Serializable, Cloneable {
     return useGCJClient;
   }
 
+  public String getTracingCookie() {
+    return tracingCookie;
+  }
+
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
@@ -557,7 +567,8 @@ public class BigtableOptions implements Serializable, Cloneable {
         && Objects.equals(callOptionsConfig, other.callOptionsConfig)
         && Objects.equals(useBatch, other.useBatch)
         && Objects.equals(useGCJClient, other.useGCJClient)
-        && Objects.equals(channelConfigurator, other.channelConfigurator);
+        && Objects.equals(channelConfigurator, other.channelConfigurator)
+        && Objects.equals(tracingCookie, other.tracingCookie);
   }
 
   /** {@inheritDoc} */
@@ -581,6 +592,7 @@ public class BigtableOptions implements Serializable, Cloneable {
         .add("useCachedDataPool", useCachedDataPool)
         .add("useBatch", useBatch)
         .add("useGCJClient", useGCJClient)
+        .add("tracingCookie", tracingCookie)
         .toString();
   }
 
