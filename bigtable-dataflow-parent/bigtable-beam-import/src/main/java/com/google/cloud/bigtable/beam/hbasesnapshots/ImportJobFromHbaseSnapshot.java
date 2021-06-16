@@ -106,7 +106,6 @@ public class ImportJobFromHbaseSnapshot {
             .setProjectId(opts.getProject())
             .setHbaseSnapshotSourceDir(opts.getHbaseSnapshotSourceDir())
             .setSnapshotName(opts.getSnapshotName())
-            .setRestoreDirSuffix(opts.getJobName())
             .setRestoreDirSuffix(opts.getJobName());
     PCollection<KV<ImmutableBytesWritable, Result>> readResult =
         pipeline.apply(
