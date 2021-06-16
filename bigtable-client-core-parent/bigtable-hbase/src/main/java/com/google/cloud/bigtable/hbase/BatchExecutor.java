@@ -300,7 +300,7 @@ public class BatchExecutor {
     }
     if (removeSucceededActions) {
       for (int i = results.length - 1; i >= 0; i--) {
-        // if result is not null, it succeeded
+        // if result is not a throwable, it succeeded
         if (!(results[i] instanceof Throwable)) {
           actions.remove(i);
         }
