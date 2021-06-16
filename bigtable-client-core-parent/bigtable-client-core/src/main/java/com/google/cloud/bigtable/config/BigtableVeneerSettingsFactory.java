@@ -38,6 +38,7 @@ import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.admin.v2.stub.BigtableTableAdminStubSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.data.v2.stub.EnhancedBigtableStubSettings.Builder;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
@@ -89,7 +90,7 @@ public class BigtableVeneerSettingsFactory {
 
     dataSettingStub
         .setEndpoint(options.getDataHost() + ":" + options.getPort())
-        .setHeaderProvider(buildHeaderProvider(options.getUserAgent()))
+        .setHeaderProvider(buildDataHeaderProvider(options))
         .setCredentialsProvider(buildCredentialProvider(options.getCredentialOptions()));
 
     if (options.usePlaintextNegotiation()) {
@@ -132,7 +133,7 @@ public class BigtableVeneerSettingsFactory {
     adminBuilder.setProjectId(options.getProjectId()).setInstanceId(options.getInstanceId());
 
     adminStub
-        .setHeaderProvider(buildHeaderProvider(options.getUserAgent()))
+        .setHeaderProvider(buildAdminHeaderProvider(options.getUserAgent()))
         .setEndpoint(options.getAdminHost() + ":" + options.getPort())
         .setCredentialsProvider(buildCredentialProvider(options.getCredentialOptions()));
 
@@ -160,8 +161,18 @@ public class BigtableVeneerSettingsFactory {
   }
 
   /** Creates {@link HeaderProvider} with VENEER_ADAPTER as prefix for user agent */
-  private static HeaderProvider buildHeaderProvider(String userAgent) {
+  private static HeaderProvider buildAdminHeaderProvider(String userAgent) {
     return FixedHeaderProvider.create(USER_AGENT_KEY.name(), VENEER_ADAPTER + userAgent);
+  }
+
+  private static HeaderProvider buildDataHeaderProvider(BigtableOptions options) {
+    ImmutableMap.Builder<String, String> mapBuilder =
+        ImmutableMap.<String, String>builder()
+            .put(USER_AGENT_KEY.name(), VENEER_ADAPTER + options.getUserAgent());
+    if (options.getTracingCookie() != null) {
+      mapBuilder.put("cookie", options.getTracingCookie());
+    }
+    return FixedHeaderProvider.create(mapBuilder.build());
   }
 
   /** Builds {@link BatchingSettings} based on {@link BulkOptions} configuration. */

@@ -427,6 +427,14 @@ public class BigtableSession implements Closeable {
       }
     }
 
+    if (options.getTracingCookie() != null) {
+      ClientInterceptor tracingCookieInterceptor =
+          new HeaderInterceptor(
+              Metadata.Key.of("cookie", Metadata.ASCII_STRING_MARSHALLER),
+              options.getTracingCookie());
+      interceptors.add(tracingCookieInterceptor);
+    }
+
     return interceptors.build();
   }
 
