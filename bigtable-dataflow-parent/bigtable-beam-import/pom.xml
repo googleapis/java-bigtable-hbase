@@ -379,7 +379,6 @@ limitations under the License.
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <trimStackTrace>false</trimStackTrace>
-          <skip>true</skip>
         </configuration>
         <executions>
           <execution>

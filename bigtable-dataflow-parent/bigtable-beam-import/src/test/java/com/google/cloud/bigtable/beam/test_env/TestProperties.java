@@ -114,8 +114,8 @@ public class TestProperties {
         getProp("region"),
         ensureTrailingSlash(workDir),
         ensureTrailingSlash(getProp("cloud.test.data.folder")),
-        Optional.ofNullable(System.getProperty("google.bigtable.endpoint.host")),
-        Optional.ofNullable(System.getProperty("google.bigtable.admin.endpoint.host")));
+        Optional.ofNullable(System.getProperty(BigtableOptionsFactory.BIGTABLE_HOST_KEY)),
+        Optional.ofNullable(System.getProperty(BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY)));
   }
 
   public void applyTo(DataflowPipelineOptions opts) {
