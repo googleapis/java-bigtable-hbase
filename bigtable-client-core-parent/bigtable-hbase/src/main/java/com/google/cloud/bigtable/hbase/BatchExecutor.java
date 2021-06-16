@@ -267,7 +267,7 @@ public class BatchExecutor {
    * @throws java.lang.InterruptedException if any.
    * @param <R> a R object.
    */
-  public <R> void batchCallback(
+  <R> void batchCallback(
       List<? extends Row> actions,
       Object[] results,
       Batch.Callback<R> callback,
