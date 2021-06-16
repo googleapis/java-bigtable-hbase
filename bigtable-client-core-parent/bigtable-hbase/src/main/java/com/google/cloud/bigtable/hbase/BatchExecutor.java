@@ -230,9 +230,13 @@ public class BatchExecutor {
    * @throws java.io.IOException if any.
    */
   public Result[] batch(List<? extends Row> actions) throws IOException {
+    return batch(actions, false);
+  }
+
+  Result[] batch(List<? extends Row> actions, boolean removeSucceededActions) throws IOException {
     try {
       Object[] resultsOrErrors = new Object[actions.size()];
-      batchCallback(actions, resultsOrErrors, null);
+      batchCallback(actions, resultsOrErrors, null, removeSucceededActions);
       // At this point we are guaranteed that the array only contains results,
       // if it had any errors, batch would've thrown an exception
       Result[] results = new Result[resultsOrErrors.length];
@@ -245,6 +249,12 @@ public class BatchExecutor {
     }
   }
 
+  public <R> void batchCallback(
+      List<? extends Row> actions, Object[] results, Batch.Callback<R> callback)
+      throws IOException, InterruptedException {
+    batchCallback(actions, results, callback, false);
+  }
+
   /**
    * Implementation of {@link org.apache.hadoop.hbase.client.HTable#batchCallback(List, Object[],
    * Batch.Callback)}
@@ -252,12 +262,16 @@ public class BatchExecutor {
    * @param actions a {@link java.util.List} object.
    * @param results an array of {@link java.lang.Object} objects.
    * @param callback a {@link org.apache.hadoop.hbase.client.coprocessor.Batch.Callback} object.
+   * @param removeSucceededActions if true, remove succeeded actions from {@code actions}
    * @throws java.io.IOException if any.
    * @throws java.lang.InterruptedException if any.
    * @param <R> a R object.
    */
-  public <R> void batchCallback(
-      List<? extends Row> actions, Object[] results, Batch.Callback<R> callback)
+  <R> void batchCallback(
+      List<? extends Row> actions,
+      Object[] results,
+      Batch.Callback<R> callback,
+      boolean removeSucceededActions)
       throws IOException, InterruptedException {
     Preconditions.checkArgument(
         results == null || results.length == actions.size(),
@@ -282,6 +296,14 @@ public class BatchExecutor {
         problemActions.add(actions.get(i));
         problems.add(e.getCause());
         hosts.add(options.getDataHost());
+      }
+    }
+    if (removeSucceededActions) {
+      for (int i = results.length - 1; i >= 0; i--) {
+        // if result is not a throwable, it succeeded
+        if (results[i] != null && !(results[i] instanceof Throwable)) {
+          actions.remove(i);
+        }
       }
     }
     if (problems.size() > 0) {
