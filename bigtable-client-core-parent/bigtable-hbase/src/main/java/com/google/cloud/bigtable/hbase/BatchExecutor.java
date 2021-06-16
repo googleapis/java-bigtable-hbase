@@ -222,20 +222,18 @@ public class BatchExecutor {
     }
   }
 
-  public Result[] batch(List<? extends Row> actions) throws IOException {
-    return batch(actions, false);
-  }
-
   /**
    * batch.
    *
    * @param actions a {@link java.util.List} object.
-   * @param removeSucceededActions if true, remove succeeded actions from {@code actions}
    * @return an array of {@link org.apache.hadoop.hbase.client.Result} objects.
    * @throws java.io.IOException if any.
    */
-  public Result[] batch(List<? extends Row> actions, boolean removeSucceededActions)
-      throws IOException {
+  public Result[] batch(List<? extends Row> actions) throws IOException {
+    return batch(actions, false);
+  }
+
+  Result[] batch(List<? extends Row> actions, boolean removeSucceededActions) throws IOException {
     try {
       Object[] resultsOrErrors = new Object[actions.size()];
       batchCallback(actions, resultsOrErrors, null, removeSucceededActions);
@@ -303,7 +301,7 @@ public class BatchExecutor {
     if (removeSucceededActions) {
       for (int i = results.length - 1; i >= 0; i--) {
         // if result is not null, it succeeded
-        if (results[i] instanceof Result) {
+        if (!(results[i] instanceof Throwable)) {
           actions.remove(i);
         }
       }
