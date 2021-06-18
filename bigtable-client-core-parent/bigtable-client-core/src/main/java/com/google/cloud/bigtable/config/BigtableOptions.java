@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.config;
 
+import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
@@ -282,6 +283,12 @@ public class BigtableOptions implements Serializable, Cloneable {
       return this;
     }
 
+    @BetaApi("The API for setting tracing cookie is not yet stable and may change in the future")
+    public Builder setTracingCookie(String tracingCookie) {
+      options.tracingCookie = tracingCookie;
+      return this;
+    }
+
     /** Apply emulator settings from the relevant environment variable, if set. */
     private void applyEmulatorEnvironment() {
       // Look for a host:port for the emulator.
@@ -394,6 +401,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   private CredentialOptions credentialOptions;
   private RetryOptions retryOptions;
   private boolean useBatch;
+  private String tracingCookie;
 
   @VisibleForTesting
   BigtableOptions() {}
@@ -532,6 +540,16 @@ public class BigtableOptions implements Serializable, Cloneable {
     return callOptionsConfig;
   }
 
+  /**
+   * Getter for tracing cookie
+   *
+   * @return return the tracing cookie.
+   */
+  @BetaApi("The API for tracing cookie is not yet stable and may change in the future")
+  public String getTracingCookie() {
+    return tracingCookie;
+  }
+
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
@@ -557,7 +575,8 @@ public class BigtableOptions implements Serializable, Cloneable {
         && Objects.equals(bulkOptions, other.bulkOptions)
         && Objects.equals(callOptionsConfig, other.callOptionsConfig)
         && Objects.equals(useBatch, other.useBatch)
-        && Objects.equals(channelConfigurator, other.channelConfigurator);
+        && Objects.equals(channelConfigurator, other.channelConfigurator)
+        && Objects.equals(tracingCookie, other.tracingCookie);
   }
 
   /** {@inheritDoc} */
@@ -580,6 +599,7 @@ public class BigtableOptions implements Serializable, Cloneable {
         .add("usePlaintextNegotiation", usePlaintextNegotiation)
         .add("useCachedDataPool", useCachedDataPool)
         .add("useBatch", useBatch)
+        .add("tracingCookie", tracingCookie)
         .toString();
   }
 

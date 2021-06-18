@@ -42,7 +42,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** This class tests value present in User-Agent's on netty server. */
+/** This class tests value present in User-Agent's on netty server and tracing cookie is sent. */
 @RunWith(JUnit4.class)
 public class TestHeaders {
 
@@ -103,6 +103,38 @@ public class TestHeaders {
     try (BigtableSession session = new BigtableSession(bigtableOptions)) {
       session.getDataClient().readFlatRows(ReadRowsRequest.getDefaultInstance()).next();
       Assert.assertTrue(serverPasses.get());
+    }
+  }
+
+  @Test
+  public void testCBC_tracingCookie() throws Exception {
+    ServerSocket serverSocket = new ServerSocket(0);
+    final int availablePort = serverSocket.getLocalPort();
+    serverSocket.close();
+
+    // Creates non-ssl server.
+    createServer(availablePort);
+
+    String fakeTracingCookie = "fake-cookie";
+    BigtableOptions bigtableOptions =
+        BigtableOptions.builder()
+            .setDataHost("localhost")
+            .setAdminHost("localhost")
+            .setProjectId(TEST_PROJECT_ID)
+            .setInstanceId(TEST_INSTANCE_ID)
+            .setUserAgent(TEST_USER_AGENT)
+            .setUsePlaintextNegotiation(true)
+            .setCredentialOptions(CredentialOptions.nullCredential())
+            .setPort(availablePort)
+            .setTracingCookie(fakeTracingCookie)
+            .build();
+
+    xGoogApiPattern = Pattern.compile(".* cbt/.*");
+    try (BigtableSession session = new BigtableSession(bigtableOptions)) {
+      session.getDataClient().readFlatRows(ReadRowsRequest.getDefaultInstance()).next();
+      Assert.assertTrue(serverPasses.get());
+      Assert.assertNotNull(fakeTracingCookie);
+      Assert.assertEquals(fakeTracingCookie, fakeTracingCookie);
     }
   }
 

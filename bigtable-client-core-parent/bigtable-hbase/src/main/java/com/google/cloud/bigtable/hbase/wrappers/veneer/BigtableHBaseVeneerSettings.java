@@ -88,6 +88,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import io.grpc.ManagedChannelBuilder;
 import java.io.ByteArrayInputStream;
@@ -246,7 +247,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       configureConnection(dataBuilder.stubSettings(), BIGTABLE_HOST_KEY);
       configureCredentialProvider(dataBuilder.stubSettings());
     }
-    configureHeaderProvider(dataBuilder.stubSettings());
+    configureHeaderProvider(dataBuilder.stubSettings(), true);
 
     // Configure the target
     dataBuilder.setProjectId(getProjectId()).setInstanceId(getInstanceId());
@@ -328,7 +329,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       configureConnection(adminBuilder.stubSettings(), BIGTABLE_ADMIN_HOST_KEY);
       configureCredentialProvider(adminBuilder.stubSettings());
     }
-    configureHeaderProvider(adminBuilder.stubSettings());
+    configureHeaderProvider(adminBuilder.stubSettings(), false);
 
     adminBuilder.setProjectId(getProjectId()).setInstanceId(getInstanceId());
 
@@ -376,7 +377,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       configureConnection(adminBuilder.stubSettings(), BIGTABLE_ADMIN_HOST_KEY);
       configureCredentialProvider(adminBuilder.stubSettings());
     }
-    configureHeaderProvider(adminBuilder.stubSettings());
+    configureHeaderProvider(adminBuilder.stubSettings(), false);
 
     adminBuilder.setProjectId(getProjectId());
 
@@ -454,7 +455,9 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     stubSettings.setTransportChannelProvider(channelProvider.build());
   }
 
-  private void configureHeaderProvider(StubSettings.Builder<?, ?> stubSettings) {
+  private void configureHeaderProvider(
+      StubSettings.Builder<?, ?> stubSettings, boolean isDataSetting) {
+    ImmutableMap.Builder<String, String> headersBuilder = ImmutableMap.<String, String>builder();
     List<String> userAgentParts = Lists.newArrayList();
     userAgentParts.add("hbase-" + VersionInfo.getVersion());
     userAgentParts.add("bigtable-" + BigtableHBaseVersion.getVersion());
@@ -466,8 +469,14 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     }
 
     String userAgent = Joiner.on(",").join(userAgentParts);
+    headersBuilder.put(USER_AGENT_KEY.name(), userAgent);
 
-    stubSettings.setHeaderProvider(FixedHeaderProvider.create(USER_AGENT_KEY.name(), userAgent));
+    String tracingCookie = configuration.get(BigtableOptionsFactory.BIGTABLE_TRACING_COOKIE);
+    if (isDataSetting && tracingCookie != null) {
+      headersBuilder.put("cookie", tracingCookie);
+    }
+
+    stubSettings.setHeaderProvider(FixedHeaderProvider.create(headersBuilder.build()));
   }
 
   private void configureCredentialProvider(StubSettings.Builder<?, ?> stubSettings)
