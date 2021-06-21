@@ -154,6 +154,7 @@ public class TestBigtableHBaseVeneerSettings {
   public void testAdminSettingsBasicKeys() throws IOException {
     String adminHost = "testadmin.example.com";
     String userAgent = "test-user-agent";
+    String fakeTracingCookie = "fake-tracing-cookie";
     Credentials credentials = Mockito.mock(Credentials.class);
 
     configuration.set(BIGTABLE_ADMIN_HOST_KEY, adminHost);
@@ -161,6 +162,7 @@ public class TestBigtableHBaseVeneerSettings {
     configuration.set(CUSTOM_USER_AGENT_KEY, userAgent);
     configuration.setBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, true);
     configuration.set(BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, "true");
+    configuration.set(BIGTABLE_TRACING_COOKIE, fakeTracingCookie);
     configuration = BigtableConfiguration.withCredentials(configuration, credentials);
 
     BigtableHBaseVeneerSettings settings =
@@ -173,6 +175,7 @@ public class TestBigtableHBaseVeneerSettings {
     assertEquals(adminHost + ":" + TEST_PORT, adminSettings.getStubSettings().getEndpoint());
     Map<String, String> headers = adminSettings.getStubSettings().getHeaderProvider().getHeaders();
     assertTrue(headers.get(GrpcUtil.USER_AGENT_KEY.name()).contains(userAgent));
+    assertTrue(headers.get("cookie").equals(fakeTracingCookie));
     assertEquals(
         credentials, adminSettings.getStubSettings().getCredentialsProvider().getCredentials());
   }

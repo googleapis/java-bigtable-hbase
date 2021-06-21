@@ -247,7 +247,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       configureConnection(dataBuilder.stubSettings(), BIGTABLE_HOST_KEY);
       configureCredentialProvider(dataBuilder.stubSettings());
     }
-    configureHeaderProvider(dataBuilder.stubSettings(), true);
+    configureHeaderProvider(dataBuilder.stubSettings());
 
     // Configure the target
     dataBuilder.setProjectId(getProjectId()).setInstanceId(getInstanceId());
@@ -329,7 +329,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       configureConnection(adminBuilder.stubSettings(), BIGTABLE_ADMIN_HOST_KEY);
       configureCredentialProvider(adminBuilder.stubSettings());
     }
-    configureHeaderProvider(adminBuilder.stubSettings(), false);
+    configureHeaderProvider(adminBuilder.stubSettings());
 
     adminBuilder.setProjectId(getProjectId()).setInstanceId(getInstanceId());
 
@@ -377,7 +377,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       configureConnection(adminBuilder.stubSettings(), BIGTABLE_ADMIN_HOST_KEY);
       configureCredentialProvider(adminBuilder.stubSettings());
     }
-    configureHeaderProvider(adminBuilder.stubSettings(), false);
+    configureHeaderProvider(adminBuilder.stubSettings());
 
     adminBuilder.setProjectId(getProjectId());
 
@@ -455,8 +455,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     stubSettings.setTransportChannelProvider(channelProvider.build());
   }
 
-  private void configureHeaderProvider(
-      StubSettings.Builder<?, ?> stubSettings, boolean isDataSetting) {
+  private void configureHeaderProvider(StubSettings.Builder<?, ?> stubSettings) {
     ImmutableMap.Builder<String, String> headersBuilder = ImmutableMap.<String, String>builder();
     List<String> userAgentParts = Lists.newArrayList();
     userAgentParts.add("hbase-" + VersionInfo.getVersion());
@@ -472,7 +471,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     headersBuilder.put(USER_AGENT_KEY.name(), userAgent);
 
     String tracingCookie = configuration.get(BigtableOptionsFactory.BIGTABLE_TRACING_COOKIE);
-    if (isDataSetting && tracingCookie != null) {
+    if (tracingCookie != null) {
       headersBuilder.put("cookie", tracingCookie);
     }
 
