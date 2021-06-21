@@ -48,7 +48,7 @@ public class CallOptionsConfig implements Serializable {
   public static final int LONG_TIMEOUT_MS_DEFAULT = 600_000;
 
   /** The default duration to wait before timing out Mutate RPCs (default value: 30 minutes). */
-  public static final int MUTATE_RPC_TIMEOUT_MS_DEFAULT = 1800_000;
+  public static final int MUTATE_RPC_TIMEOUT_MS_DEFAULT = 1_800_000;
 
   public static Builder builder() {
     return new Builder();
