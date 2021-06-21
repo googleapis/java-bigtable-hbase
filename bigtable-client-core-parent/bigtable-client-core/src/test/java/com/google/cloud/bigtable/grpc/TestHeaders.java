@@ -170,6 +170,10 @@ public class TestHeaders {
     }
   }
 
+  /**
+   * Overrides {@link BigtableTableAdminGrpc.BigtableTableAdminImplBase#getTable(GetTableRequest,
+   * StreamObserver)} and returns dummy response.
+   */
   private static class BigtableAdminExtendedImpl
       extends BigtableTableAdminGrpc.BigtableTableAdminImplBase {
     @Override
