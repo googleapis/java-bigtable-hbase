@@ -90,7 +90,7 @@ public class BigtableVeneerSettingsFactory {
 
     dataSettingStub
         .setEndpoint(options.getDataHost() + ":" + options.getPort())
-        .setHeaderProvider(buildDataHeaderProvider(options))
+        .setHeaderProvider(buildHeaderProvider(options))
         .setCredentialsProvider(buildCredentialProvider(options.getCredentialOptions()));
 
     if (options.usePlaintextNegotiation()) {
@@ -133,7 +133,7 @@ public class BigtableVeneerSettingsFactory {
     adminBuilder.setProjectId(options.getProjectId()).setInstanceId(options.getInstanceId());
 
     adminStub
-        .setHeaderProvider(buildAdminHeaderProvider(options.getUserAgent()))
+        .setHeaderProvider(buildHeaderProvider(options))
         .setEndpoint(options.getAdminHost() + ":" + options.getPort())
         .setCredentialsProvider(buildCredentialProvider(options.getCredentialOptions()));
 
@@ -160,12 +160,11 @@ public class BigtableVeneerSettingsFactory {
     }
   }
 
-  /** Creates {@link HeaderProvider} with VENEER_ADAPTER as prefix for user agent */
-  private static HeaderProvider buildAdminHeaderProvider(String userAgent) {
-    return FixedHeaderProvider.create(USER_AGENT_KEY.name(), VENEER_ADAPTER + userAgent);
-  }
-
-  private static HeaderProvider buildDataHeaderProvider(BigtableOptions options) {
+  /**
+   * Creates {@link HeaderProvider} with VENEER_ADAPTER as prefix for user agent. If tracing cookie
+   * is set in {@link BigtableOptions}, add tracing cookie to the header.
+   */
+  private static HeaderProvider buildHeaderProvider(BigtableOptions options) {
     ImmutableMap.Builder<String, String> mapBuilder =
         ImmutableMap.<String, String>builder()
             .put(USER_AGENT_KEY.name(), VENEER_ADAPTER + options.getUserAgent());
