@@ -88,6 +88,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import io.grpc.ManagedChannelBuilder;
 import java.io.ByteArrayInputStream;
@@ -455,6 +456,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   }
 
   private void configureHeaderProvider(StubSettings.Builder<?, ?> stubSettings) {
+    ImmutableMap.Builder<String, String> headersBuilder = ImmutableMap.<String, String>builder();
     List<String> userAgentParts = Lists.newArrayList();
     userAgentParts.add("hbase-" + VersionInfo.getVersion());
     userAgentParts.add("bigtable-" + BigtableHBaseVersion.getVersion());
@@ -466,8 +468,14 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     }
 
     String userAgent = Joiner.on(",").join(userAgentParts);
+    headersBuilder.put(USER_AGENT_KEY.name(), userAgent);
 
-    stubSettings.setHeaderProvider(FixedHeaderProvider.create(USER_AGENT_KEY.name(), userAgent));
+    String tracingCookie = configuration.get(BigtableOptionsFactory.BIGTABLE_TRACING_COOKIE);
+    if (tracingCookie != null) {
+      headersBuilder.put("cookie", tracingCookie);
+    }
+
+    stubSettings.setHeaderProvider(FixedHeaderProvider.create(headersBuilder.build()));
   }
 
   private void configureCredentialProvider(StubSettings.Builder<?, ?> stubSettings)

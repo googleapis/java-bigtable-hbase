@@ -17,6 +17,9 @@ package com.google.cloud.bigtable.grpc;
 
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
+import com.google.bigtable.admin.v2.BigtableTableAdminGrpc;
+import com.google.bigtable.admin.v2.GetTableRequest;
+import com.google.bigtable.admin.v2.Table;
 import com.google.bigtable.v2.BigtableGrpc.BigtableImplBase;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
@@ -42,7 +45,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** This class tests value present in User-Agent's on netty server. */
+/** This class tests value present in User-Agent's on netty server and tracing cookie is sent. */
 @RunWith(JUnit4.class)
 public class TestHeaders {
 
@@ -53,11 +56,15 @@ public class TestHeaders {
   private static final String TEST_USER_AGENT = "test-user-agent";
   private static final Pattern EXPECTED_HEADER_PATTERN =
       Pattern.compile(".*" + TEST_USER_AGENT + ".*");
+  private static final String TEST_TRACING_COOKIE = "fake-tracing-cookie";
+  private static final Pattern EXPECTED_COOKIE_HEADER_PATTERN =
+      Pattern.compile(TEST_TRACING_COOKIE);
 
   private BigtableDataClient dataClient;
   private Server server;
   private AtomicBoolean serverPasses = new AtomicBoolean(false);
   private Pattern xGoogApiPattern;
+  private AtomicBoolean testTracingCookie = new AtomicBoolean(false);
 
   @After
   public void tearDown() throws Exception {
@@ -106,6 +113,36 @@ public class TestHeaders {
     }
   }
 
+  @Test
+  public void testCBC_tracingCookie() throws Exception {
+    ServerSocket serverSocket = new ServerSocket(0);
+    final int availablePort = serverSocket.getLocalPort();
+    serverSocket.close();
+
+    // Creates non-ssl server.
+    createServer(availablePort);
+
+    BigtableOptions bigtableOptions =
+        BigtableOptions.builder()
+            .setDataHost("localhost")
+            .setAdminHost("localhost")
+            .setProjectId(TEST_PROJECT_ID)
+            .setInstanceId(TEST_INSTANCE_ID)
+            .setUserAgent(TEST_USER_AGENT)
+            .setUsePlaintextNegotiation(true)
+            .setCredentialOptions(CredentialOptions.nullCredential())
+            .setPort(availablePort)
+            .setTracingCookie(TEST_TRACING_COOKIE)
+            .build();
+    testTracingCookie.set(true);
+    xGoogApiPattern = Pattern.compile(".* cbt/.*");
+    try (BigtableSession session = new BigtableSession(bigtableOptions)) {
+      session.getTableAdminClient().getTable(GetTableRequest.getDefaultInstance());
+      session.getDataClient().readFlatRows(ReadRowsRequest.getDefaultInstance()).next();
+      Assert.assertTrue(serverPasses.get());
+    }
+  }
+
   /** Creates simple server to intercept plainText Negotiation RPCs. */
   private void createServer(int port) throws Exception {
     server =
@@ -113,6 +150,9 @@ public class TestHeaders {
             .addService(
                 ServerInterceptors.intercept(
                     new BigtableExtendedImpl(), new HeaderServerInterceptor()))
+            .addService(
+                ServerInterceptors.intercept(
+                    new BigtableAdminExtendedImpl(), new HeaderServerInterceptor()))
             .build();
     server.start();
   }
@@ -126,6 +166,19 @@ public class TestHeaders {
     public void readRows(
         ReadRowsRequest request, StreamObserver<ReadRowsResponse> responseObserver) {
       responseObserver.onNext(ReadRowsResponse.getDefaultInstance());
+      responseObserver.onCompleted();
+    }
+  }
+
+  /**
+   * Overrides {@link BigtableTableAdminGrpc.BigtableTableAdminImplBase#getTable(GetTableRequest,
+   * StreamObserver)} and returns dummy response.
+   */
+  private static class BigtableAdminExtendedImpl
+      extends BigtableTableAdminGrpc.BigtableTableAdminImplBase {
+    @Override
+    public void getTable(GetTableRequest request, StreamObserver<Table> responseObserver) {
+      responseObserver.onNext(Table.getDefaultInstance());
       responseObserver.onCompleted();
     }
   }
@@ -147,6 +200,9 @@ public class TestHeaders {
       logger.info("headers received from BigtableDataClient:" + requestHeaders);
 
       testHeader(requestHeaders, "user-agent", EXPECTED_HEADER_PATTERN);
+      if (testTracingCookie.get()) {
+        testHeader(requestHeaders, "cookie", EXPECTED_COOKIE_HEADER_PATTERN);
+      }
       if (xGoogApiPattern != null) {
         testHeader(
             requestHeaders,
