@@ -42,7 +42,19 @@ public interface DataClientWrapper extends AutoCloseable {
   /** Creates instance of bulkMutation with specified table ID. */
   BulkMutationWrapper createBulkMutation(String tableId);
 
-  /** Creates {@link BulkReadWrapper} with specified table ID. */
+  /**
+   * Creates {@link BulkReadWrapper} with specified table ID.
+   *
+   * <p>The BulkRead instance will be scoped to a single user visible operation. The operation
+   * timeout is started from the time the createBulkRead is invoked.
+   *
+   * <pre>{@code
+   * try (BulkReadWrapper batch = wrapper.createBulkRead(tableId)) {
+   *   batch.add(key1, filter1);
+   *   batch.add(key2, filter2);
+   * }
+   * }</pre>
+   */
   BulkReadWrapper createBulkRead(String tableId);
 
   /** Mutate a row atomically. */

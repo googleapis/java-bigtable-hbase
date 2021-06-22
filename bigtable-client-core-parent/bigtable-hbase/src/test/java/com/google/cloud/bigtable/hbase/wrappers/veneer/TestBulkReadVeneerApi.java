@@ -85,7 +85,7 @@ public class TestBulkReadVeneerApi {
   @Test
   public void testAdd() throws Exception {
     dataClient = BigtableDataClient.create(settingsBuilder.build());
-    BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID);
+    BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID, null);
 
     ApiFuture<Result> resultFuture1_1 = bulkReadWrapper.add(ByteString.copyFromUtf8("one"), null);
     ApiFuture<Result> resultFuture1_2 = bulkReadWrapper.add(ByteString.copyFromUtf8("two"), null);
@@ -123,7 +123,7 @@ public class TestBulkReadVeneerApi {
                 .setRequestByteThreshold(10L * 1024L)
                 .build());
     dataClient = BigtableDataClient.create(settingsBuilder.build());
-    BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID);
+    BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID, null);
 
     ApiFuture<Result> row = bulkReadWrapper.add(ROW_KEY, Filters.FILTERS.key().regex("row"));
     row.get();
@@ -147,7 +147,7 @@ public class TestBulkReadVeneerApi {
                 .setRequestByteThreshold(10L * 1024L)
                 .build());
     dataClient = BigtableDataClient.create(settingsBuilder.build());
-    BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID);
+    BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID, null);
 
     List<ApiFuture<Result>> results = new ArrayList<>();
 
@@ -183,7 +183,7 @@ public class TestBulkReadVeneerApi {
                 .setRequestByteThreshold(10L * 1024L)
                 .build());
     dataClient = BigtableDataClient.create(settingsBuilder.build());
-    BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID);
+    BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID, null);
 
     long startTime = System.currentTimeMillis();
     ApiFuture<Result> resultFuture = bulkReadWrapper.add(ROW_KEY, null);

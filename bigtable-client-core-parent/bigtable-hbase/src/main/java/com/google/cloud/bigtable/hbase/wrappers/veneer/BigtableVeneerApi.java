@@ -56,7 +56,8 @@ public class BigtableVeneerApi extends BigtableApi {
       channelPoolSize = 0;
     } else {
       dataClientWrapper =
-          new DataClientVeneerApi(BigtableDataClient.create(settings.getDataSettings()));
+          new DataClientVeneerApi(
+              BigtableDataClient.create(settings.getDataSettings()), settings.getClientTimeouts());
       channelPoolSize = getChannelPoolSize(settings.getDataSettings().getStubSettings());
       for (int i = 0; i < channelPoolSize; i++) {
         BigtableClientMetrics.counter(MetricLevel.Info, "grpc.channel.active").inc();
