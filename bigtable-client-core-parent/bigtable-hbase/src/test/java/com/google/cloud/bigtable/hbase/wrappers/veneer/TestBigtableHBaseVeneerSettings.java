@@ -218,17 +218,25 @@ public class TestBigtableHBaseVeneerSettings {
     configuration.setInt(BIGTABLE_READ_RPC_TIMEOUT_MS_KEY, readRowStreamTimeout);
     configuration.setInt(BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY, readRowStreamAttemptTimeout);
 
-    BigtableHBaseVeneerSettings settings = BigtableHBaseVeneerSettings
-        .create(configuration);
-    BigtableDataSettings dataSettings =
-        settings.getDataSettings();
+    BigtableHBaseVeneerSettings settings = BigtableHBaseVeneerSettings.create(configuration);
+    BigtableDataSettings dataSettings = settings.getDataSettings();
 
     assertTrue(settings.getClientTimeouts().getUseTimeouts());
-    assertEquals(Optional.of(Duration.ofMillis(rpcTimeoutMs)), settings.getClientTimeouts().getUnaryTimeouts().getOperationTimeout());
-    assertEquals(Optional.of(Duration.ofMillis(rpcAttemptTimeoutMs)), settings.getClientTimeouts().getUnaryTimeouts().getAttemptTimeout());
-    assertEquals(Optional.of(Duration.ofMillis(readRowStreamTimeout)), settings.getClientTimeouts().getScanTimeouts().getOperationTimeout());
-    assertEquals(Optional.of(Duration.ofMillis(readRowStreamAttemptTimeout)), settings.getClientTimeouts().getScanTimeouts().getAttemptTimeout());
-    assertEquals(Optional.of(Duration.ofMillis(perRowTimeoutMs)), settings.getClientTimeouts().getScanTimeouts().getResponseTimeout());
+    assertEquals(
+        Optional.of(Duration.ofMillis(rpcTimeoutMs)),
+        settings.getClientTimeouts().getUnaryTimeouts().getOperationTimeout());
+    assertEquals(
+        Optional.of(Duration.ofMillis(rpcAttemptTimeoutMs)),
+        settings.getClientTimeouts().getUnaryTimeouts().getAttemptTimeout());
+    assertEquals(
+        Optional.of(Duration.ofMillis(readRowStreamTimeout)),
+        settings.getClientTimeouts().getScanTimeouts().getOperationTimeout());
+    assertEquals(
+        Optional.of(Duration.ofMillis(readRowStreamAttemptTimeout)),
+        settings.getClientTimeouts().getScanTimeouts().getAttemptTimeout());
+    assertEquals(
+        Optional.of(Duration.ofMillis(perRowTimeoutMs)),
+        settings.getClientTimeouts().getScanTimeouts().getResponseTimeout());
 
     RetrySettings readRowRetrySettings =
         dataSettings.getStubSettings().readRowSettings().getRetrySettings();
