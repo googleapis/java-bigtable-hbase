@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.21.0](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.20.1...v1.21.0) (2021-06-22)
+
+
+### Features
+
+* add option to pass a tracing cookie ([#3014](https://www.github.com/googleapis/java-bigtable-hbase/issues/3014)) ([92ff6da](https://www.github.com/googleapis/java-bigtable-hbase/commit/92ff6daa0d9732af7fbee458b24166f22982a58b))
+
+
+### Bug Fixes
+
+* add tracing cookie to admin ([#3024](https://www.github.com/googleapis/java-bigtable-hbase/issues/3024)) ([bded191](https://www.github.com/googleapis/java-bigtable-hbase/commit/bded191bf0e12a8650a2616e49700dd194e25a62))
+* keep only failed actions in List<Delete> ([#3007](https://www.github.com/googleapis/java-bigtable-hbase/issues/3007)) ([9b56c0c](https://www.github.com/googleapis/java-bigtable-hbase/commit/9b56c0cc071bb886d7021929efbd04781a7bab6f))
+* max mutation comparison to include 100k ([#3009](https://www.github.com/googleapis/java-bigtable-hbase/issues/3009)) ([53acee3](https://www.github.com/googleapis/java-bigtable-hbase/commit/53acee346f5ce50b83fe02016e0bc53e0d69da09))
+
+
+### Dependencies
+
+* update shared config to 0.12.0 ([#3012](https://www.github.com/googleapis/java-bigtable-hbase/issues/3012)) ([b3c6b27](https://www.github.com/googleapis/java-bigtable-hbase/commit/b3c6b27d0d6a67884aded09eff74eef02db14df9))
+
 ### [1.20.1](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.20.0...v1.20.1) (2021-06-01)
 
 
