@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.test_env;
 
 import com.google.cloud.bigtable.hbase.Logger;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -79,6 +80,29 @@ class BigtableEnv extends SharedTestEnv {
       if (KEYS.contains(entry.getKey())) {
         configuration.set(entry.getKey().toString(), entry.getValue().toString());
       }
+    }
+
+    // Configure DirectPath settings:
+    // - when a required mode is specified, ensure that ip address match the mode
+    // - specify a user agent that will trigger deny/allow lists on the serverside
+    switch (getConnectionMode()) {
+      case DEFAULT:
+        // nothing special
+        break;
+      case REQUIRE_CFE:
+        configuration.set("google.bigtable.test.data.ip.regex", "^(?!2001:4860:8040|34\\.126)");
+        configuration.set("google.bigtable.custom.user.agent", "bigtable-directpath-disable");
+        break;
+      case REQUIRE_DIRECT_PATH:
+        configuration.set("google.bigtable.test.data.ip.regex", "^2001:4860:8040|34\\.126");
+        configuration.set("google.bigtable.custom.user.agent", "bigtable-directpath-enable");
+        break;
+      case REQUIRE_DIRECT_PATH_IPV4:
+        configuration.set("google.bigtable.test.data.ip.regex", "^34\\.126");
+        configuration.set("google.bigtable.custom.user.agent", "bigtable-directpath-enable");
+        break;
+      default:
+        throw new IllegalStateException("Unknown ConnectionMode: " + getConnectionMode());
     }
 
     // Garbage collect tables that previous runs failed to clean up

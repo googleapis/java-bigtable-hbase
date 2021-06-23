@@ -149,4 +149,8 @@ public class SharedTestEnvRule extends ExternalResource {
   public ExecutorService getExecutor() {
     return sharedTestEnv.getExecutor();
   }
+
+  public ConnectionMode getConnectionMode() {
+    return sharedTestEnv.getConnectionMode();
+  }
 }
