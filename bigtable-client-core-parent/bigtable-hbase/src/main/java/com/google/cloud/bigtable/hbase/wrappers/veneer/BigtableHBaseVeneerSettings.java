@@ -192,8 +192,6 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
     this.allowRetriesWithoutTimestamp =
         configuration.getBoolean(ALLOW_NO_TIMESTAMP_RETRIES_KEY, false);
-
-    // unaryCallSettings, scanCallSettings and bulkMutationCallSettings are set in configureD
   }
 
   @Override
@@ -921,6 +919,9 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
         new OperationTimeouts(
             Optional.<Duration>absent(), Optional.<Duration>absent(), Optional.<Duration>absent());
 
+    // responseTimeouts are only relevant to streaming RPCs, they limit the amount of timeout a
+    // stream will wait for the next response message. This is synonymous with attemptTimeouts in
+    // unary RPCs since they receive a single response (so its ignored).
     private final Optional<Duration> responseTimeout;
     private final Optional<Duration> attemptTimeout;
     private final Optional<Duration> operationTimeout;

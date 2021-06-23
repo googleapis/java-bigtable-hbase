@@ -46,7 +46,8 @@ public interface DataClientWrapper extends AutoCloseable {
    * Creates {@link BulkReadWrapper} with specified table ID.
    *
    * <p>The BulkRead instance will be scoped to a single user visible operation. The operation
-   * timeout is started from the time the createBulkRead is invoked.
+   * timeout (which is configured in the settings) is started from the time the createBulkRead is
+   * invoked.
    *
    * <pre>{@code
    * try (BulkReadWrapper batch = wrapper.createBulkRead(tableId)) {
