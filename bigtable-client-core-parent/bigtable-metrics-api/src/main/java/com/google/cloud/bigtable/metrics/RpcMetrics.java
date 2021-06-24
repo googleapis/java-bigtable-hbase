@@ -65,7 +65,7 @@ public class RpcMetrics {
     failureMeter.mark();
   }
 
-  public void markRetriesExhausted() {
+  public void markRetriesExhasted() {
     retriesExhaustedMeter.mark();
   }
 }
