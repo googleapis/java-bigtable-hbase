@@ -19,6 +19,8 @@ import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
+import com.google.api.gax.grpc.GrpcCallContext;
+import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ServerStream;
 import com.google.api.gax.rpc.StateCheckingResponseObserver;
 import com.google.api.gax.rpc.StreamController;
@@ -34,15 +36,21 @@ import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.BulkReadWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
+import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings.ClientOperationTimeouts;
+import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings.NoTimeoutsInterceptor;
+import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings.OperationTimeouts;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.Meter;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.cloud.bigtable.metrics.Timer.Context;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
+import io.grpc.CallOptions;
+import io.grpc.Deadline;
 import io.grpc.stub.StreamObserver;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
 import org.apache.hadoop.hbase.client.Result;
@@ -55,9 +63,12 @@ public class DataClientVeneerApi implements DataClientWrapper {
   private static final RowResultAdapter RESULT_ADAPTER = new RowResultAdapter();
 
   private final BigtableDataClient delegate;
+  private final ClientOperationTimeouts clientOperationTimeouts;
 
-  DataClientVeneerApi(BigtableDataClient delegate) {
+  DataClientVeneerApi(
+      BigtableDataClient delegate, ClientOperationTimeouts clientOperationTimeouts) {
     this.delegate = delegate;
+    this.clientOperationTimeouts = clientOperationTimeouts;
   }
 
   @Override
@@ -67,7 +78,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
   @Override
   public BulkReadWrapper createBulkRead(String tableId) {
-    return new BulkReadVeneerApi(delegate, tableId);
+    return new BulkReadVeneerApi(delegate, tableId, createScanCallContext());
   }
 
   @Override
@@ -101,8 +112,14 @@ public class DataClientVeneerApi implements DataClientWrapper {
   @Override
   public ApiFuture<Result> readRowAsync(
       String tableId, ByteString rowKey, @Nullable Filters.Filter filter) {
+
+    Query query = Query.create(tableId).rowKey(rowKey).limit(1);
+    if (filter != null) {
+      query.filter(filter);
+    }
+
     return ApiFutures.transform(
-        delegate.readRowAsync(tableId, rowKey, filter),
+        delegate.readRowCallable().futureCall(query, createReadRowCallContext()),
         new ApiFunction<Row, Result>() {
           @Override
           public Result apply(Row row) {
@@ -114,17 +131,84 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
   @Override
   public ResultScanner readRows(Query request) {
-    return new RowResultScanner(delegate.readRowsCallable(RESULT_ADAPTER).call(request));
+    return new RowResultScanner(
+        delegate.readRowsCallable(RESULT_ADAPTER).call(request, createScanCallContext()));
   }
 
   @Override
   public ApiFuture<List<Result>> readRowsAsync(Query request) {
-    return delegate.readRowsCallable(RESULT_ADAPTER).all().futureCall(request);
+    return delegate
+        .readRowsCallable(RESULT_ADAPTER)
+        .all()
+        .futureCall(request, createScanCallContext());
   }
 
   @Override
   public void readRowsAsync(Query request, StreamObserver<Result> observer) {
-    delegate.readRowsCallable(RESULT_ADAPTER).call(request, new StreamObserverAdapter<>(observer));
+    delegate
+        .readRowsCallable(RESULT_ADAPTER)
+        .call(request, new StreamObserverAdapter<>(observer), createScanCallContext());
+  }
+
+  // Point reads are implemented using a streaming ReadRows RPC. So timeouts need to be managed
+  // similar to scans below.
+  private ApiCallContext createReadRowCallContext() {
+    GrpcCallContext ctx = GrpcCallContext.createDefault();
+    OperationTimeouts callSettings = clientOperationTimeouts.getUnaryTimeouts();
+
+    if (clientOperationTimeouts.getUseTimeouts()) {
+      // By default veneer doesnt have timeouts per attempt for streaming rpcs
+      if (callSettings.getAttemptTimeout().isPresent()) {
+        ctx = ctx.withTimeout(callSettings.getAttemptTimeout().get());
+      }
+      // TODO: remove this after fixing it in veneer/gax
+      // If the attempt timeout was overridden, it disables overall timeout limiting
+      // Fix it by settings the underlying grpc deadline
+      if (callSettings.getOperationTimeout().isPresent()) {
+        ctx =
+            ctx.withCallOptions(
+                CallOptions.DEFAULT.withDeadline(
+                    Deadline.after(
+                        callSettings.getOperationTimeout().get().toMillis(),
+                        TimeUnit.MILLISECONDS)));
+      }
+    }
+
+    return ctx;
+  }
+
+  // Support 2 bigtable-hbase features not directly available in veneer:
+  // - disabling timeouts - when timeouts are disabled, bigtable-hbase ignores user configured
+  //   timeouts and forces 6 minute deadlines per attempt for all RPCs except scans. This is
+  //   implemented by an interceptor. However the interceptor must be informed that this is a scan
+  // - per attempt deadlines - vener doesn't implement deadlines for attempts. To workaround this,
+  //   the timeouts are set per call in the ApiCallContext. However this creates a separate issue of
+  //   over running the operation deadline, so gRPC deadline is also set.
+  private GrpcCallContext createScanCallContext() {
+    GrpcCallContext ctx = GrpcCallContext.createDefault();
+    OperationTimeouts callSettings = clientOperationTimeouts.getScanTimeouts();
+
+    if (!clientOperationTimeouts.getUseTimeouts()) {
+      ctx =
+          ctx.withCallOptions(
+              CallOptions.DEFAULT.withOption(
+                  NoTimeoutsInterceptor.SKIP_DEFAULT_ATTEMPT_TIMEOUT, true));
+    } else if (callSettings.getAttemptTimeout().isPresent()) {
+      ctx = ctx.withTimeout(callSettings.getAttemptTimeout().get());
+
+      // TODO: remove this after fixing it in veneer/gax
+      // If the attempt timeout was overridden, it disables overall timeout limiting
+      // Fix it by settings the underlying grpc deadline
+      if (callSettings.getOperationTimeout().isPresent()) {
+        ctx =
+            ctx.withCallOptions(
+                CallOptions.DEFAULT.withDeadline(
+                    Deadline.after(
+                        callSettings.getOperationTimeout().get().toMillis(),
+                        TimeUnit.MILLISECONDS)));
+      }
+    }
+    return ctx;
   }
 
   @Override

@@ -20,6 +20,7 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.batching.Batcher;
+import com.google.api.gax.grpc.GrpcCallContext;
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
 import com.google.cloud.bigtable.data.v2.models.Filters;
@@ -68,10 +69,12 @@ public class BulkReadVeneerApi implements BulkReadWrapper {
   // TODO: remove this once gax-java's Batcher supports asyncClose(). This will eliminate the need
   //  to track individual entries
   private final AtomicLong cleanupBarrier;
+  private final GrpcCallContext callContext;
 
-  BulkReadVeneerApi(BigtableDataClient client, String tableId) {
+  BulkReadVeneerApi(BigtableDataClient client, String tableId, GrpcCallContext callContext) {
     this.client = client;
     this.tableId = tableId;
+    this.callContext = callContext;
 
     this.batchers = new HashMap<>();
     this.cleanupBarrier = new AtomicLong();
@@ -135,7 +138,7 @@ public class BulkReadVeneerApi implements BulkReadWrapper {
 
     Batcher<ByteString, Row> batcher = batchers.get(proto);
     if (batcher == null) {
-      batcher = client.newBulkReadRowsBatcher(tableId, filter);
+      batcher = client.newBulkReadRowsBatcher(tableId, filter, callContext);
       batchers.put(proto, batcher);
     }
     return batcher;

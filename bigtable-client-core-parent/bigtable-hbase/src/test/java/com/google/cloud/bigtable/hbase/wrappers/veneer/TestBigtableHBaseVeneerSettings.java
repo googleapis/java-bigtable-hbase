@@ -62,6 +62,7 @@ import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.metrics.MetricsApiTracerAdapterFactory;
+import com.google.common.base.Optional;
 import io.grpc.internal.GrpcUtil;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -72,6 +73,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
+import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class TestBigtableHBaseVeneerSettings {
@@ -215,25 +217,43 @@ public class TestBigtableHBaseVeneerSettings {
     configuration.setLong(MAX_SCAN_TIMEOUT_RETRIES, maxAttempt);
     configuration.setInt(BIGTABLE_READ_RPC_TIMEOUT_MS_KEY, readRowStreamTimeout);
     configuration.setInt(BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY, readRowStreamAttemptTimeout);
-    BigtableDataSettings settings =
-        BigtableHBaseVeneerSettings.create(configuration).getDataSettings();
+
+    BigtableHBaseVeneerSettings settings = BigtableHBaseVeneerSettings.create(configuration);
+    BigtableDataSettings dataSettings = settings.getDataSettings();
+
+    assertTrue(settings.getClientTimeouts().getUseTimeouts());
+    assertEquals(
+        Optional.of(Duration.ofMillis(rpcTimeoutMs)),
+        settings.getClientTimeouts().getUnaryTimeouts().getOperationTimeout());
+    assertEquals(
+        Optional.of(Duration.ofMillis(rpcAttemptTimeoutMs)),
+        settings.getClientTimeouts().getUnaryTimeouts().getAttemptTimeout());
+    assertEquals(
+        Optional.of(Duration.ofMillis(readRowStreamTimeout)),
+        settings.getClientTimeouts().getScanTimeouts().getOperationTimeout());
+    assertEquals(
+        Optional.of(Duration.ofMillis(readRowStreamAttemptTimeout)),
+        settings.getClientTimeouts().getScanTimeouts().getAttemptTimeout());
+    assertEquals(
+        Optional.of(Duration.ofMillis(perRowTimeoutMs)),
+        settings.getClientTimeouts().getScanTimeouts().getResponseTimeout());
 
     RetrySettings readRowRetrySettings =
-        settings.getStubSettings().readRowSettings().getRetrySettings();
+        dataSettings.getStubSettings().readRowSettings().getRetrySettings();
     assertEquals(initialElapsedMs, readRowRetrySettings.getInitialRetryDelay().toMillis());
     assertEquals(rpcTimeoutMs, readRowRetrySettings.getTotalTimeout().toMillis());
     assertEquals(rpcAttemptTimeoutMs, readRowRetrySettings.getInitialRpcTimeout().toMillis());
     assertEquals(rpcAttemptTimeoutMs, readRowRetrySettings.getMaxRpcTimeout().toMillis());
 
     RetrySettings checkAndMutateRetrySettings =
-        settings.getStubSettings().checkAndMutateRowSettings().getRetrySettings();
+        dataSettings.getStubSettings().checkAndMutateRowSettings().getRetrySettings();
     assertEquals(rpcTimeoutMs, checkAndMutateRetrySettings.getTotalTimeout().toMillis());
     // CheckAndMutate is non-retriable so its rpc timeout = overall timeout
     assertEquals(rpcTimeoutMs, checkAndMutateRetrySettings.getInitialRpcTimeout().toMillis());
     assertEquals(rpcTimeoutMs, checkAndMutateRetrySettings.getMaxRpcTimeout().toMillis());
 
     RetrySettings readRowsRetrySettings =
-        settings.getStubSettings().readRowsSettings().getRetrySettings();
+        dataSettings.getStubSettings().readRowsSettings().getRetrySettings();
     assertEquals(initialElapsedMs, readRowsRetrySettings.getInitialRetryDelay().toMillis());
     assertEquals(perRowTimeoutMs, readRowsRetrySettings.getInitialRpcTimeout().toMillis());
     assertEquals(perRowTimeoutMs, readRowsRetrySettings.getMaxRpcTimeout().toMillis());
