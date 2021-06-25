@@ -72,6 +72,7 @@ import com.google.auth.oauth2.ServiceAccountJwtAccessCredentials;
 import com.google.cloud.bigtable.admin.v2.BigtableInstanceAdminSettings;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.admin.v2.stub.BigtableInstanceAdminStubSettings;
+import com.google.cloud.bigtable.config.BigtableVersionInfo;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings.Builder;
 import com.google.cloud.bigtable.data.v2.models.Query;
@@ -459,7 +460,8 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     ImmutableMap.Builder<String, String> headersBuilder = ImmutableMap.<String, String>builder();
     List<String> userAgentParts = Lists.newArrayList();
     userAgentParts.add("hbase-" + VersionInfo.getVersion());
-    userAgentParts.add("bigtable-" + BigtableHBaseVersion.getVersion());
+    userAgentParts.add("bigtable-" + BigtableVersionInfo.CLIENT_VERSION);
+    userAgentParts.add("bigtable-hbase-" + BigtableHBaseVersion.getVersion());
     userAgentParts.add("jdk-" + System.getProperty("java.specification.version"));
 
     String customUserAgent = configuration.get(CUSTOM_USER_AGENT_KEY);
