@@ -85,7 +85,7 @@ public class MetricsApiTracerAdapter implements ApiTracer {
   @Override
   public void operationFailed(Throwable error) {
     if (lastRetryStatus == RetryStatus.RETRIES_EXHAUSTED) {
-      rpcMetrics.markRetriesExhausted();
+      rpcMetrics.markRetriesExhasted();
     } else {
       rpcMetrics.markFailure();
     }
