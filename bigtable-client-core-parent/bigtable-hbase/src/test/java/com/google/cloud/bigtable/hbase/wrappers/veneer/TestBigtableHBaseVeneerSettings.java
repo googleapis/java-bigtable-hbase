@@ -127,8 +127,14 @@ public class TestBigtableHBaseVeneerSettings {
     assertEquals(TEST_HOST + ":" + TEST_PORT, dataSettings.getStubSettings().getEndpoint());
     Map<String, String> headers = dataSettings.getStubSettings().getHeaderProvider().getHeaders();
     assertTrue(headers.get(GrpcUtil.USER_AGENT_KEY.name()).contains(userAgent));
-    assertTrue(headers.get(GrpcUtil.USER_AGENT_KEY.name()).contains("bigtable-" + BigtableVersionInfo.CLIENT_VERSION));
-    assertTrue(headers.get(GrpcUtil.USER_AGENT_KEY.name()).contains("bigtable-hbase-" + BigtableHBaseVersion.getVersion()));
+    assertTrue(
+        headers
+            .get(GrpcUtil.USER_AGENT_KEY.name())
+            .contains("bigtable-" + BigtableVersionInfo.CLIENT_VERSION));
+    assertTrue(
+        headers
+            .get(GrpcUtil.USER_AGENT_KEY.name())
+            .contains("bigtable-hbase-" + BigtableHBaseVersion.getVersion()));
     assertTrue(headers.get("cookie").equals(fakeTracingCookie));
     assertEquals(
         credentials, dataSettings.getStubSettings().getCredentialsProvider().getCredentials());
