@@ -89,15 +89,15 @@ class BigtableEnv extends SharedTestEnv {
         // nothing special
         break;
       case REQUIRE_CFE:
-        configuration.set("google.bigtable.test.data.ip.regex", "^(?!2001:4860:8040|34\\.126)");
+        configuration.set("google.bigtable.test.data.ip.regex", "^(?!2001:4860:8040|34\\.126).*");
         configuration.set("google.bigtable.custom.user.agent", "bigtable-directpath-disable");
         break;
       case REQUIRE_DIRECT_PATH:
-        configuration.set("google.bigtable.test.data.ip.regex", "^2001:4860:8040|34\\.126");
+        configuration.set("google.bigtable.test.data.ip.regex", "^(?:2001:4860:8040|34\\.126).*");
         configuration.set("google.bigtable.custom.user.agent", "bigtable-directpath-enable");
         break;
       case REQUIRE_DIRECT_PATH_IPV4:
-        configuration.set("google.bigtable.test.data.ip.regex", "^34\\.126");
+        configuration.set("google.bigtable.test.data.ip.regex", "^(?:34\\.126).*");
         configuration.set("google.bigtable.custom.user.agent", "bigtable-directpath-enable");
         break;
       default:
