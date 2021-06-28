@@ -70,6 +70,12 @@ limitations under the License.
     </dependency>
 
     <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-metrics-api</artifactId>
+      <version>1.21.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-core-parent:current} -->
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
       <version>${hbase.version}</version>
@@ -104,7 +110,7 @@ limitations under the License.
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-core</artifactId>
-      <version>${dropwizard.metrics.version}</version>
+      <version>${hbase2-metrics.version}</version>
     </dependency>
     <dependency>
       <groupId>io.opencensus</groupId>
@@ -127,7 +133,7 @@ limitations under the License.
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-graphite</artifactId>
-      <version>3.2.6</version>
+      <version>${hbase2-metrics.version}</version>
       <scope>test</scope>
     </dependency>
 

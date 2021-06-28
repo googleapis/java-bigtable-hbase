@@ -200,6 +200,12 @@ limitations under the License.
 
     <!-- Metrics -->
     <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-metrics-api</artifactId>
+      <version>1.21.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-core-parent:current} -->
+    </dependency>
+
+    <dependency>
       <groupId>io.opencensus</groupId>
       <artifactId>opencensus-api</artifactId>
     </dependency>
@@ -212,7 +218,7 @@ limitations under the License.
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-core</artifactId>
-      <version>${dropwizard.metrics.version}</version>
+      <version>${hbase1-metrics.version}</version>
     </dependency>
 
     <!--  TODO: remove this dependency when upgraded through transitive dependency (http-client -> org.apache.httpcomponents:httpclient)
@@ -220,7 +226,7 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
-      <version>1.14</version>
+      <version>1.15</version>
     </dependency>
 
     <!-- Test -->

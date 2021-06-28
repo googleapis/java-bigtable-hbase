@@ -28,6 +28,7 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.DeadlineGenerator;
 import com.google.cloud.bigtable.grpc.TestDeadlineGeneratorFactory;
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException;
+import com.google.cloud.bigtable.metrics.RpcMetrics;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
@@ -60,8 +61,8 @@ public class TestRetryingUnaryOperation {
 
   private static final RetryOptions RETRY_OPTIONS = RetryOptions.getDefaultOptions();
 
-  private static final BigtableAsyncRpc.RpcMetrics metrics =
-      BigtableAsyncRpc.RpcMetrics.createRpcMetrics(BigtableGrpc.getReadRowsMethod());
+  private static final RpcMetrics metrics =
+      BigtableAsyncUtilities.Default.createRpcMetrics(BigtableGrpc.getReadRowsMethod());
 
   @Mock private BigtableAsyncRpc<ReadRowsRequest, ReadRowsResponse> readAsync;
 
