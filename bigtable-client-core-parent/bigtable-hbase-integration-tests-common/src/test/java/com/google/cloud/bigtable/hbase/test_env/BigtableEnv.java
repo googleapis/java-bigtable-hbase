@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase.test_env;
 
 import com.google.cloud.bigtable.hbase.Logger;
-import com.google.common.base.MoreObjects;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;

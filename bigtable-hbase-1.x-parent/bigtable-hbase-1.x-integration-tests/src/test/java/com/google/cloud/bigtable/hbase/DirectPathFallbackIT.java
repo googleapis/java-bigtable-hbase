@@ -29,7 +29,6 @@ import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.ClientInterceptor;
-import io.grpc.ClientInterceptors;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.MethodDescriptor;
 import io.grpc.alts.ComputeEngineChannelBuilder;
@@ -93,7 +92,8 @@ public class DirectPathFallbackIT extends AbstractTest {
         ImmutableSet.of(
             ConnectionMode.REQUIRE_DIRECT_PATH, ConnectionMode.REQUIRE_DIRECT_PATH_IPV4);
     if (!validModes.contains(sharedTestEnv.getConnectionMode())) {
-      throw new AssumptionViolatedException("DirectPathFallbackIT can only return when explicitly requested");
+      throw new AssumptionViolatedException(
+          "DirectPathFallbackIT can only return when explicitly requested");
     }
 
     BigtableOptions.Builder bigtableOptions =
@@ -116,13 +116,17 @@ public class DirectPathFallbackIT extends AbstractTest {
             }
             injectNettyChannelHandler(builder);
             // Since we are forcing fallback, disable ip verification
-            builder.intercept(new ClientInterceptor() {
-              @Override
-              public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
-                  MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
-                return next.newCall(method, callOptions.withOption(IpVerificationInterceptor.SKIP_IP_VERIFICATION, true));
-              }
-            });
+            builder.intercept(
+                new ClientInterceptor() {
+                  @Override
+                  public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+                      MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
+                    return next.newCall(
+                        method,
+                        callOptions.withOption(
+                            IpVerificationInterceptor.SKIP_IP_VERIFICATION, true));
+                  }
+                });
             // Fail fast when blackhole is active
             builder.keepAliveTime(1, TimeUnit.SECONDS);
             builder.keepAliveTimeout(1, TimeUnit.SECONDS);
@@ -152,16 +156,21 @@ public class DirectPathFallbackIT extends AbstractTest {
     blackholeDpAddr.set(true);
 
     // Send a request, which should be routed over IPv4 and CFE.
-    instrumentedSession.getDataClient().readFlatRowsList(ReadRowsRequest.newBuilder()
-        .setTableName(
-            String.format(
-                "projects/%s/instances/%s/tables/%s",
-                sharedTestEnv.getConfiguration().get(BigtableOptionsFactory.PROJECT_ID_KEY),
-                sharedTestEnv.getConfiguration().get(BigtableOptionsFactory.INSTANCE_ID_KEY),
-                sharedTestEnv.getDefaultTableName().toString()))
-        .setRows(RowSet.newBuilder().addRowKeys(ByteString.copyFromUtf8("nonexistent-row")))
-        .setRowsLimit(1)
-        .build());
+    instrumentedSession
+        .getDataClient()
+        .readFlatRowsList(
+            ReadRowsRequest.newBuilder()
+                .setTableName(
+                    String.format(
+                        "projects/%s/instances/%s/tables/%s",
+                        sharedTestEnv.getConfiguration().get(BigtableOptionsFactory.PROJECT_ID_KEY),
+                        sharedTestEnv
+                            .getConfiguration()
+                            .get(BigtableOptionsFactory.INSTANCE_ID_KEY),
+                        sharedTestEnv.getDefaultTableName().toString()))
+                .setRows(RowSet.newBuilder().addRowKeys(ByteString.copyFromUtf8("nonexistent-row")))
+                .setRowsLimit(1)
+                .build());
 
     // Verify that the above check was meaningful, by verifying that the blackhole actually dropped
     // packets.
@@ -223,13 +232,16 @@ public class DirectPathFallbackIT extends AbstractTest {
       nettyChannelBuilder.channelFactory(channelFactory);
       nettyChannelBuilder.eventLoopGroup(eventLoopGroup);
 
-      channelBuilder.intercept(new ClientInterceptor() {
-        @Override
-        public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
-            MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
-          return next.newCall(method, callOptions.withOption(IpVerificationInterceptor.SKIP_IP_VERIFICATION, true));
-        }
-      });
+      channelBuilder.intercept(
+          new ClientInterceptor() {
+            @Override
+            public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+                MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
+              return next.newCall(
+                  method,
+                  callOptions.withOption(IpVerificationInterceptor.SKIP_IP_VERIFICATION, true));
+            }
+          });
     } catch (NoSuchFieldException | IllegalAccessException e) {
       throw new RuntimeException("Failed to inject the netty ChannelHandler", e);
     }

@@ -340,7 +340,8 @@ public class BigtableSession implements Closeable {
       }
 
       Channel dataChannel =
-          ClientInterceptors.intercept(rawDataChannelPool, createDataApiInterceptors(options, useDirectPath));
+          ClientInterceptors.intercept(
+              rawDataChannelPool, createDataApiInterceptors(options, useDirectPath));
 
       this.dataRequestContext =
           RequestContext.create(
@@ -419,8 +420,8 @@ public class BigtableSession implements Closeable {
     return interceptors.build();
   }
 
-  private List<ClientInterceptor> createDataApiInterceptors(BigtableOptions options, boolean useDirectPath)
-      throws IOException {
+  private List<ClientInterceptor> createDataApiInterceptors(
+      BigtableOptions options, boolean useDirectPath) throws IOException {
     ImmutableList.Builder<ClientInterceptor> interceptors = ImmutableList.builder();
 
     // TODO: instanceName should never be null

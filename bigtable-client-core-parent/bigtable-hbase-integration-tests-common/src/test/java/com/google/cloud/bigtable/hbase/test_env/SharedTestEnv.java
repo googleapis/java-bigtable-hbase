@@ -90,8 +90,9 @@ abstract class SharedTestEnv {
   }
 
   public ConnectionMode getConnectionMode() {
-    String modeStr = MoreObjects.firstNonNull(
-        System.getProperty("bigtable.connection-mode"), ConnectionMode.DEFAULT.name());
+    String modeStr =
+        MoreObjects.firstNonNull(
+            System.getProperty("bigtable.connection-mode"), ConnectionMode.DEFAULT.name());
     return ConnectionMode.valueOf(modeStr);
   }
 }

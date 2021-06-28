@@ -414,18 +414,20 @@ public class BigtableOptionsFactory {
     final String s = configuration.get(BIGTABLE_TEST_DATA_IP_REGEX);
     if (s != null) {
       final ChannelConfigurator oldConfigurator = bigtableOptionsBuilder.getChannelConfigurator();
-      bigtableOptionsBuilder.setChannelConfigurator(new ChannelConfigurator() {
-        @Override
-        public ManagedChannelBuilder configureChannel(ManagedChannelBuilder builder, String host) {
-          if (oldConfigurator != null) {
-            builder = oldConfigurator.configureChannel(builder, host);
-          }
-          if (!host.contains("admin")) {
-            builder = builder.intercept(new IpVerificationInterceptor(Pattern.compile(s)));
-          }
-          return builder;
-        }
-      });
+      bigtableOptionsBuilder.setChannelConfigurator(
+          new ChannelConfigurator() {
+            @Override
+            public ManagedChannelBuilder configureChannel(
+                ManagedChannelBuilder builder, String host) {
+              if (oldConfigurator != null) {
+                builder = oldConfigurator.configureChannel(builder, host);
+              }
+              if (!host.contains("admin")) {
+                builder = builder.intercept(new IpVerificationInterceptor(Pattern.compile(s)));
+              }
+              return builder;
+            }
+          });
     }
 
     return bigtableOptionsBuilder.build();
