@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.test_env;
 
-
 /**
  * ConnectionMode to enforce for the tests. This will affect remote ip interceptors and use agent
  */
