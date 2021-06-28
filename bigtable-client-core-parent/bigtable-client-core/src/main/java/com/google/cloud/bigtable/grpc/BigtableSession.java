@@ -557,6 +557,7 @@ public class BigtableSession implements Closeable {
     }
 
     return builder
+        .disableServiceConfigLookUp()
         .idleTimeout(Long.MAX_VALUE, TimeUnit.SECONDS)
         .maxInboundMessageSize(MAX_MESSAGE_SIZE)
         // Default behavior Do not use keepalive without any outstanding rpc calls as it can add a
