@@ -68,11 +68,6 @@ limitations under the License.
       <version>${jsr305.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-metrics-api</artifactId>
-      <version>${project.version}</version> <!-- {x-version-update:bigtable-client-core-parent:current} -->
-    </dependency>
-    <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
       <version>${commons-logging.version}</version>

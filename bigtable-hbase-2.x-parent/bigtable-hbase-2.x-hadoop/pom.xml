@@ -64,11 +64,6 @@ limitations under the License.
       <artifactId>hbase-client</artifactId>
       <version>${hbase.version}</version>
     </dependency>
-    <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-metrics-api</artifactId>
-      <version>1.21.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-core-parent:current} -->
-    </dependency>
 
     <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
     <dependency>
