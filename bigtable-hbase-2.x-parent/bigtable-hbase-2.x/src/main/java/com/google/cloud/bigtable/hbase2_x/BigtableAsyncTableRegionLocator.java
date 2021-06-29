@@ -63,8 +63,8 @@ public class BigtableAsyncTableRegionLocator extends AbstractBigtableRegionLocat
       int mid = (low + high) >>> 1;
       HRegionLocation regionLocation = regions.get(mid);
       // TODO 2.x deprecated getRegionInfo() and returns a RegionInfo class instead of HRegionInfo.
-      // We could move this
-      // method to AbstractBigtableRegionLocator after making sure there's no compatibility issues.
+      // We could move this method to AbstractBigtableRegionLocator after making sure there's no
+      // compatibility issues.
       RegionInfo regionInfo = regionLocation.getRegion();
 
       // This isn't the last region (endKey != "") and row key is greater than the current bound
