@@ -75,10 +75,11 @@ public abstract class BigtableRegionLocator extends AbstractBigtableRegionLocato
       HRegionLocation regionLocation = regions.get(mid);
       HRegionInfo regionInfo = regionLocation.getRegionInfo();
 
-      // This isn't the last region (endKey != "") and row key is fall outside of it
+      // This isn't the last region (endKey != "") and row key is greater than the current bound
       if (regionInfo.getEndKey().length > 0 && Bytes.compareTo(row, regionInfo.getEndKey()) >= 0) {
         low = mid + 1;
       } else if (Bytes.compareTo(row, regionInfo.getStartKey()) < 0) {
+        // no need to check empty key because it will compare naturally
         high = mid - 1;
       } else {
         return regionLocation;
