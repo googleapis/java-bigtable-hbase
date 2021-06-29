@@ -37,6 +37,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -117,6 +118,15 @@ public class TestBigtableConnection {
 
     assertEquals("", Bytes.toString(regionInfoList.get(0).getStartKey()));
     assertEquals("rowKey", Bytes.toString(regionInfoList.get(0).getEndKey()));
+  }
+
+  @Test
+  public void testGetRegionLocation() throws IOException {
+    HRegionLocation regionLocation =
+        connection.getRegionLocator(TABLE_NAME).getRegionLocation("rowKey".getBytes());
+
+    assertEquals("rowKey", Bytes.toString(regionLocation.getRegionInfo().getStartKey()));
+    assertEquals("", Bytes.toString(regionLocation.getRegionInfo().getEndKey()));
   }
 
   private static class FakeDataService extends BigtableGrpc.BigtableImplBase {

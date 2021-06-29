@@ -15,14 +15,30 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import static org.junit.Assert.assertEquals;
+
+import com.google.bigtable.v2.BigtableGrpc;
+import com.google.bigtable.v2.SampleRowKeysRequest;
+import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.hbase2_x.BigtableConnection;
+import com.google.common.collect.Queues;
+import com.google.protobuf.ByteString;
+import io.grpc.Server;
+import io.grpc.ServerBuilder;
+import io.grpc.stub.StreamObserver;
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Hbck;
+import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -106,6 +122,77 @@ public class TestBigtableConnection {
       Assert.assertNotEquals(hbck1.hashCode(), hbck2.hashCode());
 
       Assert.assertEquals("UnsupportedHbck", hbck1.toString());
+    }
+  }
+
+  @Test
+  public void testGetRegionLocation() throws IOException {
+    FakeDataService fakeDataService = new FakeDataService();
+    int dataPort;
+    try (ServerSocket s = new ServerSocket(0)) {
+      dataPort = s.getLocalPort();
+    }
+    Server server = ServerBuilder.forPort(dataPort).addService(fakeDataService).build();
+    server.start();
+
+    Configuration configuration = new Configuration(false);
+    configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, "project_id");
+    configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, "instance_id");
+    configuration.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
+    configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
+    configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + dataPort);
+    try (BigtableConnection connection = new BigtableConnection(configuration)) {
+      RegionLocator regionLocator = connection.getRegionLocator(TableName.valueOf("table_id"));
+
+      // SampleRowKeys returns a, b, c ... z
+      HRegionLocation regionLocation = regionLocator.getRegionLocation("1".getBytes());
+      assertEquals("", Bytes.toString(regionLocation.getRegion().getStartKey()));
+      assertEquals("a", Bytes.toString(regionLocation.getRegion().getEndKey()));
+
+      regionLocation = regionLocator.getRegionLocation("a".getBytes());
+      assertEquals("a", Bytes.toString(regionLocation.getRegion().getStartKey()));
+      assertEquals("b", Bytes.toString(regionLocation.getRegion().getEndKey()));
+
+      regionLocation = regionLocator.getRegionLocation("bbb".getBytes());
+      assertEquals("b", Bytes.toString(regionLocation.getRegion().getStartKey()));
+      assertEquals("c", Bytes.toString(regionLocation.getRegion().getEndKey()));
+
+      regionLocation = regionLocator.getRegionLocation("d".getBytes());
+      assertEquals("d", Bytes.toString(regionLocation.getRegion().getStartKey()));
+      assertEquals("e", Bytes.toString(regionLocation.getRegion().getEndKey()));
+
+      regionLocation = regionLocator.getRegionLocation("z".getBytes());
+      assertEquals("z", Bytes.toString(regionLocation.getRegion().getStartKey()));
+      assertEquals("", Bytes.toString(regionLocation.getRegion().getEndKey()));
+
+      regionLocation = regionLocator.getRegionLocation("zzz".getBytes());
+      assertEquals("z", Bytes.toString(regionLocation.getRegion().getStartKey()));
+      assertEquals("", Bytes.toString(regionLocation.getRegion().getEndKey()));
+    }
+  }
+
+  private static class FakeDataService extends BigtableGrpc.BigtableImplBase {
+    final BlockingQueue<Object> requests = Queues.newLinkedBlockingDeque();
+
+    @SuppressWarnings("unchecked")
+    <T> T popLastRequest() throws InterruptedException {
+      return (T) requests.poll(1, TimeUnit.SECONDS);
+    }
+
+    @Override
+    public void sampleRowKeys(
+        SampleRowKeysRequest request, StreamObserver<SampleRowKeysResponse> responseObserver) {
+      requests.add(request);
+      long offset = 1000L;
+      for (char i = 'a'; i <= 'z'; i++) {
+        responseObserver.onNext(
+            SampleRowKeysResponse.newBuilder()
+                .setRowKey(ByteString.copyFromUtf8(String.valueOf(i)))
+                .setOffsetBytes(offset)
+                .build());
+        offset += 1000;
+      }
+      responseObserver.onCompleted();
     }
   }
 }
