@@ -22,7 +22,6 @@ import com.google.cloud.bigtable.hbase.AbstractBigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -63,7 +62,10 @@ public class BigtableAsyncTableRegionLocator extends AbstractBigtableRegionLocat
     while (low <= high) {
       int mid = (low + high) >>> 1;
       HRegionLocation regionLocation = regions.get(mid);
-      HRegionInfo regionInfo = regionLocation.getRegionInfo();
+      // TODO 2.x deprecated getRegionInfo() and returns a RegionInfo class instead of HRegionInfo.
+      // We could move this
+      // method to AbstractBigtableRegionLocator after making sure there's no compatibility issues.
+      RegionInfo regionInfo = regionLocation.getRegion();
 
       // This isn't the last region (endKey != "") and row key is greater than the current bound
       if (regionInfo.getEndKey().length > 0 && Bytes.compareTo(row, regionInfo.getEndKey()) >= 0) {
