@@ -30,13 +30,12 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableHBaseClassicSettings;
+import com.google.cloud.bigtable.test.helper.TestServerBuilder;
 import com.google.common.collect.Queues;
 import com.google.protobuf.Empty;
 import io.grpc.Server;
-import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.conf.Configuration;
@@ -62,23 +61,18 @@ public class TestBigtableVeneerApi {
 
   @Before
   public void setUp() throws IOException {
-    final int port;
-    try (ServerSocket s = new ServerSocket(0)) {
-      port = s.getLocalPort();
-    }
     server =
-        ServerBuilder.forPort(port)
+        TestServerBuilder.newInstance()
             .addService(fakeDataService)
             .addService(fakeAdminService)
-            .build();
-    server.start();
+            .buildAndStart();
 
     Configuration configuration = new Configuration(false);
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE_ID);
     configuration.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
     configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
-    configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + port);
+    configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + server.getPort());
     configuration.set(BigtableOptionsFactory.BIGTABLE_USE_GCJ_CLIENT, "true");
     bigtableHBaseSettings = BigtableHBaseClassicSettings.create(configuration);
     bigtableApi = BigtableApi.create(bigtableHBaseSettings);

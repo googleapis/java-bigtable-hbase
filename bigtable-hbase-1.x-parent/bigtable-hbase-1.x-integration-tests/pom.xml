@@ -249,6 +249,12 @@ limitations under the License.
       </exclusions>
     </dependency>
 
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-internal-test-helper</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
 
     <!-- java-bigtable Modules -->
     <dependency>

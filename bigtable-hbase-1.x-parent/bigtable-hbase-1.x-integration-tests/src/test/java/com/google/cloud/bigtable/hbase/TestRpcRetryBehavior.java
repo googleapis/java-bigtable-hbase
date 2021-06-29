@@ -32,14 +32,13 @@ import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.cloud.bigtable.config.Logger;
+import com.google.cloud.bigtable.test.helper.TestServerBuilder;
 import com.google.common.collect.ImmutableMap;
 import io.grpc.Server;
-import io.grpc.ServerBuilder;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.lang.time.StopWatch;
@@ -222,12 +221,7 @@ public abstract class TestRpcRetryBehavior {
     final BigtableGrpc.BigtableImplBase rpcBase = setupRpcCall();
     BigtableGrpc.BigtableImplBase rpcSleepWrapper = setupRpcServerWithSleepHandler(rpcBase);
 
-    int portNum;
-    try (ServerSocket ss = new ServerSocket(0)) {
-      portNum = ss.getLocalPort();
-    }
-    Server fakeBigtableServer = ServerBuilder.forPort(portNum).addService(rpcSleepWrapper).build();
-    fakeBigtableServer.start();
+    Server fakeBigtableServer = TestServerBuilder.newInstance().addService(rpcSleepWrapper).buildAndStart();
     return fakeBigtableServer;
   }
 

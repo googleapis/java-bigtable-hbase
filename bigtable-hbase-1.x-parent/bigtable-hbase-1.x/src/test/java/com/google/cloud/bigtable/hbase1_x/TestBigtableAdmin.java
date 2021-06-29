@@ -22,17 +22,16 @@ import com.google.bigtable.admin.v2.BigtableTableAdminGrpc;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.test.helper.TestServerBuilder;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import io.grpc.Metadata;
 import io.grpc.Server;
-import io.grpc.ServerBuilder;
 import io.grpc.ServerCall;
 import io.grpc.ServerCallHandler;
 import io.grpc.ServerInterceptor;
 import io.grpc.Status;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.concurrent.ArrayBlockingQueue;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
@@ -61,21 +60,14 @@ public class TestBigtableAdmin {
 
   @Before
   public void setup() throws Exception {
-    final int port;
-
-    try (ServerSocket serverSocket = new ServerSocket(0)) {
-      port = serverSocket.getLocalPort();
-    }
-
     fakeBigtableServer =
-        ServerBuilder.forPort(port)
+        TestServerBuilder.newInstance()
             .intercept(new RequestInterceptor())
             .addService(new BigtableTableAdminGrpc.BigtableTableAdminImplBase() {})
-            .build();
-    fakeBigtableServer.start();
+            .buildAndStart();
 
     Configuration configuration = BigtableConfiguration.configure(PROJECT_ID, INSTANCE_ID);
-    configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + port);
+    configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + fakeBigtableServer.getPort());
     connection = new BigtableConnection(configuration);
     admin = (BigtableAdmin) connection.getAdmin();
   }

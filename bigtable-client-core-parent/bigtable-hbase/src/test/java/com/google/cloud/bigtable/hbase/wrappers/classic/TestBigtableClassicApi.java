@@ -30,13 +30,12 @@ import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
+import com.google.cloud.bigtable.test.helper.TestServerBuilder;
 import com.google.common.collect.Queues;
 import com.google.protobuf.Empty;
 import io.grpc.Server;
-import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.conf.Configuration;
@@ -59,22 +58,17 @@ public class TestBigtableClassicApi {
   private static FakeDataService fakeDataService = new FakeDataService();
   private static FakeAdminService fakeAdminService = new FakeAdminService();
   private static Server server;
-  private static int port;
 
   private BigtableHBaseSettings bigtableHBaseSettings;
   private BigtableApi bigtableApi;
 
   @BeforeClass
   public static void setUpServer() throws IOException {
-    try (ServerSocket s = new ServerSocket(0)) {
-      port = s.getLocalPort();
-    }
     server =
-        ServerBuilder.forPort(port)
+        TestServerBuilder.newInstance()
             .addService(fakeDataService)
             .addService(fakeAdminService)
-            .build();
-    server.start();
+            .buildAndStart();
   }
 
   @AfterClass
@@ -92,7 +86,7 @@ public class TestBigtableClassicApi {
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE_ID);
     configuration.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
     configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
-    configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + port);
+    configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + server.getPort());
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_USE_GCJ_CLIENT, false);
     bigtableHBaseSettings = BigtableHBaseClassicSettings.create(configuration);
     bigtableApi = BigtableApi.create(bigtableHBaseSettings);

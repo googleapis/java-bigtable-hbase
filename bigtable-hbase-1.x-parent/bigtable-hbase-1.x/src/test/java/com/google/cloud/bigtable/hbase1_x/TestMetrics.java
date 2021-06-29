@@ -29,18 +29,17 @@ import com.google.cloud.bigtable.metrics.Counter;
 import com.google.cloud.bigtable.metrics.Meter;
 import com.google.cloud.bigtable.metrics.MetricRegistry;
 import com.google.cloud.bigtable.metrics.Timer;
+import com.google.cloud.bigtable.test.helper.TestServerBuilder;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Range;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.BytesValue;
 import com.google.protobuf.StringValue;
 import io.grpc.Server;
-import io.grpc.ServerBuilder;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -68,7 +67,6 @@ public class TestMetrics {
   private final String TEST_INSTANCE_ID = "fake-instance-id";
   private final TableName TABLE_NAME = TableName.valueOf("fake-table");
   private Server server;
-  private int dataPort;
   private FakeMetricRegistry fakeMetricRegistry;
 
   private MetricRegistry originalMetricRegistry;
@@ -97,11 +95,7 @@ public class TestMetrics {
 
   @Before
   public void setUp() throws IOException {
-    try (ServerSocket s = new ServerSocket(0)) {
-      dataPort = s.getLocalPort();
-    }
-    server = ServerBuilder.forPort(dataPort).addService(fakeDataService).build();
-    server.start();
+    server = TestServerBuilder.newInstance().addService(fakeDataService).buildAndStart();
 
     originalLevelToLog = BigtableClientMetrics.getLevelToLog();
     originalMetricRegistry = BigtableClientMetrics.getMetricRegistry(originalLevelToLog);
@@ -111,7 +105,7 @@ public class TestMetrics {
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE_ID);
     configuration.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
     configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
-    configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + dataPort);
+    configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + server.getPort());
     configuration.set(BigtableOptionsFactory.BIGTABLE_USE_GCJ_CLIENT, "true");
 
     fakeMetricRegistry = new FakeMetricRegistry();

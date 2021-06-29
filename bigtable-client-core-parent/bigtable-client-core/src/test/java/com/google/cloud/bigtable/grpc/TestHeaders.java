@@ -27,16 +27,15 @@ import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
+import com.google.cloud.bigtable.test.helper.TestServerBuilder;
 import io.grpc.ForwardingServerCall;
 import io.grpc.Metadata;
 import io.grpc.Server;
-import io.grpc.ServerBuilder;
 import io.grpc.ServerCall;
 import io.grpc.ServerCallHandler;
 import io.grpc.ServerInterceptor;
 import io.grpc.ServerInterceptors;
 import io.grpc.stub.StreamObserver;
-import java.net.ServerSocket;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 import org.junit.After;
@@ -87,12 +86,8 @@ public class TestHeaders {
    */
   @Test
   public void testCBC_UserAgentUsingPlainTextNegotiation() throws Exception {
-    ServerSocket serverSocket = new ServerSocket(0);
-    final int availablePort = serverSocket.getLocalPort();
-    serverSocket.close();
-
     // Creates non-ssl server.
-    createServer(availablePort);
+    createServer();
 
     BigtableOptions bigtableOptions =
         BigtableOptions.builder()
@@ -103,7 +98,7 @@ public class TestHeaders {
             .setUserAgent(TEST_USER_AGENT)
             .setUsePlaintextNegotiation(true)
             .setCredentialOptions(CredentialOptions.nullCredential())
-            .setPort(availablePort)
+            .setPort(server.getPort())
             .build();
 
     xGoogApiPattern = Pattern.compile(".* cbt/.*");
@@ -115,12 +110,8 @@ public class TestHeaders {
 
   @Test
   public void testCBC_tracingCookie() throws Exception {
-    ServerSocket serverSocket = new ServerSocket(0);
-    final int availablePort = serverSocket.getLocalPort();
-    serverSocket.close();
-
     // Creates non-ssl server.
-    createServer(availablePort);
+    createServer();
 
     BigtableOptions bigtableOptions =
         BigtableOptions.builder()
@@ -131,7 +122,7 @@ public class TestHeaders {
             .setUserAgent(TEST_USER_AGENT)
             .setUsePlaintextNegotiation(true)
             .setCredentialOptions(CredentialOptions.nullCredential())
-            .setPort(availablePort)
+            .setPort(server.getPort())
             .setTracingCookie(TEST_TRACING_COOKIE)
             .build();
     testTracingCookie.set(true);
@@ -144,16 +135,17 @@ public class TestHeaders {
   }
 
   /** Creates simple server to intercept plainText Negotiation RPCs. */
-  private void createServer(int port) throws Exception {
+  private void createServer() throws Exception {
+
     server =
-        ServerBuilder.forPort(port)
+        TestServerBuilder.newInstance()
             .addService(
                 ServerInterceptors.intercept(
                     new BigtableExtendedImpl(), new HeaderServerInterceptor()))
             .addService(
                 ServerInterceptors.intercept(
                     new BigtableAdminExtendedImpl(), new HeaderServerInterceptor()))
-            .build();
+            .buildAndStart();
     server.start();
   }
 
