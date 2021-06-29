@@ -20,7 +20,6 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.ServerInterceptor;
 import io.grpc.ServerServiceDefinition;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -28,12 +27,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Wrapper around {@link ServerBuilder} that automatically finds a free port when starting the service.
+ * Wrapper around {@link ServerBuilder} that automatically finds a free port when starting the
+ * service.
  *
- * This wraps the call for getting a random free port (e.g. ServerSocket ss = new ServerSocket(0)) into a
- * retry, since it is possible for another process on the host to use the port before the caller of the
- * method can. Though it does not happen often, it happens enough to cause noticeable test flakes. Retrying
- * the call will minimize the flakes.
+ * <p>This wraps the call for getting a random free port (e.g. ServerSocket ss = new
+ * ServerSocket(0)) into a retry, since it is possible for another process on the host to use the
+ * port before the caller of the method can. Though it does not happen often, it happens enough to
+ * cause noticeable test flakes. Retrying the call will minimize the flakes.
  */
 public class TestServerBuilder {
   private List<BindableService> services = new ArrayList<>();
@@ -48,33 +48,25 @@ public class TestServerBuilder {
 
   private TestServerBuilder() {}
 
-  /**
-   * See {@link ServerBuilder#addService(BindableService)}.
-   */
+  /** See {@link ServerBuilder#addService(BindableService)}. */
   public TestServerBuilder addService(BindableService service) {
     services.add(service);
     return this;
   }
 
-  /**
-   * See {@link ServerBuilder#addService(ServerServiceDefinition)}.
-   */
+  /** See {@link ServerBuilder#addService(ServerServiceDefinition)}. */
   public TestServerBuilder addService(ServerServiceDefinition serverServiceDefinition) {
     serverServiceDefinitions.add(serverServiceDefinition);
     return this;
   }
 
-  /**
-   * See {@link ServerBuilder#intercept(ServerInterceptor)}.
-   */
+  /** See {@link ServerBuilder#intercept(ServerInterceptor)}. */
   public TestServerBuilder intercept(ServerInterceptor interceptor) {
     interceptors.add(interceptor);
     return this;
   }
 
-  /**
-   * See {@link ServerBuilder#useTransportSecurity(File, File)}.
-   */
+  /** See {@link ServerBuilder#useTransportSecurity(File, File)}. */
   public TestServerBuilder useTransportSecurity(File certChain, File privateKey) {
     this.certChain = certChain;
     this.privateKey = privateKey;
@@ -123,6 +115,7 @@ public class TestServerBuilder {
         lastError = e;
       }
     }
+
     throw lastError;
   }
 }

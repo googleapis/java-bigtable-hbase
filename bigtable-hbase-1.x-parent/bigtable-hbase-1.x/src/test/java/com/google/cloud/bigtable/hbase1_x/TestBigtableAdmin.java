@@ -67,7 +67,9 @@ public class TestBigtableAdmin {
             .buildAndStart();
 
     Configuration configuration = BigtableConfiguration.configure(PROJECT_ID, INSTANCE_ID);
-    configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + fakeBigtableServer.getPort());
+    configuration.set(
+        BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY,
+        "localhost:" + fakeBigtableServer.getPort());
     connection = new BigtableConnection(configuration);
     admin = (BigtableAdmin) connection.getAdmin();
   }

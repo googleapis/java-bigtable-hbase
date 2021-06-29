@@ -395,7 +395,8 @@ public class TestBigtableHBaseVeneerSettings {
 
   @Test
   public void testDataSettingsWithEmulator() throws IOException {
-    // A real port isn't required for this test; only verifying the configs can be stored and retrieved.
+    // A real port isn't required for this test; only verifying the configs can be stored and
+    // retrieved.
     final int availablePort = 987654321;
     String emulatorHost = "localhost:" + availablePort;
     configuration.set(BIGTABLE_EMULATOR_HOST_KEY, emulatorHost);
@@ -411,7 +412,8 @@ public class TestBigtableHBaseVeneerSettings {
 
   @Test
   public void testAdminSettingsWithEmulator() throws IOException {
-    // A real port isn't required for this test; only verifying the configs can be stored and retrieved.
+    // A real port isn't required for this test; only verifying the configs can be stored and
+    // retrieved.
     final int availablePort = 987654321;
     String emulatorHost = "localhost:" + availablePort;
     configuration.set(BIGTABLE_EMULATOR_HOST_KEY, emulatorHost);

@@ -221,7 +221,8 @@ public abstract class TestRpcRetryBehavior {
     final BigtableGrpc.BigtableImplBase rpcBase = setupRpcCall();
     BigtableGrpc.BigtableImplBase rpcSleepWrapper = setupRpcServerWithSleepHandler(rpcBase);
 
-    Server fakeBigtableServer = TestServerBuilder.newInstance().addService(rpcSleepWrapper).buildAndStart();
+    Server fakeBigtableServer =
+        TestServerBuilder.newInstance().addService(rpcSleepWrapper).buildAndStart();
     return fakeBigtableServer;
   }
 

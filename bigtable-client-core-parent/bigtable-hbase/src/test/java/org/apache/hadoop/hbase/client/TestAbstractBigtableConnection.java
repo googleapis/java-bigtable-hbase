@@ -107,7 +107,8 @@ public class TestAbstractBigtableConnection {
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, INSTANCE_ID);
     configuration.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
     configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
-    configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, HOST_NAME + ":" + server.getPort());
+    configuration.set(
+        BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, HOST_NAME + ":" + server.getPort());
     connection = new TestBigtableConnectionImpl(configuration);
   }
 
@@ -125,7 +126,8 @@ public class TestAbstractBigtableConnection {
     assertEquals(regionInfo, connection.getAllRegionInfos(TABLE_NAME).get(0));
 
     List<HRegionLocation> expectedRegionLocations =
-        ImmutableList.of(new HRegionLocation(regionInfo, ServerName.valueOf(HOST_NAME, server.getPort(), 0)));
+        ImmutableList.of(
+            new HRegionLocation(regionInfo, ServerName.valueOf(HOST_NAME, server.getPort(), 0)));
 
     when(mockSampledAdapter.adaptResponse(Mockito.<List<KeyOffset>>any()))
         .thenReturn(expectedRegionLocations);
