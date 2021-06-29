@@ -16,18 +16,25 @@
 package com.google.cloud.bigtable.util;
 
 import com.google.api.core.InternalApi;
+import com.google.auth.Credentials;
+import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.CredentialOptions.CredentialType;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 
 @InternalApi("For internal use only")
 public class DirectPathUtil {
+  private static final Logger LOG = new Logger(DirectPathUtil.class);
+
   private static final String GCE_PRODUCTION_NAME_PRIOR_2016 = "Google";
   private static final String GCE_PRODUCTION_NAME_AFTER_2016 = "Google Compute Engine";
 
@@ -59,9 +66,23 @@ public class DirectPathUtil {
 
   public static boolean shouldAttemptDirectPath(
       String endpoint, int port, CredentialOptions creds) {
+
     return BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT.equals(endpoint)
         && BigtableOptions.BIGTABLE_PORT_DEFAULT == port
-        && CredentialType.DefaultCredentials == creds.getCredentialType()
-        && isOnComputeEngine.get();
+        && isOnComputeEngine.get()
+        && areCredsDirectPathCompatible(creds);
+  }
+
+  private static boolean areCredsDirectPathCompatible(CredentialOptions credentialOptions) {
+    if (credentialOptions.getCredentialType() != CredentialType.DefaultCredentials) {
+      return false;
+    }
+    Credentials credentials = null;
+    try {
+      credentials = CredentialFactory.getCredentials(credentialOptions);
+    } catch (IOException | GeneralSecurityException e) {
+      LOG.warn("Failed to probe credentials, assuming they are not DirectPath compatible", e);
+    }
+    return credentials instanceof ComputeEngineCredentials;
   }
 }
