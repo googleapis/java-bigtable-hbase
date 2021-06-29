@@ -21,9 +21,10 @@ import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.CredentialOptions.CredentialType;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.io.CharStreams;
+import com.google.common.io.Files;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 @InternalApi("For internal use only")
 public class DirectPathUtil {
@@ -37,16 +38,16 @@ public class DirectPathUtil {
             public Boolean get() {
               String osName = System.getProperty("os.name");
               if ("Linux".equals(osName)) {
-                String cmd = "cat /sys/class/dmi/id/product_name";
                 try {
-                  Process process = Runtime.getRuntime().exec(new String[] {"/bin/sh", "-c", cmd});
-                  process.waitFor();
                   String result =
-                      CharStreams.toString(
-                          new InputStreamReader(process.getInputStream(), "UTF-8"));
-                  return result.contains(GCE_PRODUCTION_NAME_PRIOR_2016)
-                      || result.contains(GCE_PRODUCTION_NAME_AFTER_2016);
-                } catch (IOException | InterruptedException e) {
+                      Files.asCharSource(
+                              new File("/sys/class/dmi/id/product_name"), StandardCharsets.UTF_8)
+                          .readFirstLine();
+
+                  return result != null
+                      && (result.contains(GCE_PRODUCTION_NAME_PRIOR_2016)
+                          || result.contains(GCE_PRODUCTION_NAME_AFTER_2016));
+                } catch (IOException e) {
                   return false;
                 }
               }
