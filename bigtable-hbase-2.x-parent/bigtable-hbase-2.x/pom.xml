@@ -152,10 +152,12 @@ limitations under the License.
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>com.google.api.grpc</groupId>
       <artifactId>grpc-google-cloud-bigtable-v2</artifactId>
+      <scope>runtime</scope>
     </dependency>
   </dependencies>
   <build>
