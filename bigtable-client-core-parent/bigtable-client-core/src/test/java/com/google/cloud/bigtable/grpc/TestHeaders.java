@@ -146,7 +146,6 @@ public class TestHeaders {
                 ServerInterceptors.intercept(
                     new BigtableAdminExtendedImpl(), new HeaderServerInterceptor()))
             .buildAndStart();
-    server.start();
   }
 
   /**
