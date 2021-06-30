@@ -15,10 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThan;
+import static org.junit.Assert.assertEquals;
 
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
@@ -170,7 +170,9 @@ public abstract class TestRpcRetryBehavior {
       // do an additional attempt. Update the upper bound accordingly.
       assertThat(
           sw.getTime(),
-          Matchers.both(greaterThanOrEqualTo(operationTimeoutMs - attemptTimeoutMs / 2))
+          Matchers.both(
+                  greaterThanOrEqualTo(
+                      operationTimeoutMs - (attemptTimeoutMs / 2))) // minus some buffer
               .and(lessThan(operationTimeoutMs + attemptTimeoutMs + 200))); // plus some buffer
     }
   }
@@ -186,16 +188,11 @@ public abstract class TestRpcRetryBehavior {
     // Expect multiple retries (given our timeout parameters) if attempt timeouts are enabled;
     // otherwise,
     // only 1 retry happens.
-    int expectedInvocations;
     if (attemptTimeoutEnabled || serverRpcAbortsForTest) {
-      expectedInvocations = expectedAttemptsWithRetryLogic;
+      assertThat(counter.get(), greaterThanOrEqualTo(expectedAttemptsWithRetryLogic - 1));
     } else {
-      expectedInvocations = 1;
+      assertEquals(counter.get(), 1);
     }
-
-    LOG.info("Expecting invocations for test: {}", expectedInvocations);
-
-    assertThat(counter.get(), equalTo(expectedInvocations));
   }
 
   protected Connection makeConnection(Map<String, String> customConnProps) throws IOException {
@@ -211,7 +208,7 @@ public abstract class TestRpcRetryBehavior {
     }
     // retry on aborted to differentiate server hang an explicit server error
     config.set(BigtableOptionsFactory.ADDITIONAL_RETRY_CODES, "ABORTED");
-
+    config.setInt(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, 1);
     return ConnectionFactory.createConnection(config);
   }
 
