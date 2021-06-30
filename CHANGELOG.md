@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.22.0](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.21.1...v1.22.0) (2021-06-30)
+
+
+### Features
+
+* allow DirectPath by default + update integration tests ([#3031](https://www.github.com/googleapis/java-bigtable-hbase/issues/3031)) ([7c33b14](https://www.github.com/googleapis/java-bigtable-hbase/commit/7c33b14362614be0f2d3ad0b5cc95fa70f6a9add))
+
 ### [1.21.1](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.21.0...v1.21.1) (2021-06-29)
 
 
