@@ -193,12 +193,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
           ctx.withCallOptions(
               CallOptions.DEFAULT.withOption(
                   NoTimeoutsInterceptor.SKIP_DEFAULT_ATTEMPT_TIMEOUT, true));
-    } else if (callSettings.getAttemptTimeout().isPresent()) {
-      ctx = ctx.withTimeout(callSettings.getAttemptTimeout().get());
-
-      // TODO: remove this after fixing it in veneer/gax
-      // If the attempt timeout was overridden, it disables overall timeout limiting
-      // Fix it by settings the underlying grpc deadline
+    } else {
       if (callSettings.getOperationTimeout().isPresent()) {
         ctx =
             ctx.withCallOptions(
@@ -206,6 +201,9 @@ public class DataClientVeneerApi implements DataClientWrapper {
                     Deadline.after(
                         callSettings.getOperationTimeout().get().toMillis(),
                         TimeUnit.MILLISECONDS)));
+      }
+      if (callSettings.getAttemptTimeout().isPresent()) {
+        ctx = ctx.withTimeout(callSettings.getAttemptTimeout().get());
       }
     }
     return ctx;
