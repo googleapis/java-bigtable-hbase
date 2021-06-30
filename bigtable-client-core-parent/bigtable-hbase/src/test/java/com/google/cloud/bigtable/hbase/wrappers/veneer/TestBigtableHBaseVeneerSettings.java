@@ -31,6 +31,7 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_RE
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_READ_RPC_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_RPC_ATTEMPT_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_RPC_TIMEOUT_MS_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_TRACING_COOKIE;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_PLAINTEXT_NEGOTIATION;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY;
@@ -56,11 +57,14 @@ import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
+import com.google.cloud.bigtable.config.BigtableVersionInfo;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.cloud.bigtable.hbase.BigtableHBaseVersion;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.metrics.MetricsApiTracerAdapterFactory;
+import com.google.common.base.Optional;
 import io.grpc.internal.GrpcUtil;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -71,6 +75,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
+import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class TestBigtableHBaseVeneerSettings {
@@ -96,6 +101,7 @@ public class TestBigtableHBaseVeneerSettings {
   public void testDataSettingsBasicKeys() throws IOException {
     String appProfileId = "appProfileId";
     String userAgent = "test-user-agent";
+    String fakeTracingCookie = "fake-tracing-cookie";
     Credentials credentials = Mockito.mock(Credentials.class);
 
     configuration.set(BIGTABLE_PORT_KEY, String.valueOf(TEST_PORT));
@@ -105,6 +111,7 @@ public class TestBigtableHBaseVeneerSettings {
     configuration.set(BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL, "true");
     configuration.set(BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, "true");
     configuration.set(ALLOW_NO_TIMESTAMP_RETRIES_KEY, "true");
+    configuration.set(BIGTABLE_TRACING_COOKIE, fakeTracingCookie);
     configuration = BigtableConfiguration.withCredentials(configuration, credentials);
 
     BigtableHBaseVeneerSettings settingUtils =
@@ -122,6 +129,15 @@ public class TestBigtableHBaseVeneerSettings {
     assertEquals(TEST_HOST + ":" + TEST_PORT, dataSettings.getStubSettings().getEndpoint());
     Map<String, String> headers = dataSettings.getStubSettings().getHeaderProvider().getHeaders();
     assertTrue(headers.get(GrpcUtil.USER_AGENT_KEY.name()).contains(userAgent));
+    assertTrue(
+        headers
+            .get(GrpcUtil.USER_AGENT_KEY.name())
+            .contains("bigtable-" + BigtableVersionInfo.CLIENT_VERSION));
+    assertTrue(
+        headers
+            .get(GrpcUtil.USER_AGENT_KEY.name())
+            .contains("bigtable-hbase-" + BigtableHBaseVersion.getVersion()));
+    assertTrue(headers.get("cookie").equals(fakeTracingCookie));
     assertEquals(
         credentials, dataSettings.getStubSettings().getCredentialsProvider().getCredentials());
 
@@ -150,6 +166,7 @@ public class TestBigtableHBaseVeneerSettings {
   public void testAdminSettingsBasicKeys() throws IOException {
     String adminHost = "testadmin.example.com";
     String userAgent = "test-user-agent";
+    String fakeTracingCookie = "fake-tracing-cookie";
     Credentials credentials = Mockito.mock(Credentials.class);
 
     configuration.set(BIGTABLE_ADMIN_HOST_KEY, adminHost);
@@ -157,6 +174,7 @@ public class TestBigtableHBaseVeneerSettings {
     configuration.set(CUSTOM_USER_AGENT_KEY, userAgent);
     configuration.setBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, true);
     configuration.set(BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, "true");
+    configuration.set(BIGTABLE_TRACING_COOKIE, fakeTracingCookie);
     configuration = BigtableConfiguration.withCredentials(configuration, credentials);
 
     BigtableHBaseVeneerSettings settings =
@@ -169,6 +187,7 @@ public class TestBigtableHBaseVeneerSettings {
     assertEquals(adminHost + ":" + TEST_PORT, adminSettings.getStubSettings().getEndpoint());
     Map<String, String> headers = adminSettings.getStubSettings().getHeaderProvider().getHeaders();
     assertTrue(headers.get(GrpcUtil.USER_AGENT_KEY.name()).contains(userAgent));
+    assertTrue(headers.get("cookie").equals(fakeTracingCookie));
     assertEquals(
         credentials, adminSettings.getStubSettings().getCredentialsProvider().getCredentials());
   }
@@ -208,25 +227,43 @@ public class TestBigtableHBaseVeneerSettings {
     configuration.setLong(MAX_SCAN_TIMEOUT_RETRIES, maxAttempt);
     configuration.setInt(BIGTABLE_READ_RPC_TIMEOUT_MS_KEY, readRowStreamTimeout);
     configuration.setInt(BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY, readRowStreamAttemptTimeout);
-    BigtableDataSettings settings =
-        BigtableHBaseVeneerSettings.create(configuration).getDataSettings();
+
+    BigtableHBaseVeneerSettings settings = BigtableHBaseVeneerSettings.create(configuration);
+    BigtableDataSettings dataSettings = settings.getDataSettings();
+
+    assertTrue(settings.getClientTimeouts().getUseTimeouts());
+    assertEquals(
+        Optional.of(Duration.ofMillis(rpcTimeoutMs)),
+        settings.getClientTimeouts().getUnaryTimeouts().getOperationTimeout());
+    assertEquals(
+        Optional.of(Duration.ofMillis(rpcAttemptTimeoutMs)),
+        settings.getClientTimeouts().getUnaryTimeouts().getAttemptTimeout());
+    assertEquals(
+        Optional.of(Duration.ofMillis(readRowStreamTimeout)),
+        settings.getClientTimeouts().getScanTimeouts().getOperationTimeout());
+    assertEquals(
+        Optional.of(Duration.ofMillis(readRowStreamAttemptTimeout)),
+        settings.getClientTimeouts().getScanTimeouts().getAttemptTimeout());
+    assertEquals(
+        Optional.of(Duration.ofMillis(perRowTimeoutMs)),
+        settings.getClientTimeouts().getScanTimeouts().getResponseTimeout());
 
     RetrySettings readRowRetrySettings =
-        settings.getStubSettings().readRowSettings().getRetrySettings();
+        dataSettings.getStubSettings().readRowSettings().getRetrySettings();
     assertEquals(initialElapsedMs, readRowRetrySettings.getInitialRetryDelay().toMillis());
     assertEquals(rpcTimeoutMs, readRowRetrySettings.getTotalTimeout().toMillis());
     assertEquals(rpcAttemptTimeoutMs, readRowRetrySettings.getInitialRpcTimeout().toMillis());
     assertEquals(rpcAttemptTimeoutMs, readRowRetrySettings.getMaxRpcTimeout().toMillis());
 
     RetrySettings checkAndMutateRetrySettings =
-        settings.getStubSettings().checkAndMutateRowSettings().getRetrySettings();
+        dataSettings.getStubSettings().checkAndMutateRowSettings().getRetrySettings();
     assertEquals(rpcTimeoutMs, checkAndMutateRetrySettings.getTotalTimeout().toMillis());
     // CheckAndMutate is non-retriable so its rpc timeout = overall timeout
     assertEquals(rpcTimeoutMs, checkAndMutateRetrySettings.getInitialRpcTimeout().toMillis());
     assertEquals(rpcTimeoutMs, checkAndMutateRetrySettings.getMaxRpcTimeout().toMillis());
 
     RetrySettings readRowsRetrySettings =
-        settings.getStubSettings().readRowsSettings().getRetrySettings();
+        dataSettings.getStubSettings().readRowsSettings().getRetrySettings();
     assertEquals(initialElapsedMs, readRowsRetrySettings.getInitialRetryDelay().toMillis());
     assertEquals(perRowTimeoutMs, readRowsRetrySettings.getInitialRpcTimeout().toMillis());
     assertEquals(perRowTimeoutMs, readRowsRetrySettings.getMaxRpcTimeout().toMillis());

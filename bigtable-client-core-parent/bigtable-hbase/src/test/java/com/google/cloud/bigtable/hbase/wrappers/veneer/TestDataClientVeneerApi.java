@@ -26,12 +26,14 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.batching.Batcher;
+import com.google.api.gax.grpc.GrpcCallContext;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStream;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
+import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
@@ -41,6 +43,7 @@ import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
 import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.BulkReadWrapper;
+import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings.ClientOperationTimeouts;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
@@ -50,11 +53,11 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -104,7 +107,12 @@ public class TestDataClientVeneerApi {
 
   @Mock private UnaryCallable<Query, List<Result>> mockUnaryCallable;
 
-  @InjectMocks private DataClientVeneerApi dataClientWrapper;
+  private DataClientVeneerApi dataClientWrapper;
+
+  @Before
+  public void setUp() throws Exception {
+    dataClientWrapper = new DataClientVeneerApi(mockDataClient, ClientOperationTimeouts.EMPTY);
+  }
 
   @Test
   public void testCreateBulkMutation() throws Exception {
@@ -119,11 +127,15 @@ public class TestDataClientVeneerApi {
 
   @Test
   public void testCreateBulkRead() throws Exception {
-    when(mockDataClient.newBulkReadRowsBatcher(TABLE_ID, null)).thenReturn(mockReadBatcher);
+    when(mockDataClient.newBulkReadRowsBatcher(
+            Mockito.eq(TABLE_ID), Mockito.<Filter>isNull(), Mockito.any(GrpcCallContext.class)))
+        .thenReturn(mockReadBatcher);
     when(mockReadBatcher.add(ROW_KEY)).thenReturn(ApiFutures.immediateFuture(MODEL_ROW));
     BulkReadWrapper bulkReadWrapper = dataClientWrapper.createBulkRead(TABLE_ID);
     assertResult(EXPECTED_RESULT, bulkReadWrapper.add(ROW_KEY, null).get());
-    verify(mockDataClient).newBulkReadRowsBatcher(TABLE_ID, null);
+    verify(mockDataClient)
+        .newBulkReadRowsBatcher(
+            Mockito.eq(TABLE_ID), Mockito.<Filter>isNull(), Mockito.any(GrpcCallContext.class));
     verify(mockReadBatcher).add(ROW_KEY);
   }
 
@@ -169,11 +181,16 @@ public class TestDataClientVeneerApi {
 
   @Test
   public void testReadRowAsync() throws Exception {
-    when(mockDataClient.readRowAsync(TABLE_ID, ROW_KEY, null))
+    Query expectedRequest = Query.create(TABLE_ID).rowKey(ROW_KEY).limit(1);
+    UnaryCallable<Query, Row> mockCallable = Mockito.mock(UnaryCallable.class);
+    when(mockCallable.futureCall(Mockito.eq(expectedRequest), Mockito.any(GrpcCallContext.class)))
         .thenReturn(ApiFutures.immediateFuture(MODEL_ROW));
+
+    when(mockDataClient.readRowCallable()).thenReturn(mockCallable);
     Result actualResult = dataClientWrapper.readRowAsync(TABLE_ID, ROW_KEY, null).get();
     assertResult(EXPECTED_RESULT, actualResult);
-    verify(mockDataClient).readRowAsync(TABLE_ID, ROW_KEY, null);
+    verify(mockCallable)
+        .futureCall(Mockito.eq(expectedRequest), Mockito.any(GrpcCallContext.class));
   }
 
   @Test
@@ -186,7 +203,9 @@ public class TestDataClientVeneerApi {
         .thenReturn(
             ImmutableList.of(Result.EMPTY_RESULT, EXPECTED_RESULT, EXPECTED_RESULT).iterator())
         .thenReturn(ImmutableList.<Result>of().iterator());
-    when(mockStreamingCallable.call(query)).thenReturn(serverStream).thenReturn(serverStream);
+    when(mockStreamingCallable.call(Mockito.eq(query), Mockito.any(GrpcCallContext.class)))
+        .thenReturn(serverStream)
+        .thenReturn(serverStream);
 
     ResultScanner resultScanner = dataClientWrapper.readRows(query);
     assertResult(Result.EMPTY_RESULT, resultScanner.next());
@@ -201,7 +220,8 @@ public class TestDataClientVeneerApi {
     verify(serverStream).cancel();
     verify(mockDataClient, times(2)).readRowsCallable(Mockito.<RowResultAdapter>any());
     verify(serverStream, times(2)).iterator();
-    verify(mockStreamingCallable, times(2)).call(query);
+    verify(mockStreamingCallable, times(2))
+        .call(Mockito.eq(query), Mockito.any(GrpcCallContext.class));
   }
 
   @Test
@@ -211,7 +231,7 @@ public class TestDataClientVeneerApi {
         .thenReturn(mockStreamingCallable);
     when(mockStreamingCallable.all()).thenReturn(mockUnaryCallable);
     List<Result> expectedResult = ImmutableList.of(Result.EMPTY_RESULT, EXPECTED_RESULT);
-    when(mockUnaryCallable.futureCall(query))
+    when(mockUnaryCallable.futureCall(Mockito.eq(query), Mockito.any(GrpcCallContext.class)))
         .thenReturn(ApiFutures.immediateFuture(expectedResult));
 
     List<Result> actualResult = dataClientWrapper.readRowsAsync(query).get();
@@ -222,7 +242,7 @@ public class TestDataClientVeneerApi {
 
     verify(mockDataClient).readRowsCallable(Mockito.<RowResultAdapter>any());
     verify(mockStreamingCallable).all();
-    verify(mockUnaryCallable).futureCall(query);
+    verify(mockUnaryCallable).futureCall(Mockito.eq(query), Mockito.any(GrpcCallContext.class));
   }
 
   @Test
@@ -271,7 +291,10 @@ public class TestDataClientVeneerApi {
     dataClientWrapper.readRowsAsync(request, resultStreamOb);
     verify(mockDataClient, times(2)).readRowsCallable(Mockito.<RowResultAdapter>any());
     verify(mockStreamingCallable, times(2))
-        .call(Mockito.<Query>any(), Mockito.<ResponseObserver<Result>>any());
+        .call(
+            Mockito.<Query>any(),
+            Mockito.<ResponseObserver<Result>>any(),
+            Mockito.any(GrpcCallContext.class));
   }
 
   @Test

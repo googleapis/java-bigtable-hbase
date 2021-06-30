@@ -328,6 +328,11 @@ public class BigtableOptionsFactory {
    * <p>This will be removed after the transition to java-bigtable.
    */
   @BetaApi public static final String BIGTABLE_USE_GCJ_CLIENT = "google.bigtable.use.gcj.client";
+
+  /** Tracing cookie to send in the header with the requests */
+  @BetaApi("The API for setting tracing cookie is not yet stable and may change in the future")
+  public static final String BIGTABLE_TRACING_COOKIE = "google.bigtable.tracing.cookie.header";
+
   /**
    * fromConfiguration.
    *
@@ -385,6 +390,11 @@ public class BigtableOptionsFactory {
       bigtableOptionsBuilder.setUseBatch(Boolean.parseBoolean(useBatchStr));
     }
 
+    String tracingCookie = configuration.get(BIGTABLE_TRACING_COOKIE);
+    if (tracingCookie != null) {
+      bigtableOptionsBuilder.setTracingCookie(tracingCookie);
+    }
+
     return bigtableOptionsBuilder.build();
   }
 
@@ -417,6 +427,8 @@ public class BigtableOptionsFactory {
     // This information is in addition to bigtable-client-core version, and jdk version.
     StringBuilder agentBuilder = new StringBuilder();
     agentBuilder.append("hbase-").append(VersionInfo.getVersion());
+    agentBuilder.append(", ");
+    agentBuilder.append("bigtable-hbase-").append(BigtableHBaseVersion.getVersion());
     String customUserAgent = configuration.get(CUSTOM_USER_AGENT_KEY);
     if (customUserAgent != null) {
       agentBuilder.append(',').append(customUserAgent);

@@ -176,4 +176,13 @@ public class TestBigtableOptionsFactory {
     assertEquals(
         Integer.parseInt(readTimeout), options.getCallOptionsConfig().getReadStreamRpcTimeoutMs());
   }
+
+  @Test
+  public void testTracingCookie() throws IOException {
+    String fakeTracingCookie = "fake-tracing-cookie";
+    configuration.set(BigtableOptionsFactory.BIGTABLE_TRACING_COOKIE, fakeTracingCookie);
+    BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
+
+    assertEquals(fakeTracingCookie, options.getTracingCookie());
+  }
 }

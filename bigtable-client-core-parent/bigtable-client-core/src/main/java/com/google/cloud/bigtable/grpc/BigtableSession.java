@@ -324,6 +324,14 @@ public class BigtableSession implements Closeable {
       interceptors.add(authInterceptor);
     }
 
+    if (options.getTracingCookie() != null) {
+      ClientInterceptor tracingCookieInterceptor =
+          new HeaderInterceptor(
+              Metadata.Key.of("cookie", Metadata.ASCII_STRING_MARSHALLER),
+              options.getTracingCookie());
+      interceptors.add(tracingCookieInterceptor);
+    }
+
     return interceptors.build();
   }
 
@@ -346,6 +354,14 @@ public class BigtableSession implements Closeable {
       if (authInterceptor != null) {
         interceptors.add(authInterceptor);
       }
+    }
+
+    if (options.getTracingCookie() != null) {
+      ClientInterceptor tracingCookieInterceptor =
+          new HeaderInterceptor(
+              Metadata.Key.of("cookie", Metadata.ASCII_STRING_MARSHALLER),
+              options.getTracingCookie());
+      interceptors.add(tracingCookieInterceptor);
     }
 
     return interceptors.build();
@@ -390,93 +406,6 @@ public class BigtableSession implements Closeable {
   // </editor-fold>
 
   // <editor-fold desc="Channel management">
-  /**
-   * @deprecated Channel creation is now considered an internal implementation detail channel
-   *     creation methods will be removed from the public surface in the future
-   */
-  @Deprecated
-  protected ManagedChannel createManagedPool(String host, int channelCount) throws IOException {
-    ManagedChannel channelPool = createChannelPool(host, channelCount);
-    managedChannels.add(channelPool);
-    return channelPool;
-  }
-
-  /**
-   * @deprecated Channel creation is now considered an internal implementation detail channel
-   *     creation methods will be removed from the public surface in the future
-   */
-  @Deprecated
-  protected ManagedChannel createChannelPool(final String hostString, int count)
-      throws IOException {
-    final ClientInterceptor[] clientInterceptorArray =
-        dataChannelInterceptors.toArray(new ClientInterceptor[0]);
-    ChannelPool.ChannelFactory channelFactory =
-        new ChannelPool.ChannelFactory() {
-          @Override
-          public ManagedChannel create() throws IOException {
-            return createNettyChannel(hostString, options, clientInterceptorArray);
-          }
-        };
-    return createChannelPool(channelFactory, count);
-  }
-
-  /**
-   * @deprecated Channel creation is now considered an internal implementation detail channel
-   *     creation methods will be removed from the public surface in the future
-   */
-  @Deprecated
-  @InternalApi("For internal usage only")
-  protected ManagedChannel createChannelPool(
-      final ChannelPool.ChannelFactory channelFactory, int count) throws IOException {
-    return new ChannelPool(channelFactory, count);
-  }
-
-  /**
-   * @deprecated Channel creation is now considered an internal implementation detail channel
-   *     creation methods will be removed from the public surface in the future
-   */
-  @Deprecated
-  @InternalApi("For internal usage only")
-  public static ManagedChannel createChannelPool(final String host, final BigtableOptions options)
-      throws IOException, GeneralSecurityException {
-    return createChannelPool(host, options, 1);
-  }
-
-  /**
-   * @deprecated Channel creation is now considered an internal implementation detail channel
-   *     creation methods will be removed in the future
-   */
-  @Deprecated
-  @InternalApi("For internal usage only")
-  public static ManagedChannel createChannelPool(
-      final String host, final BigtableOptions options, int count)
-      throws IOException, GeneralSecurityException {
-    final List<ClientInterceptor> interceptorList = new ArrayList<>();
-
-    ClientInterceptor credentialsInterceptor =
-        CredentialInterceptorCache.getInstance()
-            .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
-    if (credentialsInterceptor != null) {
-      interceptorList.add(credentialsInterceptor);
-    }
-
-    if (options.getInstanceName() != null) {
-      interceptorList.add(
-          new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
-    }
-    final ClientInterceptor[] interceptors =
-        interceptorList.toArray(new ClientInterceptor[interceptorList.size()]);
-
-    ChannelPool.ChannelFactory factory =
-        new ChannelPool.ChannelFactory() {
-          @Override
-          public ManagedChannel create() throws IOException {
-            return createNettyChannel(host, options, interceptors);
-          }
-        };
-    return new ChannelPool(factory, count);
-  }
-
   private static ChannelPool createRawDataChannelPool(final BigtableOptions options)
       throws IOException {
     ChannelPool.ChannelFactory channelFactory =

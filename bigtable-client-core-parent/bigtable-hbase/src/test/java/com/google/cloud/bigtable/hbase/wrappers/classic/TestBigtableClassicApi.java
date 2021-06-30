@@ -93,6 +93,7 @@ public class TestBigtableClassicApi {
     configuration.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
     configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
     configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + port);
+    configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_USE_GCJ_CLIENT, false);
     bigtableHBaseSettings = BigtableHBaseClassicSettings.create(configuration);
     bigtableApi = BigtableApi.create(bigtableHBaseSettings);
   }

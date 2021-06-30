@@ -210,6 +210,8 @@ public abstract class TestRpcRetryBehavior {
     for (Map.Entry<String, String> connProp : customConnProps.entrySet()) {
       config.set(connProp.getKey(), connProp.getValue());
     }
+    // retry on aborted to differentiate server hang an explicit server error
+    config.set(BigtableOptionsFactory.ADDITIONAL_RETRY_CODES, "ABORTED");
 
     return ConnectionFactory.createConnection(config);
   }
