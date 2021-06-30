@@ -82,5 +82,21 @@ public class TestBigtableAsyncTableRegionLocator {
     assertEquals("y", Bytes.toString(regionLocationFuture.getRegion().getEndKey()));
 
     assertEquals(TABLE_NAME, regionLocator.getName());
+
+    regionLocationFuture = regionLocator.getRegionLocation(Bytes.toBytes("1")).get();
+    assertEquals("", Bytes.toString(regionLocationFuture.getRegion().getStartKey()));
+    assertEquals("a", Bytes.toString(regionLocationFuture.getRegion().getEndKey()));
+
+    regionLocationFuture = regionLocator.getRegionLocation(Bytes.toBytes("a")).get();
+    assertEquals("a", Bytes.toString(regionLocationFuture.getRegion().getStartKey()));
+    assertEquals("b", Bytes.toString(regionLocationFuture.getRegion().getEndKey()));
+
+    regionLocationFuture = regionLocator.getRegionLocation(Bytes.toBytes("z")).get();
+    assertEquals("z", Bytes.toString(regionLocationFuture.getRegion().getStartKey()));
+    assertEquals("", Bytes.toString(regionLocationFuture.getRegion().getEndKey()));
+
+    regionLocationFuture = regionLocator.getRegionLocation(Bytes.toBytes("zzz")).get();
+    assertEquals("z", Bytes.toString(regionLocationFuture.getRegion().getStartKey()));
+    assertEquals("", Bytes.toString(regionLocationFuture.getRegion().getEndKey()));
   }
 }
