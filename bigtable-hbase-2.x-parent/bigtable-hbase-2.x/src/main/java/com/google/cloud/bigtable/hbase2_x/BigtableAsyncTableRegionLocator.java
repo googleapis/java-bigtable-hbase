@@ -28,6 +28,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AsyncTableRegionLocator;
 import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.client.RegionInfoBuilder;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * Bigtable implementation of {@link AsyncTableRegionLocator}
@@ -37,7 +38,6 @@ import org.apache.hadoop.hbase.client.RegionInfoBuilder;
 @InternalApi("For internal usage only")
 public class BigtableAsyncTableRegionLocator extends AbstractBigtableRegionLocator
     implements AsyncTableRegionLocator {
-  HRegionLocation hRegionLocation = null;
 
   public BigtableAsyncTableRegionLocator(
       TableName tableName, BigtableOptions options, IBigtableDataClient client) {
@@ -52,16 +52,33 @@ public class BigtableAsyncTableRegionLocator extends AbstractBigtableRegionLocat
   @Override
   public CompletableFuture<HRegionLocation> getRegionLocation(byte[] row, boolean reload) {
     return FutureUtils.toCompletableFuture(getRegionsAsync(reload))
-        .thenApplyAsync(
-            result -> {
-              for (HRegionLocation region : result) {
-                if (region.getRegion().containsRow(row)) {
-                  hRegionLocation = region;
-                  break;
-                }
-              }
-              return hRegionLocation;
-            });
+        .thenApplyAsync(result -> findRegion(result, row));
+  }
+
+  private HRegionLocation findRegion(List<HRegionLocation> regions, byte[] row) {
+    int low = 0;
+    int high = regions.size() - 1;
+
+    while (low <= high) {
+      int mid = (low + high) >>> 1;
+      HRegionLocation regionLocation = regions.get(mid);
+      // TODO 2.x deprecated getRegionInfo() and returns a RegionInfo class instead of HRegionInfo.
+      // We could move this method to AbstractBigtableRegionLocator after making sure there's no
+      // compatibility issues.
+      RegionInfo regionInfo = regionLocation.getRegion();
+
+      // This isn't the last region (endKey != "") and row key is greater than the current bound
+      if (regionInfo.getEndKey().length > 0 && Bytes.compareTo(row, regionInfo.getEndKey()) >= 0) {
+        low = mid + 1;
+      } else if (Bytes.compareTo(row, regionInfo.getStartKey()) < 0) {
+        // no need to check empty key because it will compare naturally
+        high = mid - 1;
+      } else {
+        return regionLocation;
+      }
+    }
+    // Should never happen because the regions are contiguous
+    return null;
   }
 
   @Override
