@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.test_env;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.IOException;
@@ -86,5 +87,12 @@ abstract class SharedTestEnv {
 
   public Configuration getConfiguration() {
     return configuration;
+  }
+
+  public ConnectionMode getConnectionMode() {
+    String modeStr =
+        MoreObjects.firstNonNull(
+            System.getProperty("bigtable.connection-mode"), ConnectionMode.DEFAULT.name());
+    return ConnectionMode.valueOf(modeStr);
   }
 }

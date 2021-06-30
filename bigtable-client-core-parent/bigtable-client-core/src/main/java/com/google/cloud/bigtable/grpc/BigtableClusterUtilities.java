@@ -154,7 +154,8 @@ public class BigtableClusterUtilities implements AutoCloseable {
 
     ClientInterceptor[] interceptors =
         BigtableSession.createAdminApiInterceptors(options).toArray(new ClientInterceptor[0]);
-    channel = BigtableSession.createNettyChannel(options.getAdminHost(), options, interceptors);
+    channel =
+        BigtableSession.createNettyChannel(options.getAdminHost(), options, false, interceptors);
     client = new BigtableInstanceGrpcClient(channel);
   }
 
