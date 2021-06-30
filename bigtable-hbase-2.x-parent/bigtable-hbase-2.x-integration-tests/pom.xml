@@ -42,7 +42,7 @@ limitations under the License.
     <google.bigtable.registry.impl>
       org.apache.hadoop.hbase.client.BigtableAsyncRegistry
     </google.bigtable.registry.impl>
-    <test.timeout>1800</test.timeout>
+    <test.timeout>2700</test.timeout>
   </properties>
 
   <profiles>
