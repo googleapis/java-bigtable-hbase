@@ -26,6 +26,7 @@ import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.cloud.bigtable.grpc.BigtableClusterName;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
+import com.google.cloud.bigtable.test.helper.TestServerBuilder;
 import com.google.common.collect.Queues;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
@@ -34,9 +35,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import io.grpc.Server;
-import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
-import java.net.ServerSocket;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -75,20 +74,14 @@ public class TestAdminClientVeneerApi {
 
   @Before
   public void setUp() throws Exception {
-    final int port;
-    try (ServerSocket serverSocket = new ServerSocket(0)) {
-      port = serverSocket.getLocalPort();
-    }
-
     server =
-        ServerBuilder.forPort(port)
+        TestServerBuilder.newInstance()
             .addService(fakeOperationsGrpc)
             .addService(fakeAdminService)
-            .build();
-    server.start();
+            .buildAndStart();
     adminClientV2 =
         BigtableTableAdminClient.create(
-            BigtableTableAdminSettings.newBuilderForEmulator(port)
+            BigtableTableAdminSettings.newBuilderForEmulator(server.getPort())
                 .setProjectId(PROJECT_ID)
                 .setInstanceId(INSTANCE_ID)
                 .build());

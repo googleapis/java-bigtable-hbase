@@ -67,7 +67,6 @@ import com.google.cloud.bigtable.hbase.wrappers.veneer.metrics.MetricsApiTracerA
 import com.google.common.base.Optional;
 import io.grpc.internal.GrpcUtil;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Before;
@@ -396,9 +395,9 @@ public class TestBigtableHBaseVeneerSettings {
 
   @Test
   public void testDataSettingsWithEmulator() throws IOException {
-    ServerSocket serverSocket = new ServerSocket(0);
-    final int availablePort = serverSocket.getLocalPort();
-    serverSocket.close();
+    // A real port isn't required for this test; only verifying the configs can be stored and
+    // retrieved.
+    final int availablePort = 987654321;
     String emulatorHost = "localhost:" + availablePort;
     configuration.set(BIGTABLE_EMULATOR_HOST_KEY, emulatorHost);
 
@@ -413,9 +412,9 @@ public class TestBigtableHBaseVeneerSettings {
 
   @Test
   public void testAdminSettingsWithEmulator() throws IOException {
-    ServerSocket serverSocket = new ServerSocket(0);
-    final int availablePort = serverSocket.getLocalPort();
-    serverSocket.close();
+    // A real port isn't required for this test; only verifying the configs can be stored and
+    // retrieved.
+    final int availablePort = 987654321;
     String emulatorHost = "localhost:" + availablePort;
     configuration.set(BIGTABLE_EMULATOR_HOST_KEY, emulatorHost);
 

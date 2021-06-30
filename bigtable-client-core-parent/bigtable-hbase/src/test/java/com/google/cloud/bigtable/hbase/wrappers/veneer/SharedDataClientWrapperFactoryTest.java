@@ -21,17 +21,16 @@ import com.google.bigtable.v2.MutateRowResponse;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
+import com.google.cloud.bigtable.test.helper.TestServerBuilder;
 import io.grpc.Grpc;
 import io.grpc.Metadata;
 import io.grpc.Server;
-import io.grpc.ServerBuilder;
 import io.grpc.ServerCall;
 import io.grpc.ServerCall.Listener;
 import io.grpc.ServerCallHandler;
 import io.grpc.ServerInterceptor;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,23 +57,17 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class SharedDataClientWrapperFactoryTest {
   private Server server;
-  private int port;
   private List<SocketAddress> remoteCallers;
 
   @Before
   public void setUp() throws IOException {
-    try (ServerSocket ss = new ServerSocket(0)) {
-      port = ss.getLocalPort();
-    }
-
     remoteCallers = Collections.synchronizedList(new ArrayList<SocketAddress>());
 
     server =
-        ServerBuilder.forPort(port)
+        TestServerBuilder.newInstance()
             .intercept(new RemoteCallerInterceptor(remoteCallers))
             .addService(new FakeBigtable())
-            .build();
-    server.start();
+            .buildAndStart();
   }
 
   @After
@@ -94,7 +87,7 @@ public class SharedDataClientWrapperFactoryTest {
 
     // Manually expand BIGTABLE_EMULATOR_HOST_KEY so that the channel settings are known
     configuration.set(BigtableOptionsFactory.BIGTABLE_HOST_KEY, "localhost");
-    configuration.setInt(BigtableOptionsFactory.BIGTABLE_PORT_KEY, port);
+    configuration.setInt(BigtableOptionsFactory.BIGTABLE_PORT_KEY, server.getPort());
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
     configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_USE_PLAINTEXT_NEGOTIATION, true);
 

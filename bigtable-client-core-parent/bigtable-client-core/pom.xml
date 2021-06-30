@@ -215,6 +215,13 @@ limitations under the License.
 
     <!-- Test -->
     <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-internal-test-helper</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
       <!-- bigtable-client-core uses gson for test only, however

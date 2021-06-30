@@ -33,13 +33,13 @@ import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
 import com.google.cloud.bigtable.hbase.BigtableHBaseVersion;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
+import com.google.cloud.bigtable.test.helper.TestServerBuilder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Queues;
 import com.google.common.truth.Truth;
 import io.grpc.Metadata;
 import io.grpc.Metadata.Key;
 import io.grpc.Server;
-import io.grpc.ServerBuilder;
 import io.grpc.ServerCall;
 import io.grpc.ServerCall.Listener;
 import io.grpc.ServerCallHandler;
@@ -47,7 +47,6 @@ import io.grpc.ServerInterceptor;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -86,7 +85,6 @@ public class TestAbstractBigtableConnection {
   private static final FakeDataService fakeDataService = new FakeDataService();
 
   private static Server server;
-  private static int port;
   private ServerHeaderInterceptor headerInterceptor;
 
   @Mock private AbstractBigtableAdmin mockBigtableAdmin;
@@ -97,23 +95,20 @@ public class TestAbstractBigtableConnection {
 
   @Before
   public void setUp() throws IOException {
-    try (ServerSocket s = new ServerSocket(0)) {
-      port = s.getLocalPort();
-    }
     headerInterceptor = new ServerHeaderInterceptor();
     server =
-        ServerBuilder.forPort(port)
+        TestServerBuilder.newInstance()
             .intercept(headerInterceptor)
             .addService(fakeDataService)
-            .build();
-    server.start();
+            .buildAndStart();
 
     Configuration configuration = new Configuration(false);
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, PROJECT_ID);
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, INSTANCE_ID);
     configuration.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
     configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
-    configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, HOST_NAME + ":" + port);
+    configuration.set(
+        BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, HOST_NAME + ":" + server.getPort());
     connection = new TestBigtableConnectionImpl(configuration);
   }
 
@@ -131,7 +126,8 @@ public class TestAbstractBigtableConnection {
     assertEquals(regionInfo, connection.getAllRegionInfos(TABLE_NAME).get(0));
 
     List<HRegionLocation> expectedRegionLocations =
-        ImmutableList.of(new HRegionLocation(regionInfo, ServerName.valueOf(HOST_NAME, port, 0)));
+        ImmutableList.of(
+            new HRegionLocation(regionInfo, ServerName.valueOf(HOST_NAME, server.getPort(), 0)));
 
     when(mockSampledAdapter.adaptResponse(Mockito.<List<KeyOffset>>any()))
         .thenReturn(expectedRegionLocations);

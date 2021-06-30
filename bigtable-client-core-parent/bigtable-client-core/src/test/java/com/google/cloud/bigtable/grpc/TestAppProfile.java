@@ -34,16 +34,15 @@ import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
+import com.google.cloud.bigtable.test.helper.TestServerBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Queues;
 import com.google.protobuf.ByteString;
 import com.google.rpc.Code;
 import com.google.rpc.Status;
 import io.grpc.Server;
-import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
@@ -65,18 +64,13 @@ public class TestAppProfile {
   public void setUp() throws IOException {
     fakeDataService = new FakeDataService();
 
-    final int port;
-    try (ServerSocket s = new ServerSocket(0)) {
-      port = s.getLocalPort();
-    }
-    server = ServerBuilder.forPort(port).addService(fakeDataService).build();
-    server.start();
+    server = TestServerBuilder.newInstance().addService(fakeDataService).buildAndStart();
 
     BigtableOptions opts =
         BigtableOptions.builder()
             .setDataHost("localhost")
             .setAdminHost("localhost")
-            .setPort(port)
+            .setPort(server.getPort())
             .setProjectId("fake-project")
             .setInstanceId("fake-instance")
             .setUserAgent("fake-agent")
