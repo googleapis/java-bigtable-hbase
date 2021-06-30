@@ -339,7 +339,7 @@ public class BigtableOptions implements Serializable, Cloneable {
 
         if (options.retryOptions.getMaxElapsedBackoffMillis()
             == RetryOptions.DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS) {
-          retryOptionsBuilder.setMaxElapsedBackoffMillis((int) TimeUnit.MINUTES.toMillis(5));
+          retryOptionsBuilder.setMaxElapsedBackoffMillis((int) TimeUnit.MINUTES.toMillis(20));
         }
         options.retryOptions = retryOptionsBuilder.build();
       }

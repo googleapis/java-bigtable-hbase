@@ -119,7 +119,7 @@ public class TestBigtableOptions {
     Assert.assertTrue(options.useCachedChannel());
     Assert.assertEquals(BigtableOptions.BIGTABLE_BATCH_DATA_HOST_DEFAULT, options.getDataHost());
     Assert.assertEquals(5000, options.getRetryOptions().getInitialBackoffMillis());
-    Assert.assertEquals(300_000, options.getRetryOptions().getMaxElapsedBackoffMillis());
+    Assert.assertEquals(1_200_000, options.getRetryOptions().getMaxElapsedBackoffMillis());
   }
 
   @Test
@@ -129,7 +129,7 @@ public class TestBigtableOptions {
     Assert.assertTrue(options.useCachedChannel());
     Assert.assertEquals(host, options.getDataHost());
     Assert.assertEquals(5000, options.getRetryOptions().getInitialBackoffMillis());
-    Assert.assertEquals(300_000, options.getRetryOptions().getMaxElapsedBackoffMillis());
+    Assert.assertEquals(1_200_000, options.getRetryOptions().getMaxElapsedBackoffMillis());
   }
 
   /**
