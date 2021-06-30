@@ -58,6 +58,7 @@ import com.google.cloud.bigtable.grpc.io.Watchdog;
 import com.google.cloud.bigtable.grpc.io.WatchdogInterceptor;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
+import com.google.cloud.bigtable.util.DirectPathUtil;
 import com.google.cloud.bigtable.util.ReferenceCountedHashMap;
 import com.google.cloud.bigtable.util.ReferenceCountedHashMap.Callable;
 import com.google.cloud.bigtable.util.ThreadUtil;
@@ -133,6 +134,9 @@ public class BigtableSession implements Closeable {
   static final long CHANNEL_KEEP_ALIVE_TIME_SECONDS = 30;
   // Use this conservative values for timeout (10s)
   static final long CHANNEL_KEEP_ALIVE_TIMEOUT_SECONDS = 10;
+
+  static final long DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS = 3600;
+  static final long DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS = 20;
 
   @VisibleForTesting
   static final String PROJECT_ID_EMPTY_OR_NULL = "ProjectId must not be empty or null.";
@@ -210,7 +214,6 @@ public class BigtableSession implements Closeable {
 
   private final BigtableOptions options;
   private final List<ManagedChannel> managedChannels;
-  @Deprecated private final List<ClientInterceptor> dataChannelInterceptors;
 
   private final BigtableDataClient dataClient;
   private final RequestContext dataRequestContext;
@@ -311,31 +314,34 @@ public class BigtableSession implements Closeable {
       this.dataClient = null;
       this.throttlingDataClient = null;
       this.dataRequestContext = null;
-      this.dataChannelInterceptors = null;
     } else {
+      boolean useDirectPath =
+          options.isDirectPathAllowed()
+              && DirectPathUtil.shouldAttemptDirectPath(
+                  options.getDataHost(), options.getPort(), options.getCredentialOptions());
+
       // Get a raw data channel pool - depending on the settings, this channel can either be
       // cached/shared or it can specific to this session. If it's specific to this session,
       // it will be added to managedChannels and cleaned up when this session is closed.
       ManagedChannel rawDataChannelPool;
       if (options.useCachedChannel()) {
         synchronized (BigtableSession.class) {
-          String key = String.format("%s:%d", options.getDataHost(), options.getPort());
+          String key =
+              String.format("%s:%s:%d", useDirectPath, options.getDataHost(), options.getPort());
           rawDataChannelPool = cachedDataChannelPools.get(key);
           if (rawDataChannelPool == null) {
-            rawDataChannelPool = createRawDataChannelPool(options);
+            rawDataChannelPool = createRawDataChannelPool(options, useDirectPath);
             cachedDataChannelPools.put(key, rawDataChannelPool);
           }
         }
       } else {
-        rawDataChannelPool = createRawDataChannelPool(options);
+        rawDataChannelPool = createRawDataChannelPool(options, useDirectPath);
         managedChannels.add(rawDataChannelPool);
       }
 
-      // TODO: stop saving the data channel interceptors as instance variables, this is here only to
-      // support deprecated methods
-      dataChannelInterceptors = createDataApiInterceptors(options);
       Channel dataChannel =
-          ClientInterceptors.intercept(rawDataChannelPool, dataChannelInterceptors);
+          ClientInterceptors.intercept(
+              rawDataChannelPool, createDataApiInterceptors(options, useDirectPath));
 
       this.dataRequestContext =
           RequestContext.create(
@@ -366,7 +372,7 @@ public class BigtableSession implements Closeable {
           new BigtableDataGrpcClient(asyncDataChannel, sharedPools.getRetryExecutor(), options);
       throttlingDataClient.setDeadlineGeneratorFactory(callOptionsFactory);
 
-      ManagedChannel rawAdminChannel = createNettyChannel(options.getAdminHost(), options);
+      ManagedChannel rawAdminChannel = createNettyChannel(options.getAdminHost(), options, false);
       managedChannels.add(rawAdminChannel);
 
       Channel adminChannel =
@@ -414,8 +420,8 @@ public class BigtableSession implements Closeable {
     return interceptors.build();
   }
 
-  private List<ClientInterceptor> createDataApiInterceptors(BigtableOptions options)
-      throws IOException {
+  private List<ClientInterceptor> createDataApiInterceptors(
+      BigtableOptions options, boolean useDirectPath) throws IOException {
     ImmutableList.Builder<ClientInterceptor> interceptors = ImmutableList.builder();
 
     // TODO: instanceName should never be null
@@ -428,7 +434,7 @@ public class BigtableSession implements Closeable {
 
     interceptors.add(setupWatchdog());
 
-    if (!BigtableOptions.isDirectPathEnabled()) {
+    if (!useDirectPath) {
       ClientInterceptor authInterceptor = createAuthInterceptor(options);
       if (authInterceptor != null) {
         interceptors.add(authInterceptor);
@@ -485,103 +491,14 @@ public class BigtableSession implements Closeable {
   // </editor-fold>
 
   // <editor-fold desc="Channel management">
-  /**
-   * @deprecated Channel creation is now considered an internal implementation detail channel
-   *     creation methods will be removed from the public surface in the future
-   */
-  @Deprecated
-  protected ManagedChannel createManagedPool(String host, int channelCount) throws IOException {
-    ManagedChannel channelPool = createChannelPool(host, channelCount);
-    managedChannels.add(channelPool);
-    return channelPool;
-  }
 
-  /**
-   * @deprecated Channel creation is now considered an internal implementation detail channel
-   *     creation methods will be removed from the public surface in the future
-   */
-  @Deprecated
-  protected ManagedChannel createChannelPool(final String hostString, int count)
-      throws IOException {
-    Preconditions.checkState(
-        !options.useGCJClient(), "Channel pools cannot be created when using google-cloud-java");
-
-    final ClientInterceptor[] clientInterceptorArray =
-        dataChannelInterceptors.toArray(new ClientInterceptor[0]);
+  private static ChannelPool createRawDataChannelPool(
+      final BigtableOptions options, final boolean useDirectPath) throws IOException {
     ChannelPool.ChannelFactory channelFactory =
         new ChannelPool.ChannelFactory() {
           @Override
           public ManagedChannel create() throws IOException {
-            return createNettyChannel(hostString, options, clientInterceptorArray);
-          }
-        };
-    return createChannelPool(channelFactory, count);
-  }
-
-  /**
-   * @deprecated Channel creation is now considered an internal implementation detail channel
-   *     creation methods will be removed from the public surface in the future
-   */
-  @Deprecated
-  @InternalApi("For internal usage only")
-  protected ManagedChannel createChannelPool(
-      final ChannelPool.ChannelFactory channelFactory, int count) throws IOException {
-    return new ChannelPool(channelFactory, count);
-  }
-
-  /**
-   * @deprecated Channel creation is now considered an internal implementation detail channel
-   *     creation methods will be removed from the public surface in the future
-   */
-  @Deprecated
-  @InternalApi("For internal usage only")
-  public static ManagedChannel createChannelPool(final String host, final BigtableOptions options)
-      throws IOException, GeneralSecurityException {
-    return createChannelPool(host, options, 1);
-  }
-
-  /**
-   * @deprecated Channel creation is now considered an internal implementation detail channel
-   *     creation methods will be removed in the future
-   */
-  @Deprecated
-  @InternalApi("For internal usage only")
-  public static ManagedChannel createChannelPool(
-      final String host, final BigtableOptions options, int count)
-      throws IOException, GeneralSecurityException {
-    final List<ClientInterceptor> interceptorList = new ArrayList<>();
-
-    ClientInterceptor credentialsInterceptor =
-        CredentialInterceptorCache.getInstance()
-            .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
-    if (credentialsInterceptor != null) {
-      interceptorList.add(credentialsInterceptor);
-    }
-
-    if (options.getInstanceName() != null) {
-      interceptorList.add(
-          new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
-    }
-    final ClientInterceptor[] interceptors =
-        interceptorList.toArray(new ClientInterceptor[interceptorList.size()]);
-
-    ChannelPool.ChannelFactory factory =
-        new ChannelPool.ChannelFactory() {
-          @Override
-          public ManagedChannel create() throws IOException {
-            return createNettyChannel(host, options, interceptors);
-          }
-        };
-    return new ChannelPool(factory, count);
-  }
-
-  private static ChannelPool createRawDataChannelPool(final BigtableOptions options)
-      throws IOException {
-    ChannelPool.ChannelFactory channelFactory =
-        new ChannelPool.ChannelFactory() {
-          @Override
-          public ManagedChannel create() throws IOException {
-            return createNettyChannel(options.getDataHost(), options);
+            return createNettyChannel(options.getDataHost(), options, useDirectPath);
           }
         };
     return new ChannelPool(channelFactory, options.getChannelCount());
@@ -589,10 +506,11 @@ public class BigtableSession implements Closeable {
   /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public static ManagedChannel createNettyChannel(
-      String host, BigtableOptions options, ClientInterceptor... interceptors) throws SSLException {
-
-    // DirectPath is only supported for data currently
-    boolean isDirectPath = BigtableOptions.isDirectPathEnabled() && !host.contains("admin");
+      String host,
+      BigtableOptions options,
+      boolean useDirectPath,
+      ClientInterceptor... interceptors)
+      throws SSLException {
 
     LOG.info("Creating new channel for %s", host);
     if (LOG.getLog().isTraceEnabled()) {
@@ -600,11 +518,7 @@ public class BigtableSession implements Closeable {
     }
 
     ManagedChannelBuilder<?> builder;
-    if (isDirectPath) {
-      LOG.warn(
-          "Connecting to Bigtable using DirectPath."
-              + " This is currently an experimental feature and should not be used in production.");
-
+    if (useDirectPath) {
       builder = ComputeEngineChannelBuilder.forAddress(host, options.getPort());
       // When channel pooling is enabled, force the pick_first grpclb strategy.
       // This is necessary to avoid the multiplicative effect of creating channel pool with
@@ -624,13 +538,19 @@ public class BigtableSession implements Closeable {
       ImmutableMap<String, Object> loadBalancingConfig =
           ImmutableMap.<String, Object>of("loadBalancingConfig", ImmutableList.of(grpcLbPolicy));
 
-      builder.defaultServiceConfig(loadBalancingConfig);
+      builder
+          .defaultServiceConfig(loadBalancingConfig)
+          .keepAliveTime(DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS, TimeUnit.SECONDS)
+          .keepAliveTimeout(DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     } else {
       builder = ManagedChannelBuilder.forAddress(host, options.getPort());
 
       if (options.usePlaintextNegotiation()) {
         builder.usePlaintext();
       }
+      builder
+          .keepAliveTime(CHANNEL_KEEP_ALIVE_TIME_SECONDS, TimeUnit.SECONDS)
+          .keepAliveTimeout(CHANNEL_KEEP_ALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
     if (options.getChannelConfigurator() != null) {
@@ -638,10 +558,9 @@ public class BigtableSession implements Closeable {
     }
 
     return builder
+        .disableServiceConfigLookUp()
         .idleTimeout(Long.MAX_VALUE, TimeUnit.SECONDS)
         .maxInboundMessageSize(MAX_MESSAGE_SIZE)
-        .keepAliveTime(CHANNEL_KEEP_ALIVE_TIME_SECONDS, TimeUnit.SECONDS)
-        .keepAliveTimeout(CHANNEL_KEEP_ALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         // Default behavior Do not use keepalive without any outstanding rpc calls as it can add a
         // bunch of load.
         .userAgent(BigtableVersionInfo.CORE_USER_AGENT + "," + options.getUserAgent())
@@ -794,7 +713,7 @@ public class BigtableSession implements Closeable {
   public static BigtableInstanceClient createInstanceClient(BigtableOptions options)
       throws IOException, GeneralSecurityException {
 
-    ManagedChannel rawAdminChannel = createNettyChannel(options.getAdminHost(), options);
+    ManagedChannel rawAdminChannel = createNettyChannel(options.getAdminHost(), options, false);
     Channel adminChannel =
         ClientInterceptors.intercept(rawAdminChannel, createAdminApiInterceptors(options));
     return new BigtableInstanceGrpcClient(adminChannel);

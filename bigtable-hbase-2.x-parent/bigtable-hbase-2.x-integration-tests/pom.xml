@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-2.x-parent</artifactId>
-    <version>1.21.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-2x-parent:current} -->
+    <version>1.22.0</version> <!-- {x-version-update:bigtable-hbase-2x-parent:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-2.x-integration-tests</artifactId>
@@ -42,7 +42,7 @@ limitations under the License.
     <google.bigtable.registry.impl>
       org.apache.hadoop.hbase.client.BigtableAsyncRegistry
     </google.bigtable.registry.impl>
-    <test.timeout>1800</test.timeout>
+    <test.timeout>2700</test.timeout>
   </properties>
 
   <profiles>

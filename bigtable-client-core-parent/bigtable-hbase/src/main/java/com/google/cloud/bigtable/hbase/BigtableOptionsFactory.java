@@ -26,20 +26,25 @@ import static com.google.cloud.bigtable.config.CallOptionsConfig.USE_TIMEOUT_DEF
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.config.BigtableOptions.ChannelConfigurator;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.CallOptionsConfig;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
+import com.google.cloud.bigtable.hbase.util.IpVerificationInterceptor;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.regex.Pattern;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.VersionInfo;
 
@@ -59,6 +64,8 @@ public class BigtableOptionsFactory {
   /** Constant <code>BIGTABLE_HOST_KEY="google.bigtable.endpoint.host"</code> */
   public static final String BIGTABLE_HOST_KEY = "google.bigtable.endpoint.host";
 
+  @BetaApi("The surface for DirectPath is currently unstable and may change in the future")
+  public static final String BIGTABLE_DIRECT_PATH_ALLOWED = "google.bigtable.direct.path.allowed";
   /**
    * Constant <code>BIGTABLE_HOST_KEY="google.bigtable.emulator.endpoint.host"</code>. Values should
    * be of format: `host:port`
@@ -331,6 +338,9 @@ public class BigtableOptionsFactory {
   @BetaApi("The API for setting tracing cookie is not yet stable and may change in the future")
   public static final String BIGTABLE_TRACING_COOKIE = "google.bigtable.tracing.cookie.header";
 
+  @InternalApi("for testing only")
+  public static final String BIGTABLE_TEST_DATA_IP_REGEX = "google.bigtable.test.data.ip.regex";
+
   /**
    * fromConfiguration.
    *
@@ -368,6 +378,10 @@ public class BigtableOptionsFactory {
       bigtableOptionsBuilder.setPort(Integer.parseInt(portOverrideStr));
     }
 
+    if (!configuration.getBoolean(BIGTABLE_DIRECT_PATH_ALLOWED, true)) {
+      bigtableOptionsBuilder.disableDirectPath();
+    }
+
     String usePlaintextStr = configuration.get(BIGTABLE_USE_PLAINTEXT_NEGOTIATION);
     if (usePlaintextStr != null) {
       bigtableOptionsBuilder.setUsePlaintextNegotiation(Boolean.parseBoolean(usePlaintextStr));
@@ -396,6 +410,26 @@ public class BigtableOptionsFactory {
     if (tracingCookie != null) {
       bigtableOptionsBuilder.setTracingCookie(tracingCookie);
     }
+
+    final String s = configuration.get(BIGTABLE_TEST_DATA_IP_REGEX);
+    if (s != null) {
+      final ChannelConfigurator oldConfigurator = bigtableOptionsBuilder.getChannelConfigurator();
+      bigtableOptionsBuilder.setChannelConfigurator(
+          new ChannelConfigurator() {
+            @Override
+            public ManagedChannelBuilder configureChannel(
+                ManagedChannelBuilder builder, String host) {
+              if (oldConfigurator != null) {
+                builder = oldConfigurator.configureChannel(builder, host);
+              }
+              if (!host.contains("admin")) {
+                builder = builder.intercept(new IpVerificationInterceptor(Pattern.compile(s)));
+              }
+              return builder;
+            }
+          });
+    }
+
     return bigtableOptionsBuilder.build();
   }
 

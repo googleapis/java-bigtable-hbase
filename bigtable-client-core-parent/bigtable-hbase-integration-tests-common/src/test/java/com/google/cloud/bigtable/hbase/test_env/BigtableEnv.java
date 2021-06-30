@@ -81,6 +81,29 @@ class BigtableEnv extends SharedTestEnv {
       }
     }
 
+    // Configure DirectPath settings:
+    // - when a required mode is specified, ensure that ip address match the mode
+    // - specify a user agent that will trigger deny/allow lists on the serverside
+    switch (getConnectionMode()) {
+      case DEFAULT:
+        // nothing special
+        break;
+      case REQUIRE_CFE:
+        configuration.set("google.bigtable.test.data.ip.regex", "^(?!2001:4860:8040|34\\.126).*");
+        configuration.set("google.bigtable.custom.user.agent", "bigtable-directpath-disable");
+        break;
+      case REQUIRE_DIRECT_PATH:
+        configuration.set("google.bigtable.test.data.ip.regex", "^(?:2001:4860:8040|34\\.126).*");
+        configuration.set("google.bigtable.custom.user.agent", "bigtable-directpath-enable");
+        break;
+      case REQUIRE_DIRECT_PATH_IPV4:
+        configuration.set("google.bigtable.test.data.ip.regex", "^(?:34\\.126).*");
+        configuration.set("google.bigtable.custom.user.agent", "bigtable-directpath-enable");
+        break;
+      default:
+        throw new IllegalStateException("Unknown ConnectionMode: " + getConnectionMode());
+    }
+
     // Garbage collect tables that previous runs failed to clean up
     ListeningExecutorService executor = MoreExecutors.listeningDecorator(getExecutor());
     try (Connection connection = ConnectionFactory.createConnection(configuration);

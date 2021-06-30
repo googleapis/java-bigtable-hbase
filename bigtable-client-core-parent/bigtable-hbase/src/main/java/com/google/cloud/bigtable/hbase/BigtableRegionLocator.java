@@ -22,6 +22,7 @@ import com.google.cloud.bigtable.core.IBigtableDataClient;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.RegionLocator;
@@ -61,11 +62,30 @@ public abstract class BigtableRegionLocator extends AbstractBigtableRegionLocato
   /** {@inheritDoc} */
   @Override
   public HRegionLocation getRegionLocation(byte[] row, boolean reload) throws IOException {
-    for (HRegionLocation region : getRegions(reload)) {
-      if (region.getRegionInfo().containsRow(row)) {
-        return region;
+    List<HRegionLocation> regions = getRegions(reload);
+    return findRegion(regions, row);
+  }
+
+  private HRegionLocation findRegion(List<HRegionLocation> regions, byte[] row) throws IOException {
+    int low = 0;
+    int high = regions.size() - 1;
+
+    while (low <= high) {
+      int mid = (low + high) >>> 1;
+      HRegionLocation regionLocation = regions.get(mid);
+      HRegionInfo regionInfo = regionLocation.getRegionInfo();
+
+      // This isn't the last region (endKey != "") and row key is greater than the current bound
+      if (regionInfo.getEndKey().length > 0 && Bytes.compareTo(row, regionInfo.getEndKey()) >= 0) {
+        low = mid + 1;
+      } else if (Bytes.compareTo(row, regionInfo.getStartKey()) < 0) {
+        // no need to check empty key because it will compare naturally
+        high = mid - 1;
+      } else {
+        return regionLocation;
       }
     }
+    // Should never happen because the regions are contiguous
     throw new IOException("Region not found for row: " + Bytes.toStringBinary(row));
   }
 

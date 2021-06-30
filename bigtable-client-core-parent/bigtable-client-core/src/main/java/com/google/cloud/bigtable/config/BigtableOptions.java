@@ -62,11 +62,6 @@ public class BigtableOptions implements Serializable, Cloneable {
   @InternalApi("For internal usage only")
   public static final String BIGTABLE_DATA_HOST_DEFAULT = "bigtable.googleapis.com";
 
-  // Temporary DirectPath config
-  private static final String DIRECT_PATH_ENV_VAR = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH";
-  private static final String BIGTABLE_DIRECTPATH_DATA_HOST_DEFAULT =
-      "directpath-bigtable.googleapis.com";
-
   /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public static final String BIGTABLE_BATCH_DATA_HOST_DEFAULT = "batch-bigtable.googleapis.com";
@@ -104,27 +99,6 @@ public class BigtableOptions implements Serializable, Cloneable {
     return builder().build();
   }
 
-  /**
-   * Checks if DirectPath is enabled via an environment variable.
-   *
-   * <p>For internal use only - public for technical reasons.
-   */
-  @InternalApi("For internal use only")
-  public static boolean isDirectPathEnabled() {
-    String whiteList = MoreObjects.firstNonNull(System.getenv(DIRECT_PATH_ENV_VAR), "").trim();
-
-    if (whiteList.isEmpty()) {
-      return false;
-    }
-
-    for (String entry : whiteList.split(",")) {
-      if (BIGTABLE_DATA_HOST_DEFAULT.contains(entry)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   /** Create a new instance of the {@link Builder}. */
   public static Builder builder() {
     return new Builder();
@@ -141,12 +115,10 @@ public class BigtableOptions implements Serializable, Cloneable {
       options.appProfileId = BIGTABLE_APP_PROFILE_DEFAULT;
 
       // Optional configuration for hosts - useful for the Bigtable team, more than anything else.
-      options.dataHost =
-          isDirectPathEnabled()
-              ? BIGTABLE_DIRECTPATH_DATA_HOST_DEFAULT
-              : BIGTABLE_DATA_HOST_DEFAULT;
+      options.dataHost = BIGTABLE_DATA_HOST_DEFAULT;
       options.adminHost = BIGTABLE_ADMIN_HOST_DEFAULT;
       options.port = BIGTABLE_PORT_DEFAULT;
+      options.directPathAllowed = true;
 
       options.dataChannelCount = BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT;
       options.usePlaintextNegotiation = false;
@@ -210,6 +182,17 @@ public class BigtableOptions implements Serializable, Cloneable {
     public Builder setDataChannelCount(int dataChannelCount) {
       options.dataChannelCount = dataChannelCount;
       return this;
+    }
+
+    public Builder disableDirectPath() {
+      options.directPathAllowed = false;
+      return this;
+    }
+
+    /** For internal use only - public for technical reasons. */
+    @InternalApi("Visible for test only")
+    public ChannelConfigurator getChannelConfigurator() {
+      return this.options.channelConfigurator;
     }
 
     /** For internal use only - public for technical reasons. */
@@ -356,7 +339,7 @@ public class BigtableOptions implements Serializable, Cloneable {
 
         if (options.retryOptions.getMaxElapsedBackoffMillis()
             == RetryOptions.DEFAULT_MAX_ELAPSED_BACKOFF_MILLIS) {
-          retryOptionsBuilder.setMaxElapsedBackoffMillis((int) TimeUnit.MINUTES.toMillis(5));
+          retryOptionsBuilder.setMaxElapsedBackoffMillis((int) TimeUnit.MINUTES.toMillis(20));
         }
         options.retryOptions = retryOptionsBuilder.build();
       }
@@ -372,6 +355,7 @@ public class BigtableOptions implements Serializable, Cloneable {
   private String adminHost;
   private String dataHost;
   private int port;
+  private boolean directPathAllowed;
   private String projectId;
   private String instanceId;
   private String appProfileId = BIGTABLE_APP_PROFILE_DEFAULT;
@@ -446,6 +430,11 @@ public class BigtableOptions implements Serializable, Cloneable {
    */
   public int getPort() {
     return port;
+  }
+
+  @BetaApi("surface for DirectPath is still unstable and may change in the future")
+  public boolean isDirectPathAllowed() {
+    return directPathAllowed;
   }
 
   /**
@@ -562,6 +551,7 @@ public class BigtableOptions implements Serializable, Cloneable {
         && (dataChannelCount == other.dataChannelCount)
         && (usePlaintextNegotiation == other.usePlaintextNegotiation)
         && (useCachedDataPool == other.useCachedDataPool)
+        && (directPathAllowed == other.directPathAllowed)
         && Objects.equals(adminHost, other.adminHost)
         && Objects.equals(dataHost, other.dataHost)
         && Objects.equals(projectId, other.projectId)
@@ -585,6 +575,7 @@ public class BigtableOptions implements Serializable, Cloneable {
         .omitNullValues()
         .add("dataHost", dataHost)
         .add("adminHost", adminHost)
+        .add("directPathEnabled", directPathAllowed)
         .add("port", port)
         .add("projectId", projectId)
         .add("instanceId", instanceId)
