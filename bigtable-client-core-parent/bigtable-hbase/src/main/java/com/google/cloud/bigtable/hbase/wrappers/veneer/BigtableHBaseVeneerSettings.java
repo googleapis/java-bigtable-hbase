@@ -121,7 +121,6 @@ import org.threeten.bp.Duration;
 @InternalApi("For internal usage only")
 public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   private static final String BIGTABLE_BATCH_DATA_HOST_DEFAULT = "batch-bigtable.googleapis.com";
-  private static final Duration DEFAULT_UNARY_ATTEMPT_DEADLINE = Duration.ofMinutes(6);
 
   private final Configuration configuration;
   private final BigtableDataSettings dataSettings;
@@ -779,8 +778,9 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
             Optional.<Duration>absent(),
             extractUnaryAttemptTimeout(BIGTABLE_MUTATE_RPC_ATTEMPT_TIMEOUT_MS_KEY),
             extractOverallTimeout(
-                BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY,
-                BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY));
+                    BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY,
+                    BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY)
+                .or(Optional.of(Duration.ofMinutes(20))));
 
     OperationTimeouts scanTimeouts =
         new OperationTimeouts(
