@@ -24,13 +24,12 @@ import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.test.helper.TestServerBuilder;
 import com.google.common.collect.Queues;
 import com.google.protobuf.ByteString;
 import io.grpc.Server;
-import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
@@ -57,7 +56,6 @@ public class TestBigtableConnection {
   private static final String FULL_TABLE_NAME =
       NameUtil.formatTableName(TEST_PROJECT_ID, TEST_INSTANCE_ID, TABLE_NAME.getNameAsString());
   private static Server server;
-  private static int dataPort;
 
   private static FakeDataService fakeDataService = new FakeDataService();
   private Configuration configuration;
@@ -65,11 +63,7 @@ public class TestBigtableConnection {
 
   @BeforeClass
   public static void setUpServer() throws IOException {
-    try (ServerSocket s = new ServerSocket(0)) {
-      dataPort = s.getLocalPort();
-    }
-    server = ServerBuilder.forPort(dataPort).addService(fakeDataService).build();
-    server.start();
+    server = TestServerBuilder.newInstance().addService(fakeDataService).buildAndStart();
   }
 
   @AfterClass
@@ -87,7 +81,8 @@ public class TestBigtableConnection {
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE_ID);
     configuration.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
     configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
-    configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + dataPort);
+    configuration.set(
+        BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + server.getPort());
     connection = new BigtableConnection(configuration);
   }
 
