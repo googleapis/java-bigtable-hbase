@@ -92,11 +92,6 @@ limitations under the License.
       <artifactId>jsr305</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${slf4j.version}</version>
-    </dependency>
-    <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
       <version>${commons-logging.version}</version>
@@ -200,6 +195,12 @@ limitations under the License.
 
     <!-- Metrics -->
     <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-metrics-api</artifactId>
+      <version>1.22.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-core-parent:current} -->
+    </dependency>
+
+    <dependency>
       <groupId>io.opencensus</groupId>
       <artifactId>opencensus-api</artifactId>
     </dependency>
@@ -212,7 +213,7 @@ limitations under the License.
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-core</artifactId>
-      <version>${dropwizard.metrics.version}</version>
+      <version>${hbase1-metrics.version}</version>
     </dependency>
 
     <!--  TODO: remove this dependency when upgraded through transitive dependency (http-client -> org.apache.httpcomponents:httpclient)
