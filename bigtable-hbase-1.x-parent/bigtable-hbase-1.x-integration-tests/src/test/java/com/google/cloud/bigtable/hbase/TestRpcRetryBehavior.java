@@ -170,7 +170,7 @@ public abstract class TestRpcRetryBehavior {
       // do an additional attempt. Update the upper bound accordingly.
       assertThat(
           sw.getTime(),
-          Matchers.both(greaterThanOrEqualTo(operationTimeoutMs - attemptTimeoutMs / 2))
+          Matchers.both(greaterThanOrEqualTo(operationTimeoutMs))
               .and(lessThan(operationTimeoutMs + attemptTimeoutMs + 200))); // plus some buffer
     }
   }
