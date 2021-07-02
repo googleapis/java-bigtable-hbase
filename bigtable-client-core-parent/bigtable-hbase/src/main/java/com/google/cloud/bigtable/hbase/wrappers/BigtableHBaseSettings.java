@@ -41,7 +41,7 @@ public abstract class BigtableHBaseSettings {
   private final int ttlSecondsForBackup;
 
   public static BigtableHBaseSettings create(Configuration configuration) throws IOException {
-    if (configuration.getBoolean(BIGTABLE_USE_GCJ_CLIENT, false)) {
+    if (configuration.getBoolean(BIGTABLE_USE_GCJ_CLIENT, true)) {
       return BigtableHBaseVeneerSettings.create(configuration);
     } else {
       return new BigtableHBaseClassicSettings(configuration);

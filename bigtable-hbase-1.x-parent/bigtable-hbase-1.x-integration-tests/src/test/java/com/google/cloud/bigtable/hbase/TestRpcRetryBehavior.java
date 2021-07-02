@@ -208,6 +208,7 @@ public abstract class TestRpcRetryBehavior {
     }
     // retry on aborted to differentiate server hang an explicit server error
     config.set(BigtableOptionsFactory.ADDITIONAL_RETRY_CODES, "ABORTED");
+    config.setBoolean(BigtableOptionsFactory.BIGTABLE_USE_GCJ_CLIENT, true);
     config.setInt(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, 1);
     return ConnectionFactory.createConnection(config);
   }
