@@ -45,6 +45,12 @@ public class BulkReadClassicApi implements BulkReadWrapper {
   }
 
   @Override
+  public void close() {
+    isClosed = true;
+    sendOutstanding();
+  }
+
+  @Override
   public ApiFuture<Result> add(ByteString rowKey, Filters.Filter filter) {
     Preconditions.checkState(!isClosed, "can't add request when the bulk read is closed.");
     Query query = Query.create(tableId).rowKey(rowKey);

@@ -56,7 +56,7 @@ import org.apache.hadoop.hbase.util.Bytes;
  * <p>For internal use only - public for technical reasons.
  */
 @InternalApi("For internal usage only")
-public class BatchExecutor {
+public class BatchExecutor implements AutoCloseable {
 
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(BatchExecutor.class);
@@ -143,6 +143,12 @@ public class BatchExecutor {
     this.settings = settings;
     this.bulkRead = bigtableApi.getDataClient().createBulkRead(adapter.getTableId());
     this.bufferedMutatorHelper = new BigtableBufferedMutatorHelper(bigtableApi, settings, adapter);
+  }
+
+  @Override
+  public void close() throws IOException {
+    bufferedMutatorHelper.close();
+    bulkRead.close();
   }
 
   /**
@@ -320,9 +326,5 @@ public class BatchExecutor {
       exists[index] = !getResults[index].isEmpty();
     }
     return exists;
-  }
-
-  public void close() throws IOException {
-    bufferedMutatorHelper.close();
   }
 }
