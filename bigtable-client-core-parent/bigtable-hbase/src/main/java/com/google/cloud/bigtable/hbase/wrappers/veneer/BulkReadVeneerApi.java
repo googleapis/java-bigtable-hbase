@@ -93,7 +93,7 @@ public class BulkReadVeneerApi implements BulkReadWrapper {
 
   @Override
   public ApiFuture<Result> add(ByteString rowKey, @Nullable Filters.Filter filter) {
-    Preconditions.checkState(!isClosed.get());
+    Preconditions.checkState(!isClosed.get(), "can't add request when the bulk read is closed.");
 
     cleanupBarrier.incrementAndGet();
 
