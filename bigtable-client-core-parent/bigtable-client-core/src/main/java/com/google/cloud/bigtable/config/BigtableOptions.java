@@ -245,13 +245,6 @@ public class BigtableOptions implements Serializable, Cloneable {
       return this;
     }
 
-    /** @deprecated GCJ wrapper have been moved to bigtable-hbase in 2.0 */
-    @Deprecated
-    public Builder setUseGCJClient(boolean useGCJClient) {
-      // noop
-      return this;
-    }
-
     @BetaApi("The API for setting tracing cookie is not yet stable and may change in the future")
     public Builder setTracingCookie(String tracingCookie) {
       options.tracingCookie = tracingCookie;
@@ -514,12 +507,6 @@ public class BigtableOptions implements Serializable, Cloneable {
    */
   public CallOptionsConfig getCallOptionsConfig() {
     return callOptionsConfig;
-  }
-
-  /** @deprecated GCJ wrappers were moved to bigtable-hbase in 2.0 */
-  @Deprecated
-  public boolean useGCJClient() {
-    return false;
   }
 
   /**

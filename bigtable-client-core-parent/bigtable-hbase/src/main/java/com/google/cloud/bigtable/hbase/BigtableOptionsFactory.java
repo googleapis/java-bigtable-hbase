@@ -331,9 +331,6 @@ public class BigtableOptionsFactory {
   /** Allow namespace methods to be no-ops */
   public static final String BIGTABLE_NAMESPACE_WARNING_KEY = "google.bigtable.namespace.warnings";
 
-  /** A flag to decide which implementation to use for data & admin operation */
-  public static final String BIGTABLE_USE_GCJ_CLIENT = "google.bigtable.use.gcj.client";
-
   /** Tracing cookie to send in the header with the requests */
   @BetaApi("The API for setting tracing cookie is not yet stable and may change in the future")
   public static final String BIGTABLE_TRACING_COOKIE = "google.bigtable.tracing.cookie.header";
