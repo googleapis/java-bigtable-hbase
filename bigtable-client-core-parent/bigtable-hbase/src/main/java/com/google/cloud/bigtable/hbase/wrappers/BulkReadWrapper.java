@@ -28,7 +28,7 @@ import org.apache.hadoop.hbase.client.Result;
  * <p>For internal use only - public for technical reasons.
  */
 @InternalApi("For internal usage only")
-public interface BulkReadWrapper {
+public interface BulkReadWrapper extends AutoCloseable {
 
   /**
    * Adds a {@code rowKey} to a batch read row request with an optional {@link Filters.Filter}. The
@@ -41,4 +41,11 @@ public interface BulkReadWrapper {
    * complete.
    */
   void sendOutstanding();
+
+  /**
+   * Closes the wrapper by preventing new elements from being added, then sending outstanding
+   * elements. This method is non-blocking.
+   */
+  @Override
+  void close();
 }
