@@ -53,8 +53,7 @@ class BigtableEnv extends SharedTestEnv {
           "google.bigtable.instance.id",
           "google.bigtable.use.bulk.api",
           "google.bigtable.use.plaintext.negotiation",
-          "google.bigtable.snapshot.cluster.id",
-          "google.bigtable.use.gcj.client");
+          "google.bigtable.snapshot.cluster.id");
 
   @Override
   protected void setup() throws IOException {

@@ -123,7 +123,6 @@ public class BigtableOptions implements Serializable, Cloneable {
       options.dataChannelCount = BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT;
       options.usePlaintextNegotiation = false;
       options.useCachedDataPool = false;
-      options.useGCJClient = false;
 
       options.retryOptions = new RetryOptions.Builder().build();
       options.callOptionsConfig = CallOptionsConfig.builder().build();
@@ -246,9 +245,10 @@ public class BigtableOptions implements Serializable, Cloneable {
       return this;
     }
 
-    @BetaApi("Will be removed after hbase transitions away from bigtable-client-core")
+    /** @deprecated GCJ wrapper have been moved to bigtable-hbase in 2.0 */
+    @Deprecated
     public Builder setUseGCJClient(boolean useGCJClient) {
-      options.useGCJClient = useGCJClient;
+      // noop
       return this;
     }
 
@@ -363,7 +363,6 @@ public class BigtableOptions implements Serializable, Cloneable {
   private int dataChannelCount;
   private boolean usePlaintextNegotiation;
   private boolean useCachedDataPool;
-  private boolean useGCJClient;
   private ChannelConfigurator channelConfigurator;
 
   private BigtableInstanceName instanceName;
@@ -517,14 +516,10 @@ public class BigtableOptions implements Serializable, Cloneable {
     return callOptionsConfig;
   }
 
-  /**
-   * useGCJClient
-   *
-   * @return a boolean flag to decide which client to use for Data & Admin Operations.
-   */
-  @BetaApi("Will be removed after hbase transitions away from bigtable-client-core")
+  /** @deprecated GCJ wrappers were moved to bigtable-hbase in 2.0 */
+  @Deprecated
   public boolean useGCJClient() {
-    return useGCJClient;
+    return false;
   }
 
   /**
@@ -563,7 +558,6 @@ public class BigtableOptions implements Serializable, Cloneable {
         && Objects.equals(bulkOptions, other.bulkOptions)
         && Objects.equals(callOptionsConfig, other.callOptionsConfig)
         && Objects.equals(useBatch, other.useBatch)
-        && Objects.equals(useGCJClient, other.useGCJClient)
         && Objects.equals(channelConfigurator, other.channelConfigurator)
         && Objects.equals(tracingCookie, other.tracingCookie);
   }
@@ -589,7 +583,6 @@ public class BigtableOptions implements Serializable, Cloneable {
         .add("usePlaintextNegotiation", usePlaintextNegotiation)
         .add("useCachedDataPool", useCachedDataPool)
         .add("useBatch", useBatch)
-        .add("useGCJClient", useGCJClient)
         .add("tracingCookie", tracingCookie)
         .toString();
   }

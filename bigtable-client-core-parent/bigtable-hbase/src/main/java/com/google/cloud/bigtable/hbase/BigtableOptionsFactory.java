@@ -401,11 +401,6 @@ public class BigtableOptionsFactory {
       bigtableOptionsBuilder.setUseBatch(Boolean.parseBoolean(useBatchStr));
     }
 
-    String useGcjClientStr = configuration.get(BIGTABLE_USE_GCJ_CLIENT);
-    if (useGcjClientStr != null) {
-      bigtableOptionsBuilder.setUseGCJClient(Boolean.parseBoolean(useGcjClientStr));
-    }
-
     String tracingCookie = configuration.get(BIGTABLE_TRACING_COOKIE);
     if (tracingCookie != null) {
       bigtableOptionsBuilder.setTracingCookie(tracingCookie);
