@@ -112,7 +112,6 @@ public abstract class AbstractBigtableTable implements Table {
   protected final HBaseRequestAdapter hbaseAdapter;
 
   protected final DataClientWrapper clientWrapper;
-  private BatchExecutor batchExecutor;
   protected final AbstractBigtableConnection bigtableConnection;
   private TableMetrics metrics = new TableMetrics();
 
@@ -183,7 +182,9 @@ public abstract class AbstractBigtableTable implements Table {
       for (Get get : gets) {
         existGets.add(GetAdapter.setCheckExistenceOnly(get));
       }
-      return getBatchExecutor().exists(existGets);
+      try (BatchExecutor executor = createBatchExecutor()) {
+        return executor.exists(existGets);
+      }
     }
   }
 
@@ -194,7 +195,9 @@ public abstract class AbstractBigtableTable implements Table {
     LOG.trace("batch(List<>, Object[])");
     try (Scope scope = TRACER.spanBuilder("BigtableTable.batch").startScopedSpan()) {
       addBatchSizeAnnotation(actions);
-      getBatchExecutor().batch(actions, results);
+      try (BatchExecutor executor = createBatchExecutor()) {
+        executor.batch(actions, results);
+      }
     }
   }
 
@@ -205,7 +208,10 @@ public abstract class AbstractBigtableTable implements Table {
     LOG.trace("batch(List<>)");
     try (Scope scope = TRACER.spanBuilder("BigtableTable.batch").startScopedSpan()) {
       addBatchSizeAnnotation(actions);
-      return getBatchExecutor().batch(actions);
+
+      try (BatchExecutor executor = createBatchExecutor()) {
+        return executor.batch(actions);
+      }
     }
   }
 
@@ -217,7 +223,9 @@ public abstract class AbstractBigtableTable implements Table {
     LOG.trace("batchCallback(List<>, Object[], Batch.Callback)");
     try (Scope scope = TRACER.spanBuilder("BigtableTable.batchCallback").startScopedSpan()) {
       addBatchSizeAnnotation(actions);
-      getBatchExecutor().batchCallback(actions, results, callback);
+      try (BatchExecutor executor = createBatchExecutor()) {
+        executor.batchCallback(actions, results, callback);
+      }
     }
   }
 
@@ -230,7 +238,9 @@ public abstract class AbstractBigtableTable implements Table {
     try (Scope scope = TRACER.spanBuilder("BigtableTable.batchCallback").startScopedSpan()) {
       addBatchSizeAnnotation(actions);
       Object[] results = new Object[actions.size()];
-      getBatchExecutor().batchCallback(actions, results, callback);
+      try (BatchExecutor executor = createBatchExecutor()) {
+        executor.batchCallback(actions, results, callback);
+      }
       return results;
     }
   }
@@ -251,7 +261,9 @@ public abstract class AbstractBigtableTable implements Table {
     } else {
       try (Scope scope = TRACER.spanBuilder("BigtableTable.get").startScopedSpan()) {
         addBatchSizeAnnotation(gets);
-        return getBatchExecutor().batch(gets);
+        try (BatchExecutor executor = createBatchExecutor()) {
+          return executor.batch(gets);
+        }
       }
     }
   }
@@ -359,7 +371,9 @@ public abstract class AbstractBigtableTable implements Table {
         throw createRetriesExhaustedWithDetailsException(e, puts.get(0));
       }
     } else {
-      getBatchExecutor().batch(puts);
+      try (BatchExecutor executor = createBatchExecutor()) {
+        executor.batch(puts);
+      }
     }
   }
 
@@ -403,8 +417,9 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public void delete(List<Delete> deletes) throws IOException {
     LOG.trace("delete(List<Delete>)");
-    try (Scope scope = TRACER.spanBuilder("BigtableTable.delete").startScopedSpan()) {
-      getBatchExecutor().batch(deletes, true);
+    try (Scope scope = TRACER.spanBuilder("BigtableTable.delete").startScopedSpan();
+        BatchExecutor executor = createBatchExecutor()) {
+      executor.batch(deletes, true);
     }
   }
 
@@ -583,9 +598,6 @@ public abstract class AbstractBigtableTable implements Table {
   /** {@inheritDoc} */
   @Override
   public void close() throws IOException {
-    if (batchExecutor != null) {
-      batchExecutor.close();
-    }
     // TODO: shutdown the executor.
   }
 
@@ -697,12 +709,8 @@ public abstract class AbstractBigtableTable implements Table {
    *
    * @return a {@link com.google.cloud.bigtable.hbase.BatchExecutor} object.
    */
-  protected synchronized BatchExecutor getBatchExecutor() {
-    if (batchExecutor == null) {
-      batchExecutor =
-          new BatchExecutor(bigtableConnection.getBigtableApi(), settings, hbaseAdapter);
-    }
-    return batchExecutor;
+  protected BatchExecutor createBatchExecutor() {
+    return new BatchExecutor(bigtableConnection.getBigtableApi(), settings, hbaseAdapter);
   }
 
   @Override
