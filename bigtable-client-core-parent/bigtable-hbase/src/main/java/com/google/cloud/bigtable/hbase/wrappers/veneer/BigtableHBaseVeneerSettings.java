@@ -780,7 +780,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
             extractOverallTimeout(
                     BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY,
                     BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY)
-                .or(Optional.of(Duration.ofMinutes(20))));
+                .or(bulkMutateDefaultTimeout()));
 
     OperationTimeouts scanTimeouts =
         new OperationTimeouts(
@@ -820,6 +820,14 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     } else {
       return extractDuration(MAX_ELAPSED_BACKOFF_MILLIS_KEY);
     }
+  }
+
+  private Optional<Duration> bulkMutateDefaultTimeout() {
+    // Set 20 minutes default timeout for batch jobs.
+    if (configuration.getBoolean(BIGTABLE_USE_BATCH, false)) {
+      return Optional.of(Duration.ofMinutes(20));
+    }
+    return Optional.absent();
   }
 
   private Optional<Duration> extractDuration(String... keys) {
