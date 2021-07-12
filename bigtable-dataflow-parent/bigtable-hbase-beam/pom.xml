@@ -44,7 +44,7 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-1.x-shaded</artifactId>
-      <version>${project.version}</version>
+      <version>1.22.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <exclusions>
         <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
         pom.xml files when invoking the build from a parent project. So we have to manually exclude
@@ -181,7 +181,7 @@ limitations under the License.
               Apache Beam + Cloud Bigtable Connector ${project.version} API
             </windowtitle>
             <doctitle>
-              Apache Beam + Cloud Bigtable Connector ${project.version} API
+              Apache Beam + Cloud Bigtable Connector API
             </doctitle>
             <overview>../overview.html</overview>
             <bottom><![CDATA[<br>]]></bottom>
