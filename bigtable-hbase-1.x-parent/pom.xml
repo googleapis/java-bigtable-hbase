@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-client-parent</artifactId>
-    <version>1.22.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-1x-parent:current} -->
+    <version>1.22.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-1.x-parent</artifactId>
@@ -46,10 +46,10 @@ limitations under the License.
           <artifactId>maven-javadoc-plugin</artifactId>
           <configuration>
             <windowtitle>
-              HBase + Cloud Bigtable Connector ${project.version} API
+              HBase + Cloud Bigtable Connector API
             </windowtitle>
             <doctitle>
-              HBase + Cloud Bigtable Connector ${project.version} API
+              HBase + Cloud Bigtable Connector API
             </doctitle>
             <overview>../overview.html</overview>
             <bottom><![CDATA[<br>]]></bottom>

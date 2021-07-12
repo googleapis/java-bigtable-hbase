@@ -4,7 +4,7 @@ This project supports importing and exporting HBase Sequence Files to Google Clo
 Cloud Dataflow.
 
 ## Instructions
-[//]: # ({x-version-update-start:bigtable-dataflow-parent:released})
+[//]: # ({x-version-update-start:bigtable-client-parent:released})
 Download [the import/export jar](http://search.maven.org/remotecontent?filepath=com/google/cloud/bigtable/bigtable-beam-import/1.19.3/bigtable-beam-import-1.19.3-shaded.jar), which is an aggregation of all required jars.
 
 Please pay attention to the Cluster CPU usage and adjust the number of Dataflow workers accordingly.
