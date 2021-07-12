@@ -16,32 +16,40 @@
 package com.google.cloud.bigtable.hbase.tools;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
+import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.gson.Gson;
+import com.google.bigtable.repackaged.com.google.gson.reflect.TypeToken;
 import com.google.bigtable.repackaged.javax.annotation.Nullable;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.tools.ClusterSchemaDefinition.TableSchemaDefinition;
-import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.lang.reflect.Type;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.exceptions.DeserializationException;
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.log4j.BasicConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,12 +103,13 @@ public class HBaseSchemaTranslator {
   public static final String INPUT_FILE_KEY = "google.bigtable.input.filepath";
   public static final String OUTPUT_FILE_KEY = "google.bigtable.output.filepath";
   public static final String TABLE_NAME_FILTER_KEY = "google.bigtable.table.filter";
+  public static final String SCHEMA_MAPPING_FILEPATH = "google.bigtable.schema.mapping.filepath";
 
-  private static Logger LOG = LoggerFactory.getLogger(HBaseSchemaTranslator.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseSchemaTranslator.class);
 
   private final SchemaReader schemaReader;
+  private final SchemaTransformer schemaTransformer;
   private final SchemaWriter schemaWriter;
-  // TODO Add a schemaOverrider
 
   @VisibleForTesting
   static class SchemaTranslationOptions {
@@ -112,6 +121,7 @@ public class HBaseSchemaTranslator {
     String inputFilePath;
     String outputFilePath;
     String tableNameFilter;
+    String schemaMappingFilePath;
 
     @VisibleForTesting
     SchemaTranslationOptions() {}
@@ -157,6 +167,7 @@ public class HBaseSchemaTranslator {
       }
 
       options.tableNameFilter = System.getProperty(TABLE_NAME_FILTER_KEY);
+      options.schemaMappingFilePath = System.getProperty(SCHEMA_MAPPING_FILEPATH);
 
       // Ensure that the options are set properly
       // TODO It is possible to validate the options without creating the object, but its less
@@ -235,6 +246,8 @@ public class HBaseSchemaTranslator {
       return Arrays.asList(tables);
     }
 
+    // TODO: Validate the maximum number of splits supported by CBT Admin APIs. Make sure that
+    // this object reduces the splits to maximum allowed number.
     private byte[][] getSplits(TableName table) throws IOException {
       List<HRegionInfo> regions = hbaseAdmin.getTableRegions(table);
 
@@ -272,7 +285,7 @@ public class HBaseSchemaTranslator {
    */
   interface SchemaWriter {
 
-    void writeSchema(ClusterSchemaDefinition schemaDefinition) throws IOException;
+    void writeSchema(final ClusterSchemaDefinition schemaDefinition) throws IOException;
   }
 
   /**
@@ -288,7 +301,7 @@ public class HBaseSchemaTranslator {
     }
 
     @Override
-    public void writeSchema(ClusterSchemaDefinition schemaDefinition) throws IOException {
+    public void writeSchema(final ClusterSchemaDefinition schemaDefinition) throws IOException {
       Preconditions.checkNotNull(schemaDefinition, "SchemaDefinitions can not be null.");
       try (Writer writer = new FileWriter(outputFilePath)) {
         new Gson().toJson(schemaDefinition, writer);
@@ -317,7 +330,7 @@ public class HBaseSchemaTranslator {
     }
 
     @Override
-    public void writeSchema(ClusterSchemaDefinition schemaDefinition) {
+    public void writeSchema(final ClusterSchemaDefinition schemaDefinition) {
       Preconditions.checkNotNull(schemaDefinition, "SchemaDefinitions can not be null.");
       List<String> failedTables = new ArrayList<>();
       for (TableSchemaDefinition tableSchemaDefinition : schemaDefinition.tableSchemaDefinitions) {
@@ -350,6 +363,12 @@ public class HBaseSchemaTranslator {
               options.zookeeperQuorum, options.zookeeperPort, options.tableNameFilter);
     }
 
+    if (options.schemaMappingFilePath != null) {
+      this.schemaTransformer = new JsonBasedSchemaTransformer(options.schemaMappingFilePath);
+    } else {
+      this.schemaTransformer = new NoopSchemaTransformer();
+    }
+
     if (options.outputFilePath != null) {
       this.schemaWriter = new FileBasedSchemaWriter(options.outputFilePath);
     } else {
@@ -357,16 +376,149 @@ public class HBaseSchemaTranslator {
     }
   }
 
-  @VisibleForTesting
-  HBaseSchemaTranslator(SchemaReader schemaReader, SchemaWriter schemaWriter) {
-    this.schemaReader = schemaReader;
-    this.schemaWriter = schemaWriter;
+  /**
+   * Transforms the {@link ClusterSchemaDefinition} read by {@link SchemaReader} before writing it
+   * to {@link SchemaWriter}.
+   */
+  interface SchemaTransformer {
+
+    ClusterSchemaDefinition transform(final ClusterSchemaDefinition originalSchema)
+        throws IOException, DeserializationException;
   }
 
-  public void translate() throws IOException {
+  /** No-op implementation of @{@link SchemaTransformer}. Returns the original schema definition. */
+  static class NoopSchemaTransformer implements SchemaTransformer {
+
+    @Override
+    public ClusterSchemaDefinition transform(final ClusterSchemaDefinition originalSchema) {
+      return originalSchema;
+    }
+  }
+
+  /**
+   * Transforms the @{@link ClusterSchemaDefinition} based on a provided JSON map. It can rename
+   * tables and column-families scoped to a table (TableName:ColumnFamily).
+   *
+   * <p>JSON map should look like { "SourceTable": "DestinationTable", "SourceTable:CF":
+   * "destinationCF" // renames CF from SourceTable to destinationCF. }
+   */
+  static class JsonBasedSchemaTransformer implements SchemaTransformer {
+
+    public static final String COLUMN_FAMILY_SEPARATOR = ":";
+    private final String mappingFilePath;
+
+    // Map from old-tableName -> new-tableName
+    @VisibleForTesting Map<String, String> tableNameMappings;
+    // Map of column families mapping scoped by a table. {tableName -> {old-family -> new-family}}
+    @VisibleForTesting Map<String, Map<String, String>> tableScopedColumnFamilyMappings;
+
+    public JsonBasedSchemaTransformer(String mappingFilePath) {
+      this.mappingFilePath = mappingFilePath;
+      tableNameMappings = new HashMap<>();
+      tableScopedColumnFamilyMappings = new HashMap<>();
+    }
+
+    @VisibleForTesting
+    void parseMappingFile() throws FileNotFoundException {
+      Reader jsonReader = new FileReader(mappingFilePath);
+      Type mapType = new TypeToken<Map<String, String>>() {}.getType();
+      Map<String, String> schemaMapping = new Gson().fromJson(jsonReader, mapType);
+
+      if (schemaMapping == null) {
+        throw new IllegalStateException(
+            "SchemaMapping file does not contain valid schema mappings");
+      }
+
+      // Raed the mapping file and organize the transformations in a structured way.
+      // Please note that we consciously chose a flat JSON file to make it easy for users to
+      // configure the schema translator.
+      for (Map.Entry<String, String> entry : schemaMapping.entrySet()) {
+        // Presence of a ":" indicates that the override is for a column family scoped to a table.
+        if (entry.getKey().contains(COLUMN_FAMILY_SEPARATOR)) {
+          // Split the key on separator. First part is the table and second part is column family.
+          String[] tableAndColumnFamily = entry.getKey().split(COLUMN_FAMILY_SEPARATOR, 2);
+          String table = tableAndColumnFamily[0];
+          String cf = tableAndColumnFamily[1];
+          tableScopedColumnFamilyMappings.putIfAbsent(table, new HashMap<>());
+          // entry<K,V>: key is the source table:cf and value is new cf.
+          tableScopedColumnFamilyMappings.get(tableAndColumnFamily[0]).put(cf, entry.getValue());
+        } else {
+          // Add the table mappings.
+          tableNameMappings.put(entry.getKey(), entry.getValue());
+        }
+      }
+    }
+
+    @Override
+    public ClusterSchemaDefinition transform(final ClusterSchemaDefinition originalSchema)
+        throws IOException, DeserializationException {
+      ClusterSchemaDefinition transformedSchema = new ClusterSchemaDefinition();
+
+      // Parse the mappings
+      parseMappingFile();
+
+      // Apply the transformations.
+      for (TableSchemaDefinition tableSchemaDefinition : originalSchema.tableSchemaDefinitions) {
+        String tableName = tableSchemaDefinition.name;
+        HTableDescriptor tableDescriptor = tableSchemaDefinition.getHbaseTableDescriptor();
+
+        // Override the table name if its present in the mapping file
+        if (tableNameMappings.containsKey(tableName)) {
+          tableName = tableNameMappings.get(tableName);
+        }
+        // Rename the table and copy all the other configs, including the column families.
+        HTableDescriptor newTableDescriptor =
+            new HTableDescriptor(TableName.valueOf(tableName), tableDescriptor);
+
+        // For all the column families that need renaming, replace them.
+        if (tableScopedColumnFamilyMappings.containsKey(tableSchemaDefinition.name)) {
+          Map<String, String> cfMap =
+              tableScopedColumnFamilyMappings.get(tableSchemaDefinition.name);
+          for (Map.Entry<String, String> cfEntry : cfMap.entrySet()) {
+            // Its not possible to rename a columnFamily using the HColumnDescriptor interface
+            // So create a new family with same config and replace it in the HTableDescriptor.
+            newTableDescriptor.addFamily(
+                renameFamily(
+                    cfEntry.getValue(), newTableDescriptor.getFamily(cfEntry.getKey().getBytes())));
+            newTableDescriptor.removeFamily(cfEntry.getKey().getBytes());
+          }
+        } else {
+          // All the column families are copied already, nothing else to do.
+        }
+        transformedSchema.addTableSchemaDefinition(
+            newTableDescriptor, tableSchemaDefinition.splits);
+      }
+      return transformedSchema;
+    }
+
+    private HColumnDescriptor renameFamily(
+        final String newFamilyName, final HColumnDescriptor columnDescriptor) {
+      HColumnDescriptor newColumnDescriptor = new HColumnDescriptor(newFamilyName);
+      for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> valueEntry :
+          columnDescriptor.getValues().entrySet()) {
+        newColumnDescriptor.setValue(
+            valueEntry.getKey().copyBytes(), valueEntry.getValue().copyBytes());
+      }
+      for (Map.Entry<String, String> configEntry : columnDescriptor.getConfiguration().entrySet()) {
+        newColumnDescriptor.setConfiguration(configEntry.getKey(), configEntry.getValue());
+      }
+      return newColumnDescriptor;
+    }
+  }
+
+  @VisibleForTesting
+  HBaseSchemaTranslator(
+      SchemaReader schemaReader, SchemaWriter schemaWriter, SchemaTransformer schemaTransformer) {
+    this.schemaReader = schemaReader;
+    this.schemaWriter = schemaWriter;
+    this.schemaTransformer = schemaTransformer;
+  }
+
+  public void translate() throws IOException, DeserializationException {
     ClusterSchemaDefinition schemaDefinition = schemaReader.readSchema();
     LOG.info("Read schema with {} tables.", schemaDefinition.tableSchemaDefinitions.size());
-    this.schemaWriter.writeSchema(schemaDefinition);
+
+    this.schemaWriter.writeSchema(schemaTransformer.transform(schemaDefinition));
   }
 
   /*
@@ -415,9 +567,14 @@ public class HBaseSchemaTranslator {
     System.err.println(
         "  Additionally, you can filter tables to create when using HBase as source");
     System.err.println("   -D " + TABLE_NAME_FILTER_KEY + "=<table name regex>");
+    System.err.println(
+        "  The tables and columnFamilies can be renamed by providing a JSON map . Source Column "
+            + "families should be scoped to a table as <table>:<cf>. Example JSON "
+            + "{'source-table': 'destination-table', `source-table:source-cf': 'destination-cf'}.");
+    System.err.println("   -D " + SCHEMA_MAPPING_FILEPATH + "=<schema mapping file path>");
   }
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws IOException, DeserializationException {
     // Configure the logger.
     BasicConfigurator.configure();
 

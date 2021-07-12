@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.tools;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.eq;
 
@@ -23,11 +24,17 @@ import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.BigtableSchem
 import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.FileBasedSchemaReader;
 import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.FileBasedSchemaWriter;
 import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.HBaseSchemaReader;
+import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.JsonBasedSchemaTransformer;
+import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.NoopSchemaTransformer;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -41,6 +48,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
@@ -139,7 +147,9 @@ public class HBaseSchemaTranslatorTest {
 
     HBaseSchemaTranslator translator =
         new HBaseSchemaTranslator(
-            new HBaseSchemaReader(hbaseAdmin, ".*"), new BigtableSchemaWriter(btAdmin));
+            new HBaseSchemaReader(hbaseAdmin, ".*"),
+            new BigtableSchemaWriter(btAdmin),
+            new NoopSchemaTransformer());
 
     // Call
     translator.translate();
@@ -159,6 +169,60 @@ public class HBaseSchemaTranslatorTest {
   }
 
   @Test
+  public void testTranslateFromHBaseToBigtableWithTransformation()
+      throws IOException, DeserializationException {
+    // Setup
+    Mockito.when(hbaseAdmin.listTables(eq(".*"))).thenReturn(getTables());
+    Mockito.when(hbaseAdmin.getTableRegions(eq(TableName.valueOf("test-table1"))))
+        .thenReturn(getRegions(0));
+    Mockito.when(hbaseAdmin.getTableRegions(eq(TableName.valueOf("test-table2"))))
+        .thenReturn(getRegions(1));
+    ArgumentCaptor<HTableDescriptor> tableCaptor = ArgumentCaptor.forClass(HTableDescriptor.class);
+
+    Map<String, String> schemaMapping = new HashMap<>();
+    schemaMapping.put("test-table1", "new-test-table1");
+    schemaMapping.put("test-table1:cf", "new-cf");
+    // Not found in the schema, should get discarded.
+    schemaMapping.put("test", "new-test");
+    schemaMapping.put("test:family", "new-family");
+
+    File schemaFile = tempFolder.newFile("schema_mapping.json");
+    try (Writer writer = new FileWriter(schemaFile.getPath())) {
+      new com.google.bigtable.repackaged.com.google.gson.Gson().toJson(schemaMapping, writer);
+    }
+
+    HBaseSchemaTranslator translator =
+        new HBaseSchemaTranslator(
+            new HBaseSchemaReader(hbaseAdmin, ".*"),
+            new BigtableSchemaWriter(btAdmin),
+            new JsonBasedSchemaTransformer(schemaFile.getPath()));
+
+    // Call
+    translator.translate();
+
+    // Verify
+    Mockito.verify(btAdmin)
+        .createTable(
+            tableCaptor.capture(), eq(schemaDefinition.tableSchemaDefinitions.get(0).splits));
+    Mockito.verify(btAdmin)
+        .createTable(
+            tableCaptor.capture(), eq(schemaDefinition.tableSchemaDefinitions.get(1).splits));
+    HTableDescriptor transformedTable = tableCaptor.getAllValues().get(0);
+    assertEquals("new-test-table1", transformedTable.getNameAsString());
+    assertEquals("new-cf", transformedTable.getColumnFamilies()[0].getNameAsString());
+    // Cloud Bigtable only uses the GC policies from HColumnFamily object
+    assertEquals(2, transformedTable.getColumnFamilies()[0].getMaxVersions());
+    assertEquals(1000, transformedTable.getColumnFamilies()[0].getTimeToLive());
+    assertEquals(
+        schemaDefinition.tableSchemaDefinitions.get(1).getHbaseTableDescriptor(),
+        tableCaptor.getAllValues().get(1));
+
+    Mockito.verify(hbaseAdmin).listTables(".*");
+    Mockito.verify(hbaseAdmin).getTableRegions(TableName.valueOf("test-table1"));
+    Mockito.verify(hbaseAdmin).getTableRegions(TableName.valueOf("test-table2"));
+  }
+
+  @Test
   public void testTranslateHBaseToBigtableViaFile() throws IOException, DeserializationException {
     // Setup
     Mockito.when(hbaseAdmin.listTables(eq(".*"))).thenReturn(getTables());
@@ -171,14 +235,17 @@ public class HBaseSchemaTranslatorTest {
     HBaseSchemaTranslator translator1 =
         new HBaseSchemaTranslator(
             new HBaseSchemaReader(hbaseAdmin, ".*"),
-            new FileBasedSchemaWriter(schemaFile.getPath()));
+            new FileBasedSchemaWriter(schemaFile.getPath()),
+            new NoopSchemaTransformer());
 
     // call
     translator1.translate();
 
     HBaseSchemaTranslator translator2 =
         new HBaseSchemaTranslator(
-            new FileBasedSchemaReader(schemaFile.getPath()), new BigtableSchemaWriter(btAdmin));
+            new FileBasedSchemaReader(schemaFile.getPath()),
+            new BigtableSchemaWriter(btAdmin),
+            new NoopSchemaTransformer());
 
     translator2.translate();
 
@@ -205,7 +272,9 @@ public class HBaseSchemaTranslatorTest {
 
     HBaseSchemaTranslator translator =
         new HBaseSchemaTranslator(
-            new HBaseSchemaReader(hbaseAdmin, ".*"), new BigtableSchemaWriter(btAdmin));
+            new HBaseSchemaReader(hbaseAdmin, ".*"),
+            new BigtableSchemaWriter(btAdmin),
+            new NoopSchemaTransformer());
 
     // Call
     try {
@@ -232,7 +301,9 @@ public class HBaseSchemaTranslatorTest {
     // Create a translator;
     HBaseSchemaTranslator translator =
         new HBaseSchemaTranslator(
-            new HBaseSchemaReader(hbaseAdmin, ".*"), new BigtableSchemaWriter(btAdmin));
+            new HBaseSchemaReader(hbaseAdmin, ".*"),
+            new BigtableSchemaWriter(btAdmin),
+            new NoopSchemaTransformer());
     // Call
     try {
       translator.translate();
@@ -266,7 +337,9 @@ public class HBaseSchemaTranslatorTest {
 
     HBaseSchemaTranslator translator =
         new HBaseSchemaTranslator(
-            new HBaseSchemaReader(hbaseAdmin, ".*"), new BigtableSchemaWriter(btAdmin));
+            new HBaseSchemaReader(hbaseAdmin, ".*"),
+            new BigtableSchemaWriter(btAdmin),
+            new NoopSchemaTransformer());
 
     // Call
     try {
@@ -287,6 +360,44 @@ public class HBaseSchemaTranslatorTest {
           .createTable(
               eq(schemaDefinition.tableSchemaDefinitions.get(1).getHbaseTableDescriptor()),
               eq(schemaDefinition.tableSchemaDefinitions.get(1).splits));
+      Mockito.verify(hbaseAdmin).listTables(".*");
+      Mockito.verify(hbaseAdmin).getTableRegions(TableName.valueOf("test-table1"));
+      // Validate that translator calls createTable for  test-table-2 even after creation of
+      // test-table1 failed.
+      Mockito.verify(hbaseAdmin).getTableRegions(TableName.valueOf("test-table2"));
+    }
+  }
+
+  @Test
+  public void testHBaseSchemaTransformerFails() throws IOException, DeserializationException {
+    // Setup
+    Mockito.when(hbaseAdmin.listTables(eq(".*"))).thenReturn(getTables());
+    Mockito.when(hbaseAdmin.getTableRegions(eq(TableName.valueOf("test-table1"))))
+        .thenReturn(getRegions(0));
+    Mockito.when(hbaseAdmin.getTableRegions(eq(TableName.valueOf("test-table2"))))
+        .thenReturn(getRegions(1));
+
+    File schemaFile = tempFolder.newFile("schema.json");
+    FileWriter fileWriter = new FileWriter(schemaFile.getPath());
+    fileWriter.write("{This is invalid JSON}");
+
+    HBaseSchemaTranslator translator =
+        new HBaseSchemaTranslator(
+            new HBaseSchemaReader(hbaseAdmin, ".*"),
+            new BigtableSchemaWriter(btAdmin),
+            new JsonBasedSchemaTransformer(schemaFile.getPath()));
+
+    // Call
+    try {
+      translator.translate();
+      fail("Expected IOException here.");
+    } catch (IllegalStateException e) {
+      // Expected.
+      e.printStackTrace();
+    } catch (Exception e) {
+      fail("Expected DeserializationException but found: " + e.toString());
+    } finally {
+      // Verify
       Mockito.verify(hbaseAdmin).listTables(".*");
       Mockito.verify(hbaseAdmin).getTableRegions(TableName.valueOf("test-table1"));
       // Validate that translator calls createTable for  test-table-2 even after creation of
