@@ -264,13 +264,6 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
   </dependencies>
 
   <build>
-    <resources>
-      <resource>
-        <directory>src/main/resources</directory>
-        <!-- enable project.version substitution. -->
-        <filtering>true</filtering>
-      </resource>
-    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

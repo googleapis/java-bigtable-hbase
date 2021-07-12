@@ -374,7 +374,7 @@ public class BigtableSession implements Closeable {
             BigtableVersionInfo.JDK_VERSION,
             GaxGrpcProperties.getGrpcTokenName(),
             GaxGrpcProperties.getGrpcVersion(),
-            BigtableVersionInfo.CLIENT_VERSION));
+            BigtableVersionInfo.getVersion()));
   }
 
   private WatchdogInterceptor setupWatchdog() {

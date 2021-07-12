@@ -13,34 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.config;
+package com.google.cloud.bigtable.hbase;
 
 import com.google.api.client.util.Joiner;
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.grpc.BigtableSession;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 
-/** For internal use only - public for technical reasons. */
+/**
+ * The version in this class is project build version specified in the maven. Maven reads the
+ * <strong>bigtable-hbase.properties</strong> file present in the resources directory and replaces
+ * the property placeholder with project version.
+ *
+ * <p>For internal use only - public for technical reasons.
+ */
 @InternalApi("For internal usage only")
-public class BigtableVersionInfo {
-  private static final Logger LOG = new Logger(BigtableVersionInfo.class);
+public class BigtableHBaseVersion {
+  private static final Log LOG = LogFactory.getLog(BigtableHBaseVersion.class);
+
   private static final AtomicBoolean wasInitialized = new AtomicBoolean(false);
 
   // {x-version-update-start:bigtable-client-parent}
-  public static final String CLIENT_VERSION = "1.22.1-SNAPSHOT";
+  public static final String VERSION = "1.22.1-SNAPSHOT";
   // {x-version-update-end}
-  public static final String JDK_VERSION = getJavaVersion();
 
-  public static final String CORE_USER_AGENT = "bigtable-" + CLIENT_VERSION + ",jdk-" + JDK_VERSION;
-
-  /** @return The java specification version; for example, 1.7 or 1.8. */
-  private static String getJavaVersion() {
-    return System.getProperty("java.specification.version");
-  }
   /**
    * Gets user agent from bigtable-hbase-version.properties. Returns a default dev user agent with
    * current timestamp if not found.
@@ -49,16 +51,16 @@ public class BigtableVersionInfo {
     if (wasInitialized.compareAndSet(false, true)) {
       warnOnVersionConflict();
     }
-    return CLIENT_VERSION;
+    return VERSION;
   }
 
   private static void warnOnVersionConflict() {
     List<URL> classResources;
-    // Use BigtableSession as a marker to detect multiple versions on the classpath
+    // Use AbstractBigtableConnection as a marker to detect multiple versions on the classpath
     // Convert package.name.class.name -> package/name/class/name.class so that the classfile could
     // be probed as a resource
     String knownClassResourcePath =
-        BigtableSession.class.getName().replaceAll("\\.", "/") + ".class";
+        AbstractBigtableConnection.class.getName().replaceAll("\\.", "/") + ".class";
     try {
       classResources = Collections.list(ClassLoader.getSystemResources(knownClassResourcePath));
     } catch (IOException e) {
@@ -68,7 +70,7 @@ public class BigtableVersionInfo {
 
     if (classResources.size() != 1) {
       LOG.warn(
-          "Found multiple copies of the bigtable-client-core on the classpath: "
+          "Found multiple copies of the bigtable-hbase on the classpath: "
               + Joiner.on(',').join(classResources));
     }
   }
