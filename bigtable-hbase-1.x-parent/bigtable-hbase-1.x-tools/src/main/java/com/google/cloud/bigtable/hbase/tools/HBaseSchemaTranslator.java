@@ -173,7 +173,7 @@ public class HBaseSchemaTranslator {
       // readable. See if we can make it readable and validate before calling the constructor.
       try {
         options.validateOptions();
-      } catch (Exception e) {
+      } catch (RuntimeException e) {
         usage(e.getMessage());
         throw e;
       }
