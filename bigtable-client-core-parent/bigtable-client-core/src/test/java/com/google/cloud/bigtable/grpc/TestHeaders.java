@@ -29,10 +29,7 @@ import com.google.bigtable.admin.v2.Table;
 import com.google.bigtable.v2.BigtableGrpc.BigtableImplBase;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
-import com.google.cloud.bigtable.admin.v2.BigtableTableAdminClient;
-import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.BigtableVeneerSettingsFactory;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
@@ -137,40 +134,6 @@ public class TestHeaders {
   }
 
   /**
-   * To Test UserAgent & PlainText Negotiation type when {@link BigtableDataSettings} is created
-   * using {@link BigtableOptions}.
-   */
-  @Test
-  public void testGCJ_UserAgentUsingPlainTextNegotiation() throws Exception {
-    ServerSocket serverSocket = new ServerSocket(0);
-    final int availablePort = serverSocket.getLocalPort();
-    serverSocket.close();
-
-    // Creates non-ssl server.
-    createServer(availablePort);
-
-    BigtableOptions bigtableOptions =
-        BigtableOptions.builder()
-            .setDataHost("localhost")
-            .setAdminHost("localhost")
-            .setProjectId(TEST_PROJECT_ID)
-            .setInstanceId(TEST_INSTANCE_ID)
-            .setUserAgent(TEST_USER_AGENT)
-            .setUsePlaintextNegotiation(true)
-            .setCredentialOptions(CredentialOptions.nullCredential())
-            .setPort(availablePort)
-            .build();
-
-    dataSettings = BigtableVeneerSettingsFactory.createBigtableDataSettings(bigtableOptions);
-
-    xGoogApiPattern = Pattern.compile(".* gapic/.*");
-    try (BigtableDataClient dataClient = BigtableDataClient.create(dataSettings)) {
-      dataClient.readRow(TABLE_ID, ROWKEY);
-      Assert.assertTrue(serverPasses.get());
-    }
-  }
-
-  /**
    * Verify userAgent on TLS Negotiation with {@link InstantiatingGrpcChannelProvider} using SSL
    * enabled server.
    */
@@ -246,46 +209,6 @@ public class TestHeaders {
     try (BigtableSession session = new BigtableSession(bigtableOptions)) {
       session.getDataClientWrapper().readFlatRows(Query.create("fake-table")).next();
       session.getTableAdminClient().getTable(GetTableRequest.getDefaultInstance());
-      Assert.assertTrue(serverPasses.get());
-    }
-  }
-
-  @Test
-  public void testGCJ_tracingCookie() throws Exception {
-    ServerSocket serverSocket = new ServerSocket(0);
-    final int availablePort = serverSocket.getLocalPort();
-    serverSocket.close();
-
-    // Creates non-ssl server.
-    createServer(availablePort);
-
-    BigtableOptions bigtableOptions =
-        BigtableOptions.builder()
-            .setDataHost("localhost")
-            .setAdminHost("localhost")
-            .setProjectId(TEST_PROJECT_ID)
-            .setInstanceId(TEST_INSTANCE_ID)
-            .setUserAgent(TEST_USER_AGENT)
-            .setUsePlaintextNegotiation(true)
-            .setCredentialOptions(CredentialOptions.nullCredential())
-            .setPort(availablePort)
-            .setTracingCookie(TEST_TRACING_COOKIE)
-            .build();
-
-    testTracingCookie.set(true);
-
-    dataSettings = BigtableVeneerSettingsFactory.createBigtableDataSettings(bigtableOptions);
-
-    xGoogApiPattern = Pattern.compile(".* gapic/.*");
-    try (BigtableDataClient dataClient = BigtableDataClient.create(dataSettings)) {
-      dataClient.readRow(TABLE_ID, ROWKEY);
-      Assert.assertTrue(serverPasses.get());
-    }
-
-    BigtableTableAdminSettings adminSettings =
-        BigtableVeneerSettingsFactory.createTableAdminSettings(bigtableOptions);
-    try (BigtableTableAdminClient adminClient = BigtableTableAdminClient.create(adminSettings)) {
-      adminClient.getTable("table");
       Assert.assertTrue(serverPasses.get());
     }
   }

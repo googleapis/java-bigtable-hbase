@@ -20,20 +20,11 @@ import com.google.api.client.util.Clock;
 import com.google.api.client.util.Strings;
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
-import com.google.api.gax.core.BackgroundResource;
-import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.api.gax.core.FixedExecutorProvider;
 import com.google.api.gax.grpc.GaxGrpcProperties;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
-import com.google.api.gax.rpc.ClientContext;
-import com.google.api.gax.rpc.FixedTransportChannelProvider;
 import com.google.bigtable.admin.v2.ListClustersResponse;
 import com.google.bigtable.v2.BigtableGrpc;
-import com.google.cloud.bigtable.admin.v2.BaseBigtableTableAdminClient;
-import com.google.cloud.bigtable.admin.v2.BaseBigtableTableAdminSettings;
-import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.BigtableVeneerSettingsFactory;
 import com.google.cloud.bigtable.config.BigtableVersionInfo;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.CredentialOptions;
@@ -42,7 +33,6 @@ import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
-import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkMutationWrapper;
@@ -59,8 +49,6 @@ import com.google.cloud.bigtable.grpc.io.WatchdogInterceptor;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.util.DirectPathUtil;
-import com.google.cloud.bigtable.util.ReferenceCountedHashMap;
-import com.google.cloud.bigtable.util.ReferenceCountedHashMap.Callable;
 import com.google.cloud.bigtable.util.ThreadUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -86,7 +74,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -114,17 +101,6 @@ public class BigtableSession implements Closeable {
   private static final Logger LOG = new Logger(BigtableSession.class);
   private static Map<String, ManagedChannel> cachedDataChannelPools = new HashMap<>();
 
-  // Map containing ref-counted, cached connections to specific destination hosts for GCJ client
-  private static Map<String, ClientContext> cachedClientContexts =
-      new ReferenceCountedHashMap<>(
-          new Callable<ClientContext>() {
-            @Override
-            public void call(ClientContext context) {
-              for (BackgroundResource backgroundResource : context.getBackgroundResources()) {
-                backgroundResource.shutdown();
-              }
-            }
-          });
   private static final Map<String, ResourceLimiter> resourceLimiterMap = new HashMap<>();
 
   // 256 MB, server has 256 MB limit.
@@ -227,16 +203,7 @@ public class BigtableSession implements Closeable {
 
   /* *****************   end cloud-bigtable-client related variables ***************** */
 
-  /* *****************   new google-cloud-bigtable related variables ***************** */
-
-  private final BigtableDataGCJClient dataGCJClient;
-  private final BigtableTableAdminSettings adminSettings;
-  private final BaseBigtableTableAdminSettings baseAdminSettings;
-  private BigtableTableAdminGCJClient adminGCJClient;
-  private IBigtableTableAdminClient adminClientWrapper;
-
-  /* *****************   end google-cloud-bigtable related variables ***************** */
-
+  private BigtableTableAdminClientWrapper adminClientWrapper;
   /**
    * This cluster name is either configured via BigtableOptions' clusterId, or via a lookup of the
    * clusterID based on BigtableOptions projectId and instanceId. See {@link
@@ -266,125 +233,70 @@ public class BigtableSession implements Closeable {
     managedChannels = new ArrayList<>();
 
     // BEGIN set up Data Clients
-    // TODO: We should use a client wrapper factory, instead of having this large if statement.
+    boolean useDirectPath =
+        options.isDirectPathAllowed()
+            && DirectPathUtil.shouldAttemptDirectPath(
+                options.getDataHost(), options.getPort(), options.getCredentialOptions());
 
-    if (options.useGCJClient()) {
-      BigtableDataSettings dataSettings =
-          BigtableVeneerSettingsFactory.createBigtableDataSettings(options);
-
-      // If we're using a cached channel we need to check if it's set up already. If
-      //  not we need to do the setup now.
-      if (options.useCachedChannel()) {
-        ClientContext cachedCtx = null;
-        synchronized (BigtableSession.class) {
-          // If it's not set up for this specific Host we set it up and save the context for
-          //  future connections
-          if (!cachedClientContexts.containsKey(options.getDataHost())) {
-            cachedCtx = ClientContext.create(dataSettings.getStubSettings());
-          } else {
-            cachedCtx = cachedClientContexts.get(options.getDataHost());
-          }
-          // Adding reference for reference count
-          cachedClientContexts.put(options.getDataHost(), cachedCtx);
+    // Get a raw data channel pool - depending on the settings, this channel can either be
+    // cached/shared or it can specific to this session. If it's specific to this session,
+    // it will be added to managedChannels and cleaned up when this session is closed.
+    ManagedChannel rawDataChannelPool;
+    if (options.useCachedChannel()) {
+      synchronized (BigtableSession.class) {
+        String key =
+            String.format("%s:%s:%d", useDirectPath, options.getDataHost(), options.getPort());
+        rawDataChannelPool = cachedDataChannelPools.get(key);
+        if (rawDataChannelPool == null) {
+          rawDataChannelPool = createRawDataChannelPool(options, useDirectPath);
+          cachedDataChannelPools.put(key, rawDataChannelPool);
         }
-
-        BigtableDataSettings.Builder builder = dataSettings.toBuilder();
-
-        // Add the executor and transport channel to the settings/options
-        builder
-            .stubSettings()
-            .setExecutorProvider(FixedExecutorProvider.create(cachedCtx.getExecutor()))
-            .setTransportChannelProvider(
-                FixedTransportChannelProvider.create(
-                    Objects.requireNonNull(cachedCtx.getTransportChannel())))
-            .setCredentialsProvider(FixedCredentialsProvider.create(cachedCtx.getCredentials()))
-            .build();
-        dataSettings = builder.build();
       }
-
-      this.dataGCJClient =
-          new BigtableDataGCJClient(
-              com.google.cloud.bigtable.data.v2.BigtableDataClient.create(dataSettings));
-
-      // Defer the creation of both the tableAdminClient until we need them.
-      this.adminSettings = BigtableVeneerSettingsFactory.createTableAdminSettings(options);
-      this.baseAdminSettings =
-          BaseBigtableTableAdminSettings.create(adminSettings.getStubSettings());
-
-      this.dataClient = null;
-      this.throttlingDataClient = null;
-      this.dataRequestContext = null;
     } else {
-      boolean useDirectPath =
-          options.isDirectPathAllowed()
-              && DirectPathUtil.shouldAttemptDirectPath(
-                  options.getDataHost(), options.getPort(), options.getCredentialOptions());
-
-      // Get a raw data channel pool - depending on the settings, this channel can either be
-      // cached/shared or it can specific to this session. If it's specific to this session,
-      // it will be added to managedChannels and cleaned up when this session is closed.
-      ManagedChannel rawDataChannelPool;
-      if (options.useCachedChannel()) {
-        synchronized (BigtableSession.class) {
-          String key =
-              String.format("%s:%s:%d", useDirectPath, options.getDataHost(), options.getPort());
-          rawDataChannelPool = cachedDataChannelPools.get(key);
-          if (rawDataChannelPool == null) {
-            rawDataChannelPool = createRawDataChannelPool(options, useDirectPath);
-            cachedDataChannelPools.put(key, rawDataChannelPool);
-          }
-        }
-      } else {
-        rawDataChannelPool = createRawDataChannelPool(options, useDirectPath);
-        managedChannels.add(rawDataChannelPool);
-      }
-
-      Channel dataChannel =
-          ClientInterceptors.intercept(
-              rawDataChannelPool, createDataApiInterceptors(options, useDirectPath));
-
-      this.dataRequestContext =
-          RequestContext.create(
-              options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
-
-      BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
-
-      ConfiguredDeadlineGeneratorFactory callOptionsFactory =
-          new ConfiguredDeadlineGeneratorFactory(options.getCallOptionsConfig());
-
-      // More often than not, users want the dataClient. Create a new one in the constructor.
-      this.dataClient =
-          new BigtableDataGrpcClient(dataChannel, sharedPools.getRetryExecutor(), options);
-      this.dataClient.setDeadlineGeneratorFactory(callOptionsFactory);
-
-      // Async operations can run amok, so they need to have some throttling. The throttling is
-      // achieved through a ThrottlingClientInterceptor.  gRPC wraps ClientInterceptors in Channels,
-      // and since a new Channel is needed, a new BigtableDataGrpcClient instance is needed as well.
-      //
-      // Throttling should not be used in blocking operations, or streaming reads. We have not
-      // tested
-      // the impact of throttling on blocking operations.
-      ResourceLimiter resourceLimiter = initializeResourceLimiter(options);
-      Channel asyncDataChannel =
-          ClientInterceptors.intercept(
-              dataChannel, new ThrottlingClientInterceptor(resourceLimiter));
-      throttlingDataClient =
-          new BigtableDataGrpcClient(asyncDataChannel, sharedPools.getRetryExecutor(), options);
-      throttlingDataClient.setDeadlineGeneratorFactory(callOptionsFactory);
-
-      ManagedChannel rawAdminChannel = createNettyChannel(options.getAdminHost(), options, false);
-      managedChannels.add(rawAdminChannel);
-
-      Channel adminChannel =
-          ClientInterceptors.intercept(rawAdminChannel, createAdminApiInterceptors(options));
-      this.instanceAdminClient = new BigtableInstanceGrpcClient(adminChannel);
-      this.tableAdminClient =
-          new BigtableTableAdminGrpcClient(adminChannel, sharedPools.getRetryExecutor(), options);
-
-      this.dataGCJClient = null;
-      this.adminSettings = null;
-      this.baseAdminSettings = null;
+      rawDataChannelPool = createRawDataChannelPool(options, useDirectPath);
+      managedChannels.add(rawDataChannelPool);
     }
+
+    Channel dataChannel =
+        ClientInterceptors.intercept(
+            rawDataChannelPool, createDataApiInterceptors(options, useDirectPath));
+
+    this.dataRequestContext =
+        RequestContext.create(
+            options.getProjectId(), options.getInstanceId(), options.getAppProfileId());
+
+    BigtableSessionSharedThreadPools sharedPools = BigtableSessionSharedThreadPools.getInstance();
+
+    ConfiguredDeadlineGeneratorFactory callOptionsFactory =
+        new ConfiguredDeadlineGeneratorFactory(options.getCallOptionsConfig());
+
+    // More often than not, users want the dataClient. Create a new one in the constructor.
+    this.dataClient =
+        new BigtableDataGrpcClient(dataChannel, sharedPools.getRetryExecutor(), options);
+    this.dataClient.setDeadlineGeneratorFactory(callOptionsFactory);
+
+    // Async operations can run amok, so they need to have some throttling. The throttling is
+    // achieved through a ThrottlingClientInterceptor.  gRPC wraps ClientInterceptors in Channels,
+    // and since a new Channel is needed, a new BigtableDataGrpcClient instance is needed as well.
+    //
+    // Throttling should not be used in blocking operations, or streaming reads. We have not
+    // tested
+    // the impact of throttling on blocking operations.
+    ResourceLimiter resourceLimiter = initializeResourceLimiter(options);
+    Channel asyncDataChannel =
+        ClientInterceptors.intercept(dataChannel, new ThrottlingClientInterceptor(resourceLimiter));
+    throttlingDataClient =
+        new BigtableDataGrpcClient(asyncDataChannel, sharedPools.getRetryExecutor(), options);
+    throttlingDataClient.setDeadlineGeneratorFactory(callOptionsFactory);
+
+    ManagedChannel rawAdminChannel = createNettyChannel(options.getAdminHost(), options, false);
+    managedChannels.add(rawAdminChannel);
+
+    Channel adminChannel =
+        ClientInterceptors.intercept(rawAdminChannel, createAdminApiInterceptors(options));
+    this.instanceAdminClient = new BigtableInstanceGrpcClient(adminChannel);
+    this.tableAdminClient =
+        new BigtableTableAdminGrpcClient(adminChannel, sharedPools.getRetryExecutor(), options);
     // END set up Data Clients
 
     BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").inc();
@@ -609,11 +521,7 @@ public class BigtableSession implements Closeable {
    */
   @InternalApi("For internal usage only")
   public IBigtableDataClient getDataClientWrapper() {
-    if (options.useGCJClient()) {
-      return dataGCJClient;
-    } else {
-      return new BigtableDataClientWrapper(dataClient, dataRequestContext);
-    }
+    return new BigtableDataClientWrapper(dataClient, dataRequestContext);
   }
 
   /**
@@ -623,9 +531,6 @@ public class BigtableSession implements Closeable {
    * @return a {@link BulkMutation} object.
    */
   public BulkMutation createBulkMutation(BigtableTableName tableName) {
-    if (options.useGCJClient()) {
-      LOG.warn("Using cloud-bigtable-client's implementation of BulkMutation.");
-    }
     return new BulkMutation(
         tableName,
         throttlingDataClient,
@@ -641,11 +546,7 @@ public class BigtableSession implements Closeable {
    */
   @InternalApi("For internal usage only")
   public IBulkMutation createBulkMutationWrapper(BigtableTableName tableName) {
-    if (options.useGCJClient()) {
-      return getDataClientWrapper().createBulkMutationBatcher(tableName.getTableId());
-    } else {
-      return new BulkMutationWrapper(createBulkMutation(tableName));
-    }
+    return new BulkMutationWrapper(createBulkMutation(tableName));
   }
 
   /**
@@ -673,8 +574,7 @@ public class BigtableSession implements Closeable {
   }
 
   /**
-   * Initializes bigtableTableAdminClient based on flag to use GCJ adapter, available in {@link
-   * BigtableOptions}.
+   * Initializes bigtableTableAdminClient
    *
    * <p>For internal use only - public for technical reasons.
    *
@@ -682,16 +582,6 @@ public class BigtableSession implements Closeable {
    */
   @InternalApi("For internal usage only")
   public synchronized IBigtableTableAdminClient getTableAdminClientWrapper() throws IOException {
-    if (options.useGCJClient()) {
-      if (adminGCJClient == null) {
-        com.google.cloud.bigtable.admin.v2.BigtableTableAdminClient adminClientV2 =
-            com.google.cloud.bigtable.admin.v2.BigtableTableAdminClient.create(adminSettings);
-        BaseBigtableTableAdminClient baseAdminClientV2 =
-            BaseBigtableTableAdminClient.create(baseAdminSettings);
-        adminGCJClient = new BigtableTableAdminGCJClient(adminClientV2, baseAdminClientV2);
-      }
-      return adminGCJClient;
-    }
     if (adminClientWrapper == null) {
       adminClientWrapper = new BigtableTableAdminClientWrapper(getTableAdminClient(), options);
     }
@@ -758,25 +648,6 @@ public class BigtableSession implements Closeable {
     }
     managedChannels.clear();
 
-    try {
-      if (dataGCJClient != null) {
-        dataGCJClient.close();
-      }
-    } catch (Exception ex) {
-      throw new IOException("Could not close the data client", ex);
-    }
-    try {
-      if (adminGCJClient != null) {
-        adminGCJClient.close();
-      }
-    } catch (Exception ex) {
-      throw new IOException("Could not close the admin client", ex);
-    }
-
-    if (options.useCachedChannel() && options.useGCJClient()) {
-      cachedClientContexts.remove(options.getDataHost());
-    }
-
     BigtableClientMetrics.counter(MetricLevel.Info, "sessions.active").dec();
   }
 
@@ -787,19 +658,5 @@ public class BigtableSession implements Closeable {
    */
   public BigtableOptions getOptions() {
     return this.options;
-  }
-
-  /**
-   * Getter for the field <code>cachedClientContexts</code>.
-   *
-   * <p>For internal usage only - public for technical reasons.
-   *
-   * @return a HashMap of Connection Name (String) to {@link ClientContext} object.
-   */
-  @InternalApi("VisibleForTesting")
-  public Map<String, ClientContext> getCachedClientContexts() {
-    Preconditions.checkState(
-        options.useGCJClient(), "Client Context is only available for GCJ Client.");
-    return cachedClientContexts;
   }
 }

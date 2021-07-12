@@ -53,7 +53,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
-/** Receives request generated from {@link TestBigtableTableAdminGCJClient}. */
 public class FakeBigtableAdminServiceImpl extends BigtableTableAdminImplBase {
 
   private static final BigtableInstanceName INSTANCE_NAME =
