@@ -85,17 +85,6 @@ limitations under the License.
     <jmh.version>1.28</jmh.version>
   </properties>
 
-  <distributionManagement>
-    <snapshotRepository>
-      <id>sonatype-nexus-snapshots</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
-    <repository>
-      <id>sonatype-nexus-staging</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-  </distributionManagement>
-
   <scm>
     <connection>
       scm:git:git@github.com:googleapis/java-bigtable-hbase.git
