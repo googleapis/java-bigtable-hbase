@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 
-/**
- * The version in this class is project build version specified in the maven. Maven reads the
- * <strong>bigtable-hbase.properties</strong> file present in the resources directory and replaces
- * the property placeholder with project version.
- *
- * <p>For internal use only - public for technical reasons.
- */
+/** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
 public class BigtableHBaseVersion {
   private static final Log LOG = LogFactory.getLog(BigtableHBaseVersion.class);
