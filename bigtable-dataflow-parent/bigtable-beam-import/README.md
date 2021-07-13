@@ -11,7 +11,7 @@ you can build them using Maven.
 
 [//]: # ({x-version-update-start:bigtable-dataflow-parent:released})
 ### Download the jars
-Download [the import/export jars](http://search.maven.org/remotecontent?filepath=com/google/cloud/bigtable/bigtable-beam-import/1.20.0/bigtable-beam-import-1.20.0-shaded.jar), which is an aggregation of all required jars.
+Download [the import/export jars](https://search.maven.org/search?q=a:bigtable-beam-import), which is an aggregation of all required jars.
 
 ### Build the jars yourself
 
@@ -116,7 +116,7 @@ Exporting HBase snapshots from Bigtable is not supported.
 
 
 You can import data into Bigtable from a snapshot or sequence files. Before you begin your import you must create
-the tables and column families in Bigtable via the [schema translation tool](bigtable-hbase-1.x-parent/bigtable-hbase-1.x-tools/README.md)
+the tables and column families in Bigtable via the [schema translation tool](https://github.com/googleapis/java-bigtable-hbase/tree/master/bigtable-hbase-1.x-parent/bigtable-hbase-1.x-tools)
 or using the Bigtable command line tool and running the following: 
 
     cbt createtable your-table-name
