@@ -15,17 +15,16 @@
  */
 package com.google.cloud.bigtable.grpc.scanner;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.bigtable.v2.ReadRowsResponse;
 import com.google.bigtable.v2.ReadRowsResponse.CellChunk;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.MoreObjects;
+import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.TextFormat;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -39,7 +38,7 @@ import org.junit.runners.Parameterized.Parameters;
 /** Parses and runs the acceptance tests for read rows */
 @RunWith(Parameterized.class)
 public class ReadRowsAcceptanceTest {
-  // The acceptance test data model, populated via jackson data binding
+  // The acceptance test data model, populated via gson
   private static final class AcceptanceTest {
     public List<ChunkTestCase> tests;
   }
@@ -144,20 +143,24 @@ public class ReadRowsAcceptanceTest {
 
   @Parameters(name = "{0}")
   public static Collection<Object[]> data() {
-    InputStream testInputStream =
-        ReadRowsAcceptanceTest.class.getResourceAsStream("read-rows-acceptance-test.json");
 
-    ObjectMapper mapper = new ObjectMapper();
-    try {
-      AcceptanceTest acceptanceTest = mapper.readValue(testInputStream, AcceptanceTest.class);
-      List<Object[]> data = new ArrayList<>();
-      for (ChunkTestCase test : acceptanceTest.tests) {
-        data.add(new Object[] {test});
-      }
-      return data;
+    AcceptanceTest acceptanceTest;
+
+    try (InputStreamReader testInputStream =
+        new InputStreamReader(
+            ReadRowsAcceptanceTest.class.getResourceAsStream("read-rows-acceptance-test.json"))) {
+
+      Gson gson = new Gson();
+      acceptanceTest = gson.fromJson(testInputStream, AcceptanceTest.class);
     } catch (IOException e) {
       throw new RuntimeException("Error loading acceptance test file", e);
     }
+
+    List<Object[]> data = new ArrayList<>();
+    for (ChunkTestCase test : acceptanceTest.tests) {
+      data.add(new Object[] {test});
+    }
+    return data;
   }
 
   public ReadRowsAcceptanceTest(ChunkTestCase testCase) {
@@ -181,7 +184,7 @@ public class ReadRowsAcceptanceTest {
     for (String chunkStr : testCase.chunks) {
       ReadRowsResponse.Builder responseBuilder = ReadRowsResponse.newBuilder();
       CellChunk.Builder ccBuilder = CellChunk.newBuilder();
-      TextFormat.merge(new StringReader(chunkStr), ccBuilder);
+      TextFormat.merge(new StringBuffer(chunkStr), ccBuilder);
       responseBuilder.addChunks(ccBuilder.build());
       rowMerger.onNext(responseBuilder.build());
     }

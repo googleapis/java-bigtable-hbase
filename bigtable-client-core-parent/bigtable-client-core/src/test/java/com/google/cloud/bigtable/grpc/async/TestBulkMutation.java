@@ -33,7 +33,6 @@ import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.BulkOptions;
-import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
@@ -107,10 +106,10 @@ public class TestBulkMutation {
         .build();
   }
 
-  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  // TODO: remove silent and tighten mocks
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().silent();
 
   @Mock private BigtableDataClient client;
-  @Mock private IBigtableDataClient clientWrapper;
   @Mock private ScheduledExecutorService retryExecutorService;
   @Mock private ScheduledFuture mockScheduledFuture;
   @Mock private ResourceLimiter fakeResourceLimiter;
@@ -307,14 +306,6 @@ public class TestBulkMutation {
     pool.shutdownNow();
 
     Assert.assertFalse(operationAccountant.hasInflightOperations());
-  }
-
-  @Test
-  public void testAutoflushDisabled() {
-    // buffer a request, with a mocked success
-    underTest.add(createRequestEntry());
-    verify(retryExecutorService, never())
-        .schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
   }
 
   @SuppressWarnings("unchecked")

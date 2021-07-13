@@ -36,17 +36,14 @@ public class CallOptionsConfig implements Serializable {
   /** Constant <code>USE_TIMEOUT_DEFAULT=false</code> */
   public static final boolean USE_TIMEOUT_DEFAULT = false;
 
-  /**
-   * The default duration to wait before timing out RPCs. 1 minute is probably too long for most
-   * RPCs, but the intent is to have a conservative timeout by default and aim for user overrides.
-   */
-  public static final int SHORT_TIMEOUT_MS_DEFAULT = 60_000;
+  /** The default duration to wait before timing out RPCs (default value: 20 seconds). */
+  public static final int SHORT_TIMEOUT_MS_DEFAULT = 20_000;
 
   /**
-   * The default duration to wait before timing out RPCs. 10 minute is probably too long for most
-   * RPCs, but the intent is to have a conservative timeout by default and aim for user overrides.
-   * There could very well be 10 minute scans, so keep the value conservative for most cases and
-   * allow user overrides as needed.
+   * The default duration to wait before timing out idempotent RPCs operation. 10 minute is probably
+   * too long for most RPCs, but the intent is to have a conservative timeout by default and aim for
+   * user overrides. There could very well be 10 minute scans, so keep the value conservative for
+   * most cases and allow user overrides as needed.
    */
   public static final int LONG_TIMEOUT_MS_DEFAULT = 600_000;
 
@@ -322,7 +319,7 @@ public class CallOptionsConfig implements Serializable {
    *
    * @return an Optional int, populated if the property was present.
    */
-  @BetaApi("The API for setting attempt timeouts is not yet stable and may change in the future")
+  @BetaApi("The API for getting attempt timeouts is not yet stable and may change in the future")
   public Optional<Integer> getShortRpcAttemptTimeoutMs() {
     return shortRpcAttemptTimeoutMs;
   }
@@ -356,7 +353,7 @@ public class CallOptionsConfig implements Serializable {
    *
    * @return an Optional int, populated if the property was present.
    */
-  @BetaApi("The API for setting attempt timeouts is not yet stable and may change in the future")
+  @BetaApi("The API for getting attempt timeouts is not yet stable and may change in the future")
   public Optional<Integer> getMutateRpcAttemptTimeoutMs() {
     return mutateRpcAttemptTimeoutMs;
   }
@@ -378,7 +375,7 @@ public class CallOptionsConfig implements Serializable {
    *
    * @return an Optional int, populated if the property was present.
    */
-  @BetaApi("The API for setting attempt timeouts is not yet stable and may change in the future")
+  @BetaApi("The API for getting attempt timeouts is not yet stable and may change in the future")
   public Optional<Integer> getReadStreamRpcAttemptTimeoutMs() {
     return readStreamRpcAttemptTimeoutMs;
   }

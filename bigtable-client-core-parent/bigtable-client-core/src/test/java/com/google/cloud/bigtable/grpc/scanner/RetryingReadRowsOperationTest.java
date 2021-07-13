@@ -70,7 +70,8 @@ import org.mockito.stubbing.Answer;
 /** Test for the {@link RetryingReadRowsOperation} */
 @RunWith(JUnit4.class)
 public class RetryingReadRowsOperationTest {
-  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  // TODO: remove silent and tighten mocks
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().silent();
 
   private static final RetryOptions RETRY_OPTIONS = RetryOptions.getDefaultOptions();
 
@@ -434,14 +435,18 @@ public class RetryingReadRowsOperationTest {
   @Test
   public void testErrorAfterComplete() throws UnsupportedEncodingException {
     ByteString key1 = ByteString.copyFromUtf8("SomeKey1");
+    ByteString key2 = ByteString.copyFromUtf8("SomeKey2");
 
     ReadRowsRequest req =
-        ReadRowsRequest.newBuilder().setRows(RowSet.newBuilder().addRowKeys(key1)).build();
+        ReadRowsRequest.newBuilder()
+            .setRows(RowSet.newBuilder().addRowKeys(key1).addRowKeys(key2))
+            .build();
     RetryingReadRowsOperation underTest =
         createOperation(DeadlineGenerator.DEFAULT, req, mockFlatRowObserver);
 
     start(underTest);
     underTest.onMessage(buildResponse(key1));
+    underTest.onMessage(buildResponse(key2));
     underTest.onClose(Status.DEADLINE_EXCEEDED, new Metadata());
 
     verify(mockFlatRowObserver, times(1)).onCompleted();
