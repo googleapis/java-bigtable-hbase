@@ -23,6 +23,7 @@ java.common_templates(excludes=[
   'CONTRIBUTING.md',
   '.github/ISSUE_TEMPLATE/bug_report.md',
   '.github/snippet-bot.yml',
+  '.github/release-please.yml', # don't clobber extraFiles
   '.github/workflows/*',
   '.kokoro/presubmit/integration.cfg',
   '.kokoro/nightly/integration.cfg',
