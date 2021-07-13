@@ -15,8 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.api.client.util.Joiner;
 import com.google.api.core.InternalApi;
+import com.google.common.base.Joiner;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
