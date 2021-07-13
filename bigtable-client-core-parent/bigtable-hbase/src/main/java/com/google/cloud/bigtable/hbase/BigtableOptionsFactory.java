@@ -454,6 +454,8 @@ public class BigtableOptionsFactory {
     // This information is in addition to bigtable-client-core version, and jdk version.
     StringBuilder agentBuilder = new StringBuilder();
     agentBuilder.append("hbase-").append(VersionInfo.getVersion());
+    agentBuilder.append(", ");
+    agentBuilder.append("bigtable-hbase-").append(BigtableHBaseVersion.getVersion());
     String customUserAgent = configuration.get(CUSTOM_USER_AGENT_KEY);
     if (customUserAgent != null) {
       agentBuilder.append(',').append(customUserAgent);
