@@ -41,10 +41,8 @@ public class BigtableVersionInfo {
   private static String getJavaVersion() {
     return System.getProperty("java.specification.version");
   }
-  /**
-   * Gets user agent from bigtable-hbase-version.properties. Returns a default dev user agent with
-   * current timestamp if not found.
-   */
+
+  
   public static String getVersion() {
     if (wasInitialized.compareAndSet(false, true)) {
       warnOnVersionConflict();
