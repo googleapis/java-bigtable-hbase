@@ -42,7 +42,6 @@ public class BigtableVersionInfo {
     return System.getProperty("java.specification.version");
   }
 
-
   public static String getVersion() {
     if (wasInitialized.compareAndSet(false, true)) {
       warnOnVersionConflict();
