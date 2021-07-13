@@ -47,10 +47,10 @@ limitations under the License.
           <artifactId>maven-javadoc-plugin</artifactId>
           <configuration>
             <windowtitle>
-              HBase + Cloud Bigtable Connector ${project.version} API
+              HBase + Cloud Bigtable Connector API
             </windowtitle>
             <doctitle>
-              HBase + Cloud Bigtable Connector ${project.version} API
+              HBase + Cloud Bigtable Connector API
             </doctitle>
             <overview>../overview.html</overview>
             <bottom><![CDATA[<br>]]></bottom>

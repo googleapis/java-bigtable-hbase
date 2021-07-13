@@ -6,7 +6,7 @@ from/to Cloud Bigtable and import HBase snapshots using a Map Reduce cluster (ie
 
 ## Expected Usage 
 
-[//]: # ({x-version-update-start:bigtable-hbase-1x-parent:released})
+[//]: # ({x-version-update-start:bigtable-client-parent:released})
 ### On-prem Hadoop
 
 1. Download or build bigtable-hbase-1.x-mapreduce-1.14.0-shaded-byo-hadoop.jar

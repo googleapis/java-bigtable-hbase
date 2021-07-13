@@ -40,7 +40,7 @@ Note: Please use [google-cloud-bigtable][google-cloud-bigtable] to access Bigtab
   * `bigtable-hbase-2.x-hadoop`: use in hadoop environments.
   * `bigtable-hbase-2.x-shaded`: use in environments (other than hadoop) that require older versions of protobuf, guava, etc.  
 
-[//]: # ({x-version-update-start:bigtable-hbase-1x-parent:released})
+[//]: # ({x-version-update-start:bigtable-client-parent:released})
   Maven:
   ```xml
   <dependency>
@@ -75,7 +75,7 @@ The code example below shows how to enable metrics. For more details, see the [g
 
 If you are _not_ using the shaded Bigtable HBase Client artifact, you need to define the OpenCensus dependencies.
 
-[//]: # ({x-version-update-start:bigtable-hbase-1x-parent:released})
+[//]: # ({x-version-update-start:bigtable-client-parent:released})
 ```xml
 <!-- OpenCensus dependencies -->
 <dependency>
@@ -187,7 +187,7 @@ The code example below shows how to enable tracing. For more details, see [here]
 
 If you are _not_ using the shaded Bigtable HBase Client artifact, you need to define the OpenCensus dependencies.
 
-[//]: # ({x-version-update-start:bigtable-hbase-1x-parent:released})
+[//]: # ({x-version-update-start:bigtable-client-parent:released})
 ```xml
 <!-- OpenCensus dependencies -->
 <dependency>

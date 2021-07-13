@@ -8,7 +8,7 @@ Pipelines to import and export data are under [bigtable-beam-import](bigtable-da
 To use the tools in this folder, you can download them from the maven repository, or
 you can build them using Maven.
 
-[//]: # ({x-version-update-start:bigtable-dataflow-parent:released})
+[//]: # ({x-version-update-start:bigtable-client-parent:released})
 ### Download the jars
 
 Download [the Bigtable tools jars](http://search.maven.org/remotecontent?filepath=com/google/cloud/bigtable/bigtable-hbase-1.x-tools/1.20.0/bigtable-hbase-1.x-tools-1.20.0-shaded.jar), which is an aggregation of all required jars.

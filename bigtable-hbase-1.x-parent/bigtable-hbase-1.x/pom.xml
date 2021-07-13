@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x-parent</artifactId>
-    <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-1x-parent:current} -->
+    <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-1.x</artifactId>
@@ -56,12 +56,12 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase</artifactId>
-      <version>${project.version}</version>
+      <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-metrics-api</artifactId>
-      <version>${project.version}</version>
+      <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>
 
     <dependency>
@@ -151,7 +151,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-internal-test-helper</artifactId>
-      <version>${project.version}</version>
+      <version>2.0.0-alpha-1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <scope>test</scope>
     </dependency>
     <dependency>
