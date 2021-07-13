@@ -15,54 +15,61 @@
  */
 package com.google.cloud.bigtable.config;
 
+import com.google.api.client.util.Joiner;
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.grpc.BigtableSession;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
+import java.net.URL;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
 public class BigtableVersionInfo {
-
   private static final Logger LOG = new Logger(BigtableVersionInfo.class);
+  private static final AtomicBoolean wasInitialized = new AtomicBoolean(false);
 
-  public static final String CLIENT_VERSION = getVersion();
+  // {x-version-update-start:bigtable-client-parent}
+  public static final String CLIENT_VERSION = "1.22.1-SNAPSHOT";
+  // {x-version-update-end}
   public static final String JDK_VERSION = getJavaVersion();
 
   public static final String CORE_USER_AGENT = "bigtable-" + CLIENT_VERSION + ",jdk-" + JDK_VERSION;
 
-  /**
-   * Gets user agent from bigtable-version.properties. Returns a default dev user agent with current
-   * timestamp if not found.
-   */
-  private static String getVersion() {
-    final String defaultVersion = "dev-" + System.currentTimeMillis();
-    final String fileName = "bigtable-version.properties";
-    final String versionProperty = "bigtable.version";
-    try (InputStream stream = BigtableVersionInfo.class.getResourceAsStream(fileName)) {
-      if (stream == null) {
-        LOG.error("Could not load properties file bigtable-version.properties");
-        return defaultVersion;
-      }
-
-      Properties properties = new Properties();
-      properties.load(stream);
-      String value = properties.getProperty(versionProperty);
-      if (value == null) {
-        LOG.error("%s not found in %s.", versionProperty, fileName);
-      } else if (value.startsWith("$")) {
-        LOG.info("%s property is not replaced.", versionProperty);
-      } else {
-        return value;
-      }
-    } catch (IOException e) {
-      LOG.error("Error while trying to get user agent name from %s", e, fileName);
-    }
-    return defaultVersion;
-  }
-
   /** @return The java specification version; for example, 1.7 or 1.8. */
   private static String getJavaVersion() {
     return System.getProperty("java.specification.version");
+  }
+  /**
+   * Gets user agent from bigtable-hbase-version.properties. Returns a default dev user agent with
+   * current timestamp if not found.
+   */
+  public static String getVersion() {
+    if (wasInitialized.compareAndSet(false, true)) {
+      warnOnVersionConflict();
+    }
+    return CLIENT_VERSION;
+  }
+
+  private static void warnOnVersionConflict() {
+    List<URL> classResources;
+    // Use BigtableSession as a marker to detect multiple versions on the classpath
+    // Convert package.name.class.name -> package/name/class/name.class so that the classfile could
+    // be probed as a resource
+    String knownClassResourcePath =
+        BigtableSession.class.getName().replaceAll("\\.", "/") + ".class";
+    try {
+      classResources = Collections.list(ClassLoader.getSystemResources(knownClassResourcePath));
+    } catch (IOException e) {
+      LOG.warn("Failed to probe for client version conflicts", e);
+      return;
+    }
+
+    if (classResources.size() != 1) {
+      LOG.warn(
+          "Found multiple copies of the bigtable-client-core on the classpath: "
+              + Joiner.on(',').join(classResources));
+    }
   }
 }
