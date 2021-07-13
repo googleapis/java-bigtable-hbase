@@ -172,10 +172,10 @@ limitations under the License.
           <configuration>
             <doclint>none</doclint>
             <windowtitle>
-              Cloud Bigtable HBase Client for Java ${project.version} API
+              Cloud Bigtable HBase Client for Java API
             </windowtitle>
             <doctitle>
-              Cloud Bigtable HBase Client for Java ${project.version} API
+              Cloud Bigtable HBase Client for Java API
             </doctitle>
             <overview>../overview.html</overview>
             <bottom><![CDATA[<br>]]></bottom>
