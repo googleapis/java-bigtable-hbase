@@ -121,7 +121,6 @@ import org.threeten.bp.Duration;
 @InternalApi("For internal usage only")
 public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   private static final String BIGTABLE_BATCH_DATA_HOST_DEFAULT = "batch-bigtable.googleapis.com";
-  private static final Duration DEFAULT_UNARY_ATTEMPT_DEADLINE = Duration.ofMinutes(6);
 
   private final Configuration configuration;
   private final BigtableDataSettings dataSettings;
@@ -774,13 +773,22 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   private ClientOperationTimeouts buildCallSettings() {
     boolean useTimeouts = configuration.getBoolean(BIGTABLE_USE_TIMEOUTS_KEY, true);
 
+    Optional<Duration> DEFAULT_BATCH_BULK_MUTATE_OVERALL_TIMEOUT =
+        Optional.of(Duration.ofMinutes(20));
+    // Set 20 minutes default timeout for batch jobs.
+    // The default override the deprecated BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY.
+    Optional<Duration> bulkMutateOverallTimeout =
+        configuration.getBoolean(BIGTABLE_USE_BATCH, false)
+            ? extractOverallTimeout(BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY)
+                .or(DEFAULT_BATCH_BULK_MUTATE_OVERALL_TIMEOUT)
+            : extractOverallTimeout(
+                BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY,
+                BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY);
     OperationTimeouts bulkMutateTimeouts =
         new OperationTimeouts(
             Optional.<Duration>absent(),
             extractUnaryAttemptTimeout(BIGTABLE_MUTATE_RPC_ATTEMPT_TIMEOUT_MS_KEY),
-            extractOverallTimeout(
-                BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY,
-                BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY));
+            bulkMutateOverallTimeout);
 
     OperationTimeouts scanTimeouts =
         new OperationTimeouts(
