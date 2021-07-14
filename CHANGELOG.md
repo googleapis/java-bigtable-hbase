@@ -5,8 +5,8 @@
 
 ### Features
 
-* backport features from main branch ([#3151](https://www.github.com/googleapis/java-bigtable-hbase/issues/3151)) ([712c650](https://www.github.com/googleapis/java-bigtable-hbase/commit/712c650a310d8db89f9ab94d9d820b26af00cf18))
-* implement veneer metrics part 1 - implement MetricsApiTracerAdapter ([#2631](https://www.github.com/googleapis/java-bigtable-hbase/issues/2631)) ([#3034](https://www.github.com/googleapis/java-bigtable-hbase/issues/3034)) ([42ec2ad](https://www.github.com/googleapis/java-bigtable-hbase/commit/42ec2ad3b7cbf427c15494a2f42a4000ac7ce91c))
+* update default settings to match java-bigtable ([#3151](https://www.github.com/googleapis/java-bigtable-hbase/issues/3151)) ([712c650](https://www.github.com/googleapis/java-bigtable-hbase/commit/712c650a310d8db89f9ab94d9d820b26af00cf18))
+* split metrics api into separate artifact ([#2631](https://www.github.com/googleapis/java-bigtable-hbase/issues/2631)) ([#3034](https://www.github.com/googleapis/java-bigtable-hbase/issues/3034)) ([42ec2ad](https://www.github.com/googleapis/java-bigtable-hbase/commit/42ec2ad3b7cbf427c15494a2f42a4000ac7ce91c))
 * remove gcj wrappers from bigtable-client-core and remove BIGTABLE_USE_GCJ_CLIENT  ([#3057](https://www.github.com/googleapis/java-bigtable-hbase/issues/3057)) ([4ce242d](https://www.github.com/googleapis/java-bigtable-hbase/commit/4ce242da82a7330757e7e6a945dfaecd8c71ab2d))
 
 
