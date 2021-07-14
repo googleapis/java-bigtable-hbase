@@ -1,4 +1,4 @@
-bigtable-client-core is in the process of being replaced with a direct dependency on [java-bigtable](https://github.com/googleapis/java-bigtable). If
+bigtable-client-core is in the process of being replaced with a direct dependency on [java-bigtable](https://github.com/googleapis/java-bigtable) in 2.x.x versions. If
 you are using bigtable-client-core directly, you can find its source in the bigtable-1.x
 branch: https://github.com/googleapis/java-bigtable-hbase/tree/master/bigtable-client-core-parent/bigtable-client-core/
 
