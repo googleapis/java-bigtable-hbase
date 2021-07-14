@@ -11,7 +11,7 @@ you can build them using Maven.
 
 [//]: # ({x-version-update-start:bigtable-dataflow-parent:released})
 ### Download the jars
-Download [the import/export jars](https://search.maven.org/search?q=a:bigtable-beam-import), which is an aggregation of all required jars.
+Download [the import/export jars](https://search.maven.org/artifact/com.google.cloud.bigtable/bigtable-beam-import), which is an aggregation of all required jars.
 
 ### Build the jars yourself
 
