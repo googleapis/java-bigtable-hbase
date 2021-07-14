@@ -20,13 +20,20 @@ import static org.junit.Assert.fail;
 
 import com.google.bigtable.repackaged.com.google.gson.Gson;
 import com.google.bigtable.repackaged.com.google.gson.JsonObject;
+import com.google.cloud.bigtable.hbase.tools.ClusterSchemaDefinition.TableSchemaDefinition;
 import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.JsonBasedSchemaTransformer;
 import com.google.common.collect.ImmutableMap;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.exceptions.DeserializationException;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -37,7 +44,8 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class HBaseSchemaTransformerTest {
 
-  @Rule public TemporaryFolder tempFolder = new TemporaryFolder();
+  @Rule
+  public TemporaryFolder tempFolder = new TemporaryFolder();
 
   private String schemaFilePath;
   private JsonBasedSchemaTransformer schemaTransformer;
@@ -45,7 +53,6 @@ public class HBaseSchemaTransformerTest {
   @Before
   public void before() throws IOException {
     schemaFilePath = tempFolder.newFile().getPath();
-    schemaTransformer = new JsonBasedSchemaTransformer(schemaFilePath);
   }
 
   ///////////////////////////////// Invalid cases //////////////////////////////////////
@@ -57,7 +64,8 @@ public class HBaseSchemaTransformerTest {
     fw.write("random JSON string");
     // Execute the test method
     try {
-      schemaTransformer.parseMappingFile();
+      schemaTransformer =
+          JsonBasedSchemaTransformer.newSchemaTransformerFromJsonFile(schemaFilePath);
       fail("Expected IllegalStateException due to bad JSON.");
     } catch (IllegalStateException e) {
       e.printStackTrace();
@@ -68,7 +76,7 @@ public class HBaseSchemaTransformerTest {
 
   //////////////////////////////////////// Happy cases ////////////////////////////////////
   @Test
-  public void testParseJsonOnlyTables() throws IOException {
+  public void testParseJsonTables() throws IOException {
     // Setup the schema file
     JsonObject jsonObject = new JsonObject();
     jsonObject.addProperty("old-table", "new-table");
@@ -78,37 +86,12 @@ public class HBaseSchemaTransformerTest {
       new Gson().toJson(jsonObject, writer);
     }
 
-    // Parse schema file
-    schemaTransformer.parseMappingFile();
+    schemaTransformer = JsonBasedSchemaTransformer.newSchemaTransformerFromJsonFile(schemaFilePath);
 
     // Validate
     Map<String, String> expectedTableMapping =
         ImmutableMap.of("old-table", "new-table", "old-table-2", "random-table-2");
     assertEquals(expectedTableMapping, schemaTransformer.tableNameMappings);
-    assertEquals(0, schemaTransformer.tableScopedColumnFamilyMappings.size());
-  }
-
-  @Test
-  public void testParseJsonOnlyColumnFamily() throws IOException {
-    // Setup the schema file
-    JsonObject jsonObject = new JsonObject();
-    jsonObject.addProperty("old-table:old-cf", "new-cf");
-    jsonObject.addProperty("old-table:old-cf2", "random-cf2");
-    jsonObject.addProperty("some-table:cf", "cf-new");
-    try (Writer writer = new FileWriter(schemaFilePath)) {
-      new Gson().toJson(jsonObject, writer);
-    }
-
-    // Parse schema file
-    schemaTransformer.parseMappingFile();
-
-    // Validate
-    assertEquals(0, schemaTransformer.tableNameMappings.size());
-    Map<String, Map<String, String>> expectedTableScopedCFMapping =
-        ImmutableMap.of(
-            "old-table", ImmutableMap.of("old-cf", "new-cf", "old-cf2", "random-cf2"),
-            "some-table", ImmutableMap.of("cf", "cf-new"));
-    assertEquals(expectedTableScopedCFMapping, schemaTransformer.tableScopedColumnFamilyMappings);
   }
 
   @Test
@@ -120,27 +103,140 @@ public class HBaseSchemaTransformerTest {
     }
 
     // Parse schema file
-    schemaTransformer.parseMappingFile();
+    schemaTransformer = JsonBasedSchemaTransformer.newSchemaTransformerFromJsonFile(schemaFilePath);
     assertEquals(0, schemaTransformer.tableNameMappings.size());
-    assertEquals(0, schemaTransformer.tableScopedColumnFamilyMappings.size());
   }
 
   @Test
-  public void testParseJsonTableAndColumnFamily() throws IOException {
-    // Setup the schema file
-    JsonObject jsonObject = new JsonObject();
-    jsonObject.addProperty("old-table", "new-table");
-    jsonObject.addProperty("old-table:old-cf", "new-cf");
-    Gson gson = new Gson();
-    try (Writer writer = new FileWriter(schemaFilePath)) {
-      new Gson().toJson(jsonObject, writer);
-    }
+  public void testTransformWithNormalTable() throws DeserializationException, IOException {
 
-    schemaTransformer.parseMappingFile();
-    Map<String, String> expectedTableMapping = Collections.singletonMap("old-table", "new-table");
-    assertEquals(expectedTableMapping, schemaTransformer.tableNameMappings);
-    Map<String, Map<String, String>> expectedTableScopedCFMapping =
-        Collections.singletonMap("old-table", Collections.singletonMap("old-cf", "new-cf"));
-    assertEquals(expectedTableScopedCFMapping, schemaTransformer.tableScopedColumnFamilyMappings);
+    // Setup a cluster schema
+    ClusterSchemaDefinition schemaDefinition = new ClusterSchemaDefinition();
+    TableSchemaDefinition tableSchemaDefinition = new TableSchemaDefinition();
+    tableSchemaDefinition.name = "test-table1";
+    tableSchemaDefinition.splits = new byte[3][];
+    tableSchemaDefinition.splits[0] = HConstants.EMPTY_BYTE_ARRAY;
+    tableSchemaDefinition.splits[1] = "first-split".getBytes();
+    tableSchemaDefinition.splits[2] = "second-split".getBytes();
+    HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf("test-table1"));
+    HColumnDescriptor columnDescriptor = new HColumnDescriptor("cf");
+    columnDescriptor.setMaxVersions(2).setTimeToLive(1000);
+    tableDescriptor.addFamily(columnDescriptor);
+    tableSchemaDefinition.tableDescriptor = tableDescriptor.toByteArray();
+    schemaDefinition.tableSchemaDefinitions.add(tableSchemaDefinition);
+
+    // setup a transformer
+    Map<String, String> schemaMapping = new HashMap<>();
+    // NOOP transform
+    schemaMapping.put("test-table1", "test-table1");
+    JsonBasedSchemaTransformer transformer = new JsonBasedSchemaTransformer(schemaMapping);
+
+    ClusterSchemaDefinition transformedClusterSchema = transformer.transform(schemaDefinition);
+
+    // Verify transformation
+    Assert.assertEquals(transformedClusterSchema.tableSchemaDefinitions.get(0).name, schemaDefinition.tableSchemaDefinitions.get(0).name);
+    Assert.assertEquals(transformedClusterSchema.tableSchemaDefinitions.get(0).getHbaseTableDescriptor(), schemaDefinition.tableSchemaDefinitions.get(0).getHbaseTableDescriptor());
+    Assert.assertEquals(transformedClusterSchema.tableSchemaDefinitions.get(0).splits, schemaDefinition.tableSchemaDefinitions.get(0).splits);
   }
+
+  @Test
+  public void testTransformWithEmptyMappings() throws DeserializationException, IOException {
+
+    // Setup a cluster schema
+    ClusterSchemaDefinition schemaDefinition = new ClusterSchemaDefinition();
+    TableSchemaDefinition tableSchemaDefinition = new TableSchemaDefinition();
+    tableSchemaDefinition.name = "test-table1";
+    tableSchemaDefinition.splits = new byte[3][];
+    tableSchemaDefinition.splits[0] = HConstants.EMPTY_BYTE_ARRAY;
+    tableSchemaDefinition.splits[1] = "first-split".getBytes();
+    tableSchemaDefinition.splits[2] = "second-split".getBytes();
+    HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf("test-table1"));
+    HColumnDescriptor columnDescriptor = new HColumnDescriptor("cf");
+    columnDescriptor.setMaxVersions(2).setTimeToLive(1000);
+    tableDescriptor.addFamily(columnDescriptor);
+    tableSchemaDefinition.tableDescriptor = tableDescriptor.toByteArray();
+    schemaDefinition.tableSchemaDefinitions.add(tableSchemaDefinition);
+
+    // setup a transformer
+    Map<String, String> schemaMapping = new HashMap<>();
+    JsonBasedSchemaTransformer transformer = new JsonBasedSchemaTransformer(schemaMapping);
+
+    ClusterSchemaDefinition transformedClusterSchema = transformer.transform(schemaDefinition);
+
+    // Verify transformation
+    Assert.assertEquals(transformedClusterSchema.tableSchemaDefinitions.get(0).name, schemaDefinition.tableSchemaDefinitions.get(0).name);
+    Assert.assertEquals(transformedClusterSchema.tableSchemaDefinitions.get(0).getHbaseTableDescriptor(), schemaDefinition.tableSchemaDefinitions.get(0).getHbaseTableDescriptor());
+    Assert.assertEquals(transformedClusterSchema.tableSchemaDefinitions.get(0).splits, schemaDefinition.tableSchemaDefinitions.get(0).splits);
+  }
+
+  @Test
+  public void testTransformWithExtraMapping() throws DeserializationException, IOException {
+
+    // Setup a cluster schema
+    ClusterSchemaDefinition schemaDefinition = new ClusterSchemaDefinition();
+    TableSchemaDefinition tableSchemaDefinition = new TableSchemaDefinition();
+    tableSchemaDefinition.name = "test-table1";
+    tableSchemaDefinition.splits = new byte[3][];
+    tableSchemaDefinition.splits[0] = HConstants.EMPTY_BYTE_ARRAY;
+    tableSchemaDefinition.splits[1] = "first-split".getBytes();
+    tableSchemaDefinition.splits[2] = "second-split".getBytes();
+    HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf("test-table1"));
+    HColumnDescriptor columnDescriptor = new HColumnDescriptor("cf");
+    columnDescriptor.setMaxVersions(2).setTimeToLive(1000);
+    tableDescriptor.addFamily(columnDescriptor);
+    tableSchemaDefinition.tableDescriptor = tableDescriptor.toByteArray();
+    schemaDefinition.tableSchemaDefinitions.add(tableSchemaDefinition);
+
+    // setup a transformer
+    Map<String, String> schemaMapping = new HashMap<>();
+    // NOOP transform
+    schemaMapping.put("test-table1", "new-table1");
+    schemaMapping.put("test", "new-table2");
+    JsonBasedSchemaTransformer transformer = new JsonBasedSchemaTransformer(schemaMapping);
+
+    ClusterSchemaDefinition transformedClusterSchema = transformer.transform(schemaDefinition);
+    TableSchemaDefinition expectedTableSchema =new TableSchemaDefinition(new HTableDescriptor(TableName.valueOf("new-table1"), schemaDefinition.tableSchemaDefinitions.get(0).getHbaseTableDescriptor()),
+        tableSchemaDefinition.splits);
+
+    // Verify transformation
+    Assert.assertEquals("new-table1", transformedClusterSchema.tableSchemaDefinitions.get(0).name);
+    Assert.assertEquals(expectedTableSchema.getHbaseTableDescriptor(), transformedClusterSchema.tableSchemaDefinitions.get(0).getHbaseTableDescriptor());
+    Assert.assertEquals(transformedClusterSchema.tableSchemaDefinitions.get(0).splits, schemaDefinition.tableSchemaDefinitions.get(0).splits);
+  }
+
+  @Test
+  public void testTransformWithinCustomNamespaceTable() throws DeserializationException, IOException {
+
+    // Setup a cluster schema
+    ClusterSchemaDefinition schemaDefinition = new ClusterSchemaDefinition();
+    TableSchemaDefinition tableSchemaDefinition = new TableSchemaDefinition();
+    tableSchemaDefinition.name = "ns:test-table1";
+    tableSchemaDefinition.splits = new byte[3][];
+    tableSchemaDefinition.splits[0] = HConstants.EMPTY_BYTE_ARRAY;
+    tableSchemaDefinition.splits[1] = "first-split".getBytes();
+    tableSchemaDefinition.splits[2] = "second-split".getBytes();
+    HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf("ns", "test-table1"));
+    HColumnDescriptor columnDescriptor = new HColumnDescriptor("cf");
+    columnDescriptor.setMaxVersions(2).setTimeToLive(1000);
+    tableDescriptor.addFamily(columnDescriptor);
+    tableSchemaDefinition.tableDescriptor = tableDescriptor.toByteArray();
+    schemaDefinition.tableSchemaDefinitions.add(tableSchemaDefinition);
+
+    // setup a transformer
+    Map<String, String> schemaMapping = new HashMap<>();
+    // NOOP transform
+    schemaMapping.put("ns:test-table1", "new-table1");
+    JsonBasedSchemaTransformer transformer = new JsonBasedSchemaTransformer(schemaMapping);
+
+    ClusterSchemaDefinition transformedClusterSchema = transformer.transform(schemaDefinition);
+    TableSchemaDefinition expectedTableSchema =new TableSchemaDefinition(new HTableDescriptor(TableName.valueOf("new-table1"), schemaDefinition.tableSchemaDefinitions.get(0).getHbaseTableDescriptor()),
+        tableSchemaDefinition.splits);
+
+    // Verify transformation
+    Assert.assertEquals("new-table1", transformedClusterSchema.tableSchemaDefinitions.get(0).name);
+    Assert.assertEquals(expectedTableSchema.getHbaseTableDescriptor(), transformedClusterSchema.tableSchemaDefinitions.get(0).getHbaseTableDescriptor());
+    Assert.assertEquals(transformedClusterSchema.tableSchemaDefinitions.get(0).splits, schemaDefinition.tableSchemaDefinitions.get(0).splits);
+
+  }
+
 }

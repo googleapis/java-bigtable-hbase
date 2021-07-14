@@ -34,13 +34,11 @@ import java.lang.reflect.Type;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -48,7 +46,6 @@ import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.log4j.BasicConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -363,7 +360,10 @@ public class HBaseSchemaTranslator {
     }
 
     if (options.schemaMappingFilePath != null) {
-      this.schemaTransformer = new JsonBasedSchemaTransformer(options.schemaMappingFilePath);
+
+      this.schemaTransformer =
+          JsonBasedSchemaTransformer.newSchemaTransformerFromJsonFile(
+              options.schemaMappingFilePath);
     } else {
       this.schemaTransformer = new NoopSchemaTransformer();
     }
@@ -396,70 +396,44 @@ public class HBaseSchemaTranslator {
 
   /**
    * Transforms the @{@link ClusterSchemaDefinition} based on a provided JSON map. It can rename
-   * tables and column-families scoped to a table (TableName:ColumnFamily).
+   * tables before writing them to {@link SchemaWriter}.
    *
-   * <p>JSON map should look like { "SourceTable": "DestinationTable", "SourceTable:CF":
-   * "destinationCF" // renames CF from SourceTable to destinationCF. }
+   * <p>JSON map should look like { "SourceTable": "DestinationTable",
+   * "sourceTable-2":"DestinationTable-2"}
    */
   static class JsonBasedSchemaTransformer implements SchemaTransformer {
 
-    // ':' is a good choice since it can not be present in either tableName or column family name.
-    public static final String COLUMN_FAMILY_SEPARATOR = ":";
-    private final String mappingFilePath;
-
     // Map from old-tableName -> new-tableName
     @VisibleForTesting Map<String, String> tableNameMappings;
-    // Map of column families mapping scoped by a table. {tableName -> {old-family -> new-family}}
-    @VisibleForTesting Map<String, Map<String, String>> tableScopedColumnFamilyMappings;
-
-    public JsonBasedSchemaTransformer(String mappingFilePath) {
-      this.mappingFilePath = mappingFilePath;
-      tableNameMappings = new HashMap<>();
-      tableScopedColumnFamilyMappings = new HashMap<>();
-    }
 
     @VisibleForTesting
-    void parseMappingFile() throws IOException {
+    JsonBasedSchemaTransformer(Map<String, String> tableNameMappings) {
+      this.tableNameMappings = tableNameMappings;
+      LOG.info("Creating SchemaTransformer with schema mapping: {}", tableNameMappings);
+    }
 
+    public static JsonBasedSchemaTransformer newSchemaTransformerFromJsonFile(
+        String mappingFilePath) throws IOException {
+
+      Map<String, String> tableNameMappings = null;
       Type mapType = new TypeToken<Map<String, String>>() {}.getType();
-      Map<String, String> schemaMapping = null;
 
       try (Reader jsonReader = new FileReader(mappingFilePath)) {
-        schemaMapping = new Gson().fromJson(jsonReader, mapType);
+        tableNameMappings = new Gson().fromJson(jsonReader, mapType);
       }
 
-      if (schemaMapping == null) {
+      if (tableNameMappings == null) {
         throw new IllegalStateException(
             "SchemaMapping file does not contain valid schema mappings");
       }
 
-      // Read the mapping file and organize the transformations in a structured way.
-      // Please note that we consciously chose a flat JSON file to make it easy for users to
-      // configure the schema translator.
-      for (Map.Entry<String, String> entry : schemaMapping.entrySet()) {
-        // Presence of a ":" indicates that the override is for a column family scoped to a table.
-        if (entry.getKey().contains(COLUMN_FAMILY_SEPARATOR)) {
-          // Split the key on separator. First part is the table and second part is column family.
-          String[] tableAndColumnFamily = entry.getKey().split(COLUMN_FAMILY_SEPARATOR, 2);
-          String table = tableAndColumnFamily[0];
-          String cf = tableAndColumnFamily[1];
-          tableScopedColumnFamilyMappings.putIfAbsent(table, new HashMap<>());
-          // entry<K,V>: key is the source table:cf and value is new cf.
-          tableScopedColumnFamilyMappings.get(tableAndColumnFamily[0]).put(cf, entry.getValue());
-        } else {
-          // Add the table mappings.
-          tableNameMappings.put(entry.getKey(), entry.getValue());
-        }
-      }
+      return new JsonBasedSchemaTransformer(tableNameMappings);
     }
 
     @Override
     public ClusterSchemaDefinition transform(final ClusterSchemaDefinition originalSchema)
-        throws IOException, DeserializationException {
+        throws DeserializationException, IOException {
       ClusterSchemaDefinition transformedSchema = new ClusterSchemaDefinition();
-
-      // Parse the mappings
-      parseMappingFile();
 
       // Apply the transformations.
       for (TableSchemaDefinition tableSchemaDefinition : originalSchema.tableSchemaDefinitions) {
@@ -469,31 +443,12 @@ public class HBaseSchemaTranslator {
         // Override the table name if its present in the mapping file
         if (tableNameMappings.containsKey(newTableName)) {
           newTableName = tableNameMappings.get(newTableName);
+          LOG.info("Renaming table {} to {}.", tableSchemaDefinition.name, newTableName);
         }
+
         // Rename the table and copy all the other configs, including the column families.
         HTableDescriptor newTableDescriptor =
             new HTableDescriptor(TableName.valueOf(newTableName), tableDescriptor);
-
-        // For all the column families that need renaming, replace them.
-        if (tableScopedColumnFamilyMappings.containsKey(tableSchemaDefinition.name)) {
-          Map<String, String> cfMap =
-              tableScopedColumnFamilyMappings.get(tableSchemaDefinition.name);
-          for (Map.Entry<String, String> cfEntry : cfMap.entrySet()) {
-            HColumnDescriptor sourceFamily =
-                newTableDescriptor.getFamily(cfEntry.getKey().getBytes());
-
-            if (sourceFamily == null) {
-              throw new IllegalStateException(
-                  "Requested rename of a non existent column family: '"
-                      + cfEntry.getKey()
-                      + "', please make sure that there are no typos.");
-            }
-            // Its not possible to rename a columnFamily using the HColumnDescriptor interface
-            // So create a new family with same config and replace it in the HTableDescriptor.
-            newTableDescriptor.removeFamily(cfEntry.getKey().getBytes());
-            newTableDescriptor.addFamily(renameFamily(cfEntry.getValue(), sourceFamily));
-          }
-        }
 
         // finalize the transformed schema
         transformedSchema.addTableSchemaDefinition(
@@ -501,20 +456,11 @@ public class HBaseSchemaTranslator {
       }
       return transformedSchema;
     }
+  }
 
-    private HColumnDescriptor renameFamily(
-        final String newFamilyName, final HColumnDescriptor columnDescriptor) {
-      HColumnDescriptor newColumnDescriptor = new HColumnDescriptor(newFamilyName);
-      for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> valueEntry :
-          columnDescriptor.getValues().entrySet()) {
-        newColumnDescriptor.setValue(
-            valueEntry.getKey().copyBytes(), valueEntry.getValue().copyBytes());
-      }
-      for (Map.Entry<String, String> configEntry : columnDescriptor.getConfiguration().entrySet()) {
-        newColumnDescriptor.setConfiguration(configEntry.getKey(), configEntry.getValue());
-      }
-      return newColumnDescriptor;
-    }
+  @VisibleForTesting
+  HBaseSchemaTranslator(SchemaReader schemaReader, SchemaWriter schemaWriter) {
+    this(schemaReader, schemaWriter, new NoopSchemaTransformer());
   }
 
   @VisibleForTesting
