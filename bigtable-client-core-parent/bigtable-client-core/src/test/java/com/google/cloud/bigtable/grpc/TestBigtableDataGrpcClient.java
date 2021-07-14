@@ -81,7 +81,8 @@ import org.mockito.stubbing.Answer;
 @RunWith(JUnit4.class)
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TestBigtableDataGrpcClient {
-  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  // TODO: remove silent tighten mocks
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().silent();
 
   private static final String TABLE_NAME =
       new BigtableInstanceName("projectId", "instanceId").toTableNameStr("tableId");
@@ -227,7 +228,7 @@ public class TestBigtableDataGrpcClient {
   @Test
   public void testScanner() throws IOException {
     ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
-    requestBuilder.getRowsBuilder().addRowKeys(ByteString.EMPTY);
+
     ResultScanner<FlatRow> scanner = defaultClient.readFlatRows(requestBuilder.build());
     ArgumentCaptor<ClientCall.Listener> listenerCaptor =
         ArgumentCaptor.forClass(ClientCall.Listener.class);
@@ -339,7 +340,7 @@ public class TestBigtableDataGrpcClient {
     ListenableFuture<List<FlatRow>> resultFuture =
         defaultClient.readFlatRowsAsync(requestBuilder.build());
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 11; i++) {
       // Get the caller's listener for the current attempt.
       ArgumentCaptor<ClientCall.Listener> listenerCaptor =
           ArgumentCaptor.forClass(ClientCall.Listener.class);

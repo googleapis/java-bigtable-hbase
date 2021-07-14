@@ -178,6 +178,7 @@ limitations under the License.
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-grpclb</artifactId>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
@@ -216,21 +217,13 @@ limitations under the License.
       <version>${hbase1-metrics.version}</version>
     </dependency>
 
-    <!--  TODO: remove this dependency when upgraded through transitive dependency (http-client -> org.apache.httpcomponents:httpclient)
-this is not used directly, but upgrading due to transitive vulnerabilities in older versions-->
-    <dependency>
-      <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
-      <version>1.15</version>
-    </dependency>
-
     <!-- Test -->
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <!-- align version with veneer's flattened dep -->
-      <version>2.11.1</version>
-      <scope>test</scope>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <!-- bigtable-client-core uses gson for test only, however
+      google-cloud-bigtable needs its for compilation. -->
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
@@ -266,30 +259,24 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <trimStackTrace>false</trimStackTrace>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <!-- commons-codec is not used directly, but upgrading due to transitive vulnerabilities in older versions.
-          grpc-grpclb is a runtime dep-->
-          <usedDependencies>
-            <usedDependency>commons-codec:commons-codec</usedDependency>
-            <usedDependency>io.grpc:grpc-grpclb</usedDependency>
-          </usedDependencies>
-        </configuration>
-      </plugin>
-      <plugin>
         <!-- skip for bigtable-client-core to allow for upcoming refactoring-->
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>clirr-maven-plugin</artifactId>
         <configuration>
           <skip>true</skip>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <trimStackTrace>false</trimStackTrace>
+          <systemProperties>
+            <property>
+              <name>java.util.logging.config.file</name>
+              <value>src/test/resources/logging.properties</value>
+            </property>
+          </systemProperties>
         </configuration>
       </plugin>
     </plugins>

@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -60,6 +61,8 @@ public class TestBulkRead {
       new BigtableTableName("projects/SomeProject/instances/SomeInstance/tables/SomeTable");
   private static final RequestContext CONTEXT =
       RequestContext.create("SomeProject", "SomeInstance", "");
+
+  private static final Random random = new Random(2128506);
 
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
@@ -158,7 +161,7 @@ public class TestBulkRead {
                 Query request = invocation.getArgument(0, Query.class);
                 List<ByteString> rowKeysList =
                     new ArrayList<>(request.toProto(CONTEXT).getRows().getRowKeysList());
-                missing.add(rowKeysList.remove((int) Math.random() * rowKeysList.size()));
+                missing.add(rowKeysList.remove(random.nextInt(rowKeysList.size())));
                 return createMockScanner(rowKeysList.iterator());
               }
             });
@@ -202,7 +205,7 @@ public class TestBulkRead {
     List<ByteString> rowKeys = new ArrayList<>();
     for (int i = 0; i < count; i++) {
       // Create a random list of keys as input
-      rowKeys.add(ByteString.copyFromUtf8(String.valueOf((int) (Math.random() * 100000000))));
+      rowKeys.add(ByteString.copyFromUtf8(String.valueOf(random.nextInt(100000000))));
     }
     return rowKeys;
   }

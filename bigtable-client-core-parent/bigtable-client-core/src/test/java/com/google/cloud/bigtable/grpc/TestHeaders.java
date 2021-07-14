@@ -15,14 +15,8 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import static io.grpc.internal.GrpcUtil.USER_AGENT_KEY;
-
-import com.google.api.core.ApiFunction;
-import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
-import com.google.api.gax.rpc.FixedHeaderProvider;
-import com.google.api.gax.rpc.HeaderProvider;
 import com.google.bigtable.admin.v2.BigtableTableAdminGrpc;
 import com.google.bigtable.admin.v2.GetTableRequest;
 import com.google.bigtable.admin.v2.Table;
@@ -35,9 +29,7 @@ import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.data.v2.models.Query;
-import com.google.common.io.Resources;
 import io.grpc.ForwardingServerCall;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -45,17 +37,10 @@ import io.grpc.ServerCall;
 import io.grpc.ServerCallHandler;
 import io.grpc.ServerInterceptor;
 import io.grpc.ServerInterceptors;
-import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
-import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.stub.StreamObserver;
-import java.io.File;
 import java.net.ServerSocket;
-import java.net.URL;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
-import javax.net.ssl.SSLException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -133,54 +118,6 @@ public class TestHeaders {
     }
   }
 
-  /**
-   * Verify userAgent on TLS Negotiation with {@link InstantiatingGrpcChannelProvider} using SSL
-   * enabled server.
-   */
-  @Test
-  public void testGCJ_UserAgentUsingTLSNegotiation() throws Exception {
-    ServerSocket serverSocket = new ServerSocket(0);
-    final int availablePort = serverSocket.getLocalPort();
-    serverSocket.close();
-
-    // Creates SSL enabled server.
-    createSecuredServer(availablePort);
-
-    BigtableDataSettings.Builder builder =
-        BigtableDataSettings.newBuilder()
-            .setProjectId(TEST_PROJECT_ID)
-            .setInstanceId(TEST_INSTANCE_ID)
-            .setCredentialsProvider(NoCredentialsProvider.create());
-
-    // Loads secured Certificate
-    final SslContext sslContext = buildSslContext();
-
-    final String endpoint = "localhost" + ":" + availablePort;
-    HeaderProvider headers = FixedHeaderProvider.create(USER_AGENT_KEY.name(), TEST_USER_AGENT);
-
-    builder
-        .stubSettings()
-        .setTransportChannelProvider(
-            InstantiatingGrpcChannelProvider.newBuilder()
-                .setHeaderProvider(headers)
-                .setEndpoint(endpoint)
-                .setChannelConfigurator(
-                    new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-                      @Override
-                      public ManagedChannelBuilder apply(ManagedChannelBuilder input) {
-                        return ((NettyChannelBuilder) input).sslContext(sslContext);
-                      }
-                    })
-                .build());
-
-    // Setting this to null, because as of 3/4/2019 the header doesn't get passed through.
-    xGoogApiPattern = null;
-    try (BigtableDataClient dataClient = BigtableDataClient.create(builder.build())) {
-      dataClient.readRow(TABLE_ID, ROWKEY);
-      Assert.assertTrue(serverPasses.get());
-    }
-  }
-
   @Test
   public void testCBC_tracingCookie() throws Exception {
     ServerSocket serverSocket = new ServerSocket(0);
@@ -225,41 +162,6 @@ public class TestHeaders {
                     new BigtableExtendedAdminImpl(), new HeaderServerInterceptor()))
             .build();
     server.start();
-  }
-
-  /** Creates secured server to intercept TLS Negotiation RPCs. */
-  private void createSecuredServer(int port) throws Exception {
-    ServerBuilder builder =
-        ServerBuilder.forPort(port)
-            .addService(
-                ServerInterceptors.intercept(
-                    new BigtableExtendedImpl(), new HeaderServerInterceptor()));
-
-    try {
-      URL serverCertChain = Resources.getResource("sslCertificates/server.crt");
-      URL privateKey = Resources.getResource("sslCertificates/server.key");
-
-      builder.useTransportSecurity(
-          new File(serverCertChain.getFile()), new File(privateKey.getFile()));
-    } catch (Exception ex) {
-      throw new AssertionError("No server certificates found");
-    }
-    server = builder.build();
-    server.start();
-  }
-
-  /** Creates SSLContext from certificate & private key provided in classpath. */
-  private static SslContext buildSslContext() throws SSLException {
-    SslContextBuilder builder = GrpcSslContexts.forClient();
-
-    try {
-      URL url = Resources.getResource("sslCertificates/server.crt");
-      builder.trustManager(new File(url.getFile()));
-    } catch (Exception ex) {
-      throw new AssertionError("No client trust certificate found");
-    }
-
-    return builder.build();
   }
 
   /**

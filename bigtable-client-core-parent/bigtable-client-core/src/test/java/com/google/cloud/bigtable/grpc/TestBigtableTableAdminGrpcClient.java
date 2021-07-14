@@ -22,6 +22,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.bigtable.admin.v2.Backup;
 import com.google.bigtable.admin.v2.CheckConsistencyRequest;
 import com.google.bigtable.admin.v2.CheckConsistencyResponse;
 import com.google.bigtable.admin.v2.CreateBackupRequest;
@@ -41,6 +42,7 @@ import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest;
 import com.google.bigtable.admin.v2.RestoreTableRequest;
 import com.google.bigtable.admin.v2.SnapshotTableRequest;
 import com.google.bigtable.admin.v2.Table;
+import com.google.bigtable.admin.v2.UpdateBackupRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.iam.v1.GetIamPolicyRequest;
 import com.google.iam.v1.Policy;
@@ -54,6 +56,7 @@ import io.grpc.ClientCall.Listener;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -248,6 +251,17 @@ public class TestBigtableTableAdminGrpcClient {
     GetBackupRequest request = GetBackupRequest.newBuilder().setName(TABLE_NAME).build();
     complete();
     defaultClient.getBackupAsync(request).get(1, TimeUnit.SECONDS);
+    verifyRequestCalled(request);
+  }
+
+  @Test
+  public void testUpdateBackup() throws InterruptedException, ExecutionException, TimeoutException {
+    UpdateBackupRequest request =
+        UpdateBackupRequest.newBuilder()
+            .setBackup(Backup.newBuilder().setName("test").build())
+            .build();
+    complete();
+    defaultClient.updateBackupAsync(request).get(1, TimeUnit.SECONDS);
     verifyRequestCalled(request);
   }
 

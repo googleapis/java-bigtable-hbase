@@ -95,6 +95,12 @@ public class BigtableOptions implements Serializable, Cloneable {
     return Math.min(250, Math.max(1, availableProcessors * 4));
   }
 
+  private static int getDefaultMaxInflightRpcCount() {
+    int maxInflightRpcCount =
+        BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * getDefaultDataChannelCount();
+    return Math.min(20_000, maxInflightRpcCount);
+  }
+
   public static BigtableOptions getDefaultOptions() {
     return builder().build();
   }
@@ -123,6 +129,9 @@ public class BigtableOptions implements Serializable, Cloneable {
       options.dataChannelCount = BIGTABLE_DATA_CHANNEL_COUNT_DEFAULT;
       options.usePlaintextNegotiation = false;
       options.useCachedDataPool = false;
+
+      options.bulkOptions =
+          BulkOptions.builder().setMaxInflightRpcs(getDefaultMaxInflightRpcCount()).build();
 
       options.retryOptions = new RetryOptions.Builder().build();
       options.callOptionsConfig = CallOptionsConfig.builder().build();
@@ -212,9 +221,17 @@ public class BigtableOptions implements Serializable, Cloneable {
       return this;
     }
 
+    public RetryOptions getRetryOptions() {
+      return options.retryOptions;
+    }
+
     public Builder setBulkOptions(BulkOptions bulkOptions) {
       options.bulkOptions = bulkOptions;
       return this;
+    }
+
+    public BulkOptions getBulkOptions() {
+      return options.bulkOptions;
     }
 
     public Builder setUsePlaintextNegotiation(boolean usePlaintextNegotiation) {
@@ -238,6 +255,10 @@ public class BigtableOptions implements Serializable, Cloneable {
     public Builder setCallOptionsConfig(CallOptionsConfig callOptionsConfig) {
       options.callOptionsConfig = callOptionsConfig;
       return this;
+    }
+
+    public CallOptionsConfig getCallOptionsConfig() {
+      return options.callOptionsConfig;
     }
 
     public Builder setUseBatch(boolean useBatch) {
@@ -300,15 +321,14 @@ public class BigtableOptions implements Serializable, Cloneable {
     }
 
     public BigtableOptions build() {
-      if (options.bulkOptions == null) {
-        int maxInflightRpcs =
-            BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * options.dataChannelCount;
-        options.bulkOptions = BulkOptions.builder().setMaxInflightRpcs(maxInflightRpcs).build();
-      } else if (options.bulkOptions.getMaxInflightRpcs() <= 0) {
-        int maxInflightRpcs =
-            BulkOptions.BIGTABLE_MAX_INFLIGHT_RPCS_PER_CHANNEL_DEFAULT * options.dataChannelCount;
+      Preconditions.checkNotNull(options.bulkOptions, "bulk options cannot be null");
+      if (options.bulkOptions.getMaxInflightRpcs() <= 0) {
         options.bulkOptions =
-            options.bulkOptions.toBuilder().setMaxInflightRpcs(maxInflightRpcs).build();
+            options
+                .bulkOptions
+                .toBuilder()
+                .setMaxInflightRpcs(getDefaultMaxInflightRpcCount())
+                .build();
       }
       applyEmulatorEnvironment();
       options.adminHost = Preconditions.checkNotNull(options.adminHost);
@@ -601,7 +621,7 @@ public class BigtableOptions implements Serializable, Cloneable {
     try {
       return (BigtableOptions) super.clone();
     } catch (CloneNotSupportedException e) {
-      throw new RuntimeException("Could not cloe BigtableOptions");
+      throw new RuntimeException("Could not clone BigtableOptions");
     }
   }
 }
