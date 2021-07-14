@@ -30,7 +30,7 @@ public class BigtableVersionInfo {
   private static final Logger LOG = new Logger(BigtableVersionInfo.class);
   private static final AtomicBoolean wasInitialized = new AtomicBoolean(false);
 
-  // {x-version-update-start:bigtable-client-parent}
+  // {x-version-update-start:bigtable-client-parent:current}
   public static final String CLIENT_VERSION = "1.23.0";
   // {x-version-update-end}
   public static final String JDK_VERSION = getJavaVersion();
