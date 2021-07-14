@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.23.0](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.22.0...v1.23.0) (2021-07-14)
+
+
+### Features
+
+* backport features from main branch ([#3151](https://www.github.com/googleapis/java-bigtable-hbase/issues/3151)) ([712c650](https://www.github.com/googleapis/java-bigtable-hbase/commit/712c650a310d8db89f9ab94d9d820b26af00cf18))
+* implement veneer metrics part 1 - implement MetricsApiTracerAdapter ([#2631](https://www.github.com/googleapis/java-bigtable-hbase/issues/2631)) ([#3034](https://www.github.com/googleapis/java-bigtable-hbase/issues/3034)) ([42ec2ad](https://www.github.com/googleapis/java-bigtable-hbase/commit/42ec2ad3b7cbf427c15494a2f42a4000ac7ce91c))
+* remove gcj wrappers from bigtable-client-core and remove BIGTABLE_USE_GCJ_CLIENT  ([#3057](https://www.github.com/googleapis/java-bigtable-hbase/issues/3057)) ([4ce242d](https://www.github.com/googleapis/java-bigtable-hbase/commit/4ce242da82a7330757e7e6a945dfaecd8c71ab2d))
+
+
+### Bug Fixes
+
+* Extend retry timeout for batch jobs from 5mins to 20 mins. ([#3050](https://www.github.com/googleapis/java-bigtable-hbase/issues/3050)) ([b5aad36](https://www.github.com/googleapis/java-bigtable-hbase/commit/b5aad366925fe0a0fbc55a8e92fafd03fc893451))
+* use binary search in async region locator ([#3045](https://www.github.com/googleapis/java-bigtable-hbase/issues/3045)) ([857af34](https://www.github.com/googleapis/java-bigtable-hbase/commit/857af344e1c242ec3312f7ef725ffa5872446f24))
+
+
+### Dependencies
+
+* upgrade veneer to 1.27.1 ([#3054](https://www.github.com/googleapis/java-bigtable-hbase/issues/3054)) ([efed001](https://www.github.com/googleapis/java-bigtable-hbase/commit/efed0011ffba9552b83e69cd75323fde385eadb4))
+
 ## [1.22.0](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.21.1...v1.22.0) (2021-06-30)
 
 
