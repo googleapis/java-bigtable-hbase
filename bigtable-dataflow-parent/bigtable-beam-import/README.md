@@ -101,7 +101,7 @@ Exporting HBase snapshots from Bigtable is not supported.
     ```
 1. Run the export.
    ```
-   java -jar bigtable-beam-import-1.20.0-shaded.jar export \
+   java -jar bigtable-beam-import-1.23.0-shaded.jar export \
         --runner=dataflow \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
@@ -141,7 +141,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
     
 1. Run the import.
     ```
-    java -jar bigtable-beam-import-1.20.0-SNAPSHOT-shaded.jar importsnapshot \
+    java -jar bigtable-beam-import-1.23.0-SNAPSHOT-shaded.jar importsnapshot \
         --runner=DataflowRunner \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
@@ -169,7 +169,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
     ```
 1. Run the import.
     ```
-    java -jar bigtable-beam-import-1.20.0-shaded.jar import \
+    java -jar bigtable-beam-import-1.23.0-shaded.jar import \
         --runner=dataflow \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_D \
@@ -197,7 +197,7 @@ check if there are any rows with mismatched data.
     ```
 1. Run the sync job. It will put the results into `$SNAPSHOT_GCS_PATH/data-verification/output-TIMESTAMP`. 
     ```
-    java -jar bigtable-beam-import-1.20.0-SNAPSHOT-shaded.jar sync-table  \
+    java -jar bigtable-beam-import-1.23.0-SNAPSHOT-shaded.jar sync-table  \
         --runner=dataflow \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_D \
