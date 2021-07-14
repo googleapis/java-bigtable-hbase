@@ -44,8 +44,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class HBaseSchemaTransformerTest {
 
-  @Rule
-  public TemporaryFolder tempFolder = new TemporaryFolder();
+  @Rule public TemporaryFolder tempFolder = new TemporaryFolder();
 
   private String schemaFilePath;
   private JsonBasedSchemaTransformer schemaTransformer;
@@ -134,9 +133,15 @@ public class HBaseSchemaTransformerTest {
     ClusterSchemaDefinition transformedClusterSchema = transformer.transform(schemaDefinition);
 
     // Verify transformation
-    Assert.assertEquals(transformedClusterSchema.tableSchemaDefinitions.get(0).name, schemaDefinition.tableSchemaDefinitions.get(0).name);
-    Assert.assertEquals(transformedClusterSchema.tableSchemaDefinitions.get(0).getHbaseTableDescriptor(), schemaDefinition.tableSchemaDefinitions.get(0).getHbaseTableDescriptor());
-    Assert.assertEquals(transformedClusterSchema.tableSchemaDefinitions.get(0).splits, schemaDefinition.tableSchemaDefinitions.get(0).splits);
+    Assert.assertEquals(
+        transformedClusterSchema.tableSchemaDefinitions.get(0).name,
+        schemaDefinition.tableSchemaDefinitions.get(0).name);
+    Assert.assertEquals(
+        transformedClusterSchema.tableSchemaDefinitions.get(0).getHbaseTableDescriptor(),
+        schemaDefinition.tableSchemaDefinitions.get(0).getHbaseTableDescriptor());
+    Assert.assertEquals(
+        transformedClusterSchema.tableSchemaDefinitions.get(0).splits,
+        schemaDefinition.tableSchemaDefinitions.get(0).splits);
   }
 
   @Test
@@ -164,9 +169,15 @@ public class HBaseSchemaTransformerTest {
     ClusterSchemaDefinition transformedClusterSchema = transformer.transform(schemaDefinition);
 
     // Verify transformation
-    Assert.assertEquals(transformedClusterSchema.tableSchemaDefinitions.get(0).name, schemaDefinition.tableSchemaDefinitions.get(0).name);
-    Assert.assertEquals(transformedClusterSchema.tableSchemaDefinitions.get(0).getHbaseTableDescriptor(), schemaDefinition.tableSchemaDefinitions.get(0).getHbaseTableDescriptor());
-    Assert.assertEquals(transformedClusterSchema.tableSchemaDefinitions.get(0).splits, schemaDefinition.tableSchemaDefinitions.get(0).splits);
+    Assert.assertEquals(
+        transformedClusterSchema.tableSchemaDefinitions.get(0).name,
+        schemaDefinition.tableSchemaDefinitions.get(0).name);
+    Assert.assertEquals(
+        transformedClusterSchema.tableSchemaDefinitions.get(0).getHbaseTableDescriptor(),
+        schemaDefinition.tableSchemaDefinitions.get(0).getHbaseTableDescriptor());
+    Assert.assertEquals(
+        transformedClusterSchema.tableSchemaDefinitions.get(0).splits,
+        schemaDefinition.tableSchemaDefinitions.get(0).splits);
   }
 
   @Test
@@ -195,17 +206,26 @@ public class HBaseSchemaTransformerTest {
     JsonBasedSchemaTransformer transformer = new JsonBasedSchemaTransformer(schemaMapping);
 
     ClusterSchemaDefinition transformedClusterSchema = transformer.transform(schemaDefinition);
-    TableSchemaDefinition expectedTableSchema =new TableSchemaDefinition(new HTableDescriptor(TableName.valueOf("new-table1"), schemaDefinition.tableSchemaDefinitions.get(0).getHbaseTableDescriptor()),
-        tableSchemaDefinition.splits);
+    TableSchemaDefinition expectedTableSchema =
+        new TableSchemaDefinition(
+            new HTableDescriptor(
+                TableName.valueOf("new-table1"),
+                schemaDefinition.tableSchemaDefinitions.get(0).getHbaseTableDescriptor()),
+            tableSchemaDefinition.splits);
 
     // Verify transformation
     Assert.assertEquals("new-table1", transformedClusterSchema.tableSchemaDefinitions.get(0).name);
-    Assert.assertEquals(expectedTableSchema.getHbaseTableDescriptor(), transformedClusterSchema.tableSchemaDefinitions.get(0).getHbaseTableDescriptor());
-    Assert.assertEquals(transformedClusterSchema.tableSchemaDefinitions.get(0).splits, schemaDefinition.tableSchemaDefinitions.get(0).splits);
+    Assert.assertEquals(
+        expectedTableSchema.getHbaseTableDescriptor(),
+        transformedClusterSchema.tableSchemaDefinitions.get(0).getHbaseTableDescriptor());
+    Assert.assertEquals(
+        transformedClusterSchema.tableSchemaDefinitions.get(0).splits,
+        schemaDefinition.tableSchemaDefinitions.get(0).splits);
   }
 
   @Test
-  public void testTransformWithinCustomNamespaceTable() throws DeserializationException, IOException {
+  public void testTransformWithinCustomNamespaceTable()
+      throws DeserializationException, IOException {
 
     // Setup a cluster schema
     ClusterSchemaDefinition schemaDefinition = new ClusterSchemaDefinition();
@@ -229,14 +249,20 @@ public class HBaseSchemaTransformerTest {
     JsonBasedSchemaTransformer transformer = new JsonBasedSchemaTransformer(schemaMapping);
 
     ClusterSchemaDefinition transformedClusterSchema = transformer.transform(schemaDefinition);
-    TableSchemaDefinition expectedTableSchema =new TableSchemaDefinition(new HTableDescriptor(TableName.valueOf("new-table1"), schemaDefinition.tableSchemaDefinitions.get(0).getHbaseTableDescriptor()),
-        tableSchemaDefinition.splits);
+    TableSchemaDefinition expectedTableSchema =
+        new TableSchemaDefinition(
+            new HTableDescriptor(
+                TableName.valueOf("new-table1"),
+                schemaDefinition.tableSchemaDefinitions.get(0).getHbaseTableDescriptor()),
+            tableSchemaDefinition.splits);
 
     // Verify transformation
     Assert.assertEquals("new-table1", transformedClusterSchema.tableSchemaDefinitions.get(0).name);
-    Assert.assertEquals(expectedTableSchema.getHbaseTableDescriptor(), transformedClusterSchema.tableSchemaDefinitions.get(0).getHbaseTableDescriptor());
-    Assert.assertEquals(transformedClusterSchema.tableSchemaDefinitions.get(0).splits, schemaDefinition.tableSchemaDefinitions.get(0).splits);
-
+    Assert.assertEquals(
+        expectedTableSchema.getHbaseTableDescriptor(),
+        transformedClusterSchema.tableSchemaDefinitions.get(0).getHbaseTableDescriptor());
+    Assert.assertEquals(
+        transformedClusterSchema.tableSchemaDefinitions.get(0).splits,
+        schemaDefinition.tableSchemaDefinitions.get(0).splits);
   }
-
 }

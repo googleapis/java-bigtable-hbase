@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase.tools;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
-import com.google.common.base.Objects;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
