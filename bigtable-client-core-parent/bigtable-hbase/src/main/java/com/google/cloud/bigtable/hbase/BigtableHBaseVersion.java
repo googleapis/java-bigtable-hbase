@@ -16,50 +16,56 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.hbase.util.Logger;
+import com.google.common.base.Joiner;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
+import java.net.URL;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 
-/**
- * The version in this class is project build version specified in the maven. Maven reads the
- * <strong>bigtable-hbase.properties</strong> file present in the resources directory and replaces
- * the property placeholder with project version.
- *
- * <p>For internal use only - public for technical reasons.
- */
+/** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
 public class BigtableHBaseVersion {
+  private static final Log LOG = LogFactory.getLog(BigtableHBaseVersion.class);
 
-  private static final Logger LOG = new Logger(BigtableHBaseVersion.class);
+  private static final AtomicBoolean wasInitialized = new AtomicBoolean(false);
+
+  // {x-version-update-start:bigtable-client-parent}
+  public static final String VERSION = "2.0.0-alpha-1-SNAPSHOT";
+  // {x-version-update-end}
 
   /**
    * Gets user agent from bigtable-hbase-version.properties. Returns a default dev user agent with
    * current timestamp if not found.
    */
   public static String getVersion() {
-    final String defaultVersion = "dev-" + System.currentTimeMillis();
-    final String fileName = "bigtable-hbase-version.properties";
-    final String versionProperty = "bigtable-hbase.version";
-    try (InputStream stream = BigtableHBaseVersion.class.getResourceAsStream(fileName)) {
-      if (stream == null) {
-        LOG.error("Could not load properties file %s", fileName);
-        return defaultVersion;
-      }
-
-      Properties properties = new Properties();
-      properties.load(stream);
-      String value = properties.getProperty(versionProperty);
-      if (value == null) {
-        LOG.error("%s not found in %s.", versionProperty, fileName);
-      } else if (value.startsWith("$")) {
-        LOG.info("%s property is not replaced.", versionProperty);
-      } else {
-        return value;
-      }
-    } catch (IOException e) {
-      LOG.error("Error while trying to get user agent name from %s", e, fileName);
+    if (wasInitialized.compareAndSet(false, true)) {
+      warnOnVersionConflict();
     }
-    return defaultVersion;
+    return VERSION;
+  }
+
+  private static void warnOnVersionConflict() {
+    List<URL> classResources;
+    // Use AbstractBigtableConnection as a marker to detect multiple versions on the classpath
+    // Convert package.name.class.name -> package/name/class/name.class so that the classfile could
+    // be probed as a resource
+    String knownClassResourcePath =
+        AbstractBigtableConnection.class.getName().replaceAll("\\.", "/") + ".class";
+    try {
+      classResources = Collections.list(ClassLoader.getSystemResources(knownClassResourcePath));
+    } catch (IOException e) {
+      LOG.warn("Failed to probe for client version conflicts", e);
+      return;
+    }
+
+    if (classResources.size() != 1) {
+      LOG.warn(
+          "Found multiple copies of the bigtable-hbase on the classpath: "
+              + Joiner.on(',').join(classResources));
+    }
   }
 }
