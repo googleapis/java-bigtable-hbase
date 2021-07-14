@@ -51,7 +51,6 @@ import org.junit.runners.Suite;
   TestTimestamp.class,
   TestTruncateTable.class,
   TestModifyTable.class,
-  DirectPathFallbackIT.class,
 })
 public class IntegrationTests {
   @ClassRule public static SharedTestEnvRule sharedTestEnvRule = SharedTestEnvRule.getInstance();
