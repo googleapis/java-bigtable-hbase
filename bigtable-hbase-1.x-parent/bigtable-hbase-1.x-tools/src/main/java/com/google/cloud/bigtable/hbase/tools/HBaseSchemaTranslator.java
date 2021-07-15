@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -249,14 +250,17 @@ public class HBaseSchemaTranslator {
         return new byte[0][];
       }
 
-      byte[][] splits = new byte[regions.size()][];
-      int i = 0;
+      List<byte[]> splits = new ArrayList<>();
       for (HRegionInfo region : regions) {
-        splits[i] = region.getStartKey();
-        i++;
+        if (Arrays.equals(region.getStartKey(), HConstants.EMPTY_START_ROW)) {
+          // CBT client does not accept an empty row as a split.
+          continue;
+        }
+        splits.add(region.getStartKey());
       }
-      LOG.debug("Found {} splits for table {}.", splits.length, table.getNameAsString());
-      return splits;
+
+      LOG.debug("Found {} splits for table {}.", splits.size(), table.getNameAsString());
+      return splits.toArray(new byte[0][]);
     }
 
     @Override

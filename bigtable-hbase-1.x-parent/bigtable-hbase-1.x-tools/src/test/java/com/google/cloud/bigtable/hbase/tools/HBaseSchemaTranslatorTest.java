@@ -154,7 +154,9 @@ public class HBaseSchemaTranslatorTest {
     Mockito.verify(btAdmin)
         .createTable(
             eq(schemaDefinition.tableSchemaDefinitions.get(0).getHbaseTableDescriptor()),
-            eq(schemaDefinition.tableSchemaDefinitions.get(0).splits));
+            // First split is EMPTY_BYTE_ARRAY which gets filtered as CBT does not support empty
+            // splits.
+            eq(Arrays.copyOfRange(schemaDefinition.tableSchemaDefinitions.get(0).splits, 1, 3)));
     Mockito.verify(btAdmin)
         .createTable(
             eq(schemaDefinition.tableSchemaDefinitions.get(1).getHbaseTableDescriptor()),
@@ -194,7 +196,10 @@ public class HBaseSchemaTranslatorTest {
     // Verify
     Mockito.verify(btAdmin)
         .createTable(
-            tableCaptor.capture(), eq(schemaDefinition.tableSchemaDefinitions.get(0).splits));
+            tableCaptor.capture(),
+            // First split is EMPTY_BYTE_ARRAY which gets filtered as CBT does not support empty
+            // splits.
+            eq(Arrays.copyOfRange(schemaDefinition.tableSchemaDefinitions.get(0).splits, 1, 3)));
     Mockito.verify(btAdmin)
         .createTable(
             tableCaptor.capture(), eq(schemaDefinition.tableSchemaDefinitions.get(1).splits));
@@ -241,7 +246,9 @@ public class HBaseSchemaTranslatorTest {
     Mockito.verify(btAdmin)
         .createTable(
             eq(schemaDefinition.tableSchemaDefinitions.get(0).getHbaseTableDescriptor()),
-            eq(schemaDefinition.tableSchemaDefinitions.get(0).splits));
+            // First split is EMPTY_BYTE_ARRAY which gets filtered as CBT does not support empty
+            // splits.
+            eq(Arrays.copyOfRange(schemaDefinition.tableSchemaDefinitions.get(0).splits, 1, 3)));
     Mockito.verify(btAdmin)
         .createTable(
             eq(schemaDefinition.tableSchemaDefinitions.get(1).getHbaseTableDescriptor()),
@@ -317,7 +324,9 @@ public class HBaseSchemaTranslatorTest {
         .when(btAdmin)
         .createTable(
             eq(schemaDefinition.tableSchemaDefinitions.get(0).getHbaseTableDescriptor()),
-            eq(schemaDefinition.tableSchemaDefinitions.get(0).splits));
+            // First split is EMPTY_BYTE_ARRAY which gets filtered as CBT does not support empty
+            // splits.
+            eq(Arrays.copyOfRange(schemaDefinition.tableSchemaDefinitions.get(0).splits, 1, 3)));
 
     HBaseSchemaTranslator translator =
         new HBaseSchemaTranslator(
@@ -337,7 +346,9 @@ public class HBaseSchemaTranslatorTest {
       Mockito.verify(btAdmin)
           .createTable(
               eq(schemaDefinition.tableSchemaDefinitions.get(0).getHbaseTableDescriptor()),
-              eq(schemaDefinition.tableSchemaDefinitions.get(0).splits));
+              // First split is EMPTY_BYTE_ARRAY which gets filtered as CBT does not support empty
+              // splits.
+              eq(Arrays.copyOfRange(schemaDefinition.tableSchemaDefinitions.get(0).splits, 1, 3)));
       // Validate that translator calls createTable for  test-table-2 even after creation of
       // test-table1 failed.
       Mockito.verify(btAdmin)
