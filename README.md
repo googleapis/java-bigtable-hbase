@@ -20,7 +20,7 @@ Hadoop, as well as Google Cloud Platform products like Cloud Dataflow and
 Dataproc. Plus, Bigtable supports the open-source, industry-standard HBase API,
 which makes it easy for development teams to get started.
 
-**Note**: If you are looking for a Java client to access Bigtable APIs directly, please use [google-cloud-bigtable][google-cloud-bigtable]. These artifacts are meant to wrap HBase over the Bigtable API.
+**Note**: These artifacts are meant to wrap HBase over the Bigtable API. If you are looking for a Java client to access Bigtable APIs directly, please use [google-cloud-bigtable][google-cloud-bigtable].
 
 ## Project setup, installation, and configuration
 
