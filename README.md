@@ -274,14 +274,20 @@ You can also subscribe to
 [google-cloud-bigtable-announce@][google-cloud-bigtable-announce] list to receive
 infrequent product and client library announcements.
 
-## Contributing changes
+## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for more information on how to contribute
-to this project.
+
+Contributions to this library are always welcome and highly encouraged.
+
+See [CONTRIBUTING][contributing] for more information how to get started.
+
+Please note that this project is released with a Contributor Code of Conduct. By participating in
+this project you agree to abide by its terms. See [Code of Conduct][code-of-conduct] for more
+information.
 
 ## License
 
-Apache 2.0; see [LICENSE](LICENSE) for details.
+Apache 2.0 - See [LICENSE][license] for more information.
 
 ## CI Status
 
@@ -296,17 +302,11 @@ Java is a registered trademark of Oracle and/or its affiliates.
 
 <!-- references -->
 
-[maven-hbase-shield]: https://maven-badges.herokuapp.com/maven-central/com.google.cloud.bigtable/bigtable-client-core/badge.svg
-[maven-hbase-client-maven-search]: http://search.maven.org/#search%7Cga%7C1%7Ccom.google.cloud.bigtable
-[maven-google-cloud-java-shield]: https://maven-badges.herokuapp.com/maven-central/com.google.cloud/google-cloud-bigtable/badge.svg
-[maven-google-cloud-java-maven-search]: https://search.maven.org/search?q=a:google-cloud-bigtable
-[npm-shield]: https://badge.fury.io/js/%40google-cloud%2Fbigtable.svg
-[npm-bigtable-client]: https://www.npmjs.com/package/@google-cloud/bigtable
+[maven-hbase-shield]: https://maven-badges.herokuapp.com/maven-central/com.google.cloud.bigtable/bigtable-hbase/badge.svg
+[maven-hbase-client-maven-search]: http://search.maven.org/#search%7Cga%7C1%7Cg:com.google.cloud.bigtable
 [stackoverflow-shield]: https://img.shields.io/badge/stackoverflow-google--cloud--bigtable-blue.svg
 [stackoverflow-link]: http://stackoverflow.com/search?q=[google-cloud-bigtable]
 [integrations]: https://cloud.google.com/bigtable/docs/integrations
-[maven-hbase-client-repo]: https://github.com/googleapis/cloud-bigtable-client
-[maven-bigtable-nodejs-repo]: https://github.com/googleapis/nodejs-bigtable
 [maven-examples-repo]: https://github.com/GoogleCloudPlatform/cloud-bigtable-examples
 [google-cloud-bigtable-discuss]: https://groups.google.com/group/google-cloud-bigtable-discuss
 [google-cloud-bigtable-announce]: https://groups.google.com/group/google-cloud-bigtable-announce
@@ -320,3 +320,6 @@ Java is a registered trademark of Oracle and/or its affiliates.
 [kokoro-badge-link-3]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java11.html
 [kokoro-badge-image-4]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/integration.svg
 [kokoro-badge-link-4]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/integration.html
+[contributing]: https://github.com/googleapis/java-bigtable-hbase/blob/master/CONTRIBUTING.md
+[code-of-conduct]: https://github.com/googleapis/java-bigtable-hbase/blob/master/CODE_OF_CONDUCT.md#contributor-code-of-conduct
+[license]: https://github.com/googleapis/java-bigtable-hbase/blob/master/LICENSE
