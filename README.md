@@ -274,21 +274,6 @@ You can also subscribe to
 [google-cloud-bigtable-announce@][google-cloud-bigtable-announce] list to receive
 infrequent product and client library announcements.
 
-## Clients and Repositories
-
-| Name | Language | Repository | latest version | status |
-| --- | --- | --- | --- | --- |
-| Cloud Bigtable Examples | Java, others | [GoogleCloudPlatform/cloud-bigtable-examples][maven-examples-repo] | | |
-| HBase client | Java | [googleapis/cloud-bigtable-client][maven-hbase-client-repo] | [![Maven][maven-hbase-shield]][maven-hbase-client-maven-search] | GA |
-| Cloud Bigtable GoLang | Go | [googleapis/google-cloud-go](https://github.com/googleapis/google-cloud-go) | N/A | GA |
-| Cloud Bigtable Java | Java | [googleapis/java-bigtable][google-cloud-bigtable] | [![Maven][maven-google-cloud-java-shield]][maven-google-cloud-java-maven-search] | GA |
-| Cloud Bigtable Python | Python | [googleapis/google-cloud-python](http://github.com/googleapis/google-cloud-python) | [![PyPI version](https://badge.fury.io/py/google-cloud-bigtable.svg)](https://badge.fury.io/py/google-cloud-bigtable) | Beta |
-| Cloud Bigtable Node.js | Node | [googleaps/nodejs-bigtable][maven-bigtable-nodejs-repo] | [![npm version][npm-shield]][npm-bigtable-client] | GA |
-| Cloud Bigtable C# | C# | [googleapis/google-cloud-dotnet](http://github.com/googleapis/google-cloud-dotnet) | [![NuGet version](https://badge.fury.io/nu/Google.Cloud.Bigtable.V2.svg)](https://badge.fury.io/nu/Google.Cloud.Bigtable.V2) | GA |
-| Cloud Bigtable C++ | C++ | [googleapis/google-cloud-cpp](http://github.com/googleapis/google-cloud-cpp) | 0.9.0 | Beta |
-| Cloud Bigtable Ruby | Ruby | [googleapis/google-cloud-ruby](http://github.com/googleapis/google-cloud-ruby) | [![Gem Version](https://badge.fury.io/rb/google-cloud-bigtable.svg)](https://badge.fury.io/rb/google-cloud-bigtable) | Beta |
-| Cloud Bigtable PHP | PHP | [googleapis/google-cloud-php](http://github.com/googleapis/google-cloud-php) | [![Latest Stable Version](https://poser.pugx.org/google/cloud/v/stable)](https://packagist.org/packages/google/cloud) | Beta  |
-
 ## Contributing changes
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for more information on how to contribute
@@ -297,6 +282,17 @@ to this project.
 ## License
 
 Apache 2.0; see [LICENSE](LICENSE) for details.
+
+## CI Status
+
+Java Version | Status
+------------ | ------
+Java 8 | [![Kokoro CI][kokoro-badge-image-1]][kokoro-badge-link-1]
+Java 8 OSX | [![Kokoro CI][kokoro-badge-image-2]][kokoro-badge-link-2]
+Java 11 | [![Kokoro CI][kokoro-badge-image-3]][kokoro-badge-link-3]
+Integration | [![Kokoro CI][kokoro-badge-image-4]][kokoro-badge-link-4]
+
+Java is a registered trademark of Oracle and/or its affiliates.
 
 <!-- references -->
 
@@ -316,3 +312,11 @@ Apache 2.0; see [LICENSE](LICENSE) for details.
 [google-cloud-bigtable-announce]: https://groups.google.com/group/google-cloud-bigtable-announce
 [google-cloud-bigtable-emulator]: https://github.com/googleapis/google-cloud-java/tree/master/google-cloud-testing/google-cloud-bigtable-emulator
 [google-cloud-bigtable]: https://github.com/googleapis/java-bigtable
+[kokoro-badge-image-1]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java8.svg
+[kokoro-badge-link-1]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java8.html
+[kokoro-badge-image-2]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java8-osx.svg
+[kokoro-badge-link-2]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java8-osx.html
+[kokoro-badge-image-3]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java11.svg
+[kokoro-badge-link-3]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java11.html
+[kokoro-badge-image-4]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/integration.svg
+[kokoro-badge-link-4]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/integration.html
