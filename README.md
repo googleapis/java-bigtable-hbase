@@ -20,7 +20,7 @@ Hadoop, as well as Google Cloud Platform products like Cloud Dataflow and
 Dataproc. Plus, Bigtable supports the open-source, industry-standard HBase API,
 which makes it easy for development teams to get started.
 
-Note: Please use [google-cloud-bigtable][google-cloud-bigtable] to access Bigtable APIs instead of `bigtable-core-client`. These artifacts are meant to wrap HBase over Bigtable API. 
+**Note**: These artifacts are meant to wrap HBase over the Bigtable API. If you are looking for a Java client to access Bigtable APIs directly, please use [google-cloud-bigtable][google-cloud-bigtable].
 
 ## Project setup, installation, and configuration
 
@@ -274,45 +274,52 @@ You can also subscribe to
 [google-cloud-bigtable-announce@][google-cloud-bigtable-announce] list to receive
 infrequent product and client library announcements.
 
-## Clients and Repositories
+## Contributing
 
-| Name | Language | Repository | latest version | status |
-| --- | --- | --- | --- | --- |
-| Cloud Bigtable Examples | Java, others | [GoogleCloudPlatform/cloud-bigtable-examples][maven-examples-repo] | | |
-| HBase client | Java | [googleapis/cloud-bigtable-client][maven-hbase-client-repo] | [![Maven][maven-hbase-shield]][maven-hbase-client-maven-search] | GA |
-| Cloud Bigtable GoLang | Go | [googleapis/google-cloud-go](https://github.com/googleapis/google-cloud-go) | N/A | GA |
-| Cloud Bigtable Java | Java | [googleapis/java-bigtable][google-cloud-bigtable] | [![Maven][maven-google-cloud-java-shield]][maven-google-cloud-java-maven-search] | GA |
-| Cloud Bigtable Python | Python | [googleapis/google-cloud-python](http://github.com/googleapis/google-cloud-python) | [![PyPI version](https://badge.fury.io/py/google-cloud-bigtable.svg)](https://badge.fury.io/py/google-cloud-bigtable) | Beta |
-| Cloud Bigtable Node.js | Node | [googleaps/nodejs-bigtable][maven-bigtable-nodejs-repo] | [![npm version][npm-shield]][npm-bigtable-client] | GA |
-| Cloud Bigtable C# | C# | [googleapis/google-cloud-dotnet](http://github.com/googleapis/google-cloud-dotnet) | [![NuGet version](https://badge.fury.io/nu/Google.Cloud.Bigtable.V2.svg)](https://badge.fury.io/nu/Google.Cloud.Bigtable.V2) | GA |
-| Cloud Bigtable C++ | C++ | [googleapis/google-cloud-cpp](http://github.com/googleapis/google-cloud-cpp) | 0.9.0 | Beta |
-| Cloud Bigtable Ruby | Ruby | [googleapis/google-cloud-ruby](http://github.com/googleapis/google-cloud-ruby) | [![Gem Version](https://badge.fury.io/rb/google-cloud-bigtable.svg)](https://badge.fury.io/rb/google-cloud-bigtable) | Beta |
-| Cloud Bigtable PHP | PHP | [googleapis/google-cloud-php](http://github.com/googleapis/google-cloud-php) | [![Latest Stable Version](https://poser.pugx.org/google/cloud/v/stable)](https://packagist.org/packages/google/cloud) | Beta  |
 
-## Contributing changes
+Contributions to this library are always welcome and highly encouraged.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for more information on how to contribute
-to this project.
+See [CONTRIBUTING][contributing] for more information how to get started.
+
+Please note that this project is released with a Contributor Code of Conduct. By participating in
+this project you agree to abide by its terms. See [Code of Conduct][code-of-conduct] for more
+information.
 
 ## License
 
-Apache 2.0; see [LICENSE](LICENSE) for details.
+Apache 2.0 - See [LICENSE][license] for more information.
+
+## CI Status
+
+Java Version | Status
+------------ | ------
+Java 8 | [![Kokoro CI][kokoro-badge-image-1]][kokoro-badge-link-1]
+Java 8 OSX | [![Kokoro CI][kokoro-badge-image-2]][kokoro-badge-link-2]
+Java 11 | [![Kokoro CI][kokoro-badge-image-3]][kokoro-badge-link-3]
+Integration | [![Kokoro CI][kokoro-badge-image-4]][kokoro-badge-link-4]
+
+Java is a registered trademark of Oracle and/or its affiliates.
 
 <!-- references -->
 
-[maven-hbase-shield]: https://maven-badges.herokuapp.com/maven-central/com.google.cloud.bigtable/bigtable-client-core/badge.svg
-[maven-hbase-client-maven-search]: http://search.maven.org/#search%7Cga%7C1%7Ccom.google.cloud.bigtable
-[maven-google-cloud-java-shield]: https://maven-badges.herokuapp.com/maven-central/com.google.cloud/google-cloud-bigtable/badge.svg
-[maven-google-cloud-java-maven-search]: https://search.maven.org/search?q=a:google-cloud-bigtable
-[npm-shield]: https://badge.fury.io/js/%40google-cloud%2Fbigtable.svg
-[npm-bigtable-client]: https://www.npmjs.com/package/@google-cloud/bigtable
+[maven-hbase-shield]: https://maven-badges.herokuapp.com/maven-central/com.google.cloud.bigtable/bigtable-hbase/badge.svg
+[maven-hbase-client-maven-search]: http://search.maven.org/#search%7Cga%7C1%7Cg:com.google.cloud.bigtable
 [stackoverflow-shield]: https://img.shields.io/badge/stackoverflow-google--cloud--bigtable-blue.svg
 [stackoverflow-link]: http://stackoverflow.com/search?q=[google-cloud-bigtable]
 [integrations]: https://cloud.google.com/bigtable/docs/integrations
-[maven-hbase-client-repo]: https://github.com/googleapis/cloud-bigtable-client
-[maven-bigtable-nodejs-repo]: https://github.com/googleapis/nodejs-bigtable
 [maven-examples-repo]: https://github.com/GoogleCloudPlatform/cloud-bigtable-examples
 [google-cloud-bigtable-discuss]: https://groups.google.com/group/google-cloud-bigtable-discuss
 [google-cloud-bigtable-announce]: https://groups.google.com/group/google-cloud-bigtable-announce
 [google-cloud-bigtable-emulator]: https://github.com/googleapis/google-cloud-java/tree/master/google-cloud-testing/google-cloud-bigtable-emulator
 [google-cloud-bigtable]: https://github.com/googleapis/java-bigtable
+[kokoro-badge-image-1]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java8.svg
+[kokoro-badge-link-1]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java8.html
+[kokoro-badge-image-2]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java8-osx.svg
+[kokoro-badge-link-2]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java8-osx.html
+[kokoro-badge-image-3]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java11.svg
+[kokoro-badge-link-3]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java11.html
+[kokoro-badge-image-4]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/integration.svg
+[kokoro-badge-link-4]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/integration.html
+[contributing]: https://github.com/googleapis/java-bigtable-hbase/blob/master/CONTRIBUTING.md
+[code-of-conduct]: https://github.com/googleapis/java-bigtable-hbase/blob/master/CODE_OF_CONDUCT.md#contributor-code-of-conduct
+[license]: https://github.com/googleapis/java-bigtable-hbase/blob/master/LICENSE
