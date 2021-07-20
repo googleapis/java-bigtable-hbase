@@ -114,13 +114,6 @@ Exporting HBase snapshots from Bigtable is not supported.
 
 ## Importing to Bigtable
 
----
-**NOTE**
-
-If your snapshot or sequence files are compressed with Snappy, you'll run into errors importing them as of now. We are working on a solution to resolve this error.
-
----
-
 You can import data into Bigtable from a snapshot or sequence files. Before you begin your import you must create
 the tables and column families in Bigtable via the [schema translation tool](https://github.com/googleapis/java-bigtable-hbase/tree/master/bigtable-hbase-1.x-parent/bigtable-hbase-1.x-tools)
 or using the Bigtable command line tool and running the following: 
@@ -185,6 +178,13 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
         --maxNumWorkers=$(expr 3 \* $CLUSTER_NUM_NODES)  \
         --zone=$CLUSTER_ZONE
     ```
+
+---
+**NOTE**
+
+Snappy compressed files are not supported with Import pipelines, we are working to add support for Snappy compressed files.
+
+---
 
 
 ## Validating data
