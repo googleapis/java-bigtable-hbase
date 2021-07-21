@@ -2,7 +2,8 @@
 
 This module provides a work alike to some of the jobs implemented in hbase-server.
 Specifically this currently has the ability to export and import SequenceFiles
-from/to Cloud Bigtable and import HBase snapshots using a Map Reduce cluster (ie. dataproc).
+from/to Cloud Bigtable, import HBase snapshots using a Map Reduce cluster (ie. 
+dataproc), and HashTable/SyncTable for validation only.  
 
 ## Expected Usage 
 
@@ -13,36 +14,55 @@ from/to Cloud Bigtable and import HBase snapshots using a Map Reduce cluster (ie
 2. Download service account credentials json from Google Cloud Console.
 3. Submit the job using your edge node's hadoop installation. 
    ```bash
-   # Export to SequenceFiles
-   GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json \
-   hadoop jar bigtable-hbase-1.x-mapreduce-1.23.0-shaded-byo-hadoop.jar \
-       export-table \
-       -Dgoogle.bigtable.project.id=<project-id> \
-       -Dgoogle.bigtable.instance.id=<instance-id> \
-       <table-id> \
-       <outputdir>
+    # Export to SequenceFiles
+    GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json \
+    hadoop jar bigtable-hbase-1.x-mapreduce-1.23.0-shaded-byo-hadoop.jar \
+        export-table \
+        -Dgoogle.bigtable.project.id=<project-id> \
+        -Dgoogle.bigtable.instance.id=<instance-id> \
+        <table-id> \
+        <outputdir>
    
-   # Import from SequenceFiles
-      GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json \
-      hadoop jar bigtable-hbase-1.x-mapreduce-1.23.0-shaded-byo-hadoop.jar \
-          import-table \
-          -Dgoogle.bigtable.project.id=<project-id> \
-          -Dgoogle.bigtable.instance.id=<instance-id> \
-          <table-id> \
-          <inputdir>
+    # Import from SequenceFiles
+    GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json \
+    hadoop jar bigtable-hbase-1.x-mapreduce-1.23.0-shaded-byo-hadoop.jar \
+        import-table \
+        -Dgoogle.bigtable.project.id=<project-id> \
+        -Dgoogle.bigtable.instance.id=<instance-id> \
+        <table-id> \
+        <inputdir>
    
-   # Import from HBase snapshot
-      GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json \
-      hadoop jar bigtable-hbase-1.x-mapreduce-1.23.0-shaded-byo-hadoop.jar \
-          import-snapshot \
-          -Dgoogle.bigtable.project.id=<project-id> \
-          -Dgoogle.bigtable.instance.id=<instance-id> \
-          <snapshot-name> \
-          <snapshot-dir> \
-          <table-id> \
-          <tmp-dir>
+    # Import from HBase snapshot
+    GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json \
+    hadoop jar bigtable-hbase-1.x-mapreduce-1.23.0-shaded-byo-hadoop.jar \
+        import-snapshot \
+        -Dgoogle.bigtable.project.id=<project-id> \
+        -Dgoogle.bigtable.instance.id=<instance-id> \
+        <snapshot-name> \
+        <snapshot-dir> \
+        <table-id> \
+        <tmp-dir>
+   
+    # HashTable on HBase
+    GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json \
+    hadoop jar bigtable-hbase-1.x-mapreduce-1.23.0-shaded-byo-hadoop.jar \
+        hash-table \
+        -Dhbase.zookeeper.quorum=<source-zk-quorum> \
+        <source-table-id> \
+        <hash-outputdir-hbase>
+   
+    # SyncTableValidationOnlyJob on Bigtable
+    GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json \
+    hadoop jar bigtable-hbase-1.x-mapreduce-1.23.0-shaded-byo-hadoop.jar \
+        sync-table-validation-only \
+        --sourcezkcluster=<source-zk-quorum> \
+        --targetbigtableproject=<project-id> \
+        --targetbigtableinstance=<instance-id> \
+        --sourcehashdir=<hash-outputdir-hbase> \
+        --sourcetablename=<source-table-id> \
+        --targettablename=<target-table-id> \
+        --outputpath=<sync-outputdir-hbase-cbt>
    ```
-
 
 ### Dataproc
 
@@ -89,7 +109,33 @@ from/to Cloud Bigtable and import HBase snapshots using a Map Reduce cluster (ie
         <snapshot-name> \
         <snapshot-dir> \
         <table-id> \
-        <tmp-dir>   
+        <tmp-dir>
+   
+    # HashTable on HBase
+    gcloud dataproc jobs submit hadoop \
+        --cluster <dataproc-cluster> \
+        --region <dataproc-region> \
+        --jar bigtable-hbase-1.x-mapreduce-1.23.0-shaded-byo-hadoop.jar \
+        -- \
+        hash-table \
+        -Dhbase.zookeeper.quorum=<source-zk-quorum> \
+        <table-id> \
+        <hash-outputdir-hbase>
+   
+    # SyncTableValidationOnlyJob on Bigtable
+    gcloud dataproc jobs submit hadoop \
+        --cluster <dataproc-cluster> \
+        --region <dataproc-region> \
+        --jar bigtable-hbase-1.x-mapreduce-1.23.0-shaded-byo-hadoop.jar \
+        -- \
+        sync-table-validation-only \
+        --sourcezkcluster=<source-zk-quorum> \
+        --targetbigtableproject=<project-id> \
+        --targetbigtableinstance=<instance-id> \
+        --sourcehashdir=<hash-outputdir-hbase> \
+        --sourcetablename=<source-table-id> \
+        --targettablename=<target-table-id> \
+        --outputpath=<sync-outputdir-hbase-cbt>
    ```
 
 ## Examples
@@ -109,7 +155,7 @@ for the on-prem application to write to GCS).
     ```bash
     hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot \
      -snapshot <snapshotName> \
-     -copy-to gs://<bucket/<snapshot-dir> \
+     -copy-to gs://<bucket>/<snapshot-dir> \
      -mappers <num-mappers>
     ```
 
@@ -172,7 +218,7 @@ the command:
 
 #### Run the import snapshot job
 
-1. Run the following command to start the import snapshot job on the Dataproc cluster
+1. Run the following command to start the `import-snapshot` job on the Dataproc cluster
 that was created. Slowly scale the dataproc cluster to increase/decrease throughput 
 and similarly scale up/down the bigtable cluster to meet the throughput demand. See 
 Bigtable [scaling limitations](https://cloud.google.com/bigtable/docs/scaling#limitations) if observing slower performance than expected.
@@ -225,6 +271,56 @@ setting the properties for the job. For example:
     -Dmapreduce.map.speculative=false
     -Dhbase.snapshot.thread.pool.max=10
     ```
+
+### Example jobs to validate the data migrated from source to target
+
+1. Set the following additional environment variables for running the validation steps.
+    ```bash
+    # hash-table validation job
+    export HBASE_TABLENAME=<HBASE_TABLENAME>
+    # hbase zookeeper quorum (ie. zk1.example.com:2181)
+    export HBASE_ZK_QUORUM=<ZK_QUORUM>
+    export HASH_OUTPUTDIR=<HASH_OUTPUTDIR>
+
+    # sync-table-validation-only job
+    export HBASE_ZK_QUORUM_FULL=${HBASE_ZK_QUORUM}:/hbase
+    export SYNC_OUTPUTDIR=<SYNC_OUTPUTDIR>
+    ```
+
+2. Run `hash-table` and compute hashes for ranges on the source table and output 
+   results to a GCS bucket (See [HashTable/SyncTable](https://hbase.apache.org/book.html#_step_1_hashtable) doc for more details).
+    ```bash
+    hadoop jar ${JOB_JAR} \
+        hash-table \
+        -Dhbase.zookeeper.quorum=${HBASE_ZK_QUORUM} \
+        ${HBASE_TABLENAME} \
+        ${HASH_OUTPUTDIR}
+    ```
+
+3. Run `sync-table-validation-only` to generate hashes on the target table and compare 
+   these hashes with the output from `hash-table`. If this job has connectivity to the source, 
+   for diverging hashes, cell-level comparison is performed and mismatch results outputted.
+   If not, only ranges and diverging hashes are emitted. 
+    ```bash
+   
+    gcloud dataproc jobs submit hadoop \
+        --cluster ${DATAPROC_CLUSTER} \
+        --region ${REGION} \
+        --project ${PROJECT_ID} \
+        --jar ${JOB_JAR} \
+        -- \
+        sync-table-validation-only \
+        --sourcezkcluster=${HBASE_ZK_QUORUM_FULL} \
+        --targetbigtableproject=${PROJECT_ID} \
+        --targetbigtableinstance=${CBT_INSTANCE} \
+        --sourcehashdir=${HASH_OUTPUTDIR} \
+        --sourcetablename=${HBASE_TABLENAME} \
+        --targettablename=${CBT_TABLENAME} \
+        --outputpath=${SYNC_OUTPUTDIR}
+    ```
+Note: Connection with source is recommended for [results to include exact cells and 
+reason code for mismatches](src/main/java/com/google/cloud/bigtable/mapreduce/validation/SyncTableValidationOnlyJob.java) found. Job configurations may be updated to run `hash-table` 
+against bigtable and `sync-table-validation-only` run against hbase. 
 
 ## Backwards compatibility
 
