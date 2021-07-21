@@ -2,6 +2,29 @@
 
 ## [2.0.0-alpha1](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.23.0...v2.0.0-alpha1) (2021-07-19)
 
+**Note: This alpha release is a work-in-progress. For the latest stable version of java-bigtable-hbase, please refer to version [1.23.0](https://github.com/googleapis/java-bigtable-hbase/releases/tag/v1.23.0).**
+
+This is the first alpha release of Bigtable HBase 2.0.0. This release switches the core Bigtable layer to the [java-bigtable](https://www.github.com/googleapis/java-bigtable) library. 
+This is primarily an implementation detail change. Currently, users can opt out of this via the `BIGTABLE_USE_GCJ_CLIENT` configuration option to use the existing bigtable-client-core layer. 
+This option is primarily intended for testing during the alpha period. Example:
+```
+Configuration configuration = new Configuration(false);
+...
+configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_USE_GCJ_CLIENT, false);
+```
+
+In future releases, the configuration option to toggle the use of client core on or off will be removed, and the library 
+will no longer use bigtable-client-core to connect to the Bigtable API.
+
+Other notable changes include:
+* Deadlines are enabled by default (google.bigtable.rpc.use.timeouts)
+* Retry settings have been tweaked (timeouts, exponential backoff)
+* Error handling has been improved to always be a subclass of IOException and to include the caller’s stack trace for asynchronous calls
+* Dependencies have been improved (mapreduce byo-hadoop, etc)
+
+We look forward to hearing your feedback! Please let us know any comments or issues in our issue tracker.
+
+Complete release notes below:
 
 ### Features
 
