@@ -111,14 +111,14 @@ public class HBaseSchemaTranslator {
   @VisibleForTesting
   static class SchemaTranslationOptions {
 
-    String projectId;
-    String instanceId;
-    String zookeeperQuorum;
-    Integer zookeeperPort;
-    String inputFilePath;
-    String outputFilePath;
-    String tableNameFilter;
-    String schemaMappingFilePath;
+    @Nullable String projectId;
+    @Nullable String instanceId;
+    @Nullable String zookeeperQuorum;
+    @Nullable Integer zookeeperPort;
+    @Nullable String inputFilePath;
+    @Nullable String outputFilePath;
+    @Nullable String tableNameFilter;
+    @Nullable String schemaMappingFilePath;
 
     @VisibleForTesting
     SchemaTranslationOptions() {}
@@ -180,8 +180,7 @@ public class HBaseSchemaTranslator {
   }
 
   /** Interface for reading HBase schema. */
-  interface SchemaReader {
-
+  private interface SchemaReader {
     ClusterSchemaDefinition readSchema() throws IOException;
   }
 
@@ -189,6 +188,7 @@ public class HBaseSchemaTranslator {
    * Reads HBase schema from a JSON file. JSON file should be representation of a {@link
    * ClusterSchemaDefinition} object.
    */
+  @VisibleForTesting
   static class FileBasedSchemaReader implements SchemaReader {
 
     private final String schemaFilePath;
@@ -205,6 +205,7 @@ public class HBaseSchemaTranslator {
   }
 
   /** Reads the HBase schema by connecting to an HBase cluster. */
+  @VisibleForTesting
   static class HBaseSchemaReader implements SchemaReader {
 
     private final String tableFilterPattern;
@@ -281,7 +282,7 @@ public class HBaseSchemaTranslator {
   /**
    * Interface for writing the HBase schema represented by a {@link ClusterSchemaDefinition} object.
    */
-  interface SchemaWriter {
+  private interface SchemaWriter {
 
     void writeSchema(ClusterSchemaDefinition schemaDefinition) throws IOException;
   }
@@ -290,6 +291,7 @@ public class HBaseSchemaTranslator {
    * Writes the HBase schema into a file. File contains the JSON representation of the {@link
    * ClusterSchemaDefinition} object.
    */
+  @VisibleForTesting
   static class FileBasedSchemaWriter implements SchemaWriter {
 
     private final String outputFilePath;
@@ -312,6 +314,7 @@ public class HBaseSchemaTranslator {
    * Creates tables in Cloud Bigtable based on the schema provided by the {@link
    * ClusterSchemaDefinition} object.
    */
+  @VisibleForTesting
   static class BigtableSchemaWriter implements SchemaWriter {
 
     private final Admin btAdmin;
@@ -381,14 +384,14 @@ public class HBaseSchemaTranslator {
    * Transforms the {@link ClusterSchemaDefinition} read by {@link SchemaReader} before writing it
    * to {@link SchemaWriter}.
    */
-  interface SchemaTransformer {
+  private interface SchemaTransformer {
 
     ClusterSchemaDefinition transform(ClusterSchemaDefinition originalSchema)
         throws IOException, DeserializationException;
   }
 
   /** No-op implementation of @{@link SchemaTransformer}. Returns the original schema definition. */
-  static class NoopSchemaTransformer implements SchemaTransformer {
+  private static class NoopSchemaTransformer implements SchemaTransformer {
 
     @Override
     public ClusterSchemaDefinition transform(ClusterSchemaDefinition originalSchema) {
@@ -403,6 +406,7 @@ public class HBaseSchemaTranslator {
    * <p>JSON map should look like { "SourceTable": "DestinationTable",
    * "sourceTable-2":"DestinationTable-2"}
    */
+  @VisibleForTesting
   static class JsonBasedSchemaTransformer implements SchemaTransformer {
 
     // Map from old-tableName -> new-tableName
@@ -527,8 +531,8 @@ public class HBaseSchemaTranslator {
         "  Additionally, you can filter tables to create when using HBase as source");
     System.err.println("   -D " + TABLE_NAME_FILTER_KEY + "=<table name regex>");
     System.err.println(
-        "  The tables can be renamed by providing a JSON map. Example JSON "
-            + "{\"source-table\": \"destination-table\", \"namespace:source-table2\": \"destination-table2\"}.");
+        "  Optionally, the tables can be renamed by providing a JSON map. Example JSON "
+            + "{\"source-table\": \"destination-table\", \"namespace:source-table2\": \"namespace-destination-table2\"}.");
     System.err.println("   -D " + SCHEMA_MAPPING_FILEPATH + "=/schema/mapping/file/path.json");
   }
 
