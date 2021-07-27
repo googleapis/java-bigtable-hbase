@@ -51,7 +51,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>30.0-jre</version>
+      <version>30.1.1-android</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -118,6 +118,14 @@
               </mainClass>
             </manifest>
           </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>${compileSource.1.8}</source>
+          <target>${compileSource.1.8}</target>
         </configuration>
       </plugin>
       <plugin>
