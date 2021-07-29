@@ -83,6 +83,9 @@ If you are _not_ using the shaded Bigtable HBase Client artifact, you need to de
     <artifactId>bigtable-hbase-1.x</artifactId>
     <version>2.0.0-alpha1</version>
 </dependency>
+```
+[//]: # ({x-version-update-end})
+```xml
 <dependency>
     <groupId>io.opencensus</groupId>
     <artifactId>opencensus-impl</artifactId>
@@ -195,6 +198,9 @@ If you are _not_ using the shaded Bigtable HBase Client artifact, you need to de
     <artifactId>bigtable-hbase-1.x</artifactId>
     <version>2.0.0-alpha1</version>
 </dependency>
+```
+[//]: # ({x-version-update-end})
+```xml
 <dependency>
     <groupId>io.opencensus</groupId>
     <artifactId>opencensus-impl</artifactId>
