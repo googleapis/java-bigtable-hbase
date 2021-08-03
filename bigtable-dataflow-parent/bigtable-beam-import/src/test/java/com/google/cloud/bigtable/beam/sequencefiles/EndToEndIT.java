@@ -15,22 +15,19 @@
  */
 package com.google.cloud.bigtable.beam.sequencefiles;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.google.cloud.bigtable.beam.sequencefiles.ExportJob.ExportOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.testing.BigtableTableUtils;
+import com.google.cloud.bigtable.beam.test_env.EnvSetup;
+import com.google.cloud.bigtable.beam.test_env.TestProperties;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.PipelineResult.State;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
@@ -53,58 +50,42 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class EndToEndIT {
-  // Location of test data hosted on Google Cloud Storage, for on-cloud dataflow tests.
-  private static final String CLOUD_TEST_DATA_FOLDER = "cloud.test.data.folder";
-  private static final String DATAFLOW_REGION = "region";
-
   // Column family name used in all test bigtables.
   private static final String CF = "column_family";
 
-  // Full path of the Cloud Storage folder where dataflow jars are uploaded to.
-  private static final String GOOGLE_DATAFLOW_STAGING_LOCATION = "google.dataflow.stagingLocation";
+  private TestProperties properties;
+  private String workDir;
+  private String outputDir;
+  private String tableId;
 
   private Connection connection;
-  private String projectId;
-  private String instanceId;
-  private String tableId;
-  private String region;
 
-  private GcsUtil gcsUtil;
-  private String cloudTestDataFolder;
-  private String dataflowStagingLocation;
-  private String workDir;
+  private GcsUtil gcsUtil;;
 
   @Before
   public void setup() throws Exception {
-    projectId = getTestProperty(BigtableOptionsFactory.PROJECT_ID_KEY);
-    instanceId = getTestProperty(BigtableOptionsFactory.INSTANCE_ID_KEY);
-    region = getTestProperty(DATAFLOW_REGION);
-    dataflowStagingLocation = getTestProperty(GOOGLE_DATAFLOW_STAGING_LOCATION);
+    EnvSetup.initialize();
+    properties = TestProperties.fromSystem();
+    workDir = properties.getTestWorkdir(UUID.randomUUID());
+    outputDir = workDir + "output/";
 
-    cloudTestDataFolder = getTestProperty(CLOUD_TEST_DATA_FOLDER);
-    if (!cloudTestDataFolder.endsWith(File.separator)) {
-      cloudTestDataFolder = cloudTestDataFolder + File.separator;
-    }
+    // TODO: use time based names to allow for GC
+    tableId = "test_" + UUID.randomUUID();
 
     // Cloud Storage config
     GcpOptions gcpOptions = PipelineOptionsFactory.create().as(GcpOptions.class);
-    gcpOptions.setProject(projectId);
+    properties.applyTo(gcpOptions);
     gcsUtil = new GcsUtil.GcsUtilFactory().create(gcpOptions);
 
-    workDir = cloudTestDataFolder + "exports/" + UUID.randomUUID();
-
     // Bigtable config
-    connection = BigtableConfiguration.connect(projectId, instanceId);
-    tableId = "test_" + UUID.randomUUID().toString();
-  }
-
-  private static String getTestProperty(String name) {
-    return checkNotNull(System.getProperty(name), "Required property missing: " + name);
+    connection =
+        BigtableConfiguration.connect(properties.getProjectId(), properties.getInstanceId());
+    // TODO: support endpoints
   }
 
   @After
   public void teardown() throws IOException {
-    final List<GcsPath> paths = gcsUtil.expand(GcsPath.fromUri(workDir + "/*"));
+    final List<GcsPath> paths = gcsUtil.expand(GcsPath.fromUri(workDir + "*"));
 
     if (!paths.isEmpty()) {
       final List<String> pathStrs = new ArrayList<>();
@@ -150,16 +131,12 @@ public class EndToEndIT {
       // Export the data
       DataflowPipelineOptions pipelineOpts =
           PipelineOptionsFactory.as(DataflowPipelineOptions.class);
-      pipelineOpts.setRunner(DataflowRunner.class);
-      pipelineOpts.setGcpTempLocation(dataflowStagingLocation);
-      pipelineOpts.setNumWorkers(1);
-      pipelineOpts.setProject(projectId);
-      pipelineOpts.setRegion(region);
+      properties.applyTo(pipelineOpts);
 
       ExportOptions exportOpts = pipelineOpts.as(ExportOptions.class);
-      exportOpts.setBigtableInstanceId(StaticValueProvider.of(instanceId));
+      exportOpts.setBigtableInstanceId(StaticValueProvider.of(properties.getInstanceId()));
       exportOpts.setBigtableTableId(StaticValueProvider.of(tableId));
-      exportOpts.setDestinationPath(StaticValueProvider.of(workDir));
+      exportOpts.setDestinationPath(StaticValueProvider.of(outputDir));
 
       State state = ExportJob.buildPipeline(exportOpts).run().waitUntilFinish();
       Assert.assertEquals(State.DONE, state);
@@ -173,35 +150,29 @@ public class EndToEndIT {
 
       DataflowPipelineOptions createTablePipelineOpts =
           PipelineOptionsFactory.as(DataflowPipelineOptions.class);
-      createTablePipelineOpts.setRunner(DataflowRunner.class);
-      createTablePipelineOpts.setProject(projectId);
-      createTablePipelineOpts.setRegion(region);
+      properties.applyTo(createTablePipelineOpts);
 
       CreateTableHelper.CreateTableOpts createOpts =
           createTablePipelineOpts.as(CreateTableHelper.CreateTableOpts.class);
-      createOpts.setBigtableProject(projectId);
-      createOpts.setBigtableInstanceId(instanceId);
+      createOpts.setBigtableProject(properties.getProjectId());
+      createOpts.setBigtableInstanceId(properties.getInstanceId());
       createOpts.setBigtableTableId(destTableId);
-      createOpts.setSourcePattern(workDir + "/part-*");
+      createOpts.setSourcePattern(outputDir + "part-*");
       createOpts.setFamilies(ImmutableList.of(CF));
       CreateTableHelper.createTable(createOpts);
 
       DataflowPipelineOptions importPipelineOpts =
           PipelineOptionsFactory.as(DataflowPipelineOptions.class);
-      importPipelineOpts.setRunner(DataflowRunner.class);
-      importPipelineOpts.setGcpTempLocation(dataflowStagingLocation);
-      importPipelineOpts.setNumWorkers(1);
-      importPipelineOpts.setProject(projectId);
-      importPipelineOpts.setRegion(region);
+      properties.applyTo(importPipelineOpts);
 
       ImportJob.ImportOptions importOpts = importPipelineOpts.as(ImportJob.ImportOptions.class);
-      importOpts.setBigtableProject(StaticValueProvider.of(projectId));
-      importOpts.setBigtableInstanceId(StaticValueProvider.of(instanceId));
+      importOpts.setBigtableProject(StaticValueProvider.of(properties.getProjectId()));
+      importOpts.setBigtableInstanceId(StaticValueProvider.of(properties.getInstanceId()));
       importOpts.setBigtableTableId(StaticValueProvider.of(destTableId));
       // Have to set bigtableAppProfileId to null, otherwise importOpts will return a non-null
       // value.
       importOpts.setBigtableAppProfileId(null);
-      importOpts.setSourcePattern(StaticValueProvider.of(workDir + "/part-*"));
+      importOpts.setSourcePattern(StaticValueProvider.of(outputDir + "part-*"));
       State state = ImportJob.buildPipeline(importOpts).run().waitUntilFinish();
       Assert.assertEquals(State.DONE, state);
 
