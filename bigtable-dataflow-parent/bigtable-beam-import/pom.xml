@@ -188,7 +188,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-runners-core-construction-java</artifactId>
-      <version>2.24.0</version>
+      <version>${beam.version}</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
