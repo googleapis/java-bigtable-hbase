@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.0-sp.2](https://www.github.com/googleapis/java-bigtable-hbase/compare/1.20.0-sp.1...v1.20.0-sp.2) (2021-08-04)
+
+
+### Dependencies
+
+* upgrade commons-compress to 1.21 ([#3173](https://www.github.com/googleapis/java-bigtable-hbase/issues/3173)) ([2d811e9](https://www.github.com/googleapis/java-bigtable-hbase/commit/2d811e98b52f116ad9474b67a404e15f7022c0e3))
+
 ## [1.20.0-sp.1](https://www.github.com/googleapis/java-bigtable-hbase/compare/1.20.0...v1.20.0-sp.1) (2021-05-25)
 
 
