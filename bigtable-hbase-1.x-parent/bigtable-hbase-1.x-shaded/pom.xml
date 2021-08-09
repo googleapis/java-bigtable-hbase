@@ -304,6 +304,10 @@ limitations under the License.
                     com.google.bigtable.repackaged.org.codehaus
                   </shadedPattern>
                 </relocation>
+                <relocation>
+                  <pattern>org.checkerframework</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.checkerframework</shadedPattern>
+                </relocation>
               </relocations>
             </configuration>
           </execution>
