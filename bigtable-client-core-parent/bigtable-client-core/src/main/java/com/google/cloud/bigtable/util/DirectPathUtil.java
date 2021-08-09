@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.util;
 import com.google.api.core.InternalApi;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.CredentialOptions.CredentialType;
@@ -67,8 +66,7 @@ public class DirectPathUtil {
   public static boolean shouldAttemptDirectPath(
       String endpoint, int port, CredentialOptions creds) {
 
-    return isOnComputeEngine.get()
-        && areCredsDirectPathCompatible(creds);
+    return isOnComputeEngine.get() && areCredsDirectPathCompatible(creds);
   }
 
   private static boolean areCredsDirectPathCompatible(CredentialOptions credentialOptions) {
