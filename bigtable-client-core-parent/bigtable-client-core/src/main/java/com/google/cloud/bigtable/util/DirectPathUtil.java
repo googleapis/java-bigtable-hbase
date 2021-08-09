@@ -67,9 +67,7 @@ public class DirectPathUtil {
   public static boolean shouldAttemptDirectPath(
       String endpoint, int port, CredentialOptions creds) {
 
-    return BigtableOptions.BIGTABLE_DATA_HOST_DEFAULT.equals(endpoint)
-        && BigtableOptions.BIGTABLE_PORT_DEFAULT == port
-        && isOnComputeEngine.get()
+    return isOnComputeEngine.get()
         && areCredsDirectPathCompatible(creds);
   }
 
