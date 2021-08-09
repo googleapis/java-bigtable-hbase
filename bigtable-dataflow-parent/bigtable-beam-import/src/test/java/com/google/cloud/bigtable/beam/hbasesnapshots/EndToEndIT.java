@@ -15,20 +15,19 @@
  */
 package com.google.cloud.bigtable.beam.hbasesnapshots;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.google.api.services.storage.model.Objects;
+import com.google.api.services.storage.model.StorageObject;
 import com.google.bigtable.repackaged.com.google.gson.Gson;
 import com.google.cloud.bigtable.beam.hbasesnapshots.ImportJobFromHbaseSnapshot.ImportOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.HBaseResultToMutationFn;
+import com.google.cloud.bigtable.beam.test_env.EnvSetup;
+import com.google.cloud.bigtable.beam.test_env.TestProperties;
 import com.google.cloud.bigtable.beam.validation.HadoopHashTableSource.RangeHash;
 import com.google.cloud.bigtable.beam.validation.SyncTableJob;
 import com.google.cloud.bigtable.beam.validation.SyncTableJob.SyncTableOptions;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
@@ -39,7 +38,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import org.apache.beam.runners.dataflow.DataflowRunner;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.PipelineResult.State;
@@ -72,77 +70,53 @@ import org.slf4j.LoggerFactory;
  * validates the imported data with SyncTable.
  * Prepare test data with gsutil(https://cloud.google.com/storage/docs/quickstart-gsutil):
  * gsutil -m cp -r <PATH_TO_REPO>/bigtable-dataflow-parent/bigtable-beam-import/src/test/integration-test \
- *  gs://<test_bucket>/
- *
- * Setup GCP credential: https://cloud.google.com/docs/authentication
- *  Ensure your credential have access to Bigtable and Dataflow
- *
- * Run with:
- * mvn integration-test -PhbasesnapshotsIntegrationTest \
- * -Dgoogle.bigtable.project.id=<project_id> \
- * -Dgoogle.bigtable.instance.id=<instance_id> \
- * -Dgoogle.dataflow.stagingLocation=gs://<test_bucket>/staging \
- * -Dcloud.test.data.folder=gs://<test_bucket>/integration-test/
+ *  gs://<test_bucket>/cloud-data-dir/
  */
 public class EndToEndIT {
-
   private static Logger LOG = LoggerFactory.getLogger(HBaseResultToMutationFn.class);
   private static final String TEST_SNAPSHOT_NAME = "test-snapshot";
-  // Location of test data hosted on Google Cloud Storage, for on-cloud dataflow tests.
-  private static final String CLOUD_TEST_DATA_FOLDER = "cloud.test.data.folder";
-  private static final String DATAFLOW_REGION = "region";
-
-  // Column family name used in all test bigtables.
   private static final String CF = "cf";
 
-  // Full path of the Cloud Storage folder where dataflow jars are uploaded to.
-  private static final String GOOGLE_DATAFLOW_STAGING_LOCATION = "google.dataflow.stagingLocation";
+  private TestProperties properties;
 
   private Connection connection;
-  private String projectId;
-  private String instanceId;
-  private String tableId;
-  private String region;
-
   private GcsUtil gcsUtil;
-  private String dataflowStagingLocation;
-  private String workDir;
   private byte[][] keySplits;
 
-  // Snapshot data setup
+  // Input setup
   private String hbaseSnapshotDir;
   private String hashDir;
+
+  // Output
+  private String workDir;
+  private String tempDir;
   private String syncTableOutputDir;
+  private String tableId;
 
   @Before
   public void setup() throws Exception {
-    projectId = getTestProperty(BigtableOptionsFactory.PROJECT_ID_KEY);
-    instanceId = getTestProperty(BigtableOptionsFactory.INSTANCE_ID_KEY);
-    dataflowStagingLocation = getTestProperty(GOOGLE_DATAFLOW_STAGING_LOCATION);
-    region = getTestProperty(DATAFLOW_REGION);
-    String cloudTestDataFolder = getTestProperty(CLOUD_TEST_DATA_FOLDER);
-    if (!cloudTestDataFolder.endsWith(File.separator)) {
-      cloudTestDataFolder = cloudTestDataFolder + File.separator;
-    }
+    EnvSetup.initialize();
+    properties = TestProperties.fromSystem();
 
-    hbaseSnapshotDir = cloudTestDataFolder + "data/";
-    UUID test_uuid = UUID.randomUUID();
-    hashDir = cloudTestDataFolder + "hashtable/";
+    // Configure inputs
+    hbaseSnapshotDir = properties.getCloudDataDir() + "data/";
+    hashDir = properties.getCloudDataDir() + "hashtable/";
 
-    syncTableOutputDir = dataflowStagingLocation;
-    if (!syncTableOutputDir.endsWith(File.separator)) {
-      syncTableOutputDir = syncTableOutputDir + File.separator;
-    }
-    syncTableOutputDir = syncTableOutputDir + "sync-table-output/" + test_uuid + "/";
+    // Configure output
+    workDir = properties.getTestWorkdir(UUID.randomUUID());
+    tempDir = workDir + "temp/";
+    syncTableOutputDir = workDir + "output/";
 
     // Cloud Storage config
     GcpOptions gcpOptions = PipelineOptionsFactory.create().as(GcpOptions.class);
-    gcpOptions.setProject(projectId);
+    properties.applyTo(gcpOptions);
     gcsUtil = new GcsUtil.GcsUtilFactory().create(gcpOptions);
 
     // Bigtable config
-    connection = BigtableConfiguration.connect(projectId, instanceId);
-    tableId = "test_" + UUID.randomUUID().toString();
+    connection =
+        BigtableConfiguration.connect(properties.getProjectId(), properties.getInstanceId());
+    // TODO: use timebased names to allow for gc
+    tableId = "test_" + UUID.randomUUID();
 
     LOG.info("Setting up integration tests");
 
@@ -159,13 +133,9 @@ public class EndToEndIT {
     connection.getAdmin().createTable(descriptor, SnapshotTestingUtils.getSplitKeys());
   }
 
-  private static String getTestProperty(String name) {
-    return checkNotNull(System.getProperty(name), "Required property missing: " + name);
-  }
-
   @After
   public void teardown() throws IOException {
-    final List<GcsPath> paths = gcsUtil.expand(GcsPath.fromUri(syncTableOutputDir + "/*"));
+    final List<GcsPath> paths = gcsUtil.expand(GcsPath.fromUri(syncTableOutputDir + "*"));
 
     if (!paths.isEmpty()) {
       final List<String> pathStrs = new ArrayList<>();
@@ -178,27 +148,19 @@ public class EndToEndIT {
       this.gcsUtil.remove(pathStrs);
     }
 
+    connection.getAdmin().deleteTable(TableName.valueOf(tableId));
     connection.close();
-
-    // delete test table
-    BigtableConfiguration.connect(projectId, instanceId)
-        .getAdmin()
-        .deleteTable(TableName.valueOf(tableId));
   }
 
   private SyncTableOptions createSyncTableOptions() {
     DataflowPipelineOptions syncTableOpts =
         PipelineOptionsFactory.as(DataflowPipelineOptions.class);
-    syncTableOpts.setRunner(DataflowRunner.class);
-    syncTableOpts.setGcpTempLocation(dataflowStagingLocation);
-    syncTableOpts.setNumWorkers(1);
-    syncTableOpts.setProject(projectId);
-    syncTableOpts.setRegion(region);
+    properties.applyTo(syncTableOpts);
 
     SyncTableOptions syncOpts = syncTableOpts.as(SyncTableOptions.class);
     // Setup Bigtable params
-    syncOpts.setBigtableProject(StaticValueProvider.of(projectId));
-    syncOpts.setBigtableInstanceId(StaticValueProvider.of(instanceId));
+    syncOpts.setBigtableProject(StaticValueProvider.of(properties.getProjectId()));
+    syncOpts.setBigtableInstanceId(StaticValueProvider.of(properties.getInstanceId()));
     syncOpts.setBigtableTableId(StaticValueProvider.of(tableId));
     syncOpts.setBigtableAppProfileId(null);
 
@@ -211,17 +173,13 @@ public class EndToEndIT {
   private ImportOptions createImportOptions() {
     DataflowPipelineOptions importPipelineOpts =
         PipelineOptionsFactory.as(DataflowPipelineOptions.class);
-    importPipelineOpts.setRunner(DataflowRunner.class);
-    importPipelineOpts.setGcpTempLocation(dataflowStagingLocation);
-    importPipelineOpts.setNumWorkers(1);
-    importPipelineOpts.setProject(projectId);
-    importPipelineOpts.setRegion(region);
+    properties.applyTo(importPipelineOpts);
 
     ImportOptions importOpts = importPipelineOpts.as(ImportOptions.class);
 
     // setup Bigtable options
-    importOpts.setBigtableProject(StaticValueProvider.of(projectId));
-    importOpts.setBigtableInstanceId(StaticValueProvider.of(instanceId));
+    importOpts.setBigtableProject(StaticValueProvider.of(properties.getProjectId()));
+    importOpts.setBigtableInstanceId(StaticValueProvider.of(properties.getInstanceId()));
     importOpts.setBigtableTableId(StaticValueProvider.of(tableId));
 
     // setup HBase snapshot info
@@ -292,7 +250,6 @@ public class EndToEndIT {
 
   @Test
   public void testHBaseSnapshotImport() throws Exception {
-
     // Start import
     ImportOptions importOpts = createImportOptions();
 
@@ -301,14 +258,29 @@ public class EndToEndIT {
     Assert.assertEquals(State.DONE, state);
 
     // check that the .restore dir used for temp files has been removed
-    Objects objects =
-        gcsUtil.listObjects(
-            GcsPath.fromUri(hbaseSnapshotDir).getBucket(),
-            CleanupHBaseSnapshotRestoreFilesFn.getListPrefix(
-                HBaseSnapshotInputConfigBuilder.RESTORE_DIR),
-            null);
-    Assert.assertNull(objects.getItems());
+    // The restore directory is stored relative to the snapshot directory and contains the job name
+    String bucket = GcsPath.fromUri(hbaseSnapshotDir).getBucket();
+    String restorePathPrefix =
+        CleanupHBaseSnapshotRestoreFilesFn.getListPrefix(
+            HBaseSnapshotInputConfigBuilder.RESTORE_DIR);
+    List<StorageObject> allObjects = new ArrayList<>();
+    String nextToken;
+    do {
+      Objects objects = gcsUtil.listObjects(bucket, restorePathPrefix, null);
+      List<StorageObject> items = objects.getItems();
+      if (items != null) {
+        allObjects.addAll(items);
+      }
+      nextToken = objects.getNextPageToken();
+    } while (nextToken != null);
 
+    List<StorageObject> myObjects =
+        allObjects.stream()
+            .filter(o -> o.getName().contains(importOpts.getJobName()))
+            .collect(Collectors.toList());
+    Assert.assertTrue("Restore directory wasn't deleted", myObjects.isEmpty());
+
+    // Verify the import using the sync job
     SyncTableOptions syncOpts = createSyncTableOptions();
 
     PipelineResult result = SyncTableJob.buildPipeline(syncOpts).run();

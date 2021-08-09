@@ -184,6 +184,19 @@ limitations under the License.
       <version>v1-rev171-1.25.0</version>
     </dependency>
 
+    <!-- Used transitively by beam, and directly in tests -->
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-runners-core-construction-java</artifactId>
+      <version>${beam.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-vendor-guava-26_0-jre</artifactId>
+      <version>0.1</version>
+      <scope>runtime</scope>
+    </dependency>
 
     <!-- Test -->
     <dependency>
