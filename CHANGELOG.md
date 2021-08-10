@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.23.1](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.23.0...v1.23.1) (2021-08-09)
+
+
+### Bug Fixes
+
+* allow direct path to be used with custom endpoints ([#3184](https://www.github.com/googleapis/java-bigtable-hbase/issues/3184)) ([7178129](https://www.github.com/googleapis/java-bigtable-hbase/commit/7178129e76275caa8339874577e5c25c7d78737c))
+
+
+### Dependencies
+
+* upgrade commons-compress to 1.21 ([#3174](https://www.github.com/googleapis/java-bigtable-hbase/issues/3174)) ([26435e5](https://www.github.com/googleapis/java-bigtable-hbase/commit/26435e51fa14ce97e0140028a7fc427e2612a83e))
+
 ## [1.23.0](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.22.0...v1.23.0) (2021-07-14)
 
 
