@@ -1,0 +1,30 @@
+name: Verify
+
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  tests_1_x:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 8
+        uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          distribution: 'adopt'
+      - name: Cache Maven packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('bigtable-hbase-mirroring-client-1.x-parent/bigtable-hbase-mirroring-client-1.x/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: verify 1.x
+        run: mvn --batch-mode --update-snapshots verify -pl bigtable-hbase-mirroring-client-1.x-parent/bigtable-hbase-mirroring-client-1.x
