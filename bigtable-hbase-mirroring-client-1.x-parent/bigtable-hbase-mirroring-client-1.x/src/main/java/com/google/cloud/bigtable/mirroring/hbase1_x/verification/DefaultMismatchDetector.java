@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Scan;
 
 @InternalApi("For internal usage only")
 public class DefaultMismatchDetector implements MismatchDetector {
@@ -75,5 +76,38 @@ public class DefaultMismatchDetector implements MismatchDetector {
   @Override
   public void get(List<Get> request, Throwable throwable) {
     System.out.println("getAll failed");
+  }
+
+  @Override
+  public void scannerNext(Scan request, int entriesAlreadyRead, Result primary, Result secondary) {
+    if (!Comparators.resultsEqual(primary, secondary)) {
+      System.out.println("scan() mismatch");
+    }
+  }
+
+  @Override
+  public void scannerNext(Scan request, int entriesAlreadyRead, Throwable throwable) {
+    System.out.println("scan() failed");
+  }
+
+  @Override
+  public void scannerNext(
+      Scan request, int entriesAlreadyRead, Result[] primary, Result[] secondary) {
+    if (primary.length != secondary.length) {
+      System.out.println("scan(i) length mismatch");
+      return;
+    }
+
+    for (int i = 0; i < primary.length; i++) {
+      if (!Comparators.resultsEqual(primary[i], secondary[i])) {
+        System.out.println("scan(i) mismatch");
+      }
+    }
+  }
+
+  @Override
+  public void scannerNext(
+      Scan request, int entriesAlreadyRead, int entriesRequested, Throwable throwable) {
+    System.out.println("scan(i) failed");
   }
 }

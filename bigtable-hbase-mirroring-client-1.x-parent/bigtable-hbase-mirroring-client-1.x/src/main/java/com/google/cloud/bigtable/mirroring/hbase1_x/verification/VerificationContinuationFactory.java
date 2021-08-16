@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import java.util.List;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Scan;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 @InternalApi("For internal usage only")
@@ -84,6 +85,43 @@ public class VerificationContinuationFactory {
       @Override
       public void onFailure(Throwable throwable) {
         VerificationContinuationFactory.this.mismatchDetector.get(request, throwable);
+      }
+    };
+  }
+
+  public FutureCallback<Result> scannerNext(
+      final Scan request, final int entriesAlreadyRead, final Result expectation) {
+    return new FutureCallback<Result>() {
+      @Override
+      public void onSuccess(@NullableDecl Result secondary) {
+        VerificationContinuationFactory.this.mismatchDetector.scannerNext(
+            request, entriesAlreadyRead, expectation, secondary);
+      }
+
+      @Override
+      public void onFailure(Throwable throwable) {
+        VerificationContinuationFactory.this.mismatchDetector.scannerNext(
+            request, entriesAlreadyRead, throwable);
+      }
+    };
+  }
+
+  public FutureCallback<Result[]> scannerNext(
+      final Scan request,
+      final int entriesAlreadyRead,
+      final int entriesToRead,
+      final Result[] expectation) {
+    return new FutureCallback<Result[]>() {
+      @Override
+      public void onSuccess(@NullableDecl Result[] secondary) {
+        VerificationContinuationFactory.this.mismatchDetector.scannerNext(
+            request, entriesAlreadyRead, expectation, secondary);
+      }
+
+      @Override
+      public void onFailure(Throwable throwable) {
+        VerificationContinuationFactory.this.mismatchDetector.scannerNext(
+            request, entriesAlreadyRead, entriesToRead, throwable);
       }
     };
   }

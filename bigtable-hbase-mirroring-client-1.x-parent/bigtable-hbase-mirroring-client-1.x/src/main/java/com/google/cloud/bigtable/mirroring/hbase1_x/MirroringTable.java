@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncTableWrapper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
 import com.google.common.util.concurrent.Futures;
@@ -160,17 +161,30 @@ public class MirroringTable implements Table {
 
   @Override
   public ResultScanner getScanner(Scan scan) throws IOException {
-    throw new UnsupportedOperationException();
+    return new MirroringResultScanner(
+        scan,
+        this.primaryTable.getScanner(scan),
+        this.secondaryAsyncWrapper.getScanner(scan),
+        this.verificationContinuationFactory);
   }
 
   @Override
-  public ResultScanner getScanner(byte[] bytes) throws IOException {
-    throw new UnsupportedOperationException();
+  public ResultScanner getScanner(byte[] family) throws IOException {
+    return getScanner(new Scan().addFamily(family));
   }
 
   @Override
-  public ResultScanner getScanner(byte[] bytes, byte[] bytes1) throws IOException {
-    throw new UnsupportedOperationException();
+  public ResultScanner getScanner(byte[] family, byte[] qualifier) throws IOException {
+    return getScanner(new Scan().addColumn(family, qualifier));
+  }
+
+  @Override
+  public void close() throws IOException {
+    try {
+      this.primaryTable.close();
+    } finally {
+      this.secondaryAsyncWrapper.close();
+    }
   }
 
   @Override
@@ -244,11 +258,6 @@ public class MirroringTable implements Table {
   public long incrementColumnValue(
       byte[] bytes, byte[] bytes1, byte[] bytes2, long l, Durability durability)
       throws IOException {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void close() throws IOException {
     throw new UnsupportedOperationException();
   }
 

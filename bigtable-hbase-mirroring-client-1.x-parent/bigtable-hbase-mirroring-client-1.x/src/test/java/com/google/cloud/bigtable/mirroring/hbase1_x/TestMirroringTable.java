@@ -17,6 +17,9 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -34,6 +37,8 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.junit.Before;
 import org.junit.Rule;
@@ -233,5 +238,165 @@ public class TestMirroringTable {
     assertThat(result).isEqualTo(expectedResult);
 
     verify(mismatchDetector, times(1)).existsAll(request, expectedException);
+  }
+
+  @Test
+  public void testMismatchDetectorIsCalledOnScannerNextOne() throws IOException {
+    Result expected1 = createResult("test1", "value1");
+    Result expected2 = createResult("test2", "value2");
+
+    ResultScanner primaryScannerMock = mock(ResultScanner.class);
+    when(primaryScannerMock.next()).thenReturn(expected1, expected2, null);
+    when(primaryTable.getScanner((Scan) any())).thenReturn(primaryScannerMock);
+
+    ResultScanner secondaryScannerMock = mock(ResultScanner.class);
+    when(secondaryScannerMock.next()).thenReturn(expected1, expected2, null);
+    when(secondaryTable.getScanner((Scan) any())).thenReturn(secondaryScannerMock);
+
+    Scan scan = new Scan();
+    ResultScanner mirroringScanner = mirroringTable.getScanner(scan);
+    Result result1 = mirroringScanner.next();
+    Result result2 = mirroringScanner.next();
+    Result result3 = mirroringScanner.next();
+    mirroringScanner.close();
+
+    assertThat(result1).isEqualTo(expected1);
+    assertThat(result2).isEqualTo(expected2);
+    assertThat(result3).isNull();
+
+    waitForExecutor();
+
+    verify(mismatchDetector, times(1)).scannerNext(scan, 0, expected1, expected1);
+    verify(mismatchDetector, times(1)).scannerNext(scan, 1, expected2, expected2);
+    verify(mismatchDetector, times(1)).scannerNext(scan, 2, (Result) null, null);
+    verify(mismatchDetector, times(3))
+        .scannerNext(eq(scan), anyInt(), (Result) any(), (Result) any());
+  }
+
+  @Test
+  public void testSecondaryReadExceptionCallsVerificationErrorHandlerOnScannerNextOne()
+      throws IOException {
+    Result expected1 = createResult("test1", "value1");
+    Result expected2 = createResult("test2", "value2");
+
+    ResultScanner primaryScannerMock = mock(ResultScanner.class);
+    when(primaryScannerMock.next()).thenReturn(expected1, expected2, null);
+    when(primaryTable.getScanner((Scan) any())).thenReturn(primaryScannerMock);
+
+    ResultScanner secondaryScannerMock = mock(ResultScanner.class);
+    IOException expectedException = new IOException("expected");
+    when(secondaryScannerMock.next())
+        .thenReturn(expected1)
+        .thenThrow(expectedException)
+        .thenReturn(null);
+    when(secondaryTable.getScanner((Scan) any())).thenReturn(secondaryScannerMock);
+
+    Scan scan = new Scan();
+    ResultScanner mirroringScanner = mirroringTable.getScanner(scan);
+    Result result1 = mirroringScanner.next();
+    Result result2 = mirroringScanner.next();
+    Result result3 = mirroringScanner.next();
+    mirroringScanner.close();
+
+    assertThat(result1).isEqualTo(expected1);
+    assertThat(result2).isEqualTo(expected2);
+    assertThat(result3).isNull();
+
+    waitForExecutor();
+
+    verify(mismatchDetector, times(1)).scannerNext(scan, 0, expected1, expected1);
+    verify(mismatchDetector, times(1)).scannerNext(scan, 1, expectedException);
+    verify(mismatchDetector, times(1)).scannerNext(scan, 2, (Result) null, null);
+    verify(mismatchDetector, times(2))
+        .scannerNext(eq(scan), anyInt(), (Result) any(), (Result) any());
+  }
+
+  @Test
+  public void testMismatchDetectorIsCalledOnScannerNextMultiple() throws IOException {
+    Result[] expected =
+        new Result[] {createResult("test1", "value1"), createResult("test2", "value2")};
+
+    ResultScanner primaryScannerMock = mock(ResultScanner.class);
+    when(primaryScannerMock.next(anyInt())).thenReturn(expected);
+    when(primaryTable.getScanner((Scan) any())).thenReturn(primaryScannerMock);
+
+    ResultScanner secondaryScannerMock = mock(ResultScanner.class);
+    when(secondaryScannerMock.next(anyInt())).thenReturn(expected);
+    when(secondaryTable.getScanner((Scan) any())).thenReturn(secondaryScannerMock);
+
+    Scan scan = new Scan();
+    ResultScanner mirroringScanner = mirroringTable.getScanner(scan);
+    Result[] result = mirroringScanner.next(2);
+    mirroringScanner.close();
+
+    assertThat(result).isEqualTo(expected);
+
+    waitForExecutor();
+
+    verify(mismatchDetector, times(1)).scannerNext(scan, 0, expected, expected);
+  }
+
+  @Test
+  public void testSecondaryReadExceptionCallsVerificationErrorHandlerOnScannerNextMultiple()
+      throws IOException {
+    Result[] expected =
+        new Result[] {createResult("test1", "value1"), createResult("test2", "value2")};
+
+    ResultScanner primaryScannerMock = mock(ResultScanner.class);
+    when(primaryScannerMock.next(anyInt())).thenReturn(expected);
+    when(primaryTable.getScanner((Scan) any())).thenReturn(primaryScannerMock);
+
+    ResultScanner secondaryScannerMock = mock(ResultScanner.class);
+    IOException expectedException = new IOException("expected");
+    when(secondaryScannerMock.next(anyInt())).thenThrow(expectedException);
+    when(secondaryTable.getScanner((Scan) any())).thenReturn(secondaryScannerMock);
+
+    Scan scan = new Scan();
+    ResultScanner mirroringScanner = mirroringTable.getScanner(scan);
+    Result[] result = mirroringScanner.next(2);
+    mirroringScanner.close();
+
+    assertThat(result).isEqualTo(expected);
+
+    waitForExecutor();
+
+    verify(mismatchDetector, times(1)).scannerNext(scan, 0, 2, expectedException);
+  }
+
+  @Test
+  public void testScannerClose() throws IOException {
+    ResultScanner primaryScannerMock = mock(ResultScanner.class);
+    when(primaryTable.getScanner((Scan) any())).thenReturn(primaryScannerMock);
+
+    ResultScanner secondaryScannerMock = mock(ResultScanner.class);
+    when(secondaryTable.getScanner((Scan) any())).thenReturn(secondaryScannerMock);
+
+    Scan scan = new Scan();
+    ResultScanner mirroringScanner = mirroringTable.getScanner(scan);
+    mirroringScanner.close();
+
+    waitForExecutor();
+    verify(primaryScannerMock, times(1)).close();
+    verify(secondaryScannerMock, times(1)).close();
+  }
+
+  @Test
+  public void testScannerRenewLease() throws IOException {
+    ResultScanner primaryScannerMock = mock(ResultScanner.class);
+    when(primaryScannerMock.renewLease()).thenReturn(true);
+    when(primaryTable.getScanner((Scan) any())).thenReturn(primaryScannerMock);
+
+    ResultScanner secondaryScannerMock = mock(ResultScanner.class);
+    when(secondaryScannerMock.renewLease()).thenReturn(false);
+    when(secondaryTable.getScanner((Scan) any())).thenReturn(secondaryScannerMock);
+
+    Scan scan = new Scan();
+    ResultScanner mirroringScanner = mirroringTable.getScanner(scan);
+
+    // primary scanner lease was renewed, so we waited for the second one, and it returned false.
+    assertThat(mirroringScanner.renewLease()).isFalse();
+
+    waitForExecutor();
+    verify(secondaryScannerMock, times(1)).renewLease();
   }
 }

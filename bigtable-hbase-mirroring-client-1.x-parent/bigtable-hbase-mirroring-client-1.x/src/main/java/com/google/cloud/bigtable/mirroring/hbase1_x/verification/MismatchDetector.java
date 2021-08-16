@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.mirroring.hbase1_x.verification;
 import java.util.List;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Scan;
 
 /**
  * Detects mismatches between primary and secondary databases. User can provide own implementation
@@ -40,4 +41,12 @@ public interface MismatchDetector {
   void get(List<Get> request, Result[] primary, Result[] secondary);
 
   void get(List<Get> request, Throwable throwable);
+
+  void scannerNext(Scan request, int entriesAlreadyRead, Result primary, Result secondary);
+
+  void scannerNext(Scan request, int entriesAlreadyRead, Throwable throwable);
+
+  void scannerNext(Scan request, int entriesAlreadyRead, Result[] primary, Result[] secondary);
+
+  void scannerNext(Scan request, int entriesAlreadyRead, int entriesRequested, Throwable throwable);
 }

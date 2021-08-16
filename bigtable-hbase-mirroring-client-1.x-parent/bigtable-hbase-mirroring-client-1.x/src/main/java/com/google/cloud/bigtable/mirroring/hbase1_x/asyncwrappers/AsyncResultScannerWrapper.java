@@ -13,78 +13,89 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.mirroring.hbase1_x;
+package com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers;
 
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringResultScanner;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import java.util.List;
+import java.io.IOException;
 import java.util.concurrent.Callable;
-import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Table;
 
 /**
- * MirroringClient verifies consistency between two databases asynchronously - after the results are
- * delivered to the user. HBase Table object does not have an synchronous API, so we simulate it by
- * wrapping the regular Table into AsyncTableWrapper.
- *
- * <p>Table instances are not thread-safe, every operation is synchronized to prevent concurrent
- * accesses to the table from different threads in the executor.
+ * {@link MirroringResultScanner} schedules asynchronous next()s after synchronous operations to
+ * verify consistency. HBase doesn't provide any Asynchronous API for Scanners thus we wrap
+ * ResultScanner into AsyncResultScannerWrapper to enable async operations on scanners.
  */
 @InternalApi("For internal usage only")
-public class AsyncTableWrapper {
+public class AsyncResultScannerWrapper {
   private final Table table;
-  private final ListeningExecutorService executorService;
+  private ResultScanner scanner;
+  private ListeningExecutorService executorService;
 
-  public AsyncTableWrapper(Table table, ListeningExecutorService executorService) {
+  public AsyncResultScannerWrapper(
+      Table table, ResultScanner scanner, ListeningExecutorService executorService) {
+    super();
     this.table = table;
+    this.scanner = scanner;
     this.executorService = executorService;
   }
 
-  public ListenableFuture<Result> get(final Get gets) {
+  public ListenableFuture<Result> next() {
     return this.executorService.submit(
         new Callable<Result>() {
           @Override
-          public Result call() throws Exception {
+          public Result call() throws IOException {
+            Result result;
             synchronized (table) {
-              return table.get(gets);
+              result = scanner.next();
             }
+            return result;
           }
         });
   }
 
-  public ListenableFuture<Result[]> get(final List<Get> gets) {
+  public ListenableFuture<Result[]> next(final int nbRows) {
     return this.executorService.submit(
         new Callable<Result[]>() {
           @Override
           public Result[] call() throws Exception {
+            Result[] result;
             synchronized (table) {
-              return table.get(gets);
+              result = scanner.next(nbRows);
             }
+            return result;
           }
         });
   }
 
-  public ListenableFuture<Boolean> exists(final Get get) {
+  public ListenableFuture<Boolean> renewLease() {
     return this.executorService.submit(
         new Callable<Boolean>() {
           @Override
-          public Boolean call() throws Exception {
+          public Boolean call() {
+            boolean result;
             synchronized (table) {
-              return table.exists(get);
+              result = scanner.renewLease();
             }
+            return result;
           }
         });
   }
 
-  public ListenableFuture<boolean[]> existsAll(final List<Get> gets) {
-    return this.executorService.submit(
-        new Callable<boolean[]>() {
+  public void close() {
+    // TODO(mwalkiewicz): There is a race condition here, we should wait until all scheduled
+    // operations are finished before closing the scanner.
+    this.executorService.submit(
+        new Callable<Void>() {
           @Override
-          public boolean[] call() throws Exception {
+          public Void call() {
             synchronized (table) {
-              return table.existsAll(gets);
+              scanner.close();
+              return null;
             }
           }
         });
