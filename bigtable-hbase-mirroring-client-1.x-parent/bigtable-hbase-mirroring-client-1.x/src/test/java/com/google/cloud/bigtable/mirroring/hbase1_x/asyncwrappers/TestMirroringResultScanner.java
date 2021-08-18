@@ -57,7 +57,7 @@ public class TestMirroringResultScanner {
             });
 
     verify(primaryScannerMock, times(1)).close();
-    verify(secondaryScannerMock, times(1)).close();
+    verify(secondaryScannerMock, times(1)).asyncClose();
     assertThat(thrown).hasMessageThat().contains("first");
   }
 
@@ -72,7 +72,7 @@ public class TestMirroringResultScanner {
         new MirroringResultScanner(
             new Scan(), primaryScannerMock, secondaryScannerWrapperMock, continuationFactoryMock);
 
-    doThrow(new RuntimeException("second")).when(secondaryScannerWrapperMock).close();
+    doThrow(new RuntimeException("second")).when(secondaryScannerWrapperMock).asyncClose();
 
     Exception thrown =
         assertThrows(
@@ -85,7 +85,7 @@ public class TestMirroringResultScanner {
             });
 
     verify(primaryScannerMock, times(1)).close();
-    verify(secondaryScannerWrapperMock, times(1)).close();
+    verify(secondaryScannerWrapperMock, times(1)).asyncClose();
     assertThat(thrown).hasMessageThat().contains("second");
   }
 
@@ -102,7 +102,7 @@ public class TestMirroringResultScanner {
             new Scan(), primaryScannerMock, secondaryScannerWrapperMock, continuationFactoryMock);
 
     doThrow(new RuntimeException("first")).when(primaryScannerMock).close();
-    doThrow(new RuntimeException("second")).when(secondaryScannerWrapperMock).close();
+    doThrow(new RuntimeException("second")).when(secondaryScannerWrapperMock).asyncClose();
 
     RuntimeException thrown =
         assertThrows(
@@ -115,9 +115,27 @@ public class TestMirroringResultScanner {
             });
 
     verify(primaryScannerMock, times(1)).close();
-    verify(secondaryScannerWrapperMock, times(1)).close();
+    verify(secondaryScannerWrapperMock, times(1)).asyncClose();
     assertThat(thrown).hasMessageThat().contains("first");
     assertThat(thrown.getSuppressed()).hasLength(1);
     assertThat(thrown.getSuppressed()[0]).hasMessageThat().contains("second");
+  }
+
+  @Test
+  public void testMultipleCloseCallsCloseScannersOnlyOnce() {
+    ResultScanner primaryScannerMock = mock(ResultScanner.class);
+
+    VerificationContinuationFactory continuationFactoryMock =
+        mock(VerificationContinuationFactory.class);
+    AsyncResultScannerWrapper secondaryScannerWrapperMock = mock(AsyncResultScannerWrapper.class);
+
+    final ResultScanner mirroringScanner =
+        new MirroringResultScanner(
+            new Scan(), primaryScannerMock, secondaryScannerWrapperMock, continuationFactoryMock);
+
+    mirroringScanner.close();
+    mirroringScanner.close();
+    verify(primaryScannerMock, times(1)).close();
+    verify(secondaryScannerWrapperMock, times(1)).asyncClose();
   }
 }

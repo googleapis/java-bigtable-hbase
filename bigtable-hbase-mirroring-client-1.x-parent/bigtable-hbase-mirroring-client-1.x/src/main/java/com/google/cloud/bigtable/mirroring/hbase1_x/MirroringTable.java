@@ -17,11 +17,14 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncTableWrapper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -56,11 +59,13 @@ import org.apache.hadoop.hbase.shaded.com.google.protobuf.Service;
  * asynchronously. Read operations are mirrored to verify that content of both databases matches.
  */
 @InternalApi("For internal usage only")
-public class MirroringTable implements Table {
+public class MirroringTable implements Table, ListenableCloseable {
   Table primaryTable;
   Table secondaryTable;
   AsyncTableWrapper secondaryAsyncWrapper;
   VerificationContinuationFactory verificationContinuationFactory;
+  private List<Runnable> onCloseListeners = new ArrayList<>();
+  private ListenableFuture<Void> closeFuture;
 
   /**
    * @param executorService ExecutorService is used to perform operations on secondaryTable and
@@ -178,13 +183,54 @@ public class MirroringTable implements Table {
     return getScanner(new Scan().addColumn(family, qualifier));
   }
 
+  /**
+   * `close()` won't perform the actual close if there are any in-flight requests, in such a case
+   * the `close` operation is scheduled and will be performed after all requests have finished.
+   */
   @Override
   public void close() throws IOException {
+    this.asyncClose();
+  }
+
+  public synchronized ListenableFuture<Void> asyncClose() throws IOException {
+    if (this.closeFuture != null) {
+      return this.closeFuture;
+    }
+
+    IOException primaryException = null;
     try {
       this.primaryTable.close();
-    } finally {
-      this.secondaryAsyncWrapper.close();
+    } catch (IOException e) {
+      primaryException = e;
     }
+
+    try {
+      this.closeFuture = this.secondaryAsyncWrapper.asyncClose();
+      this.closeFuture.addListener(
+          new Runnable() {
+            @Override
+            public void run() {
+              MirroringTable.this.runOnCloseListeners();
+            }
+          },
+          MoreExecutors.directExecutor());
+    } catch (RuntimeException e) {
+      // If scheduling close failed, run listeners now, and behave as if we have closed for
+      // correct reference counting.
+      this.runOnCloseListeners();
+
+      if (primaryException != null) {
+        primaryException.addSuppressed(e);
+        throw primaryException;
+      } else {
+        throw e;
+      }
+    }
+
+    if (primaryException != null) {
+      throw primaryException;
+    }
+    return closeFuture;
   }
 
   @Override
@@ -358,5 +404,16 @@ public class MirroringTable implements Table {
   @Override
   public void setWriteRpcTimeout(int i) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void addOnCloseListener(Runnable listener) {
+    this.onCloseListeners.add(listener);
+  }
+
+  public void runOnCloseListeners() {
+    for (Runnable listener : this.onCloseListeners) {
+      listener.run();
+    }
   }
 }

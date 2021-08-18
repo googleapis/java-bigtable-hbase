@@ -44,6 +44,7 @@ public class MirroringResultScanner extends AbstractClientScanner {
   private ResultScanner primaryResultScanner;
   private AsyncResultScannerWrapper secondaryResultScannerWrapper;
   private VerificationContinuationFactory verificationContinuationFactory;
+  private boolean closed = false;
   /**
    * Keeps track of number of entries already read from this scanner to provide context for
    * MismatchDetectors.
@@ -88,7 +89,12 @@ public class MirroringResultScanner extends AbstractClientScanner {
   }
 
   @Override
-  public void close() {
+  public synchronized void close() {
+    if (this.closed) {
+      return;
+    }
+    this.closed = true;
+
     RuntimeException firstException = null;
     try {
       this.primaryResultScanner.close();
@@ -96,7 +102,7 @@ public class MirroringResultScanner extends AbstractClientScanner {
       firstException = e;
     } finally {
       try {
-        this.secondaryResultScannerWrapper.close();
+        this.secondaryResultScannerWrapper.asyncClose();
       } catch (RuntimeException e) {
         log.error("Exception while scheduling secondaryResultScannerWrapper.close().", e);
         if (firstException == null) {

@@ -16,23 +16,31 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Get;
@@ -43,6 +51,7 @@ import org.apache.hadoop.hbase.client.Table;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentMatchers;
@@ -398,5 +407,119 @@ public class TestMirroringTable {
 
     waitForExecutor();
     verify(secondaryScannerMock, times(1)).renewLease();
+  }
+
+  @Test
+  public void testClosingTableWithFutureDecreasesListenableCounter() throws IOException {
+    ListenableReferenceCounter listenableReferenceCounter = spy(new ListenableReferenceCounter());
+    listenableReferenceCounter.holdReferenceUntilClosing(mirroringTable);
+
+    verify(listenableReferenceCounter, times(1)).incrementReferenceCount();
+    verify(listenableReferenceCounter, never()).decrementReferenceCount();
+    IOException expectedException = new IOException("expected");
+    doThrow(expectedException).when(secondaryTable).close();
+
+    final ListenableFuture<Void> closingFuture = mirroringTable.asyncClose();
+    ExecutionException e =
+        assertThrows(
+            ExecutionException.class,
+            new ThrowingRunnable() {
+              @Override
+              public void run() throws Throwable {
+                closingFuture.get();
+              }
+            });
+
+    assertThat(e).hasCauseThat().isInstanceOf(IOException.class);
+    assertThat(e).hasCauseThat().hasMessageThat().contains("expected");
+
+    verify(listenableReferenceCounter, times(1)).decrementReferenceCount();
+  }
+
+  @Test
+  public void testClosingTableWithoutFutureDecreasesListenableCounter() throws IOException {
+    ListenableReferenceCounter listenableReferenceCounter = spy(new ListenableReferenceCounter());
+    listenableReferenceCounter.holdReferenceUntilClosing(mirroringTable);
+
+    verify(listenableReferenceCounter, times(1)).incrementReferenceCount();
+    verify(listenableReferenceCounter, never()).decrementReferenceCount();
+
+    IOException expectedException = new IOException("expected");
+    doThrow(expectedException).when(secondaryTable).close();
+
+    mirroringTable.close();
+    waitForExecutor();
+
+    verify(listenableReferenceCounter, times(1)).decrementReferenceCount();
+  }
+
+  @Test
+  public void testSecondaryIsClosedWhenPrimaryThrowsAnException() throws IOException {
+    doThrow(new IOException("expected")).when(primaryTable).close();
+
+    IOException exception =
+        assertThrows(
+            IOException.class,
+            new ThrowingRunnable() {
+              @Override
+              public void run() throws Throwable {
+                mirroringTable.close();
+              }
+            });
+    assertThat(exception).hasMessageThat().contains("expected");
+    waitForExecutor();
+
+    verify(secondaryTable, times(1)).close();
+  }
+
+  @Test
+  public void testListenersAreCalledOnClose()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
+
+    final SettableFuture<Integer> listenerFuture1 = SettableFuture.create();
+    mirroringTable.addOnCloseListener(
+        new Runnable() {
+          @Override
+          public void run() {
+            listenerFuture1.set(1);
+          }
+        });
+
+    final SettableFuture<Integer> listenerFuture2 = SettableFuture.create();
+    mirroringTable.addOnCloseListener(
+        new Runnable() {
+          @Override
+          public void run() {
+            listenerFuture2.set(2);
+          }
+        });
+
+    mirroringTable.asyncClose().get(3, TimeUnit.SECONDS);
+    assertThat(listenerFuture1.get(3, TimeUnit.SECONDS)).isEqualTo(1);
+    assertThat(listenerFuture2.get(3, TimeUnit.SECONDS)).isEqualTo(2);
+  }
+
+  @Test
+  public void testListenersAreNotCalledAfterSecondClose()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
+
+    final SettableFuture<Integer> listenerFuture1 = SettableFuture.create();
+
+    Runnable onCloseAction =
+        spy(
+            new Runnable() {
+              @Override
+              public void run() {
+                listenerFuture1.set(1);
+              }
+            });
+
+    mirroringTable.addOnCloseListener(onCloseAction);
+
+    mirroringTable.asyncClose().get(3, TimeUnit.SECONDS);
+    assertThat(listenerFuture1.get(3, TimeUnit.SECONDS)).isEqualTo(1);
+    mirroringTable.asyncClose().get(3, TimeUnit.SECONDS);
+
+    verify(onCloseAction, times(1)).run();
   }
 }

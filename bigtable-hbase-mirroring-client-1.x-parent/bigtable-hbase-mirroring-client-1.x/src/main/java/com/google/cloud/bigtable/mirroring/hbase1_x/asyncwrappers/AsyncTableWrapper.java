@@ -16,8 +16,11 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers;
 
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -38,14 +41,27 @@ import org.apache.hadoop.hbase.client.Table;
 public class AsyncTableWrapper {
   private final Table table;
   private final ListeningExecutorService executorService;
+  /**
+   * We are counting references to this object to be able to call {@link Table#close()} on
+   * underlying table in a predictable way. The reference count is increased before submitting each
+   * asynchronous task or when creating a ResultScanner, and decreased after it finishes. Moreover,
+   * this object holds an implicit self-reference, which in released in {@link #asyncClose()}.
+   *
+   * <p>In this way we are able to call Table#close() only if all scheduled tasks have finished, all
+   * scanners are closed, and #asyncClose() was called.
+   */
+  private final ListenableReferenceCounter pendingOperationsReferenceCounter;
+
+  private SettableFuture<Void> closeResultFuture;
 
   public AsyncTableWrapper(Table table, ListeningExecutorService executorService) {
     this.table = table;
     this.executorService = executorService;
+    this.pendingOperationsReferenceCounter = new ListenableReferenceCounter();
   }
 
   public ListenableFuture<Result> get(final Get gets) {
-    return this.executorService.submit(
+    return submitTask(
         new Callable<Result>() {
           @Override
           public Result call() throws Exception {
@@ -57,7 +73,7 @@ public class AsyncTableWrapper {
   }
 
   public ListenableFuture<Result[]> get(final List<Get> gets) {
-    return this.executorService.submit(
+    return submitTask(
         new Callable<Result[]>() {
           @Override
           public Result[] call() throws Exception {
@@ -69,7 +85,7 @@ public class AsyncTableWrapper {
   }
 
   public ListenableFuture<Boolean> exists(final Get get) {
-    return this.executorService.submit(
+    return submitTask(
         new Callable<Boolean>() {
           @Override
           public Boolean call() throws Exception {
@@ -81,7 +97,7 @@ public class AsyncTableWrapper {
   }
 
   public ListenableFuture<boolean[]> existsAll(final List<Get> gets) {
-    return this.executorService.submit(
+    return submitTask(
         new Callable<boolean[]>() {
           @Override
           public boolean[] call() throws Exception {
@@ -92,23 +108,45 @@ public class AsyncTableWrapper {
         });
   }
 
-  public ListenableFuture<Void> close() {
-    // TODO(mwalkiewicz): There is a race condition here, we should wait until all scheduled
-    // operations are finished before closing the scanner.
-    return this.executorService.submit(
-        new Callable<Void>() {
-          @Override
-          public Void call() throws IOException {
-            synchronized (table) {
-              table.close();
-            }
-            return null;
-          }
-        });
+  public synchronized ListenableFuture<Void> asyncClose() {
+    if (this.closeResultFuture != null) {
+      return this.closeResultFuture;
+    }
+
+    this.pendingOperationsReferenceCounter.decrementReferenceCount();
+    this.closeResultFuture = SettableFuture.create();
+
+    this.pendingOperationsReferenceCounter
+        .getOnLastReferenceClosed()
+        .addListener(
+            new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  synchronized (table) {
+                    table.close();
+                  }
+                  AsyncTableWrapper.this.closeResultFuture.set(null);
+                } catch (IOException e) {
+                  AsyncTableWrapper.this.closeResultFuture.setException(e);
+                }
+              }
+            },
+            MoreExecutors.directExecutor());
+    return this.closeResultFuture;
   }
 
   public AsyncResultScannerWrapper getScanner(Scan scan) throws IOException {
-    return new AsyncResultScannerWrapper(
-        this.table, this.table.getScanner(scan), this.executorService);
+    AsyncResultScannerWrapper result =
+        new AsyncResultScannerWrapper(
+            this.table, this.table.getScanner(scan), this.executorService);
+    this.pendingOperationsReferenceCounter.holdReferenceUntilClosing(result);
+    return result;
+  }
+
+  public <T> ListenableFuture<T> submitTask(Callable<T> task) {
+    ListenableFuture<T> future = this.executorService.submit(task);
+    this.pendingOperationsReferenceCounter.holdReferenceUntilCompletion(future);
+    return future;
   }
 }
