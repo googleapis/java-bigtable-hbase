@@ -12,6 +12,7 @@ branchProtectionRules:
       - 'Kokoro - Test: Java 11'
       - 'Kokoro - Test: Java 8'
       - 'Kokoro - Test: Linkage Monitor'
+      - 'Kokoro - Test: Beam Integration'
       - cla/google
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true
@@ -25,6 +26,21 @@ branchProtectionRules:
       - 'Kokoro - Test: Java 11'
       - 'Kokoro - Test: Java 8'
       - 'Kokoro - Test: Linkage Monitor'
+      - 'Kokoro - Test: Beam Integration'
+      - cla/google
+    requiredApprovingReviewCount: 1
+    requiresCodeOwnerReviews: true
+  - pattern: bigtable-1.x
+    isAdminEnforced: true
+    requiredStatusCheckContexts:
+      - 'Kokoro - Test: Binary Compatibility'
+      - 'Kokoro - Test: Code Format'
+      - 'Kokoro - Test: Dependencies'
+      - 'Kokoro - Test: Integration'
+      - 'Kokoro - Test: Java 11'
+      - 'Kokoro - Test: Java 8'
+      - 'Kokoro - Test: Linkage Monitor'
+      - 'Kokoro - Test: Beam Integration'
       - cla/google
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true
