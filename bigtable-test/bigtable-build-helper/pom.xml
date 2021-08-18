@@ -99,17 +99,6 @@
           <version>3.6.0</version>
         </plugin>
 
-        <!-- Configure java version -->
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.8.1</version>
-          <configuration>
-            <source>${java.version}</source>
-            <target>${java.version}</target>
-          </configuration>
-        </plugin>
-
         <!-- Start Skip publishing -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
