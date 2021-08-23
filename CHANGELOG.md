@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.0.0-alpha2](https://www.github.com/googleapis/java-bigtable-hbase/compare/v2.0.0-alpha1...v2.0.0-alpha2) (2021-08-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* migrate to java 8 (#3189)
+
+### Features
+
+* Add support for renaming tables in schema translator ([#3154](https://www.github.com/googleapis/java-bigtable-hbase/issues/3154)) ([7d49bba](https://www.github.com/googleapis/java-bigtable-hbase/commit/7d49bba33c0b722e953ae20e4e393a7fd06a6567))
+* migrate to java 8 ([#3189](https://www.github.com/googleapis/java-bigtable-hbase/issues/3189)) ([948b99f](https://www.github.com/googleapis/java-bigtable-hbase/commit/948b99ffe9dfc85d647f5d480544e91bd0cf6a0a))
+
+
+### Miscellaneous Chores
+
+* bump next tag to 2.0.0-alpha2 ([#3170](https://www.github.com/googleapis/java-bigtable-hbase/issues/3170)) ([25c4bfb](https://www.github.com/googleapis/java-bigtable-hbase/commit/25c4bfb49342d2743c822c850932acf5dcc8735c))
+
 ## [2.0.0-alpha1](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.23.0...v2.0.0-alpha1) (2021-07-19)
 
 **Note: This alpha release is a work-in-progress. For the latest stable version of java-bigtable-hbase, please refer to version [1.23.0](https://github.com/googleapis/java-bigtable-hbase/releases/tag/v1.23.0).**
