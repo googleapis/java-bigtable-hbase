@@ -48,10 +48,13 @@ limitations under the License.
     <module>bigtable-hbase-2.x-parent</module>
     <module>bigtable-dataflow-parent</module>
     <module>bigtable-test</module>
+    <module>bigtable-hbase-replication</module>
   </modules>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <compileSource>1.8</compileSource>
+    <compileSource.1.8>1.8</compileSource.1.8>
 
     <!-- core dependency versions -->
     <bigtable.version>2.0.1</bigtable.version>
