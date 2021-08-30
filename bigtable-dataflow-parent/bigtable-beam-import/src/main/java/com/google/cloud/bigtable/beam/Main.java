@@ -21,6 +21,7 @@ import com.google.cloud.bigtable.beam.hbasesnapshots.ImportJobFromHbaseSnapshot;
 import com.google.cloud.bigtable.beam.sequencefiles.CreateTableHelper;
 import com.google.cloud.bigtable.beam.sequencefiles.ExportJob;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob;
+import com.google.cloud.bigtable.beam.validation.SyncTableJob;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -52,6 +53,9 @@ final class Main {
         break;
       case "create-table":
         CreateTableHelper.main(subArgs);
+        break;
+      case "sync-table":
+        SyncTableJob.main(subArgs);
         break;
       default:
         usage();

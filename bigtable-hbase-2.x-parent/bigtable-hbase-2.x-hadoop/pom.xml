@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright 2017 Google Inc. All Rights Reserved.
+Copyright 2017 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ limitations under the License.
   <parent>
     <artifactId>bigtable-hbase-2.x-parent</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-2x-parent:current} -->
+    <version>2.0.0-alpha3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -31,14 +31,15 @@ limitations under the License.
   </description>
 
   <properties>
-    <hbase.version>${hbase.version.2}</hbase.version>
+    <!-- define a property that can be ignored by renovate -->
+    <hbase2-hadoop-slf4j.version>1.7.25</hbase2-hadoop-slf4j.version>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-2.x-shaded</artifactId>
-      <version>${project.version}</version>
+      <version>2.0.0-alpha3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <exclusions>
         <exclusion>
           <groupId>org.apache.hbase</groupId>
@@ -54,23 +55,26 @@ limitations under the License.
           <artifactId>bigtable-hbase-2.x</artifactId>
         </exclusion>
         <exclusion>
+          <groupId>com.google.cloud.bigtable</groupId>
+          <artifactId>bigtable-metrics-api</artifactId>
+        </exclusion>
+        <exclusion>
           <groupId>io.opencensus</groupId>
           <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.grpc</groupId>
+          <artifactId>grpc-census</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-client</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase2.version}</version>
     </dependency>
 
     <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-    <dependency>
-      <groupId>com.google.code.findbugs</groupId>
-      <artifactId>jsr305</artifactId>
-      <version>${jsr305.version}</version>
-    </dependency>
     <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
@@ -79,21 +83,33 @@ limitations under the License.
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-core</artifactId>
-      <version>${dropwizard.metrics.version}</version>
+      <version>${hbase2-metrics.version}</version>
+      <exclusions>
+        <!-- see slf4j notes below -->
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
-    <!-- this is used only for test, but we need this as compile scope for repackaging-->
+    <!-- unlike hbase-shaded-client, hbase-client depends on slf4j 1.6.1.
+      Which is older than the version requested by metrics-core. However,
+      metrics-core will work fine with the older version and we want to stay
+      compatible with hbase-client deps -->
     <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-common</artifactId>
-      <version>${hbase2-hadoop.version}</version>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${hbase2-hadoop-slf4j.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-common</artifactId>
-      <version>${hbase.version}</version>
+      <groupId>org.conscrypt</groupId>
+      <artifactId>conscrypt-openjdk-uber</artifactId>
+      <version>${grpc-conscrypt.version}</version>
+      <scope>runtime</scope>
     </dependency>
 
+    <!-- Test deps -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -105,41 +121,37 @@ limitations under the License.
   <build>
     <plugins>
       <plugin>
-        <!-- overriding the default config to add exclusions-->
+        <!-- disable google-cloud-shared-config enforcement checks because
+        hbase-client's dependency subtree doesn't follow the same rules and is
+        unable to be fixed here -->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <configuration>
-          <rules>
-            <requireMavenVersion>
-              <version>[3.0,)</version>
-            </requireMavenVersion>
-            <requireJavaVersion>
-              <version>[1.7,)</version>
-            </requireJavaVersion>
-            <requireUpperBoundDeps>
-              <excludes>
-                <exclude>com.google.guava:guava</exclude>
-              </excludes>
-            </requireUpperBoundDeps>
-            <banDuplicateClasses>
-              <ignoreClasses>
-                <!-- todo(kolea2): investigate transitive deps causing conflicts-->
-                <ignoreClass>**</ignoreClass>
-              </ignoreClasses>
-            </banDuplicateClasses>
-          </rules>
-        </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
-        <configuration>
-          <source>${compileSource.1.8}</source>
-          <target>${compileSource.1.8}</target>
-          <showWarnings>true</showWarnings>
-          <showDeprecation>false</showDeprecation>
-          <compilerArgument>-Xlint:-options</compilerArgument>
-        </configuration>
+        <executions>
+          <execution>
+            <id>enforce</id>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
+          <!-- hbase-client doesnt align slf4j-api & slf4j-log4j -->
+          <execution>
+            <id>enforce-version-consistency-slf4j</id>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
+          <!-- This must be a drop in replacement for hbase-client, so can't
+            manage hbase's deps -->
+          <execution>
+            <id>enforce-banned-deps</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -151,7 +163,6 @@ limitations under the License.
               <goal>shade</goal>
             </goals>
             <configuration>
-              <shadeTestJar>true</shadeTestJar>
               <shadedArtifactAttached>false</shadedArtifactAttached>
               <createDependencyReducedPom>true</createDependencyReducedPom>
               <!-- Need to manually promote to dependencies to keep the structure of hbase-shade-client -->
@@ -188,20 +199,71 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
+
+      <plugin>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>2.0.0-alpha3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+
+        <executions>
+          <execution>
+            <id>verify-shaded-jar-entries</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-shaded-jar-entries</goal>
+            </goals>
+            <configuration>
+              <allowedJarClassEntries>
+                <classEntry>com/google/bigtable</classEntry>
+                <classEntry>com/google/cloud/bigtable</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableAdmin</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableConnection</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/BigtableAsyncConnection</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/BigtableAsyncRegistry</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/CommonConnection</classEntry>
+              </allowedJarClassEntries>
+            </configuration>
+          </execution>
+          <execution>
+            <id>verify-shaded-exclusions</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-shaded-exclusions</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>verify-mirror-deps</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-mirror-deps</goal>
+            </goals>
+            <configuration>
+              <targetDependencies>
+                <targetDependency>org.apache.hbase:hbase-client:${hbase2.version}</targetDependency>
+              </targetDependencies>
+              <ignoredDependencies>
+                <!-- There are 3 users of this dep: us, httpclient & hbase2.
+                httpclient requires a higher version than hbase, so for now,
+                we are using that version -->
+                <ignoredDependency>commons-logging:commons-logging</ignoredDependency>
+              </ignoredDependencies>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- skip for shaded jar-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
         <configuration>
-          <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-          <usedDependencies>
-            <usedDependency>com.google.code.findbugs:jsr305</usedDependency>
-            <usedDependency>commons-logging:commons-logging</usedDependency>
-            <usedDependency>io.dropwizard.metrics:metrics-core</usedDependency>
-          </usedDependencies>
+          <ignoredDependencies>
+              <dependency>*</dependency>
+          </ignoredDependencies>
         </configuration>
       </plugin>
+      <!-- skip for shaded jar-->
       <plugin>
-        <!-- skip for shaded jar-->
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>clirr-maven-plugin</artifactId>
         <configuration>

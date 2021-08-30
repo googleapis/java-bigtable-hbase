@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google Inc. All Rights Reserved.
+ * Copyright 2015 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class RowAdapter implements ResponseAdapter<Row, Result> {
   @Override
   public Result adaptResponse(Row response) {
     if (response == null) {
-      return new Result();
+      return Result.EMPTY_RESULT;
     }
 
     SortedSet<Cell> hbaseCells = new TreeSet<>(KeyValue.COMPARATOR);

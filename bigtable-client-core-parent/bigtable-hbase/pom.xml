@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright 2015 Google Inc. All Rights Reserved.
+Copyright 2015 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-client-core-parent</artifactId>
-    <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-core-parent:current} -->
+    <version>2.0.0-alpha3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <artifactId>bigtable-hbase</artifactId>
@@ -55,7 +55,13 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-client-core</artifactId>
-      <version>${project.version}</version>
+      <version>${bigtable-client-core.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>bigtable-metrics-api</artifactId>
+      <version>${bigtable-client-core.version}</version>
     </dependency>
 
     <dependency>
@@ -99,6 +105,17 @@ limitations under the License.
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
+      <artifactId>grpc-context</artifactId>
+    </dependency>
+    <dependency>
+      <!-- See notes in verify-conscrypt-version execution below -->
+      <groupId>org.conscrypt</groupId>
+      <artifactId>conscrypt-openjdk-uber</artifactId>
+      <version>${grpc-conscrypt.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
       <artifactId>grpc-stub</artifactId>
     </dependency>
     <dependency>
@@ -126,6 +143,10 @@ limitations under the License.
       <artifactId>commons-logging</artifactId>
       <version>${commons-logging.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.google.api.grpc</groupId>
+      <artifactId>proto-google-common-protos</artifactId>
+    </dependency>
 
     <!-- For veneer client settings configurations -->
     <dependency>
@@ -141,16 +162,10 @@ limitations under the License.
       <artifactId>google-auth-library-oauth2-http</artifactId>
     </dependency>
 
-    <!-- TODO: remove this is direct dep, its only used for its Clock interface -->
-    <dependency>
-      <groupId>com.google.http-client</groupId>
-      <artifactId>google-http-client</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase1.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.slf4j</groupId>
@@ -160,6 +175,17 @@ limitations under the License.
     </dependency>
 
     <!-- Test -->
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-internal-test-helper</artifactId>
+      <version>2.0.0-alpha3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.api.grpc</groupId>
+      <artifactId>grpc-google-common-protos</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>commons-lang</groupId>
       <artifactId>commons-lang</artifactId>
@@ -179,6 +205,18 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>com.google.truth</groupId>
+      <artifactId>truth</artifactId>
+      <version>1.1.2</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.checkerframework</groupId>
+          <artifactId>checker-qual</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>${junit.version}</version>
@@ -196,13 +234,53 @@ limitations under the License.
           <skip>true</skip>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <trimStackTrace>false</trimStackTrace>
+          <systemProperties>
+            <property>
+              <name>java.util.logging.config.file</name>
+              <value>src/test/resources/logging.properties</value>
+            </property>
+          </systemProperties>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>2.0.0-alpha3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+
+        <executions>
+          <!-- TODO: Remove this once we can properly shade conscrypt:
+            https://github.com/google/conscrypt/issues/811 -->
+
+          <!-- This module doesn't actually need to declare a dependency on
+          conscrypt, it already has it transitively via bigtable-client-core.
+          However, the child -shaded artifacts need a version number to manually
+          promote it. So this module declares the dependency solely to verify
+          the version in grpc-conscrypt.version is correct.
+
+          Ideally we would just shade conscrypt in the -shaded artifacts, but
+          currently it impossible. So for now we just need to make sure that
+          after all of shading, we expose it properly.
+          -->
+          <execution>
+            <id>verify-conscrypt-version</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-mirror-deps</goal>
+            </goals>
+            <configuration>
+              <targetDependencies>
+                <!-- make sure that we are a strict superset of veneer -->
+                <targetDependency>com.google.cloud:google-cloud-bigtable</targetDependency>
+              </targetDependencies>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
-    <resources>
-      <resource>
-        <directory>src/main/resources</directory>
-        <!-- enable project.version substitution. -->
-        <filtering>true</filtering>
-      </resource>
-    </resources>
   </build>
 </project>

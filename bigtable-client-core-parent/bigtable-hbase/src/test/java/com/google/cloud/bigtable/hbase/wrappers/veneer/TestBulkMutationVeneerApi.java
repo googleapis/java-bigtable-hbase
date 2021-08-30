@@ -31,6 +31,8 @@ import com.google.api.gax.batching.Batcher;
 import com.google.api.gax.batching.BatcherImpl;
 import com.google.api.gax.batching.BatchingDescriptor;
 import com.google.api.gax.batching.BatchingSettings;
+import com.google.api.gax.batching.FlowControlSettings;
+import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
 import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
@@ -113,13 +115,20 @@ public class TestBulkMutationVeneerApi {
 
   @Test
   public void testWhenBatcherIsClosed() throws IOException {
+    BatchingSettings batchingSettings = mock(BatchingSettings.class);
+    FlowControlSettings flowControlSettings =
+        FlowControlSettings.newBuilder()
+            .setLimitExceededBehavior(LimitExceededBehavior.Ignore)
+            .build();
+    when(batchingSettings.getFlowControlSettings()).thenReturn(flowControlSettings);
+
     @SuppressWarnings("unchecked")
     Batcher<RowMutationEntry, Void> actualBatcher =
         new BatcherImpl(
             mock(BatchingDescriptor.class),
             mock(UnaryCallable.class),
             new Object(),
-            mock(BatchingSettings.class),
+            batchingSettings,
             mock(ScheduledExecutorService.class));
     BulkMutationWrapper underTest = new BulkMutationVeneerApi(actualBatcher);
     underTest.close();

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright 2017 Google Inc. All Rights Reserved.
+Copyright 2017 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-client-parent</artifactId>
-    <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.0.0-alpha3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <artifactId>bigtable-test</artifactId>
@@ -32,5 +32,7 @@ limitations under the License.
 
   <modules>
     <module>bigtable-emulator-maven-plugin</module>
+    <module>bigtable-build-helper</module>
+    <module>bigtable-internal-test-helper</module>
   </modules>
 </project>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright 2015 Google Inc. All Rights Reserved.
+Copyright 2015 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x-parent</artifactId>
-    <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-1x-parent:current} -->
+    <version>2.0.0-alpha3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-1.x-mapreduce</artifactId>
@@ -35,15 +35,44 @@ limitations under the License.
   </description>
 
   <properties>
-    <hadoop.scope>provided</hadoop.scope>
+    <mrunit.version>1.1.0</mrunit.version>
+    <google-cloud-bigtable-emulator.version>0.130.2</google-cloud-bigtable-emulator.version>
   </properties>
 
+  <!-- NOTE: this artifact is designed to be used alongside hbase-server via
+  the bin/hbase script. Its primary intention is to produce a single jar that can
+  be added to hbase's classpath to kick off mapreduce jobs targeted at bigtable.
+  A secondary goal is for some java orchestration program to kick off the jobs.
+
+  Thus the dependencies here must be exactly:
+  - bigtable-hbase-1.x-hadoop
+  - any hbase provided jars
+
+  In the primary usecase we will shade bigtable-hbase-1.x-hadoop allowing the
+  enduser to drop a single jar in the hbase classpath. In the secondary case,
+  the enduser can explcitly add their own version hbase-server.
+  -->
+
   <dependencies>
+    <!-- Primary Group -->
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-server</artifactId>
+      <version>${hbase1.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
-      <version>${project.version}</version>
+      <version>2.0.0-alpha3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <exclusions>
+        <!-- we need hbase-server instead of hbase-client -->
+        <exclusion>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-client</artifactId>
+        </exclusion>
+
         <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
         pom.xml files when invoking the build from a parent project. So we have to manually exclude
         the dependencies. Note that this works in conjunction with the manually promoted dependencies
@@ -55,55 +84,65 @@ limitations under the License.
       </exclusions>
     </dependency>
 
+    <!-- Test Group -->
     <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>${commons-logging.version}</version>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-common</artifactId>
-      <version>${hbase1-hadoop.version}</version>
-      <scope>${hadoop.scope}</scope>
+      <groupId>org.apache.mrunit</groupId>
+      <artifactId>mrunit</artifactId>
+      <version>${mrunit.version}</version>
+      <classifier>hadoop2</classifier>
+      <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-mapreduce-client-core</artifactId>
-      <version>${hbase1-hadoop.version}</version>
-      <scope>${hadoop.scope}</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-annotations</artifactId>
-      <version>${hbase.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-client</artifactId>
-      <version>${hbase.version}</version>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-bigtable-emulator</artifactId>
+      <version>${google-cloud-bigtable-emulator.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-common</artifactId>
-      <version>${hbase.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-annotations</artifactId>
-      <version>${hbase1-hadoop.version}</version>
-      <scope>${hadoop.scope}</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-server</artifactId>
-      <version>${hbase.version}</version>
+      <artifactId>hbase-testing-util</artifactId>
+      <version>${hbase1.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <!-- exclusion to avoid version conflict with existing artifact  -->
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+        <!-- exclusion to avoid version conflict with existing artifact  -->
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 
   <build>
     <plugins>
+      <!-- This is basically a replacement for the mapreduce jobs in hbase-server,
+      but with the implementation replaced by bigtable-hbase-1.x-hadoop. This means
+      that all of our dependencies are dictated by hbase-server. hbase-server
+      has a fairly complex dependency tree with a lot of exclusions. Trying to
+      replicate it here to declare exact deps our job uses creates an undue burden.-->
       <plugin>
-        <!-- overriding the default config to add exclusions-->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <configuration>
+          <ignoredDependencies>
+            <dependency>*</dependency>
+          </ignoredDependencies>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <!-- skip UpperBound enforcement for hadoop jars -->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
         <executions>
@@ -113,29 +152,15 @@ limitations under the License.
               <goal>enforce</goal>
             </goals>
             <configuration>
-              <rules>
-                <requireMavenVersion>
-                  <version>[3.0,)</version>
-                </requireMavenVersion>
-                <requireJavaVersion>
-                  <version>[1.7,)</version>
-                </requireJavaVersion>
-                <requireUpperBoundDeps>
-                  <!-- todo(kolea2): fix these temporary exclusions-->
-                  <excludes>
-                    <exclude>com.google.guava:guava</exclude>
-                    <exclude>commons-codec:commons-codec</exclude>
-                    <exclude>org.apache.zookeeper:zookeeper</exclude>
-                    <exclude>org.apache.hadoop:hadoop-yarn-api</exclude>
-                  </excludes>
-                </requireUpperBoundDeps>
-                <banDuplicateClasses>
-                  <ignoreClasses>
-                    <!-- todo(kolea2): investigate transitive deps causing conflicts-->
-                    <ignoreClass>**</ignoreClass>
-                  </ignoreClasses>
-                </banDuplicateClasses>
-              </rules>
+              <skip>true</skip>
+            </configuration>
+          </execution>
+          <!-- We are not introducing any new deps here. We expect to be
+          running in hadoop's provided classpath -->
+          <execution>
+            <id>enforce-banned-deps</id>
+            <configuration>
+              <skip>true</skip>
             </configuration>
           </execution>
         </executions>
@@ -161,13 +186,6 @@ limitations under the License.
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-eclipse-plugin</artifactId>
-        <configuration>
-          <useProjectReferences>false</useProjectReferences>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>
           <archive>
@@ -177,18 +195,55 @@ limitations under the License.
           </archive>
         </configuration>
       </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.3.0</version>
         <executions>
           <execution>
-            <phase>package</phase>
+            <id>shaded</id>
             <goals>
-              <goal>shade</goal>
+              <goal>single</goal>
+            </goals>
+            <phase>package</phase>
+            <configuration>
+              <archive>
+                <manifest>
+                  <mainClass>com.google.cloud.bigtable.mapreduce.Driver</mainClass>
+                </manifest>
+              </archive>
+              <descriptors>
+                <descriptor>assembly/shaded-byo-hadoop.xml</descriptor>
+                <descriptor>assembly/shaded.xml</descriptor>
+              </descriptors>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>2.0.0-alpha3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+        <executions>
+          <execution>
+            <id>verify-mirror-deps</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-mirror-deps</goal>
             </goals>
             <configuration>
-              <shadeTestJar>true</shadeTestJar>
-              <shadedArtifactAttached>true</shadedArtifactAttached>
+              <targetDependencies>
+                <targetDependency>org.apache.hbase:hbase-server:${hbase1.version}</targetDependency>
+              </targetDependencies>
+              <ignoredDependencies>
+                <!-- TODO: figure out why this diverges from hbase-client -->
+                <ignoredDependency>org.slf4j:slf4j-api</ignoredDependency>
+                <!-- For some reason, hbase-server pulls in test deps -->
+                <ignoredDependency>junit:junit</ignoredDependency>
+                <ignoredDependency>org.hamcrest:hamcrest-core</ignoredDependency>
+              </ignoredDependencies>
             </configuration>
           </execution>
         </executions>

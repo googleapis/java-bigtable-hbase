@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google Inc. All Rights Reserved.
+ * Copyright 2015 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,13 +39,18 @@ import org.junit.runners.Suite;
   TestGet.class,
   TestGetTable.class,
   TestScan.class,
+  TestSnapshots.class,
   TestIncrement.class,
   TestListTables.class,
   TestPut.class,
+  TestRpcRetryBehaviorCheckAndMutateRow.class,
+  TestRpcRetryBehaviorGetMultiple.class,
+  TestRpcRetryBehaviorGetSingle.class,
+  TestRpcRetryBehaviorPutMultiple.class,
+  TestRpcRetryBehaviorPutSingle.class,
   TestTimestamp.class,
   TestTruncateTable.class,
   TestModifyTable.class,
-  DirectPathFallbackIT.class,
 })
 public class IntegrationTests {
   @ClassRule public static SharedTestEnvRule sharedTestEnvRule = SharedTestEnvRule.getInstance();

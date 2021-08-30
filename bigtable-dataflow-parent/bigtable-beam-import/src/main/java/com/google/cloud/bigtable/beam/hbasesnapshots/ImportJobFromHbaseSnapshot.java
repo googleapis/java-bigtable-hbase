@@ -106,7 +106,6 @@ public class ImportJobFromHbaseSnapshot {
             .setProjectId(opts.getProject())
             .setHbaseSnapshotSourceDir(opts.getHbaseSnapshotSourceDir())
             .setSnapshotName(opts.getSnapshotName())
-            .setRestoreDirSuffix(opts.getJobName())
             .setRestoreDirSuffix(opts.getJobName());
     PCollection<KV<ImmutableBytesWritable, Result>> readResult =
         pipeline.apply(
@@ -118,7 +117,8 @@ public class ImportJobFromHbaseSnapshot {
         .apply("Create Mutations", ParDo.of(new HBaseResultToMutationFn()))
         .apply(
             "Write to Bigtable",
-            CloudBigtableIO.writeToTable(TemplateUtils.BuildImportConfig(opts)));
+            CloudBigtableIO.writeToTable(
+                TemplateUtils.buildImportConfig(opts, "HBaseSnapshotImportJob")));
 
     final List<KV<String, String>> sourceAndRestoreFolders =
         Arrays.asList(

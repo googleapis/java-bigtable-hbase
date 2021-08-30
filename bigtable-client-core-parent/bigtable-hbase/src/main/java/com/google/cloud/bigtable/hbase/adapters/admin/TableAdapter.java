@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google Inc. All Rights Reserved.
+ * Copyright 2015 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import static com.google.cloud.bigtable.hbase.adapters.admin.ColumnDescriptorAda
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.admin.v2.models.ColumnFamily;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
+import com.google.cloud.bigtable.admin.v2.models.GCRules.GCRule;
 import com.google.cloud.bigtable.admin.v2.models.Table;
 import com.google.protobuf.ByteString;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -46,7 +47,12 @@ public class TableAdapter {
     if (request != null) {
       for (HColumnDescriptor column : desc.getColumnFamilies()) {
         String columnName = column.getNameAsString();
-        request.addFamily(columnName, buildGarbageCollectionRule(column));
+        GCRule gcRule = buildGarbageCollectionRule(column);
+        if (gcRule == null) {
+          request.addFamily(columnName);
+        } else {
+          request.addFamily(columnName, gcRule);
+        }
       }
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc. All Rights Reserved.
+ * Copyright 2017 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BulkOptions;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
@@ -581,10 +580,7 @@ public class CloudBigtableIO {
 
       // This will use cached data channels under the covers.
       session = new BigtableSession(BigtableOptionsFactory.fromConfiguration(config));
-      scanner =
-          session
-              .getDataClientWrapper()
-              .readFlatRows(Query.fromProto(source.getConfiguration().getRequest()));
+      scanner = session.getDataClient().readFlatRows(source.getConfiguration().getRequest());
     }
 
     /** Calls {@link ResultScanner#next()}. */
@@ -698,10 +694,6 @@ public class CloudBigtableIO {
       if (scanner != null) {
         scanner.close();
         scanner = null;
-      }
-      if (session != null) {
-        session.close();
-        session = null;
       }
       long totalOps = getRowsReadCount();
       long elapsedTimeMs = System.currentTimeMillis() - workStart;

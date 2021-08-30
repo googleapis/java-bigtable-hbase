@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc. All Rights Reserved.
+ * Copyright 2017 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.apache.hadoop.hbase.client;
 
 import com.google.api.core.InternalApi;
-import com.google.api.gax.rpc.ApiExceptions;
 import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.data.v2.internal.NameUtil;
@@ -25,6 +24,7 @@ import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter.MutationAdapters;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
+import com.google.cloud.bigtable.hbase.util.FutureUtil;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
@@ -382,9 +382,9 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
     SampleRowKeysRequest.Builder request = SampleRowKeysRequest.newBuilder();
     request.setTableName(
         NameUtil.formatTableName(
-            settings.getProjectId(), settings.getInstanceId(), tableName.getQualifierAsString()));
+            settings.getProjectId(), settings.getInstanceId(), tableName.getNameAsString()));
     List<KeyOffset> sampleRowKeyResponse =
-        ApiExceptions.callAndTranslateApiException(
+        FutureUtil.unwrap(
             this.bigtableApi.getDataClient().sampleRowKeysAsync(tableName.getNameAsString()));
 
     return getSampledRowKeysAdapter(tableName, serverName).adaptResponse(sampleRowKeyResponse)

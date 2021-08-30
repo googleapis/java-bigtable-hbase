@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc. All Rights Reserved.
+ * Copyright 2017 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
-import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture;
+import static com.google.cloud.bigtable.hbase2_x.ApiFutureUtils.toCompletableFuture;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutatorHelper;

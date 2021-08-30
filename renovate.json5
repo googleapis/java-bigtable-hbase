@@ -10,6 +10,10 @@
     ":maintainLockFilesDisabled",
     ":autodetectPinVersions"
   ],
+  "ignorePaths": [
+    // ignore pom.xmls that are used as test subjects
+    "bigtable-test/bigtable-build-helper/src/it/**"
+  ],
   "packageRules": [
     {
       "packagePatterns": [
@@ -69,27 +73,20 @@
     },
     {
       // pin to beam deps
-      "packagePatterns": ["^beam-auto-value.version"],
-      "enabled": false
-    },
-    {
-      // pin to beam deps
-      "packagePatterns": ["^beam-grpc.version"],
-      "enabled": false
-    },
-    {
-      // pin to beam deps
-      "packagePatterns": ["^beam-guava.version"],
+      "packagePatterns": ["^beam-slf4j.version"],
       "enabled": false
     },
     {
       // pin to hbase deps
-      "packagePatterns": ["^hbase1-hadoop.version"],
+      "packagePatterns": [
+        "^hbase.-hadoop-slf4j.version",
+        "^hbase.-mapreduce-slfj.version",
+      ],
       "enabled": false
     },
     {
-      // pin to hbase deps
-      "packagePatterns": ["^hbase2-hadoop.version"],
+      // pin to bigtable version
+      "excludePackagePatterns" : ["^grpc-conscrypt.version"],
       "enabled": false
     },
     {

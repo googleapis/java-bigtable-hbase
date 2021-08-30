@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc. All Rights Reserved.
+ * Copyright 2017 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,7 +176,8 @@ public class ImportJob {
   }
 
   static PTransform<PCollection<Mutation>, PDone> createSink(ImportOptions opts) {
-    CloudBigtableTableConfiguration config = TemplateUtils.BuildImportConfig(opts);
+    CloudBigtableTableConfiguration config =
+        TemplateUtils.buildImportConfig(opts, "SequenceFileImportJob");
     return CloudBigtableIO.writeToTable(config);
   }
 }

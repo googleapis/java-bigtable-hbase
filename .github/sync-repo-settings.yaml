@@ -2,19 +2,45 @@ rebaseMergeAllowed: false
 squashMergeAllowed: true
 mergeCommitAllowed: false
 branchProtectionRules:
-- pattern: master
-  isAdminEnforced: true
-  requiredStatusCheckContexts:
-    - 'Kokoro - Test: Binary Compatibility'
-    - 'Kokoro - Test: Code Format'
-    - 'Kokoro - Test: Dependencies'
-    - 'Kokoro - Test: Integration'
-    - 'Kokoro - Test: Java 11'
-    - 'Kokoro - Test: Java 8'
-    - 'Kokoro - Test: Linkage Monitor'
-    - 'cla/google'
-  requiredApprovingReviewCount: 1
-  requiresCodeOwnerReviews: true
+  - pattern: master
+    isAdminEnforced: true
+    requiredStatusCheckContexts:
+      - 'Kokoro - Test: Binary Compatibility'
+      - 'Kokoro - Test: Code Format'
+      - 'Kokoro - Test: Dependencies'
+      - 'Kokoro - Test: Integration'
+      - 'Kokoro - Test: Java 11'
+      - 'Kokoro - Test: Java 8'
+      - 'Kokoro - Test: Beam Integration'
+      - cla/google
+    requiredApprovingReviewCount: 1
+    requiresCodeOwnerReviews: true
+  - pattern: 1.20.0-sp
+    isAdminEnforced: true
+    requiredStatusCheckContexts:
+      - 'Kokoro - Test: Binary Compatibility'
+      - 'Kokoro - Test: Code Format'
+      - 'Kokoro - Test: Dependencies'
+      - 'Kokoro - Test: Integration'
+      - 'Kokoro - Test: Java 11'
+      - 'Kokoro - Test: Java 8'
+      - 'Kokoro - Test: Beam Integration'
+      - cla/google
+    requiredApprovingReviewCount: 1
+    requiresCodeOwnerReviews: true
+  - pattern: bigtable-1.x
+    isAdminEnforced: true
+    requiredStatusCheckContexts:
+      - 'Kokoro - Test: Binary Compatibility'
+      - 'Kokoro - Test: Code Format'
+      - 'Kokoro - Test: Dependencies'
+      - 'Kokoro - Test: Integration'
+      - 'Kokoro - Test: Java 11'
+      - 'Kokoro - Test: Java 8'
+      - 'Kokoro - Test: Beam Integration'
+      - cla/google
+    requiredApprovingReviewCount: 1
+    requiresCodeOwnerReviews: true
 permissionRules:
   - team: yoshi-java-admins
     permission: admin

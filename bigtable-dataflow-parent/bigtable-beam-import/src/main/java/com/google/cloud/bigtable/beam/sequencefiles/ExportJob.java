@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc. All Rights Reserved.
+ * Copyright 2017 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,6 @@ import org.apache.hadoop.io.serializer.WritableSerialization;
  *    -Dexec.args="--runner=dataflow \
  *    --project=[PROJECT_ID] \
  *    --tempLocation=gs://[BUCKET]/[TEMP_PATH] \
- *    --zone=[ZONE] \
  *    --bigtableInstanceId=[INSTANCE] \
  *    --bigtableTableId=[TABLE] \
  *    --destination=gs://[BUCKET]/[EXPORT_PATH] \
@@ -205,7 +204,7 @@ public class ExportJob {
 
     Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
 
-    CloudBigtableScanConfiguration config = TemplateUtils.BuildExportConfig(opts);
+    CloudBigtableScanConfiguration config = TemplateUtils.buildExportConfig(opts);
     pipeline
         .apply("Read table", Read.from(CloudBigtableIO.read(config)))
         .apply("Format results", MapElements.via(new ResultToKV()))

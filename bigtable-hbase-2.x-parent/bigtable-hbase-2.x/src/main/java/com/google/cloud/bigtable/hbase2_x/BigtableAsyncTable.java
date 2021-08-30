@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
-import static com.google.cloud.bigtable.hbase2_x.FutureUtils.toCompletableFuture;
+import static com.google.cloud.bigtable.hbase2_x.ApiFutureUtils.toCompletableFuture;
 import static java.util.stream.Collectors.toList;
 
 import com.google.api.core.InternalApi;
@@ -173,7 +173,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
         builder.withPut(put);
         return call();
       } catch (Exception e) {
-        return FutureUtils.failedFuture(e);
+        return ApiFutureUtils.failedFuture(e);
       }
     }
 
@@ -184,7 +184,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
         builder.withDelete(delete);
         return call();
       } catch (Exception e) {
-        return FutureUtils.failedFuture(e);
+        return ApiFutureUtils.failedFuture(e);
       }
     }
 
@@ -195,7 +195,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
         builder.withMutations(mutation);
         return call();
       } catch (Exception e) {
-        return FutureUtils.failedFuture(e);
+        return ApiFutureUtils.failedFuture(e);
       }
     }
 
@@ -222,7 +222,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   private <T> List<CompletableFuture<?>> asyncRequests(List<? extends Row> actions) {
     return map(
         getBatchExecutor().issueAsyncRowRequests(actions, new Object[actions.size()], null),
-        FutureUtils::toCompletableFuture);
+        ApiFutureUtils::toCompletableFuture);
   }
 
   /** {@inheritDoc} */

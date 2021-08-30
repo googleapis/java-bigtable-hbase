@@ -54,7 +54,10 @@ public class BigtableClassicApi extends BigtableApi {
     BigtableInstanceName instanceName =
         new BigtableInstanceName(settings.getProjectId(), settings.getInstanceId());
     this.adminClientWrapper =
-        new AdminClientClassicApi(bigtableSession.getTableAdminClient(), instanceName);
+        new AdminClientClassicApi(
+            bigtableSession.getTableAdminClient(),
+            instanceName,
+            bigtableSession.getInstanceAdminClient());
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc. All Rights Reserved.
+ * Copyright 2017 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.google.cloud.bigtable.hbase2_x;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +27,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -117,18 +120,40 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   /** {@inheritDoc} */
   @Override
   public List<SnapshotDescription> listSnapshots(String regex) throws IOException {
-    throw new UnsupportedOperationException("listSnapshots");
+    return listSnapshots(Pattern.compile(regex));
   }
 
   /** {@inheritDoc} */
   @Override
   public List<SnapshotDescription> listSnapshots(Pattern pattern) throws IOException {
-    throw new UnsupportedOperationException("listSnapshots");
+    if (pattern == null || pattern.matcher("").matches()) {
+      return ImmutableList.of();
+    }
+
+    List<SnapshotDescription> response = new ArrayList<>();
+    for (SnapshotDescription description : listSnapshots()) {
+      if (pattern.matcher(description.getName()).matches()) {
+        response.add(description);
+      }
+    }
+    return response;
   }
 
   @Override
   public List<SnapshotDescription> listSnapshots() throws IOException {
-    throw new UnsupportedOperationException("listSnapshots");
+    List<String> backups =
+        Futures.getChecked(
+            adminClientWrapper.listBackupsAsync(getBackupClusterId()), IOException.class);
+    List<SnapshotDescription> response = new ArrayList<>();
+    for (String backup : backups) {
+      response.add(new SnapshotDescription(backup));
+    }
+    return response;
+  }
+
+  @Override
+  public void deleteSnapshots(Pattern pattern) throws IOException {
+    throw new UnsupportedOperationException("use deleteSnapshot instead");
   }
 
   /**
@@ -195,21 +220,25 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public void snapshot(SnapshotDescription snapshot)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
-    throw new UnsupportedOperationException("snapshot");
+    Objects.requireNonNull(snapshot);
+    snapshot(snapshot.getName(), snapshot.getTableName());
   }
 
   /** {@inheritDoc} */
   @Override
-  public void snapshot(String snapshotName, TableName tableName, SnapshotType arg2)
+  public void snapshot(String snapshotId, TableName tableName, SnapshotType ignored)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
-    throw new UnsupportedOperationException("snapshot");
+    snapshot(snapshotId, tableName);
   }
 
   /** {@inheritDoc} */
   @Override
   public void snapshotAsync(SnapshotDescription snapshot)
       throws IOException, SnapshotCreationException {
-    throw new UnsupportedOperationException("snapshotAsync");
+    asyncAdmin.snapshot(snapshot);
+    LOG.warn(
+        "isSnapshotFinished() is not currently supported by BigtableAdmin.\n"
+            + "You may poll for existence of the snapshot with listSnapshots(snapshotName)");
   }
 
   @Override
@@ -229,8 +258,8 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   protected CompletableFuture<Void> deleteTableAsyncInternal(TableName tableName) {
-    return FutureUtils.toCompletableFuture(
-        tableAdminClientWrapper.deleteTableAsync(tableName.getNameAsString()));
+    return ApiFutureUtils.toCompletableFuture(
+        adminClientWrapper.deleteTableAsync(tableName.getNameAsString()));
   }
 
   @Override
@@ -274,15 +303,15 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public List<SnapshotDescription> listTableSnapshots(String tableName, String snapshotName)
+  public List<SnapshotDescription> listTableSnapshots(String tableName, String snapshotId)
       throws IOException {
-    throw new UnsupportedOperationException("listTableSnapshots");
+    throw new UnsupportedOperationException("Unsupported - please use listSnapshots");
   }
 
   @Override
   public List<SnapshotDescription> listTableSnapshots(Pattern tableName, Pattern snapshotName)
       throws IOException {
-    throw new UnsupportedOperationException("listTableSnapshots");
+    throw new UnsupportedOperationException("Unsupported - please use listSnapshots");
   }
 
   @Override
@@ -333,8 +362,8 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     if (!preserveSplits) {
       LOG.info("truncate will preserveSplits. The passed in variable is ignored.");
     }
-    return FutureUtils.toCompletableFuture(
-        tableAdminClientWrapper.dropAllRowsAsync(tableName.getNameAsString()));
+    return ApiFutureUtils.toCompletableFuture(
+        adminClientWrapper.dropAllRowsAsync(tableName.getNameAsString()));
   }
   /* ******* Unsupported methods *********** */
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google Inc. All Rights Reserved.
+ * Copyright 2015 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
-import com.google.api.client.util.Clock;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.util.TimestampConverter;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.Map.Entry;
@@ -36,8 +34,6 @@ import org.apache.hadoop.hbase.client.Put;
 public class PutAdapter extends MutationAdapter<Put> {
   private final int maxKeyValueSize;
   private final boolean setClientTimestamp;
-
-  @VisibleForTesting Clock clock = Clock.SYSTEM;
 
   /**
    * Constructor for PutAdapter.
@@ -74,7 +70,7 @@ public class PutAdapter extends MutationAdapter<Put> {
 
     // Bigtable uses a 1ms granularity. Use this timestamp if the Put does not have one specified to
     // make mutations idempotent.
-    long currentTimestampMicros = setClientTimestamp ? clock.currentTimeMillis() * 1000 : -1;
+    long currentTimestampMicros = setClientTimestamp ? System.currentTimeMillis() * 1000 : -1;
     final int rowLength = operation.getRow().length;
 
     for (Entry<byte[], List<Cell>> entry : operation.getFamilyCellMap().entrySet()) {

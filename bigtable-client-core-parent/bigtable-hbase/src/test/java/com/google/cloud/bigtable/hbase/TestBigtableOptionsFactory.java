@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google Inc. All Rights Reserved.
+ * Copyright 2015 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,5 +175,14 @@ public class TestBigtableOptionsFactory {
         Integer.parseInt(longTimeout), options.getCallOptionsConfig().getMutateRpcTimeoutMs());
     assertEquals(
         Integer.parseInt(readTimeout), options.getCallOptionsConfig().getReadStreamRpcTimeoutMs());
+  }
+
+  @Test
+  public void testTracingCookie() throws IOException {
+    String fakeTracingCookie = "fake-tracing-cookie";
+    configuration.set(BigtableOptionsFactory.BIGTABLE_TRACING_COOKIE, fakeTracingCookie);
+    BigtableOptions options = BigtableOptionsFactory.fromConfiguration(configuration);
+
+    assertEquals(fakeTracingCookie, options.getTracingCookie());
   }
 }

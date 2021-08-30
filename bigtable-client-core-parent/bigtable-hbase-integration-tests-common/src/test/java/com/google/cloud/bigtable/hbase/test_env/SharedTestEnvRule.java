@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc. All Rights Reserved.
+ * Copyright 2017 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -34,6 +36,10 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.rules.ExternalResource;
 
 public class SharedTestEnvRule extends ExternalResource {
+  static final String PREFIX = "temp-";
+  private static final int SUFFIX = new Random().nextInt(Integer.MAX_VALUE);
+  private static final AtomicInteger prefixCounter = new AtomicInteger(0);
+
   private static final String HBASE_CONN_KEY = "hbase_conn";
 
   public static final int MAX_VERSIONS = 6;
@@ -141,9 +147,16 @@ public class SharedTestEnvRule extends ExternalResource {
   }
 
   public TableName newTestTableName() {
-    String suffix =
-        String.format("%016x-%016x", System.currentTimeMillis(), new Random().nextLong());
-    return TableName.valueOf("test_table2-" + suffix);
+    // Sortable resource prefix - time, process identifier, serial counterck
+    long epoch = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    String nameStr =
+        String.format("%s-%x-%x", newTimePrefix(epoch), SUFFIX, prefixCounter.getAndIncrement());
+
+    return TableName.valueOf(nameStr);
+  }
+
+  static String newTimePrefix(long epochSecs) {
+    return String.format(PREFIX + "08%x", epochSecs);
   }
 
   public ExecutorService getExecutor() {

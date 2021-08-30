@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright 2015 Google Inc. All Rights Reserved.
+Copyright 2015 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-client-parent</artifactId>
-    <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.0.0-alpha3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-1.x-parent</artifactId>
@@ -36,6 +36,7 @@ limitations under the License.
     <module>bigtable-hbase-1.x-integration-tests</module>
     <module>bigtable-hbase-1.x-mapreduce</module>
     <module>bigtable-hbase-1.x-benchmarks</module>
+    <module>bigtable-hbase-1.x-tools</module>
   </modules>
 
   <build>
@@ -46,10 +47,10 @@ limitations under the License.
           <artifactId>maven-javadoc-plugin</artifactId>
           <configuration>
             <windowtitle>
-              HBase + Cloud Bigtable Connector ${project.version} API
+              HBase + Cloud Bigtable Connector API
             </windowtitle>
             <doctitle>
-              HBase + Cloud Bigtable Connector ${project.version} API
+              HBase + Cloud Bigtable Connector API
             </doctitle>
             <overview>../overview.html</overview>
             <bottom><![CDATA[<br>]]></bottom>

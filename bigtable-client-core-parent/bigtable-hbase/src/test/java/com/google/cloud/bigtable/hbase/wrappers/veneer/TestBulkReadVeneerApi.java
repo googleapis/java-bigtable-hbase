@@ -29,12 +29,11 @@ import com.google.cloud.bigtable.data.v2.BigtableDataClient;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.hbase.wrappers.BulkReadWrapper;
+import com.google.cloud.bigtable.test.helper.TestServerBuilder;
 import com.google.protobuf.ByteString;
 import io.grpc.Server;
-import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -58,17 +57,11 @@ public class TestBulkReadVeneerApi {
 
   @Before
   public void setUp() throws IOException {
-    final int port;
-    try (ServerSocket s = new ServerSocket(0)) {
-      port = s.getLocalPort();
-    }
-
     fakeDataService = new FakeDataService();
-    server = ServerBuilder.forPort(port).addService(fakeDataService).build();
-    server.start();
+    server = TestServerBuilder.newInstance().addService(fakeDataService).buildAndStart();
 
     settingsBuilder =
-        BigtableDataSettings.newBuilderForEmulator(port)
+        BigtableDataSettings.newBuilderForEmulator(server.getPort())
             .setProjectId("fake-project")
             .setInstanceId("fake-instance");
   }
@@ -85,7 +78,7 @@ public class TestBulkReadVeneerApi {
   @Test
   public void testAdd() throws Exception {
     dataClient = BigtableDataClient.create(settingsBuilder.build());
-    BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID);
+    BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID, null);
 
     ApiFuture<Result> resultFuture1_1 = bulkReadWrapper.add(ByteString.copyFromUtf8("one"), null);
     ApiFuture<Result> resultFuture1_2 = bulkReadWrapper.add(ByteString.copyFromUtf8("two"), null);
@@ -123,7 +116,7 @@ public class TestBulkReadVeneerApi {
                 .setRequestByteThreshold(10L * 1024L)
                 .build());
     dataClient = BigtableDataClient.create(settingsBuilder.build());
-    BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID);
+    BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID, null);
 
     ApiFuture<Result> row = bulkReadWrapper.add(ROW_KEY, Filters.FILTERS.key().regex("row"));
     row.get();
@@ -147,7 +140,7 @@ public class TestBulkReadVeneerApi {
                 .setRequestByteThreshold(10L * 1024L)
                 .build());
     dataClient = BigtableDataClient.create(settingsBuilder.build());
-    BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID);
+    BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID, null);
 
     List<ApiFuture<Result>> results = new ArrayList<>();
 
@@ -183,7 +176,7 @@ public class TestBulkReadVeneerApi {
                 .setRequestByteThreshold(10L * 1024L)
                 .build());
     dataClient = BigtableDataClient.create(settingsBuilder.build());
-    BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID);
+    BulkReadWrapper bulkReadWrapper = new BulkReadVeneerApi(dataClient, TABLE_ID, null);
 
     long startTime = System.currentTimeMillis();
     ApiFuture<Result> resultFuture = bulkReadWrapper.add(ROW_KEY, null);

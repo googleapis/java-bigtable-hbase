@@ -20,6 +20,9 @@ import com.google.api.core.InternalApi;
 import com.google.api.gax.batching.Batcher;
 import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
 import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
+import com.google.cloud.bigtable.metrics.Meter;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 
@@ -27,6 +30,8 @@ import java.io.IOException;
 @InternalApi("For internal usage only")
 public class BulkMutationVeneerApi implements BulkMutationWrapper {
 
+  private final Meter mutationAdded =
+      BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.mutations.added");
   private final Batcher<RowMutationEntry, Void> bulkMutateBatcher;
 
   BulkMutationVeneerApi(Batcher<RowMutationEntry, Void> bulkMutateBatcher) {
@@ -37,18 +42,19 @@ public class BulkMutationVeneerApi implements BulkMutationWrapper {
   @Override
   public synchronized ApiFuture<Void> add(RowMutationEntry rowMutation) {
     Preconditions.checkNotNull(rowMutation, "mutation details cannot be null");
+    mutationAdded.mark();
     return bulkMutateBatcher.add(rowMutation);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void sendUnsent() {
+  public synchronized void sendUnsent() {
     bulkMutateBatcher.sendOutstanding();
   }
 
   /** {@inheritDoc} */
   @Override
-  public void flush() {
+  public synchronized void flush() {
     try {
       bulkMutateBatcher.flush();
     } catch (InterruptedException ex) {
@@ -57,7 +63,7 @@ public class BulkMutationVeneerApi implements BulkMutationWrapper {
   }
 
   @Override
-  public void close() throws IOException {
+  public synchronized void close() throws IOException {
     try {
       bulkMutateBatcher.close();
     } catch (InterruptedException e) {

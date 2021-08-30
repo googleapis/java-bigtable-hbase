@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google Inc. All Rights Reserved.
+ * Copyright 2015 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.mapreduce;
 
+import com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportHBaseSnapshotJob;
 import org.apache.hadoop.classification.InterfaceStability.Evolving;
 import org.apache.hadoop.util.ProgramDriver;
 
@@ -32,9 +33,17 @@ public class Driver {
     int exitCode = -1;
     try {
       programDriver.addClass(
-          "export-table", Export.class, "A map/reduce program that exports a table to a file.");
+          "export-table",
+          Export.class,
+          "A map/reduce program that exports a table to sequencefiles.");
       programDriver.addClass(
-          "import-table", Import.class, "A map/reduce program that imports a table to a file.");
+          "import-table",
+          Import.class,
+          "A map/reduce program that imports sequencefiles to a table.");
+      programDriver.addClass(
+          "import-snapshot",
+          ImportHBaseSnapshotJob.class,
+          "A map/reduce program that imports an hbase snapshot to a table.");
       programDriver.driver(args);
       exitCode = programDriver.run(args);
     } catch (Throwable e) {

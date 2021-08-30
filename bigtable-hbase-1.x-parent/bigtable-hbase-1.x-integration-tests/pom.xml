@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright 2015 Google Inc. All Rights Reserved.
+Copyright 2015 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x-parent</artifactId>
-    <version>1.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-1x-parent:current} -->
+    <version>2.0.0-alpha3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-1.x-integration-tests</artifactId>
@@ -32,9 +32,8 @@ limitations under the License.
   </description>
 
   <properties>
-    <google.bigtable.connection.impl>
-      com.google.cloud.bigtable.hbase1_x.BigtableConnection
-    </google.bigtable.connection.impl>
+    <hbase.version>${hbase1.version}</hbase.version>
+    <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase1_x.BigtableConnection</google.bigtable.connection.impl>
     <test.timeout>1800</test.timeout>
   </properties>
 
@@ -45,40 +44,39 @@ limitations under the License.
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-              <trimStackTrace>false</trimStackTrace>
-            </configuration>
+            <artifactId>maven-failsafe-plugin</artifactId>
             <executions>
               <execution>
-                <id>api-integration-test</id>
+                <id>integration-tests</id>
                 <goals>
-                  <goal>test</goal>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
                 </goals>
-                <phase>none</phase>
-              </execution>
-              <execution>
-                <id>api-gap-test</id>
-                <goals>
-                  <goal>test</goal>
-                </goals>
-                <phase>integration-test</phase>
                 <configuration>
-                  <forkCount>1</forkCount>
                   <includes>
-                    <include>**/IntegrationTestsNoKnownGap.java</include>
+                    <include>**/IntegrationTests.java</include>
                   </includes>
-                  <reportNameSuffix>bigtable-server</reportNameSuffix>
+                  <excludedGroups>KnownGap</excludedGroups>
+
+                  <redirectTestOutputToFile>true</redirectTestOutputToFile>
+
+                  <!-- Run tests in parallel -->
+                  <parallel>classes</parallel>
+                  <threadCount>4</threadCount>
+
+                  <!-- Fork & set system properties -->
+                  <forkCount>1</forkCount>
                   <systemPropertyVariables>
-                    <google.bigtable.connection.impl>
-                      ${google.bigtable.connection.impl}
-                    </google.bigtable.connection.impl>
+                    <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
                   </systemPropertyVariables>
-                  <forkedProcessTimeoutInSeconds>
-                    ${test.timeout}
-                  </forkedProcessTimeoutInSeconds>
+                  <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
+
                   <!-- Make sure to fail the build when the suite fails to initialize -->
                   <failIfNoTests>true</failIfNoTests>
+
+                  <!-- prevent multiple executions from clobering each other -->
+                  <summaryFile>${project.build.directory}/failsafe-reports/integration-tests/failsafe-summary.xml</summaryFile>
+                  <reportsDirectory>${project.build.directory}/failsafe-reports/integration-tests</reportsDirectory>
                 </configuration>
               </execution>
             </executions>
@@ -86,139 +84,33 @@ limitations under the License.
         </plugins>
       </build>
     </profile>
-    <profile>
-      <id>bigtableGapTest</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-              <trimStackTrace>false</trimStackTrace>
-            </configuration>
-            <executions>
-              <execution>
-                <id>api-integration-test</id>
-                <goals>
-                  <goal>test</goal>
-                </goals>
-                <phase>none</phase>
-              </execution>
-              <execution>
-                <id>api-gap-test</id>
-                <goals>
-                  <goal>test</goal>
-                </goals>
-                <phase>integration-test</phase>
-                <configuration>
-                  <!-- to enable netty logging, include:
-                  -Djava.util.logging.config.file=src/test/resources/logging.properties
-                  -->
-                  <forkCount>1</forkCount>
-                  <includes>
-                    <include>**/IntegrationTestsGap.java</include>
-                  </includes>
-                  <reportNameSuffix>bigtable-server</reportNameSuffix>
-                  <systemPropertyVariables>
-                    <google.bigtable.connection.impl>
-                      ${google.bigtable.connection.impl}
-                    </google.bigtable.connection.impl>
-                  </systemPropertyVariables>
-                  <forkedProcessTimeoutInSeconds>
-                    ${test.timeout}
-                  </forkedProcessTimeoutInSeconds>
-                  <trimStackTrace>false</trimStackTrace>
-                  <!-- Make sure to fail the build when the suite fails to initialize -->
-                  <failIfNoTests>true</failIfNoTests>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
+
     <profile>
       <id>hbaseLocalMiniClusterTest</id>
       <build>
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-              <trimStackTrace>false</trimStackTrace>
-            </configuration>
+            <artifactId>maven-failsafe-plugin</artifactId>
             <executions>
-              <execution>
-                <id>api-integration-test</id>
-                <goals>
-                  <goal>test</goal>
-                </goals>
-                <phase>none</phase>
-              </execution>
               <execution>
                 <id>local-hbase-cluster-test</id>
                 <goals>
-                  <goal>test</goal>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
                 </goals>
-                <phase>integration-test</phase>
                 <configuration>
                   <includes>
-                    <include>**/TestKnownHBaseGap.java</include>
+                    <include>**/IntegrationTests.java</include>
                   </includes>
-                  <reportNameSuffix>local-mini-cluster</reportNameSuffix>
-                  <forkedProcessTimeoutInSeconds>
-                    ${test.timeout}
-                  </forkedProcessTimeoutInSeconds>
-                  <trimStackTrace>false</trimStackTrace>
+                  <excludedGroups>KnownHBaseGap</excludedGroups>
+                  <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                   <!-- Make sure to fail the build when the suite fails to initialize -->
                   <failIfNoTests>true</failIfNoTests>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>simpleBigtableIntegrationTest</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-              <trimStackTrace>false</trimStackTrace>
-            </configuration>
-            <executions>
-              <execution>
-                <id>api-integration-test</id>
-                <goals>
-                  <goal>test</goal>
-                </goals>
-                <phase>none</phase>
-              </execution>
-              <execution>
-                <id>api-gap-test</id>
-                <goals>
-                  <goal>test</goal>
-                </goals>
-                <phase>integration-test</phase>
-                <configuration>
-                  <forkCount>1</forkCount>
-                  <environmentVariables>
-                    <LD_LIBRARY_PATH>${ld.library.path}</LD_LIBRARY_PATH>
-                  </environmentVariables>
-                  <includes>
-                    <include>**/SimpleIntegrationTests.java</include>
-                  </includes>
-                  <reportNameSuffix>bigtable-server</reportNameSuffix>
-                  <systemPropertyVariables>
-                    <google.bigtable.connection.impl>
-                      ${google.bigtable.connection.impl}
-                    </google.bigtable.connection.impl>
-                  </systemPropertyVariables>
-                  <!-- Make sure to fail the build when the suite fails to initialize -->
-                  <failIfNoTests>true</failIfNoTests>
+
+                  <!-- prevent multiple executions from clobering each other -->
+                  <summaryFile>${project.build.directory}/failsafe-reports/minicluster-tests/failsafe-summary.xml</summaryFile>
+                  <reportsDirectory>${project.build.directory}/failsafe-reports/minicluster-tests</reportsDirectory>
                 </configuration>
               </execution>
             </executions>
@@ -234,7 +126,7 @@ limitations under the License.
           <plugin>
             <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-emulator-maven-plugin</artifactId>
-            <version>${project.version}</version>
+            <version>2.0.0-alpha3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
             <executions>
               <execution>
                 <goals>
@@ -259,31 +151,24 @@ limitations under the License.
                 </goals>
                 <configuration>
                   <includes>
-                    <include>**/EmulatorTests.java</include>
+                    <include>**/IntegrationTests.java</include>
                   </includes>
-                  <reportNameSuffix>emulator</reportNameSuffix>
+                  <excludedGroups>KnownEmulatorGap,KnownGap</excludedGroups>
                   <systemPropertyVariables>
-                    <google.bigtable.connection.impl>
-                      ${google.bigtable.connection.impl}
-                    </google.bigtable.connection.impl>
-                    <google.bigtable.project.id>
-                      fake-project
-                    </google.bigtable.project.id>
-                    <google.bigtable.instance.id>
-                      fake-instance
-                    </google.bigtable.instance.id>
+                    <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
+                    <google.bigtable.project.id>fake-project</google.bigtable.project.id>
+                    <google.bigtable.instance.id>fake-instance</google.bigtable.instance.id>
                   </systemPropertyVariables>
                   <environmentVariables>
-                    <BIGTABLE_EMULATOR_HOST>
-                      ${bigtable.emulator.endpoint}
-                    </BIGTABLE_EMULATOR_HOST>
+                    <BIGTABLE_EMULATOR_HOST>${bigtable.emulator.endpoint}</BIGTABLE_EMULATOR_HOST>
                   </environmentVariables>
-                  <trimStackTrace>false</trimStackTrace>
-                  <forkedProcessTimeoutInSeconds>
-                    ${test.timeout}
-                  </forkedProcessTimeoutInSeconds>
+                  <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                   <!-- Make sure to fail the build when the suite fails to initialize -->
                   <failIfNoTests>true</failIfNoTests>
+
+                  <!-- prevent multiple executions from clobbering each other -->
+                  <summaryFile>${project.build.directory}/failsafe-reports/emulator-tests/failsafe-summary.xml</summaryFile>
+                  <reportsDirectory>${project.build.directory}/failsafe-reports/emulator-tests</reportsDirectory>
                 </configuration>
               </execution>
             </executions>
@@ -318,14 +203,14 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-client-core</artifactId>
-      <version>${project.version}</version>
+      <version>${bigtable-client-core.version}</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase</artifactId>
-      <version>${project.version}</version>
+      <version>2.0.0-alpha3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <scope>test</scope>
       <exclusions>
         <!-- included in hbase-shaded-testing-util -->
@@ -339,7 +224,7 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-1.x</artifactId>
-      <version>${project.version}</version>
+      <version>2.0.0-alpha3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <scope>test</scope>
       <exclusions>
         <!-- included in hbase-shaded-testing-util -->
@@ -353,7 +238,7 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-integration-tests-common</artifactId>
-      <version>${project.version}</version>
+      <version>2.0.0-alpha3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <type>test-jar</type>
       <scope>test</scope>
       <exclusions>
@@ -364,6 +249,12 @@ limitations under the License.
       </exclusions>
     </dependency>
 
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-internal-test-helper</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
 
     <!-- java-bigtable Modules -->
     <dependency>
@@ -372,6 +263,11 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>com.google.api.grpc</groupId>
+      <artifactId>grpc-google-cloud-bigtable-v2</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>com.google.api.grpc</groupId>
       <artifactId>proto-google-cloud-bigtable-v2</artifactId>
@@ -383,7 +279,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-testing-util</artifactId>
-      <version>${hbase.version}</version>
+      <version>${hbase1.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -433,6 +329,11 @@ limitations under the License.
       <artifactId>grpc-alts</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-stub</artifactId>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>io.grpc</groupId>
@@ -462,6 +363,13 @@ limitations under the License.
     </dependency>
 
     <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-library</artifactId>
+      <version>${hamcrest.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>${junit.version}</version>
@@ -470,14 +378,63 @@ limitations under the License.
   </dependencies>
 
   <build>
+    <pluginManagement>
+      <plugins>
+        <!-- Start Skip publishing -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>3.0.0-M1</version>
+          <configuration>
+            <skip>true</skip>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>nexus-staging-maven-plugin</artifactId>
+          <configuration>
+            <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-site-plugin</artifactId>
+          <configuration>
+            <skipDeploy>true</skipDeploy>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <configuration>
+            <skipSource>true</skipSource>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <configuration>
+            <skip>true</skip>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <configuration>
+            <skip>true</skip>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>clirr-maven-plugin</artifactId>
+          <configuration>
+            <skip>true</skip>
+          </configuration>
+        </plugin>
+        <!-- End Skip publishing -->
+      </plugins>
+    </pluginManagement>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-eclipse-plugin</artifactId>
-        <configuration>
-          <useProjectReferences>false</useProjectReferences>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -496,16 +453,6 @@ limitations under the License.
             </configuration>
           </execution>
         </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <usedDependencies>
-            <usedDependency>${project.groupId}:bigtable-hbase-1.x</usedDependency>
-            <usedDependency>io.grpc:grpc-grpclb</usedDependency>
-          </usedDependencies>
-        </configuration>
       </plugin>
     </plugins>
   </build>

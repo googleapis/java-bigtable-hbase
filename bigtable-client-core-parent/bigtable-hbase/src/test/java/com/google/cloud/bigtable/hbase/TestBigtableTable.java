@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google Inc. All Rights Reserved.
+ * Copyright 2015 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,8 @@ import org.mockito.stubbing.Answer;
 /** Unit tests for {@link AbstractBigtableTable}. */
 @RunWith(JUnit4.class)
 public class TestBigtableTable {
-  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  // TODO: remove silent and tighten mocks
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().silent();
 
   public static final String TEST_PROJECT = "testproject";
   public static final String TEST_TABLE = "testtable";

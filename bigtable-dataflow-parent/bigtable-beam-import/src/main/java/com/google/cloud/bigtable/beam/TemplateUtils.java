@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2018 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.beam.sequencefiles.ExportJob.ExportOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob.ImportOptions;
+import com.google.cloud.bigtable.beam.validation.SyncTableJob.SyncTableOptions;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
@@ -47,13 +48,18 @@ import org.apache.hadoop.hbase.filter.ParseFilter;
  */
 @InternalApi("For internal usage only")
 public class TemplateUtils {
-  /** Builds CloudBigtableTableConfiguration from input runtime parameters for import job. */
-  public static CloudBigtableTableConfiguration BuildImportConfig(ImportOptions opts) {
+  /**
+   * Builds CloudBigtableTableConfiguration from input runtime parameters for import job with with
+   * custom user agent.
+   */
+  public static CloudBigtableTableConfiguration buildImportConfig(
+      ImportOptions opts, String customUserAgent) {
     CloudBigtableTableConfiguration.Builder builder =
         new CloudBigtableTableConfiguration.Builder()
             .withProjectId(opts.getBigtableProject())
             .withInstanceId(opts.getBigtableInstanceId())
-            .withTableId(opts.getBigtableTableId());
+            .withTableId(opts.getBigtableTableId())
+            .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, customUserAgent);
     if (opts.getBigtableAppProfileId() != null) {
       builder.withAppProfileId(opts.getBigtableAppProfileId());
     }
@@ -69,6 +75,20 @@ public class TemplateUtils {
         BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS,
         ValueProvider.NestedValueProvider.of(opts.getMutationThrottleLatencyMs(), String::valueOf));
 
+    return builder.build();
+  }
+
+  /** Builds CloudBigtableTableConfiguration from input runtime parameters for import job. */
+  public static CloudBigtableTableConfiguration buildSyncTableConfig(SyncTableOptions opts) {
+    CloudBigtableTableConfiguration.Builder builder =
+        new CloudBigtableTableConfiguration.Builder()
+            .withProjectId(opts.getBigtableProject())
+            .withInstanceId(opts.getBigtableInstanceId())
+            .withTableId(opts.getBigtableTableId())
+            .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "SyncTableJob");
+    if (opts.getBigtableAppProfileId() != null) {
+      builder.withAppProfileId(opts.getBigtableAppProfileId());
+    }
     return builder.build();
   }
 
@@ -141,7 +161,7 @@ public class TemplateUtils {
   }
 
   /** Builds CloudBigtableScanConfiguration from input runtime parameters for export job. */
-  public static CloudBigtableScanConfiguration BuildExportConfig(ExportOptions options) {
+  public static CloudBigtableScanConfiguration buildExportConfig(ExportOptions options) {
     ValueProvider<ReadRowsRequest> request = new RequestValueProvider(options);
     CloudBigtableScanConfiguration.Builder configBuilder =
         new CloudBigtableScanConfiguration.Builder()
@@ -149,6 +169,8 @@ public class TemplateUtils {
             .withInstanceId(options.getBigtableInstanceId())
             .withTableId(options.getBigtableTableId())
             .withAppProfileId(options.getBigtableAppProfileId())
+            .withConfiguration(
+                BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "SequenceFileExportJob")
             .withRequest(request);
 
     return configBuilder.build();

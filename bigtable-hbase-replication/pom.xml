@@ -13,7 +13,8 @@
   <version>1.14.1-SNAPSHOT</version>
   <artifactId>bigtable-hbase-replication</artifactId>
   <packaging>jar</packaging>
-  <name>pubsub bigtable hbase client test</name>
+  <name>bigtable-hbase-replication</name>
+<!--  Library to enable one way replication from HBase to Cloud Bigtable.-->
 
   <repositories>
     <repository>
