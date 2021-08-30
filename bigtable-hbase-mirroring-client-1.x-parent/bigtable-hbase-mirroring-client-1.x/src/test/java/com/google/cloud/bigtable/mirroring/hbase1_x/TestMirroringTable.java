@@ -20,6 +20,7 @@ import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -29,6 +30,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController.ResourceReservation;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -66,6 +70,7 @@ public class TestMirroringTable {
   @Mock Table primaryTable;
   @Mock Table secondaryTable;
   @Mock MismatchDetector mismatchDetector;
+  @Mock FlowController flowController;
 
   ExecutorService executorService;
   MirroringTable mirroringTable;
@@ -74,7 +79,19 @@ public class TestMirroringTable {
   public void setUp() {
     this.executorService = Executors.newSingleThreadExecutor();
     this.mirroringTable =
-        new MirroringTable(primaryTable, secondaryTable, this.executorService, mismatchDetector);
+        new MirroringTable(
+            primaryTable, secondaryTable, this.executorService, mismatchDetector, flowController);
+  }
+
+  private void mockFlowController() {
+    ResourceReservation resourceReservationMock = mock(ResourceReservation.class);
+
+    SettableFuture<ResourceReservation> resourceReservationFuture = SettableFuture.create();
+    resourceReservationFuture.set(resourceReservationMock);
+
+    doReturn(resourceReservationFuture)
+        .when(flowController)
+        .asyncRequestResource(any(RequestResourcesDescription.class));
   }
 
   private Result createResult(String key, String... values) {
@@ -108,6 +125,7 @@ public class TestMirroringTable {
 
   @Test
   public void testMismatchDetectorIsCalledOnGetSingle() throws IOException {
+    mockFlowController();
     Get get = createGets("test").get(0);
     Result expectedResult = createResult("test", "value");
 
@@ -128,6 +146,7 @@ public class TestMirroringTable {
   @Test
   public void testSecondaryReadExceptionCallsVerificationErrorHandlerOnSingleGet()
       throws IOException {
+    mockFlowController();
     Get request = createGet("test");
     Result expectedResult = createResult("test", "value");
 
@@ -145,6 +164,7 @@ public class TestMirroringTable {
 
   @Test
   public void testMismatchDetectorIsCalledOnGetMultiple() throws IOException {
+    mockFlowController();
     List<Get> get = Arrays.asList(createGets("test").get(0));
     Result[] expectedResult = new Result[] {createResult("test", "value")};
 
@@ -164,6 +184,7 @@ public class TestMirroringTable {
   @Test
   public void testSecondaryReadExceptionCallsVerificationErrorHandlerOnGetMultiple()
       throws IOException {
+    mockFlowController();
     List<Get> request = createGets("test1", "test2");
     Result[] expectedResult =
         new Result[] {createResult("test1", "value1"), createResult("test2", "value2")};
@@ -182,6 +203,7 @@ public class TestMirroringTable {
 
   @Test
   public void testMismatchDetectorIsCalledOnExists() throws IOException {
+    mockFlowController();
     Get get = createGet("test");
     boolean expectedResult = true;
 
@@ -199,6 +221,7 @@ public class TestMirroringTable {
 
   @Test
   public void testSecondaryReadExceptionCallsVerificationErrorHandlerOnExists() throws IOException {
+    mockFlowController();
     Get request = createGet("test");
     boolean expectedResult = true;
 
@@ -216,6 +239,7 @@ public class TestMirroringTable {
 
   @Test
   public void testMismatchDetectorIsCalledOnExistsAll() throws IOException {
+    mockFlowController();
     List<Get> get = Arrays.asList(createGets("test").get(0));
     boolean[] expectedResult = new boolean[] {true, false};
 
@@ -234,6 +258,7 @@ public class TestMirroringTable {
   @Test
   public void testSecondaryReadExceptionCallsVerificationErrorHandlerOnExistsAll()
       throws IOException {
+    mockFlowController();
     List<Get> request = createGets("test1", "test2");
     boolean[] expectedResult = new boolean[] {true, false};
 
@@ -251,6 +276,7 @@ public class TestMirroringTable {
 
   @Test
   public void testMismatchDetectorIsCalledOnScannerNextOne() throws IOException {
+    mockFlowController();
     Result expected1 = createResult("test1", "value1");
     Result expected2 = createResult("test2", "value2");
 
@@ -285,6 +311,7 @@ public class TestMirroringTable {
   @Test
   public void testSecondaryReadExceptionCallsVerificationErrorHandlerOnScannerNextOne()
       throws IOException {
+    mockFlowController();
     Result expected1 = createResult("test1", "value1");
     Result expected2 = createResult("test2", "value2");
 
@@ -322,6 +349,7 @@ public class TestMirroringTable {
 
   @Test
   public void testMismatchDetectorIsCalledOnScannerNextMultiple() throws IOException {
+    mockFlowController();
     Result[] expected =
         new Result[] {createResult("test1", "value1"), createResult("test2", "value2")};
 
@@ -348,6 +376,7 @@ public class TestMirroringTable {
   @Test
   public void testSecondaryReadExceptionCallsVerificationErrorHandlerOnScannerNextMultiple()
       throws IOException {
+    mockFlowController();
     Result[] expected =
         new Result[] {createResult("test1", "value1"), createResult("test2", "value2")};
 

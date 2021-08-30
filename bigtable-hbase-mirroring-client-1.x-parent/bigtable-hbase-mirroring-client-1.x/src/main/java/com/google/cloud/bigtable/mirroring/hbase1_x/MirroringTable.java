@@ -18,9 +18,12 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncTableWrapper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.RequestScheduling;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
-import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
@@ -66,6 +69,7 @@ public class MirroringTable implements Table, ListenableCloseable {
   VerificationContinuationFactory verificationContinuationFactory;
   private List<Runnable> onCloseListeners = new ArrayList<>();
   private ListenableFuture<Void> closeFuture;
+  private FlowController flowController;
 
   /**
    * @param executorService ExecutorService is used to perform operations on secondaryTable and
@@ -77,13 +81,15 @@ public class MirroringTable implements Table, ListenableCloseable {
       Table primaryTable,
       Table secondaryTable,
       ExecutorService executorService,
-      MismatchDetector mismatchDetector) {
+      MismatchDetector mismatchDetector,
+      FlowController flowController) {
     this.primaryTable = primaryTable;
     this.secondaryTable = secondaryTable;
     this.verificationContinuationFactory = new VerificationContinuationFactory(mismatchDetector);
     this.secondaryAsyncWrapper =
         new AsyncTableWrapper(
             this.secondaryTable, MoreExecutors.listeningDecorator(executorService));
+    this.flowController = flowController;
   }
 
   @Override
@@ -104,20 +110,20 @@ public class MirroringTable implements Table, ListenableCloseable {
   @Override
   public boolean exists(Get get) throws IOException {
     boolean result = this.primaryTable.exists(get);
-    Futures.addCallback(
+    scheduleVerificationAndRequestWithFlowControl(
+        new RequestResourcesDescription(result),
         this.secondaryAsyncWrapper.exists(get),
-        this.verificationContinuationFactory.exists(get, result),
-        MoreExecutors.directExecutor());
+        this.verificationContinuationFactory.exists(get, result));
     return result;
   }
 
   @Override
   public boolean[] existsAll(List<Get> list) throws IOException {
     boolean[] result = this.primaryTable.existsAll(list);
-    Futures.addCallback(
+    scheduleVerificationAndRequestWithFlowControl(
+        new RequestResourcesDescription(result),
         this.secondaryAsyncWrapper.existsAll(list),
-        this.verificationContinuationFactory.existsAll(list, result),
-        MoreExecutors.directExecutor());
+        this.verificationContinuationFactory.existsAll(list, result));
     return result;
   }
 
@@ -147,20 +153,22 @@ public class MirroringTable implements Table, ListenableCloseable {
   @Override
   public Result get(Get get) throws IOException {
     Result result = this.primaryTable.get(get);
-    Futures.addCallback(
+    scheduleVerificationAndRequestWithFlowControl(
+        new RequestResourcesDescription(result),
         this.secondaryAsyncWrapper.get(get),
-        this.verificationContinuationFactory.get(get, result),
-        MoreExecutors.directExecutor());
+        this.verificationContinuationFactory.get(get, result));
+
     return result;
   }
 
   @Override
   public Result[] get(List<Get> list) throws IOException {
     Result[] result = this.primaryTable.get(list);
-    Futures.addCallback(
+    scheduleVerificationAndRequestWithFlowControl(
+        new RequestResourcesDescription(result),
         this.secondaryAsyncWrapper.get(list),
-        this.verificationContinuationFactory.get(list, result),
-        MoreExecutors.directExecutor());
+        this.verificationContinuationFactory.get(list, result));
+
     return result;
   }
 
@@ -170,7 +178,8 @@ public class MirroringTable implements Table, ListenableCloseable {
         scan,
         this.primaryTable.getScanner(scan),
         this.secondaryAsyncWrapper.getScanner(scan),
-        this.verificationContinuationFactory);
+        this.verificationContinuationFactory,
+        this.flowController);
   }
 
   @Override
@@ -415,5 +424,13 @@ public class MirroringTable implements Table, ListenableCloseable {
     for (Runnable listener : this.onCloseListeners) {
       listener.run();
     }
+  }
+
+  private <T> void scheduleVerificationAndRequestWithFlowControl(
+      final RequestResourcesDescription resultInfo,
+      final ListenableFuture<T> secondaryGetFuture,
+      final FutureCallback<T> verificationCallback) {
+    RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
+        resultInfo, secondaryGetFuture, verificationCallback, this.flowController);
   }
 }

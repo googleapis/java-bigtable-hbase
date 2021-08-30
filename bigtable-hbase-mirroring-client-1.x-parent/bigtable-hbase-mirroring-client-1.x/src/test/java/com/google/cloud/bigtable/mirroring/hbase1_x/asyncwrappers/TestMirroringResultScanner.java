@@ -23,6 +23,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringResultScanner;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
@@ -30,9 +31,12 @@ import org.junit.Test;
 import org.junit.function.ThrowingRunnable;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mock;
 
 @RunWith(JUnit4.class)
 public class TestMirroringResultScanner {
+  @Mock FlowController flowController;
+
   @Test
   public void testScannerCloseWhenFirstCloseThrows() {
     ResultScanner primaryScannerMock = mock(ResultScanner.class);
@@ -42,7 +46,11 @@ public class TestMirroringResultScanner {
     AsyncResultScannerWrapper secondaryScannerMock = mock(AsyncResultScannerWrapper.class);
     final ResultScanner mirroringScanner =
         new MirroringResultScanner(
-            new Scan(), primaryScannerMock, secondaryScannerMock, continuationFactoryMock);
+            new Scan(),
+            primaryScannerMock,
+            secondaryScannerMock,
+            continuationFactoryMock,
+            flowController);
 
     doThrow(new RuntimeException("first")).when(primaryScannerMock).close();
 
@@ -70,7 +78,11 @@ public class TestMirroringResultScanner {
     AsyncResultScannerWrapper secondaryScannerWrapperMock = mock(AsyncResultScannerWrapper.class);
     final ResultScanner mirroringScanner =
         new MirroringResultScanner(
-            new Scan(), primaryScannerMock, secondaryScannerWrapperMock, continuationFactoryMock);
+            new Scan(),
+            primaryScannerMock,
+            secondaryScannerWrapperMock,
+            continuationFactoryMock,
+            flowController);
 
     doThrow(new RuntimeException("second")).when(secondaryScannerWrapperMock).asyncClose();
 
@@ -99,7 +111,11 @@ public class TestMirroringResultScanner {
 
     final ResultScanner mirroringScanner =
         new MirroringResultScanner(
-            new Scan(), primaryScannerMock, secondaryScannerWrapperMock, continuationFactoryMock);
+            new Scan(),
+            primaryScannerMock,
+            secondaryScannerWrapperMock,
+            continuationFactoryMock,
+            flowController);
 
     doThrow(new RuntimeException("first")).when(primaryScannerMock).close();
     doThrow(new RuntimeException("second")).when(secondaryScannerWrapperMock).asyncClose();
@@ -131,7 +147,11 @@ public class TestMirroringResultScanner {
 
     final ResultScanner mirroringScanner =
         new MirroringResultScanner(
-            new Scan(), primaryScannerMock, secondaryScannerWrapperMock, continuationFactoryMock);
+            new Scan(),
+            primaryScannerMock,
+            secondaryScannerWrapperMock,
+            continuationFactoryMock,
+            flowController);
 
     mirroringScanner.close();
     mirroringScanner.close();

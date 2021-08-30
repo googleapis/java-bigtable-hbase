@@ -17,9 +17,10 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncResultScannerWrapper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.RequestScheduling;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import org.apache.commons.logging.Log;
@@ -51,15 +52,19 @@ public class MirroringResultScanner extends AbstractClientScanner {
    */
   private int readEntries;
 
+  private FlowController flowController;
+
   public MirroringResultScanner(
       Scan originalScan,
       ResultScanner primaryResultScanner,
       AsyncResultScannerWrapper secondaryResultScannerWrapper,
-      VerificationContinuationFactory verificationContinuationFactory) {
+      VerificationContinuationFactory verificationContinuationFactory,
+      FlowController flowController) {
     this.originalScan = originalScan;
     this.primaryResultScanner = primaryResultScanner;
     this.secondaryResultScannerWrapper = secondaryResultScannerWrapper;
     this.verificationContinuationFactory = verificationContinuationFactory;
+    this.flowController = flowController;
     this.readEntries = 0;
   }
 
@@ -68,10 +73,11 @@ public class MirroringResultScanner extends AbstractClientScanner {
     Result result = this.primaryResultScanner.next();
     int startingIndex = this.readEntries;
     this.readEntries += 1;
-    Futures.addCallback(
+    RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
+        new RequestResourcesDescription(result),
         this.secondaryResultScannerWrapper.next(),
         this.verificationContinuationFactory.scannerNext(this.originalScan, startingIndex, result),
-        MoreExecutors.directExecutor());
+        this.flowController);
     return result;
   }
 
@@ -80,11 +86,12 @@ public class MirroringResultScanner extends AbstractClientScanner {
     Result[] results = this.primaryResultScanner.next(entriesToRead);
     int startingIndex = this.readEntries;
     this.readEntries += entriesToRead;
-    Futures.addCallback(
+    RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
+        new RequestResourcesDescription(results),
         this.secondaryResultScannerWrapper.next(entriesToRead),
         this.verificationContinuationFactory.scannerNext(
             this.originalScan, startingIndex, entriesToRead, results),
-        MoreExecutors.directExecutor());
+        this.flowController);
     return results;
   }
 
