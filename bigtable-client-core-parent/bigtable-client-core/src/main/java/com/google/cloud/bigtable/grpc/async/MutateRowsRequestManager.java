@@ -212,10 +212,9 @@ public class MutateRowsRequestManager {
         resultCounts.put(result.getCode(), msgCounts);
       }
 
-      Long count =
-          MoreObjects.firstNonNull(
-              msgCounts.get(MoreObjects.firstNonNull(result.getMessage(), "")), 0L);
-      msgCounts.put(result.getMessage(), count + 1);
+      String msg = MoreObjects.firstNonNull(result.getMessage(), "");
+      Long count = MoreObjects.firstNonNull(msgCounts.get(msg), 0L);
+      msgCounts.put(msg, count + 1);
     }
 
     // Format string as: code: msg(count), msg2(count); code2: msg(count);
