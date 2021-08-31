@@ -8,10 +8,9 @@ Pipelines to import and export data are under [bigtable-beam-import](bigtable-da
 To use the tools in this folder, you can download them from the maven repository, or
 you can build them using Maven.
 
-[//]: # ({x-version-update-start:bigtable-dataflow-parent:released})
 ### Download the jars
 
-Download [the Bigtable tools jars](http://search.maven.org/remotecontent?filepath=com/google/cloud/bigtable/bigtable-hbase-1.x-tools/1.20.0/bigtable-hbase-1.x-tools-1.20.0-shaded.jar), which is an aggregation of all required jars.
+Download [the Bigtable tools jars](http://search.maven.org/remotecontent?filepath=com/google/cloud/bigtable/bigtable-hbase-1.x-tools/1.24.0/bigtable-hbase-1.x-tools-1.24.0-shaded.jar), which is an aggregation of all required jars.
 
 ### Build the jars
 Go to the top level directory and build the repo then return to this sub directory.
@@ -24,7 +23,7 @@ cd bigtable-hbase-1.x-parent/bigtable-hbase-1.x-tools
 
 ## Schema Translation tool 
 This tool will create tables in Cloud Bigtable based on the tables in an HBase cluster.
-You specifiy a [name regex](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html?is-external=true)
+You specify a [name regex](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html?is-external=true)
 and it will copy column families, garbage collection rules,
 and table splits.
 
@@ -38,6 +37,7 @@ and table splits.
     ZOOKEEPER_PORT=2181
     ```
 1. Execute the following command to copy the schema from HBase to Cloud Bigtable.
+[//]: # ({x-version-update-start:bigtable-client-parent:released})
     ```
     java \
      -Dgoogle.bigtable.project.id=$PROJECT_ID \
@@ -45,8 +45,9 @@ and table splits.
      -Dgoogle.bigtable.table.filter=$TABLE_NAME_REGEX \
      -Dhbase.zookeeper.quorum=$ZOOKEEPER_QUORUM \
      -Dhbase.zookeeper.property.clientPort=$ZOOKEEPER_PORT \
-     -jar bigtable-hbase-1.x-tools-1.20.0-SNAPSHOT-jar-with-dependencies.jar
+     -jar bigtable-hbase-1.x-tools-1.24.0-jar-with-dependencies.jar
     ```
+[//]: # ({x-version-update-end})
 
 ### Alternative: Exporting Schema
 
@@ -61,14 +62,16 @@ export the HBase schema to a file and use that to create tables in Cloud Bigtabl
     HBASE_EXPORT_PATH=/path/to/hbase-schema.json
     ```
 1. Run the export tool from the host.
+[//]: # ({x-version-update-start:bigtable-client-parent:released})
     ```
     java \
      -Dgoogle.bigtable.table.filter=$TABLE_NAME_REGEX \
      -Dgoogle.bigtable.output.filepath=$HBASE_EXPORT_PATH \
      -Dhbase.zookeeper.quorum=$ZOOKEEPER_QUORUM \
      -Dhbase.zookeeper.property.clientPort=$ZOOKEEPER_PORT \
-     -jar bigtable-hbase-1.x-tools-1.20.0-SNAPSHOT-jar-with-dependencies.jar
+     -jar bigtable-hbase-1.x-tools-1.24.0-jar-with-dependencies.jar
     ```
+[//]: # ({x-version-update-end})
 
 #### Import schema
 
@@ -78,10 +81,12 @@ export the HBase schema to a file and use that to create tables in Cloud Bigtabl
    ```
 
 1. Create tables in Cloud Bigtable using the schema file:
+[//]: # ({x-version-update-start:bigtable-client-parent:released})
     ```
     java \
      -Dgoogle.bigtable.project.id=$PROJECT_ID \
      -Dgoogle.bigtable.instance.id=$INSTANCE_ID \
      -Dgoogle.bigtable.input.filepath=$SCHEMA_FILE_PATH \
-     -jar bigtable-hbase-1.x-tools-1.20.0-SNAPSHOT-jar-with-dependencies.jar \
+     -jar bigtable-hbase-1.x-tools-1.24.0-jar-with-dependencies.jar \
     ```
+[//]: # ({x-version-update-end})

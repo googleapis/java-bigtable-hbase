@@ -9,7 +9,6 @@ To use the tools in this folder, you can download them from the maven repository
 you can build them using Maven. 
 
 
-[//]: # ({x-version-update-start:bigtable-dataflow-parent:released})
 ### Download the jars
 Download [the import/export jars](https://search.maven.org/artifact/com.google.cloud.bigtable/bigtable-beam-import), which is an aggregation of all required jars.
 
@@ -100,8 +99,9 @@ Exporting HBase snapshots from Bigtable is not supported.
     BUCKET_NAME=gs://bucket-name
     ```
 1. Run the export.
+[//]: # ({x-version-update-start:bigtable-client-parent:released})
    ```
-   java -jar bigtable-beam-import-1.20.0-shaded.jar export \
+   java -jar bigtable-beam-import-1.24.0-shaded.jar export \
         --runner=dataflow \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
@@ -110,6 +110,7 @@ Exporting HBase snapshots from Bigtable is not supported.
         --tempLocation=$BUCKET_NAME/hbase_temp/ \
         --maxNumWorkers=$(expr 3 \* $CLUSTER_NUM_NODES)
    ```
+[//]: # ({x-version-update-end})
 
 
 ## Importing to Bigtable
@@ -140,8 +141,9 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
     ```
     
 1. Run the import.
+[//]: # ({x-version-update-start:bigtable-client-parent:released})
     ```
-    java -jar bigtable-beam-import-1.20.0-SNAPSHOT-shaded.jar importsnapshot \
+    java -jar bigtable-beam-import-1.24.0-shaded.jar importsnapshot \
         --runner=DataflowRunner \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
@@ -153,6 +155,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
         --maxWorkerNodes=$(expr 3 \* $CLUSTER_NUM_NODES) \
         --region=$REGION
     ```
+[//]: # ({x-version-update-end})
 
 
 ### Sequence Files
@@ -168,8 +171,9 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
     BUCKET_NAME=gs://bucket-name
     ```
 1. Run the import.
+[//]: # ({x-version-update-start:bigtable-client-parent:released})
     ```
-    java -jar bigtable-beam-import-1.20.0-shaded.jar import \
+    java -jar bigtable-beam-import-1.24.0-shaded.jar import \
         --runner=dataflow \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_D \
@@ -179,6 +183,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
         --maxNumWorkers=$(expr 3 \* $CLUSTER_NUM_NODES)  \
         --zone=$CLUSTER_ZONE
     ```
+[//]: # ({x-version-update-end})
 
 
 ## Validating data
@@ -195,9 +200,10 @@ check if there are any rows with mismatched data.
     
     SNAPSHOT_GCS_PATH="$BUCKET_NAME/hbase-migration-snap"
     ```
-1. Run the sync job. It will put the results into `$SNAPSHOT_GCS_PATH/data-verification/output-TIMESTAMP`. 
+1. Run the sync job. It will put the results into `$SNAPSHOT_GCS_PATH/data-verification/output-TIMESTAMP`.
+[//]: # ({x-version-update-start:bigtable-client-parent:released})
     ```
-    java -jar bigtable-beam-import-1.20.0-SNAPSHOT-shaded.jar sync-table  \
+    java -jar bigtable-beam-import-1.24.0-shaded.jar sync-table  \
         --runner=dataflow \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_D \
@@ -208,6 +214,4 @@ check if there are any rows with mismatched data.
         --tempLocation=$SNAPSHOT_GCS_PATH/sync-table/dataflow-test/temp \
         --region=$REGION
     ```
-
-
 [//]: # ({x-version-update-end})
