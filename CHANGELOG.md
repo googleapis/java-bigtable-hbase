@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.24.0](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.23.1...v1.24.0) (2021-08-31)
+
+
+### Features
+
+* Add support for renaming tables in schema translator ([#3185](https://www.github.com/googleapis/java-bigtable-hbase/issues/3185)) ([e294c1e](https://www.github.com/googleapis/java-bigtable-hbase/commit/e294c1ecd9a985558e8447cf2fa954040016a23a))
+* log bulk mutation entry errors ([#3198](https://www.github.com/googleapis/java-bigtable-hbase/issues/3198)) ([0618ddb](https://www.github.com/googleapis/java-bigtable-hbase/commit/0618ddb6a323c3d795658a306721751502329fcd))
+
 ### [1.23.1](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.23.0...v1.23.1) (2021-08-09)
 
 
