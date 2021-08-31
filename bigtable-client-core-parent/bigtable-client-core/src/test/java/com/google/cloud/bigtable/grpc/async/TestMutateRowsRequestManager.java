@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -226,5 +228,34 @@ public class TestMutateRowsRequestManager {
     MutateRowsRequestManager underTest =
         new MutateRowsRequestManager(retryOptions, createRequest(3));
     Assert.assertEquals(ProcessingStatus.INVALID, send(underTest, createResponse(OK, OK)));
+  }
+
+  @Test
+  public void testMessage() {
+    MutateRowsRequestManager underTest =
+        new MutateRowsRequestManager(retryOptions, createRequest(4));
+    send(
+        underTest,
+        createResponse(
+            Status.newBuilder().setCode(io.grpc.Status.Code.OK.value()).build(),
+            Status.newBuilder()
+                .setCode(io.grpc.Status.Code.DEADLINE_EXCEEDED.value())
+                .setMessage("deadline exceeded custom message")
+                .build(),
+            Status.newBuilder()
+                .setCode(io.grpc.Status.Code.DEADLINE_EXCEEDED.value())
+                .setMessage("deadline exceeded custom message")
+                .build(),
+            Status.newBuilder()
+                .setCode(io.grpc.Status.Code.INVALID_ARGUMENT.value())
+                .setMessage("invalid arg custom message")
+                .build()));
+    String resultString = underTest.getResultString();
+    MatcherAssert.assertThat(resultString, Matchers.containsString("OK: (1)"));
+    MatcherAssert.assertThat(
+        resultString,
+        Matchers.containsString("DEADLINE_EXCEEDED: deadline exceeded custom message(2)"));
+    MatcherAssert.assertThat(
+        resultString, Matchers.containsString("INVALID_ARGUMENT: invalid arg custom message(1)"));
   }
 }

@@ -21,10 +21,13 @@ import com.google.bigtable.v2.MutateRowsResponse;
 import com.google.bigtable.v2.MutateRowsResponse.Entry;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
+import com.google.common.base.MoreObjects;
 import com.google.rpc.Status;
 import io.grpc.Status.Code;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Performs retries for {@link BigtableDataClient#mutateRows(MutateRowsRequest)} operations.
@@ -193,5 +196,52 @@ public class MutateRowsRequestManager {
       entries.add(createEntry(i, status));
     }
     return MutateRowsResponse.newBuilder().addAllEntries(entries).build();
+  }
+
+  public String getResultString() {
+    // 2D map: code -> msg -> count
+    Map<Integer, Map<String, Long>> resultCounts = new TreeMap<>();
+
+    for (Status result : results) {
+      if (result == null) {
+        result = STATUS_INTERNAL;
+      }
+      Map<String, Long> msgCounts = resultCounts.get(result.getCode());
+      if (msgCounts == null) {
+        msgCounts = new TreeMap<>();
+        resultCounts.put(result.getCode(), msgCounts);
+      }
+
+      String msg = MoreObjects.firstNonNull(result.getMessage(), "");
+      Long count = MoreObjects.firstNonNull(msgCounts.get(msg), 0L);
+      msgCounts.put(msg, count + 1);
+    }
+
+    // Format string as: code: msg(count), msg2(count); code2: msg(count);
+    StringBuilder buffer = new StringBuilder();
+    boolean isFirstCode = true;
+    for (Map.Entry<Integer, Map<String, Long>> codeEntry : resultCounts.entrySet()) {
+      if (!isFirstCode) {
+        buffer.append("; ");
+      } else {
+        isFirstCode = false;
+      }
+
+      buffer.append(io.grpc.Status.fromCodeValue(codeEntry.getKey()).getCode());
+      buffer.append(": ");
+
+      boolean isFirstMsg = true;
+      for (Map.Entry<String, Long> msgEntry : codeEntry.getValue().entrySet()) {
+        if (!isFirstMsg) {
+          buffer.append(", ");
+        } else {
+          isFirstMsg = false;
+        }
+        buffer.append(msgEntry.getKey());
+        buffer.append("(" + msgEntry.getValue() + ")");
+      }
+    }
+
+    return buffer.toString();
   }
 }

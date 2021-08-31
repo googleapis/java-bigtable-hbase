@@ -19,6 +19,7 @@ import com.google.api.core.ApiClock;
 import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.MutateRowsRequest;
 import com.google.bigtable.v2.MutateRowsResponse;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.grpc.BigtableDataClient;
 import com.google.cloud.bigtable.grpc.DeadlineGenerator;
@@ -39,6 +40,8 @@ import java.util.concurrent.ScheduledExecutorService;
 public class RetryingMutateRowsOperation
     extends AbstractRetryingOperation<
         MutateRowsRequest, MutateRowsResponse, List<MutateRowsResponse>> {
+  protected static final Logger LOG = new Logger(RetryingMutateRowsOperation.class);
+
   private static final io.grpc.Status INVALID_RESPONSE =
       io.grpc.Status.INTERNAL.withDescription("The server returned an invalid response");
 
@@ -86,6 +89,8 @@ public class RetryingMutateRowsOperation
     ProcessingStatus status = requestManager.onOK();
 
     if (status == ProcessingStatus.INVALID) {
+      LOG.error("BulkMutateRows was invalid, final state: " + requestManager.getResultString());
+
       // Set an exception.
       onError(INVALID_RESPONSE, trailers);
       return true;
@@ -95,6 +100,12 @@ public class RetryingMutateRowsOperation
     if (status == ProcessingStatus.SUCCESS || status == ProcessingStatus.NOT_RETRYABLE) {
       // Set the response, with either success, or non-retryable responses.
       completionFuture.set(Arrays.asList(requestManager.buildResponse()));
+
+      if (status != ProcessingStatus.SUCCESS) {
+        LOG.error(
+            "BulkMutateRows partially failed with nonretryable errors, final state: "
+                + requestManager.getResultString());
+      }
       return true;
     }
 
@@ -110,6 +121,9 @@ public class RetryingMutateRowsOperation
               "failureCount",
               AttributeValue.longAttributeValue(
                   requestManager.getRetryRequest().getEntriesCount())));
+
+      LOG.error(
+          "BulkMutateRows exhausted retries, final state: " + requestManager.getResultString());
       return true;
     }
 
