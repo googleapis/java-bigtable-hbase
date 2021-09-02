@@ -17,10 +17,16 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncResultScannerWrapper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncTableWrapper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.RequestScheduling;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import org.apache.commons.logging.Log;
@@ -38,13 +44,14 @@ import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
  * succeeded, asynchronously on secondary `ResultScanner`.
  */
 @InternalApi("For internal usage only")
-public class MirroringResultScanner extends AbstractClientScanner {
-  private static final Log log = LogFactory.getLog(MirroringTable.class);
+public class MirroringResultScanner extends AbstractClientScanner implements ListenableCloseable {
+  private static final Log log = LogFactory.getLog(MirroringResultScanner.class);
 
   private Scan originalScan;
   private ResultScanner primaryResultScanner;
   private AsyncResultScannerWrapper secondaryResultScannerWrapper;
   private VerificationContinuationFactory verificationContinuationFactory;
+  private ListenableReferenceCounter listenableReferenceCounter;
   private boolean closed = false;
   /**
    * Keeps track of number of entries already read from this scanner to provide context for
@@ -57,15 +64,19 @@ public class MirroringResultScanner extends AbstractClientScanner {
   public MirroringResultScanner(
       Scan originalScan,
       ResultScanner primaryResultScanner,
-      AsyncResultScannerWrapper secondaryResultScannerWrapper,
+      AsyncTableWrapper secondaryTableWrapper,
       VerificationContinuationFactory verificationContinuationFactory,
-      FlowController flowController) {
+      FlowController flowController)
+      throws IOException {
     this.originalScan = originalScan;
     this.primaryResultScanner = primaryResultScanner;
-    this.secondaryResultScannerWrapper = secondaryResultScannerWrapper;
+    this.secondaryResultScannerWrapper = secondaryTableWrapper.getScanner(originalScan);
     this.verificationContinuationFactory = verificationContinuationFactory;
+    this.listenableReferenceCounter = new ListenableReferenceCounter();
     this.flowController = flowController;
     this.readEntries = 0;
+
+    this.listenableReferenceCounter.holdReferenceUntilClosing(this.secondaryResultScannerWrapper);
   }
 
   @Override
@@ -100,7 +111,6 @@ public class MirroringResultScanner extends AbstractClientScanner {
     if (this.closed) {
       return;
     }
-    this.closed = true;
 
     RuntimeException firstException = null;
     try {
@@ -109,9 +119,9 @@ public class MirroringResultScanner extends AbstractClientScanner {
       firstException = e;
     } finally {
       try {
-        this.secondaryResultScannerWrapper.asyncClose();
+        this.asyncClose();
       } catch (RuntimeException e) {
-        log.error("Exception while scheduling secondaryResultScannerWrapper.close().", e);
+        log.error("Exception while scheduling this.close().", e);
         if (firstException == null) {
           firstException = e;
         } else {
@@ -122,9 +132,18 @@ public class MirroringResultScanner extends AbstractClientScanner {
       }
     }
 
+    this.closed = true;
     if (firstException != null) {
       throw firstException;
     }
+  }
+
+  public synchronized ListenableFuture<Void> asyncClose() {
+    if (!this.closed) {
+      this.secondaryResultScannerWrapper.asyncClose();
+      this.listenableReferenceCounter.decrementReferenceCount();
+    }
+    return this.listenableReferenceCounter.getOnLastReferenceClosed();
   }
 
   @Override
@@ -151,5 +170,21 @@ public class MirroringResultScanner extends AbstractClientScanner {
   @Override
   public ScanMetrics getScanMetrics() {
     throw new UnsupportedOperationException();
+  }
+
+  private <T> void scheduleRequest(
+      RequestResourcesDescription requestResourcesDescription,
+      ListenableFuture<T> next,
+      FutureCallback<T> scannerNext) {
+    this.listenableReferenceCounter.holdReferenceUntilCompletion(
+        RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
+            requestResourcesDescription, next, scannerNext, this.flowController));
+  }
+
+  @Override
+  public void addOnCloseListener(Runnable listener) {
+    this.listenableReferenceCounter
+        .getOnLastReferenceClosed()
+        .addListener(listener, MoreExecutors.directExecutor());
   }
 }

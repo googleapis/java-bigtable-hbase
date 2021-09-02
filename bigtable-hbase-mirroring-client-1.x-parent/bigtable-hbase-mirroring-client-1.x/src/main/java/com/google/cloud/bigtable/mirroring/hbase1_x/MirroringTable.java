@@ -196,7 +196,7 @@ public class MirroringTable implements Table, ListenableCloseable {
     return new MirroringResultScanner(
         scan,
         this.primaryTable.getScanner(scan),
-        this.secondaryAsyncWrapper.getScanner(scan),
+        this.secondaryAsyncWrapper,
         this.verificationContinuationFactory,
         this.flowController);
   }

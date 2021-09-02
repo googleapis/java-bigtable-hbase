@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import java.util.concurrent.ExecutionException;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
@@ -31,11 +32,14 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
  */
 @InternalApi("For internal usage only")
 public class RequestScheduling {
-  public static <T> void scheduleVerificationAndRequestWithFlowControl(
+
+  public static <T> ListenableFuture<Void> scheduleVerificationAndRequestWithFlowControl(
       final RequestResourcesDescription requestResourcesDescription,
       final ListenableFuture<T> secondaryGetFuture,
       final FutureCallback<T> verificationCallback,
       final FlowController flowController) {
+    final SettableFuture<Void> verificationCompletedFuture = SettableFuture.create();
+
     final ListenableFuture<ResourceReservation> reservationRequest =
         flowController.asyncRequestResource(requestResourcesDescription);
     try {
@@ -49,13 +53,18 @@ public class RequestScheduling {
                 verificationCallback.onSuccess(t);
               } finally {
                 reservation.release();
+                verificationCompletedFuture.set(null);
               }
             }
 
             @Override
             public void onFailure(Throwable throwable) {
-              reservation.release();
-              verificationCallback.onFailure(throwable);
+              try {
+                verificationCallback.onFailure(throwable);
+              } finally {
+                reservation.release();
+                verificationCompletedFuture.set(null);
+              }
             }
           },
           MoreExecutors.directExecutor());
@@ -69,10 +78,13 @@ public class RequestScheduling {
           assert false;
         }
       }
+      verificationCompletedFuture.set(null);
       Thread.currentThread().interrupt();
     } catch (ExecutionException e) {
       // We couldn't obtain reservation, this shouldn't happen.
       assert false;
+      verificationCompletedFuture.set(null);
     }
+    return verificationCompletedFuture;
   }
 }

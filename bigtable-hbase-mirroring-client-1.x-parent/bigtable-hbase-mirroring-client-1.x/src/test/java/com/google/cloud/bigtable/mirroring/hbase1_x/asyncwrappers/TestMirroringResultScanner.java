@@ -17,14 +17,18 @@ package com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringResultScanner;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
+import com.google.common.util.concurrent.SettableFuture;
+import java.io.IOException;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.junit.Test;
@@ -38,17 +42,22 @@ public class TestMirroringResultScanner {
   @Mock FlowController flowController;
 
   @Test
-  public void testScannerCloseWhenFirstCloseThrows() {
+  public void testScannerCloseWhenFirstCloseThrows() throws IOException {
     ResultScanner primaryScannerMock = mock(ResultScanner.class);
 
     VerificationContinuationFactory continuationFactoryMock =
         mock(VerificationContinuationFactory.class);
-    AsyncResultScannerWrapper secondaryScannerMock = mock(AsyncResultScannerWrapper.class);
+
+    AsyncResultScannerWrapper secondaryScannerWrapperMock = mock(AsyncResultScannerWrapper.class);
+    AsyncTableWrapper secondaryAsyncTableWrapperMock = mock(AsyncTableWrapper.class);
+    when(secondaryAsyncTableWrapperMock.getScanner(any(Scan.class)))
+        .thenReturn(secondaryScannerWrapperMock);
+
     final ResultScanner mirroringScanner =
         new MirroringResultScanner(
             new Scan(),
             primaryScannerMock,
-            secondaryScannerMock,
+            secondaryAsyncTableWrapperMock,
             continuationFactoryMock,
             flowController);
 
@@ -65,22 +74,27 @@ public class TestMirroringResultScanner {
             });
 
     verify(primaryScannerMock, times(1)).close();
-    verify(secondaryScannerMock, times(1)).asyncClose();
+    verify(secondaryScannerWrapperMock, times(1)).asyncClose();
     assertThat(thrown).hasMessageThat().contains("first");
   }
 
   @Test
-  public void testScannerCloseWhenSecondCloseThrows() {
+  public void testScannerCloseWhenSecondCloseThrows() throws IOException {
     ResultScanner primaryScannerMock = mock(ResultScanner.class);
 
     VerificationContinuationFactory continuationFactoryMock =
         mock(VerificationContinuationFactory.class);
+
     AsyncResultScannerWrapper secondaryScannerWrapperMock = mock(AsyncResultScannerWrapper.class);
+    AsyncTableWrapper secondaryAsyncTableWrapperMock = mock(AsyncTableWrapper.class);
+    when(secondaryAsyncTableWrapperMock.getScanner(any(Scan.class)))
+        .thenReturn(secondaryScannerWrapperMock);
+
     final ResultScanner mirroringScanner =
         new MirroringResultScanner(
             new Scan(),
             primaryScannerMock,
-            secondaryScannerWrapperMock,
+            secondaryAsyncTableWrapperMock,
             continuationFactoryMock,
             flowController);
 
@@ -102,18 +116,22 @@ public class TestMirroringResultScanner {
   }
 
   @Test
-  public void testScannerCloseWhenBothCloseThrow() {
+  public void testScannerCloseWhenBothCloseThrow() throws IOException {
     ResultScanner primaryScannerMock = mock(ResultScanner.class);
 
     VerificationContinuationFactory continuationFactoryMock =
         mock(VerificationContinuationFactory.class);
+
     AsyncResultScannerWrapper secondaryScannerWrapperMock = mock(AsyncResultScannerWrapper.class);
+    AsyncTableWrapper secondaryAsyncTableWrapperMock = mock(AsyncTableWrapper.class);
+    when(secondaryAsyncTableWrapperMock.getScanner(any(Scan.class)))
+        .thenReturn(secondaryScannerWrapperMock);
 
     final ResultScanner mirroringScanner =
         new MirroringResultScanner(
             new Scan(),
             primaryScannerMock,
-            secondaryScannerWrapperMock,
+            secondaryAsyncTableWrapperMock,
             continuationFactoryMock,
             flowController);
 
@@ -138,18 +156,25 @@ public class TestMirroringResultScanner {
   }
 
   @Test
-  public void testMultipleCloseCallsCloseScannersOnlyOnce() {
+  public void testMultipleCloseCallsCloseScannersOnlyOnce() throws IOException {
     ResultScanner primaryScannerMock = mock(ResultScanner.class);
 
     VerificationContinuationFactory continuationFactoryMock =
         mock(VerificationContinuationFactory.class);
     AsyncResultScannerWrapper secondaryScannerWrapperMock = mock(AsyncResultScannerWrapper.class);
+    SettableFuture<Void> closedFuture = SettableFuture.create();
+    closedFuture.set(null);
+    when(secondaryScannerWrapperMock.asyncClose()).thenReturn(closedFuture);
+
+    AsyncTableWrapper secondaryAsyncTableWrapperMock = mock(AsyncTableWrapper.class);
+    when(secondaryAsyncTableWrapperMock.getScanner(any(Scan.class)))
+        .thenReturn(secondaryScannerWrapperMock);
 
     final ResultScanner mirroringScanner =
         new MirroringResultScanner(
             new Scan(),
             primaryScannerMock,
-            secondaryScannerWrapperMock,
+            secondaryAsyncTableWrapperMock,
             continuationFactoryMock,
             flowController);
 
