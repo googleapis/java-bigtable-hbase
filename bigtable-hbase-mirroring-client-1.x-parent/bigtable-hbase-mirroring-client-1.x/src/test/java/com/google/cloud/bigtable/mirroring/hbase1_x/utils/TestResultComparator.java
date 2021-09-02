@@ -89,7 +89,6 @@ public class TestResultComparator {
 
   @Test
   public void testNotMatchingCellContents() {
-
     assertThat(
             resultsEqual(
                 createResult(createCell("r3", "f1", "q1", 1, Type.Put, "v1")),
@@ -120,6 +119,17 @@ public class TestResultComparator {
     assertThat(
             resultsEqual(
                 createResult(createCell("r1", "f1", "q1", 1, Type.Put, "v3")),
+                createResult(createCell("r1", "f1", "q1", 1, Type.Put, "v1"))))
+        .isFalse();
+  }
+
+  @Test
+  public void testResultOfEmptyGetIsCompared() {
+    // Gets on non existent cells return Results with cells set to null.
+    assertThat(resultsEqual(createResult((Cell[]) null), createResult((Cell[]) null))).isTrue();
+    assertThat(
+            resultsEqual(
+                createResult((Cell[]) null),
                 createResult(createCell("r1", "f1", "q1", 1, Type.Put, "v1"))))
         .isFalse();
   }

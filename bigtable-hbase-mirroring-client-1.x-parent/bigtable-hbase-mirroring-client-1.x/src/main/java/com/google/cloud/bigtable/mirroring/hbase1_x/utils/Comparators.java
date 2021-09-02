@@ -37,6 +37,15 @@ public class Comparators {
     }
     Cell[] cells1 = result1.rawCells();
     Cell[] cells2 = result2.rawCells();
+
+    if (cells1 == null && cells2 == null) {
+      return true;
+    }
+
+    if (cells1 == null || cells2 == null) {
+      return false;
+    }
+
     if (cells1.length != cells2.length) {
       return false;
     }
