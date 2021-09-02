@@ -110,4 +110,23 @@ public class DefaultMismatchDetector implements MismatchDetector {
       Scan request, int entriesAlreadyRead, int entriesRequested, Throwable throwable) {
     System.out.println("scan(i) failed");
   }
+
+  @Override
+  public void batch(List<Get> request, Result[] primary, Result[] secondary) {
+    if (primary.length != secondary.length) {
+      System.out.println("batch() length mismatch");
+      return;
+    }
+
+    for (int i = 0; i < primary.length; i++) {
+      if (!Comparators.resultsEqual(primary[i], secondary[i])) {
+        System.out.println("batch() mismatch");
+      }
+    }
+  }
+
+  @Override
+  public void batch(List<Get> request, Throwable throwable) {
+    System.out.println("batch() failed");
+  }
 }

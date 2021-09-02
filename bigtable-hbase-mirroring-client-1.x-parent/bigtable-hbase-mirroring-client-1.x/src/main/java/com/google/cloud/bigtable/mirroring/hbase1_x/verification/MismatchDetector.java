@@ -49,4 +49,8 @@ public interface MismatchDetector {
   void scannerNext(Scan request, int entriesAlreadyRead, Result[] primary, Result[] secondary);
 
   void scannerNext(Scan request, int entriesAlreadyRead, int entriesRequested, Throwable throwable);
+
+  void batch(List<Get> request, Result[] primary, Result[] secondary);
+
+  void batch(List<Get> request, Throwable throwable);
 }

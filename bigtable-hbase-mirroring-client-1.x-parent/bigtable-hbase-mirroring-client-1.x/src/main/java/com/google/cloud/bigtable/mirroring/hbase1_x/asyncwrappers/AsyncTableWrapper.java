@@ -22,10 +22,17 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.List;
 import java.util.concurrent.Callable;
+import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Row;
+import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 
@@ -148,5 +155,90 @@ public class AsyncTableWrapper {
     ListenableFuture<T> future = this.executorService.submit(task);
     this.pendingOperationsReferenceCounter.holdReferenceUntilCompletion(future);
     return future;
+  }
+
+  public ListenableFuture<Void> put(final Put put) {
+    return submitTask(
+        new Callable<Void>() {
+          @Override
+          public Void call() throws IOException {
+            synchronized (table) {
+              table.put(put);
+            }
+            return null;
+          }
+        });
+  }
+
+  public ListenableFuture<Void> append(final Append append) {
+    return submitTask(
+        new Callable<Void>() {
+          @Override
+          public Void call() throws IOException {
+            synchronized (table) {
+              table.append(append);
+            }
+            return null;
+          }
+        });
+  }
+
+  public ListenableFuture<Void> increment(final Increment increment) {
+    return submitTask(
+        new Callable<Void>() {
+          @Override
+          public Void call() throws IOException {
+            synchronized (table) {
+              table.increment(increment);
+            }
+            return null;
+          }
+        });
+  }
+
+  public ListenableFuture<Void> mutateRow(final RowMutations rowMutations) {
+    return submitTask(
+        new Callable<Void>() {
+          @Override
+          public Void call() throws IOException {
+            synchronized (table) {
+              table.mutateRow(rowMutations);
+            }
+            return null;
+          }
+        });
+  }
+
+  public ListenableFuture<Void> delete(final Delete delete) {
+    return submitTask(
+        new Callable<Void>() {
+          @Override
+          public Void call() throws IOException {
+            synchronized (table) {
+              table.delete(delete);
+            }
+            return null;
+          }
+        });
+  }
+
+  public ListenableFuture<Void> batch(
+      final List<? extends Row> operations, final Object[] results) {
+    return submitTask(
+        new Callable<Void>() {
+          @Override
+          public Void call() throws IOException {
+            synchronized (table) {
+              try {
+                table.batch(operations, results);
+              } catch (InterruptedException e) {
+                IOException exception = new InterruptedIOException();
+                exception.initCause(e);
+                throw exception;
+              }
+            }
+            return null;
+          }
+        });
   }
 }

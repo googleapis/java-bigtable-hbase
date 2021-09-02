@@ -25,10 +25,15 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 @InternalApi("For internal usage only")
 public class VerificationContinuationFactory {
+
   private MismatchDetector mismatchDetector;
 
   public VerificationContinuationFactory(MismatchDetector mismatchDetector) {
     this.mismatchDetector = mismatchDetector;
+  }
+
+  public MismatchDetector getMismatchDetector() {
+    return mismatchDetector;
   }
 
   public FutureCallback<Boolean> exists(final Get request, final boolean expectation) {

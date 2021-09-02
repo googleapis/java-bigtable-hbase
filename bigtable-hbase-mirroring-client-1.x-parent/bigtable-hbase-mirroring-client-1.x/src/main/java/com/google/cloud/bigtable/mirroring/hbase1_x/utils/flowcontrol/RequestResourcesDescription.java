@@ -16,13 +16,15 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol;
 
 import com.google.api.core.InternalApi;
+import java.util.List;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Row;
 
 @InternalApi("For internal usage only")
 public class RequestResourcesDescription {
   public final int numberOfResults;
 
-  private RequestResourcesDescription(int numberOfResults) {
+  protected RequestResourcesDescription(int numberOfResults) {
     this.numberOfResults = numberOfResults;
   }
 
@@ -40,5 +42,13 @@ public class RequestResourcesDescription {
 
   public RequestResourcesDescription(Result[] array) {
     this(array.length);
+  }
+
+  public RequestResourcesDescription(List<? extends Row> operations) {
+    this(operations.size());
+  }
+
+  public RequestResourcesDescription(Row operation) {
+    this(1);
   }
 }
