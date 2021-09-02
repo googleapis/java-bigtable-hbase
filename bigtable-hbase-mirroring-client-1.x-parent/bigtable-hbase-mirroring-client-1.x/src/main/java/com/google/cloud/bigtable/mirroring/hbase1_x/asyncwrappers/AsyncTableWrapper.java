@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers;
 
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -45,7 +46,7 @@ import org.apache.hadoop.hbase.client.Table;
  * accesses to the table from different threads in the executor.
  */
 @InternalApi("For internal usage only")
-public class AsyncTableWrapper {
+public class AsyncTableWrapper implements ListenableCloseable {
   private final Table table;
   private final ListeningExecutorService executorService;
   /**
@@ -240,5 +241,12 @@ public class AsyncTableWrapper {
             return null;
           }
         });
+  }
+
+  @Override
+  public void addOnCloseListener(Runnable listener) {
+    this.pendingOperationsReferenceCounter
+        .getOnLastReferenceClosed()
+        .addListener(listener, MoreExecutors.directExecutor());
   }
 }
