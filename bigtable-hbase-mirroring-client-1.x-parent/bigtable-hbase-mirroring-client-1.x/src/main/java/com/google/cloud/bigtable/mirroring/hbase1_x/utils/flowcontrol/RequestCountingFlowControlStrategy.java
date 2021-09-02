@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol;
 
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringOptions;
 import java.util.List;
 import org.apache.hadoop.hbase.client.Table;
 
@@ -52,6 +53,10 @@ import org.apache.hadoop.hbase.client.Table;
 public class RequestCountingFlowControlStrategy extends SingleQueueFlowControlStrategy {
   public RequestCountingFlowControlStrategy(int minDifferenceToBlock) {
     super(new Ledger(minDifferenceToBlock));
+  }
+
+  public RequestCountingFlowControlStrategy(MirroringOptions options) {
+    this(options.flowControllerMaxOutstandingRequests);
   }
 
   private static class Ledger implements SingleQueueFlowControlStrategy.Ledger {

@@ -173,11 +173,12 @@ public class TestMirroringConfiguration {
         MirroringConfiguration.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
         TestConnection.class.getCanonicalName());
     testConfiguration.set(MirroringConfiguration.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY, "test");
-    testConfiguration.set(MirroringOptions.MIRRORING_SYNCHRONOUS_KEY, "true");
+    testConfiguration.set(
+        MirroringConfiguration.MIRRORING_FLOW_CONTROLLER_STRATEGY_CLASS, "test-1");
 
     MirroringConfiguration configuration = new MirroringConfiguration(testConfiguration);
 
-    assertThat(configuration.mirroringOptions.getSynchronous()).isTrue();
+    assertThat(configuration.mirroringOptions.flowControllerStrategyClass).isEqualTo("test-1");
   }
 
   @Test

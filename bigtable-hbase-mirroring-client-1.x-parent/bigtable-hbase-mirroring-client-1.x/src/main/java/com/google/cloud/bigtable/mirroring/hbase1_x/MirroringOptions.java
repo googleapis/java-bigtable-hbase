@@ -15,20 +15,31 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
+import static com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration.MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration.MIRRORING_FLOW_CONTROLLER_STRATEGY_CLASS;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration.MIRRORING_MISMATCH_DETECTOR_CLASS;
+
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestCountingFlowControlStrategy;
+import com.google.cloud.bigtable.mirroring.hbase1_x.verification.DefaultMismatchDetector;
 import org.apache.hadoop.conf.Configuration;
 
 @InternalApi("For internal use only")
-class MirroringOptions {
-  static final String MIRRORING_SYNCHRONOUS_KEY = "google.bigtable.mirroring.synchronous";
-
-  private boolean synchronous;
-
-  public boolean getSynchronous() {
-    return synchronous;
-  }
+public class MirroringOptions {
+  public final String mismatchDetectorClass;
+  public final String flowControllerStrategyClass;
+  public final int flowControllerMaxOutstandingRequests;
 
   MirroringOptions(Configuration configuration) {
-    this.synchronous = configuration.getBoolean(MIRRORING_SYNCHRONOUS_KEY, false);
+    this.mismatchDetectorClass =
+        configuration.get(
+            MIRRORING_MISMATCH_DETECTOR_CLASS, DefaultMismatchDetector.class.getCanonicalName());
+    this.flowControllerStrategyClass =
+        configuration.get(
+            MIRRORING_FLOW_CONTROLLER_STRATEGY_CLASS,
+            RequestCountingFlowControlStrategy.class.getCanonicalName());
+    this.flowControllerMaxOutstandingRequests =
+        Integer.parseInt(
+            configuration.get(MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS, "500"));
   }
 }

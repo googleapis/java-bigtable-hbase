@@ -29,14 +29,16 @@ public class MirroringConfiguration extends Configuration {
 
   /**
    * Key to set to a name of Connection class that should be used to connect to primary database. It
-   * is used as hbase.client.connection.impl when creating connection to primary database.
+   * is used as hbase.client.connection.impl when creating connection to primary database. Set to
+   * {@code default} to use default HBase connection class.
    */
   public static final String MIRRORING_PRIMARY_CONNECTION_CLASS_KEY =
       "google.bigtable.mirroring.primary-client.connection.impl";
 
   /**
    * Key to set to a name of Connection class that should be used to connect to secondary database.
-   * It is used as hbase.client.connection.impl when creating connection to secondary database.
+   * It is used as hbase.client.connection.impl when creating connection to secondary database. Set
+   * to an {@code default} to use default HBase connection class.
    */
   public static final String MIRRORING_SECONDARY_CONNECTION_CLASS_KEY =
       "google.bigtable.mirroring.secondary-client.connection.impl";
@@ -59,6 +61,15 @@ public class MirroringConfiguration extends Configuration {
    */
   public static final String MIRRORING_SECONDARY_CONFIG_PREFIX_KEY =
       "google.bigtable.mirroring.secondary-client.prefix";
+
+  public static final String MIRRORING_MISMATCH_DETECTOR_CLASS =
+      "google.bigtable.mirroring.mismatch-detector.impl";
+
+  public static final String MIRRORING_FLOW_CONTROLLER_STRATEGY_CLASS =
+      "google.bigtable.mirroring.flow-controller.impl";
+
+  public static final String MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS =
+      "google.bigtable.mirroring.flow-controller.max-outstanding-requests";
 
   public MirroringConfiguration(
       Configuration primaryConfiguration,
@@ -102,7 +113,9 @@ public class MirroringConfiguration extends Configuration {
     String connectionClassName = conf.get(connectionClassKey);
     String prefix = conf.get(prefixKey, "");
     Configuration connectionConfig = extractPrefixedConfig(prefix, conf);
-    connectionConfig.set("hbase.client.connection.impl", connectionClassName);
+    if (!connectionClassName.equalsIgnoreCase("default")) {
+      connectionConfig.set("hbase.client.connection.impl", connectionClassName);
+    }
     return connectionConfig;
   }
 
