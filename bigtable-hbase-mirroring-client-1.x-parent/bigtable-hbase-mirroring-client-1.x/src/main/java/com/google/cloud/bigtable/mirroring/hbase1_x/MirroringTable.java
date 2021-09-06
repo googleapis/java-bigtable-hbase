@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncTableWrapper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.RequestScheduling;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
@@ -73,9 +74,9 @@ public class MirroringTable implements Table, ListenableCloseable {
   Table secondaryTable;
   AsyncTableWrapper secondaryAsyncWrapper;
   VerificationContinuationFactory verificationContinuationFactory;
-  private List<Runnable> onCloseListeners = new ArrayList<>();
-  private ListenableFuture<Void> closeFuture;
   private FlowController flowController;
+  private ListenableReferenceCounter referenceCounter;
+  private boolean closed = false;
 
   /**
    * @param executorService ExecutorService is used to perform operations on secondaryTable and
@@ -96,6 +97,8 @@ public class MirroringTable implements Table, ListenableCloseable {
         new AsyncTableWrapper(
             this.secondaryTable, MoreExecutors.listeningDecorator(executorService));
     this.flowController = flowController;
+    this.referenceCounter = new ListenableReferenceCounter();
+    this.referenceCounter.holdReferenceUntilClosing(this.secondaryAsyncWrapper);
   }
 
   @Override
@@ -193,12 +196,15 @@ public class MirroringTable implements Table, ListenableCloseable {
 
   @Override
   public ResultScanner getScanner(Scan scan) throws IOException {
-    return new MirroringResultScanner(
-        scan,
-        this.primaryTable.getScanner(scan),
-        this.secondaryAsyncWrapper,
-        this.verificationContinuationFactory,
-        this.flowController);
+    MirroringResultScanner scanner =
+        new MirroringResultScanner(
+            scan,
+            this.primaryTable.getScanner(scan),
+            this.secondaryAsyncWrapper,
+            this.verificationContinuationFactory,
+            this.flowController);
+    this.referenceCounter.holdReferenceUntilClosing(scanner);
+    return scanner;
   }
 
   @Override
@@ -221,9 +227,12 @@ public class MirroringTable implements Table, ListenableCloseable {
   }
 
   public synchronized ListenableFuture<Void> asyncClose() throws IOException {
-    if (this.closeFuture != null) {
-      return this.closeFuture;
+    if (closed) {
+      return this.referenceCounter.getOnLastReferenceClosed();
     }
+
+    this.closed = true;
+    this.referenceCounter.decrementReferenceCount();
 
     IOException primaryException = null;
     try {
@@ -233,20 +242,8 @@ public class MirroringTable implements Table, ListenableCloseable {
     }
 
     try {
-      this.closeFuture = this.secondaryAsyncWrapper.asyncClose();
-      this.closeFuture.addListener(
-          new Runnable() {
-            @Override
-            public void run() {
-              MirroringTable.this.runOnCloseListeners();
-            }
-          },
-          MoreExecutors.directExecutor());
+      this.secondaryAsyncWrapper.asyncClose();
     } catch (RuntimeException e) {
-      // If scheduling close failed, run listeners now, and behave as if we have closed for
-      // correct reference counting.
-      this.runOnCloseListeners();
-
       if (primaryException != null) {
         primaryException.addSuppressed(e);
         throw primaryException;
@@ -258,7 +255,7 @@ public class MirroringTable implements Table, ListenableCloseable {
     if (primaryException != null) {
       throw primaryException;
     }
-    return closeFuture;
+    return this.referenceCounter.getOnLastReferenceClosed();
   }
 
   @Override
@@ -498,40 +495,38 @@ public class MirroringTable implements Table, ListenableCloseable {
 
   @Override
   public void addOnCloseListener(Runnable listener) {
-    this.onCloseListeners.add(listener);
-  }
-
-  public void runOnCloseListeners() {
-    for (Runnable listener : this.onCloseListeners) {
-      listener.run();
-    }
+    this.referenceCounter
+        .getOnLastReferenceClosed()
+        .addListener(listener, MoreExecutors.directExecutor());
   }
 
   private <T> void scheduleVerificationAndRequestWithFlowControl(
       final RequestResourcesDescription resultInfo,
       final ListenableFuture<T> secondaryGetFuture,
       final FutureCallback<T> verificationCallback) {
-    RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
-        resultInfo, secondaryGetFuture, verificationCallback, this.flowController);
+    this.referenceCounter.holdReferenceUntilCompletion(
+        RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
+            resultInfo, secondaryGetFuture, verificationCallback, this.flowController));
   }
 
   public <T> void scheduleWriteWithControlFlow(
       final WriteOperationInfo writeOperationInfo,
       final ListenableFuture<T> secondaryResultFuture,
       final FlowController flowController) {
-    RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
-        writeOperationInfo.requestResourcesDescription,
-        secondaryResultFuture,
-        new FutureCallback<T>() {
-          @Override
-          public void onSuccess(@NullableDecl T t) {}
+    this.referenceCounter.holdReferenceUntilCompletion(
+        RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
+            writeOperationInfo.requestResourcesDescription,
+            secondaryResultFuture,
+            new FutureCallback<T>() {
+              @Override
+              public void onSuccess(@NullableDecl T t) {}
 
-          @Override
-          public void onFailure(Throwable throwable) {
-            handleFailedOperations(writeOperationInfo.operations);
-          }
-        },
-        flowController);
+              @Override
+              public void onFailure(Throwable throwable) {
+                handleFailedOperations(writeOperationInfo.operations);
+              }
+            },
+            flowController));
   }
 
   public static class WriteOperationInfo {

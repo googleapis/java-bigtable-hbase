@@ -145,6 +145,11 @@ public class TestMirroringTable {
     }
   }
 
+  private void waitForMirroringScanner(ResultScanner mirroringScanner)
+      throws InterruptedException, ExecutionException, TimeoutException {
+    ((MirroringResultScanner) mirroringScanner).asyncClose().get(3, TimeUnit.SECONDS);
+  }
+
   @Test
   public void testMismatchDetectorIsCalledOnGetSingle() throws IOException {
     mockFlowController();
@@ -297,7 +302,8 @@ public class TestMirroringTable {
   }
 
   @Test
-  public void testMismatchDetectorIsCalledOnScannerNextOne() throws IOException {
+  public void testMismatchDetectorIsCalledOnScannerNextOne()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
     mockFlowController();
     Result expected1 = createResult("test1", "value1");
     Result expected2 = createResult("test2", "value2");
@@ -321,6 +327,7 @@ public class TestMirroringTable {
     assertThat(result2).isEqualTo(expected2);
     assertThat(result3).isNull();
 
+    waitForMirroringScanner(mirroringScanner);
     waitForExecutor();
 
     verify(mismatchDetector, times(1)).scannerNext(scan, 0, expected1, expected1);
@@ -332,7 +339,7 @@ public class TestMirroringTable {
 
   @Test
   public void testSecondaryReadExceptionCallsVerificationErrorHandlerOnScannerNextOne()
-      throws IOException {
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
     mockFlowController();
     Result expected1 = createResult("test1", "value1");
     Result expected2 = createResult("test2", "value2");
@@ -360,6 +367,7 @@ public class TestMirroringTable {
     assertThat(result2).isEqualTo(expected2);
     assertThat(result3).isNull();
 
+    waitForMirroringScanner(mirroringScanner);
     waitForExecutor();
 
     verify(mismatchDetector, times(1)).scannerNext(scan, 0, expected1, expected1);
@@ -370,7 +378,8 @@ public class TestMirroringTable {
   }
 
   @Test
-  public void testMismatchDetectorIsCalledOnScannerNextMultiple() throws IOException {
+  public void testMismatchDetectorIsCalledOnScannerNextMultiple()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
     mockFlowController();
     Result[] expected =
         new Result[] {createResult("test1", "value1"), createResult("test2", "value2")};
@@ -390,6 +399,7 @@ public class TestMirroringTable {
 
     assertThat(result).isEqualTo(expected);
 
+    waitForMirroringScanner(mirroringScanner);
     waitForExecutor();
 
     verify(mismatchDetector, times(1)).scannerNext(scan, 0, expected, expected);
@@ -397,7 +407,7 @@ public class TestMirroringTable {
 
   @Test
   public void testSecondaryReadExceptionCallsVerificationErrorHandlerOnScannerNextMultiple()
-      throws IOException {
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
     mockFlowController();
     Result[] expected =
         new Result[] {createResult("test1", "value1"), createResult("test2", "value2")};
@@ -418,13 +428,15 @@ public class TestMirroringTable {
 
     assertThat(result).isEqualTo(expected);
 
+    waitForMirroringScanner(mirroringScanner);
     waitForExecutor();
 
     verify(mismatchDetector, times(1)).scannerNext(scan, 0, 2, expectedException);
   }
 
   @Test
-  public void testScannerClose() throws IOException {
+  public void testScannerClose()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
     ResultScanner primaryScannerMock = mock(ResultScanner.class);
     when(primaryTable.getScanner((Scan) any())).thenReturn(primaryScannerMock);
 
@@ -435,13 +447,15 @@ public class TestMirroringTable {
     ResultScanner mirroringScanner = mirroringTable.getScanner(scan);
     mirroringScanner.close();
 
+    waitForMirroringScanner(mirroringScanner);
     waitForExecutor();
     verify(primaryScannerMock, times(1)).close();
     verify(secondaryScannerMock, times(1)).close();
   }
 
   @Test
-  public void testScannerRenewLease() throws IOException {
+  public void testScannerRenewLease()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
     ResultScanner primaryScannerMock = mock(ResultScanner.class);
     when(primaryScannerMock.renewLease()).thenReturn(true);
     when(primaryTable.getScanner((Scan) any())).thenReturn(primaryScannerMock);
@@ -456,34 +470,21 @@ public class TestMirroringTable {
     // primary scanner lease was renewed, so we waited for the second one, and it returned false.
     assertThat(mirroringScanner.renewLease()).isFalse();
 
+    waitForMirroringScanner(mirroringScanner);
     waitForExecutor();
     verify(secondaryScannerMock, times(1)).renewLease();
   }
 
   @Test
-  public void testClosingTableWithFutureDecreasesListenableCounter() throws IOException {
+  public void testClosingTableWithFutureDecreasesListenableCounter()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
     ListenableReferenceCounter listenableReferenceCounter = spy(new ListenableReferenceCounter());
     listenableReferenceCounter.holdReferenceUntilClosing(mirroringTable);
 
     verify(listenableReferenceCounter, times(1)).incrementReferenceCount();
     verify(listenableReferenceCounter, never()).decrementReferenceCount();
-    IOException expectedException = new IOException("expected");
-    doThrow(expectedException).when(secondaryTable).close();
-
     final ListenableFuture<Void> closingFuture = mirroringTable.asyncClose();
-    ExecutionException e =
-        assertThrows(
-            ExecutionException.class,
-            new ThrowingRunnable() {
-              @Override
-              public void run() throws Throwable {
-                closingFuture.get();
-              }
-            });
-
-    assertThat(e).hasCauseThat().isInstanceOf(IOException.class);
-    assertThat(e).hasCauseThat().hasMessageThat().contains("expected");
-
+    closingFuture.get(3, TimeUnit.SECONDS);
     verify(listenableReferenceCounter, times(1)).decrementReferenceCount();
   }
 
