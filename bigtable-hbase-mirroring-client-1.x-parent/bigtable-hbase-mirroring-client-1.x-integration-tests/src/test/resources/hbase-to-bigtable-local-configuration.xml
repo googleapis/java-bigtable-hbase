@@ -1,0 +1,36 @@
+<configuration>
+  <property>
+    <name>google.bigtable.mirroring.primary-client.connection.impl</name>
+    <value>default</value>
+  </property>
+
+  <property>
+    <name>google.bigtable.mirroring.secondary-client.connection.impl</name>
+    <value>com.google.cloud.bigtable.hbase1_x.BigtableConnection</value>
+  </property>
+
+  <property>
+    <name>google.bigtable.project.id</name>
+    <value>fake-project</value>
+  </property>
+
+  <property>
+    <name>google.bigtable.instance.id</name>
+    <value>fake-instance</value>
+  </property>
+
+  <property>
+    <name>google.bigtable.use.gcj.client</name>
+    <value>false</value>
+  </property>
+
+  <property>
+    <name>hbase.client.retries.number</name>
+    <value>2</value>
+  </property>
+
+  <property>
+    <name>use-hbase-mini-cluster</name>
+    <value>true</value>
+  </property>
+</configuration>
