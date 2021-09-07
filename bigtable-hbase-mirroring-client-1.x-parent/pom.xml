@@ -16,6 +16,14 @@ limitations under the License.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
@@ -26,13 +34,14 @@ limitations under the License.
   <artifactId>bigtable-hbase-mirroring-client-1.x-parent</artifactId>
   <packaging>pom</packaging>
   <name>${project.groupId}:${project.artifactId}</name>
-  <version>0.0.1-alpha1-SNAPSHOT</version>
+  <version>2.0.0-alpha2-SNAPSHOT</version>
   <description>
     This project is a parent project for the hbase 1.x mirroring client projects.
   </description>
 
   <modules>
     <module>bigtable-hbase-mirroring-client-1.x</module>
+    <module>bigtable-hbase-mirroring-client-1.x-integration-tests</module>
   </modules>
 
   <build>

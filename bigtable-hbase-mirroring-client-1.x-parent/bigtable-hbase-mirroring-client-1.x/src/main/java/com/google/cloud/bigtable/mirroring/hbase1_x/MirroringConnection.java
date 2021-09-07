@@ -185,4 +185,12 @@ public class MirroringConnection implements Connection {
   public boolean isAborted() {
     throw new UnsupportedOperationException();
   }
+
+  public Connection getPrimaryConnection() {
+    return this.primaryConnection;
+  }
+
+  public Connection getSecondaryConnection() {
+    return this.secondaryConnection;
+  }
 }
