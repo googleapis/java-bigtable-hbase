@@ -25,12 +25,30 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringResultScanner;
+import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncResultScannerWrapper.AsyncScannerVerificationPayload;
+import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncResultScannerWrapper.ScannerRequestContext;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.junit.Test;
 import org.junit.function.ThrowingRunnable;
 import org.junit.runner.RunWith;
@@ -182,5 +200,140 @@ public class TestMirroringResultScanner {
     mirroringScanner.close();
     verify(primaryScannerMock, times(1)).close();
     verify(secondaryScannerWrapperMock, times(1)).asyncClose();
+  }
+
+  static class ReverseOrderExecutorService implements ExecutorService {
+    List<Runnable> callables = new ArrayList<>();
+
+    public void callCallables() {
+      for (int i = callables.size() - 1; i >= 0; i--) {
+        callables.get(i).run();
+      }
+    }
+
+    @Override
+    public void shutdown() {}
+
+    @Override
+    public List<Runnable> shutdownNow() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isShutdown() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isTerminated() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean awaitTermination(long l, TimeUnit timeUnit) throws InterruptedException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> Future<T> submit(Callable<T> callable) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> Future<T> submit(Runnable runnable, T t) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Future<?> submit(Runnable runnable) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> collection)
+        throws InterruptedException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> List<Future<T>> invokeAll(
+        Collection<? extends Callable<T>> collection, long l, TimeUnit timeUnit)
+        throws InterruptedException {
+      return null;
+    }
+
+    @Override
+    public <T> T invokeAny(Collection<? extends Callable<T>> collection)
+        throws InterruptedException, ExecutionException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> T invokeAny(Collection<? extends Callable<T>> collection, long l, TimeUnit timeUnit)
+        throws InterruptedException, ExecutionException, TimeoutException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void execute(Runnable runnable) {
+      this.callables.add(runnable);
+    }
+  }
+
+  @Test
+  public void testSecondaryNextsAreIssuedInTheSameOrderAsPrimary() throws IOException {
+    AsyncResultScannerWrapper secondaryScannerWrapperMock = mock(AsyncResultScannerWrapper.class);
+    AsyncTableWrapper secondaryAsyncTableWrapperMock = mock(AsyncTableWrapper.class);
+    when(secondaryAsyncTableWrapperMock.getScanner(any(Scan.class)))
+        .thenReturn(secondaryScannerWrapperMock);
+
+    Table table = mock(Table.class);
+    ResultScanner resultScanner = mock(ResultScanner.class);
+
+    ReverseOrderExecutorService reverseOrderExecutorService = new ReverseOrderExecutorService();
+    ListeningExecutorService listeningExecutorService =
+        MoreExecutors.listeningDecorator(reverseOrderExecutorService);
+
+    final AsyncResultScannerWrapper asyncResultScannerWrapper =
+        new AsyncResultScannerWrapper(table, resultScanner, listeningExecutorService);
+
+    final List<ScannerRequestContext> calls = new ArrayList<>();
+
+    ScannerRequestContext c1 = new ScannerRequestContext(null, null, 1);
+    ScannerRequestContext c2 = new ScannerRequestContext(null, null, 2);
+    ScannerRequestContext c3 = new ScannerRequestContext(null, null, 3);
+    ScannerRequestContext c4 = new ScannerRequestContext(null, null, 4);
+    ScannerRequestContext c5 = new ScannerRequestContext(null, null, 5);
+    ScannerRequestContext c6 = new ScannerRequestContext(null, null, 6);
+
+    catchResult(asyncResultScannerWrapper.next(c1), calls);
+    catchResult(asyncResultScannerWrapper.next(c2), calls);
+    catchResult(asyncResultScannerWrapper.next(c3), calls);
+    catchResult(asyncResultScannerWrapper.next(c4), calls);
+    catchResult(asyncResultScannerWrapper.next(c5), calls);
+    catchResult(asyncResultScannerWrapper.next(c6), calls);
+
+    reverseOrderExecutorService.callCallables();
+
+    verify(resultScanner, times(6)).next();
+    assertThat(calls).containsExactly(c1, c2, c3, c4, c5, c6);
+  }
+
+  private void catchResult(
+      ListenableFuture<AsyncScannerVerificationPayload> next,
+      final List<ScannerRequestContext> calls) {
+    Futures.addCallback(
+        next,
+        new FutureCallback<AsyncScannerVerificationPayload>() {
+          @Override
+          public void onSuccess(
+              @NullableDecl AsyncScannerVerificationPayload asyncScannerVerificationPayload) {
+            calls.add(asyncScannerVerificationPayload.context);
+          }
+
+          @Override
+          public void onFailure(Throwable throwable) {}
+        },
+        MoreExecutors.directExecutor());
   }
 }

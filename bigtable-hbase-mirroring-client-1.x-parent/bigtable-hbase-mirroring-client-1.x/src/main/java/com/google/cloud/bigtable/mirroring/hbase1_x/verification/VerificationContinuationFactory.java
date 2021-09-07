@@ -16,8 +16,12 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x.verification;
 
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncResultScannerWrapper.AsyncScannerExceptionWithContext;
+import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncResultScannerWrapper.AsyncScannerVerificationPayload;
 import com.google.common.util.concurrent.FutureCallback;
 import java.util.List;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
@@ -25,6 +29,7 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 @InternalApi("For internal usage only")
 public class VerificationContinuationFactory {
+  private static final Log log = LogFactory.getLog(VerificationContinuationFactory.class);
 
   private MismatchDetector mismatchDetector;
 
@@ -94,39 +99,54 @@ public class VerificationContinuationFactory {
     };
   }
 
-  public FutureCallback<Result> scannerNext(
-      final Scan request, final int entriesAlreadyRead, final Result expectation) {
-    return new FutureCallback<Result>() {
-      @Override
-      public void onSuccess(@NullableDecl Result secondary) {
-        VerificationContinuationFactory.this.mismatchDetector.scannerNext(
-            request, entriesAlreadyRead, expectation, secondary);
-      }
-
-      @Override
-      public void onFailure(Throwable throwable) {
-        VerificationContinuationFactory.this.mismatchDetector.scannerNext(
-            request, entriesAlreadyRead, throwable);
-      }
-    };
+  private Result firstOrNull(Result[] results) {
+    if (results == null) {
+      return null;
+    }
+    if (results.length == 0) {
+      return null;
+    }
+    return results[0];
   }
 
-  public FutureCallback<Result[]> scannerNext(
-      final Scan request,
-      final int entriesAlreadyRead,
-      final int entriesToRead,
-      final Result[] expectation) {
-    return new FutureCallback<Result[]>() {
+  public FutureCallback<AsyncScannerVerificationPayload> scannerNext() {
+    return new FutureCallback<AsyncScannerVerificationPayload>() {
       @Override
-      public void onSuccess(@NullableDecl Result[] secondary) {
-        VerificationContinuationFactory.this.mismatchDetector.scannerNext(
-            request, entriesAlreadyRead, expectation, secondary);
+      public void onSuccess(@NullableDecl AsyncScannerVerificationPayload results) {
+        Scan request = results.context.scan;
+        if (results.context.singleNext) {
+          VerificationContinuationFactory.this.mismatchDetector.scannerNext(
+              request,
+              results.context.startingIndex,
+              firstOrNull(results.context.result),
+              firstOrNull(results.secondary));
+        } else {
+          VerificationContinuationFactory.this.mismatchDetector.scannerNext(
+              request, results.context.startingIndex, results.context.result, results.secondary);
+        }
       }
 
       @Override
       public void onFailure(Throwable throwable) {
-        VerificationContinuationFactory.this.mismatchDetector.scannerNext(
-            request, entriesAlreadyRead, entriesToRead, throwable);
+        if (throwable instanceof AsyncScannerExceptionWithContext) {
+          AsyncScannerExceptionWithContext exceptionWithContext =
+              (AsyncScannerExceptionWithContext) throwable;
+          Scan request = exceptionWithContext.context.scan;
+          if (exceptionWithContext.context.singleNext) {
+            VerificationContinuationFactory.this.mismatchDetector.scannerNext(
+                request, exceptionWithContext.context.startingIndex, throwable.getCause());
+          } else {
+            VerificationContinuationFactory.this.mismatchDetector.scannerNext(
+                request,
+                exceptionWithContext.context.startingIndex,
+                exceptionWithContext.context.numRequests,
+                throwable.getCause());
+          }
+        } else {
+          log.error(
+              "VerificationContinuationFactory.scannerNext() received an unexpected error.",
+              throwable);
+        }
       }
     };
   }

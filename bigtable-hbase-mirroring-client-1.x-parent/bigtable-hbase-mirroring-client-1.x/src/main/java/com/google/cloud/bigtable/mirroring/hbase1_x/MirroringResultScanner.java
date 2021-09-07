@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncResultScannerWrapper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncResultScannerWrapper.ScannerRequestContext;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncTableWrapper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
@@ -84,11 +85,12 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
     Result result = this.primaryResultScanner.next();
     int startingIndex = this.readEntries;
     this.readEntries += 1;
-    RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
+    ScannerRequestContext context =
+        new ScannerRequestContext(this.originalScan, result, startingIndex);
+    this.scheduleRequest(
         new RequestResourcesDescription(result),
-        this.secondaryResultScannerWrapper.next(),
-        this.verificationContinuationFactory.scannerNext(this.originalScan, startingIndex, result),
-        this.flowController);
+        this.secondaryResultScannerWrapper.next(context),
+        this.verificationContinuationFactory.scannerNext());
     return result;
   }
 
@@ -97,12 +99,13 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
     Result[] results = this.primaryResultScanner.next(entriesToRead);
     int startingIndex = this.readEntries;
     this.readEntries += entriesToRead;
-    RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
+
+    ScannerRequestContext context =
+        new ScannerRequestContext(this.originalScan, results, startingIndex, entriesToRead);
+    this.scheduleRequest(
         new RequestResourcesDescription(results),
-        this.secondaryResultScannerWrapper.next(entriesToRead),
-        this.verificationContinuationFactory.scannerNext(
-            this.originalScan, startingIndex, entriesToRead, results),
-        this.flowController);
+        this.secondaryResultScannerWrapper.next(context),
+        this.verificationContinuationFactory.scannerNext());
     return results;
   }
 
