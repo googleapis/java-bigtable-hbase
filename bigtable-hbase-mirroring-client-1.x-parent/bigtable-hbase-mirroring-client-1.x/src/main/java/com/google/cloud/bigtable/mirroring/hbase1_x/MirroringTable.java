@@ -577,13 +577,36 @@ public class MirroringTable implements Table, ListenableCloseable {
     final RequestResourcesDescription requestResourcesDescription;
     final List<? extends Row> operations;
 
-    public WriteOperationInfo(List<? extends Row> operations) {
-      this.requestResourcesDescription = new RequestResourcesDescription(operations);
-      this.operations = operations;
+    public WriteOperationInfo(BatchHelpers.SplitBatchResponse<? extends Row> primarySplitResponse) {
+      this.operations = primarySplitResponse.allSuccessfulOperations;
+      this.requestResourcesDescription =
+          new RequestResourcesDescription(
+              this.operations, primarySplitResponse.successfulReadsResults);
     }
 
-    public WriteOperationInfo(Row operation) {
-      this.requestResourcesDescription = new RequestResourcesDescription(operation);
+    public WriteOperationInfo(Put operation) {
+      this(new RequestResourcesDescription(operation), operation);
+    }
+
+    public WriteOperationInfo(Delete operation) {
+      this(new RequestResourcesDescription(operation), operation);
+    }
+
+    public WriteOperationInfo(Append operation) {
+      this(new RequestResourcesDescription(operation), operation);
+    }
+
+    public WriteOperationInfo(Increment operation) {
+      this(new RequestResourcesDescription(operation), operation);
+    }
+
+    public WriteOperationInfo(RowMutations operation) {
+      this(new RequestResourcesDescription(operation), operation);
+    }
+
+    private WriteOperationInfo(
+        RequestResourcesDescription requestResourcesDescription, Row operation) {
+      this.requestResourcesDescription = requestResourcesDescription;
       this.operations = Collections.singletonList(operation);
     }
   }
@@ -614,8 +637,7 @@ public class MirroringTable implements Table, ListenableCloseable {
               table);
 
       RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
-          new WriteOperationInfo(primarySplitResponse.allSuccessfulOperations)
-              .requestResourcesDescription,
+          new WriteOperationInfo(primarySplitResponse).requestResourcesDescription,
           table.secondaryAsyncWrapper.batch(
               primarySplitResponse.allSuccessfulOperations, resultsSecondary),
           verificationFuture,
