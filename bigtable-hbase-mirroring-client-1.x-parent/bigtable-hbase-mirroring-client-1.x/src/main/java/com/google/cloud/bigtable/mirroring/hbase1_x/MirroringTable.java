@@ -19,6 +19,7 @@ import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncTableWrapper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.RequestScheduling;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
@@ -70,6 +71,8 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
  */
 @InternalApi("For internal usage only")
 public class MirroringTable implements Table, ListenableCloseable {
+  private static final Logger Log = new Logger(MirroringTable.class);
+
   Table primaryTable;
   Table secondaryTable;
   AsyncTableWrapper secondaryAsyncWrapper;
@@ -118,6 +121,7 @@ public class MirroringTable implements Table, ListenableCloseable {
 
   @Override
   public boolean exists(Get get) throws IOException {
+    Log.trace("[%s] exists(get=%s)", this.getName(), get);
     boolean result = this.primaryTable.exists(get);
     scheduleVerificationAndRequestWithFlowControl(
         new RequestResourcesDescription(result),
@@ -128,6 +132,7 @@ public class MirroringTable implements Table, ListenableCloseable {
 
   @Override
   public boolean[] existsAll(List<Get> list) throws IOException {
+    Log.trace("[%s] existsAll(gets=%s)", this.getName(), list);
     boolean[] result = this.primaryTable.existsAll(list);
     scheduleVerificationAndRequestWithFlowControl(
         new RequestResourcesDescription(result),
@@ -139,6 +144,7 @@ public class MirroringTable implements Table, ListenableCloseable {
   @Override
   public void batch(List<? extends Row> operations, Object[] results)
       throws IOException, InterruptedException {
+    Log.trace("[%s] batch(operations=%s, results)", this.getName(), operations);
     try {
       this.primaryTable.batch(operations, results);
     } finally {
@@ -148,6 +154,7 @@ public class MirroringTable implements Table, ListenableCloseable {
 
   @Override
   public Object[] batch(List<? extends Row> operations) throws IOException, InterruptedException {
+    Log.trace("[%s] batch(operations=%s)", this.getName(), operations);
     Object[] results = new Object[operations.size()];
     this.batch(operations, results);
     return results;
@@ -157,6 +164,9 @@ public class MirroringTable implements Table, ListenableCloseable {
   public <R> void batchCallback(
       List<? extends Row> operations, Object[] results, Callback<R> callback)
       throws IOException, InterruptedException {
+    Log.trace(
+        "[%s] batchCallback(operations=%s, results, callback=%s)",
+        this.getName(), operations, callback);
     try {
       this.primaryTable.batchCallback(operations, results, callback);
     } finally {
@@ -167,6 +177,8 @@ public class MirroringTable implements Table, ListenableCloseable {
   @Override
   public <R> Object[] batchCallback(List<? extends Row> operations, Callback<R> callback)
       throws IOException, InterruptedException {
+    Log.trace(
+        "[%s] batchCallback(operations=%s, callback=%s)", this.getName(), operations, callback);
     Object[] results = new Object[operations.size()];
     this.batchCallback(operations, results, callback);
     return results;
@@ -174,6 +186,7 @@ public class MirroringTable implements Table, ListenableCloseable {
 
   @Override
   public Result get(Get get) throws IOException {
+    Log.trace("[%s] get(get=%s)", this.getName(), get);
     Result result = this.primaryTable.get(get);
     scheduleVerificationAndRequestWithFlowControl(
         new RequestResourcesDescription(result),
@@ -185,6 +198,7 @@ public class MirroringTable implements Table, ListenableCloseable {
 
   @Override
   public Result[] get(List<Get> list) throws IOException {
+    Log.trace("[%s] get(gets=%s)", this.getName(), list);
     Result[] result = this.primaryTable.get(list);
     scheduleVerificationAndRequestWithFlowControl(
         new RequestResourcesDescription(result),
@@ -196,6 +210,7 @@ public class MirroringTable implements Table, ListenableCloseable {
 
   @Override
   public ResultScanner getScanner(Scan scan) throws IOException {
+    Log.trace("[%s] getScanner(scan=%s)", this.getName(), scan);
     MirroringResultScanner scanner =
         new MirroringResultScanner(
             scan,
@@ -227,6 +242,7 @@ public class MirroringTable implements Table, ListenableCloseable {
   }
 
   public synchronized ListenableFuture<Void> asyncClose() throws IOException {
+    Log.trace("[%s] asyncClose()", this.getName());
     if (closed) {
       return this.referenceCounter.getOnLastReferenceClosed();
     }
@@ -260,6 +276,7 @@ public class MirroringTable implements Table, ListenableCloseable {
 
   @Override
   public void put(Put put) throws IOException {
+    Log.trace("[%s] put(put=%s)", this.getName(), put);
     this.primaryTable.put(put);
     scheduleWriteWithControlFlow(
         new WriteOperationInfo(put), this.secondaryAsyncWrapper.put(put), this.flowController);
@@ -267,6 +284,7 @@ public class MirroringTable implements Table, ListenableCloseable {
 
   @Override
   public void put(List<Put> puts) throws IOException {
+    Log.trace("[%s] put(puts=%s)", this.getName(), puts);
     Object[] results = new Object[puts.size()];
     try {
       this.batch(puts, results);
@@ -280,6 +298,9 @@ public class MirroringTable implements Table, ListenableCloseable {
   @Override
   public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put)
       throws IOException {
+    Log.trace(
+        "[%s] checkAndPut(row=%s, family=%s, qualifier=%s, value=%s, put=%s)",
+        this.getName(), row, family, qualifier, value, put);
     return this.checkAndPut(row, family, qualifier, CompareOp.EQUAL, value, put);
   }
 
@@ -287,6 +308,9 @@ public class MirroringTable implements Table, ListenableCloseable {
   public boolean checkAndPut(
       byte[] row, byte[] family, byte[] qualifier, CompareOp compareOp, byte[] value, Put put)
       throws IOException {
+    Log.trace(
+        "[%s] checkAndPut(row=%s, family=%s, qualifier=%s, compareOp=%s, value=%s, put=%s)",
+        this.getName(), row, family, qualifier, compareOp, value, put);
     RowMutations mutations = new RowMutations(row);
     mutations.add(put);
     return this.checkAndMutate(row, family, qualifier, compareOp, value, mutations);
@@ -294,6 +318,7 @@ public class MirroringTable implements Table, ListenableCloseable {
 
   @Override
   public void delete(Delete delete) throws IOException {
+    Log.trace("[%s] delete(delete=%s)", this.getName(), delete);
     this.primaryTable.delete(delete);
     scheduleWriteWithControlFlow(
         new WriteOperationInfo(delete),
@@ -303,6 +328,7 @@ public class MirroringTable implements Table, ListenableCloseable {
 
   @Override
   public void delete(List<Delete> deletes) throws IOException {
+    Log.trace("[%s] delete(deletes=%s)", this.getName(), deletes);
     // Delete should remove successfully deleted rows from input list.
     Object[] results = new Object[deletes.size()];
     try {
@@ -324,6 +350,9 @@ public class MirroringTable implements Table, ListenableCloseable {
   @Override
   public boolean checkAndDelete(
       byte[] row, byte[] family, byte[] qualifier, byte[] value, Delete delete) throws IOException {
+    Log.trace(
+        "[%s] checkAndDelete(row=%s, family=%s, qualifier=%s, value=%s, delete=%s)",
+        this.getName(), row, family, qualifier, value, delete);
     return this.checkAndDelete(row, family, qualifier, CompareOp.EQUAL, value, delete);
   }
 
@@ -331,6 +360,9 @@ public class MirroringTable implements Table, ListenableCloseable {
   public boolean checkAndDelete(
       byte[] row, byte[] family, byte[] qualifier, CompareOp compareOp, byte[] value, Delete delete)
       throws IOException {
+    Log.trace(
+        "[%s] checkAndDelete(row=%s, family=%s, qualifier=%s, compareOp=%s, value=%s, delete=%s)",
+        this.getName(), row, family, qualifier, compareOp, value, delete);
     RowMutations mutations = new RowMutations(row);
     mutations.add(delete);
     return this.checkAndMutate(row, family, qualifier, compareOp, value, mutations);
@@ -338,6 +370,7 @@ public class MirroringTable implements Table, ListenableCloseable {
 
   @Override
   public void mutateRow(RowMutations rowMutations) throws IOException {
+    Log.trace("[%s] mutateRow(rowMutations=%s)", this.getName(), rowMutations);
     this.primaryTable.mutateRow(rowMutations);
     scheduleWriteWithControlFlow(
         new WriteOperationInfo(rowMutations),
@@ -347,6 +380,7 @@ public class MirroringTable implements Table, ListenableCloseable {
 
   @Override
   public Result append(Append append) throws IOException {
+    Log.trace("[%s] append(append=%s)", this.getName(), append);
     Result result = this.primaryTable.append(append);
     scheduleWriteWithControlFlow(
         new WriteOperationInfo(append),
@@ -357,6 +391,7 @@ public class MirroringTable implements Table, ListenableCloseable {
 
   @Override
   public Result increment(Increment increment) throws IOException {
+    Log.trace("[%s] increment(increment=%s)", this.getName(), increment);
     Result result = this.primaryTable.increment(increment);
     scheduleWriteWithControlFlow(
         new WriteOperationInfo(increment),
@@ -368,6 +403,9 @@ public class MirroringTable implements Table, ListenableCloseable {
   @Override
   public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount)
       throws IOException {
+    Log.trace(
+        "[%s] incrementColumnValue(row=%s, family=%s, qualifier=%s, amount=%s)",
+        this.getName(), row, family, qualifier, amount);
     Result result = increment((new Increment(row)).addColumn(family, qualifier, amount));
     Cell cell = result.getColumnLatestCell(family, qualifier);
     assert cell != null;
@@ -378,6 +416,9 @@ public class MirroringTable implements Table, ListenableCloseable {
   public long incrementColumnValue(
       byte[] row, byte[] family, byte[] qualifier, long amount, Durability durability)
       throws IOException {
+    Log.trace(
+        "[%s] incrementColumnValue(row=%s, family=%s, qualifier=%s, amount=%s, durability=%s)",
+        this.getName(), row, family, qualifier, amount, durability);
     Result result =
         increment(
             (new Increment(row)).addColumn(family, qualifier, amount).setDurability(durability));
@@ -442,6 +483,9 @@ public class MirroringTable implements Table, ListenableCloseable {
       byte[] value,
       RowMutations rowMutations)
       throws IOException {
+    Log.trace(
+        "[%s] checkAndMutate(row=%s, family=%s, qualifier=%s, compareOp=%s, value=%s, rowMutations=%s)",
+        this.getName(), row, family, qualifier, compareOp, value, rowMutations);
     boolean wereMutationsApplied =
         this.primaryTable.checkAndMutate(row, family, qualifier, compareOp, value, rowMutations);
     if (wereMutationsApplied) {

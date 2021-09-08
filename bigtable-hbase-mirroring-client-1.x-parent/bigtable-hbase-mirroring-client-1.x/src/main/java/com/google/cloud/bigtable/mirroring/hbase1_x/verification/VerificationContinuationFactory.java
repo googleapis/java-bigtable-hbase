@@ -18,10 +18,9 @@ package com.google.cloud.bigtable.mirroring.hbase1_x.verification;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncResultScannerWrapper.AsyncScannerExceptionWithContext;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncResultScannerWrapper.AsyncScannerVerificationPayload;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger;
 import com.google.common.util.concurrent.FutureCallback;
 import java.util.List;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
@@ -29,9 +28,8 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 @InternalApi("For internal usage only")
 public class VerificationContinuationFactory {
-  private static final Log log = LogFactory.getLog(VerificationContinuationFactory.class);
-
   private MismatchDetector mismatchDetector;
+  private static final Logger Log = new Logger(VerificationContinuationFactory.class);
 
   public VerificationContinuationFactory(MismatchDetector mismatchDetector) {
     this.mismatchDetector = mismatchDetector;
@@ -45,12 +43,14 @@ public class VerificationContinuationFactory {
     return new FutureCallback<Boolean>() {
       @Override
       public void onSuccess(@NullableDecl Boolean secondary) {
+        Log.trace("verification onSuccess exists(Get)");
         VerificationContinuationFactory.this.mismatchDetector.exists(
             request, expectation, secondary);
       }
 
       @Override
       public void onFailure(Throwable throwable) {
+        Log.trace("verification onFailure exists(Get)");
         VerificationContinuationFactory.this.mismatchDetector.exists(request, throwable);
       }
     };
@@ -60,12 +60,14 @@ public class VerificationContinuationFactory {
     return new FutureCallback<boolean[]>() {
       @Override
       public void onSuccess(@NullableDecl boolean[] secondary) {
+        Log.trace("verification onSuccess existsAll(List<Get>)");
         VerificationContinuationFactory.this.mismatchDetector.existsAll(
             request, expectation, secondary);
       }
 
       @Override
       public void onFailure(Throwable throwable) {
+        Log.trace("verification onFailure existsAll(List<Get>)");
         VerificationContinuationFactory.this.mismatchDetector.existsAll(request, throwable);
       }
     };
@@ -75,11 +77,13 @@ public class VerificationContinuationFactory {
     return new FutureCallback<Result>() {
       @Override
       public void onSuccess(@NullableDecl Result secondary) {
+        Log.trace("verification onSuccess get(Get)");
         VerificationContinuationFactory.this.mismatchDetector.get(request, expectation, secondary);
       }
 
       @Override
       public void onFailure(Throwable throwable) {
+        Log.trace("verification onFailure get(Get)");
         VerificationContinuationFactory.this.mismatchDetector.get(request, throwable);
       }
     };
@@ -89,11 +93,13 @@ public class VerificationContinuationFactory {
     return new FutureCallback<Result[]>() {
       @Override
       public void onSuccess(@NullableDecl Result[] secondary) {
+        Log.trace("verification onSuccess get(List<Get>)");
         VerificationContinuationFactory.this.mismatchDetector.get(request, expectation, secondary);
       }
 
       @Override
       public void onFailure(Throwable throwable) {
+        Log.trace("verification onFailure get(List<Get>)");
         VerificationContinuationFactory.this.mismatchDetector.get(request, throwable);
       }
     };
@@ -113,6 +119,7 @@ public class VerificationContinuationFactory {
     return new FutureCallback<AsyncScannerVerificationPayload>() {
       @Override
       public void onSuccess(@NullableDecl AsyncScannerVerificationPayload results) {
+        Log.trace("verification onSuccess scannerNext(Scan, int)");
         Scan request = results.context.scan;
         if (results.context.singleNext) {
           VerificationContinuationFactory.this.mismatchDetector.scannerNext(
@@ -128,6 +135,7 @@ public class VerificationContinuationFactory {
 
       @Override
       public void onFailure(Throwable throwable) {
+        Log.trace("verification onFailure scannerNext(Scan, int)");
         if (throwable instanceof AsyncScannerExceptionWithContext) {
           AsyncScannerExceptionWithContext exceptionWithContext =
               (AsyncScannerExceptionWithContext) throwable;
@@ -143,8 +151,8 @@ public class VerificationContinuationFactory {
                 throwable.getCause());
           }
         } else {
-          log.error(
-              "VerificationContinuationFactory.scannerNext() received an unexpected error.",
+          Log.error(
+              "scannerNext.onFailure received an exception that is not a AsyncScannerExceptionWithContext: %s",
               throwable);
         }
       }

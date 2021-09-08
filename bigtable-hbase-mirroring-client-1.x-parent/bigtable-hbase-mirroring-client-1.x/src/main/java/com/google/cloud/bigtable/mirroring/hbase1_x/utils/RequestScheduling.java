@@ -32,6 +32,7 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
  */
 @InternalApi("For internal usage only")
 public class RequestScheduling {
+  private static final Logger Log = new Logger(RequestScheduling.class);
 
   public static <T> ListenableFuture<Void> scheduleVerificationAndRequestWithFlowControl(
       final RequestResourcesDescription requestResourcesDescription,
@@ -50,7 +51,9 @@ public class RequestScheduling {
             @Override
             public void onSuccess(@NullableDecl T t) {
               try {
+                Log.trace("starting verification %s", t);
                 verificationCallback.onSuccess(t);
+                Log.trace("verification done %s", t);
               } finally {
                 reservation.release();
                 verificationCompletedFuture.set(null);

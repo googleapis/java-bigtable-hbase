@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -49,6 +50,7 @@ import org.apache.hadoop.hbase.client.Table;
 public class AsyncTableWrapper implements ListenableCloseable {
   private final Table table;
   private final ListeningExecutorService executorService;
+  private static final Logger Log = new Logger(AsyncTableWrapper.class);
   /**
    * We are counting references to this object to be able to call {@link Table#close()} on
    * underlying table in a predictable way. The reference count is increased before submitting each
@@ -74,6 +76,7 @@ public class AsyncTableWrapper implements ListenableCloseable {
           @Override
           public Result call() throws Exception {
             synchronized (table) {
+              Log.trace("get(Get)");
               return table.get(gets);
             }
           }
@@ -86,6 +89,7 @@ public class AsyncTableWrapper implements ListenableCloseable {
           @Override
           public Result[] call() throws Exception {
             synchronized (table) {
+              Log.trace("get(List<Get>)");
               return table.get(gets);
             }
           }
@@ -98,6 +102,7 @@ public class AsyncTableWrapper implements ListenableCloseable {
           @Override
           public Boolean call() throws Exception {
             synchronized (table) {
+              Log.trace("exists(Get)");
               return table.exists(get);
             }
           }
@@ -110,6 +115,7 @@ public class AsyncTableWrapper implements ListenableCloseable {
           @Override
           public boolean[] call() throws Exception {
             synchronized (table) {
+              Log.trace("existsAll(List<Get>)");
               return table.existsAll(gets);
             }
           }
@@ -117,9 +123,11 @@ public class AsyncTableWrapper implements ListenableCloseable {
   }
 
   public synchronized ListenableFuture<Void> asyncClose() {
+    Log.trace("asyncClose()");
     if (this.closeResultFuture != null) {
       return this.closeResultFuture;
     }
+    Log.trace("performing asyncClose()");
 
     this.pendingOperationsReferenceCounter.decrementReferenceCount();
     this.closeResultFuture = SettableFuture.create();
@@ -132,11 +140,14 @@ public class AsyncTableWrapper implements ListenableCloseable {
               public void run() {
                 try {
                   synchronized (table) {
+                    Log.trace("performing close()");
                     table.close();
                   }
                   AsyncTableWrapper.this.closeResultFuture.set(null);
                 } catch (IOException e) {
                   AsyncTableWrapper.this.closeResultFuture.setException(e);
+                } finally {
+                  Log.trace("asyncClose() completed");
                 }
               }
             },
@@ -145,6 +156,7 @@ public class AsyncTableWrapper implements ListenableCloseable {
   }
 
   public AsyncResultScannerWrapper getScanner(Scan scan) throws IOException {
+    Log.trace("getScanner(Scan)");
     AsyncResultScannerWrapper result =
         new AsyncResultScannerWrapper(
             this.table, this.table.getScanner(scan), this.executorService);
@@ -164,6 +176,7 @@ public class AsyncTableWrapper implements ListenableCloseable {
           @Override
           public Void call() throws IOException {
             synchronized (table) {
+              Log.trace("put(Put)");
               table.put(put);
             }
             return null;
@@ -177,6 +190,7 @@ public class AsyncTableWrapper implements ListenableCloseable {
           @Override
           public Void call() throws IOException {
             synchronized (table) {
+              Log.trace("append(Append)");
               table.append(append);
             }
             return null;
@@ -190,6 +204,7 @@ public class AsyncTableWrapper implements ListenableCloseable {
           @Override
           public Void call() throws IOException {
             synchronized (table) {
+              Log.trace("increment(Increment)");
               table.increment(increment);
             }
             return null;
@@ -203,6 +218,7 @@ public class AsyncTableWrapper implements ListenableCloseable {
           @Override
           public Void call() throws IOException {
             synchronized (table) {
+              Log.trace("mutateRow(RowMutations)");
               table.mutateRow(rowMutations);
             }
             return null;
@@ -216,6 +232,7 @@ public class AsyncTableWrapper implements ListenableCloseable {
           @Override
           public Void call() throws IOException {
             synchronized (table) {
+              Log.trace("delete(Delete)");
               table.delete(delete);
             }
             return null;
@@ -231,6 +248,7 @@ public class AsyncTableWrapper implements ListenableCloseable {
           public Void call() throws IOException {
             synchronized (table) {
               try {
+                Log.trace("batch(List<Row>, Object[])");
                 table.batch(operations, results);
               } catch (InterruptedException e) {
                 IOException exception = new InterruptedIOException();

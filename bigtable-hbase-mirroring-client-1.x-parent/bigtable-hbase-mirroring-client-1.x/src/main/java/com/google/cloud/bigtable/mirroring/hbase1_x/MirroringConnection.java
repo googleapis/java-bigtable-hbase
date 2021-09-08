@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowControlStrategy;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
@@ -48,6 +49,7 @@ public class MirroringConnection implements Connection {
   private final ExecutorService executorService;
   private final MismatchDetector mismatchDetector;
   private final ListenableReferenceCounter referenceCounter;
+  private static final Logger Log = new Logger(MirroringConnection.class);
 
   /**
    * The constructor called from {@link
@@ -112,6 +114,7 @@ public class MirroringConnection implements Connection {
 
   @Override
   public Table getTable(TableName tableName) throws IOException {
+    Log.trace("getTable(%s)", tableName);
     MirroringTable table =
         new MirroringTable(
             this.primaryConnection.getTable(tableName),
@@ -125,6 +128,7 @@ public class MirroringConnection implements Connection {
 
   @Override
   public Table getTable(TableName tableName, ExecutorService executorService) throws IOException {
+    Log.trace("getTable(%s, executorService)", tableName);
     MirroringTable table =
         new MirroringTable(
             this.primaryConnection.getTable(tableName, executorService),
@@ -159,9 +163,11 @@ public class MirroringConnection implements Connection {
 
   @Override
   public void close() throws IOException {
+    Log.trace("close()");
     this.referenceCounter.decrementReferenceCount();
     try {
       this.referenceCounter.getOnLastReferenceClosed().get();
+      Log.trace("close(): closed");
     } catch (InterruptedException e) {
       IOException wrapperException = new InterruptedIOException();
       wrapperException.initCause(e);

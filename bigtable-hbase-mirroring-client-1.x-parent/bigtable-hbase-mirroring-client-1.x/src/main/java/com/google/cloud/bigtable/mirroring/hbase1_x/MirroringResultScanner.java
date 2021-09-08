@@ -99,7 +99,6 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
     Result[] results = this.primaryResultScanner.next(entriesToRead);
     int startingIndex = this.readEntries;
     this.readEntries += entriesToRead;
-
     ScannerRequestContext context =
         new ScannerRequestContext(this.originalScan, results, startingIndex, entriesToRead);
     this.scheduleRequest(
