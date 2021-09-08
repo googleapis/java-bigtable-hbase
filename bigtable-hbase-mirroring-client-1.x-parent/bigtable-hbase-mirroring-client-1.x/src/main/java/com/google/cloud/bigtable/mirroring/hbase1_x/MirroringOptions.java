@@ -15,20 +15,26 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
+import static com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration.MIRRORING_BUFFERED_MUTATOR_BYTES_TO_FLUSH;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration.MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration.MIRRORING_FLOW_CONTROLLER_STRATEGY_CLASS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration.MIRRORING_MISMATCH_DETECTOR_CLASS;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration.MIRRORING_WRITE_ERROR_CONSUMER_CLASS;
 
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.DefaultSecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestCountingFlowControlStrategy;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.DefaultMismatchDetector;
 import org.apache.hadoop.conf.Configuration;
 
 @InternalApi("For internal use only")
 public class MirroringOptions {
+  private static final String HBASE_CLIENT_WRITE_BUFFER_KEY = "hbase.client.write.buffer";
   public final String mismatchDetectorClass;
   public final String flowControllerStrategyClass;
   public final int flowControllerMaxOutstandingRequests;
+  public final long bufferedMutatorBytesToFlush;
+  public final String writeErrorConsumerClass;
 
   MirroringOptions(Configuration configuration) {
     this.mismatchDetectorClass =
@@ -41,5 +47,14 @@ public class MirroringOptions {
     this.flowControllerMaxOutstandingRequests =
         Integer.parseInt(
             configuration.get(MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS, "500"));
+    this.bufferedMutatorBytesToFlush =
+        Integer.parseInt(
+            configuration.get(
+                MIRRORING_BUFFERED_MUTATOR_BYTES_TO_FLUSH,
+                configuration.get(HBASE_CLIENT_WRITE_BUFFER_KEY, "2097152")));
+    this.writeErrorConsumerClass =
+        configuration.get(
+            MIRRORING_WRITE_ERROR_CONSUMER_CLASS,
+            DefaultSecondaryWriteErrorConsumer.class.getCanonicalName());
   }
 }

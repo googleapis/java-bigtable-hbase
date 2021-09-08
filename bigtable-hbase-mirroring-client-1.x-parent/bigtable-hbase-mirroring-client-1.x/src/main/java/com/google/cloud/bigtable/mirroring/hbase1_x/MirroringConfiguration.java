@@ -71,6 +71,20 @@ public class MirroringConfiguration extends Configuration {
   public static final String MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS =
       "google.bigtable.mirroring.flow-controller.max-outstanding-requests";
 
+  public static final String MIRRORING_WRITE_ERROR_CONSUMER_CLASS =
+      "google.bigtable.mirroring.write-error-consumer.impl";
+
+  /**
+   * Number of bytes that {@link MirroringBufferedMutator} should buffer before flushing underlying
+   * primary BufferedMutator and performing a write to secondary database.
+   *
+   * <p>If not set uses the value of {@code hbase.client.write.buffer}, which by default is 2MB.
+   * When those values are kept in sync, mirroring client should perform flush operation on primary
+   * BufferedMutator right after it schedules a new asynchronous write to the database.
+   */
+  public static final String MIRRORING_BUFFERED_MUTATOR_BYTES_TO_FLUSH =
+      "google.bigtable.mirroring.buffered-mutator.bytes-to-flush";
+
   public MirroringConfiguration(
       Configuration primaryConfiguration,
       Configuration secondaryConfiguration,

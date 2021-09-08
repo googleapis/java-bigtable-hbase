@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
+import static org.mockito.Mockito.spy;
+
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.util.concurrent.ExecutorService;
@@ -54,7 +56,7 @@ public class ExecutorServiceRule extends ExternalResource {
   @Override
   protected void before() throws Throwable {
     super.before();
-    this.executorService = MoreExecutors.listeningDecorator(createExecutor());
+    this.executorService = spy(MoreExecutors.listeningDecorator(createExecutor()));
   }
 
   private ExecutorService createExecutor() {
