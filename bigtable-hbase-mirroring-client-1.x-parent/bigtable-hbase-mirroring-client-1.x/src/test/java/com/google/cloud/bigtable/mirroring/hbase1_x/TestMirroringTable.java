@@ -45,8 +45,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.hadoop.hbase.Cell;
@@ -84,23 +82,25 @@ import org.mockito.stubbing.Answer;
 public class TestMirroringTable {
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
+  @Rule
+  public final ExecutorServiceRule executorServiceRule =
+      ExecutorServiceRule.singleThreadedExecutor();
+
   @Mock Table primaryTable;
   @Mock Table secondaryTable;
   @Mock MismatchDetector mismatchDetector;
   @Mock FlowController flowController;
 
-  ExecutorService executorService;
   MirroringTable mirroringTable;
 
   @Before
   public void setUp() {
-    this.executorService = Executors.newSingleThreadExecutor();
     this.mirroringTable =
         spy(
             new MirroringTable(
                 primaryTable,
                 secondaryTable,
-                this.executorService,
+                this.executorServiceRule.executorService,
                 mismatchDetector,
                 flowController));
   }
@@ -136,15 +136,6 @@ public class TestMirroringTable {
     return result;
   }
 
-  private void waitForExecutor() {
-    executorService.shutdown();
-    try {
-      executorService.awaitTermination(3, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   private void waitForMirroringScanner(ResultScanner mirroringScanner)
       throws InterruptedException, ExecutionException, TimeoutException {
     ((MirroringResultScanner) mirroringScanner).asyncClose().get(3, TimeUnit.SECONDS);
@@ -160,7 +151,7 @@ public class TestMirroringTable {
     when(secondaryTable.get(get)).thenReturn(expectedResult);
 
     Result result = mirroringTable.get(get);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     assertThat(result).isEqualTo(expectedResult);
 
@@ -182,7 +173,7 @@ public class TestMirroringTable {
     when(secondaryTable.get(request)).thenThrow(expectedException);
 
     Result result = mirroringTable.get(request);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     assertThat(result).isEqualTo(expectedResult);
 
@@ -199,7 +190,7 @@ public class TestMirroringTable {
     when(secondaryTable.get(get)).thenReturn(expectedResult);
 
     Result[] result = mirroringTable.get(get);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     assertThat(result).isEqualTo(expectedResult);
 
@@ -221,7 +212,7 @@ public class TestMirroringTable {
     when(secondaryTable.get(request)).thenThrow(expectedException);
 
     Result[] result = mirroringTable.get(request);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     assertThat(result).isEqualTo(expectedResult);
 
@@ -238,7 +229,7 @@ public class TestMirroringTable {
     when(secondaryTable.exists(get)).thenReturn(expectedResult);
 
     boolean result = mirroringTable.exists(get);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     assertThat(result).isEqualTo(expectedResult);
 
@@ -257,7 +248,7 @@ public class TestMirroringTable {
     when(secondaryTable.exists(request)).thenThrow(expectedException);
 
     boolean result = mirroringTable.exists(request);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     assertThat(result).isEqualTo(expectedResult);
 
@@ -274,7 +265,7 @@ public class TestMirroringTable {
     when(secondaryTable.existsAll(get)).thenReturn(expectedResult);
 
     boolean[] result = mirroringTable.existsAll(get);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     assertThat(result).isEqualTo(expectedResult);
 
@@ -294,7 +285,7 @@ public class TestMirroringTable {
     when(secondaryTable.existsAll(request)).thenThrow(expectedException);
 
     boolean[] result = mirroringTable.existsAll(request);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     assertThat(result).isEqualTo(expectedResult);
 
@@ -328,7 +319,7 @@ public class TestMirroringTable {
     assertThat(result3).isNull();
 
     waitForMirroringScanner(mirroringScanner);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     verify(mismatchDetector, times(1)).scannerNext(scan, 0, expected1, expected1);
     verify(mismatchDetector, times(1)).scannerNext(scan, 1, expected2, expected2);
@@ -368,7 +359,7 @@ public class TestMirroringTable {
     assertThat(result3).isNull();
 
     waitForMirroringScanner(mirroringScanner);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     verify(mismatchDetector, times(1)).scannerNext(scan, 0, expected1, expected1);
     verify(mismatchDetector, times(1)).scannerNext(scan, 1, expectedException);
@@ -400,7 +391,7 @@ public class TestMirroringTable {
     assertThat(result).isEqualTo(expected);
 
     waitForMirroringScanner(mirroringScanner);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     verify(mismatchDetector, times(1)).scannerNext(scan, 0, expected, expected);
   }
@@ -429,7 +420,7 @@ public class TestMirroringTable {
     assertThat(result).isEqualTo(expected);
 
     waitForMirroringScanner(mirroringScanner);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     verify(mismatchDetector, times(1)).scannerNext(scan, 0, 2, expectedException);
   }
@@ -448,7 +439,7 @@ public class TestMirroringTable {
     mirroringScanner.close();
 
     waitForMirroringScanner(mirroringScanner);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
     verify(primaryScannerMock, times(1)).close();
     verify(secondaryScannerMock, times(1)).close();
   }
@@ -471,7 +462,7 @@ public class TestMirroringTable {
     assertThat(mirroringScanner.renewLease()).isFalse();
 
     waitForMirroringScanner(mirroringScanner);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
     verify(secondaryScannerMock, times(1)).renewLease();
   }
 
@@ -500,7 +491,7 @@ public class TestMirroringTable {
     doThrow(expectedException).when(secondaryTable).close();
 
     mirroringTable.close();
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     verify(listenableReferenceCounter, times(1)).decrementReferenceCount();
   }
@@ -519,7 +510,7 @@ public class TestMirroringTable {
               }
             });
     assertThat(exception).hasMessageThat().contains("expected");
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     verify(secondaryTable, times(1)).close();
   }
@@ -604,7 +595,7 @@ public class TestMirroringTable {
 
     mirroringTable.put(put);
     mirroringTable.put(puts);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     verify(primaryTable, times(1)).put(put);
     verify(secondaryTable, times(1)).put(put);
@@ -628,7 +619,7 @@ public class TestMirroringTable {
             mirroringTable.put(put);
           }
         });
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     verify(primaryTable, times(1)).put(put);
     verify(secondaryTable, times(0)).put(put);
@@ -642,7 +633,7 @@ public class TestMirroringTable {
     doNothing().when(primaryTable).put(put);
 
     mirroringTable.put(put);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     verify(primaryTable, times(1)).put(put);
     verify(secondaryTable, times(1)).put(put);
@@ -694,7 +685,7 @@ public class TestMirroringTable {
         .batch(eq(secondaryRequests), any(Object[].class));
 
     mirroringTable.batch(requests, results);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     ArgumentCaptor<Object[]> argument = ArgumentCaptor.forClass(Object[].class);
     verify(primaryTable, times(1)).batch(requests, results);
@@ -768,7 +759,7 @@ public class TestMirroringTable {
     } catch (IOException e) {
       assertThat(e).hasMessageThat().contains("test1");
     }
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     ArgumentCaptor<Object[]> argument = ArgumentCaptor.forClass(Object[].class);
     verify(primaryTable, times(1)).batch(requests, results);
@@ -831,7 +822,7 @@ public class TestMirroringTable {
     } catch (IOException e) {
       assertThat(e).hasMessageThat().contains("test1");
     }
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     ArgumentCaptor<Object[]> argument = ArgumentCaptor.forClass(Object[].class);
     verify(primaryTable, times(1)).batch(requests, results);
@@ -862,7 +853,7 @@ public class TestMirroringTable {
 
     mirroringTable.checkAndPut(
         "r1".getBytes(), "f1".getBytes(), "q1".getBytes(), "v1".getBytes(), put);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     ArgumentCaptor<RowMutations> argument = ArgumentCaptor.forClass(RowMutations.class);
     verify(secondaryTable, times(1)).mutateRow(argument.capture());
@@ -884,7 +875,7 @@ public class TestMirroringTable {
 
     mirroringTable.checkAndPut(
         "r1".getBytes(), "f1".getBytes(), "q1".getBytes(), "v1".getBytes(), put);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     verify(secondaryTable, never()).mutateRow(any(RowMutations.class));
   }
@@ -909,7 +900,7 @@ public class TestMirroringTable {
         CompareOp.GREATER_OR_EQUAL,
         "v1".getBytes(),
         put);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     verify(secondaryTable, times(1)).mutateRow(any(RowMutations.class));
   }
@@ -937,7 +928,7 @@ public class TestMirroringTable {
 
     mirroringTable.checkAndDelete(
         "r1".getBytes(), "f1".getBytes(), "q1".getBytes(), "v1".getBytes(), delete);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     verify(secondaryTable, times(2)).mutateRow(any(RowMutations.class));
   }
@@ -962,7 +953,7 @@ public class TestMirroringTable {
         CompareOp.GREATER_OR_EQUAL,
         "v1".getBytes(),
         mutations);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     verify(secondaryTable, times(1)).mutateRow(any(RowMutations.class));
   }
@@ -992,7 +983,7 @@ public class TestMirroringTable {
         .batch(eq(deletes), any(Object[].class));
 
     mirroringTable.delete(deletes);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
     verify(secondaryTable, times(1)).delete(delete);
     verify(secondaryTable, times(1)).batch(eq(Arrays.asList(delete)), any(Object[].class));
   }
@@ -1002,7 +993,7 @@ public class TestMirroringTable {
     mockFlowController();
     RowMutations mutations = new RowMutations("r1".getBytes());
     mirroringTable.mutateRow(mutations);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
     verify(secondaryTable, times(1)).mutateRow(mutations);
   }
 
@@ -1026,7 +1017,7 @@ public class TestMirroringTable {
     mirroringTable.incrementColumnValue("r1".getBytes(), "f1".getBytes(), "q1".getBytes(), 3L);
     mirroringTable.incrementColumnValue(
         "r1".getBytes(), "f1".getBytes(), "q1".getBytes(), 3L, Durability.SYNC_WAL);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     ArgumentCaptor<Increment> argument = ArgumentCaptor.forClass(Increment.class);
     verify(secondaryTable, times(3)).increment(argument.capture());
@@ -1050,7 +1041,7 @@ public class TestMirroringTable {
                       Longs.toByteArray(142))
                 }));
     mirroringTable.append(append);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
 
     verify(secondaryTable, times(1)).append(append);
   }
@@ -1062,7 +1053,7 @@ public class TestMirroringTable {
     Object[] results = new Object[] {createResult("test")};
     Callback<?> callback = mock(Callback.class);
     mirroringTable.batchCallback(mutations, results, callback);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
     verify(primaryTable, times(1)).batchCallback(mutations, results, callback);
     verify(secondaryTable, times(1)).batch(eq(mutations), any(Object[].class));
   }
@@ -1073,7 +1064,7 @@ public class TestMirroringTable {
     Object[] results = new Object[] {null};
     Callback<?> callback = mock(Callback.class);
     mirroringTable.batchCallback(mutations, results, callback);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
     verify(primaryTable, times(1)).batchCallback(mutations, results, callback);
     verify(secondaryTable, never()).batch(ArgumentMatchers.<Row>anyList(), any(Object[].class));
   }
@@ -1082,7 +1073,7 @@ public class TestMirroringTable {
   public void testBatchWithoutResultParameter() throws IOException, InterruptedException {
     List<Get> mutations = Arrays.asList(createGet("get1"));
     mirroringTable.batch(mutations);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
     verify(primaryTable, times(1)).batch(eq(mutations), any(Object[].class));
     verify(secondaryTable, never()).batch(ArgumentMatchers.<Row>anyList(), any(Object[].class));
   }
@@ -1092,7 +1083,7 @@ public class TestMirroringTable {
     List<Get> mutations = Arrays.asList(createGet("get1"));
     Callback<?> callback = mock(Callback.class);
     mirroringTable.batchCallback(mutations, callback);
-    waitForExecutor();
+    executorServiceRule.waitForExecutor();
     verify(primaryTable, times(1)).batchCallback(eq(mutations), any(Object[].class), eq(callback));
     verify(secondaryTable, never()).batch(ArgumentMatchers.<Row>anyList(), any(Object[].class));
   }
