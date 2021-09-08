@@ -95,13 +95,16 @@ class HBaseSnapshotInputConfigBuilder {
   }
 
   public Configuration build() throws Exception {
-    Preconditions.checkNotNull(projectId, "Required value projectId must be set");
-    Preconditions.checkNotNull(
-        hbaseSnapshotSourceDir, "Required value hbaseSnapshotSourceDir must be set");
-    Preconditions.checkNotNull(snapshotName, "Required value snapshotName must be set");
+    Preconditions.checkState(
+        projectId != null && !projectId.isEmpty(), "Required value projectId must be set");
+    Preconditions.checkState(
+        hbaseSnapshotSourceDir != null && !hbaseSnapshotSourceDir.isEmpty(),
+        "Required value hbaseSnapshotSourceDir must be set");
+    Preconditions.checkState(
+        snapshotName != null && !snapshotName.isEmpty(), "Required value snapshotName must be set");
     Preconditions.checkState(
         hbaseSnapshotSourceDir.startsWith(GcsPath.SCHEME),
-        "snapshot folder must be hosted in a GCS bucket ");
+        "Snapshot folder must be hosted in a GCS bucket");
 
     Configuration conf = createHBaseConfiguration();
 
