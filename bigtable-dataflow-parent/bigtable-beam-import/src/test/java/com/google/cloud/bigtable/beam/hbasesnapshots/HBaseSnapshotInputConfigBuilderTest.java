@@ -54,7 +54,7 @@ public class HBaseSnapshotInputConfigBuilderTest {
           .setProjectId(TEST_PROJECT)
           .setHbaseSnapshotSourceDir(TEST_SNAPSHOT_DIR)
           .build();
-      fail();
+      fail("Expected unset snapshot name to fail");
     } catch (Exception e) {
       assertEquals(e.getMessage(), "Required value snapshotName must be set");
     }
@@ -65,7 +65,7 @@ public class HBaseSnapshotInputConfigBuilderTest {
           .setSnapshotName("")
           .setHbaseSnapshotSourceDir(TEST_SNAPSHOT_DIR)
           .build();
-      fail();
+      fail("Expected empty snapshot name to fail");
     } catch (Exception e) {
       assertEquals(e.getMessage(), "Required value snapshotName must be set");
     }
@@ -78,7 +78,7 @@ public class HBaseSnapshotInputConfigBuilderTest {
           .setProjectId(TEST_PROJECT)
           .setSnapshotName(TEST_SNAPSHOT_NAME)
           .build();
-      fail();
+      fail("Expected unset snapshot directory to fail");
     } catch (Exception e) {
       assertEquals(e.getMessage(), "Required value hbaseSnapshotSourceDir must be set");
     }
@@ -89,7 +89,7 @@ public class HBaseSnapshotInputConfigBuilderTest {
           .setSnapshotName(TEST_SNAPSHOT_NAME)
           .setHbaseSnapshotSourceDir("")
           .build();
-      fail();
+      fail("Expected empty snapshot directory to fail");
     } catch (Exception e) {
       assertEquals(e.getMessage(), "Snapshot folder must be hosted in a GCS bucket");
     }
@@ -100,7 +100,7 @@ public class HBaseSnapshotInputConfigBuilderTest {
           .setSnapshotName(TEST_SNAPSHOT_NAME)
           .setHbaseSnapshotSourceDir("test-bucket/hbase-export")
           .build();
-      fail();
+      fail("Expected snapshot directory without gs prefix to fail");
     } catch (Exception e) {
       assertEquals(e.getMessage(), "Snapshot folder must be hosted in a GCS bucket");
     }
