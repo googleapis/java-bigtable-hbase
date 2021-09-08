@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.beam.hbasesnapshots;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.mapreduce.TableSnapshotInputFormat;
@@ -44,5 +45,64 @@ public class HBaseSnapshotInputConfigBuilderTest {
         TableSnapshotInputFormat.class,
         conf.getClass(
             "mapreduce.job.inputformat.class", TableSnapshotInputFormat.class, InputFormat.class));
+  }
+
+  @Test
+  public void testInvalidSnapshotHBaseSnapshotInputConfig() {
+    try {
+      new HBaseSnapshotInputConfigBuilder()
+          .setProjectId(TEST_PROJECT)
+          .setHbaseSnapshotSourceDir(TEST_SNAPSHOT_DIR)
+          .build();
+      fail();
+    } catch (Exception e) {
+      assertEquals(e.getMessage(), "Required value snapshotName must be set");
+    }
+
+    try {
+      new HBaseSnapshotInputConfigBuilder()
+          .setProjectId(TEST_PROJECT)
+          .setSnapshotName("")
+          .setHbaseSnapshotSourceDir(TEST_SNAPSHOT_DIR)
+          .build();
+      fail();
+    } catch (Exception e) {
+      assertEquals(e.getMessage(), "Required value snapshotName must be set");
+    }
+  }
+
+  @Test
+  public void testInvalidSourceDirHBaseSnapshotInputConfig() {
+    try {
+      new HBaseSnapshotInputConfigBuilder()
+          .setProjectId(TEST_PROJECT)
+          .setSnapshotName(TEST_SNAPSHOT_NAME)
+          .build();
+      fail();
+    } catch (Exception e) {
+      assertEquals(e.getMessage(), "Required value hbaseSnapshotSourceDir must be set");
+    }
+
+    try {
+      new HBaseSnapshotInputConfigBuilder()
+          .setProjectId(TEST_PROJECT)
+          .setSnapshotName(TEST_SNAPSHOT_NAME)
+          .setHbaseSnapshotSourceDir("")
+          .build();
+      fail();
+    } catch (Exception e) {
+      assertEquals(e.getMessage(), "Snapshot folder must be hosted in a GCS bucket");
+    }
+
+    try {
+      new HBaseSnapshotInputConfigBuilder()
+          .setProjectId(TEST_PROJECT)
+          .setSnapshotName(TEST_SNAPSHOT_NAME)
+          .setHbaseSnapshotSourceDir("test-bucket/hbase-export")
+          .build();
+      fail();
+    } catch (Exception e) {
+      assertEquals(e.getMessage(), "Snapshot folder must be hosted in a GCS bucket");
+    }
   }
 }
