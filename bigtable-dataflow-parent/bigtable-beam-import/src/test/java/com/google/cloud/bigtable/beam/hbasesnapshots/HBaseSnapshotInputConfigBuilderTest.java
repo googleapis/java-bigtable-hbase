@@ -48,6 +48,30 @@ public class HBaseSnapshotInputConfigBuilderTest {
   }
 
   @Test
+  public void testInvalidProjectHBaseSnapshotInputConfig() {
+    try {
+      new HBaseSnapshotInputConfigBuilder()
+          .setSnapshotName(TEST_SNAPSHOT_NAME)
+          .setHbaseSnapshotSourceDir(TEST_SNAPSHOT_DIR)
+          .build();
+      fail("Expected unset project to fail");
+    } catch (Exception e) {
+      assertEquals(e.getMessage(), "Required value projectId must be set");
+    }
+
+    try {
+      new HBaseSnapshotInputConfigBuilder()
+          .setProjectId("")
+          .setSnapshotName(TEST_SNAPSHOT_NAME)
+          .setHbaseSnapshotSourceDir(TEST_SNAPSHOT_DIR)
+          .build();
+      fail("Expected empty project to fail");
+    } catch (Exception e) {
+      assertEquals(e.getMessage(), "Required value projectId must be set");
+    }
+  }
+
+  @Test
   public void testInvalidSnapshotHBaseSnapshotInputConfig() {
     try {
       new HBaseSnapshotInputConfigBuilder()
@@ -91,7 +115,7 @@ public class HBaseSnapshotInputConfigBuilderTest {
           .build();
       fail("Expected empty snapshot directory to fail");
     } catch (Exception e) {
-      assertEquals(e.getMessage(), "Snapshot folder must be hosted in a GCS bucket");
+      assertEquals(e.getMessage(), "Required value hbaseSnapshotSourceDir must be set");
     }
 
     try {

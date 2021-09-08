@@ -95,9 +95,11 @@ class HBaseSnapshotInputConfigBuilder {
   }
 
   public Configuration build() throws Exception {
-    Preconditions.checkNotNull(projectId, "Required value projectId must be set");
-    Preconditions.checkNotNull(
-        hbaseSnapshotSourceDir, "Required value hbaseSnapshotSourceDir must be set");
+    Preconditions.checkState(
+        projectId != null && !projectId.isEmpty(), "Required value projectId must be set");
+    Preconditions.checkState(
+        hbaseSnapshotSourceDir != null && !hbaseSnapshotSourceDir.isEmpty(),
+        "Required value hbaseSnapshotSourceDir must be set");
     Preconditions.checkState(
         snapshotName != null && !snapshotName.isEmpty(), "Required value snapshotName must be set");
     Preconditions.checkState(
