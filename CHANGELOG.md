@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.0-sp.3](https://www.github.com/googleapis/java-bigtable-hbase/compare/1.20.0-sp.2...v1.20.0-sp.3) (2021-09-10)
+
+
+### Bug Fixes
+
+* retry rst stream (port of [#3000](https://www.github.com/googleapis/java-bigtable-hbase/issues/3000)) ([#3211](https://www.github.com/googleapis/java-bigtable-hbase/issues/3211)) ([9f63882](https://www.github.com/googleapis/java-bigtable-hbase/commit/9f6388228d94d78ef1676a86dc39ad849629ea88))
+
 ## [1.20.0-sp.2](https://www.github.com/googleapis/java-bigtable-hbase/compare/1.20.0-sp.1...v1.20.0-sp.2) (2021-08-04)
 
 
