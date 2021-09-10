@@ -203,7 +203,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     String channelId = ChannelPool.extractIdentifier(trailers);
     // Non retry scenario
     if (!retryOptions.enableRetries()
-        || !retryOptions.isRetryable(code)
+        || !isStatusRetryable(status)
         // Unauthenticated is special because the request never made it to
         // to the server, so all requests are retryable
         || !(isRequestRetryable() || code == Code.UNAUTHENTICATED || code == Code.UNAVAILABLE)) {
@@ -261,6 +261,10 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   protected boolean isRequestRetryable() {
     return rpc.isRetryable(getRetryRequest());
+  }
+
+  protected boolean isStatusRetryable(Status status) {
+    return retryOptions.isRetryable(status.getCode());
   }
 
   protected void setException(Exception exception) {
