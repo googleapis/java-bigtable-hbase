@@ -18,9 +18,9 @@ import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
+import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
-import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.protobuf.ByteString;
 import java.util.List;
@@ -40,11 +40,12 @@ public class SimpleIT {
     String key = "key";
     String value = "value";
 
-    BigtableOptions opts = new BigtableOptions.Builder()
-        .setUserAgent("fake")
-        .setProjectId(projectId)
-        .setInstanceId(instanceId)
-        .build();
+    BigtableOptions opts =
+        new BigtableOptions.Builder()
+            .setUserAgent("fake")
+            .setProjectId(projectId)
+            .setInstanceId(instanceId)
+            .build();
 
     try (BigtableSession session = new BigtableSession(opts)) {
       IBigtableTableAdminClient tableAdminClient = session.getTableAdminClientWrapper();
@@ -54,8 +55,8 @@ public class SimpleIT {
       dataClient.mutateRow(RowMutation.create(tableId, key).setCell(family, "", value));
       List<Row> results = dataClient.readRowsAsync(Query.create(tableId).rowKey(key)).get();
 
-      Assert.assertEquals(ByteString.copyFromUtf8(value), results.get(0).getCells().get(0).getValue());
+      Assert.assertEquals(
+          ByteString.copyFromUtf8(value), results.get(0).getCells().get(0).getValue());
     }
   }
 }
-
