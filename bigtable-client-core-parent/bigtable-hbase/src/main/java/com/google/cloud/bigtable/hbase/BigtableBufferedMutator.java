@@ -34,6 +34,8 @@ import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
+import org.apache.hadoop.hbase.client.RowMutations;
+import org.apache.hadoop.hbase.shaded.org.apache.http.annotation.Experimental;
 
 /**
  * Bigtable's {@link org.apache.hadoop.hbase.client.BufferedMutator} implementation.
@@ -135,6 +137,20 @@ public class BigtableBufferedMutator implements BufferedMutator {
   }
 
   /**
+   * Being a Mutation. This method will block if either of the following are true: 1) There are more
+   * than {@code maxInflightRpcs} RPCs in flight 2) There are more than {@link
+   * #getWriteBufferSize()} bytes pending.
+   *
+   * <p>This is an experimental feature that takes in {@link RowMutations}. All the mutations in
+   * RowMutations are applied atomically and in order.
+   */
+  @Experimental
+  public void mutate(RowMutations rowMutations) throws IOException {
+    handleExceptions();
+    addCallback(helper.mutate(rowMutations), rowMutations);
+  }
+
+  /**
    * Create a {@link RetriesExhaustedWithDetailsException} if there were any async exceptions and
    * send it to the {@link org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener}.
    */
@@ -148,6 +164,12 @@ public class BigtableBufferedMutator implements BufferedMutator {
   @SuppressWarnings("unchecked")
   private void addCallback(ApiFuture<?> future, Mutation mutation) {
     ApiFutures.addCallback(future, new ExceptionCallback(mutation), MoreExecutors.directExecutor());
+  }
+
+  @SuppressWarnings("unchecked")
+  private void addCallback(ApiFuture<?> future, RowMutations rowMutations) {
+    ApiFutures.addCallback(
+        future, new ExceptionCallback(rowMutations), MoreExecutors.directExecutor());
   }
 
   /**

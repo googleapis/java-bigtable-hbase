@@ -42,6 +42,7 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
+import org.apache.hadoop.hbase.client.RowMutations;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -131,6 +132,16 @@ public class TestBigtableBufferedMutator {
     BigtableBufferedMutator underTest = createMutator(new Configuration(false));
     underTest.mutate(new Append(EMPTY_BYTES).add(EMPTY_BYTES, EMPTY_BYTES, EMPTY_BYTES));
     verify(mockDataClient, times(1)).readModifyWriteRowAsync(any(ReadModifyWriteRow.class));
+  }
+
+  @Test
+  public void testRowMutation() throws IOException {
+    when(mockBulkMutation.add(any(RowMutationEntry.class))).thenReturn(future);
+    BigtableBufferedMutator underTest = createMutator(new Configuration(false));
+    RowMutations rowMutations = new RowMutations(EMPTY_BYTES);
+    rowMutations.add(SIMPLE_PUT);
+    underTest.mutate(rowMutations);
+    verify(mockBulkMutation, times(1)).add(any(RowMutationEntry.class));
   }
 
   @Test
