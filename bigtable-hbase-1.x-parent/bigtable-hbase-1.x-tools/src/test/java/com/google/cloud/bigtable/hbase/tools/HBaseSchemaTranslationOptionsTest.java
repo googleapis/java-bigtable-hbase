@@ -106,12 +106,14 @@ public class HBaseSchemaTranslationOptionsTest {
     System.setProperty(HBaseSchemaTranslator.ZOOKEEPER_PORT_KEY, "1080");
     System.setProperty(HBaseSchemaTranslator.TABLE_NAME_FILTER_KEY, "hbase-.*");
     System.setProperty(HBaseSchemaTranslator.OUTPUT_FILE_KEY, "/tmp/output");
+    System.setProperty(HBaseSchemaTranslator.SCHEMA_MAPPING_FILEPATH, "/tmp/schema_mapping.json");
 
     SchemaTranslationOptions options = SchemaTranslationOptions.loadOptionsFromSystemProperties();
     Assert.assertEquals("localhost", options.zookeeperQuorum);
     Assert.assertEquals((Integer) 1080, options.zookeeperPort);
     Assert.assertEquals("/tmp/output", options.outputFilePath);
     Assert.assertEquals("hbase-.*", options.tableNameFilter);
+    Assert.assertEquals("/tmp/schema_mapping.json", options.schemaMappingFilePath);
   }
 
   @Test

@@ -4,14 +4,14 @@
       "git": {
         "name": ".",
         "remote": "https://github.com/googleapis/java-bigtable-hbase.git",
-        "sha": "aee2f4e60ca28a535ebcd41826752dc781e52921"
+        "sha": "8935fea4fa393f5ae238c5d66fe158c0c77836f1"
       }
     },
     {
       "git": {
         "name": "synthtool",
         "remote": "https://github.com/googleapis/synthtool.git",
-        "sha": "09c59c20a4bf0daed1665af59035ff240fe356df"
+        "sha": "396d9b84a1e93880f5bf88b59ecd38a0a6dffc5e"
       }
     }
   ],
@@ -22,7 +22,7 @@
     ".github/PULL_REQUEST_TEMPLATE.md",
     ".github/blunderbuss.yml",
     ".github/generated-files-bot.yml",
-    ".github/readme/synth.py",
+    ".github/release-trigger.yml",
     ".github/sync-repo-settings.yaml",
     ".github/trusted-contribution.yml",
     ".kokoro/coerce_logs.sh",
@@ -30,7 +30,6 @@
     ".kokoro/common.sh",
     ".kokoro/continuous/common.cfg",
     ".kokoro/continuous/java8.cfg",
-    ".kokoro/continuous/readme.cfg",
     ".kokoro/nightly/common.cfg",
     ".kokoro/nightly/java11.cfg",
     ".kokoro/nightly/java8-osx.cfg",
