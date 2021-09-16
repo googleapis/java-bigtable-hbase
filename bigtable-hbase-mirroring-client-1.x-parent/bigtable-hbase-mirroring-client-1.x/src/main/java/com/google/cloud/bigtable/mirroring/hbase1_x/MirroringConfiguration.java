@@ -115,6 +115,8 @@ public class MirroringConfiguration extends Configuration {
     Configuration connectionConfig = extractPrefixedConfig(prefix, conf);
     if (!connectionClassName.equalsIgnoreCase("default")) {
       connectionConfig.set("hbase.client.connection.impl", connectionClassName);
+    } else {
+      connectionConfig.unset("hbase.client.connection.impl");
     }
     return connectionConfig;
   }

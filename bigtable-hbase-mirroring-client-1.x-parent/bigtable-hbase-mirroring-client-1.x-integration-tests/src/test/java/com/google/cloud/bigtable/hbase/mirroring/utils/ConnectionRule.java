@@ -31,13 +31,8 @@ import org.junit.rules.ExternalResource;
 public class ConnectionRule extends ExternalResource {
   private HBaseMiniClusterSingleton baseMiniCluster;
 
-  private boolean shouldUseHBaseMiniCluster() {
-    // use-hbase-mini-cluster set to "true" by default to allow for easy running of tests in IDE.
-    return Boolean.parseBoolean(System.getProperty("use-hbase-mini-cluster", "true"));
-  }
-
   public ConnectionRule() {
-    if (shouldUseHBaseMiniCluster()) {
+    if (ConfigurationHelper.isUsingHBaseMiniCluster()) {
       baseMiniCluster = HBaseMiniClusterSingleton.getInstance();
     }
   }
@@ -50,48 +45,18 @@ public class ConnectionRule extends ExternalResource {
   }
 
   public MirroringConnection createConnection(ExecutorService executorService) throws IOException {
-    Configuration configuration = new Configuration();
+    Configuration configuration = ConfigurationHelper.newConfiguration();
     return createConnection(executorService, configuration);
   }
 
   public MirroringConnection createConnection(
       ExecutorService executorService, Configuration configuration) throws IOException {
-    fillDefaults(configuration);
     if (baseMiniCluster != null) {
       baseMiniCluster.updateConfigurationWithHbaseMiniClusterProps(configuration);
     }
 
     Connection conn = ConnectionFactory.createConnection(configuration, executorService);
     return (MirroringConnection) conn;
-  }
-
-  private void fillDefaults(Configuration configuration) {
-    configuration.setIfUnset(
-        "hbase.client.connection.impl",
-        "com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection");
-
-    configuration.setIfUnset(
-        "google.bigtable.mirroring.mismatch-detector.impl",
-        TestMismatchDetector.class.getCanonicalName());
-
-    configuration.setIfUnset(
-        "google.bigtable.mirroring.primary-client.connection.impl",
-        "com.google.cloud.bigtable.hbase1_x.BigtableConnection");
-
-    // Provide default configuration for Bigtable emulator and HBase minicluster, those values will
-    // be used when debugging in IDE.
-    configuration.setIfUnset("google.bigtable.mirroring.primary-client.prefix", "default-primary");
-    configuration.setIfUnset("default-primary.google.bigtable.project.id", "fake-project");
-    configuration.setIfUnset("default-primary.google.bigtable.instance.id", "fake-instance");
-    configuration.setIfUnset(
-        "default-primary.google.bigtable.emulator.endpoint.host", "localhost:8086");
-    configuration.setBooleanIfUnset("default-primary.google.bigtable.use.gcj.client", false);
-
-    configuration.setIfUnset(
-        "google.bigtable.mirroring.secondary-client.connection.impl", "default");
-    configuration.setIfUnset(
-        "google.bigtable.mirroring.secondary-client.prefix", "default-secondary");
-    configuration.setIfUnset("default-secondary.zookeeper.recovery.retry", "1");
   }
 
   @Override
