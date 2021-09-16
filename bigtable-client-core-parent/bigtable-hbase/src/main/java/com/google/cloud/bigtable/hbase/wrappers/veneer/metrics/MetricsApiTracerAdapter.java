@@ -16,8 +16,8 @@
 package com.google.cloud.bigtable.hbase.wrappers.veneer.metrics;
 
 import com.google.api.core.InternalApi;
-import com.google.api.gax.tracing.ApiTracer;
 import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
+import com.google.api.gax.tracing.BaseApiTracer;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Counter;
@@ -35,7 +35,7 @@ import org.threeten.bp.Duration;
  * its lifecycle.
  */
 @InternalApi
-public class MetricsApiTracerAdapter implements ApiTracer {
+public class MetricsApiTracerAdapter extends BaseApiTracer {
 
   private final Timer firstResponseLatencyTimer =
       BigtableClientMetrics.timer(MetricLevel.Info, "grpc.method.ReadRows.firstResponse.latency");

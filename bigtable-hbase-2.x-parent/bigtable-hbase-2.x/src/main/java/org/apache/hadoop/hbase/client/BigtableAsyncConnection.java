@@ -28,8 +28,6 @@ import com.google.cloud.bigtable.hbase.util.FutureUtil;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
-import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableHBaseClassicSettings;
-import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings;
 import com.google.cloud.bigtable.hbase2_x.BigtableAsyncAdmin;
 import com.google.cloud.bigtable.hbase2_x.BigtableAsyncBufferedMutator;
 import com.google.cloud.bigtable.hbase2_x.BigtableAsyncTable;
@@ -111,10 +109,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
   }
 
   public BigtableOptions getOptions() {
-    if (settings instanceof BigtableHBaseVeneerSettings) {
-      throw new UnsupportedOperationException("veneer client does not support BigtableOptions");
-    }
-    return ((BigtableHBaseClassicSettings) this.settings).getBigtableOptions();
+    throw new UnsupportedOperationException("veneer client does not support BigtableOptions");
   }
 
   @Override

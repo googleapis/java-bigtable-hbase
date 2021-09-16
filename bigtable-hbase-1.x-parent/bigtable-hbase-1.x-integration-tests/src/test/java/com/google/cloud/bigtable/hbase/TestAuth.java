@@ -34,9 +34,6 @@ public class TestAuth extends AbstractTest {
   @Test
   public void testBatchJwt() throws IOException {
     Assume.assumeTrue("Batch JWT can only run against Bigtable", sharedTestEnv.isBigtable());
-    Assume.assumeFalse(
-        "GCJ client does not support cachedDataPool",
-        Boolean.getBoolean("google.bigtable.use.gcj.client"));
 
     String currentEndpoint = sharedTestEnv.getConfiguration().get("google.bigtable.endpoint.host");
     Assume.assumeTrue(

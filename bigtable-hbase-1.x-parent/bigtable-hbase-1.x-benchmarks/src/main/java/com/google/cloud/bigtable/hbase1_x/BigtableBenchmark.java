@@ -91,9 +91,6 @@ public class BigtableBenchmark {
   })
   private String rowShape;
 
-  @Param({"true", "false"})
-  private boolean useGcj;
-
   @Param("true")
   private boolean useBatch;
 
@@ -103,7 +100,7 @@ public class BigtableBenchmark {
 
   @Setup
   public void setUp() throws IOException {
-    connection = BenchmarkSetupUtils.createConnection(projectId, instanceId, useBatch, useGcj);
+    connection = BenchmarkSetupUtils.createConnection(projectId, instanceId, useBatch);
     rowShapeParams = new RowShapeParams(rowShape);
     table = connection.getTable(rowShapeParams.tableName);
 

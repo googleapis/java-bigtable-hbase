@@ -93,7 +93,6 @@ public class TestBigtableHBaseVeneerSettings {
     configuration.set(BIGTABLE_ADMIN_HOST_KEY, TEST_HOST);
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE_ID);
-    configuration.set(BigtableOptionsFactory.BIGTABLE_USE_GCJ_CLIENT, "true");
   }
 
   @Test

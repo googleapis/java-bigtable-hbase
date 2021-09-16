@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.wrappers;
 
-import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_GCJ_CLIENT;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.INSTANCE_ID_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.PROJECT_ID_KEY;
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -23,7 +22,6 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.util.Logger;
-import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableHBaseClassicSettings;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -41,11 +39,7 @@ public abstract class BigtableHBaseSettings {
   private final int ttlSecondsForBackup;
 
   public static BigtableHBaseSettings create(Configuration configuration) throws IOException {
-    if (configuration.getBoolean(BIGTABLE_USE_GCJ_CLIENT, true)) {
-      return BigtableHBaseVeneerSettings.create(configuration);
-    } else {
-      return new BigtableHBaseClassicSettings(configuration);
-    }
+    return BigtableHBaseVeneerSettings.create(configuration);
   }
 
   public BigtableHBaseSettings(Configuration configuration) {
