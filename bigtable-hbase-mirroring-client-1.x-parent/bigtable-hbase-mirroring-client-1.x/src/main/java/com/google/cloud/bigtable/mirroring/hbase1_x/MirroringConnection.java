@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowControlStrategy;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
@@ -50,6 +51,7 @@ public class MirroringConnection implements Connection {
   private final MismatchDetector mismatchDetector;
   private final ListenableReferenceCounter referenceCounter;
   private static final Logger Log = new Logger(MirroringConnection.class);
+  private final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
 
   /**
    * The constructor called from {@link
@@ -81,6 +83,9 @@ public class MirroringConnection implements Connection {
                 this.configuration.mirroringOptions.flowControllerStrategyClass,
                 this.configuration.mirroringOptions));
     this.mismatchDetector = construct(this.configuration.mirroringOptions.mismatchDetectorClass);
+
+    this.secondaryWriteErrorConsumer =
+        construct(this.configuration.mirroringOptions.writeErrorConsumerClass);
   }
 
   private <T> T construct(String className, Object... params) {
@@ -142,13 +147,20 @@ public class MirroringConnection implements Connection {
 
   @Override
   public BufferedMutator getBufferedMutator(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException();
+    return getBufferedMutator(new BufferedMutatorParams(tableName));
   }
 
   @Override
   public BufferedMutator getBufferedMutator(BufferedMutatorParams bufferedMutatorParams)
       throws IOException {
-    throw new UnsupportedOperationException();
+    return new MirroringBufferedMutator(
+        primaryConnection,
+        secondaryConnection,
+        bufferedMutatorParams,
+        configuration,
+        flowController,
+        executorService,
+        secondaryWriteErrorConsumer);
   }
 
   @Override
