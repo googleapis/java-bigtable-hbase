@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Google LLC
+ * Copyright 2015 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.google.cloud.bigtable.hbase.mirroring.utils;
 
-import org.junit.rules.ExternalResource;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.WriteErrorConsumer;
+import org.apache.hadoop.hbase.client.Mutation;
 
-public class MismatchDetectorCounterRule extends ExternalResource {
+public class TestWriteErrorConsumer implements WriteErrorConsumer {
+  static int errorCount;
+
+  public static int getErrorCount() {
+    return errorCount;
+  }
+
+  public static void clearErrors() {
+    errorCount = 0;
+  }
+
   @Override
-  public void before() {
-    MismatchDetectorCounter.getInstance().clearErrors();
+  public void consume(Mutation r) {
+    errorCount++;
   }
 }

@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
-@Suite.SuiteClasses({TestErrorDetection.class, TestBlocking.class})
+@Suite.SuiteClasses({TestErrorDetection.class, TestBlocking.class, TestBufferedMutator.class})
 public class IntegrationTests {
   // Classes in test suites should use their own ConnectionRule, the one here serves to keep a
   // single HBase MiniCluster connection up for all tests (if one is needed).

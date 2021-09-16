@@ -15,8 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase.mirroring.utils;
 
+import com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.FailingHBaseHRegion;
 import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 
 /**
@@ -27,7 +29,13 @@ public class HBaseMiniClusterSingleton {
   private static HBaseMiniClusterSingleton instance = new HBaseMiniClusterSingleton();
   private static int refCounter = 0;
 
-  private HBaseTestingUtility helper = new HBaseTestingUtility();
+  private final HBaseTestingUtility helper;
+
+  public HBaseMiniClusterSingleton() {
+    Configuration configuration = HBaseConfiguration.create();
+    configuration.set("hbase.hregion.impl", FailingHBaseHRegion.class.getCanonicalName());
+    helper = new HBaseTestingUtility(configuration);
+  }
 
   static HBaseMiniClusterSingleton getInstance() {
     return instance;
