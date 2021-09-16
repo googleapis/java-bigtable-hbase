@@ -15,10 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase.mirroring.utils;
 
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.WriteErrorConsumer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
 import org.apache.hadoop.hbase.client.Mutation;
 
-public class TestWriteErrorConsumer implements WriteErrorConsumer {
+public class TestWriteErrorConsumer implements SecondaryWriteErrorConsumer {
   static int errorCount;
 
   public static int getErrorCount() {
