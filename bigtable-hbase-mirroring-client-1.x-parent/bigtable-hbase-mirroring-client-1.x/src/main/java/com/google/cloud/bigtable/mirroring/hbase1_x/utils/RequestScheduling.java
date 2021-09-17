@@ -19,6 +19,7 @@ import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController.ResourceReservation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
+import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -36,7 +37,7 @@ public class RequestScheduling {
 
   public static <T> ListenableFuture<Void> scheduleVerificationAndRequestWithFlowControl(
       final RequestResourcesDescription requestResourcesDescription,
-      final ListenableFuture<T> secondaryGetFuture,
+      final Supplier<ListenableFuture<T>> secondaryResultFutureSupplier,
       final FutureCallback<T> verificationCallback,
       final FlowController flowController) {
     final SettableFuture<Void> verificationCompletedFuture = SettableFuture.create();
@@ -46,7 +47,7 @@ public class RequestScheduling {
     try {
       final ResourceReservation reservation = reservationRequest.get();
       Futures.addCallback(
-          secondaryGetFuture,
+          secondaryResultFutureSupplier.get(),
           new FutureCallback<T>() {
             @Override
             public void onSuccess(@NullableDecl T t) {

@@ -25,6 +25,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.RequestScheduling;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
+import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -176,11 +177,11 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
 
   private <T> void scheduleRequest(
       RequestResourcesDescription requestResourcesDescription,
-      ListenableFuture<T> next,
+      Supplier<ListenableFuture<T>> nextSupplier,
       FutureCallback<T> scannerNext) {
     this.listenableReferenceCounter.holdReferenceUntilCompletion(
         RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
-            requestResourcesDescription, next, scannerNext, this.flowController));
+            requestResourcesDescription, nextSupplier, scannerNext, this.flowController));
   }
 
   @Override

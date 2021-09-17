@@ -25,6 +25,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowContro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
+import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -546,21 +547,21 @@ public class MirroringTable implements Table, ListenableCloseable {
 
   private <T> void scheduleVerificationAndRequestWithFlowControl(
       final RequestResourcesDescription resultInfo,
-      final ListenableFuture<T> secondaryGetFuture,
+      final Supplier<ListenableFuture<T>> secondaryGetFutureSupplier,
       final FutureCallback<T> verificationCallback) {
     this.referenceCounter.holdReferenceUntilCompletion(
         RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
-            resultInfo, secondaryGetFuture, verificationCallback, this.flowController));
+            resultInfo, secondaryGetFutureSupplier, verificationCallback, this.flowController));
   }
 
   public <T> void scheduleWriteWithControlFlow(
       final WriteOperationInfo writeOperationInfo,
-      final ListenableFuture<T> secondaryResultFuture,
+      final Supplier<ListenableFuture<T>> secondaryResultFutureSupplier,
       final FlowController flowController) {
     this.referenceCounter.holdReferenceUntilCompletion(
         RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
             writeOperationInfo.requestResourcesDescription,
-            secondaryResultFuture,
+            secondaryResultFutureSupplier,
             new FutureCallback<T>() {
               @Override
               public void onSuccess(@NullableDecl T t) {}

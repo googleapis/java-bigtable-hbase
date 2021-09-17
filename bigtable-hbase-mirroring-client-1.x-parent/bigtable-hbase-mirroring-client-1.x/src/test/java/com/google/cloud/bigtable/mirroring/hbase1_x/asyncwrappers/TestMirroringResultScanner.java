@@ -306,12 +306,12 @@ public class TestMirroringResultScanner {
     ScannerRequestContext c5 = new ScannerRequestContext(null, null, 5);
     ScannerRequestContext c6 = new ScannerRequestContext(null, null, 6);
 
-    catchResult(asyncResultScannerWrapper.next(c1), calls);
-    catchResult(asyncResultScannerWrapper.next(c2), calls);
-    catchResult(asyncResultScannerWrapper.next(c3), calls);
-    catchResult(asyncResultScannerWrapper.next(c4), calls);
-    catchResult(asyncResultScannerWrapper.next(c5), calls);
-    catchResult(asyncResultScannerWrapper.next(c6), calls);
+    catchResult(asyncResultScannerWrapper.next(c1).get(), calls);
+    catchResult(asyncResultScannerWrapper.next(c2).get(), calls);
+    catchResult(asyncResultScannerWrapper.next(c3).get(), calls);
+    catchResult(asyncResultScannerWrapper.next(c4).get(), calls);
+    catchResult(asyncResultScannerWrapper.next(c5).get(), calls);
+    catchResult(asyncResultScannerWrapper.next(c6).get(), calls);
 
     reverseOrderExecutorService.callCallables();
 

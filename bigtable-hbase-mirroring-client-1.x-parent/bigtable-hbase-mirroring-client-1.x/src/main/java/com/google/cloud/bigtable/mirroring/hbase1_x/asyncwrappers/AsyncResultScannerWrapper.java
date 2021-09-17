@@ -19,6 +19,7 @@ import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringResultScanner;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
+import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -34,6 +35,8 @@ import org.apache.hadoop.hbase.client.Table;
  * {@link MirroringResultScanner} schedules asynchronous next()s after synchronous operations to
  * verify consistency. HBase doesn't provide any Asynchronous API for Scanners thus we wrap
  * ResultScanner into AsyncResultScannerWrapper to enable async operations on scanners.
+ *
+ * <p>Note that next() method returns a Supplier<> as its result is used only in callbacks
  */
 @InternalApi("For internal usage only")
 public class AsyncResultScannerWrapper implements ListenableCloseable {
@@ -70,11 +73,17 @@ public class AsyncResultScannerWrapper implements ListenableCloseable {
     this.nextContextQueue = new ConcurrentLinkedQueue<>();
   }
 
-  public ListenableFuture<AsyncScannerVerificationPayload> next(ScannerRequestContext context) {
-    this.nextContextQueue.add(context);
-    ListenableFuture<AsyncScannerVerificationPayload> future = scheduleNext();
-    this.pendingOperationsReferenceCounter.holdReferenceUntilCompletion(future);
-    return future;
+  public Supplier<ListenableFuture<AsyncScannerVerificationPayload>> next(
+      final ScannerRequestContext context) {
+    return new Supplier<ListenableFuture<AsyncScannerVerificationPayload>>() {
+      @Override
+      public ListenableFuture<AsyncScannerVerificationPayload> get() {
+        nextContextQueue.add(context);
+        ListenableFuture<AsyncScannerVerificationPayload> future = scheduleNext();
+        pendingOperationsReferenceCounter.holdReferenceUntilCompletion(future);
+        return future;
+      }
+    };
   }
 
   private ListenableFuture<AsyncScannerVerificationPayload> scheduleNext() {
