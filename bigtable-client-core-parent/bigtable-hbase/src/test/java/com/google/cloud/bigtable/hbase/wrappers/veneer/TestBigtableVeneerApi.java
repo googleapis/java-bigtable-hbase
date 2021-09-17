@@ -29,7 +29,6 @@ import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
-import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableHBaseClassicSettings;
 import com.google.cloud.bigtable.test.helper.TestServerBuilder;
 import com.google.common.collect.Queues;
 import com.google.protobuf.Empty;
@@ -74,8 +73,7 @@ public class TestBigtableVeneerApi {
     configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
     configuration.set(
         BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + server.getPort());
-    configuration.set(BigtableOptionsFactory.BIGTABLE_USE_GCJ_CLIENT, "true");
-    bigtableHBaseSettings = BigtableHBaseClassicSettings.create(configuration);
+    bigtableHBaseSettings = BigtableHBaseVeneerSettings.create(configuration);
     bigtableApi = BigtableApi.create(bigtableHBaseSettings);
   }
 
