@@ -19,6 +19,7 @@ import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger;
+import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -45,6 +46,9 @@ import org.apache.hadoop.hbase.client.Table;
  *
  * <p>Table instances are not thread-safe, every operation is synchronized to prevent concurrent
  * accesses to the table from different threads in the executor.
+ *
+ * <p>Note that the most of the class' interface is wrapped in Supplier<> as the results are only
+ * used in callbacks.
  */
 @InternalApi("For internal usage only")
 public class AsyncTableWrapper implements ListenableCloseable {
@@ -70,8 +74,8 @@ public class AsyncTableWrapper implements ListenableCloseable {
     this.pendingOperationsReferenceCounter = new ListenableReferenceCounter();
   }
 
-  public ListenableFuture<Result> get(final Get gets) {
-    return submitTask(
+  public Supplier<ListenableFuture<Result>> get(final Get gets) {
+    return createSubmitTaskSupplier(
         new Callable<Result>() {
           @Override
           public Result call() throws Exception {
@@ -83,8 +87,8 @@ public class AsyncTableWrapper implements ListenableCloseable {
         });
   }
 
-  public ListenableFuture<Result[]> get(final List<Get> gets) {
-    return submitTask(
+  public Supplier<ListenableFuture<Result[]>> get(final List<Get> gets) {
+    return createSubmitTaskSupplier(
         new Callable<Result[]>() {
           @Override
           public Result[] call() throws Exception {
@@ -96,8 +100,8 @@ public class AsyncTableWrapper implements ListenableCloseable {
         });
   }
 
-  public ListenableFuture<Boolean> exists(final Get get) {
-    return submitTask(
+  public Supplier<ListenableFuture<Boolean>> exists(final Get get) {
+    return createSubmitTaskSupplier(
         new Callable<Boolean>() {
           @Override
           public Boolean call() throws Exception {
@@ -109,8 +113,8 @@ public class AsyncTableWrapper implements ListenableCloseable {
         });
   }
 
-  public ListenableFuture<boolean[]> existsAll(final List<Get> gets) {
-    return submitTask(
+  public Supplier<ListenableFuture<boolean[]>> existsAll(final List<Get> gets) {
+    return createSubmitTaskSupplier(
         new Callable<boolean[]>() {
           @Override
           public boolean[] call() throws Exception {
@@ -164,14 +168,23 @@ public class AsyncTableWrapper implements ListenableCloseable {
     return result;
   }
 
+  public <T> Supplier<ListenableFuture<T>> createSubmitTaskSupplier(final Callable<T> task) {
+    return new Supplier<ListenableFuture<T>>() {
+      @Override
+      public ListenableFuture<T> get() {
+        return submitTask(task);
+      }
+    };
+  }
+
   public <T> ListenableFuture<T> submitTask(Callable<T> task) {
     ListenableFuture<T> future = this.executorService.submit(task);
     this.pendingOperationsReferenceCounter.holdReferenceUntilCompletion(future);
     return future;
   }
 
-  public ListenableFuture<Void> put(final Put put) {
-    return submitTask(
+  public Supplier<ListenableFuture<Void>> put(final Put put) {
+    return createSubmitTaskSupplier(
         new Callable<Void>() {
           @Override
           public Void call() throws IOException {
@@ -184,8 +197,8 @@ public class AsyncTableWrapper implements ListenableCloseable {
         });
   }
 
-  public ListenableFuture<Void> append(final Append append) {
-    return submitTask(
+  public Supplier<ListenableFuture<Void>> append(final Append append) {
+    return createSubmitTaskSupplier(
         new Callable<Void>() {
           @Override
           public Void call() throws IOException {
@@ -198,8 +211,8 @@ public class AsyncTableWrapper implements ListenableCloseable {
         });
   }
 
-  public ListenableFuture<Void> increment(final Increment increment) {
-    return submitTask(
+  public Supplier<ListenableFuture<Void>> increment(final Increment increment) {
+    return createSubmitTaskSupplier(
         new Callable<Void>() {
           @Override
           public Void call() throws IOException {
@@ -212,8 +225,8 @@ public class AsyncTableWrapper implements ListenableCloseable {
         });
   }
 
-  public ListenableFuture<Void> mutateRow(final RowMutations rowMutations) {
-    return submitTask(
+  public Supplier<ListenableFuture<Void>> mutateRow(final RowMutations rowMutations) {
+    return createSubmitTaskSupplier(
         new Callable<Void>() {
           @Override
           public Void call() throws IOException {
@@ -226,8 +239,8 @@ public class AsyncTableWrapper implements ListenableCloseable {
         });
   }
 
-  public ListenableFuture<Void> delete(final Delete delete) {
-    return submitTask(
+  public Supplier<ListenableFuture<Void>> delete(final Delete delete) {
+    return createSubmitTaskSupplier(
         new Callable<Void>() {
           @Override
           public Void call() throws IOException {
@@ -240,9 +253,9 @@ public class AsyncTableWrapper implements ListenableCloseable {
         });
   }
 
-  public ListenableFuture<Void> batch(
+  public Supplier<ListenableFuture<Void>> batch(
       final List<? extends Row> operations, final Object[] results) {
-    return submitTask(
+    return createSubmitTaskSupplier(
         new Callable<Void>() {
           @Override
           public Void call() throws IOException {
