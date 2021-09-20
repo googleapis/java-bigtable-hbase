@@ -88,7 +88,6 @@ public class CloudBigtableIOReaderTest {
                     10L,
                     Bytes.toBytes("value"),
                     ImmutableList.of("label"))));
-    //    FlatRow row = FlatRow.newBuilder().withRowKey(rowKeyByteString).build();
     when(mockScanner.next()).thenReturn(row);
   }
 

@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.api.core.BetaApi;
-import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 
 /**
@@ -307,14 +306,4 @@ public class BigtableOptionsFactory {
   /** Tracing cookie to send in the header with the requests */
   @BetaApi("The API for setting tracing cookie is not yet stable and may change in the future")
   public static final String BIGTABLE_TRACING_COOKIE = "google.bigtable.tracing.cookie.header";
-
-  /**
-   * This is the maximum accumulated size of uncompleted requests that we allow before throttling.
-   * Default to 10% of available memory with a max of 1GB.
-   *
-   * <p>For internal use only - public for technical reasons.
-   */
-  @InternalApi("For internal usage only")
-  public static final long BIGTABLE_MAX_MEMORY_DEFAULT =
-      (long) Math.min(1 << 30, (Runtime.getRuntime().maxMemory() * 0.1d));
 }
