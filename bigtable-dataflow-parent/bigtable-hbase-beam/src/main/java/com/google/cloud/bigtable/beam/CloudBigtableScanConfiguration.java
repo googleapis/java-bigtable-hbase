@@ -19,9 +19,9 @@ import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowRange;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowSet;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
@@ -273,9 +273,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     public ReadRowsRequest get() {
       if (cachedRequest == null) {
         if (request.get().getTableName().isEmpty()) {
-          BigtableInstanceName bigtableInstanceName =
-              new BigtableInstanceName(projectId.get(), instanceId.get());
-          String fullTableName = bigtableInstanceName.toTableNameStr(tableId.get());
+          String fullTableName =
+              NameUtil.formatTableName(projectId.get(), instanceId.get(), tableId.get());
           cachedRequest = request.get().toBuilder().setTableName(fullTableName).build();
         } else {
           cachedRequest = request.get();

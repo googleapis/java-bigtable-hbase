@@ -78,6 +78,8 @@ public abstract class BigtableHBaseSettings {
 
   public abstract long getBatchingMaxRequestSize();
 
+  public abstract String getUserAgent();
+
   // This is equivalent to allow server-side timestamp.
   public abstract boolean isRetriesWithoutTimestampAllowed();
 

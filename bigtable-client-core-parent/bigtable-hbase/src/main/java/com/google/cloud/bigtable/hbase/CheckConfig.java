@@ -17,10 +17,8 @@ package com.google.cloud.bigtable.hbase;
 
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
-import com.google.auth.Credentials;
-import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.hbase.util.Logger;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -58,28 +56,19 @@ public class CheckConfig {
         new GenericOptionsParser(HBaseConfiguration.create(), args);
     Configuration fullConfiguration = optionsParser.getConfiguration();
 
-    BigtableOptions options;
+    BigtableHBaseSettings settings;
     try {
-      options = BigtableOptionsFactory.fromConfiguration(fullConfiguration);
+      settings = BigtableHBaseSettings.create(fullConfiguration);
     } catch (IOException | RuntimeException exc) {
       logger.warn("Encountered errors attempting to parse configuration.", exc);
       return;
     }
 
-    System.out.println(String.format("User Agent: %s", options.getUserAgent()));
-    System.out.println(String.format("Project ID: %s", options.getProjectId()));
-    System.out.println(String.format("Instance Id: %s", options.getInstanceId()));
-    System.out.println(String.format("Admin host: %s", options.getAdminHost()));
-    System.out.println(String.format("Data host: %s", options.getDataHost()));
-
-    Credentials credentials = CredentialFactory.getCredentials(options.getCredentialOptions());
-    try {
-      System.out.println("Attempting credential refresh...");
-      credentials.refresh();
-    } catch (IOException ioe) {
-      logger.warn("Encountered errors attempting to refresh credentials.", ioe);
-      return;
-    }
+    System.out.println(String.format("User Agent: %s", settings.getUserAgent()));
+    System.out.println(String.format("Project ID: %s", settings.getProjectId()));
+    System.out.println(String.format("Instance Id: %s", settings.getInstanceId()));
+    System.out.println(String.format("Admin host: %s", settings.getAdminHost()));
+    System.out.println(String.format("Data host: %s", settings.getDataHost()));
 
     String configuredConnectionClass =
         fullConfiguration.get(BigtableConfiguration.HBASE_CLIENT_CONNECTION_IMPL);
@@ -104,7 +93,7 @@ public class CheckConfig {
     System.out.println("Opening table admin connection...");
     try (Connection conn = ConnectionFactory.createConnection(fullConfiguration)) {
       try (Admin admin = conn.getAdmin()) {
-        System.out.println(String.format("Tables in cluster %s:", options.getInstanceId()));
+        System.out.println(String.format("Tables in cluster %s:", settings.getInstanceId()));
         TableName[] tableNames = admin.listTableNames();
         if (tableNames.length == 0) {
           System.out.println("No tables found.");

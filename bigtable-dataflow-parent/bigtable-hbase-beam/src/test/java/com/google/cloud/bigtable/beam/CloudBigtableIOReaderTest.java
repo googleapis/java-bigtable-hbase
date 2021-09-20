@@ -17,17 +17,18 @@ package com.google.cloud.bigtable.beam;
 
 import static org.mockito.Mockito.when;
 
+import avro.shaded.com.google.common.collect.ImmutableList;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.FlatRow;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import java.io.IOException;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.range.ByteKey;
 import org.apache.beam.sdk.io.range.ByteKeyRange;
 import org.apache.beam.sdk.io.range.ByteKeyRangeTracker;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -44,9 +45,9 @@ import org.mockito.junit.MockitoRule;
 public class CloudBigtableIOReaderTest {
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
-  @Mock BigtableSession mockSession;
+  @Mock Connection mockConnection;
 
-  @Mock ResultScanner<FlatRow> mockScanner;
+  @Mock ResultScanner mockScanner;
 
   @Mock CloudBigtableIO.AbstractSource mockSource;
 
@@ -77,7 +78,17 @@ public class CloudBigtableIOReaderTest {
 
   private void setRowKey(String rowKey) throws IOException {
     ByteString rowKeyByteString = ByteString.copyFrom(Bytes.toBytes(rowKey));
-    FlatRow row = FlatRow.newBuilder().withRowKey(rowKeyByteString).build();
+    Result row =
+        Result.create(
+            ImmutableList.<Cell>of(
+                new com.google.cloud.bigtable.hbase.adapters.read.RowCell(
+                    Bytes.toBytes(rowKey),
+                    Bytes.toBytes("cf"),
+                    Bytes.toBytes("q"),
+                    10L,
+                    Bytes.toBytes("value"),
+                    ImmutableList.of("label"))));
+    //    FlatRow row = FlatRow.newBuilder().withRowKey(rowKeyByteString).build();
     when(mockScanner.next()).thenReturn(row);
   }
 
@@ -86,7 +97,7 @@ public class CloudBigtableIOReaderTest {
     return new CloudBigtableIO.Reader(mockSource) {
       @Override
       void initializeScanner() throws IOException {
-        setSession(mockSession);
+        setConnection(mockConnection);
         setScanner(mockScanner);
       }
     };

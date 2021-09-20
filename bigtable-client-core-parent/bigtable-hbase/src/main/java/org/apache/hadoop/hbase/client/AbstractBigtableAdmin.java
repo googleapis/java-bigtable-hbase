@@ -22,7 +22,7 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.FailedPreconditionException;
-import com.google.cloud.bigtable.admin.v2.internal.NameUtil;
+import com.google.bigtable.admin.v2.ClusterName;
 import com.google.cloud.bigtable.admin.v2.models.Backup;
 import com.google.cloud.bigtable.admin.v2.models.Cluster;
 import com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest;
@@ -30,8 +30,6 @@ import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.RestoreTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
-import com.google.cloud.bigtable.grpc.BigtableClusterName;
-import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.cloud.bigtable.hbase.util.FutureUtil;
@@ -100,7 +98,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private final BigtableHBaseSettings settings;
   protected final CommonConnection connection;
   protected final AdminClientWrapper adminClientWrapper;
-  private BigtableClusterName bigtableSnapshotClusterName;
+  private ClusterName bigtableSnapshotClusterName;
 
   /**
    * Constructor for AbstractBigtableAdmin.
@@ -119,11 +117,11 @@ public abstract class AbstractBigtableAdmin implements Admin {
     String clusterId =
         configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
     if (clusterId != null) {
-      BigtableInstanceName bigtableInstanceName =
-          new BigtableInstanceName(
+      bigtableSnapshotClusterName =
+          ClusterName.of(
               connection.getBigtableSettings().getProjectId(),
-              connection.getBigtableSettings().getInstanceId());
-      bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
+              connection.getBigtableSettings().getInstanceId(),
+              clusterId);
     }
   }
 
@@ -920,7 +918,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     }
 
     FutureUtil.unwrap(
-        adminClientWrapper.deleteBackupAsync(getBackupClusterName().getClusterId(), snapshotId));
+        adminClientWrapper.deleteBackupAsync(getBackupClusterName().getCluster(), snapshotId));
   }
 
   protected Backup snapshotTable(String snapshotId, TableName tableName) throws IOException {
@@ -928,7 +926,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(tableName.getNameAsString()));
 
     CreateBackupRequest request =
-        CreateBackupRequest.of(getBackupClusterName().getClusterId(), snapshotId)
+        CreateBackupRequest.of(getBackupClusterName().getCluster(), snapshotId)
             .setSourceTableId(tableName.getNameAsString());
 
     int ttlSecondsForBackup = settings.getTtlSecondsForBackup();
@@ -988,10 +986,10 @@ public abstract class AbstractBigtableAdmin implements Admin {
   }
 
   protected synchronized String getBackupClusterId() {
-    return getBackupClusterName().getClusterId();
+    return getBackupClusterName().getCluster();
   }
 
-  private synchronized BigtableClusterName getBackupClusterName() {
+  private synchronized ClusterName getBackupClusterName() {
     if (this.bigtableSnapshotClusterName == null) {
       List<Cluster> clusters = adminClientWrapper.listClusters(settings.getInstanceId());
       Preconditions.checkState(
@@ -999,10 +997,9 @@ public abstract class AbstractBigtableAdmin implements Admin {
           String.format(
               "Project '%s' / Instance '%s' has %d clusters. There must be exactly 1 for this operation to work.",
               settings.getProjectId(), settings.getInstanceId(), clusters.size()));
-      String clusterName =
-          NameUtil.formatClusterName(
+      bigtableSnapshotClusterName =
+          ClusterName.of(
               settings.getProjectId(), settings.getInstanceId(), clusters.get(0).getId());
-      bigtableSnapshotClusterName = new BigtableClusterName(clusterName);
     }
     return bigtableSnapshotClusterName;
   }

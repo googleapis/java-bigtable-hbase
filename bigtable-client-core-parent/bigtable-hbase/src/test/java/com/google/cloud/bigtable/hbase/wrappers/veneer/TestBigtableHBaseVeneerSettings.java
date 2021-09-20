@@ -56,8 +56,8 @@ import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.auth.Credentials;
+import com.google.cloud.bigtable.Version;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
-import com.google.cloud.bigtable.config.BigtableVersionInfo;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableHBaseVersion;
@@ -127,10 +127,7 @@ public class TestBigtableHBaseVeneerSettings {
     assertEquals(TEST_HOST + ":" + TEST_PORT, dataSettings.getStubSettings().getEndpoint());
     Map<String, String> headers = dataSettings.getStubSettings().getHeaderProvider().getHeaders();
     assertTrue(headers.get(GrpcUtil.USER_AGENT_KEY.name()).contains(userAgent));
-    assertTrue(
-        headers
-            .get(GrpcUtil.USER_AGENT_KEY.name())
-            .contains("bigtable-" + BigtableVersionInfo.CLIENT_VERSION));
+    assertTrue(headers.get(GrpcUtil.USER_AGENT_KEY.name()).contains("bigtable-" + Version.VERSION));
     assertTrue(
         headers
             .get(GrpcUtil.USER_AGENT_KEY.name())

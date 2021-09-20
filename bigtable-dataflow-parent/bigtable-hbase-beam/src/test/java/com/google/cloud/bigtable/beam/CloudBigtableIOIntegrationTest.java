@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.beam;
 
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.Logger;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import java.io.IOException;
@@ -27,6 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.BoundedSource.BoundedReader;
 import org.apache.beam.sdk.transforms.DoFn;
@@ -64,7 +64,8 @@ public class CloudBigtableIOIntegrationTest {
   public static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
   public static final byte[] QUALIFIER1 = Bytes.toBytes("qualifier1");
 
-  private static final Logger LOG = new Logger(CloudBigtableIOIntegrationTest.class);
+  private static final Logger LOG =
+      Logger.getLogger(CloudBigtableIOIntegrationTest.class.getName());
 
   private static String projectId = System.getProperty(BIGTABLE_PROJECT_KEY);
   private static String instanceId = System.getProperty(BIGTABLE_INSTANCE_KEY);
@@ -299,7 +300,7 @@ public class CloudBigtableIOIntegrationTest {
       TableName tableName = createNewTable(admin);
 
       final int rowCount = 1000;
-      LOG.info("Adding %d rows in testEstimatedAndSplitForLargeTable()", rowCount);
+      LOG.info("Adding " + rowCount + " rows in testEstimatedAndSplitForLargeTable()");
       try (BufferedMutator mutator = connection.getBufferedMutator(tableName)) {
         for (int i = 0; i < rowCount; i++) {
           byte[] largeValue = Bytes.toBytes(RandomStringUtils.randomAlphanumeric(LARGE_VALUE_SIZE));
@@ -339,7 +340,7 @@ public class CloudBigtableIOIntegrationTest {
                         reader.advance();
                       }
                     } catch (IOException e) {
-                      LOG.warn("Could not read bundle: %s", e, bundle);
+                      LOG.warning("Could not read bundle: " + e + bundle);
                     }
                   }
                 });

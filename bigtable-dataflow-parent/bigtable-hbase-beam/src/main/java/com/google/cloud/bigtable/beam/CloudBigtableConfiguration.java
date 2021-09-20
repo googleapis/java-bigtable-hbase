@@ -15,12 +15,10 @@
  */
 package com.google.cloud.bigtable.beam;
 
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BigtableVersionInfo;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.Version;
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.common.collect.ImmutableMap;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -110,9 +108,8 @@ public class CloudBigtableConfiguration implements Serializable {
     }
 
     /**
-     * Adds additional connection configuration. {@link
-     * BigtableOptionsFactory#fromConfiguration(Configuration)} for more information about
-     * configuration options.
+     * Adds additional connection configuration. {@link BigtableOptionsFactory} for more information
+     * about configuration options.
      *
      * @return The {@link CloudBigtableConfiguration.Builder} for chaining convenience.
      */
@@ -121,9 +118,8 @@ public class CloudBigtableConfiguration implements Serializable {
     }
 
     /**
-     * Adds additional connection configuration. {@link
-     * BigtableOptionsFactory#fromConfiguration(Configuration)} for more information about
-     * configuration options.
+     * Adds additional connection configuration. {@link BigtableOptionsFactory} for more information
+     * about configuration options.
      *
      * @return The {@link CloudBigtableConfiguration.Builder} for chaining convenience.
      */
@@ -157,8 +153,7 @@ public class CloudBigtableConfiguration implements Serializable {
    * @param projectId The project ID for the instance.
    * @param instanceId The instance ID.
    * @param additionalConfiguration A {@link Map} with additional connection configuration. See
-   *     {@link BigtableOptionsFactory#fromConfiguration(Configuration)} for more information about
-   *     configuration options.
+   *     {@link BigtableOptionsFactory} for more information about configuration options.
    */
   protected CloudBigtableConfiguration(
       ValueProvider<String> projectId,
@@ -196,15 +191,6 @@ public class CloudBigtableConfiguration implements Serializable {
   /** Get the Cloud Bigtable App Profile id. */
   public String getAppProfileId() {
     return configuration.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY).get();
-  }
-
-  /**
-   * Converts the {@link CloudBigtableConfiguration} to a {@link BigtableOptions} object.
-   *
-   * @return The {@link BigtableOptions} object.
-   */
-  public BigtableOptions toBigtableOptions() throws IOException {
-    return BigtableOptionsFactory.fromConfiguration(toHBaseConfig());
   }
 
   /**
@@ -322,7 +308,7 @@ public class CloudBigtableConfiguration implements Serializable {
                 getDisplayValue(configuration.get(BigtableOptionsFactory.INSTANCE_ID_KEY)))
             .withLabel("Instance ID"));
     builder.add(
-        DisplayData.item("bigtableClientVersion", BigtableVersionInfo.CLIENT_VERSION)
+        DisplayData.item("bigtableClientVersion", Version.VERSION)
             .withLabel("Bigtable Client Version"));
     Map<String, ValueProvider<String>> hashMap =
         new HashMap<String, ValueProvider<String>>(configuration);
