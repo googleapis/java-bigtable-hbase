@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.hbase1_x;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_AUTOFLUSH_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_MAX_ROW_KEY_COUNT;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_BATCH;
-import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_GCJ_CLIENT;
 import static com.google.cloud.bigtable.hbase1_x.BigtableBenchmark.COL_FAMILY;
 import static com.google.cloud.bigtable.hbase1_x.BigtableBenchmark.READ_ROW_PREFIX;
 import static com.google.cloud.bigtable.hbase1_x.BigtableBenchmark.SAMPLE_TIMESTAMP;
@@ -47,13 +46,11 @@ class BenchmarkSetupUtils {
   private static final Pattern CELL_PATTERN = Pattern.compile("cellsPerRow/(\\d+)/cellSize/(\\d+)");
   private static final Random random = new Random();
 
-  static Connection createConnection(
-      String projectId, String instanceId, boolean useBatch, boolean useGcj) {
+  static Connection createConnection(String projectId, String instanceId, boolean useBatch) {
     Configuration config = BigtableConfiguration.configure(projectId, instanceId);
     config.set(BIGTABLE_USE_BATCH, String.valueOf(useBatch));
     config.set(BIGTABLE_BULK_AUTOFLUSH_MS_KEY, String.valueOf(100));
     config.set(BIGTABLE_BULK_MAX_ROW_KEY_COUNT, String.valueOf(3000));
-    config.set(BIGTABLE_USE_GCJ_CLIENT, String.valueOf(useGcj));
     return BigtableConfiguration.connect(config);
   }
 

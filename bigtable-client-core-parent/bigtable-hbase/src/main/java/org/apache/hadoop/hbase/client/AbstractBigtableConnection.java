@@ -27,8 +27,6 @@ import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
-import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableHBaseClassicSettings;
-import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings;
 import com.google.common.base.MoreObjects;
 import java.io.Closeable;
 import java.io.IOException;
@@ -304,10 +302,7 @@ public abstract class AbstractBigtableConnection
    * @return a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
    */
   public BigtableOptions getOptions() {
-    if (settings instanceof BigtableHBaseVeneerSettings) {
-      throw new UnsupportedOperationException("veneer client does not support BigtableOptions");
-    }
-    return ((BigtableHBaseClassicSettings) settings).getBigtableOptions();
+    throw new UnsupportedOperationException("veneer client does not support BigtableOptions");
   }
 
   @Override

@@ -16,8 +16,6 @@
 package com.google.cloud.bigtable.hbase.wrappers;
 
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableClassicApi;
-import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableHBaseClassicSettings;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableVeneerApi;
 import java.io.IOException;
@@ -33,11 +31,7 @@ public abstract class BigtableApi implements AutoCloseable {
   private final BigtableHBaseSettings hBaseSettings;
 
   public static BigtableApi create(BigtableHBaseSettings settings) throws IOException {
-    if (settings instanceof BigtableHBaseVeneerSettings) {
-      return new BigtableVeneerApi((BigtableHBaseVeneerSettings) settings);
-    } else {
-      return new BigtableClassicApi((BigtableHBaseClassicSettings) settings);
-    }
+    return new BigtableVeneerApi((BigtableHBaseVeneerSettings) settings);
   }
 
   protected BigtableApi(BigtableHBaseSettings hbaseSettings) {
