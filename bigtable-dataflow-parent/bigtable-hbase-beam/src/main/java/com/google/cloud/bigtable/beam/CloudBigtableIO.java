@@ -569,7 +569,8 @@ public class CloudBigtableIO {
           connection
               .getTable(TableName.valueOf(tableName))
               .getScanner(
-                  source.getConfiguration().getStartRow(), source.getConfiguration().getStopRow());
+                  source.getConfiguration().getZeroCopyStartRow(),
+                  source.getConfiguration().getZeroCopyStopRow());
     }
 
     /** Calls {@link ResultScanner#next()}. */
