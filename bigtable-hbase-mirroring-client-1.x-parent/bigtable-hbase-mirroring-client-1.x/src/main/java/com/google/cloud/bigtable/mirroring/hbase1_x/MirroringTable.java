@@ -334,17 +334,16 @@ public class MirroringTable implements Table, ListenableCloseable {
     Object[] results = new Object[deletes.size()];
     try {
       this.batch(deletes, results);
-      deletes.clear();
     } catch (InterruptedException e) {
+      IOException e2 = new InterruptedIOException();
+      e2.initCause(e);
+      throw e2;
+    } finally {
       final BatchHelpers.SplitBatchResponse<Delete> splitResponse =
           new BatchHelpers.SplitBatchResponse<>(deletes, results);
 
       deletes.clear();
       deletes.addAll(splitResponse.failedWrites);
-
-      IOException e2 = new InterruptedIOException();
-      e2.initCause(e);
-      throw e2;
     }
   }
 
@@ -791,7 +790,7 @@ public class MirroringTable implements Table, ListenableCloseable {
         for (int i = 0; i < operations.size(); i++) {
           T operation = operations.get(i);
           boolean isRead = operation instanceof Get;
-          boolean isFailed = results[i] == null;
+          boolean isFailed = results[i] == null || results[i] instanceof Throwable;
           if (isFailed) {
             if (isRead) {
               this.allReads.add((Get) operation);

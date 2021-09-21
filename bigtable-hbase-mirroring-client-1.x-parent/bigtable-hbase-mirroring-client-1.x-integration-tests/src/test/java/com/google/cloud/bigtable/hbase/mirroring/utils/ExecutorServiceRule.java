@@ -16,21 +16,13 @@
 
 package com.google.cloud.bigtable.hbase.mirroring.utils;
 
-import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection;
-import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import org.apache.hadoop.conf.Configuration;
 import org.junit.rules.ExternalResource;
 
 public class ExecutorServiceRule extends ExternalResource {
-  private ConnectionRule connectionRule;
   public ExecutorService executorService;
-
-  public ExecutorServiceRule(ConnectionRule connectionRule) {
-    this.connectionRule = connectionRule;
-  }
 
   public void before() {
     executorService = Executors.newCachedThreadPool();
@@ -43,13 +35,5 @@ public class ExecutorServiceRule extends ExternalResource {
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-  }
-
-  public MirroringConnection createConnection() throws IOException {
-    return connectionRule.createConnection(executorService);
-  }
-
-  public MirroringConnection createConnection(Configuration configuration) throws IOException {
-    return connectionRule.createConnection(executorService, configuration);
   }
 }

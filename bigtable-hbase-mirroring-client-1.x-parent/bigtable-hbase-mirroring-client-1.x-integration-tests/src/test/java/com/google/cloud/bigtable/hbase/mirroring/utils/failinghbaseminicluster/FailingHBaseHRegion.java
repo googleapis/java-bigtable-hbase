@@ -15,36 +15,62 @@
  */
 package com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster;
 
+import com.google.common.base.Predicate;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.HConstants.OperationStatusCode;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Mutation;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.RowMutations;
+import org.apache.hadoop.hbase.exceptions.FailedSanityCheckException;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionFileSystem;
+import org.apache.hadoop.hbase.regionserver.NoSuchColumnFamilyException;
 import org.apache.hadoop.hbase.regionserver.OperationStatus;
 import org.apache.hadoop.hbase.regionserver.RegionServerServices;
 import org.apache.hadoop.hbase.wal.WAL;
 
 public class FailingHBaseHRegion extends HRegion {
-  private static Map<ByteBuffer, String> fakeErrorsMap = new ConcurrentHashMap<>();
+  private static Map<ByteBuffer, OperationStatus> fakeErrorsMap = new ConcurrentHashMap<>();
+  private static Map<Predicate<byte[]>, OperationStatus> errorConditionMap =
+      new ConcurrentHashMap<>();
 
   public static void failMutation(byte[] row, String message) {
+    failMutation(row, OperationStatusCode.FAILURE, message);
+  }
+
+  public static void failMutation(byte[] row, OperationStatusCode statusCode, String message) {
     ByteBuffer byteBufferRow = ByteBuffer.wrap(row);
     assert !fakeErrorsMap.containsKey(byteBufferRow);
-    fakeErrorsMap.put(byteBufferRow, message);
+    fakeErrorsMap.put(byteBufferRow, new OperationStatus(statusCode, message));
+  }
+
+  public static void failMutation(Predicate<byte[]> failCondition, String message) {
+    failMutation(failCondition, OperationStatusCode.FAILURE, message);
+  }
+
+  public static void failMutation(
+      Predicate<byte[]> failCondition, OperationStatusCode statusCode, String message) {
+    errorConditionMap.put(failCondition, new OperationStatus(statusCode, message));
   }
 
   public static void clearFailures() {
     fakeErrorsMap.clear();
+    errorConditionMap.clear();
   }
 
   public FailingHBaseHRegion(
@@ -68,6 +94,12 @@ public class FailingHBaseHRegion extends HRegion {
   }
 
   @Override
+  public void mutateRow(RowMutations rm) throws IOException {
+    processRowThrow(rm.getRow());
+    super.mutateRow(rm);
+  }
+
+  @Override
   public OperationStatus[] batchMutate(Mutation[] mutations, long nonceGroup, long nonce)
       throws IOException {
 
@@ -76,7 +108,7 @@ public class FailingHBaseHRegion extends HRegion {
 
     for (int i = 0; i < mutations.length; i++) {
       Mutation mutation = mutations[i];
-      OperationStatus r = processRow(mutation);
+      OperationStatus r = processRowNoThrow(mutation.getRow());
       if (r != null) {
         result[i] = r;
       } else {
@@ -95,11 +127,54 @@ public class FailingHBaseHRegion extends HRegion {
     return result;
   }
 
-  private static OperationStatus processRow(Mutation mutation) {
-    ByteBuffer row = ByteBuffer.wrap(mutation.getRow());
+  @Override
+  public Result get(Get get) throws IOException {
+    processRowThrow(get.getRow());
+    return super.get(get);
+  }
+
+  @Override
+  public Result increment(Increment mutation, long nonceGroup, long nonce) throws IOException {
+    processRowThrow(mutation.getRow());
+    return super.increment(mutation, nonceGroup, nonce);
+  }
+
+  @Override
+  public Result append(Append mutation, long nonceGroup, long nonce) throws IOException {
+    processRowThrow(mutation.getRow());
+    return super.append(mutation, nonceGroup, nonce);
+  }
+
+  private static OperationStatus processRowNoThrow(byte[] rowKey) {
+    ByteBuffer row = ByteBuffer.wrap(rowKey);
     if (fakeErrorsMap.containsKey(row)) {
-      return new OperationStatus(OperationStatusCode.FAILURE, fakeErrorsMap.get(row));
+      return fakeErrorsMap.get(row);
+    }
+    for (Entry<Predicate<byte[]>, OperationStatus> entry : errorConditionMap.entrySet()) {
+      if (entry.getKey().apply(rowKey)) {
+        return entry.getValue();
+      }
     }
     return null;
+  }
+
+  private static void processRowThrow(byte[] rowKey) throws IOException {
+    throwError(processRowNoThrow(rowKey));
+  }
+
+  private static void throwError(OperationStatus operationStatus) throws IOException {
+    if (operationStatus == null) {
+      return;
+    }
+
+    if (operationStatus.getOperationStatusCode().equals(OperationStatusCode.SANITY_CHECK_FAILURE)) {
+      throw new FailedSanityCheckException(operationStatus.getExceptionMsg());
+    } else if (operationStatus.getOperationStatusCode().equals(OperationStatusCode.BAD_FAMILY)) {
+      throw new NoSuchColumnFamilyException(operationStatus.getExceptionMsg());
+    } else if (operationStatus.getOperationStatusCode().equals(OperationStatusCode.FAILURE)) {
+      throw new DoNotRetryIOException(operationStatus.getExceptionMsg());
+    } else {
+      throw new DoNotRetryIOException(operationStatus.getExceptionMsg());
+    }
   }
 }

@@ -19,6 +19,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection;
 import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -69,6 +70,15 @@ public class ConnectionRule extends ExternalResource {
   public String createTableName() {
     return String.format(
         "mirroring-test-table-%s-%s", System.currentTimeMillis(), (new Random()).nextInt());
+  }
+
+  public TableName createTable(byte[]... columnFamilies) throws IOException {
+    String tableName = createTableName();
+    try (MirroringConnection connection = createConnection(Executors.newSingleThreadExecutor())) {
+      createTable(connection.getPrimaryConnection(), tableName, columnFamilies);
+      createTable(connection.getSecondaryConnection(), tableName, columnFamilies);
+      return TableName.valueOf(tableName);
+    }
   }
 
   public TableName createTable(MirroringConnection connection, byte[]... columnFamilies)
