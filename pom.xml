@@ -49,6 +49,7 @@ limitations under the License.
     <module>bigtable-dataflow-parent</module>
     <module>bigtable-test</module>
     <module>bigtable-hbase-mirroring-client-1.x-parent</module>
+    <module>bigtable-hbase-mirroring-client-2.x-parent</module>
   </modules>
 
   <properties>

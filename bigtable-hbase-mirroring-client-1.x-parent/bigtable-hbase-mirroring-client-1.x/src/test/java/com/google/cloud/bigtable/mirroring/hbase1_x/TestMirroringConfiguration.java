@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;
 import org.junit.function.ThrowingRunnable;
@@ -48,7 +49,7 @@ public class TestMirroringConfiguration {
 
     testConfiguration = new Configuration(false);
     testConfiguration.set(
-        MirroringConfiguration.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
+        MirroringConfigurationHelper.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
         TestConnection.class.getCanonicalName());
     exc = assertInvalidConfiguration(testConfiguration);
     assertThat(exc)
@@ -57,7 +58,7 @@ public class TestMirroringConfiguration {
 
     testConfiguration = new Configuration(false);
     testConfiguration.set(
-        MirroringConfiguration.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY,
+        MirroringConfigurationHelper.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY,
         TestConnection.class.getCanonicalName());
     exc = assertInvalidConfiguration(testConfiguration);
     assertThat(exc)
@@ -69,16 +70,16 @@ public class TestMirroringConfiguration {
   public void testSameConnectionClassesRequireOneOfPrefixes() {
     Configuration testConfiguration = new Configuration(false);
     testConfiguration.set(
-        MirroringConfiguration.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
+        MirroringConfigurationHelper.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
         TestConnection.class.getCanonicalName());
     testConfiguration.set(
-        MirroringConfiguration.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY,
+        MirroringConfigurationHelper.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY,
         TestConnection.class.getCanonicalName());
 
     Exception exc = assertInvalidConfiguration(testConfiguration);
     assertThat(exc).hasMessageThat().contains("prefix");
 
-    testConfiguration.set(MirroringConfiguration.MIRRORING_PRIMARY_CONFIG_PREFIX_KEY, "test");
+    testConfiguration.set(MirroringConfigurationHelper.MIRRORING_PRIMARY_CONFIG_PREFIX_KEY, "test");
     new MirroringConfiguration(testConfiguration);
   }
 
@@ -86,9 +87,10 @@ public class TestMirroringConfiguration {
   public void testDifferentConnectionClassesDoNotRequirePrefix() {
     Configuration testConfiguration = new Configuration(false);
     testConfiguration.set(
-        MirroringConfiguration.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
+        MirroringConfigurationHelper.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
         TestConnection.class.getCanonicalName());
-    testConfiguration.set(MirroringConfiguration.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY, "test");
+    testConfiguration.set(
+        MirroringConfigurationHelper.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY, "test");
 
     new MirroringConfiguration(testConfiguration);
   }
@@ -97,13 +99,14 @@ public class TestMirroringConfiguration {
   public void testSamePrefixForPrimaryAndSecondaryIsNotAllowedIfConnectionClassesAreTheSame() {
     Configuration testConfiguration = new Configuration(false);
     testConfiguration.set(
-        MirroringConfiguration.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
+        MirroringConfigurationHelper.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
         TestConnection.class.getCanonicalName());
     testConfiguration.set(
-        MirroringConfiguration.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY,
+        MirroringConfigurationHelper.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY,
         TestConnection.class.getCanonicalName());
-    testConfiguration.set(MirroringConfiguration.MIRRORING_PRIMARY_CONFIG_PREFIX_KEY, "test");
-    testConfiguration.set(MirroringConfiguration.MIRRORING_SECONDARY_CONFIG_PREFIX_KEY, "test");
+    testConfiguration.set(MirroringConfigurationHelper.MIRRORING_PRIMARY_CONFIG_PREFIX_KEY, "test");
+    testConfiguration.set(
+        MirroringConfigurationHelper.MIRRORING_SECONDARY_CONFIG_PREFIX_KEY, "test");
 
     assertInvalidConfiguration(testConfiguration);
   }
@@ -112,15 +115,15 @@ public class TestMirroringConfiguration {
   public void testConfigurationPrefixesAreStrippedAndPassedAsConfigurations() {
     Configuration testConfiguration = new Configuration(false);
     testConfiguration.set(
-        MirroringConfiguration.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
+        MirroringConfigurationHelper.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
         TestConnection.class.getCanonicalName());
     testConfiguration.set(
-        MirroringConfiguration.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY,
+        MirroringConfigurationHelper.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY,
         TestConnection.class.getCanonicalName());
     testConfiguration.set(
-        MirroringConfiguration.MIRRORING_PRIMARY_CONFIG_PREFIX_KEY, "connection-1");
+        MirroringConfigurationHelper.MIRRORING_PRIMARY_CONFIG_PREFIX_KEY, "connection-1");
     testConfiguration.set(
-        MirroringConfiguration.MIRRORING_SECONDARY_CONFIG_PREFIX_KEY, "connection-2");
+        MirroringConfigurationHelper.MIRRORING_SECONDARY_CONFIG_PREFIX_KEY, "connection-2");
     testConfiguration.set("connection-2.test1", "21");
     testConfiguration.set("connection-2.test2", "22");
 
@@ -139,13 +142,13 @@ public class TestMirroringConfiguration {
   public void testConfigWithoutPrefixReceivesAllProperties() {
     Configuration testConfiguration = new Configuration(false);
     testConfiguration.set(
-        MirroringConfiguration.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
+        MirroringConfigurationHelper.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
         TestConnection.class.getCanonicalName());
     testConfiguration.set(
-        MirroringConfiguration.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY,
+        MirroringConfigurationHelper.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY,
         TestConnection.class.getCanonicalName());
     testConfiguration.set(
-        MirroringConfiguration.MIRRORING_PRIMARY_CONFIG_PREFIX_KEY, "connection-1");
+        MirroringConfigurationHelper.MIRRORING_PRIMARY_CONFIG_PREFIX_KEY, "connection-1");
     testConfiguration.set("connection-1.test1", "11");
     testConfiguration.set("connection-1.test2", "12");
     testConfiguration.set("not-a-connection-1.test3", "13");
@@ -170,11 +173,12 @@ public class TestMirroringConfiguration {
   public void testMirroringOptionsAreRead() {
     Configuration testConfiguration = new Configuration(false);
     testConfiguration.set(
-        MirroringConfiguration.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
+        MirroringConfigurationHelper.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
         TestConnection.class.getCanonicalName());
-    testConfiguration.set(MirroringConfiguration.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY, "test");
     testConfiguration.set(
-        MirroringConfiguration.MIRRORING_FLOW_CONTROLLER_STRATEGY_CLASS, "test-1");
+        MirroringConfigurationHelper.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY, "test");
+    testConfiguration.set(
+        MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_STRATEGY_CLASS, "test-1");
 
     MirroringConfiguration configuration = new MirroringConfiguration(testConfiguration);
 
@@ -184,15 +188,41 @@ public class TestMirroringConfiguration {
   @Test
   public void testConnectionClassesArePassedAsHbaseConfig() {
     Configuration testConfiguration = new Configuration(false);
-    testConfiguration.set(MirroringConfiguration.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY, "test1");
-    testConfiguration.set(MirroringConfiguration.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY, "test2");
     testConfiguration.set(
-        MirroringConfiguration.MIRRORING_PRIMARY_CONFIG_PREFIX_KEY, "connection-1");
+        MirroringConfigurationHelper.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY, "test1");
+    testConfiguration.set(
+        MirroringConfigurationHelper.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY, "test2");
+    testConfiguration.set(
+        MirroringConfigurationHelper.MIRRORING_PRIMARY_CONFIG_PREFIX_KEY, "connection-1");
     MirroringConfiguration configuration = new MirroringConfiguration(testConfiguration);
 
     assertThat(configuration.primaryConfiguration.get("hbase.client.connection.impl"))
         .isEqualTo("test1");
     assertThat(configuration.secondaryConfiguration.get("hbase.client.connection.impl"))
         .isEqualTo("test2");
+  }
+
+  @Test
+  public void testDefaultImplClass() {
+    Configuration testConfiguration = new Configuration(false);
+    testConfiguration.set(
+        MirroringConfigurationHelper.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
+        TestConnection.class.getCanonicalName());
+    testConfiguration.set(
+        MirroringConfigurationHelper.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY, "default");
+    MirroringConfiguration configuration = new MirroringConfiguration(testConfiguration);
+
+    assertThat(configuration.secondaryConfiguration.get("hbase.client.connection.impl"))
+        .isEqualTo(null);
+  }
+
+  @Test
+  public void testCopyConstructorSetsImplClasses() {
+    Configuration empty = new Configuration(false);
+    MirroringConfiguration emptyMirroringConfiguration =
+        new MirroringConfiguration(empty, empty, empty);
+    MirroringConfiguration configuration = new MirroringConfiguration(emptyMirroringConfiguration);
+    assertThat(configuration.get("hbase.client.connection.impl"))
+        .isEqualTo(MirroringConnection.class.getCanonicalName());
   }
 }

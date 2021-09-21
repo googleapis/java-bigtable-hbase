@@ -15,11 +15,11 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
-import static com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration.MIRRORING_BUFFERED_MUTATOR_BYTES_TO_FLUSH;
-import static com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration.MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS;
-import static com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration.MIRRORING_FLOW_CONTROLLER_STRATEGY_CLASS;
-import static com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration.MIRRORING_MISMATCH_DETECTOR_CLASS;
-import static com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration.MIRRORING_WRITE_ERROR_CONSUMER_CLASS;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_BUFFERED_MUTATOR_BYTES_TO_FLUSH;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_STRATEGY_CLASS;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_MISMATCH_DETECTOR_CLASS;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_WRITE_ERROR_CONSUMER_CLASS;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.DefaultSecondaryWriteErrorConsumer;
@@ -36,7 +36,7 @@ public class MirroringOptions {
   public final long bufferedMutatorBytesToFlush;
   public final String writeErrorConsumerClass;
 
-  MirroringOptions(Configuration configuration) {
+  public MirroringOptions(Configuration configuration) {
     this.mismatchDetectorClass =
         configuration.get(
             MIRRORING_MISMATCH_DETECTOR_CLASS, DefaultMismatchDetector.class.getCanonicalName());
