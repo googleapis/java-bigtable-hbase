@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
-import static com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration.MIRRORING_BUFFERED_MUTATOR_BYTES_TO_FLUSH;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_BUFFERED_MUTATOR_BYTES_TO_FLUSH;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;

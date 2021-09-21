@@ -15,8 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.mirroring;
 
-import static com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration.MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS;
-import static com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration.MIRRORING_MISMATCH_DETECTOR_CLASS;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_MISMATCH_DETECTOR_CLASS;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConfigurationHelper;
