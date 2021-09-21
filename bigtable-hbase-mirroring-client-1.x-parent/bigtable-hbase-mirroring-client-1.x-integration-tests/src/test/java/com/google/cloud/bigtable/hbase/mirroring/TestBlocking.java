@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConfigurationHelper;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
+import com.google.cloud.bigtable.hbase.mirroring.utils.DatabaseHelpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ExecutorServiceRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.Helpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounter;
@@ -42,7 +43,8 @@ import org.junit.runners.JUnit4;
 public class TestBlocking {
   @ClassRule public static ConnectionRule connectionRule = new ConnectionRule();
 
-  @Rule public ExecutorServiceRule executorServiceRule = new ExecutorServiceRule(connectionRule);
+  @Rule public ExecutorServiceRule executorServiceRule = new ExecutorServiceRule();
+  public DatabaseHelpers databaseHelpers = new DatabaseHelpers(connectionRule, executorServiceRule);
 
   @Rule
   public MismatchDetectorCounterRule mismatchDetectorCounterRule =
@@ -63,7 +65,7 @@ public class TestBlocking {
     SlowMismatchDetector.sleepTime = 1000;
 
     TableName tableName;
-    try (MirroringConnection connection = executorServiceRule.createConnection(config)) {
+    try (MirroringConnection connection = databaseHelpers.createConnection(config)) {
       tableName = connectionRule.createTable(connection, columnFamily1);
       try (Table t = connection.getTable(tableName)) {
         for (int i = 0; i < 10; i++) {
@@ -94,7 +96,7 @@ public class TestBlocking {
     config.set(MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS, "10");
     TableName tableName;
     byte[] row = "1".getBytes();
-    try (MirroringConnection connection = executorServiceRule.createConnection(config)) {
+    try (MirroringConnection connection = databaseHelpers.createConnection(config)) {
       tableName = connectionRule.createTable(connection, columnFamily1);
       try (Table table = connection.getTable(tableName)) {
         table.put(Helpers.createPut(row, columnFamily1, qualifier1, "1".getBytes()));
@@ -105,7 +107,7 @@ public class TestBlocking {
     long endTime;
     long duration;
 
-    try (MirroringConnection connection = executorServiceRule.createConnection(config)) {
+    try (MirroringConnection connection = databaseHelpers.createConnection(config)) {
       startTime = System.currentTimeMillis();
       try (Table table = connection.getTable(tableName)) {
         for (int i = 0; i < 1000; i++) {
@@ -119,7 +121,7 @@ public class TestBlocking {
     assertThat(duration).isGreaterThan(10000);
 
     config.set(MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS, "50");
-    try (MirroringConnection connection = executorServiceRule.createConnection(config)) {
+    try (MirroringConnection connection = databaseHelpers.createConnection(config)) {
       startTime = System.currentTimeMillis();
       try (Table table = connection.getTable(tableName)) {
         for (int i = 0; i < 1000; i++) {
@@ -133,7 +135,7 @@ public class TestBlocking {
     assertThat(duration).isGreaterThan(2000);
 
     config.set(MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS, "1000");
-    try (MirroringConnection connection = executorServiceRule.createConnection(config)) {
+    try (MirroringConnection connection = databaseHelpers.createConnection(config)) {
       startTime = System.currentTimeMillis();
       try (Table table = connection.getTable(tableName)) {
         for (int i = 0; i < 1000; i++) {

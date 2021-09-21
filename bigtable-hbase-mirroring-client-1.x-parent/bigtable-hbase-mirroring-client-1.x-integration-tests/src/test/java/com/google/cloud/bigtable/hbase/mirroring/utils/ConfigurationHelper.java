@@ -18,6 +18,19 @@ package com.google.cloud.bigtable.hbase.mirroring.utils;
 import org.apache.hadoop.conf.Configuration;
 
 public class ConfigurationHelper {
+  static {
+    printDatabasesInfo();
+  }
+
+  private static void printDatabasesInfo() {
+    String hbaseName =
+        ConfigurationHelper.isUsingHBaseMiniCluster() ? "HBase Minicluster" : "HBase";
+    String primary = ConfigurationHelper.isPrimaryHBase() ? hbaseName : "Bigtable";
+    String secondary = ConfigurationHelper.isSecondaryHBase() ? hbaseName : "Bigtable";
+
+    System.out.printf("Database configuration:\nprimary: %s\nsecondary: %s\n", primary, secondary);
+  }
+
   public static Configuration newConfiguration() {
     Configuration configuration = new Configuration();
     fillDefaults(configuration);
@@ -60,5 +73,9 @@ public class ConfigurationHelper {
     configuration.setIfUnset(
         "google.bigtable.mirroring.mismatch-detector.impl",
         TestMismatchDetector.class.getCanonicalName());
+
+    configuration.setIfUnset(
+        "google.bigtable.mirroring.write-error-consumer.impl",
+        TestWriteErrorConsumer.class.getCanonicalName());
   }
 }

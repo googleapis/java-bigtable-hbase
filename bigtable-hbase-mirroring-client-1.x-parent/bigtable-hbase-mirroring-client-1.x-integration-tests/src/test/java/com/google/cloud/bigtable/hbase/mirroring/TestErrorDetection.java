@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
+import com.google.cloud.bigtable.hbase.mirroring.utils.DatabaseHelpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ExecutorServiceRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.Helpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounter;
@@ -50,11 +51,13 @@ import org.junit.runners.JUnit4;
 public class TestErrorDetection {
   @ClassRule public static ConnectionRule connectionRule = new ConnectionRule();
 
-  @Rule public ExecutorServiceRule executorServiceRule = new ExecutorServiceRule(connectionRule);
+  @Rule public ExecutorServiceRule executorServiceRule = new ExecutorServiceRule();
 
   @Rule
   public MismatchDetectorCounterRule mismatchDetectorCounterRule =
       new MismatchDetectorCounterRule();
+
+  public DatabaseHelpers databaseHelpers = new DatabaseHelpers(connectionRule, executorServiceRule);
 
   static final byte[] columnFamily1 = "cf1".getBytes();
   static final byte[] qualifier1 = "q1".getBytes();
@@ -63,14 +66,14 @@ public class TestErrorDetection {
   public void readsAndWritesArePerformed() throws IOException {
     TableName tableName;
 
-    try (MirroringConnection connection = executorServiceRule.createConnection()) {
+    try (MirroringConnection connection = databaseHelpers.createConnection()) {
       tableName = connectionRule.createTable(connection, columnFamily1);
       try (Table t1 = connection.getTable(tableName)) {
         t1.put(Helpers.createPut("1".getBytes(), columnFamily1, qualifier1, "1".getBytes()));
       }
     }
 
-    try (MirroringConnection connection = executorServiceRule.createConnection()) {
+    try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table t2 = connection.getTable(tableName)) {
         Result result = t2.get(Helpers.createGet("1".getBytes(), columnFamily1, qualifier1));
         assertArrayEquals(result.getRow(), "1".getBytes());
@@ -83,7 +86,7 @@ public class TestErrorDetection {
   @Test
   public void mismatchIsDetected() throws IOException, InterruptedException {
     TableName tableName;
-    try (MirroringConnection connection = executorServiceRule.createConnection()) {
+    try (MirroringConnection connection = databaseHelpers.createConnection()) {
       tableName = connectionRule.createTable(connection, columnFamily1);
       try (Table mirroredTable = connection.getTable(tableName)) {
         mirroredTable.put(
@@ -91,14 +94,14 @@ public class TestErrorDetection {
       }
     }
 
-    try (MirroringConnection connection = executorServiceRule.createConnection()) {
+    try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table secondaryTable = connection.getSecondaryConnection().getTable(tableName)) {
         secondaryTable.put(
             Helpers.createPut("1".getBytes(), columnFamily1, qualifier1, "2".getBytes()));
       }
     }
 
-    try (MirroringConnection connection = executorServiceRule.createConnection()) {
+    try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table mirroredTable = connection.getTable(tableName)) {
         Result result =
             mirroredTable.get(Helpers.createGet("1".getBytes(), columnFamily1, qualifier1));
@@ -157,7 +160,7 @@ public class TestErrorDetection {
     final int numberOfBatches = 100;
 
     TableName tableName;
-    try (MirroringConnection connection = executorServiceRule.createConnection()) {
+    try (MirroringConnection connection = databaseHelpers.createConnection()) {
       tableName = connectionRule.createTable(connection, columnFamily1);
 
       List<PropagatingThread> workers = new ArrayList<>();
@@ -172,7 +175,7 @@ public class TestErrorDetection {
       }
     }
 
-    try (MirroringConnection connection = executorServiceRule.createConnection()) {
+    try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table t = connection.getTable(tableName)) {
         try (ResultScanner s = t.getScanner(columnFamily1, qualifier1)) {
           long counter = 0;
@@ -242,7 +245,7 @@ public class TestErrorDetection {
     }
 
     TableName tableName;
-    try (MirroringConnection connection = executorServiceRule.createConnection()) {
+    try (MirroringConnection connection = databaseHelpers.createConnection()) {
       tableName = connectionRule.createTable(connection, columnFamily1);
       List<PropagatingThread> workers = new ArrayList<>();
       for (int i = 0; i < numberOfWorkers; i++) {
@@ -256,7 +259,7 @@ public class TestErrorDetection {
       }
     }
 
-    try (MirroringConnection connection = executorServiceRule.createConnection()) {
+    try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table t = connection.getTable(tableName)) {
         try (ResultScanner s = t.getScanner(columnFamily1, qualifier1)) {
           int counter = 0;

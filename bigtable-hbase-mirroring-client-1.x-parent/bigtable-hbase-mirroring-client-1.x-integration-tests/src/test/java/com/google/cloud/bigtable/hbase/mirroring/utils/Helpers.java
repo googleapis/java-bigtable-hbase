@@ -15,10 +15,19 @@
  */
 package com.google.cloud.bigtable.hbase.mirroring.utils;
 
+import com.google.common.primitives.Longs;
+import java.io.IOException;
+import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.RowMutations;
+import org.apache.hadoop.hbase.client.Scan;
 
 public class Helpers {
+
   public static Put createPut(byte[] row, byte[] family, byte[] qualifier, byte[] value) {
     Put put = new Put(row);
     put.addColumn(family, qualifier, value);
@@ -32,9 +41,56 @@ public class Helpers {
     return put;
   }
 
+  public static Put createPut(int id, byte[] family, byte[] qualifier) {
+    byte[] rowAndValue = Longs.toByteArray(id);
+    return createPut(rowAndValue, family, qualifier, id, rowAndValue);
+  }
+
   public static Get createGet(byte[] row, byte[] family, byte[] qualifier) {
     Get put = new Get(row);
     put.addColumn(family, qualifier);
     return put;
+  }
+
+  public static Delete createDelete(byte[] rowKey, byte[] family, byte[] qualifier) {
+    Delete delete = new Delete(rowKey);
+    delete.addColumns(family, qualifier);
+    return delete;
+  }
+
+  public static Scan createScan(byte[] family, byte[] qualifier) {
+    Scan scan = new Scan();
+    scan.addColumn(family, qualifier);
+    return scan;
+  }
+
+  public static RowMutations createRowMutations(byte[] row, Mutation... mutations)
+      throws IOException {
+    RowMutations rowMutations = new RowMutations(row);
+    for (Mutation mutation : mutations) {
+      if (mutation instanceof Put) {
+        rowMutations.add((Put) mutation);
+      } else if (mutation instanceof Delete) {
+        rowMutations.add((Delete) mutation);
+      } else {
+        throw new UnsupportedOperationException();
+      }
+    }
+    return rowMutations;
+  }
+
+  public static Increment createIncrement(
+      byte[] rowKey, byte[] columnFamily, byte[] qualifier, int ts) throws IOException {
+    Increment increment = new Increment(rowKey);
+    increment.addColumn(columnFamily, qualifier, 1);
+    increment.setTimeRange(ts, ts + 1);
+    return increment;
+  }
+
+  public static Append createAppend(
+      byte[] rowKey, byte[] columnFamily, byte[] qualifier, byte[] value) {
+    Append append = new Append(rowKey);
+    append.add(columnFamily, qualifier, value);
+    return append;
   }
 }

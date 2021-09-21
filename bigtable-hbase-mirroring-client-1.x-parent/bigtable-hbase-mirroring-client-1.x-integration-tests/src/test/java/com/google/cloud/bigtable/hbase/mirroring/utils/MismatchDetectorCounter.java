@@ -17,13 +17,16 @@ package com.google.cloud.bigtable.hbase.mirroring.utils;
 
 import com.google.common.base.Joiner;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MismatchDetectorCounter {
   private int errorCounter;
   private int verificationsStartedCounter;
   private int verificationsFinishedCounter;
   private List<String> errors;
+  private Map<String, Integer> typeErrorMap;
 
   private MismatchDetectorCounter() {
     clearErrors();
@@ -40,6 +43,10 @@ public class MismatchDetectorCounter {
 
   public synchronized void reportError(String operation, String errorType, String details) {
     this.errors.add(String.format("%s %s %s", operation, errorType, details));
+    if (!this.typeErrorMap.containsKey(errorType)) {
+      this.typeErrorMap.put(errorType, 0);
+    }
+    this.typeErrorMap.put(errorType, this.typeErrorMap.get(errorType) + 1);
     this.errorCounter += 1;
   }
 
@@ -48,10 +55,18 @@ public class MismatchDetectorCounter {
     this.verificationsStartedCounter = 0;
     this.verificationsFinishedCounter = 0;
     this.errors = new ArrayList<>();
+    this.typeErrorMap = new HashMap<>();
   }
 
   public synchronized int getErrorCount() {
     return this.errorCounter;
+  }
+
+  public synchronized int getErrorCount(String type) {
+    if (!this.typeErrorMap.containsKey(type)) {
+      return 0;
+    }
+    return this.typeErrorMap.get(type);
   }
 
   public synchronized List<String> getErrors() {

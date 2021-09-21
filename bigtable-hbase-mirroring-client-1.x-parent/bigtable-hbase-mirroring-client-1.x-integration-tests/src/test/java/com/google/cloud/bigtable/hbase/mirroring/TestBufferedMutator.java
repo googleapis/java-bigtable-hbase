@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConfigurationHelper;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
+import com.google.cloud.bigtable.hbase.mirroring.utils.DatabaseHelpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ExecutorServiceRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounter;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRule;
@@ -61,8 +62,9 @@ import org.junit.runners.JUnit4;
 public class TestBufferedMutator {
   @ClassRule public static ConnectionRule connectionRule = new ConnectionRule();
 
-  @Rule public ExecutorServiceRule executorServiceRule = new ExecutorServiceRule(connectionRule);
+  @Rule public ExecutorServiceRule executorServiceRule = new ExecutorServiceRule();
   @Rule public FailingHBaseHRegionRule failingHBaseHRegionRule = new FailingHBaseHRegionRule();
+  public DatabaseHelpers databaseHelpers = new DatabaseHelpers(connectionRule, executorServiceRule);
 
   @Rule
   public MismatchDetectorCounterRule mismatchDetectorCounterRule =
@@ -111,7 +113,7 @@ public class TestBufferedMutator {
     config.set(MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS, "10000");
 
     TableName tableName;
-    try (MirroringConnection connection = executorServiceRule.createConnection(config)) {
+    try (MirroringConnection connection = databaseHelpers.createConnection(config)) {
       tableName = connectionRule.createTable(connection, columnFamily1);
       try (BufferedMutator bm = connection.getBufferedMutator(tableName)) {
         List<PropagatingThread> threads = new ArrayList<>();
@@ -127,7 +129,7 @@ public class TestBufferedMutator {
     } // wait for secondary writes
 
     long readEntries = 0;
-    try (MirroringConnection connection = executorServiceRule.createConnection()) {
+    try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table table = connection.getTable(tableName)) {
         try (ResultScanner scanner = table.getScanner(new Scan())) {
           Result[] results = scanner.next(100);
@@ -174,7 +176,7 @@ public class TestBufferedMutator {
         TestWriteErrorConsumer.class.getCanonicalName());
 
     TableName tableName;
-    try (MirroringConnection connection = executorServiceRule.createConnection(configuration)) {
+    try (MirroringConnection connection = databaseHelpers.createConnection(configuration)) {
       tableName = connectionRule.createTable(connection, columnFamily1);
       BufferedMutatorParams params = new BufferedMutatorParams(tableName);
       try (BufferedMutator bm = connection.getBufferedMutator(params)) {
@@ -191,7 +193,7 @@ public class TestBufferedMutator {
     // Two failed writes should have been reported
     assertThat(TestWriteErrorConsumer.getErrorCount()).isEqualTo(2);
 
-    try (MirroringConnection mirroringConnection = executorServiceRule.createConnection()) {
+    try (MirroringConnection mirroringConnection = databaseHelpers.createConnection()) {
       try (Table table = mirroringConnection.getTable(tableName)) {
         try (ResultScanner scanner = table.getScanner(columnFamily1)) {
           List<Long> rows = new ArrayList<>();
@@ -217,7 +219,7 @@ public class TestBufferedMutator {
 
     final List<ByteBuffer> thrownException = new ArrayList<>();
     TableName tableName;
-    try (MirroringConnection connection = executorServiceRule.createConnection()) {
+    try (MirroringConnection connection = databaseHelpers.createConnection()) {
       tableName = connectionRule.createTable(connection, columnFamily1);
       BufferedMutatorParams params = new BufferedMutatorParams(tableName);
       params.listener(
@@ -242,7 +244,7 @@ public class TestBufferedMutator {
       }
     } // wait for secondary writes
 
-    try (MirroringConnection mirroringConnection = executorServiceRule.createConnection()) {
+    try (MirroringConnection mirroringConnection = databaseHelpers.createConnection()) {
       Connection secondary = mirroringConnection.getSecondaryConnection();
       Table table = secondary.getTable(tableName);
       ResultScanner scanner = table.getScanner(columnFamily1);
