@@ -21,6 +21,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.RequestScheduling;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
@@ -81,6 +82,7 @@ public class MirroringTable implements Table, ListenableCloseable {
   private FlowController flowController;
   private ListenableReferenceCounter referenceCounter;
   private boolean closed = false;
+  private final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
 
   /**
    * @param executorService ExecutorService is used to perform operations on secondaryTable and
@@ -93,7 +95,8 @@ public class MirroringTable implements Table, ListenableCloseable {
       Table secondaryTable,
       ExecutorService executorService,
       MismatchDetector mismatchDetector,
-      FlowController flowController) {
+      FlowController flowController,
+      SecondaryWriteErrorConsumer secondaryWriteErrorConsumer) {
     this.primaryTable = primaryTable;
     this.secondaryTable = secondaryTable;
     this.verificationContinuationFactory = new VerificationContinuationFactory(mismatchDetector);
@@ -103,6 +106,7 @@ public class MirroringTable implements Table, ListenableCloseable {
     this.flowController = flowController;
     this.referenceCounter = new ListenableReferenceCounter();
     this.referenceCounter.holdReferenceUntilClosing(this.secondaryAsyncWrapper);
+    this.secondaryWriteErrorConsumer = secondaryWriteErrorConsumer;
   }
 
   @Override
@@ -567,7 +571,7 @@ public class MirroringTable implements Table, ListenableCloseable {
 
               @Override
               public void onFailure(Throwable throwable) {
-                handleFailedOperations(writeOperationInfo.operations);
+                secondaryWriteErrorConsumer.consume(writeOperationInfo.operations);
               }
             },
             flowController));
@@ -609,10 +613,6 @@ public class MirroringTable implements Table, ListenableCloseable {
       this.requestResourcesDescription = requestResourcesDescription;
       this.operations = Collections.singletonList(operation);
     }
-  }
-
-  public void handleFailedOperations(List<? extends Row> operations) {
-    // TODO(mwalkiewicz): call write error handler.
   }
 
   static class BatchHelpers {
@@ -675,7 +675,7 @@ public class MirroringTable implements Table, ListenableCloseable {
               new SplitBatchResponse<>(secondaryOperations, secondaryResults);
 
           if (secondarySplitResponse.failedWrites.size() > 0) {
-            table.handleFailedOperations(secondarySplitResponse.failedWrites);
+            table.secondaryWriteErrorConsumer.consume(secondarySplitResponse.failedWrites);
           }
 
           if (secondarySplitResponse.allReads.size() > 0) {

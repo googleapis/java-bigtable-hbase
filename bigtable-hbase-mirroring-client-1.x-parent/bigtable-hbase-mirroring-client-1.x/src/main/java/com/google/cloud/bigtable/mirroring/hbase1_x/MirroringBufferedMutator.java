@@ -212,7 +212,7 @@ public class MirroringBufferedMutator implements BufferedMutator {
     } catch (InterruptedException | ExecutionException e) {
       // We won't write those mutations to secondary database, they should be reported to
       // secondaryWriteErrorConsumer.
-      handleWriteError(mutations);
+      this.secondaryWriteErrorConsumer.consume(mutations);
 
       setInterruptedFlagInInterruptedException(e);
       if (primaryException != null) {
@@ -298,17 +298,7 @@ public class MirroringBufferedMutator implements BufferedMutator {
 
   private void handleSecondaryExceptions(RetriesExhaustedWithDetailsException e) {
     for (int i = 0; i < e.getNumExceptions(); i++) {
-      handleWriteError((Mutation) e.getRow(i));
-    }
-  }
-
-  public void handleWriteError(Mutation row) {
-    this.secondaryWriteErrorConsumer.consume(row);
-  }
-
-  public void handleWriteError(List<? extends Mutation> rows) {
-    for (Mutation row : rows) {
-      handleWriteError(row);
+      this.secondaryWriteErrorConsumer.consume((Mutation) e.getRow(i));
     }
   }
 
@@ -380,7 +370,7 @@ public class MirroringBufferedMutator implements BufferedMutator {
               // idea - if current thread was interrupted then next flush might also be, only
               // increasing our confusion, moreover, that may cause secondary writes that were not
               // completed on primary.
-              handleWriteError(dataToFlush);
+              secondaryWriteErrorConsumer.consume(dataToFlush);
               releaseReservations(flushReservations);
               secondaryFlushFinished.setException(throwable);
             }
@@ -443,7 +433,7 @@ public class MirroringBufferedMutator implements BufferedMutator {
       // InterruptedIOException or some RuntimeError, in both cases we should consider operation as
       // not completed - the worst that can happen is that we will have some writes in both
       // secondary database and on-disk log.
-      handleWriteError(dataToFlush);
+      this.secondaryWriteErrorConsumer.consume(dataToFlush);
       releaseReservations(flushReservations);
       completionFuture.setException(e);
     }

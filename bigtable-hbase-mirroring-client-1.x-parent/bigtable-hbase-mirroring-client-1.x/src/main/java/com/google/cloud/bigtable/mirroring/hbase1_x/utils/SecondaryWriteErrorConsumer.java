@@ -16,9 +16,16 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
 
 import com.google.api.core.InternalApi;
+import java.util.List;
 import org.apache.hadoop.hbase.client.Mutation;
+import org.apache.hadoop.hbase.client.Row;
+import org.apache.hadoop.hbase.client.RowMutations;
 
 @InternalApi("For internal usage only")
 public interface SecondaryWriteErrorConsumer {
   void consume(Mutation r);
+
+  void consume(RowMutations r);
+
+  void consume(List<? extends Row> operations);
 }

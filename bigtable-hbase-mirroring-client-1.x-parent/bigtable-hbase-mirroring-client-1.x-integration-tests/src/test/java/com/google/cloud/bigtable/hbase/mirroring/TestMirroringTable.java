@@ -816,8 +816,7 @@ public class TestMirroringTable {
     int databaseEntriesCount = 1000;
 
     final TableName tableName1 = connectionRule.createTable(columnFamily1);
-    databaseHelpers.fillTable(
-        tableName1, databaseEntriesCount, columnFamily1, qualifier1);
+    databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
 
     FailingHBaseHRegion.failMutation(failPredicate, "failed");
 
@@ -909,8 +908,7 @@ public class TestMirroringTable {
     int databaseEntriesCount = 1000;
 
     final TableName tableName1 = connectionRule.createTable(columnFamily1);
-    databaseHelpers.fillTable(
-        tableName1, databaseEntriesCount, columnFamily1, qualifier1);
+    databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
 
     FailingHBaseHRegion.failMutation(failPredicate, "failed");
 
