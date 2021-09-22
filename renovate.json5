@@ -95,6 +95,9 @@
       "enabled": false
     }
   ],
-  "semanticCommits": true,
-  "masterIssue": true
+  "semanticCommits": true",
+  "dependencyDashboard": true,
+  "dependencyDashboardLabels": [
+    "type: process"
+  ]
 }
