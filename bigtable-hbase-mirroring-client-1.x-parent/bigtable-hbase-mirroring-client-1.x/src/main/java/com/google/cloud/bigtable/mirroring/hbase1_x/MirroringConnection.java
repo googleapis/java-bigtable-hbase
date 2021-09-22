@@ -126,7 +126,8 @@ public class MirroringConnection implements Connection {
             this.secondaryConnection.getTable(tableName),
             this.executorService,
             this.mismatchDetector,
-            this.flowController);
+            this.flowController,
+            this.secondaryWriteErrorConsumer);
     this.referenceCounter.holdReferenceUntilClosing(table);
     return table;
   }
@@ -140,7 +141,8 @@ public class MirroringConnection implements Connection {
             this.secondaryConnection.getTable(tableName, executorService),
             executorService,
             this.mismatchDetector,
-            this.flowController);
+            this.flowController,
+            this.secondaryWriteErrorConsumer);
     this.referenceCounter.holdReferenceUntilClosing(table);
     return table;
   }
