@@ -36,6 +36,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NavigableMap;
 import java.util.concurrent.ExecutorService;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
@@ -107,6 +109,24 @@ public class MirroringTable implements Table, ListenableCloseable {
     this.referenceCounter = new ListenableReferenceCounter();
     this.referenceCounter.holdReferenceUntilClosing(this.secondaryAsyncWrapper);
     this.secondaryWriteErrorConsumer = secondaryWriteErrorConsumer;
+  }
+
+  private static Put makePutFromResult(Result result) {
+    Put put = new Put(result.getRow());
+    for (Entry<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> familyEntry :
+        result.getMap().entrySet()) {
+      byte[] family = familyEntry.getKey();
+      for (Entry<byte[], NavigableMap<Long, byte[]>> qualifierEntry :
+          familyEntry.getValue().entrySet()) {
+        byte[] qualifier = qualifierEntry.getKey();
+        for (Entry<Long, byte[]> valueEntry : qualifierEntry.getValue().entrySet()) {
+          long timestamp = valueEntry.getKey();
+          byte[] value = valueEntry.getValue();
+          put.addColumn(family, qualifier, timestamp, value);
+        }
+      }
+    }
+    return put;
   }
 
   @Override
@@ -388,7 +408,7 @@ public class MirroringTable implements Table, ListenableCloseable {
     Result result = this.primaryTable.append(append);
     scheduleWriteWithControlFlow(
         new WriteOperationInfo(append),
-        this.secondaryAsyncWrapper.append(append),
+        this.secondaryAsyncWrapper.put(makePutFromResult(result)),
         this.flowController);
     return result;
   }
@@ -399,7 +419,7 @@ public class MirroringTable implements Table, ListenableCloseable {
     Result result = this.primaryTable.increment(increment);
     scheduleWriteWithControlFlow(
         new WriteOperationInfo(increment),
-        this.secondaryAsyncWrapper.increment(increment),
+        this.secondaryAsyncWrapper.put(makePutFromResult(result)),
         this.flowController);
     return result;
   }
