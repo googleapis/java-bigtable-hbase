@@ -49,6 +49,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellComparator;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue.Type;
 import org.apache.hadoop.hbase.client.Append;
@@ -1003,50 +1004,80 @@ public class TestMirroringTable {
   @Test
   public void testIncrement() throws IOException {
     mockFlowController();
-    Increment increment = new Increment("r1".getBytes());
+
+    byte[] row = "r1".getBytes();
+    byte[] family = "f1".getBytes();
+    byte[] qualifier = "q1".getBytes();
+    long ts = 12;
+    byte[] value = Longs.toByteArray(142);
+
+    Put expectedPut = new Put(row);
+    expectedPut.addColumn(family, qualifier, ts, value);
+
+    Increment increment = new Increment(row);
     when(primaryTable.increment(any(Increment.class)))
         .thenReturn(
             Result.create(
                 new Cell[] {
-                  CellUtil.createCell(
-                      "r1".getBytes(),
-                      "f1".getBytes(),
-                      "q1".getBytes(),
-                      12,
-                      Type.Put.getCode(),
-                      Longs.toByteArray(142))
+                  CellUtil.createCell(row, family, qualifier, ts, Type.Put.getCode(), value)
                 }));
     mirroringTable.increment(increment);
-    mirroringTable.incrementColumnValue("r1".getBytes(), "f1".getBytes(), "q1".getBytes(), 3L);
-    mirroringTable.incrementColumnValue(
-        "r1".getBytes(), "f1".getBytes(), "q1".getBytes(), 3L, Durability.SYNC_WAL);
+    mirroringTable.incrementColumnValue(row, family, qualifier, 3L);
+    mirroringTable.incrementColumnValue(row, family, qualifier, 3L, Durability.SYNC_WAL);
     executorServiceRule.waitForExecutor();
 
-    ArgumentCaptor<Increment> argument = ArgumentCaptor.forClass(Increment.class);
-    verify(secondaryTable, times(3)).increment(argument.capture());
-    assertThat(argument.getAllValues().get(0)).isEqualTo(increment);
+    ArgumentCaptor<Put> argument = ArgumentCaptor.forClass(Put.class);
+    verify(secondaryTable, never()).increment(any(Increment.class));
+    verify(secondaryTable, times(3)).put(argument.capture());
+
+    assertPutsAreEqual(argument.getAllValues().get(0), expectedPut);
+    assertPutsAreEqual(argument.getAllValues().get(1), expectedPut);
+    assertPutsAreEqual(argument.getAllValues().get(2), expectedPut);
   }
 
   @Test
   public void testAppend() throws IOException {
     mockFlowController();
-    Append append = new Append("r1".getBytes());
+
+    byte[] row = "r1".getBytes();
+    byte[] family = "f1".getBytes();
+    byte[] qualifier = "q1".getBytes();
+    long ts = 12;
+    byte[] value = "v1".getBytes();
+
+    Append append = new Append(row);
+    Put expectedPut = new Put(row);
+    expectedPut.addColumn(family, qualifier, ts, value);
+
     when(primaryTable.append(any(Append.class)))
         .thenReturn(
             Result.create(
                 new Cell[] {
-                  CellUtil.createCell(
-                      "r1".getBytes(),
-                      "f1".getBytes(),
-                      "q1".getBytes(),
-                      12,
-                      Type.Put.getCode(),
-                      Longs.toByteArray(142))
+                  CellUtil.createCell(row, family, qualifier, ts, Type.Put.getCode(), value)
                 }));
     mirroringTable.append(append);
     executorServiceRule.waitForExecutor();
 
-    verify(secondaryTable, times(1)).append(append);
+    ArgumentCaptor<Put> argument = ArgumentCaptor.forClass(Put.class);
+    verify(secondaryTable, times(1)).put(argument.capture());
+    assertPutsAreEqual(expectedPut, argument.getValue());
+
+    verify(secondaryTable, never()).append(any(Append.class));
+  }
+
+  private void assertPutsAreEqual(Put expectedPut, Put value) {
+    assertThat(expectedPut.getRow()).isEqualTo(value.getRow());
+    assertThat(expectedPut.getFamilyCellMap().size()).isEqualTo(value.getFamilyCellMap().size());
+    CellComparator cellComparator = new CellComparator();
+    for (byte[] family : expectedPut.getFamilyCellMap().keySet()) {
+      assertThat(value.getFamilyCellMap()).containsKey(family);
+      List<Cell> expectedCells = expectedPut.getFamilyCellMap().get(family);
+      List<Cell> valueCells = value.getFamilyCellMap().get(family);
+      assertThat(expectedCells.size()).isEqualTo(valueCells.size());
+      for (int i = 0; i < expectedCells.size(); i++) {
+        assertThat(cellComparator.compare(expectedCells.get(i), valueCells.get(i))).isEqualTo(0);
+      }
+    }
   }
 
   @Test
