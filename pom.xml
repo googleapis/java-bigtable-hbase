@@ -66,7 +66,7 @@ limitations under the License.
     <hbase1.version>1.4.12</hbase1.version>
     <hbase1-metrics.version>3.1.2</hbase1-metrics.version>
     <hbase2.version>2.2.3</hbase2.version>
-    <hbase2-metrics.version>3.2.6</hbase2-metrics.version>
+    <hbase2-metrics.version>4.2.3</hbase2-metrics.version>
 
     <!-- testing dependency versions -->
     <commons-lang.version>2.6</commons-lang.version>
