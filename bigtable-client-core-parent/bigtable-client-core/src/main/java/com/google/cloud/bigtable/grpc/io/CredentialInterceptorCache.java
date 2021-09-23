@@ -32,9 +32,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Caches {@link com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor} for
- * default authorization cases. In other types of authorization, such as file based Credentials, it
- * will create a new one.
+ * Caches {@link OAuth2CredentialsInterceptor} for default authorization cases. In other types of
+ * authorization, such as file based Credentials, it will create a new one.
  *
  * <p>For internal use only - public for technical reasons.
  */
@@ -65,10 +64,10 @@ public class CredentialInterceptorCache {
    * <ol>
    *   <li>Look up the credentials
    *   <li>If there are credentials, create a gRPC interceptor that gets OAuth2 security tokens and
-   *       add that token as a header on all calls. <br>
-   *       NOTE: {@link com.google.cloud.bigtable.grpc.io.RefreshingOAuth2CredentialsInterceptor}
-   *       ensures that the token stays fresh. It does token lookups asynchronously so that the
-   *       calls themselves take as little performance penalty as possible.
+   *       add the credentials to {@link io.grpc.CallOptions}. <br>
+   *       NOTE: {@link OAuth2Credentials} ensures that the token stays fresh. It does token lookups
+   *       asynchronously so that the calls themselves take as little performance penalty as
+   *       possible.
    *   <li>Cache the interceptor in step #2 if the {@link
    *       com.google.cloud.bigtable.config.CredentialOptions} uses <a
    *       href="https://developers.google.com/identity/protocols/application-default-credentials">
@@ -99,20 +98,9 @@ public class CredentialInterceptorCache {
       return null;
     }
 
-    // Optimization for asyncOAuth refresh
     if (credentials instanceof OAuth2Credentials) {
-      RefreshingOAuth2CredentialsInterceptor oauth2Interceptor =
-          new RefreshingOAuth2CredentialsInterceptor(executor, (OAuth2Credentials) credentials);
-
-      // The RefreshingOAuth2CredentialsInterceptor uses the credentials to get a security token
-      // that
-      // will live for a short time.  That token is added on all calls by the gRPC interceptor to
-      // allow users to access secure resources.
-      //
-      // Perform that token lookup asynchronously. This permits other work to be done in
-      // parallel. The RefreshingOAuth2CredentialsInterceptor has internal locking that assures that
-      // the oauth2 token is loaded before the interceptor proceeds with any calls.
-      oauth2Interceptor.asyncRefresh();
+      OAuth2CredentialsInterceptor oauth2Interceptor =
+          new OAuth2CredentialsInterceptor((OAuth2Credentials) credentials);
       if (isDefaultCredentials) {
         defaultCredentialInterceptor = oauth2Interceptor;
       }
