@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase.replication;
 
 import static java.util.stream.Collectors.groupingBy;
 
-import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import java.io.IOException;
 import java.util.List;
@@ -25,7 +24,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
 import org.apache.hadoop.hbase.wal.WAL;
 import org.apache.log4j.Level;
@@ -35,13 +33,16 @@ import org.slf4j.LoggerFactory;
 
 public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndpoint {
 
-  private final Logger LOG = LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
-  private Connection connection;
+  private static final AtomicLong numInstances = new AtomicLong();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
   private static final AtomicLong concurrentReplications = new AtomicLong();
 
   private static final String PROJECT_ID_KEY = "google.bigtable.project_id";
   private static final String INSTANCE_ID_KEY = "google.bigtable.instance";
   private static final String TABLE_ID_KEY = "google.bigtable.table";
+  private String projectId;
+  private String instanceId;
 
   /**
    * Basic endpoint that listens to CDC from HBase and replicates to Cloud Bigtable. This
@@ -49,23 +50,26 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
    */
   public HbaseToCloudBigtableReplicationEndpoint() {
     super();
-    LOG.error("Creating replication endpoint to CBT. ");
+    numInstances.incrementAndGet();
+    LOG.error(
+        "Creating replication endpoint to CBT. NumInstances: " + numInstances.get() + "; ",
+        new RuntimeException("Dummy exception for stacktrace"));
     LogManager.getLogger(BigtableClientMetrics.class).setLevel(Level.DEBUG);
+    LogManager.getLogger(HbaseToCloudBigtableReplicationEndpoint.class).setLevel(Level.DEBUG);
+    LogManager.getLogger(CloudBigtableTableReplicator.class).setLevel(Level.DEBUG);
   }
 
   @Override
   protected void doStart() {
-    LOG.error("Starting replication to CBT. ");
+    LOG.error("NEW Starting replication to CBT. ");
 
-    String projectId = ctx.getConfiguration().get(PROJECT_ID_KEY);
-    String instanceId = ctx.getConfiguration().get(INSTANCE_ID_KEY);
+    projectId = ctx.getConfiguration().get(PROJECT_ID_KEY);
+    instanceId = ctx.getConfiguration().get(INSTANCE_ID_KEY);
     // Replicates to a single destination table. Consider creating a TableReplicator and using
     // a map <TableName, TableReplicator> here, that can delegate table level WAL entries to it.
     String tableId = ctx.getConfiguration().get(TABLE_ID_KEY);
 
-    LOG.error("Connecting to " + projectId + ":" + instanceId + " table: " + tableId);
-    connection = BigtableConfiguration.connect(projectId, instanceId);
-
+    LOG.error("Created a connection to CBT. ");
     LOG.error("Created a connection to CBT. ");
 
     notifyStarted();
@@ -75,12 +79,16 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
   protected void doStop() {
 
     LOG.error("Stopping replication to CBT. ");
+    /*
     try {
       // TODO: Wait for each replicator to flush.
+      // TODO: Do ref counting and make sure all the bulk mutators are flushed. Maybe connection
+      // should be owned by the factory?
       connection.close();
     } catch (IOException e) {
       LOG.error("Failed to close connection ", e);
     }
+     */
     notifyStopped();
   }
 
@@ -97,7 +105,7 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
     List<WAL.Entry> entries = replicateContext.getEntries();
     long concurrent = concurrentReplications.incrementAndGet();
     LOG.error(
-        "In CBT replicate -- Concurrency: "
+        " NEW In CBT replicate -- Concurrency: "
             + concurrent
             + " wal size: "
             + entries.size()
@@ -123,17 +131,29 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
         // TODO: MAKE IT PARALLEL
         try {
           boolean result =
-              CloudBigtableTableReplicatorFactory.getReplicator(tableName, connection)
+              CloudBigtableTableReplicatorFactory.getReplicator(tableName, projectId, instanceId)
                   .replicateTable(walEntriesForTable.getValue());
+          if (!result) {
+            LOG.error(
+                "Table replicator returned false in CBT replicate. " + tableName + " failed.");
+          }
           // The overall operation is successful only if all the calls are successful.
           succeeded.set(result & succeeded.get());
         } catch (IOException e) {
+          LOG.error("Got IOException from table replicator: ", e);
+          // Supress the exception here and return false to the replication machinery.
           succeeded.set(false);
         }
       } // Top level loop exiting
+    } catch (Exception e) {
+      LOG.error("Failed to replicate some  WAL with exception: ", e);
+      succeeded.set(false);
     } finally {
-      LOG.error("Exiting replicate method after {} ms", System.currentTimeMillis() - startTime);
-      concurrentReplications.decrementAndGet();
+      LOG.error(
+          "Exiting CBT replicate method after {} ms, Succeeded: {}",
+          (System.currentTimeMillis() - startTime),
+          succeeded.get());
+      concurrentReplications.getAndDecrement();
     }
     return succeeded.get();
   }
