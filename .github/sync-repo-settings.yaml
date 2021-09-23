@@ -13,6 +13,7 @@ branchProtectionRules:
       - 'Kokoro - Test: Java 8'
       - 'Kokoro - Test: Beam Integration'
       - cla/google
+      - OwlBot Post Processor
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true
   - pattern: 1.20.0-sp
@@ -26,6 +27,7 @@ branchProtectionRules:
       - 'Kokoro - Test: Java 8'
       - 'Kokoro - Test: Beam Integration'
       - cla/google
+      - OwlBot Post Processor
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true
   - pattern: bigtable-1.x
@@ -39,6 +41,7 @@ branchProtectionRules:
       - 'Kokoro - Test: Java 8'
       - 'Kokoro - Test: Beam Integration'
       - cla/google
+      - OwlBot Post Processor
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true
 permissionRules:
