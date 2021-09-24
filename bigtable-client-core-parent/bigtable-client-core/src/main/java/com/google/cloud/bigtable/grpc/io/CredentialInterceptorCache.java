@@ -21,18 +21,12 @@ import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.CredentialOptions.CredentialType;
-import com.google.cloud.bigtable.config.RetryOptions;
-import com.google.cloud.bigtable.util.ThreadUtil;
-import com.google.common.util.concurrent.MoreExecutors;
 import io.grpc.ClientInterceptor;
-import io.grpc.auth.ClientAuthInterceptor;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
- * Caches {@link OAuth2CredentialsInterceptor} for default authorization cases. In other types of
+ * Caches {@link CredentialsInterceptor} for default authorization cases. In other types of
  * authorization, such as file based Credentials, it will create a new one.
  *
  * <p>For internal use only - public for technical reasons.
@@ -50,9 +44,6 @@ public class CredentialInterceptorCache {
     return instance;
   }
 
-  private final ExecutorService executor =
-      Executors.newCachedThreadPool(ThreadUtil.getThreadFactory("Credentials-Refresh-%d", true));
-
   private ClientInterceptor defaultCredentialInterceptor;
 
   private CredentialInterceptorCache() {}
@@ -63,8 +54,8 @@ public class CredentialInterceptorCache {
    *
    * <ol>
    *   <li>Look up the credentials
-   *   <li>If there are credentials, create a gRPC interceptor that gets OAuth2 security tokens and
-   *       add the credentials to {@link io.grpc.CallOptions}. <br>
+   *   <li>If there are credentials, create a gRPC interceptor that adds the credentials to {@link
+   *       io.grpc.CallOptions}. <br>
    *       NOTE: {@link OAuth2Credentials} ensures that the token stays fresh. It does token lookups
    *       asynchronously so that the calls themselves take as little performance penalty as
    *       possible.
@@ -75,14 +66,12 @@ public class CredentialInterceptorCache {
    * </ol>
    *
    * @param credentialOptions Defines how credentials should be achieved
-   * @param retryOptions a {@link com.google.cloud.bigtable.config.RetryOptions} object.
-   * @return a HeaderInterceptor
+   * @return a ClientInterceptor
    * @throws java.io.IOException if any.
    * @throws java.security.GeneralSecurityException if any.
    */
   public synchronized ClientInterceptor getCredentialsInterceptor(
-      CredentialOptions credentialOptions, RetryOptions retryOptions)
-      throws IOException, GeneralSecurityException {
+      CredentialOptions credentialOptions) throws IOException, GeneralSecurityException {
     // Default credentials is the most likely CredentialType. It's also the only CredentialType
     // that can be safely cached.
     boolean isDefaultCredentials =
@@ -98,23 +87,11 @@ public class CredentialInterceptorCache {
       return null;
     }
 
-    if (credentials instanceof OAuth2Credentials) {
-      OAuth2CredentialsInterceptor oauth2Interceptor =
-          new OAuth2CredentialsInterceptor((OAuth2Credentials) credentials);
-      if (isDefaultCredentials) {
-        defaultCredentialInterceptor = oauth2Interceptor;
-      }
-      return oauth2Interceptor;
-    }
-
-    // Normal path
-    ClientInterceptor jwtAuthInterceptor =
-        new ClientAuthInterceptor(credentials, MoreExecutors.directExecutor());
+    CredentialsInterceptor credentialsInterceptor = new CredentialsInterceptor(credentials);
 
     if (isDefaultCredentials) {
-      defaultCredentialInterceptor = jwtAuthInterceptor;
+      defaultCredentialInterceptor = credentialsInterceptor;
     }
-
-    return jwtAuthInterceptor;
+    return credentialsInterceptor;
   }
 }

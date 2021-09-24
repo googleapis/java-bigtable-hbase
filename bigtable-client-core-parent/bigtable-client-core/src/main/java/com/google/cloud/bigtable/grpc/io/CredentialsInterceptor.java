@@ -16,15 +16,15 @@
 
 package com.google.cloud.bigtable.grpc.io;
 
-import com.google.auth.oauth2.OAuth2Credentials;
+import com.google.auth.Credentials;
 import io.grpc.*;
 import io.grpc.auth.MoreCallCredentials;
 
-public class OAuth2CredentialsInterceptor implements ClientInterceptor {
+public class CredentialsInterceptor implements ClientInterceptor {
 
   private CallCredentials callCredentials;
 
-  public OAuth2CredentialsInterceptor(OAuth2Credentials credentials) {
+  public CredentialsInterceptor(Credentials credentials) {
     this.callCredentials = MoreCallCredentials.from(credentials);
   }
 
