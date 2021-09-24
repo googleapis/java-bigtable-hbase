@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.25.0](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.24.0...v1.25.0) (2021-09-24)
+
+
+### Features
+
+* migrate to google-auth-library for pre-emptive oauth refresh ([#3228](https://www.github.com/googleapis/java-bigtable-hbase/issues/3228)) ([8031a29](https://www.github.com/googleapis/java-bigtable-hbase/commit/8031a297aaf7bf612862b21efb70962ad1966633))
+
+
+### Bug Fixes
+
+* adding validation for snapshot name for hbase import pipeline ([#3203](https://www.github.com/googleapis/java-bigtable-hbase/issues/3203)) ([#3226](https://www.github.com/googleapis/java-bigtable-hbase/issues/3226)) ([38925e8](https://www.github.com/googleapis/java-bigtable-hbase/commit/38925e8517403294b0958296aa5f20da6ba5cc55))
+
+
+### Documentation
+
+* Add instructions for migrating from HBase to Bigtable (offline via snapshots) ([#3197](https://www.github.com/googleapis/java-bigtable-hbase/issues/3197)) ([17bda3a](https://www.github.com/googleapis/java-bigtable-hbase/commit/17bda3a2d65d8d154b68dc3ff6c538544390ffd5))
+
 ## [1.24.0](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.23.1...v1.24.0) (2021-08-31)
 
 
