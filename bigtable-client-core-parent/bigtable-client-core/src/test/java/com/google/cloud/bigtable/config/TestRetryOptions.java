@@ -58,7 +58,7 @@ public class TestRetryOptions {
   public void testGetRetryableStatusCodesWhenDisabledDeadLineExceed() {
     RetryOptions options = RetryOptions.builder().setRetryOnDeadlineExceeded(false).build();
     assertEquals(
-        ImmutableSet.of(Status.Code.UNAVAILABLE, Status.Code.ABORTED, Status.Code.UNAUTHENTICATED),
+        ImmutableSet.of(Status.Code.UNAVAILABLE, Status.Code.ABORTED),
         options.getRetryableStatusCodes());
   }
 }

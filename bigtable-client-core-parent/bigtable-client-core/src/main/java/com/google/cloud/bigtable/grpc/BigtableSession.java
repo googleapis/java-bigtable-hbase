@@ -29,7 +29,6 @@ import com.google.cloud.bigtable.config.BigtableVersionInfo;
 import com.google.cloud.bigtable.config.BulkOptions;
 import com.google.cloud.bigtable.config.CredentialOptions;
 import com.google.cloud.bigtable.config.Logger;
-import com.google.cloud.bigtable.config.RetryOptions;
 import com.google.cloud.bigtable.core.IBigtableDataClient;
 import com.google.cloud.bigtable.core.IBigtableTableAdminClient;
 import com.google.cloud.bigtable.core.IBulkMutation;
@@ -392,10 +391,9 @@ public class BigtableSession implements Closeable {
   private static ClientInterceptor createAuthInterceptor(BigtableOptions options)
       throws IOException {
     CredentialInterceptorCache credentialsCache = CredentialInterceptorCache.getInstance();
-    RetryOptions retryOptions = options.getRetryOptions();
     CredentialOptions credentialOptions = options.getCredentialOptions();
     try {
-      return credentialsCache.getCredentialsInterceptor(credentialOptions, retryOptions);
+      return credentialsCache.getCredentialsInterceptor(credentialOptions);
     } catch (GeneralSecurityException e) {
       throw new IOException("Could not initialize credentials.", e);
     }

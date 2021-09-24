@@ -47,11 +47,7 @@ public class RetryOptions implements Serializable, Cloneable {
   /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public static final Set<Status.Code> DEFAULT_ENABLE_GRPC_RETRIES_SET =
-      ImmutableSet.of(
-          Status.Code.DEADLINE_EXCEEDED,
-          Status.Code.UNAVAILABLE,
-          Status.Code.ABORTED,
-          Status.Code.UNAUTHENTICATED);
+      ImmutableSet.of(Status.Code.DEADLINE_EXCEEDED, Status.Code.UNAVAILABLE, Status.Code.ABORTED);
 
   /**
    * We can timeout when reading large cells with a low value here.
