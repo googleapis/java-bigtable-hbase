@@ -17,7 +17,13 @@
 package com.google.cloud.bigtable.grpc.io;
 
 import com.google.auth.Credentials;
-import io.grpc.*;
+import io.grpc.CallCredentials;
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.ClientInterceptor;
+import io.grpc.ForwardingClientCall;
+import io.grpc.MethodDescriptor;
 import io.grpc.auth.MoreCallCredentials;
 
 public class CredentialsInterceptor implements ClientInterceptor {
