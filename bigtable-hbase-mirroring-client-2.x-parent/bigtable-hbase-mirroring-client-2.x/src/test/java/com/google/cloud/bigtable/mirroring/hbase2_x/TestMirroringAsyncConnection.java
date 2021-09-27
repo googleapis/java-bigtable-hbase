@@ -15,15 +15,13 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase2_x;
 
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowControlStrategy;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.reflection.ReflectionConstructor;
-import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeoutException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -31,75 +29,27 @@ import org.apache.hadoop.hbase.client.AdvancedScanResultConsumer;
 import org.apache.hadoop.hbase.client.AsyncAdminBuilder;
 import org.apache.hadoop.hbase.client.AsyncBufferedMutatorBuilder;
 import org.apache.hadoop.hbase.client.AsyncConnection;
-import org.apache.hadoop.hbase.client.AsyncTable;
 import org.apache.hadoop.hbase.client.AsyncTableBuilder;
 import org.apache.hadoop.hbase.client.AsyncTableRegionLocator;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Hbck;
 import org.apache.hadoop.hbase.client.ScanResultConsumer;
+import org.apache.hadoop.hbase.client.TestRegistry;
 import org.apache.hadoop.hbase.security.User;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-public class MirroringAsyncConnection implements AsyncConnection {
-  private MirroringAsyncConfiguration configuration;
-  private AsyncConnection primaryConnection;
-  private AsyncConnection secondaryConnection;
-  private final MismatchDetector mismatchDetector;
-  private final FlowController flowController;
-  private final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
-
-  /**
-   * The constructor called from {@link
-   * org.apache.hadoop.hbase.client.ConnectionFactory#createAsyncConnection(Configuration)} and in
-   * its many forms via reflection with this specific signature.
-   *
-   * <p>Parameters are passed down to ConnectionFactory#createAsyncConnection method, connection
-   * errors are passed back to the user (wrapped in a CompletableFuture).
-   */
-  public MirroringAsyncConnection(
+class TestAsyncConnection implements AsyncConnection {
+  public TestAsyncConnection(
       Configuration conf,
-      /**
-       * The constructor is passed a ConnectionRegistry, which is a private interface in
-       * org.apache.hadoop.hbase.client.
-       */
-      Object ignoredRegistry,
-      String ignoredClusterId,
-      User user)
-      throws ExecutionException, InterruptedException {
-    this.configuration = new MirroringAsyncConfiguration(conf);
-
-    this.primaryConnection =
-        ConnectionFactory.createAsyncConnection(this.configuration.primaryConfiguration, user)
-            .get();
-    this.secondaryConnection =
-        ConnectionFactory.createAsyncConnection(this.configuration.secondaryConfiguration, user)
-            .get();
-
-    this.flowController =
-        new FlowController(
-            ReflectionConstructor.<FlowControlStrategy>construct(
-                this.configuration.mirroringOptions.flowControllerStrategyClass,
-                this.configuration.mirroringOptions));
-    this.mismatchDetector =
-        ReflectionConstructor.construct(this.configuration.mirroringOptions.mismatchDetectorClass);
-    this.secondaryWriteErrorConsumer =
-        ReflectionConstructor.construct(
-            this.configuration.mirroringOptions.writeErrorConsumerClass);
-  }
+      /* AsyncRegion - see comments in MirroringAsyncConnection */ Object o,
+      String clusterId,
+      User user) {}
 
   @Override
   public Configuration getConfiguration() {
-    return this.configuration;
-  }
-
-  // TODO(aczajkowski): use default method after implementing MirroringAsyncTableBuilder
-  @Override
-  public AsyncTable<ScanResultConsumer> getTable(TableName tableName, ExecutorService pool) {
-    return new MirroringAsyncTable(
-        this.primaryConnection.getTable(tableName),
-        this.secondaryConnection.getTable(tableName),
-        this.mismatchDetector,
-        this.flowController,
-        this.secondaryWriteErrorConsumer);
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -162,5 +112,22 @@ public class MirroringAsyncConnection implements AsyncConnection {
   @Override
   public void close() throws IOException {
     throw new UnsupportedOperationException();
+  }
+}
+
+@RunWith(JUnit4.class)
+public class TestMirroringAsyncConnection {
+  @Test
+  public void testConnectionFactoryCreatesMirroringAsyncConnection()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
+    Configuration testConfiguration = new Configuration();
+    testConfiguration.set("hbase.client.registry.impl", TestRegistry.class.getCanonicalName());
+    testConfiguration.set(
+        "hbase.client.async.connection.impl", TestAsyncConnection.class.getCanonicalName());
+    MirroringAsyncConfiguration configuration =
+        new MirroringAsyncConfiguration(testConfiguration, testConfiguration, testConfiguration);
+    configuration.set("hbase.client.registry.impl", TestRegistry.class.getCanonicalName());
+    AsyncConnection connection = ConnectionFactory.createAsyncConnection(configuration).get();
+    assertTrue(connection instanceof MirroringAsyncConnection);
   }
 }
