@@ -40,6 +40,23 @@ public class RequestScheduling {
       final Supplier<ListenableFuture<T>> secondaryResultFutureSupplier,
       final FutureCallback<T> verificationCallback,
       final FlowController flowController) {
+    return scheduleVerificationAndRequestWithFlowControl(
+        requestResourcesDescription,
+        secondaryResultFutureSupplier,
+        verificationCallback,
+        flowController,
+        new Runnable() {
+          @Override
+          public void run() {}
+        });
+  }
+
+  public static <T> ListenableFuture<Void> scheduleVerificationAndRequestWithFlowControl(
+      final RequestResourcesDescription requestResourcesDescription,
+      final Supplier<ListenableFuture<T>> secondaryResultFutureSupplier,
+      final FutureCallback<T> verificationCallback,
+      final FlowController flowController,
+      final Runnable flowControlReservationErrorConsumer) {
     final SettableFuture<Void> verificationCompletedFuture = SettableFuture.create();
 
     final ListenableFuture<ResourceReservation> reservationRequest =
@@ -72,14 +89,15 @@ public class RequestScheduling {
             }
           },
           MoreExecutors.directExecutor());
-    } catch (InterruptedException e) {
+    } catch (InterruptedException | ExecutionException e) {
+      flowControlReservationErrorConsumer.run();
       FlowController.cancelRequest(reservationRequest);
+
       verificationCompletedFuture.set(null);
-      Thread.currentThread().interrupt();
-    } catch (ExecutionException e) {
-      // We couldn't obtain reservation, this shouldn't happen.
-      assert false;
-      verificationCompletedFuture.set(null);
+
+      if (e instanceof InterruptedException) {
+        Thread.currentThread().interrupt();
+      }
     }
     return verificationCompletedFuture;
   }

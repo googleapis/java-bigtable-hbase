@@ -38,6 +38,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowContro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController.ResourceReservation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
+import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -1120,5 +1121,87 @@ public class TestMirroringTable {
     executorServiceRule.waitForExecutor();
     verify(primaryTable, times(1)).batchCallback(eq(mutations), any(Object[].class), eq(callback));
     verify(secondaryTable, never()).batch(ArgumentMatchers.<Row>anyList(), any(Object[].class));
+  }
+
+  @Test
+  public void testFlowControllerExceptionInGetPreventsSecondaryOperation() throws IOException {
+    SettableFuture<ResourceReservation> resourceReservationFuture = SettableFuture.create();
+    resourceReservationFuture.setException(new Exception("test"));
+
+    doReturn(resourceReservationFuture)
+        .when(flowController)
+        .asyncRequestResource(any(RequestResourcesDescription.class));
+
+    Get request = createGet("test");
+    Result expectedResult = createResult("test", "value");
+
+    when(primaryTable.get(request)).thenReturn(expectedResult);
+
+    Result result = mirroringTable.get(request);
+    executorServiceRule.waitForExecutor();
+
+    assertThat(result).isEqualTo(expectedResult);
+
+    verify(primaryTable, times(1)).get(request);
+    verify(secondaryTable, never()).get(any(Get.class));
+  }
+
+  @Test
+  public void testFlowControllerExceptionInPutExecutesWriteErrorHandler() throws IOException {
+    SettableFuture<ResourceReservation> resourceReservationFuture = SettableFuture.create();
+    resourceReservationFuture.setException(new Exception("test"));
+
+    doReturn(resourceReservationFuture)
+        .when(flowController)
+        .asyncRequestResource(any(RequestResourcesDescription.class));
+
+    Put request = createPut("test", "f1", "q1", "v1");
+
+    mirroringTable.put(request);
+    executorServiceRule.waitForExecutor();
+
+    verify(primaryTable, times(1)).put(request);
+    verify(secondaryTable, never()).get(any(Get.class));
+    verify(secondaryWriteErrorConsumer, times(1)).consume(ImmutableList.of(request));
+  }
+
+  @Test
+  public void testFlowControllerExceptionInBatchExecutesWriteErrorHandler()
+      throws IOException, InterruptedException {
+    SettableFuture<ResourceReservation> resourceReservationFuture = SettableFuture.create();
+    resourceReservationFuture.setException(new Exception("test"));
+
+    doReturn(resourceReservationFuture)
+        .when(flowController)
+        .asyncRequestResource(any(RequestResourcesDescription.class));
+
+    Put put1 = createPut("test0", "f1", "q1", "v1");
+    Put put2 = createPut("test1", "f1", "q2", "v1");
+    List<? extends Row> request = ImmutableList.of(put1, put2, createGet("test2"));
+
+    doAnswer(
+            new Answer<Void>() {
+              @Override
+              public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
+                Object[] args = invocationOnMock.getArguments();
+                Object[] result = (Object[]) args[1];
+
+                // secondary
+                result[0] = Result.create(new Cell[0]);
+                result[1] = Result.create(new Cell[0]);
+                result[2] = Result.create(new Cell[0]);
+                return null;
+              }
+            })
+        .when(primaryTable)
+        .batch(eq(request), any(Object[].class));
+
+    Object[] results = new Object[3];
+    mirroringTable.batch(request, results);
+    executorServiceRule.waitForExecutor();
+
+    verify(primaryTable, times(1)).batch(request, results);
+    verify(secondaryTable, never()).batch(ArgumentMatchers.<Row>anyList(), any(Object[].class));
+    verify(secondaryWriteErrorConsumer, times(1)).consume(ImmutableList.of(put1, put2));
   }
 }
