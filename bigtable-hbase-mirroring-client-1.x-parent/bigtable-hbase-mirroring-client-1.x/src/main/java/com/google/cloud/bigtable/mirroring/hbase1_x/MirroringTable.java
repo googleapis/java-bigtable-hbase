@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncTableWrapper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger;
@@ -26,13 +27,13 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowContro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
+import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +77,13 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 @InternalApi("For internal usage only")
 public class MirroringTable implements Table, ListenableCloseable {
   private static final Logger Log = new Logger(MirroringTable.class);
+  private static final Predicate<Object> resultIsFaultyPredicate =
+      new Predicate<Object>() {
+        @Override
+        public boolean apply(@NullableDecl Object o) {
+          return o == null || o instanceof Throwable;
+        }
+      };
 
   Table primaryTable;
   Table secondaryTable;
@@ -173,7 +181,7 @@ public class MirroringTable implements Table, ListenableCloseable {
     try {
       this.primaryTable.batch(operations, results);
     } finally {
-      BatchHelpers.scheduleSecondaryWriteBatchOperations(operations, results, this);
+      scheduleSecondaryWriteBatchOperations(operations, results);
     }
   }
 
@@ -195,7 +203,7 @@ public class MirroringTable implements Table, ListenableCloseable {
     try {
       this.primaryTable.batchCallback(operations, results, callback);
     } finally {
-      BatchHelpers.scheduleSecondaryWriteBatchOperations(operations, results, this);
+      scheduleSecondaryWriteBatchOperations(operations, results);
     }
   }
 
@@ -364,7 +372,7 @@ public class MirroringTable implements Table, ListenableCloseable {
       throw e2;
     } finally {
       final BatchHelpers.SplitBatchResponse<Delete> splitResponse =
-          new BatchHelpers.SplitBatchResponse<>(deletes, results);
+          new BatchHelpers.SplitBatchResponse<>(deletes, results, resultIsFaultyPredicate);
 
       deletes.clear();
       deletes.addAll(splitResponse.failedWrites);
@@ -577,7 +585,7 @@ public class MirroringTable implements Table, ListenableCloseable {
             resultInfo, secondaryGetFutureSupplier, verificationCallback, this.flowController));
   }
 
-  public <T> void scheduleWriteWithControlFlow(
+  private <T> void scheduleWriteWithControlFlow(
       final WriteOperationInfo writeOperationInfo,
       final Supplier<ListenableFuture<T>> secondaryResultFutureSupplier,
       final FlowController flowController) {
@@ -595,6 +603,35 @@ public class MirroringTable implements Table, ListenableCloseable {
               }
             },
             flowController));
+  }
+
+  private void scheduleSecondaryWriteBatchOperations(
+      final List<? extends Row> operations, final Object[] results) {
+
+    final BatchHelpers.SplitBatchResponse<?> primarySplitResponse =
+        new BatchHelpers.SplitBatchResponse<>(operations, results, resultIsFaultyPredicate);
+
+    if (primarySplitResponse.allSuccessfulOperations.size() == 0) {
+      return;
+    }
+
+    final Object[] resultsSecondary =
+        new Object[primarySplitResponse.allSuccessfulOperations.size()];
+
+    FutureCallback<Void> verificationFuture =
+        BatchHelpers.createBatchVerificationCallback(
+            primarySplitResponse,
+            resultsSecondary,
+            verificationContinuationFactory.getMismatchDetector(),
+            this.secondaryWriteErrorConsumer,
+            resultIsFaultyPredicate);
+
+    RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
+        new MirroringTable.WriteOperationInfo(primarySplitResponse).requestResourcesDescription,
+        this.secondaryAsyncWrapper.batch(
+            primarySplitResponse.allSuccessfulOperations, resultsSecondary),
+        verificationFuture,
+        this.flowController);
   }
 
   public static class WriteOperationInfo {
@@ -632,210 +669,6 @@ public class MirroringTable implements Table, ListenableCloseable {
         RequestResourcesDescription requestResourcesDescription, Row operation) {
       this.requestResourcesDescription = requestResourcesDescription;
       this.operations = Collections.singletonList(operation);
-    }
-  }
-
-  static class BatchHelpers {
-    private static void scheduleSecondaryWriteBatchOperations(
-        final List<? extends Row> operations, final Object[] results, MirroringTable table) {
-
-      final SplitBatchResponse<?> primarySplitResponse =
-          new SplitBatchResponse<>(operations, results);
-
-      if (primarySplitResponse.allSuccessfulOperations.size() == 0) {
-        return;
-      }
-
-      final Object[] resultsSecondary =
-          new Object[primarySplitResponse.allSuccessfulOperations.size()];
-
-      FutureCallback<Void> verificationFuture =
-          createBatchVerificationCallback(
-              primarySplitResponse,
-              resultsSecondary,
-              table.verificationContinuationFactory.getMismatchDetector(),
-              table);
-
-      RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
-          new WriteOperationInfo(primarySplitResponse).requestResourcesDescription,
-          table.secondaryAsyncWrapper.batch(
-              primarySplitResponse.allSuccessfulOperations, resultsSecondary),
-          verificationFuture,
-          table.flowController);
-    }
-
-    private static FutureCallback<Void> createBatchVerificationCallback(
-        final SplitBatchResponse<?> primarySplitResponse,
-        final Object[] secondaryResults,
-        final MismatchDetector mismatchDetector,
-        final MirroringTable table) {
-      return new FutureCallback<Void>() {
-        @Override
-        public void onSuccess(@NullableDecl Void t) {
-          // Batch is successful - all results are correct.
-          List<? extends Row> secondaryOperations = primarySplitResponse.allSuccessfulOperations;
-
-          final SplitBatchResponse<?> secondarySplitResponse =
-              new SplitBatchResponse<>(secondaryOperations, secondaryResults);
-
-          if (secondarySplitResponse.successfulReads.size() > 0) {
-            mismatchDetector.batch(
-                secondarySplitResponse.successfulReads,
-                primarySplitResponse.successfulReadsResults,
-                secondarySplitResponse.successfulReadsResults);
-          }
-        }
-
-        @Override
-        public void onFailure(Throwable throwable) {
-          // Batch has thrown - partial results might be available.
-          List<? extends Row> secondaryOperations = primarySplitResponse.allSuccessfulOperations;
-
-          final SplitBatchResponse<?> secondarySplitResponse =
-              new SplitBatchResponse<>(secondaryOperations, secondaryResults);
-
-          if (secondarySplitResponse.failedWrites.size() > 0) {
-            table.secondaryWriteErrorConsumer.consume(secondarySplitResponse.failedWrites);
-          }
-
-          if (secondarySplitResponse.allReads.size() > 0) {
-            // Some of the reads in this batch might have been not successful.
-            // We want to verify successful reads and report the others.
-
-            // We are using `secondaryResults` to select indices of operations that were successful.
-            // Using those indices we select Get operations that have results from both primary and
-            // secondary database, and pass them to `mismatchDetector.batch()`.
-            // We also gather failed gets to pass them to `batchGetFailure`.
-            MatchingSuccessfulReadsResults matchingSuccessfulReads =
-                selectMatchingSuccessfulReads(
-                    secondaryOperations,
-                    primarySplitResponse.allSuccessfulResults,
-                    secondaryResults);
-
-            mismatchDetector.batch(
-                secondarySplitResponse.successfulReads,
-                matchingSuccessfulReads.primaryResults,
-                matchingSuccessfulReads.secondaryResults);
-
-            if (!matchingSuccessfulReads.failedReads.isEmpty()) {
-              mismatchDetector.batch(matchingSuccessfulReads.failedReads, throwable);
-            }
-          }
-        }
-      };
-    }
-
-    /**
-     * Helper class that facilitates analysing results of partially completed batch operation
-     * containing {@link Get}s. Contains matching results from first and secondary databases, Get
-     * operations that produced those results, and Gets that failed on secondary.
-     */
-    private static class MatchingSuccessfulReadsResults {
-      final Result[] primaryResults;
-      final Result[] secondaryResults;
-      final List<Get> failedReads;
-      final List<Get> successfulReads;
-
-      private MatchingSuccessfulReadsResults(
-          Result[] primaryResults,
-          Result[] secondaryResults,
-          List<Get> failedReads,
-          List<Get> successfulReads) {
-        this.primaryResults = primaryResults;
-        this.secondaryResults = secondaryResults;
-        this.failedReads = failedReads;
-        this.successfulReads = successfulReads;
-      }
-    }
-
-    /**
-     * Creates a {@link MatchingSuccessfulReadsResults} based on arrays of results from primary and
-     * secondary databases and list of performed operations. All inputs are iterated simultaneously,
-     * Get operations are identified using isinstance and f their results from both databases are
-     * available, they are added to lists of matching reads and successful operations. In the other
-     * case the Get operation is placed on failed operations list.
-     */
-    private static MatchingSuccessfulReadsResults selectMatchingSuccessfulReads(
-        List<? extends Row> operations, Object[] primaryResults, Object[] secondaryResults) {
-      assert operations.size() == secondaryResults.length;
-      assert primaryResults.length == secondaryResults.length;
-
-      List<Result> primaryMatchingReads = new ArrayList<>();
-      List<Result> secondaryMatchingReads = new ArrayList<>();
-
-      List<Get> failedReads = new ArrayList<>();
-      List<Get> successfulReads = new ArrayList<>();
-
-      for (int i = 0; i < secondaryResults.length; i++) {
-        if (!(operations.get(i) instanceof Get)) {
-          continue;
-        }
-
-        // We are sure casts are correct, and non-null results to Gets are always Results.
-        if (secondaryResults[i] == null) {
-          failedReads.add((Get) operations.get(i));
-        } else {
-          primaryMatchingReads.add((Result) primaryResults[i]);
-          secondaryMatchingReads.add((Result) secondaryResults[i]);
-          successfulReads.add((Get) operations.get(i));
-        }
-      }
-
-      return new MatchingSuccessfulReadsResults(
-          primaryMatchingReads.toArray(new Result[0]),
-          secondaryMatchingReads.toArray(new Result[0]),
-          failedReads,
-          successfulReads);
-    }
-
-    /**
-     * Helper class facilitating analysis of batch results. Basing on issued operations and results
-     * array splits provided operations into reads/writes, failed/successful.
-     */
-    private static class SplitBatchResponse<T extends Row> {
-      final List<Get> successfulReads = new ArrayList<>();
-      final List<T> failedWrites = new ArrayList<>();
-      final List<T> successfulWrites = new ArrayList<>();
-      final List<T> allSuccessfulOperations = new ArrayList<>();
-      final Result[] successfulReadsResults;
-      final List<Get> allReads = new ArrayList<>();
-      final Result[] allReadsResults;
-      final Object[] allSuccessfulResults;
-
-      SplitBatchResponse(List<T> operations, Object[] results) {
-        final List<Result> successfulReadsResults = new ArrayList<>();
-        final List<Result> allReadsResults = new ArrayList<>();
-        final List<Object> allSuccessfulResultsList = new ArrayList<>();
-
-        for (int i = 0; i < operations.size(); i++) {
-          T operation = operations.get(i);
-          boolean isRead = operation instanceof Get;
-          boolean isFailed = results[i] == null || results[i] instanceof Throwable;
-          if (isFailed) {
-            if (isRead) {
-              this.allReads.add((Get) operation);
-              allReadsResults.add(null);
-            } else {
-              this.failedWrites.add(operation);
-            }
-          } else {
-            if (isRead) {
-              this.successfulReads.add((Get) operation);
-              successfulReadsResults.add((Result) results[i]);
-
-              this.allReads.add((Get) operation);
-              allReadsResults.add((Result) results[i]);
-            } else {
-              this.successfulWrites.add(operation);
-            }
-            this.allSuccessfulOperations.add(operation);
-            allSuccessfulResultsList.add(results[i]);
-          }
-        }
-        this.successfulReadsResults = successfulReadsResults.toArray(new Result[0]);
-        this.allReadsResults = allReadsResults.toArray(new Result[0]);
-        this.allSuccessfulResults = allSuccessfulResultsList.toArray(new Object[0]);
-      }
     }
   }
 }
