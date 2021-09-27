@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.beam;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
@@ -560,14 +559,10 @@ public class CloudBigtableIO {
       Configuration config = source.getConfiguration().toHBaseConfig();
 
       connection = ConnectionFactory.createConnection(config);
-      String tableName =
-          NameUtil.formatTableName(
-              source.getConfiguration().getProjectId(),
-              source.getConfiguration().getInstanceId(),
-              source.getConfiguration().getTableId());
+
       scanner =
           connection
-              .getTable(TableName.valueOf(tableName))
+              .getTable(TableName.valueOf(source.getConfiguration().getTableId()))
               .getScanner(
                   source.getConfiguration().getZeroCopyStartRow(),
                   source.getConfiguration().getZeroCopyStopRow());
