@@ -23,9 +23,10 @@ import java.util.concurrent.Future;
 
 /**
  * FlowController limits the number of concurrently performed requests to the secondary database.
- * Call to {@link #asyncRequestResource(RequestResourcesDescription)} returns object with a future
- * that will be notified when {@link FlowControlStrategy} decides that it can be allowed to perform
- * the requests.
+ * Call to {@link #asyncRequestResource(RequestResourcesDescription)} returns a future that will be
+ * completed when {@link FlowControlStrategy} decides that it can be allowed to perform the
+ * requests. The future might also be completed exceptionally if the resource was not allowed to
+ * obtain the resources.
  *
  * <p>Order of allowing requests in determined by {@link FlowControlStrategy}.
  *
@@ -45,15 +46,17 @@ public class FlowController {
   }
 
   public static void cancelRequest(Future<ResourceReservation> resourceReservationFuture) {
-    // The cancellation may fail - then the resources have already been allocated by FlowController.
-    // Then we must release them - the user wouldn't be able to do it on their own.
+    // The cancellation may fail if the resources were already allocated by the FlowController, then
+    // we should free them, or when the reservation was rejected, which we should ignore.
     if (!resourceReservationFuture.cancel(true)) {
       try {
         resourceReservationFuture.get().release();
-      } catch (InterruptedException | ExecutionException ex) {
+      } catch (InterruptedException ex) {
         // If we couldn't cancel the request, it must have already been set, we assume
         // that we will get the reservation without problems
         assert false;
+      } catch (ExecutionException ex) {
+        // The request was rejected.
       }
     }
   }

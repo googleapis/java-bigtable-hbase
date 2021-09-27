@@ -602,7 +602,13 @@ public class MirroringTable implements Table, ListenableCloseable {
                 secondaryWriteErrorConsumer.consume(writeOperationInfo.operations);
               }
             },
-            flowController));
+            flowController,
+            new Runnable() {
+              @Override
+              public void run() {
+                secondaryWriteErrorConsumer.consume(writeOperationInfo.operations);
+              }
+            }));
   }
 
   private void scheduleSecondaryWriteBatchOperations(
@@ -631,7 +637,13 @@ public class MirroringTable implements Table, ListenableCloseable {
         this.secondaryAsyncWrapper.batch(
             primarySplitResponse.allSuccessfulOperations, resultsSecondary),
         verificationFuture,
-        this.flowController);
+        this.flowController,
+        new Runnable() {
+          @Override
+          public void run() {
+            secondaryWriteErrorConsumer.consume(primarySplitResponse.successfulWrites);
+          }
+        });
   }
 
   public static class WriteOperationInfo {

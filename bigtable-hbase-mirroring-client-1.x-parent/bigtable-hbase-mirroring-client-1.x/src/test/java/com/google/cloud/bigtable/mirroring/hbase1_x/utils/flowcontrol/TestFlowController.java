@@ -236,4 +236,14 @@ public class TestFlowController {
     FlowController.cancelRequest(grantedFuture);
     verify(reservation, never()).release();
   }
+
+  @Test
+  public void testCancellingRejectedReservationFuture() {
+    ResourceReservation reservation = mock(ResourceReservation.class);
+    SettableFuture<ResourceReservation> notGrantedFuture = SettableFuture.create();
+    notGrantedFuture.setException(new Exception("test"));
+
+    FlowController.cancelRequest(notGrantedFuture);
+    verify(reservation, never()).release();
+  }
 }
