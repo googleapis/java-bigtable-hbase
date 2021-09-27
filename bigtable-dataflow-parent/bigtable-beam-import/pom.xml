@@ -165,7 +165,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-storage</artifactId>
-      <version>v1-rev171-1.25.0</version>
+      <version>v1-rev20210127-1.32.1</version>
     </dependency>
     <dependency>
       <groupId>com.google.auto.value</groupId>
