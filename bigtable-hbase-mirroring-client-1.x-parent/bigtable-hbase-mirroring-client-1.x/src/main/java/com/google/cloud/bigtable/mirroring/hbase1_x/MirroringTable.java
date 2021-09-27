@@ -635,8 +635,8 @@ public class MirroringTable implements Table, ListenableCloseable {
   }
 
   public static class WriteOperationInfo {
-    final RequestResourcesDescription requestResourcesDescription;
-    final List<? extends Row> operations;
+    public final RequestResourcesDescription requestResourcesDescription;
+    public final List<? extends Row> operations;
 
     public WriteOperationInfo(BatchHelpers.SplitBatchResponse<? extends Row> primarySplitResponse) {
       this.operations = primarySplitResponse.allSuccessfulOperations;
