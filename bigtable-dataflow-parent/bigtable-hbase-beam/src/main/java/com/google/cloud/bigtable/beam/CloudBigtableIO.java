@@ -51,8 +51,20 @@ import org.apache.beam.sdk.values.PDone;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
+import org.apache.hadoop.hbase.client.BufferedMutatorParams;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Mutation;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.RegionLocator;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -271,9 +283,10 @@ public class CloudBigtableIO {
 
     /**
      * Gets an estimated size based on data returned from {@link #getSampleRowKeys}. The estimate
-     * will be high if a {@link Scan} is set on the {@link CloudBigtableScanConfiguration}; in such
-     * cases, the estimate will not take the Scan into account, and will return a larger estimate
-     * than what the {@link CloudBigtableIO.Reader} will actually read.
+     * will be high if a {@link org.apache.hadoop.hbase.client.Scan} is set on the {@link
+     * CloudBigtableScanConfiguration}; in such cases, the estimate will not take the Scan into
+     * account, and will return a larger estimate than what the {@link CloudBigtableIO.Reader} will
+     * actually read.
      *
      * @param options The pipeline options.
      * @return The estimated size of the data, in bytes.
@@ -559,13 +572,14 @@ public class CloudBigtableIO {
       Configuration config = source.getConfiguration().toHBaseConfig();
 
       connection = ConnectionFactory.createConnection(config);
-
+      Scan scan =
+          new Scan()
+              .withStartRow(source.getConfiguration().getZeroCopyStartRow())
+              .withStopRow(source.getConfiguration().getZeroCopyStopRow());
       scanner =
           connection
               .getTable(TableName.valueOf(source.getConfiguration().getTableId()))
-              .getScanner(
-                  source.getConfiguration().getZeroCopyStartRow(),
-                  source.getConfiguration().getZeroCopyStopRow());
+              .getScanner(scan);
     }
 
     /** Calls {@link ResultScanner#next()}. */

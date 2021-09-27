@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.beam;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.Version;
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.common.collect.ImmutableMap;
+import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -200,6 +201,8 @@ public class CloudBigtableConfiguration implements Serializable {
    */
   public Configuration toHBaseConfig() {
     Configuration config = new Configuration(false);
+
+    config = BigtableConfiguration.configure(config, this.getProjectId(), this.getInstanceId());
 
     /**
      * Sets below setting for batch BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL = true
