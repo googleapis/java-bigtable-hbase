@@ -79,11 +79,10 @@ public class Helpers {
     return rowMutations;
   }
 
-  public static Increment createIncrement(
-      byte[] rowKey, byte[] columnFamily, byte[] qualifier, int ts) throws IOException {
+  public static Increment createIncrement(byte[] rowKey, byte[] columnFamily, byte[] qualifier)
+      throws IOException {
     Increment increment = new Increment(rowKey);
     increment.addColumn(columnFamily, qualifier, 1);
-    increment.setTimeRange(ts, ts + 1);
     return increment;
   }
 

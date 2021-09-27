@@ -788,7 +788,7 @@ public class TestMirroringTable {
       try (Table table = connection.getTable(tableName1)) {
         for (int i = 0; i < databaseEntriesCount; i++) {
           byte[] rowKey = rowKeyFromId(i);
-          table.increment(Helpers.createIncrement(rowKey, columnFamily1, qualifier1, i));
+          table.increment(Helpers.createIncrement(rowKey, columnFamily1, qualifier1));
         }
       }
     }
@@ -821,14 +821,12 @@ public class TestMirroringTable {
       try (Table table = connection.getTable(tableName1)) {
         for (int i = 0; i < databaseEntriesCount; i++) {
           final byte[] rowKey = rowKeyFromId(i);
-          final int finalI = i;
           catchIOExceptionsIfWillThrow(
               rowKey,
               new RunnableThrowingIO() {
                 @Override
                 public void run() throws IOException {
-                  table.increment(
-                      Helpers.createIncrement(rowKey, columnFamily1, qualifier1, finalI));
+                  table.increment(Helpers.createIncrement(rowKey, columnFamily1, qualifier1));
                 }
               });
         }
@@ -856,7 +854,7 @@ public class TestMirroringTable {
       try (Table table = connection.getTable(tableName1)) {
         for (int i = 0; i < databaseEntriesCount; i++) {
           byte[] rowKey = rowKeyFromId(i);
-          table.increment(Helpers.createIncrement(rowKey, columnFamily1, qualifier1, i));
+          table.increment(Helpers.createIncrement(rowKey, columnFamily1, qualifier1));
         }
       }
     }
@@ -1185,7 +1183,6 @@ public class TestMirroringTable {
   }
 
   interface RunnableThrowingIO {
-
     void run() throws IOException;
   }
 
