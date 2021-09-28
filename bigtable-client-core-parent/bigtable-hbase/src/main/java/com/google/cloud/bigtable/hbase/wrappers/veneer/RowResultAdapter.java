@@ -46,6 +46,9 @@ import org.apache.hadoop.hbase.filter.FilterList.Operator;
  * on duplicate labelled cells for its implementation. So this adapter will not deduplicate labelled
  * cells.
  *
+ * <p>This adapter will also return and check for scan marker rows, which will be an empty row with
+ * the scan marker row label.
+ *
  * <p>For internal use only - public for technical reasons.
  */
 @InternalApi("For internal usage only")
@@ -59,15 +62,17 @@ public class RowResultAdapter implements RowAdapter<Result> {
     return new RowResultBuilder();
   }
 
+  /**
+   * Checks if the result is a scan marker row. Returns true if the row's family, qualifier, and
+   * value are empty, and only has a scan marker row label.
+   */
   @Override
   public boolean isScanMarkerRow(Result result) {
-    if (result.listCells().size() != 1) {
+    if (result.rawCells().length != 1 || !(result.rawCells()[0] instanceof RowCell)) {
       return false;
     }
-    Preconditions.checkState(
-        result.listCells().get(0) instanceof RowCell, "Should be instance of RowCell");
 
-    RowCell cell = (RowCell) result.listCells().get(0);
+    RowCell cell = (RowCell) result.rawCells()[0];
     return cell.getLabels().size() == 1
         && cell.getLabels().get(0).equals(SCAN_MARKER_ROW_LABEL)
         && cell.getValueArray().length == 0
@@ -77,7 +82,7 @@ public class RowResultAdapter implements RowAdapter<Result> {
 
   @Override
   public ByteString getKey(Result result) {
-    return ByteStringer.wrap(result.getRow());
+    return ByteStringer.wrap(result.rawCells()[0].getRowArray());
   }
 
   static class RowResultBuilder implements RowBuilder<Result> {
@@ -221,6 +226,10 @@ public class RowResultAdapter implements RowAdapter<Result> {
       this.previousNoLabelCell = null;
     }
 
+    /**
+     * Creates a marker row with rowKey with a scan marker row label and empty family, qualifier and
+     * value.
+     */
     @Override
     public Result createScanMarkerRow(ByteString rowKey) {
       return Result.create(
