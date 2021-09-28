@@ -22,7 +22,6 @@ import com.google.cloud.bigtable.data.v2.models.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.RowCell;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import com.google.cloud.bigtable.hbase.util.TimestampConverter;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
@@ -53,6 +52,7 @@ import org.apache.hadoop.hbase.filter.FilterList.Operator;
 public class RowResultAdapter implements RowAdapter<Result> {
 
   private static final byte[] EMPTY_VALUE = new byte[0];
+  private static final String SCAN_MARKER_ROW_LABEL = "bigtable-scan-marker-row";
 
   @Override
   public RowBuilder<Result> createRowBuilder() {
@@ -61,45 +61,23 @@ public class RowResultAdapter implements RowAdapter<Result> {
 
   @Override
   public boolean isScanMarkerRow(Result result) {
-    Preconditions.checkState(result instanceof RowResult, "Should be an instance of RowResult");
-    return ((RowResult) result).isMarkerRow();
+    if (result.listCells().size() != 1) {
+      return false;
+    }
+    Preconditions.checkState(
+        result.listCells().get(0) instanceof RowCell, "Should be instance of RowCell");
+
+    RowCell cell = (RowCell) result.listCells().get(0);
+    return cell.getLabels().size() == 1
+        && cell.getLabels().get(0).equals(SCAN_MARKER_ROW_LABEL)
+        && cell.getValueArray().length == 0
+        && cell.getFamilyArray().length == 0
+        && cell.getQualifierArray().length == 0;
   }
 
   @Override
   public ByteString getKey(Result result) {
-    Preconditions.checkState(result instanceof RowResult, "Should be an instance of RowResult");
-    return ((RowResult) result).getKey();
-  }
-
-  @VisibleForTesting
-  static class RowResult extends Result {
-    private final ByteString rowKey;
-    private final boolean isMarkerRow;
-
-    static RowResult create(ByteString rowKey, List<Cell> cells) {
-      return new RowResult(rowKey, false, cells);
-    }
-
-    static RowResult createMarker(ByteString rowKey) {
-      return new RowResult(rowKey, true, ImmutableList.<Cell>of());
-    }
-
-    private RowResult(ByteString rowKey, boolean isMarkerRow, List<Cell> cells) {
-      this.rowKey = rowKey;
-      this.isMarkerRow = isMarkerRow;
-
-      // Only default ctor of Result is public, so instantiating cells through copyFrom() because
-      // value(), size(), isEmpty() rawCells() etc. directly usages Result's cells field.
-      this.copyFrom(Result.create(cells));
-    }
-
-    ByteString getKey() {
-      return rowKey;
-    }
-
-    boolean isMarkerRow() {
-      return isMarkerRow;
-    }
+    return ByteStringer.wrap(result.getRow());
   }
 
   static class RowResultBuilder implements RowBuilder<Result> {
@@ -226,7 +204,7 @@ public class RowResultAdapter implements RowAdapter<Result> {
         combined.addAll(familyCellList);
       }
 
-      return RowResult.create(currentKey, combined.build());
+      return Result.create(combined.build());
     }
 
     @Override
@@ -245,7 +223,15 @@ public class RowResultAdapter implements RowAdapter<Result> {
 
     @Override
     public Result createScanMarkerRow(ByteString rowKey) {
-      return RowResult.createMarker(rowKey);
+      return Result.create(
+          ImmutableList.<Cell>of(
+              new RowCell(
+                  ByteStringer.extract(rowKey),
+                  EMPTY_VALUE,
+                  EMPTY_VALUE,
+                  0l,
+                  EMPTY_VALUE,
+                  ImmutableList.<String>of(SCAN_MARKER_ROW_LABEL))));
     }
   }
 }
