@@ -128,6 +128,9 @@ public class EndToEndIT {
         bufferedMutator.mutate(testData);
       }
 
+      // TODO check populated table
+      System.out.println("mattie --- srcTable: " + srcTable.readAllCellsFromTable());
+
       // Export the data
       DataflowPipelineOptions pipelineOpts =
           PipelineOptionsFactory.as(DataflowPipelineOptions.class);

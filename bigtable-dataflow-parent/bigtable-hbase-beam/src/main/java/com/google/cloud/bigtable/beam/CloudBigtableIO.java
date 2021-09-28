@@ -575,7 +575,8 @@ public class CloudBigtableIO {
       Scan scan =
           new Scan()
               .withStartRow(source.getConfiguration().getZeroCopyStartRow())
-              .withStopRow(source.getConfiguration().getZeroCopyStopRow());
+              .withStopRow(source.getConfiguration().getZeroCopyStopRow())
+              .setMaxVersions(Integer.MAX_VALUE);
       scanner =
           connection
               .getTable(TableName.valueOf(source.getConfiguration().getTableId()))
@@ -585,8 +586,11 @@ public class CloudBigtableIO {
     /** Calls {@link ResultScanner#next()}. */
     @Override
     public boolean advance() throws IOException {
+      System.out.println("mattie --- scanner class: " + scanner.getClass().getName());
       Result row = scanner.next();
       if (row != null && rangeTracker.tryReturnRecordAt(true, ByteKey.copyFrom(row.getRow()))) {
+        READER_LOG.info(
+            "mattie --- " + row.listCells().toString() + " class is: " + row.getClass().getName());
         current = row;
         rowsRead.addAndGet(1l);
         return true;
@@ -710,6 +714,7 @@ public class CloudBigtableIO {
 
     @Override
     public final Result getCurrent() throws NoSuchElementException {
+//      return Result.create(current.rawCells());
       return current;
     }
 
