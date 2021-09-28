@@ -2,7 +2,7 @@ rebaseMergeAllowed: false
 squashMergeAllowed: true
 mergeCommitAllowed: false
 branchProtectionRules:
-  - pattern: master
+  - pattern: main
     isAdminEnforced: true
     requiredStatusCheckContexts:
       - 'Kokoro - Test: Binary Compatibility'
