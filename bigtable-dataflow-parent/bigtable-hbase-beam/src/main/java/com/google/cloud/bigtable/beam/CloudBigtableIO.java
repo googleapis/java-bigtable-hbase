@@ -121,9 +121,6 @@ import org.slf4j.LoggerFactory;
 @Experimental
 public class CloudBigtableIO {
 
-  private static final long BIGTABLE_MAX_MEMORY_DEFAULT =
-      (long) Math.min(1 << 30, (Runtime.getRuntime().maxMemory() * 0.1d));
-
   /**
    * A {@link BoundedSource} for a Cloud Bigtable {@link Table}, which is potentially filtered by a
    * {@link Scan}.
@@ -763,7 +760,6 @@ public class CloudBigtableIO {
       return getConnection()
           .getBufferedMutator(
               new BufferedMutatorParams(TableName.valueOf(tableName))
-                  .writeBufferSize(BIGTABLE_MAX_MEMORY_DEFAULT)
                   .listener(createExceptionListener(context)));
     }
 
