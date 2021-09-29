@@ -734,8 +734,6 @@ public class CloudBigtableIO {
    * This is a DoFn that relies on {@link BufferedMutator} as the implementation to write data to
    * Cloud Bigtable. The main function of this class is to manage Aggregators relating to mutations.
    *
-   * <p>TODO: set up buffered mutator stats exporter.
-   *
    * @param <InputType>
    */
   private abstract static class BufferedMutatorDoFn<InputType>
@@ -756,7 +754,9 @@ public class CloudBigtableIO {
     }
 
     @Setup
-    public synchronized void setup() {}
+    public synchronized void setup() {
+      // TODO set up buffered mutator stats exporter
+    }
 
     protected BufferedMutator createBufferedMutator(Object context, String tableName)
         throws IOException {

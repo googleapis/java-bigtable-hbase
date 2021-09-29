@@ -300,7 +300,8 @@ public class CloudBigtableIOIntegrationTest {
       TableName tableName = createNewTable(admin);
 
       final int rowCount = 1000;
-      LOG.info(String.format("Adding %s rows in testEstimatedAndSplitForLargeTable()", rowCount));
+      LOG.info(
+          String.format("Adding %dgit  rows in testEstimatedAndSplitForLargeTable()", rowCount));
       try (BufferedMutator mutator = connection.getBufferedMutator(tableName)) {
         for (int i = 0; i < rowCount; i++) {
           byte[] largeValue = Bytes.toBytes(RandomStringUtils.randomAlphanumeric(LARGE_VALUE_SIZE));
