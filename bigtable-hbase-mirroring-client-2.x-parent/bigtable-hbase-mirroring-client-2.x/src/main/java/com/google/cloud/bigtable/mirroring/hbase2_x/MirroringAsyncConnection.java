@@ -16,8 +16,8 @@
 package com.google.cloud.bigtable.mirroring.hbase2_x;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowControlStrategy;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.reflection.ReflectionConstructor;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import java.io.IOException;
@@ -46,6 +46,7 @@ public class MirroringAsyncConnection implements AsyncConnection {
   private final MismatchDetector mismatchDetector;
   private final FlowController flowController;
   private final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
+  private final MirroringTracer mirroringTracer;
 
   /**
    * The constructor called from {@link
@@ -67,6 +68,8 @@ public class MirroringAsyncConnection implements AsyncConnection {
       throws ExecutionException, InterruptedException {
     this.configuration = new MirroringAsyncConfiguration(conf);
 
+    this.mirroringTracer = new MirroringTracer();
+
     this.primaryConnection =
         ConnectionFactory.createAsyncConnection(this.configuration.primaryConfiguration, user)
             .get();
@@ -76,11 +79,12 @@ public class MirroringAsyncConnection implements AsyncConnection {
 
     this.flowController =
         new FlowController(
-            ReflectionConstructor.<FlowControlStrategy>construct(
+            ReflectionConstructor.construct(
                 this.configuration.mirroringOptions.flowControllerStrategyClass,
                 this.configuration.mirroringOptions));
     this.mismatchDetector =
-        ReflectionConstructor.construct(this.configuration.mirroringOptions.mismatchDetectorClass);
+        ReflectionConstructor.construct(
+            this.configuration.mirroringOptions.mismatchDetectorClass, this.mirroringTracer);
     this.secondaryWriteErrorConsumer =
         ReflectionConstructor.construct(
             this.configuration.mirroringOptions.writeErrorConsumerClass);

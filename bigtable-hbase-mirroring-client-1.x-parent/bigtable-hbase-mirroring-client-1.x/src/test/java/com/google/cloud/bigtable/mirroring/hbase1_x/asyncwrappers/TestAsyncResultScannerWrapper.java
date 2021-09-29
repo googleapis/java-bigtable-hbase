@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import java.util.concurrent.ExecutionException;
@@ -42,7 +43,8 @@ public class TestAsyncResultScannerWrapper {
         new AsyncResultScannerWrapper(
             table,
             resultScanner,
-            MoreExecutors.listeningDecorator(MoreExecutors.newDirectExecutorService()));
+            MoreExecutors.listeningDecorator(MoreExecutors.newDirectExecutorService()),
+            new MirroringTracer());
     final SettableFuture<Void> listenerFuture = SettableFuture.create();
     asyncResultScannerWrapper.addOnCloseListener(
         new Runnable() {
@@ -64,7 +66,8 @@ public class TestAsyncResultScannerWrapper {
         new AsyncResultScannerWrapper(
             table,
             resultScanner,
-            MoreExecutors.listeningDecorator(MoreExecutors.newDirectExecutorService()));
+            MoreExecutors.listeningDecorator(MoreExecutors.newDirectExecutorService()),
+            new MirroringTracer());
     asyncResultScannerWrapper.asyncClose().get(3, TimeUnit.SECONDS);
     asyncResultScannerWrapper.asyncClose().get(3, TimeUnit.SECONDS);
     verify(resultScanner, times(1)).close();

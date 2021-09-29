@@ -17,6 +17,9 @@ package com.google.cloud.bigtable.mirroring.hbase1_x.verification;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Comparators;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringMetricsRecorder;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.client.Get;
@@ -25,9 +28,16 @@ import org.apache.hadoop.hbase.client.Scan;
 
 @InternalApi("For internal usage only")
 public class DefaultMismatchDetector implements MismatchDetector {
+  private final MirroringMetricsRecorder metricsRecorder;
+
+  public DefaultMismatchDetector(MirroringTracer mirroringTracer) {
+    this.metricsRecorder = mirroringTracer.metricsRecorder;
+  }
+
   public void exists(Get request, boolean primary, boolean secondary) {
     if (primary != secondary) {
       System.out.println("exists mismatch");
+      this.metricsRecorder.recordReadMismatches(HBaseOperation.EXISTS, 1);
     }
   }
 
@@ -40,6 +50,7 @@ public class DefaultMismatchDetector implements MismatchDetector {
   public void existsAll(List<Get> request, boolean[] primary, boolean[] secondary) {
     if (!Arrays.equals(primary, secondary)) {
       System.out.println("existsAll mismatch");
+      this.metricsRecorder.recordReadMismatches(HBaseOperation.EXISTS, primary.length);
     }
   }
 
@@ -51,6 +62,7 @@ public class DefaultMismatchDetector implements MismatchDetector {
   public void get(Get request, Result primary, Result secondary) {
     if (!Comparators.resultsEqual(primary, secondary)) {
       System.out.println("get mismatch");
+      this.metricsRecorder.recordReadMismatches(HBaseOperation.GET, 1);
     }
   }
 
@@ -61,16 +73,7 @@ public class DefaultMismatchDetector implements MismatchDetector {
 
   @Override
   public void get(List<Get> request, Result[] primary, Result[] secondary) {
-    if (primary.length != secondary.length) {
-      System.out.println("getAll length mismatch");
-      return;
-    }
-
-    for (int i = 0; i < primary.length; i++) {
-      if (Comparators.resultsEqual(primary[i], secondary[i])) {
-        System.out.println("getAll mismatch");
-      }
-    }
+    verifyResults(primary, secondary, "getAll mismatch", HBaseOperation.GET_LIST);
   }
 
   @Override
@@ -82,6 +85,7 @@ public class DefaultMismatchDetector implements MismatchDetector {
   public void scannerNext(Scan request, int entriesAlreadyRead, Result primary, Result secondary) {
     if (!Comparators.resultsEqual(primary, secondary)) {
       System.out.println("scan() mismatch");
+      this.metricsRecorder.recordReadMismatches(HBaseOperation.NEXT, 1);
     }
   }
 
@@ -93,16 +97,7 @@ public class DefaultMismatchDetector implements MismatchDetector {
   @Override
   public void scannerNext(
       Scan request, int entriesAlreadyRead, Result[] primary, Result[] secondary) {
-    if (primary.length != secondary.length) {
-      System.out.println("scan(i) length mismatch");
-      return;
-    }
-
-    for (int i = 0; i < primary.length; i++) {
-      if (!Comparators.resultsEqual(primary[i], secondary[i])) {
-        System.out.println("scan(i) mismatch");
-      }
-    }
+    verifyResults(primary, secondary, "scan(i) mismatch", HBaseOperation.NEXT_MULTIPLE);
   }
 
   @Override
@@ -113,20 +108,26 @@ public class DefaultMismatchDetector implements MismatchDetector {
 
   @Override
   public void batch(List<Get> request, Result[] primary, Result[] secondary) {
-    if (primary.length != secondary.length) {
-      System.out.println("batch() length mismatch");
-      return;
-    }
-
-    for (int i = 0; i < primary.length; i++) {
-      if (!Comparators.resultsEqual(primary[i], secondary[i])) {
-        System.out.println("batch() mismatch");
-      }
-    }
+    verifyResults(primary, secondary, "batch() mismatch", HBaseOperation.BATCH);
   }
 
   @Override
   public void batch(List<Get> request, Throwable throwable) {
     System.out.println("batch() failed");
+  }
+
+  private void verifyResults(
+      Result[] primary, Result[] secondary, String errorMessage, HBaseOperation operation) {
+    int minLength = Math.min(primary.length, secondary.length);
+    int errors = Math.max(primary.length, secondary.length) - minLength;
+    for (int i = 0; i < minLength; i++) {
+      if (Comparators.resultsEqual(primary[i], secondary[i])) {
+        System.out.println(errorMessage);
+        errors++;
+      }
+    }
+    if (errors > 0) {
+      this.metricsRecorder.recordReadMismatches(operation, errors);
+    }
   }
 }

@@ -15,13 +15,18 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOException;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowControlStrategy;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.reflection.ReflectionConstructor;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
+import io.opencensus.common.Scope;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.concurrent.ExecutionException;
@@ -40,15 +45,17 @@ import org.apache.hadoop.hbase.security.User;
 
 public class MirroringConnection implements Connection {
 
+  private static final Logger Log = new Logger(MirroringConnection.class);
   private final FlowController flowController;
-  private MirroringConfiguration configuration;
-  private Connection primaryConnection;
-  private Connection secondaryConnection;
   private final ExecutorService executorService;
   private final MismatchDetector mismatchDetector;
   private final ListenableReferenceCounter referenceCounter;
-  private static final Logger Log = new Logger(MirroringConnection.class);
   private final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
+  private final MirroringTracer mirroringTracer;
+  private final SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumerWithMetrics;
+  private MirroringConfiguration configuration;
+  private Connection primaryConnection;
+  private Connection secondaryConnection;
 
   /**
    * The constructor called from {@link
@@ -62,6 +69,8 @@ public class MirroringConnection implements Connection {
       throws IOException {
     assert !managed; // This is always-false legacy hbase parameter.
     this.configuration = new MirroringConfiguration(conf);
+    this.mirroringTracer = new MirroringTracer();
+
     this.primaryConnection =
         ConnectionFactory.createConnection(this.configuration.primaryConfiguration, pool, user);
     this.secondaryConnection =
@@ -80,11 +89,16 @@ public class MirroringConnection implements Connection {
                 this.configuration.mirroringOptions.flowControllerStrategyClass,
                 this.configuration.mirroringOptions));
     this.mismatchDetector =
-        ReflectionConstructor.construct(this.configuration.mirroringOptions.mismatchDetectorClass);
+        ReflectionConstructor.construct(
+            this.configuration.mirroringOptions.mismatchDetectorClass, this.mirroringTracer);
 
     this.secondaryWriteErrorConsumer =
         ReflectionConstructor.construct(
             this.configuration.mirroringOptions.writeErrorConsumerClass);
+
+    this.secondaryWriteErrorConsumerWithMetrics =
+        new SecondaryWriteErrorConsumerWithMetrics(
+            this.mirroringTracer, this.secondaryWriteErrorConsumer);
   }
 
   @Override
@@ -95,31 +109,36 @@ public class MirroringConnection implements Connection {
   @Override
   public Table getTable(TableName tableName) throws IOException {
     Log.trace("getTable(%s)", tableName);
-    MirroringTable table =
-        new MirroringTable(
-            this.primaryConnection.getTable(tableName),
-            this.secondaryConnection.getTable(tableName),
-            this.executorService,
-            this.mismatchDetector,
-            this.flowController,
-            this.secondaryWriteErrorConsumer);
-    this.referenceCounter.holdReferenceUntilClosing(table);
-    return table;
+    return this.getTable(tableName, this.executorService);
   }
 
   @Override
-  public Table getTable(TableName tableName, ExecutorService executorService) throws IOException {
-    Log.trace("getTable(%s, executorService)", tableName);
-    MirroringTable table =
-        new MirroringTable(
-            this.primaryConnection.getTable(tableName, executorService),
-            this.secondaryConnection.getTable(tableName, executorService),
-            executorService,
-            this.mismatchDetector,
-            this.flowController,
-            this.secondaryWriteErrorConsumer);
-    this.referenceCounter.holdReferenceUntilClosing(table);
-    return table;
+  public Table getTable(final TableName tableName, ExecutorService executorService)
+      throws IOException {
+    try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.GET_TABLE)) {
+      Log.trace("getTable(%s, executorService)", tableName);
+      Table primaryTable =
+          this.mirroringTracer.spanFactory.wrapPrimaryOperation(
+              new CallableThrowingIOException<Table>() {
+                @Override
+                public Table call() throws IOException {
+                  return MirroringConnection.this.primaryConnection.getTable(tableName);
+                }
+              },
+              HBaseOperation.GET_TABLE);
+      Table secondaryTable = this.secondaryConnection.getTable(tableName);
+      MirroringTable table =
+          new MirroringTable(
+              primaryTable,
+              secondaryTable,
+              executorService,
+              this.mismatchDetector,
+              this.flowController,
+              this.secondaryWriteErrorConsumerWithMetrics,
+              this.mirroringTracer);
+      this.referenceCounter.holdReferenceUntilClosing(table);
+      return table;
+    }
   }
 
   @Override
@@ -130,14 +149,18 @@ public class MirroringConnection implements Connection {
   @Override
   public BufferedMutator getBufferedMutator(BufferedMutatorParams bufferedMutatorParams)
       throws IOException {
-    return new MirroringBufferedMutator(
-        primaryConnection,
-        secondaryConnection,
-        bufferedMutatorParams,
-        configuration,
-        flowController,
-        executorService,
-        secondaryWriteErrorConsumer);
+    try (Scope scope =
+        this.mirroringTracer.spanFactory.operationScope(HBaseOperation.GET_BUFFERED_MUTATOR)) {
+      return new MirroringBufferedMutator(
+          primaryConnection,
+          secondaryConnection,
+          bufferedMutatorParams,
+          configuration,
+          flowController,
+          executorService,
+          secondaryWriteErrorConsumerWithMetrics,
+          mirroringTracer);
+    }
   }
 
   @Override
@@ -152,17 +175,21 @@ public class MirroringConnection implements Connection {
 
   @Override
   public void close() throws IOException {
-    Log.trace("close()");
-    this.referenceCounter.decrementReferenceCount();
-    try {
-      this.referenceCounter.getOnLastReferenceClosed().get();
-      Log.trace("close(): closed");
-    } catch (InterruptedException e) {
-      IOException wrapperException = new InterruptedIOException();
-      wrapperException.initCause(e);
-      throw wrapperException;
-    } catch (ExecutionException e) {
-      throw new RuntimeException(e);
+    try (Scope scope =
+        this.mirroringTracer.spanFactory.operationScope(
+            HBaseOperation.MIRRORING_CONNECTION_CLOSE)) {
+      Log.trace("close()");
+      this.referenceCounter.decrementReferenceCount();
+      try {
+        this.referenceCounter.getOnLastReferenceClosed().get();
+        Log.trace("close(): closed");
+      } catch (InterruptedException e) {
+        IOException wrapperException = new InterruptedIOException();
+        wrapperException.initCause(e);
+        throw wrapperException;
+      } catch (ExecutionException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 

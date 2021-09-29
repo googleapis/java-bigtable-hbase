@@ -15,9 +15,12 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.FutureCallback;
+import io.opencensus.common.Scope;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.hadoop.hbase.client.Get;
@@ -30,8 +33,9 @@ public class BatchHelpers {
       final SplitBatchResponse<?> primarySplitResponse,
       final Object[] secondaryResults,
       final MismatchDetector mismatchDetector,
-      final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer,
-      final Predicate<Object> resultIsFaultyPredicate) {
+      final SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer,
+      final Predicate<Object> resultIsFaultyPredicate,
+      final MirroringTracer mirroringTracer) {
     return new FutureCallback<Void>() {
       @Override
       public void onSuccess(@NullableDecl Void t) {
@@ -43,10 +47,12 @@ public class BatchHelpers {
                 secondaryOperations, secondaryResults, resultIsFaultyPredicate);
 
         if (secondarySplitResponse.successfulReads.size() > 0) {
-          mismatchDetector.batch(
-              secondarySplitResponse.successfulReads,
-              primarySplitResponse.successfulReadsResults,
-              secondarySplitResponse.successfulReadsResults);
+          try (Scope scope = mirroringTracer.spanFactory.verificationScope()) {
+            mismatchDetector.batch(
+                secondarySplitResponse.successfulReads,
+                primarySplitResponse.successfulReadsResults,
+                secondarySplitResponse.successfulReadsResults);
+          }
         }
       }
 
@@ -60,7 +66,10 @@ public class BatchHelpers {
                 secondaryOperations, secondaryResults, resultIsFaultyPredicate);
 
         if (secondarySplitResponse.failedWrites.size() > 0) {
-          secondaryWriteErrorConsumer.consume(secondarySplitResponse.failedWrites);
+          try (Scope scope = mirroringTracer.spanFactory.writeErrorScope()) {
+            secondaryWriteErrorConsumer.consume(
+                HBaseOperation.BATCH, secondarySplitResponse.failedWrites);
+          }
         }
 
         if (secondarySplitResponse.allReads.size() > 0) {
@@ -78,15 +87,15 @@ public class BatchHelpers {
                   secondaryResults,
                   resultIsFaultyPredicate);
 
-          if (!matchingSuccessfulReads.successfulReads.isEmpty()) {
+          try (Scope scope = mirroringTracer.spanFactory.verificationScope()) {
             mismatchDetector.batch(
                 secondarySplitResponse.successfulReads,
                 matchingSuccessfulReads.primaryResults,
                 matchingSuccessfulReads.secondaryResults);
-          }
 
-          if (!matchingSuccessfulReads.failedReads.isEmpty()) {
-            mismatchDetector.batch(matchingSuccessfulReads.failedReads, throwable);
+            if (!matchingSuccessfulReads.failedReads.isEmpty()) {
+              mismatchDetector.batch(matchingSuccessfulReads.failedReads, throwable);
+            }
           }
         }
       }

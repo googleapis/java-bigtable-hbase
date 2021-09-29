@@ -19,12 +19,14 @@ import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController.ResourceReservation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
+import io.opencensus.common.Scope;
 import java.util.concurrent.ExecutionException;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
@@ -39,12 +41,14 @@ public class RequestScheduling {
       final RequestResourcesDescription requestResourcesDescription,
       final Supplier<ListenableFuture<T>> secondaryResultFutureSupplier,
       final FutureCallback<T> verificationCallback,
-      final FlowController flowController) {
+      final FlowController flowController,
+      final MirroringTracer mirroringTracer) {
     return scheduleVerificationAndRequestWithFlowControl(
         requestResourcesDescription,
         secondaryResultFutureSupplier,
         verificationCallback,
         flowController,
+        mirroringTracer,
         new Runnable() {
           @Override
           public void run() {}
@@ -56,38 +60,43 @@ public class RequestScheduling {
       final Supplier<ListenableFuture<T>> secondaryResultFutureSupplier,
       final FutureCallback<T> verificationCallback,
       final FlowController flowController,
+      final MirroringTracer mirroringTracer,
       final Runnable flowControlReservationErrorConsumer) {
     final SettableFuture<Void> verificationCompletedFuture = SettableFuture.create();
 
     final ListenableFuture<ResourceReservation> reservationRequest =
         flowController.asyncRequestResource(requestResourcesDescription);
     try {
-      final ResourceReservation reservation = reservationRequest.get();
+      final ResourceReservation reservation;
+      try (Scope scope = mirroringTracer.spanFactory.flowControlScope()) {
+        reservation = reservationRequest.get();
+      }
       Futures.addCallback(
           secondaryResultFutureSupplier.get(),
-          new FutureCallback<T>() {
-            @Override
-            public void onSuccess(@NullableDecl T t) {
-              try {
-                Log.trace("starting verification %s", t);
-                verificationCallback.onSuccess(t);
-                Log.trace("verification done %s", t);
-              } finally {
-                reservation.release();
-                verificationCompletedFuture.set(null);
-              }
-            }
+          mirroringTracer.spanFactory.wrapWithCurrentSpan(
+              new FutureCallback<T>() {
+                @Override
+                public void onSuccess(@NullableDecl T t) {
+                  try {
+                    Log.trace("starting verification %s", t);
+                    verificationCallback.onSuccess(t);
+                    Log.trace("verification done %s", t);
+                  } finally {
+                    reservation.release();
+                    verificationCompletedFuture.set(null);
+                  }
+                }
 
-            @Override
-            public void onFailure(Throwable throwable) {
-              try {
-                verificationCallback.onFailure(throwable);
-              } finally {
-                reservation.release();
-                verificationCompletedFuture.set(null);
-              }
-            }
-          },
+                @Override
+                public void onFailure(Throwable throwable) {
+                  try {
+                    verificationCallback.onFailure(throwable);
+                  } finally {
+                    reservation.release();
+                    verificationCompletedFuture.set(null);
+                  }
+                }
+              }),
           MoreExecutors.directExecutor());
     } catch (InterruptedException | ExecutionException e) {
       flowControlReservationErrorConsumer.run();

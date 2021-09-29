@@ -19,16 +19,20 @@ import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncResultScannerWrapper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncResultScannerWrapper.ScannerRequestContext;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncTableWrapper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOException;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.RequestScheduling;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import io.opencensus.common.Scope;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import org.apache.commons.logging.Log;
@@ -48,6 +52,7 @@ import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
 @InternalApi("For internal usage only")
 public class MirroringResultScanner extends AbstractClientScanner implements ListenableCloseable {
   private static final Log log = LogFactory.getLog(MirroringResultScanner.class);
+  private final MirroringTracer mirroringTracer;
 
   private Scan originalScan;
   private ResultScanner primaryResultScanner;
@@ -68,7 +73,8 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
       ResultScanner primaryResultScanner,
       AsyncTableWrapper secondaryTableWrapper,
       VerificationContinuationFactory verificationContinuationFactory,
-      FlowController flowController)
+      FlowController flowController,
+      MirroringTracer mirroringTracer)
       throws IOException {
     this.originalScan = originalScan;
     this.primaryResultScanner = primaryResultScanner;
@@ -79,34 +85,69 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
     this.readEntries = 0;
 
     this.listenableReferenceCounter.holdReferenceUntilClosing(this.secondaryResultScannerWrapper);
+    this.mirroringTracer = mirroringTracer;
   }
 
   @Override
   public Result next() throws IOException {
-    Result result = this.primaryResultScanner.next();
-    int startingIndex = this.readEntries;
-    this.readEntries += 1;
-    ScannerRequestContext context =
-        new ScannerRequestContext(this.originalScan, result, startingIndex);
-    this.scheduleRequest(
-        new RequestResourcesDescription(result),
-        this.secondaryResultScannerWrapper.next(context),
-        this.verificationContinuationFactory.scannerNext());
-    return result;
+    try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.NEXT)) {
+
+      Result result =
+          this.mirroringTracer.spanFactory.wrapPrimaryOperation(
+              new CallableThrowingIOException<Result>() {
+                @Override
+                public Result call() throws IOException {
+                  return MirroringResultScanner.this.primaryResultScanner.next();
+                }
+              },
+              HBaseOperation.NEXT);
+
+      int startingIndex = this.readEntries;
+      this.readEntries += 1;
+      ScannerRequestContext context =
+          new ScannerRequestContext(
+              this.originalScan,
+              result,
+              startingIndex,
+              this.mirroringTracer.spanFactory.getCurrentSpan());
+
+      this.scheduleRequest(
+          new RequestResourcesDescription(result),
+          this.secondaryResultScannerWrapper.next(context),
+          this.verificationContinuationFactory.scannerNext());
+      return result;
+    }
   }
 
   @Override
-  public Result[] next(int entriesToRead) throws IOException {
-    Result[] results = this.primaryResultScanner.next(entriesToRead);
-    int startingIndex = this.readEntries;
-    this.readEntries += entriesToRead;
-    ScannerRequestContext context =
-        new ScannerRequestContext(this.originalScan, results, startingIndex, entriesToRead);
-    this.scheduleRequest(
-        new RequestResourcesDescription(results),
-        this.secondaryResultScannerWrapper.next(context),
-        this.verificationContinuationFactory.scannerNext());
-    return results;
+  public Result[] next(final int entriesToRead) throws IOException {
+    try (Scope scope =
+        this.mirroringTracer.spanFactory.operationScope(HBaseOperation.NEXT_MULTIPLE)) {
+      Result[] results =
+          this.mirroringTracer.spanFactory.wrapPrimaryOperation(
+              new CallableThrowingIOException<Result[]>() {
+                @Override
+                public Result[] call() throws IOException {
+                  return MirroringResultScanner.this.primaryResultScanner.next(entriesToRead);
+                }
+              },
+              HBaseOperation.NEXT_MULTIPLE);
+
+      int startingIndex = this.readEntries;
+      this.readEntries += entriesToRead;
+      ScannerRequestContext context =
+          new ScannerRequestContext(
+              this.originalScan,
+              results,
+              startingIndex,
+              entriesToRead,
+              this.mirroringTracer.spanFactory.getCurrentSpan());
+      this.scheduleRequest(
+          new RequestResourcesDescription(results),
+          this.secondaryResultScannerWrapper.next(context),
+          this.verificationContinuationFactory.scannerNext());
+      return results;
+    }
   }
 
   @Override
@@ -181,7 +222,11 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
       FutureCallback<T> scannerNext) {
     this.listenableReferenceCounter.holdReferenceUntilCompletion(
         RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
-            requestResourcesDescription, nextSupplier, scannerNext, this.flowController));
+            requestResourcesDescription,
+            nextSupplier,
+            this.mirroringTracer.spanFactory.wrapReadVerificationCallback(scannerNext),
+            this.flowController,
+            this.mirroringTracer));
   }
 
   @Override
