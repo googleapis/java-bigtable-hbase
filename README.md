@@ -316,7 +316,7 @@ Java is a registered trademark of Oracle and/or its affiliates.
 [maven-examples-repo]: https://github.com/GoogleCloudPlatform/cloud-bigtable-examples
 [google-cloud-bigtable-discuss]: https://groups.google.com/group/google-cloud-bigtable-discuss
 [google-cloud-bigtable-announce]: https://groups.google.com/group/google-cloud-bigtable-announce
-[google-cloud-bigtable-emulator]: https://github.com/googleapis/google-cloud-java/tree/master/google-cloud-testing/google-cloud-bigtable-emulator
+[google-cloud-bigtable-emulator]: https://github.com/googleapis/google-cloud-java/tree/main/google-cloud-testing/google-cloud-bigtable-emulator
 [google-cloud-bigtable]: https://github.com/googleapis/java-bigtable
 [kokoro-badge-image-1]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java8.svg
 [kokoro-badge-link-1]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java8.html
@@ -326,6 +326,6 @@ Java is a registered trademark of Oracle and/or its affiliates.
 [kokoro-badge-link-3]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java11.html
 [kokoro-badge-image-4]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/integration.svg
 [kokoro-badge-link-4]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/integration.html
-[contributing]: https://github.com/googleapis/java-bigtable-hbase/blob/master/CONTRIBUTING.md
-[code-of-conduct]: https://github.com/googleapis/java-bigtable-hbase/blob/master/CODE_OF_CONDUCT.md#contributor-code-of-conduct
-[license]: https://github.com/googleapis/java-bigtable-hbase/blob/master/LICENSE
+[contributing]: https://github.com/googleapis/java-bigtable-hbase/blob/main/CONTRIBUTING.md
+[code-of-conduct]: https://github.com/googleapis/java-bigtable-hbase/blob/main/CODE_OF_CONDUCT.md#contributor-code-of-conduct
+[license]: https://github.com/googleapis/java-bigtable-hbase/blob/main/LICENSE
