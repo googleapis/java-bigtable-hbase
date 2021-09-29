@@ -327,6 +327,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    *
    * @return The {@link Scan}.
    */
+  @Deprecated
   public ReadRowsRequest getRequest() {
     return request.get();
   }
