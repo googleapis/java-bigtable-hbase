@@ -22,7 +22,6 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.FailedPreconditionException;
-import com.google.bigtable.admin.v2.ClusterName;
 import com.google.cloud.bigtable.admin.v2.models.Backup;
 import com.google.cloud.bigtable.admin.v2.models.Cluster;
 import com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest;
@@ -98,7 +97,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private final BigtableHBaseSettings settings;
   protected final CommonConnection connection;
   protected final AdminClientWrapper adminClientWrapper;
-  private ClusterName bigtableSnapshotClusterName;
+  private String bigtableSnapshotClusterId;
 
   /**
    * Constructor for AbstractBigtableAdmin.
@@ -117,11 +116,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     String clusterId =
         configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
     if (clusterId != null) {
-      bigtableSnapshotClusterName =
-          ClusterName.of(
-              connection.getBigtableSettings().getProjectId(),
-              connection.getBigtableSettings().getInstanceId(),
-              clusterId);
+      bigtableSnapshotClusterId = clusterId;
     }
   }
 
@@ -917,8 +912,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
       return;
     }
 
-    FutureUtil.unwrap(
-        adminClientWrapper.deleteBackupAsync(getBackupClusterName().getCluster(), snapshotId));
+    FutureUtil.unwrap(adminClientWrapper.deleteBackupAsync(getBackupClusterId(), snapshotId));
   }
 
   protected Backup snapshotTable(String snapshotId, TableName tableName) throws IOException {
@@ -926,7 +920,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(tableName.getNameAsString()));
 
     CreateBackupRequest request =
-        CreateBackupRequest.of(getBackupClusterName().getCluster(), snapshotId)
+        CreateBackupRequest.of(getBackupClusterId(), snapshotId)
             .setSourceTableId(tableName.getNameAsString());
 
     int ttlSecondsForBackup = settings.getTtlSecondsForBackup();
@@ -986,22 +980,16 @@ public abstract class AbstractBigtableAdmin implements Admin {
   }
 
   protected synchronized String getBackupClusterId() {
-    return getBackupClusterName().getCluster();
-  }
-
-  private synchronized ClusterName getBackupClusterName() {
-    if (this.bigtableSnapshotClusterName == null) {
+    if (this.bigtableSnapshotClusterId == null) {
       List<Cluster> clusters = adminClientWrapper.listClusters(settings.getInstanceId());
       Preconditions.checkState(
           clusters.size() == 1,
           String.format(
               "Project '%s' / Instance '%s' has %d clusters. There must be exactly 1 for this operation to work.",
               settings.getProjectId(), settings.getInstanceId(), clusters.size()));
-      bigtableSnapshotClusterName =
-          ClusterName.of(
-              settings.getProjectId(), settings.getInstanceId(), clusters.get(0).getId());
+      bigtableSnapshotClusterId = clusters.get(0).getId();
     }
-    return bigtableSnapshotClusterName;
+    return bigtableSnapshotClusterId;
   }
 
   /** {@inheritDoc} */

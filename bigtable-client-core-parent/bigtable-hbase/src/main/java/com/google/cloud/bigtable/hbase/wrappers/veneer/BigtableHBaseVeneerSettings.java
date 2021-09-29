@@ -220,22 +220,6 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   }
 
   @Override
-  public String getUserAgent() {
-    List<String> userAgentParts = Lists.newArrayList();
-    userAgentParts.add("hbase-" + VersionInfo.getVersion());
-    userAgentParts.add("bigtable-" + Version.VERSION);
-    userAgentParts.add("bigtable-hbase-" + BigtableHBaseVersion.getVersion());
-    userAgentParts.add("jdk-" + System.getProperty("java.specification.version"));
-
-    String customUserAgent = configuration.get(CUSTOM_USER_AGENT_KEY);
-    if (customUserAgent != null) {
-      userAgentParts.add(customUserAgent);
-    }
-
-    return Joiner.on(",").join(userAgentParts);
-  }
-
-  @Override
   public boolean isRetriesWithoutTimestampAllowed() {
     return allowRetriesWithoutTimestamp;
   }
@@ -480,7 +464,18 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
   private void configureHeaderProvider(StubSettings.Builder<?, ?> stubSettings) {
     ImmutableMap.Builder<String, String> headersBuilder = ImmutableMap.<String, String>builder();
-    String userAgent = getUserAgent();
+    List<String> userAgentParts = Lists.newArrayList();
+    userAgentParts.add("hbase-" + VersionInfo.getVersion());
+    userAgentParts.add("bigtable-" + Version.VERSION);
+    userAgentParts.add("bigtable-hbase-" + BigtableHBaseVersion.getVersion());
+    userAgentParts.add("jdk-" + System.getProperty("java.specification.version"));
+
+    String customUserAgent = configuration.get(CUSTOM_USER_AGENT_KEY);
+    if (customUserAgent != null) {
+      userAgentParts.add(customUserAgent);
+    }
+
+    String userAgent = Joiner.on(",").join(userAgentParts);
     headersBuilder.put(USER_AGENT_KEY.name(), userAgent);
 
     String tracingCookie = configuration.get(BigtableOptionsFactory.BIGTABLE_TRACING_COOKIE);

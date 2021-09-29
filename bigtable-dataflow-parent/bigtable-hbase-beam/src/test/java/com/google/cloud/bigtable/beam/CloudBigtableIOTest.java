@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
 
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal.ByteStringComparator;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.beam.CloudBigtableIO.AbstractSource;
@@ -129,35 +130,9 @@ public class CloudBigtableIOTest {
         new Comparator<SourceWithKeys>() {
           @Override
           public int compare(SourceWithKeys o1, SourceWithKeys o2) {
-            ByteString key1 = o1.getConfiguration().getStartRowByteString();
-            ByteString key2 = o2.getConfiguration().getStartRowByteString();
-            if (key1 == null) {
-              if (key2 == null) {
-                return 0;
-              } else {
-                return 1;
-              }
-            } else if (key2 == null) {
-              return -1;
-            }
-
-            if (key1 == key2) {
-              return 0;
-            }
-
-            int size = Math.min(key1.size(), key2.size());
-
-            for (int i = 0; i < size; i++) {
-              // compare bytes as unsigned
-              int byte1 = key1.byteAt(i) & 0xff;
-              int byte2 = key2.byteAt(i) & 0xff;
-
-              int comparison = Integer.compare(byte1, byte2);
-              if (comparison != 0) {
-                return comparison;
-              }
-            }
-            return Integer.compare(key1.size(), key2.size());
+            return ByteStringComparator.INSTANCE.compare(
+                o1.getConfiguration().getStartRowByteString(),
+                o2.getConfiguration().getStartRowByteString());
           }
         });
     Assert.assertTrue(splits.size() <= AbstractSource.COUNT_MAX_SPLIT_COUNT);

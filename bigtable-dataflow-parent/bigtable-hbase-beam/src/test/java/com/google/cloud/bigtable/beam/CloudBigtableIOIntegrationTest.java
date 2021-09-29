@@ -26,13 +26,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.BoundedSource.BoundedReader;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.DoFnTester;
 import org.apache.beam.sdk.values.KV;
 import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -64,8 +65,7 @@ public class CloudBigtableIOIntegrationTest {
   public static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
   public static final byte[] QUALIFIER1 = Bytes.toBytes("qualifier1");
 
-  private static final Logger LOG =
-      Logger.getLogger(CloudBigtableIOIntegrationTest.class.getName());
+  private static final Log LOG = LogFactory.getLog(CloudBigtableIOIntegrationTest.class);
 
   private static String projectId = System.getProperty(BIGTABLE_PROJECT_KEY);
   private static String instanceId = System.getProperty(BIGTABLE_INSTANCE_KEY);
@@ -300,7 +300,7 @@ public class CloudBigtableIOIntegrationTest {
       TableName tableName = createNewTable(admin);
 
       final int rowCount = 1000;
-      LOG.info("Adding " + rowCount + " rows in testEstimatedAndSplitForLargeTable()");
+      LOG.info(String.format("Adding %s rows in testEstimatedAndSplitForLargeTable()", rowCount));
       try (BufferedMutator mutator = connection.getBufferedMutator(tableName)) {
         for (int i = 0; i < rowCount; i++) {
           byte[] largeValue = Bytes.toBytes(RandomStringUtils.randomAlphanumeric(LARGE_VALUE_SIZE));
@@ -340,7 +340,7 @@ public class CloudBigtableIOIntegrationTest {
                         reader.advance();
                       }
                     } catch (IOException e) {
-                      LOG.warning("Could not read bundle: " + e + bundle);
+                      LOG.warn(String.format("Could not read bundle: %s", bundle), e);
                     }
                   }
                 });

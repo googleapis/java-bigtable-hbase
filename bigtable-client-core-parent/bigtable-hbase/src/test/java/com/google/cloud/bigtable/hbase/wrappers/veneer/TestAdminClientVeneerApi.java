@@ -56,11 +56,8 @@ public class TestAdminClientVeneerApi {
   private static final String TABLE_ID_2 = "fake-Table-id-2";
   private static final String TABLE_NAME =
       NameUtil.formatTableName(PROJECT_ID, INSTANCE_ID, TABLE_ID_1);
-  private static final InstanceName INSTANCE_NAME = InstanceName.of(PROJECT_ID, INSTANCE_ID);
   private static final String CLUSTER_ID = "fake-cluster-id";
   private static final String BACKUP_ID = "fake-backup-id";
-  private static final ClusterName CLUSTER_NAME =
-      ClusterName.of(PROJECT_ID, INSTANCE_ID, CLUSTER_ID);
   private static final String BACKUP_NAME =
       BackupName.format(PROJECT_ID, INSTANCE_ID, CLUSTER_ID, BACKUP_ID);
   private static final AtomicInteger callCount = new AtomicInteger(1);
