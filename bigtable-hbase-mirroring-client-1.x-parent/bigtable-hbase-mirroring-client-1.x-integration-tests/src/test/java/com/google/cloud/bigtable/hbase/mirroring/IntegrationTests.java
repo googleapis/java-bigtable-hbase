@@ -16,6 +16,8 @@
 package com.google.cloud.bigtable.hbase.mirroring;
 
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
+import com.google.cloud.bigtable.hbase.mirroring.utils.PrometheusStatsCollectionRule;
+import com.google.cloud.bigtable.hbase.mirroring.utils.ZipkinTracingRule;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -31,4 +33,9 @@ public class IntegrationTests {
   // Classes in test suites should use their own ConnectionRule, the one here serves to keep a
   // single HBase MiniCluster connection up for all tests (if one is needed).
   @ClassRule public static ConnectionRule connectionRule = new ConnectionRule();
+  @ClassRule public static ZipkinTracingRule zipkinTracingRule = new ZipkinTracingRule();
+
+  @ClassRule
+  public static PrometheusStatsCollectionRule prometheusStatsCollectionRule =
+      new PrometheusStatsCollectionRule();
 }

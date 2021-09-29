@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase.mirroring.utils;
+package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
 
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
+import com.google.api.core.InternalApi;
+import java.io.IOException;
+import java.util.concurrent.Callable;
 
-public class SlowMismatchDetector extends TestMismatchDetector {
-  public static int sleepTime = 1000;
-
-  public SlowMismatchDetector(MirroringTracer tracer) {
-    super(tracer);
-  }
-
-  @Override
-  public void onVerificationStarted() {
-    super.onVerificationStarted();
-    try {
-      Thread.sleep(sleepTime);
-    } catch (InterruptedException ignored) {
-
-    }
-  }
+@InternalApi("For internal usage only")
+public interface CallableThrowingIOAndInterruptedException<T> extends Callable<T> {
+  T call() throws IOException, InterruptedException;
 }

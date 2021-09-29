@@ -33,10 +33,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController.ResourceReservation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Longs;
@@ -93,7 +95,7 @@ public class TestMirroringTable {
   @Mock Table secondaryTable;
   @Mock MismatchDetector mismatchDetector;
   @Mock FlowController flowController;
-  @Mock SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
+  @Mock SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
 
   MirroringTable mirroringTable;
 
@@ -107,7 +109,8 @@ public class TestMirroringTable {
                 this.executorServiceRule.executorService,
                 mismatchDetector,
                 flowController,
-                secondaryWriteErrorConsumer));
+                secondaryWriteErrorConsumer,
+                new MirroringTracer()));
   }
 
   private void mockFlowController() {
@@ -643,10 +646,13 @@ public class TestMirroringTable {
     verify(primaryTable, times(1)).put(put);
     verify(secondaryTable, times(1)).put(put);
 
-    ArgumentCaptor<List<Row>> argument = ArgumentCaptor.forClass(List.class);
-    verify(secondaryWriteErrorConsumer, times(1)).consume(argument.capture());
-    assertThat(argument.getValue().size()).isEqualTo(1);
-    assertThat(argument.getValue().get(0)).isEqualTo(put);
+    ArgumentCaptor<HBaseOperation> argument1 = ArgumentCaptor.forClass(HBaseOperation.class);
+    ArgumentCaptor<List<Row>> argument2 = ArgumentCaptor.forClass(List.class);
+    verify(secondaryWriteErrorConsumer, times(1)).consume(argument1.capture(), argument2.capture());
+    assertThat(argument2.getValue().size()).isEqualTo(1);
+    assertThat(argument2.getValue().get(0)).isEqualTo(put);
+
+    assertThat(argument1.getValue()).isEqualTo(HBaseOperation.PUT);
   }
 
   @Test
@@ -772,7 +778,8 @@ public class TestMirroringTable {
     assertThat(argument.getValue().length).isEqualTo(4);
 
     // failed secondary writes were reported
-    verify(secondaryWriteErrorConsumer, times(1)).consume(Arrays.asList(put1));
+    verify(secondaryWriteErrorConsumer, times(1))
+        .consume(HBaseOperation.BATCH, Arrays.asList(put1));
 
     // successful secondary reads were reported
     verify(mismatchDetector, times(1))
@@ -1162,7 +1169,8 @@ public class TestMirroringTable {
 
     verify(primaryTable, times(1)).put(request);
     verify(secondaryTable, never()).get(any(Get.class));
-    verify(secondaryWriteErrorConsumer, times(1)).consume(ImmutableList.of(request));
+    verify(secondaryWriteErrorConsumer, times(1))
+        .consume(HBaseOperation.PUT, ImmutableList.of(request));
   }
 
   @Test
@@ -1202,6 +1210,7 @@ public class TestMirroringTable {
 
     verify(primaryTable, times(1)).batch(request, results);
     verify(secondaryTable, never()).batch(ArgumentMatchers.<Row>anyList(), any(Object[].class));
-    verify(secondaryWriteErrorConsumer, times(1)).consume(ImmutableList.of(put1, put2));
+    verify(secondaryWriteErrorConsumer, times(1))
+        .consume(HBaseOperation.BATCH, ImmutableList.of(put1, put2));
   }
 }

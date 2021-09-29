@@ -26,10 +26,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController.ResourceReservation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
@@ -76,7 +78,7 @@ public class TestMirroringBufferedMutator {
   @Mock Connection secondaryConnection;
   @Mock FlowController flowController;
   @Mock ResourceReservation resourceReservation;
-  @Mock SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
+  @Mock SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumerWithMetrics;
 
   BufferedMutatorParams bufferedMutatorParams =
       new BufferedMutatorParams(TableName.valueOf("test1"));
@@ -274,8 +276,10 @@ public class TestMirroringBufferedMutator {
     verify(secondaryBufferedMutator, times(1))
         .mutate(Arrays.asList(mutation1, mutation2, mutation3, mutation4));
 
-    verify(secondaryWriteErrorConsumer, atLeastOnce()).consume(mutation1);
-    verify(secondaryWriteErrorConsumer, atLeastOnce()).consume(mutation3);
+    verify(secondaryWriteErrorConsumerWithMetrics, atLeastOnce())
+        .consume(HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST, Arrays.asList(mutation1));
+    verify(secondaryWriteErrorConsumerWithMetrics, atLeastOnce())
+        .consume(HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST, Arrays.asList(mutation3));
   }
 
   @Test
@@ -317,8 +321,10 @@ public class TestMirroringBufferedMutator {
     verify(secondaryBufferedMutator, atLeastOnce()).mutate(Arrays.asList(mutation1, mutation2));
     verify(secondaryBufferedMutator, atLeastOnce()).mutate(Arrays.asList(mutation3, mutation4));
 
-    verify(secondaryWriteErrorConsumer, atLeastOnce()).consume(mutation1);
-    verify(secondaryWriteErrorConsumer, atLeastOnce()).consume(mutation3);
+    verify(secondaryWriteErrorConsumerWithMetrics, atLeastOnce())
+        .consume(HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST, Arrays.asList(mutation1));
+    verify(secondaryWriteErrorConsumerWithMetrics, atLeastOnce())
+        .consume(HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST, Arrays.asList(mutation3));
   }
 
   @Test
@@ -468,7 +474,8 @@ public class TestMirroringBufferedMutator {
         makeConfigurationWithFlushThreshold(flushThreshold),
         flowController,
         executorServiceRule.executorService,
-        secondaryWriteErrorConsumer);
+        secondaryWriteErrorConsumerWithMetrics,
+        new MirroringTracer());
   }
 
   private MirroringConfiguration makeConfigurationWithFlushThreshold(long flushThreshold) {

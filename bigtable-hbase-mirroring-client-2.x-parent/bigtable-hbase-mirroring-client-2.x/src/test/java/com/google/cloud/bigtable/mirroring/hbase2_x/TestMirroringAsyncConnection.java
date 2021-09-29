@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ServerName;
@@ -127,7 +128,8 @@ public class TestMirroringAsyncConnection {
     MirroringAsyncConfiguration configuration =
         new MirroringAsyncConfiguration(testConfiguration, testConfiguration, testConfiguration);
     configuration.set("hbase.client.registry.impl", TestRegistry.class.getCanonicalName());
-    AsyncConnection connection = ConnectionFactory.createAsyncConnection(configuration).get();
+    AsyncConnection connection =
+        ConnectionFactory.createAsyncConnection(configuration).get(1, TimeUnit.SECONDS);
     assertTrue(connection instanceof MirroringAsyncConnection);
   }
 }
