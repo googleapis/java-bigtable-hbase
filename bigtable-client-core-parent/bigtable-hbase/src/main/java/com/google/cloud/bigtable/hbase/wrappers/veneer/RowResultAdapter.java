@@ -82,7 +82,8 @@ public class RowResultAdapter implements RowAdapter<Result> {
 
   @Override
   public ByteString getKey(Result result) {
-    return ByteStringer.wrap(result.rawCells()[0].getRowArray());
+    Cell cell = result.rawCells()[0];
+    return ByteStringer.wrap(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength());
   }
 
   static class RowResultBuilder implements RowBuilder<Result> {
