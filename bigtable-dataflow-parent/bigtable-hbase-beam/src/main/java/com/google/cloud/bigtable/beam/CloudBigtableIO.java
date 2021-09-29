@@ -714,7 +714,6 @@ public class CloudBigtableIO {
 
     @Override
     public final Result getCurrent() throws NoSuchElementException {
-//      return Result.create(current.rawCells());
       return current;
     }
 

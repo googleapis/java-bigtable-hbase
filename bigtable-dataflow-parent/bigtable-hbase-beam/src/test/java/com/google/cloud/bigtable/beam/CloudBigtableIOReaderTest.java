@@ -17,8 +17,8 @@ package com.google.cloud.bigtable.beam;
 
 import static org.mockito.Mockito.when;
 
-import avro.shaded.com.google.common.collect.ImmutableList;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.repackaged.com.google.common.collect.ImmutableList;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import java.io.IOException;
 import org.apache.beam.sdk.io.BoundedSource;
