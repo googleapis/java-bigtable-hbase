@@ -98,21 +98,23 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     }
 
     /**
-     * Specifies the {@link ReadRowsRequest} that will be used to filter the table.
-     *
+     * @deprecated Please use {@link #withScan(Scan)} instead.
+     *     <p>Specifies the {@link ReadRowsRequest} that will be used to filter the table.
      * @param request The {@link ReadRowsRequest} to add to the configuration.
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
+    @Deprecated
     public Builder withRequest(ReadRowsRequest request) {
       return withRequest(StaticValueProvider.of(request));
     }
 
     /**
-     * Specifies the {@link ReadRowsRequest} that will be used to filter the table.
-     *
+     * @deprecated Please use {@link #withScan(Scan)} instead.
+     *     <p>Specifies the {@link ReadRowsRequest} that will be used to filter the table.
      * @param request The {@link ReadRowsRequest} to add to the configuration.
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
+    @Deprecated
     public Builder withRequest(ValueProvider<ReadRowsRequest> request) {
       this.request = request;
       return this;
