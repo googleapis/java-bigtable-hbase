@@ -51,7 +51,6 @@ import io.grpc.stub.StreamObserver;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
 import org.apache.hadoop.hbase.client.Result;
@@ -122,11 +121,8 @@ public class DataClientVeneerApi implements DataClientWrapper {
     return ApiFutures.transform(
         delegate.readRowCallable().futureCall(query, createReadRowCallContext()),
         new ApiFunction<Row, Result>() {
-          Logger logger = Logger.getLogger("Logger");
-
           @Override
           public Result apply(Row row) {
-            logger.info("mattie --- adapting row: " + row);
             return Adapters.ROW_ADAPTER.adaptResponse(row);
           }
         },

@@ -586,11 +586,8 @@ public class CloudBigtableIO {
     /** Calls {@link ResultScanner#next()}. */
     @Override
     public boolean advance() throws IOException {
-      System.out.println("mattie --- scanner class: " + scanner.getClass().getName());
       Result row = scanner.next();
       if (row != null && rangeTracker.tryReturnRecordAt(true, ByteKey.copyFrom(row.getRow()))) {
-        READER_LOG.info(
-            "mattie --- " + row.listCells().toString() + " class is: " + row.getClass().getName());
         current = row;
         rowsRead.addAndGet(1l);
         return true;
