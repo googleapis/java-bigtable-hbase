@@ -27,7 +27,7 @@ import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
-import com.google.cloud.bigtable.config.BigtableVersionInfo;
+import com.google.cloud.bigtable.Version;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
 import com.google.cloud.bigtable.hbase.BigtableHBaseVersion;
@@ -184,7 +184,7 @@ public class TestAbstractBigtableConnection {
 
     Metadata metadata = headerInterceptor.receivedMetadata.get();
     String userAgent = metadata.get(Key.of("user-agent", Metadata.ASCII_STRING_MARSHALLER));
-    Truth.assertThat(userAgent).contains("bigtable-" + BigtableVersionInfo.CLIENT_VERSION);
+    Truth.assertThat(userAgent).contains("bigtable-" + Version.VERSION);
     Truth.assertThat(userAgent).contains("bigtable-hbase-" + BigtableHBaseVersion.getVersion());
     Truth.assertThat(userAgent).contains("hbase-" + VersionInfo.getVersion());
     Truth.assertThat(userAgent)

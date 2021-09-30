@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.hbase.adapters;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.adapters.filters.BigtableWhileMatchResultScannerAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
-import com.google.cloud.bigtable.hbase.adapters.read.FlatRowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.GetAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.RowRangeAdapter;
@@ -37,8 +36,6 @@ import org.apache.hadoop.hbase.client.Increment;
 public final class Adapters {
   /** Constant <code>ROW_ADAPTER</code> */
   public static final RowAdapter ROW_ADAPTER = new RowAdapter();
-  /** Constant <code>FLAT_ROW_ADAPTER</code> */
-  public static final FlatRowAdapter FLAT_ROW_ADAPTER = new FlatRowAdapter();
   /** Constant <code>APPEND_ADAPTER</code> */
   public static final AppendAdapter APPEND_ADAPTER = new AppendAdapter();
   /** Constant <code>INCREMENT_ADAPTER</code> */

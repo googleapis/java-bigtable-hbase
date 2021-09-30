@@ -17,7 +17,6 @@
 package org.apache.hadoop.hbase.client;
 
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
@@ -295,15 +294,6 @@ public abstract class AbstractBigtableConnection
   /** {@inheritDoc} */
   @Override
   public abstract Admin getAdmin() throws IOException;
-
-  /**
-   * Getter for the field <code>options</code>.
-   *
-   * @return a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
-   */
-  public BigtableOptions getOptions() {
-    throw new UnsupportedOperationException("veneer client does not support BigtableOptions");
-  }
 
   @Override
   public BigtableHBaseSettings getBigtableSettings() {
