@@ -18,16 +18,13 @@ package com.google.cloud.bigtable.mirroring.hbase2_x.utils;
 import static com.google.cloud.bigtable.mirroring.hbase2_x.utils.AsyncRequestScheduling.reserveFlowControlResourcesThenScheduleSecondary;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,47 +32,19 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 
 public class TestAsyncRequestScheduling {
-  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
-
-  @Mock FlowController flowController;
-
-  private void mockFlowController() {
-    FlowController.ResourceReservation resourceReservationMock =
-        mock(FlowController.ResourceReservation.class);
-
-    SettableFuture<FlowController.ResourceReservation> resourceReservationFuture =
-        SettableFuture.create();
-    resourceReservationFuture.set(resourceReservationMock);
-
-    doReturn(resourceReservationFuture)
-        .when(flowController)
-        .asyncRequestResource(any(RequestResourcesDescription.class));
-  }
-
-  private void mockExceptionalFlowController() {
-    SettableFuture<FlowController.ResourceReservation> resourceReservationFuture =
-        SettableFuture.create();
-    resourceReservationFuture.setException(new IOException("expected"));
-
-    doReturn(resourceReservationFuture)
-        .when(flowController)
-        .asyncRequestResource(any(RequestResourcesDescription.class));
-  }
-
   @Test
   public void testExceptionalPrimaryFuture() throws ExecutionException, InterruptedException {
-    mockFlowController();
-
     CompletableFuture<Void> exceptionalFuture = new CompletableFuture<>();
     IOException ioe = new IOException("expected");
     exceptionalFuture.completeExceptionally(ioe);
+
+    FlowController.ResourceReservation resourceReservation =
+        mock(FlowController.ResourceReservation.class);
+    CompletableFuture<FlowController.ResourceReservation> resourceReservationFuture =
+        CompletableFuture.completedFuture(resourceReservation);
 
     Supplier<CompletableFuture<Void>> secondaryFutureSupplier = mock(Supplier.class);
     Function<Void, FutureCallback<Void>> verificationCreator = mock(Function.class);
@@ -84,10 +53,9 @@ public class TestAsyncRequestScheduling {
     CompletableFuture<Void> resultFuture =
         reserveFlowControlResourcesThenScheduleSecondary(
             exceptionalFuture,
-            new RequestResourcesDescription(new boolean[0]),
+            resourceReservationFuture,
             secondaryFutureSupplier,
             verificationCreator,
-            this.flowController,
             flowControlReservationErrorHandler);
 
     final List<Throwable> resultFutureThrowableList = new ArrayList<>();
@@ -102,15 +70,16 @@ public class TestAsyncRequestScheduling {
     assertThat(resultFutureThrowableList.size()).isEqualTo(1);
     assertThat(resultFutureThrowableList.get(0)).isEqualTo(ioe);
 
+    verify(resourceReservation, times(1)).release();
     verify(verificationCreator, never()).apply((Void) any());
     verify(secondaryFutureSupplier, never()).get();
     verify(flowControlReservationErrorHandler, never()).run();
+
+    assertThat(resourceReservationFuture.isCancelled());
   }
 
   @Test
   public void testExceptionalReservationFuture() throws ExecutionException, InterruptedException {
-    mockExceptionalFlowController();
-
     CompletableFuture<Void> primaryFuture = CompletableFuture.completedFuture(null);
     CompletableFuture<FlowController.ResourceReservation> exceptionalFuture =
         new CompletableFuture<>();
@@ -124,11 +93,10 @@ public class TestAsyncRequestScheduling {
     CompletableFuture<Void> resultFuture =
         reserveFlowControlResourcesThenScheduleSecondary(
             primaryFuture,
-            new RequestResourcesDescription(new boolean[0]),
+            exceptionalFuture,
             secondaryFutureSupplier,
             verificationCreator,
-            this.flowController,
-            flowControlReservationErrorHandler);
+            flowControlReservationErrorHandler::run);
 
     Void result = resultFuture.get();
 

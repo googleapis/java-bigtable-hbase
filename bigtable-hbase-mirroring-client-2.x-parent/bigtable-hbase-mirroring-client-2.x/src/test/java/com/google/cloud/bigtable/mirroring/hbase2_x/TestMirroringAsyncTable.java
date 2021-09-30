@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.common.primitives.Longs;
@@ -278,7 +278,7 @@ public class TestMirroringAsyncTable {
 
     ArgumentCaptor<List<Row>> argument = ArgumentCaptor.forClass(List.class);
     verify(secondaryWriteErrorConsumer, times(1))
-        .consume(eq(MirroringSpanConstants.HBaseOperation.PUT), argument.capture());
+        .consume(eq(HBaseOperation.PUT), argument.capture());
     assertThat(argument.getValue().size()).isEqualTo(1);
     assertThat(argument.getValue().get(0)).isEqualTo(put);
   }
