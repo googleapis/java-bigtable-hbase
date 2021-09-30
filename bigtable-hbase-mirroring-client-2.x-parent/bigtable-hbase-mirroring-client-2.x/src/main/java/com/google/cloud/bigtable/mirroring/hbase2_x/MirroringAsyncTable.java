@@ -25,6 +25,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.Mirro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
+import com.google.cloud.bigtable.mirroring.hbase2_x.utils.futures.FutureConverter;
 import com.google.common.util.concurrent.FutureCallback;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -162,10 +163,11 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
           }
           reserveFlowControlResourcesThenScheduleSecondary(
                   primaryFuture,
-                  resourcesDescriptionCreator.apply(primaryResult),
+                  FutureConverter.toCompletable(
+                      flowController.asyncRequestResource(
+                          resourcesDescriptionCreator.apply(primaryResult))),
                   secondaryFutureSupplier,
-                  verificationCallbackCreator,
-                  this.flowController)
+                  verificationCallbackCreator)
               .whenComplete(
                   (ignoredResult, ignoredError) -> {
                     resultFuture.complete(primaryResult);
@@ -183,7 +185,8 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
       final Runnable controlFlowReservationErrorHandler) {
     return reserveFlowControlResourcesThenScheduleSecondary(
         primaryFuture,
-        writeOperationInfo.requestResourcesDescription,
+        FutureConverter.toCompletable(
+            flowController.asyncRequestResource(writeOperationInfo.requestResourcesDescription)),
         secondaryFutureSupplier,
         (ignoredSecondaryResult) ->
             new FutureCallback<T>() {
@@ -195,7 +198,6 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
                 secondaryWriteErrorConsumer.consume(operation, writeOperationInfo.operations);
               }
             },
-        this.flowController,
         controlFlowReservationErrorHandler);
   }
 
@@ -270,7 +272,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
   }
 
   @Override
-  public <T> List<CompletableFuture<T>> batch(List<? extends Row> list) {
+  public <T> List<CompletableFuture<T>> batch(List<? extends Row> actions) {
     throw new UnsupportedOperationException();
   }
 
