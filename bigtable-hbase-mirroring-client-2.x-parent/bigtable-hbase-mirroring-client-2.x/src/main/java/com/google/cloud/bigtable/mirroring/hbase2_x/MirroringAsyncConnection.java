@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase2_x;
 
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.reflection.ReflectionConstructor;
@@ -45,7 +45,7 @@ public class MirroringAsyncConnection implements AsyncConnection {
   private AsyncConnection secondaryConnection;
   private final MismatchDetector mismatchDetector;
   private final FlowController flowController;
-  private final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
+  private final SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
   private final MirroringTracer mirroringTracer;
 
   /**
@@ -86,8 +86,10 @@ public class MirroringAsyncConnection implements AsyncConnection {
         ReflectionConstructor.construct(
             this.configuration.mirroringOptions.mismatchDetectorClass, this.mirroringTracer);
     this.secondaryWriteErrorConsumer =
-        ReflectionConstructor.construct(
-            this.configuration.mirroringOptions.writeErrorConsumerClass);
+        new SecondaryWriteErrorConsumerWithMetrics(
+            this.mirroringTracer,
+            ReflectionConstructor.construct(
+                this.configuration.mirroringOptions.writeErrorConsumerClass));
   }
 
   @Override
@@ -103,7 +105,8 @@ public class MirroringAsyncConnection implements AsyncConnection {
         this.secondaryConnection.getTable(tableName),
         this.mismatchDetector,
         this.flowController,
-        this.secondaryWriteErrorConsumer);
+        this.secondaryWriteErrorConsumer,
+        this.mirroringTracer);
   }
 
   @Override

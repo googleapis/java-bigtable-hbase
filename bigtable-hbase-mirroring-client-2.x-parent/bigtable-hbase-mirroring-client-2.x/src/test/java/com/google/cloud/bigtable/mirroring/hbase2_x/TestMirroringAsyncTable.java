@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.mirroring.hbase2_x;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -25,9 +26,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.SettableFuture;
@@ -69,7 +72,7 @@ public class TestMirroringAsyncTable {
   @Mock AsyncTable secondaryTable;
   @Mock MismatchDetector mismatchDetector;
   @Mock FlowController flowController;
-  @Mock SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
+  @Mock SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
 
   MirroringAsyncTable<ScanResultConsumerBase> mirroringTable;
 
@@ -82,7 +85,8 @@ public class TestMirroringAsyncTable {
                 secondaryTable,
                 mismatchDetector,
                 flowController,
-                secondaryWriteErrorConsumer));
+                secondaryWriteErrorConsumer,
+                new MirroringTracer()));
   }
 
   private void mockFlowController() {
@@ -273,7 +277,8 @@ public class TestMirroringAsyncTable {
     verify(secondaryTable, times(1)).put(put);
 
     ArgumentCaptor<List<Row>> argument = ArgumentCaptor.forClass(List.class);
-    verify(secondaryWriteErrorConsumer, times(1)).consume(argument.capture());
+    verify(secondaryWriteErrorConsumer, times(1))
+        .consume(eq(MirroringSpanConstants.HBaseOperation.PUT), argument.capture());
     assertThat(argument.getValue().size()).isEqualTo(1);
     assertThat(argument.getValue().get(0)).isEqualTo(put);
   }
