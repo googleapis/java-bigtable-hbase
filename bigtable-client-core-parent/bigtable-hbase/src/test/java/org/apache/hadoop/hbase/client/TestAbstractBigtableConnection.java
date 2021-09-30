@@ -246,6 +246,11 @@ public class TestAbstractBigtableConnection {
     }
 
     @Override
+    public String getClusterId() throws IOException {
+      throw new UnsupportedOperationException("not supported");
+    }
+
+    @Override
     public List<HRegionInfo> getAllRegionInfos(TableName tableName) {
       return ImmutableList.of(regionInfo);
     }

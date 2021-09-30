@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -33,6 +35,8 @@ import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.CommonConnection;
+import org.apache.hadoop.hbase.client.LogEntry;
+import org.apache.hadoop.hbase.client.ServerType;
 import org.apache.hadoop.hbase.client.security.SecurityCapability;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
@@ -79,6 +83,12 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     disableTable(tableName);
   }
 
+  @Override
+  public Map<ServerName, Boolean> compactionSwitch(boolean b, List<String> list)
+      throws IOException {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
   /** {@inheritDoc} */
   @Override
   public void enableTableAsync(TableName tableName) throws IOException {
@@ -111,6 +121,13 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
       String snapshotId, TableName tableName, HBaseProtos.SnapshotDescription.Type type)
       throws IOException, SnapshotCreationException, IllegalArgumentException {
     snapshot(snapshotId, tableName);
+  }
+
+  @Override
+  public void snapshot(
+      String s, TableName tableName, SnapshotDescription.Type type, Map<String, Object> map)
+      throws IOException, SnapshotCreationException, IllegalArgumentException {
+    throw new UnsupportedOperationException("not implemented");
   }
 
   /** {@inheritDoc} */
@@ -217,6 +234,11 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
+  public ServerName getMaster() throws IOException {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
   public boolean normalize() throws IOException {
     throw new UnsupportedOperationException("normalize"); // TODO
   }
@@ -293,6 +315,28 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
+  public boolean snapshotCleanupSwitch(boolean b, boolean b1) throws IOException {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
+  public boolean isSnapshotCleanupEnabled() throws IOException {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
+  public List<Boolean> clearSlowLogResponses(Set<ServerName> set) throws IOException {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
+  public List<LogEntry> getLogEntries(
+      Set<ServerName> set, String s, ServerType serverType, int i, Map<String, Object> map)
+      throws IOException {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
   public boolean[] setSplitOrMergeEnabled(boolean arg0, boolean arg1, MasterSwitchType... arg2)
       throws IOException {
     throw new UnsupportedOperationException("setSplitOrMergeEnabled"); // TODO
@@ -306,5 +350,10 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
         return Collections.emptyList();
       }
     };
+  }
+
+  @Override
+  public String[] listNamespaces() throws IOException {
+    throw new UnsupportedOperationException("not implemented");
   }
 }
