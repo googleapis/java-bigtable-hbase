@@ -88,10 +88,12 @@ public class BatchHelpers {
                   resultIsFaultyPredicate);
 
           try (Scope scope = mirroringTracer.spanFactory.verificationScope()) {
-            mismatchDetector.batch(
-                secondarySplitResponse.successfulReads,
-                matchingSuccessfulReads.primaryResults,
-                matchingSuccessfulReads.secondaryResults);
+            if (!matchingSuccessfulReads.successfulReads.isEmpty()) {
+              mismatchDetector.batch(
+                  secondarySplitResponse.successfulReads,
+                  matchingSuccessfulReads.primaryResults,
+                  matchingSuccessfulReads.secondaryResults);
+            }
 
             if (!matchingSuccessfulReads.failedReads.isEmpty()) {
               mismatchDetector.batch(matchingSuccessfulReads.failedReads, throwable);
