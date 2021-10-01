@@ -79,19 +79,23 @@ which makes it easy for development teams to get started.
     Then create the connection and connect to the table:
 
     ```java
-    Configuration configuration = BigtableConfiguration.configure("project-id", "instance-id");
+    Connection connection = BigtableConfiguration.connect("project-id", "instance-id");
     Table table = connection.getTable(TableName.valueOf("table-id"));
     ```
 
   * Option 2: Create a `Configuration` object with `BigtableConfiguration` and create the connection from `ConnectionFactory`
 
     ```java
+    // Add additional imports
+    import org.apache.hadoop.hbase.client.ConnectionFactory;
+
     Configuration configuration = BigtableConfiguration.configure("project-id", "instance-id");
     Connection connection = ConnectionFactory.createConnection(configuration);
     ```
 
     The configuration can also be used to create async connections with HBase 2.x interface
     ```java
+    // Add additional imports
     import org.apache.hadoop.hbase.client.AsyncConnection;
     import org.apache.hadoop.hbase.client.AsyncTable;
 
@@ -105,6 +109,25 @@ which makes it easy for development teams to get started.
 
     Add the following configuration to your `hbase-site.xml` under your project's `src/main/resources` directory.
 
+    For HBase 1.x
+    ```xml
+    <configuration>
+        <property>
+           <name>hbase.client.connection.impl</name>
+           <value>com.google.cloud.bigtable.hbase1_x.BigtableConnection</value>
+        </property>
+        <property>
+           <name>google.bigtable.project.id</name>
+           <value>project-id</value>
+        </property>
+        <property>
+           <name>google.bigtable.instance.id</name>
+           <value>instance-id</value>
+        </property>
+    </configuration>
+    ```
+
+    For HBase 2.x
     ```xml
     <configuration>
         <property>
@@ -120,12 +143,12 @@ which makes it easy for development teams to get started.
            <value>org.apache.hadoop.hbase.client.BigtableAsyncRegistry</value>
         </property>
         <property>
-           <name>google.bigtable.instance.id</name>
-           <value>instance-id</value>
-        </property>
-        <property>
            <name>google.bigtable.project.id</name>
            <value>project-id</value>
+        </property>
+        <property>
+           <name>google.bigtable.instance.id</name>
+           <value>instance-id</value>
         </property>
     </configuration>
     ```
@@ -136,7 +159,7 @@ which makes it easy for development teams to get started.
     Connection connection = ConnectionFactory.createConnection();
     ```
 
-    Or create async connection with:
+    Or for HBase 2.x, create async connection with:
     ```
     AsyncConnection connection = ConnectionFactory.createAsyncConnection().get();
     ```
