@@ -91,8 +91,8 @@ public class BigtableConfiguration {
   }
 
   /**
-   * Set up connection impl classes. If org.apache.hadoop.hbase.client.AsyncConnection exists, set
-   * up async connection impl class as well.
+   * Set up connection impl classes. If Bigtable and HBase async connection classes exist, set up
+   * async connection impl class as well.
    */
   private static Configuration injectBigtableImpls(Configuration configuration) {
     configuration.set(HBASE_CLIENT_CONNECTION_IMPL, getConnectionClass().getCanonicalName());
@@ -106,7 +106,7 @@ public class BigtableConfiguration {
       configuration.set(
           HBASE_CLIENT_ASYNC_REGISTRY_IMPL, BIGTABLE_HBASE_CLIENT_ASYNC_REGISTRY_CLASS);
     } catch (ClassNotFoundException ignored) {
-      // Skip if AsyncConnection doesn't exist
+      // Skip if any of the async connection class doesn't exist
     }
     return configuration;
   }
