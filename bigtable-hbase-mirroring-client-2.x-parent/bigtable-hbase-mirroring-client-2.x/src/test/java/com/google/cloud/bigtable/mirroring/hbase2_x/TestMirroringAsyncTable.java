@@ -36,8 +36,10 @@ import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -96,6 +98,16 @@ public class TestMirroringAsyncTable {
     SettableFuture<FlowController.ResourceReservation> resourceReservationFuture =
         SettableFuture.create();
     resourceReservationFuture.set(resourceReservationMock);
+
+    doReturn(resourceReservationFuture)
+        .when(flowController)
+        .asyncRequestResource(any(RequestResourcesDescription.class));
+  }
+
+  private void mockExceptionalFlowController() {
+    SettableFuture<FlowController.ResourceReservation> resourceReservationFuture =
+        SettableFuture.create();
+    resourceReservationFuture.setException(new IOException("expected"));
 
     doReturn(resourceReservationFuture)
         .when(flowController)
@@ -193,6 +205,73 @@ public class TestMirroringAsyncTable {
   }
 
   @Test
+  public void testMismatchDetectorIsCalledOnGetMultiple()
+      throws IOException, ExecutionException, InterruptedException {
+    mockFlowController();
+    List<Get> get = createGets("test");
+    Result[] expectedResultArray = {createResult("test", "value")};
+    CompletableFuture<Result> expectedFuture = new CompletableFuture<Result>();
+    List<CompletableFuture<Result>> expectedResultFutureList = Arrays.asList(expectedFuture);
+
+    when(primaryTable.batch(get)).thenReturn(expectedResultFutureList);
+    when(secondaryTable.batch(get)).thenReturn(expectedResultFutureList);
+
+    List<CompletableFuture<Result>> resultFutures = mirroringTable.get(get);
+    assertThat(resultFutures.size()).isEqualTo(1);
+
+    expectedFuture.complete(expectedResultArray[0]);
+    Result result = resultFutures.get(0).get();
+    assertThat(result).isEqualTo(expectedResultArray[0]);
+
+    verify(mismatchDetector, times(1))
+        .batch(eq(get), eq(expectedResultArray), eq(expectedResultArray));
+    verify(mismatchDetector, never()).batch((List<Get>) any(), (Throwable) any());
+    verify(mismatchDetector, never()).get((Get) any(), (Throwable) any());
+    verify(mismatchDetector, never()).get((Get) any(), (Result) any(), (Result) any());
+  }
+
+  @Test
+  public void testSecondaryReadExceptionCallsVerificationErrorHandlerOnGetMultiple()
+      throws IOException, ExecutionException, InterruptedException {
+    mockFlowController();
+    List<Get> get = createGets("test1", "test2");
+    Result[] expectedResultArray = {
+      createResult("test1", "value1"), createResult("test2", "value2")
+    };
+    CompletableFuture<Result> expectedFuture1 = new CompletableFuture<Result>();
+    CompletableFuture<Result> expectedFuture2 = new CompletableFuture<Result>();
+    CompletableFuture<Result> exceptionalFuture = new CompletableFuture<Result>();
+    List<CompletableFuture<Result>> expectedResultFutureList =
+        Arrays.asList(expectedFuture1, expectedFuture2);
+    List<CompletableFuture<Result>> exceptionalResultFutureList =
+        Arrays.asList(exceptionalFuture, exceptionalFuture);
+
+    when(primaryTable.batch(get)).thenReturn(expectedResultFutureList);
+    when(secondaryTable.batch(get)).thenReturn(exceptionalResultFutureList);
+
+    List<CompletableFuture<Result>> resultFutures = mirroringTable.get(get);
+    assertThat(resultFutures.size()).isEqualTo(2);
+
+    expectedFuture1.complete(expectedResultArray[0]);
+    expectedFuture2.complete(expectedResultArray[1]);
+    IOException ioe = new IOException("expected");
+    exceptionalFuture.completeExceptionally(ioe);
+    Result result1 = resultFutures.get(0).get();
+    assertThat(result1).isEqualTo(expectedResultArray[0]);
+    Result result2 = resultFutures.get(1).get();
+    assertThat(result2).isEqualTo(expectedResultArray[1]);
+
+    ArgumentCaptor<CompletionException> argument =
+        ArgumentCaptor.forClass(CompletionException.class);
+    verify(mismatchDetector, times(1)).batch(eq(get), argument.capture());
+    assertThat(argument.getValue().getCause()).isEqualTo(ioe);
+
+    verify(mismatchDetector, never()).batch((List<Get>) any(), (Result[]) any(), (Result[]) any());
+    verify(mismatchDetector, never()).get((Get) any(), (Throwable) any());
+    verify(mismatchDetector, never()).get((Get) any(), (Result) any(), (Result) any());
+  }
+
+  @Test
   public void testSecondaryReadExceptionCallsVerificationErrorHandlerOnExists()
       throws IOException, ExecutionException, InterruptedException {
     mockFlowController();
@@ -283,6 +362,202 @@ public class TestMirroringAsyncTable {
     assertThat(argument.getValue().get(0)).isEqualTo(put);
   }
 
+  <T> List<T> waitForAll(List<CompletableFuture<T>> futures) {
+    List<T> results = new ArrayList<>(futures.size());
+    int numberOfFutures = futures.size();
+    for (int i = 0; i < numberOfFutures; i++) {
+      try {
+        results.add(futures.get(i).get());
+      } catch (Exception e) {
+        results.add(null);
+      }
+    }
+    return results;
+  }
+
+  @Test
+  public void testEmptyBatch() {
+    mockFlowController();
+    List<Get> requests = Arrays.asList();
+    when(primaryTable.batch(requests)).thenReturn(Arrays.asList());
+
+    List<CompletableFuture<Object>> resultFutures = mirroringTable.batch(requests);
+    assertThat(resultFutures.size()).isEqualTo(0);
+
+    verify(primaryTable, times(1)).batch(requests);
+    verify(secondaryTable, never()).batch(requests);
+    verify(mismatchDetector, never()).batch((List<Get>) any(), (Result[]) any(), (Result[]) any());
+    verify(mismatchDetector, never()).batch((List<Get>) any(), (Throwable) any());
+  }
+
+  @Test
+  public void testBatchGetAndPutGetsAreVerifiedOnSuccess()
+      throws IOException, InterruptedException, ExecutionException {
+    mockFlowController();
+    Put put1 = createPut("test1", "f1", "q1", "v1");
+    Get get1 = createGet("get1");
+
+    List<Row> requests = Arrays.asList(new Row[] {put1, get1});
+    List<Row> secondaryRequests = requests;
+
+    // op   | p    | s
+    // put1 | ok   | ok
+    // get1 | ok   | ok
+
+    final Result get1Result = createResult("get1", "value1");
+
+    List<CompletableFuture<Object>> primaryFutures =
+        Arrays.asList(new CompletableFuture<>(), new CompletableFuture<>());
+    List<CompletableFuture<Object>> secondaryFutures =
+        Arrays.asList(new CompletableFuture<>(), new CompletableFuture<>());
+
+    when(primaryTable.batch(requests)).thenReturn(primaryFutures);
+    when(secondaryTable.batch(secondaryRequests)).thenReturn(secondaryFutures);
+
+    List<CompletableFuture<Object>> resultFutures = mirroringTable.batch(requests);
+    primaryFutures.get(0).complete(null);
+    primaryFutures.get(1).complete(get1Result);
+    secondaryFutures.get(0).complete(null);
+    secondaryFutures.get(1).complete(get1Result);
+    List<Object> results = waitForAll(resultFutures);
+    assertThat(results.size()).isEqualTo(2);
+
+    verify(primaryTable, times(1)).batch(requests);
+    verify(secondaryTable, times(1)).batch(eq(secondaryRequests));
+
+    verify(mismatchDetector, times(1))
+        .batch(Arrays.asList(get1), new Result[] {get1Result}, new Result[] {get1Result});
+    verify(secondaryWriteErrorConsumer, never())
+        .consume(eq(HBaseOperation.BATCH), (List<? extends Row>) any());
+  }
+
+  @Test
+  public void testBatchGetAndPut() throws IOException, InterruptedException, ExecutionException {
+    mockFlowController();
+    Put put1 = createPut("test1", "f1", "q1", "v1");
+    Put put2 = createPut("test2", "f2", "q2", "v2");
+    Put put3 = createPut("test3", "f3", "q3", "v3");
+    Get get1 = createGet("get1");
+    Get get2 = createGet("get2");
+    Get get3 = createGet("get3");
+
+    List<Row> requests = Arrays.asList(new Row[] {put1, put2, put3, get1, get2, get3});
+    List<Row> secondaryRequests = Arrays.asList(new Row[] {put1, put3, get1, get3});
+
+    // op   | p    | s
+    // put1 | ok   | fail
+    // put2 | fail | x
+    // put3 | ok   | ok
+
+    // get1 | ok   | fail
+    // get2 | fail | x
+    // get3 | ok   | ok
+
+    final Result get1Result = createResult("get1", "value1");
+    final Result get3Result = createResult("get3", "value3");
+
+    List<CompletableFuture<Object>> primaryFutures =
+        Arrays.asList(
+            new CompletableFuture<>(),
+            new CompletableFuture<>(),
+            new CompletableFuture<>(),
+            new CompletableFuture<>(),
+            new CompletableFuture<>(),
+            new CompletableFuture<>());
+    List<CompletableFuture<Object>> secondaryFutures =
+        Arrays.asList(
+            new CompletableFuture<>(),
+            new CompletableFuture<>(),
+            new CompletableFuture<>(),
+            new CompletableFuture<>());
+
+    when(primaryTable.batch(requests)).thenReturn(primaryFutures);
+    when(secondaryTable.batch(secondaryRequests)).thenReturn(secondaryFutures);
+
+    List<CompletableFuture<Object>> resultFutures = mirroringTable.batch(requests);
+    IOException ioe = new IOException("expected");
+
+    primaryFutures.get(0).complete(null); // put1 - ok
+    primaryFutures.get(1).completeExceptionally(ioe); // put2 - failed
+    primaryFutures.get(2).complete(null); // put3 - ok
+    primaryFutures.get(3).complete(get1Result); // get1 - ok
+    primaryFutures.get(4).completeExceptionally(ioe); // get2 - failed
+    primaryFutures.get(5).complete(get3Result); // get3 - ok
+
+    secondaryFutures.get(0).completeExceptionally(ioe); // put1 - failed
+    secondaryFutures.get(1).complete(null); // put3 - ok
+    secondaryFutures.get(2).completeExceptionally(ioe); // get1 - failed
+    secondaryFutures.get(3).complete(get3Result); // get3 - ok
+
+    List<Object> results = waitForAll(resultFutures);
+    assertThat(results.size()).isEqualTo(primaryFutures.size());
+
+    assertThat(results.get(0)).isEqualTo(null); // put1
+    assertThat(resultFutures.get(1).isCompletedExceptionally()); // put2
+    assertThat(results.get(2)).isEqualTo(null); // put3
+
+    assertThat(results.get(3)).isEqualTo(get1Result);
+    assertThat(resultFutures.get(4).isCompletedExceptionally());
+    assertThat(results.get(5)).isEqualTo(get3Result);
+
+    verify(primaryTable, times(1)).batch(requests);
+    verify(secondaryTable, times(1)).batch(eq(secondaryRequests));
+
+    verify(mismatchDetector, times(1))
+        .batch(
+            eq(Arrays.asList(get3)), eq(new Result[] {get3Result}), eq(new Result[] {get3Result}));
+    verify(secondaryWriteErrorConsumer, times(1))
+        .consume(HBaseOperation.BATCH, Arrays.asList(put1));
+  }
+
+  @Test
+  public void testBatchGetsPrimaryFailsSecondaryOk()
+      throws IOException, InterruptedException, ExecutionException {
+    mockFlowController();
+    Get get1 = createGet("get1");
+    Get get2 = createGet("get2");
+
+    List<Row> requests = Arrays.asList(new Row[] {get1, get2});
+    List<Row> secondaryRequests = Arrays.asList(new Row[] {get2});
+
+    // op   | p    | s
+    // get1 | fail | x
+    // get2 | ok   | ok
+
+    final Result get2Result = createResult("get2", "value2");
+
+    List<CompletableFuture<Object>> primaryFutures =
+        Arrays.asList(new CompletableFuture<>(), new CompletableFuture<>());
+    List<CompletableFuture<Object>> secondaryFutures = Arrays.asList(new CompletableFuture<>());
+
+    when(primaryTable.batch(requests)).thenReturn(primaryFutures);
+    when(secondaryTable.batch(secondaryRequests)).thenReturn(secondaryFutures);
+
+    List<CompletableFuture<Object>> resultFutures = mirroringTable.batch(requests);
+    IOException ioe = new IOException("expected");
+
+    primaryFutures.get(0).completeExceptionally(ioe); // get1 - failed
+    primaryFutures.get(1).complete(get2Result); // get2 - ok
+    secondaryFutures.get(0).complete(get2Result); // get2 - ok
+
+    List<Object> results = waitForAll(resultFutures);
+    assertThat(results.size()).isEqualTo(primaryFutures.size());
+
+    assertThat(resultFutures.get(0).isCompletedExceptionally()); // get1
+    assertThat(results.get(1)).isEqualTo(get2Result); // put3
+
+    verify(primaryTable, times(1)).batch(requests);
+    verify(secondaryTable, times(1)).batch(eq(secondaryRequests));
+
+    // successful secondary reads were reported
+    verify(mismatchDetector, times(1))
+        .batch(Arrays.asList(get2), new Result[] {get2Result}, new Result[] {get2Result});
+
+    // no read errors reported
+    verify(mismatchDetector, never())
+        .batch(ArgumentMatchers.<Get>anyList(), any(IOException.class));
+  }
+
   @Test
   public void testDelete() throws IOException, InterruptedException, ExecutionException {
     mockFlowController();
@@ -367,5 +642,31 @@ public class TestMirroringAsyncTable {
     mirroringTable.append(append).get();
 
     verify(secondaryTable, times(1)).append(append);
+  }
+
+  @Test
+  public void TestExceptionalFlowControllerAndWriteInBatch()
+      throws ExecutionException, InterruptedException {
+    mockExceptionalFlowController();
+    Put put1 = createPut("test1", "f1", "q1", "v1");
+    Put put2 = createPut("test2", "f2", "q2", "v2");
+    List<Put> requests = Arrays.asList(new Put[] {put1, put2});
+
+    CompletableFuture<Void> exceptionalFuture = new CompletableFuture<>();
+    exceptionalFuture.completeExceptionally(new IOException("expected"));
+
+    List<CompletableFuture<Void>> primaryResults =
+        Arrays.asList(exceptionalFuture, CompletableFuture.completedFuture(null));
+
+    when(primaryTable.batch(requests)).thenReturn(primaryResults);
+
+    List<CompletableFuture<Void>> resultFutures = mirroringTable.batch(requests);
+    assertThat(resultFutures.size()).isEqualTo(2);
+    assertThat(resultFutures.get(0).isCompletedExceptionally());
+    assertThat(resultFutures.get(1).get()).isEqualTo(null);
+
+    verify(secondaryTable, never()).batch((List<Put>) any());
+    verify(secondaryWriteErrorConsumer, times(1))
+        .consume(HBaseOperation.BATCH, Arrays.asList(put2));
   }
 }

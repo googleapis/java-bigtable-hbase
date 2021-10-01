@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.mirroring.hbase2_x;
 import static com.google.cloud.bigtable.mirroring.hbase2_x.utils.AsyncRequestScheduling.reserveFlowControlResourcesThenScheduleSecondary;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringTable;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
@@ -26,12 +27,18 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.Mirro
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
 import com.google.cloud.bigtable.mirroring.hbase2_x.utils.futures.FutureConverter;
+import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.FutureCallback;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
@@ -51,6 +58,7 @@ import org.apache.hadoop.hbase.shaded.com.google.protobuf.RpcChannel;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements AsyncTable<C> {
+  private final Predicate<Object> resultIsFaultyPredicate = (o) -> o instanceof Throwable;
   private final AsyncTable<C> primaryTable;
   private final AsyncTable<C> secondaryTable;
   private final VerificationContinuationFactory verificationContinuationFactory;
@@ -146,6 +154,123 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
         primaryFuture,
         () -> this.secondaryTable.mutateRow(rowMutations),
         () -> this.secondaryWriteErrorConsumer.consume(HBaseOperation.MUTATE_ROW, rowMutations));
+  }
+
+  @Override
+  public List<CompletableFuture<Result>> get(List<Get> list) {
+    return batch(list);
+  }
+
+  @Override
+  public List<CompletableFuture<Void>> put(List<Put> list) {
+    return batch(list);
+  }
+
+  @Override
+  public List<CompletableFuture<Void>> delete(List<Delete> list) {
+    return batch(list);
+  }
+
+  @Override
+  public <T> List<CompletableFuture<T>> batch(List<? extends Row> actions) {
+    final int numActions = actions.size();
+    final List<CompletableFuture<T>> resultFutures =
+        Stream.generate(() -> new CompletableFuture<T>())
+            .limit(numActions)
+            .collect(Collectors.toCollection(ArrayList::new));
+
+    final List<CompletableFuture<T>> primaryFutures = this.primaryTable.batch(actions);
+    // Unfortunately, we cannot create T[].
+    final Object[] primaryResults = new Object[numActions];
+
+    BiConsumer<Integer, Throwable> primaryErrorHandler =
+        (idx, throwable) -> resultFutures.get(idx).completeExceptionally(throwable);
+    waitForAllWithErrorHandler(primaryFutures, primaryErrorHandler, primaryResults)
+        .whenComplete(
+            (ignoredResult, ignoredError) -> {
+              final BatchHelpers.SplitBatchResponse<?> primarySplitResponse =
+                  new BatchHelpers.SplitBatchResponse<>(
+                      actions, primaryResults, resultIsFaultyPredicate);
+
+              if (primarySplitResponse.allSuccessfulOperations.size() == 0) {
+                // All results were instances of Throwable, so we already completed
+                // exceptionally result futures by errorHandler passed to
+                // waitForAllWithErrorHandler.
+                return;
+              }
+
+              final MirroringTable.WriteOperationInfo writeOperationInfo =
+                  new MirroringTable.WriteOperationInfo(primarySplitResponse);
+              final CompletableFuture<FlowController.ResourceReservation>
+                  resourceReservationRequest =
+                      FutureConverter.toCompletable(
+                          this.flowController.asyncRequestResource(
+                              writeOperationInfo.requestResourcesDescription));
+              final Object[] secondaryResults =
+                  new Object[primarySplitResponse.allSuccessfulOperations.size()];
+
+              resourceReservationRequest.whenComplete(
+                  (ignoredResourceReservation, resourceReservationError) -> {
+                    completeSuccessfulResultFutures(resultFutures, primaryResults, numActions);
+                    if (resourceReservationError != null) {
+                      this.secondaryWriteErrorConsumer.consume(
+                          HBaseOperation.BATCH, primarySplitResponse.successfulWrites);
+                      return;
+                    }
+                    reserveFlowControlResourcesThenScheduleSecondary(
+                        CompletableFuture.completedFuture(null),
+                        resourceReservationRequest,
+                        () ->
+                            waitForAllWithErrorHandler(
+                                this.secondaryTable.batch(
+                                    primarySplitResponse.allSuccessfulOperations),
+                                (idx, throwable) -> {},
+                                secondaryResults),
+                        (ignoredPrimaryResult) ->
+                            BatchHelpers.createBatchVerificationCallback(
+                                primarySplitResponse,
+                                secondaryResults,
+                                verificationContinuationFactory.getMismatchDetector(),
+                                secondaryWriteErrorConsumer,
+                                resultIsFaultyPredicate,
+                                mirroringTracer));
+                  });
+            });
+    return resultFutures;
+  }
+
+  private <T> void completeSuccessfulResultFutures(
+      List<CompletableFuture<T>> resultFutures, Object[] primaryResults, int numResults) {
+    for (int i = 0; i < numResults; i++) {
+      if (!(resultIsFaultyPredicate.apply(primaryResults[i]))) {
+        resultFutures.get(i).complete((T) primaryResults[i]);
+      }
+    }
+  }
+
+  private <T> CompletableFuture<Void> waitForAllWithErrorHandler(
+      List<CompletableFuture<T>> futures,
+      BiConsumer<Integer, Throwable> errorHandler,
+      Object[] results) {
+    int numFutures = futures.size();
+    List<CompletableFuture<Void>> handledFutures = new ArrayList<>(numFutures);
+    for (int i = 0; i < numFutures; i++) {
+      final int futureIdx = i;
+      handledFutures.add(
+          futures
+              .get(futureIdx)
+              .handle(
+                  (result, error) -> {
+                    if (error != null) {
+                      results[futureIdx] = error;
+                      errorHandler.accept(futureIdx, error);
+                      throw new CompletionException(error);
+                    }
+                    results[futureIdx] = result;
+                    return null;
+                  }));
+    }
+    return CompletableFuture.allOf(handledFutures.toArray(new CompletableFuture[0]));
   }
 
   private <T> CompletableFuture<T> readWithVerificationAndFlowControl(
@@ -253,26 +378,6 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
 
   @Override
   public CompletableFuture<List<Result>> scanAll(Scan scan) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public List<CompletableFuture<Result>> get(List<Get> list) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public List<CompletableFuture<Void>> put(List<Put> list) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public List<CompletableFuture<Void>> delete(List<Delete> list) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public <T> List<CompletableFuture<T>> batch(List<? extends Row> actions) {
     throw new UnsupportedOperationException();
   }
 
