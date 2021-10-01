@@ -48,13 +48,19 @@ public class BigtableConfiguration {
   public static final String BIGTABLE_HBASE_CLIENT_ASYNC_REGISTRY_CLASS =
       "org.apache.hadoop.hbase.client.BigtableAsyncRegistry";
 
+  private static final String HBASE_ASYNC_CONNECTION_CLASS =
+      "org.apache.hadoop.hbase.client.AsyncConnection";
+
   private static final String[] CONNECTION_CLASS_NAMES = {
     "com.google.cloud.bigtable.hbase1_x.BigtableConnection",
     "com.google.cloud.bigtable.hbase2_x.BigtableConnection",
   };
 
-  private static final String HBASE_ASYNC_CONNECTION_CLASS =
-      "org.apache.hadoop.hbase.client.AsyncConnection";
+  private static final String[] ASYNC_CONNECTION_CLASS_NAMES = {
+    BIGTABLE_HBASE_CLIENT_ASYNC_CONNECTION_CLASS,
+    BIGTABLE_HBASE_CLIENT_ASYNC_REGISTRY_CLASS,
+    HBASE_ASYNC_CONNECTION_CLASS
+  };
 
   private static final Class<? extends Connection> CONNECTION_CLASS = chooseConnectionClass();
 
@@ -88,11 +94,13 @@ public class BigtableConfiguration {
    * Set up connection impl classes. If org.apache.hadoop.hbase.client.AsyncConnection exists, set
    * up async connection impl class as well.
    */
-  private static Configuration configureConnectionClass(Configuration configuration) {
+  private static Configuration injectBigtableImpls(Configuration configuration) {
     configuration.set(HBASE_CLIENT_CONNECTION_IMPL, getConnectionClass().getCanonicalName());
     try {
-      // Set up HBase async registry impl if AsyncConnection class exists
-      Class.forName(HBASE_ASYNC_CONNECTION_CLASS);
+      // Set up HBase async registry impl if async connection classes exist
+      for (String className : ASYNC_CONNECTION_CLASS_NAMES) {
+        Class.forName(className);
+      }
       configuration.set(
           HBASE_CLIENT_ASYNC_CONNECTION_IMPL, BIGTABLE_HBASE_CLIENT_ASYNC_CONNECTION_CLASS);
       configuration.set(
@@ -139,7 +147,7 @@ public class BigtableConfiguration {
   public static Configuration configure(Configuration conf, String projectId, String instanceId) {
     conf.set(BigtableOptionsFactory.PROJECT_ID_KEY, projectId);
     conf.set(BigtableOptionsFactory.INSTANCE_ID_KEY, instanceId);
-    return configureConnectionClass(conf);
+    return injectBigtableImpls(conf);
   }
 
   /**
@@ -156,7 +164,7 @@ public class BigtableConfiguration {
     conf.set(BigtableOptionsFactory.PROJECT_ID_KEY, projectId);
     conf.set(BigtableOptionsFactory.INSTANCE_ID_KEY, instanceId);
     conf.set(BigtableOptionsFactory.APP_PROFILE_ID_KEY, appProfileId);
-    return configureConnectionClass(conf);
+    return injectBigtableImpls(conf);
   }
 
   /**
