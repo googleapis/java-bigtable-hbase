@@ -62,6 +62,86 @@ which makes it easy for development teams to get started.
 [//]: # ({x-version-update-end})
 * Refer to the [Java samples documentation](https://cloud.google.com/bigtable/docs/samples) for detailed demonstrations of how to read and write data with Cloud Bigtable. The code for these samples is available in the [Cloud Bigtable examples project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples).
 
+### Connecting to Cloud Bigtable
+
+There are a few ways to configure a cloud bigtable connection.
+
+#### Option 1: Create a connection from `BigtableConfiguration` directly
+
+First, add the following imports at the top of your file:
+```java
+import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.Table;
+```
+
+Then create the connection and connect to the table:
+
+```java
+Configuration configuration = BigtableConfiguration.configure("project-id", "instance-id");
+Table table = connection.getTable(TableName.valueOf("table-id"));
+```
+
+#### Option 2: Create a `Configuration` object with `BigtableConfiguration` and create the connection from `ConnectionFactory`
+
+```java
+Configuration configuration = BigtableConfiguration.configure("project-id", "instance-id");
+Connection connection = ConnectionFactory.createConnection(configuration);
+```
+
+The configuration can also be used to create async connections with HBase 2.x interface
+```java
+import org.apache.hadoop.hbase.client.AsyncConnection;
+import org.apache.hadoop.hbase.client.AsyncTable;
+
+// Create async connection
+Configuration configuration = BigtableConfiguration.configure("project-id", "instance-id");
+AsyncConnection connection = ConnectionFactory.createAsyncConnection(configuration).get();
+AsyncTable table = connection.getTable(TableName.valueOf("table-id"));
+```
+
+#### Option 3: Configure connection with `hbase-site.xml` file
+
+Add the following configuration to your `hbase-site.xml` under your project's `src/main/resources` directory.
+
+```xml
+<configuration>
+    <property>
+       <name>hbase.client.connection.impl</name>
+       <value>com.google.cloud.bigtable.hbase2_x.BigtableConnection</value>
+    </property>
+    <property>
+       <name>hbase.client.async.connection.impl</name>
+       <value>org.apache.hadoop.hbase.client.BigtableAsyncConnection</value>
+    </property>
+    <property>
+       <name>hbase.client.registry.impl</name>
+       <value>org.apache.hadoop.hbase.client.BigtableAsyncRegistry</value>
+    </property>
+    <property>
+       <name>google.bigtable.instance.id</name>
+       <value>instance-id</value>
+    </property>
+    <property>
+       <name>google.bigtable.project.id</name>
+       <value>project-id</value>
+    </property>
+</configuration>
+```
+
+Then create the connection from `ConnectionFactory`:
+
+```
+Connection connection = ConnectionFactory.createConnection();
+```
+
+Or create async connection with:
+```
+AsyncConnection connection = ConnectionFactory.createAsyncConnection().get();
+```
+
 ## OpenCensus Integration
 
 The Bigtable HBase Client supports OpenCensus telemetry, specifically exporting gRPC metrics to Stats and supporting
