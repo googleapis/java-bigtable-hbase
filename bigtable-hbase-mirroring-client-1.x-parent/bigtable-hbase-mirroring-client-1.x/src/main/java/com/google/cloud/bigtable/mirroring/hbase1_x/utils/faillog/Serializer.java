@@ -15,11 +15,21 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog;
 
+import org.apache.hadoop.hbase.client.Mutation;
+
 /**
- * Objects of this class should write log entries somewhere.
- *
- * <p>Implementations should be thread-safe.
+ * Objects of this class should transform a failed mutation into data to be passed to {@link
+ * Appender}.
  */
-public interface Appender extends AutoCloseable {
-  void append(byte[] data) throws InterruptedException;
+public interface Serializer {
+  /**
+   * Create a failed mutation log entry for a given mutation and a failure cause.
+   *
+   * <p>This method is thread-safe.
+   *
+   * @param mutation the failed mutation
+   * @param failureCause the cause of failure
+   * @return data representing the relevant log entry
+   */
+  byte[] serialize(Mutation mutation, Throwable failureCause);
 }

@@ -35,7 +35,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class AppenderTest {
+public class DefaultAppenderTest {
   Path tmpdir;
 
   @Before
@@ -77,17 +77,17 @@ public class AppenderTest {
 
   @Test
   public void startupAndShutdown() throws Exception {
-    try (Appender appender = new Appender(tmpdir.resolve("test").toString(), 4096, false)) {
+    try (Appender appender = new DefaultAppender(tmpdir.resolve("test").toString(), 4096, false)) {
       appender.append("foo".getBytes(StandardCharsets.UTF_8));
     }
   }
 
   @Test
   public void pathNamesHaveTimestampAndTid() throws Exception {
-    try (Appender appender = new Appender(tmpdir.resolve("test").toString(), 4096, false)) {
+    try (Appender appender = new DefaultAppender(tmpdir.resolve("test").toString(), 4096, false)) {
       appender.append("foo".getBytes(StandardCharsets.UTF_8));
     }
-    try (Appender appender = new Appender(tmpdir.resolve("test").toString(), 4096, false)) {
+    try (Appender appender = new DefaultAppender(tmpdir.resolve("test").toString(), 4096, false)) {
       appender.append("bar".getBytes(StandardCharsets.UTF_8));
     }
 
@@ -102,7 +102,7 @@ public class AppenderTest {
 
   @Test
   public void contentsAreProper() throws Exception {
-    try (Appender appender = new Appender(tmpdir.resolve("test").toString(), 4096, false)) {
+    try (Appender appender = new DefaultAppender(tmpdir.resolve("test").toString(), 4096, false)) {
       appender.append("foo".getBytes(StandardCharsets.UTF_8));
       appender.append("bar".getBytes(StandardCharsets.UTF_8));
     }
@@ -114,7 +114,7 @@ public class AppenderTest {
   @Test
   public void interruptedThreadStopsAcceptingMoreEntries() throws Exception {
     Set<Thread> threadsBeforeAppenderIsCreated = Thread.getAllStackTraces().keySet();
-    try (Appender appender = new Appender(tmpdir.resolve("test").toString(), 4096, false)) {
+    try (Appender appender = new DefaultAppender(tmpdir.resolve("test").toString(), 4096, false)) {
       appender.append("foo".getBytes(StandardCharsets.UTF_8));
 
       Set<Thread> threadsCreatedByAppender =
