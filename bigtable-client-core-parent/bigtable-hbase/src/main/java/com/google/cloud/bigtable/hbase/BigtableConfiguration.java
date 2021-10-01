@@ -88,7 +88,7 @@ public class BigtableConfiguration {
    * Set up connection impl classes. If org.apache.hadoop.hbase.client.AsyncConnection exists, set
    * up async connection impl class as well.
    */
-  private static Configuration configureConnection(Configuration configuration) {
+  private static Configuration configureConnectionClass(Configuration configuration) {
     configuration.set(HBASE_CLIENT_CONNECTION_IMPL, getConnectionClass().getCanonicalName());
     try {
       // Set up HBase async registry impl if AsyncConnection class exists
@@ -139,7 +139,7 @@ public class BigtableConfiguration {
   public static Configuration configure(Configuration conf, String projectId, String instanceId) {
     conf.set(BigtableOptionsFactory.PROJECT_ID_KEY, projectId);
     conf.set(BigtableOptionsFactory.INSTANCE_ID_KEY, instanceId);
-    return configureConnection(conf);
+    return configureConnectionClass(conf);
   }
 
   /**
@@ -156,7 +156,7 @@ public class BigtableConfiguration {
     conf.set(BigtableOptionsFactory.PROJECT_ID_KEY, projectId);
     conf.set(BigtableOptionsFactory.INSTANCE_ID_KEY, instanceId);
     conf.set(BigtableOptionsFactory.APP_PROFILE_ID_KEY, appProfileId);
-    return configureConnection(conf);
+    return configureConnectionClass(conf);
   }
 
   /**
