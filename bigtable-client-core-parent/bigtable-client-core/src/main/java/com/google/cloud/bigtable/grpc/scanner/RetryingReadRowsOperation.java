@@ -251,13 +251,9 @@ public class RetryingReadRowsOperation
   }
 
   private boolean isRstStream(Status status) {
-    if (status.getCode() == Code.INTERNAL) {
-      String description = status.getDescription();
-      if (description != null) {
-        return description.contains("Received Rst stream")
-            || description.contains("RST_STREAM closed stream")
-            || description.contains("Received RST_STREAM");
-      }
+    if (status.getCode() == Code.INTERNAL && status.getDescription() != null) {
+      String description = status.getDescription().toLowerCase();
+      return description.contains("rst stream") || description.contains("rst_stream");
     }
     return false;
   }
