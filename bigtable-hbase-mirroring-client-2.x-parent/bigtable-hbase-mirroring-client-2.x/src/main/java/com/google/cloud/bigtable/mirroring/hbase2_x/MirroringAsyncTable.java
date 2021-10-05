@@ -19,6 +19,8 @@ import static com.google.cloud.bigtable.mirroring.hbase2_x.utils.AsyncRequestSch
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringTable;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers.FailedSuccessfulSplit;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers.ReadWriteSplit;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
@@ -188,33 +190,42 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     waitForAllWithErrorHandler(primaryFutures, primaryErrorHandler, primaryResults)
         .whenComplete(
             (ignoredResult, ignoredError) -> {
-              final BatchHelpers.SplitBatchResponse<?> primarySplitResponse =
-                  new BatchHelpers.SplitBatchResponse<>(
-                      actions, primaryResults, resultIsFaultyPredicate);
+              final FailedSuccessfulSplit<? extends Row> failedSuccessfulSplit =
+                  new FailedSuccessfulSplit<>(actions, primaryResults, resultIsFaultyPredicate);
 
-              if (primarySplitResponse.allSuccessfulOperations.size() == 0) {
+              if (failedSuccessfulSplit.successfulOperations.size() == 0) {
                 // All results were instances of Throwable, so we already completed
                 // exceptionally result futures by errorHandler passed to
                 // waitForAllWithErrorHandler.
                 return;
               }
 
-              final MirroringTable.WriteOperationInfo writeOperationInfo =
-                  new MirroringTable.WriteOperationInfo(primarySplitResponse);
+              final List<? extends Row> operationsToScheduleOnSecondary =
+                  failedSuccessfulSplit.successfulOperations;
+
+              final Object[] secondaryResults = new Object[operationsToScheduleOnSecondary.size()];
+
+              final ReadWriteSplit<? extends Row, Result> successfulReadWriteSplit =
+                  new ReadWriteSplit<>(
+                      failedSuccessfulSplit.successfulOperations,
+                      failedSuccessfulSplit.successfulResults,
+                      Result.class);
+
+              final RequestResourcesDescription requestResourcesDescription =
+                  new RequestResourcesDescription(
+                      operationsToScheduleOnSecondary, successfulReadWriteSplit.readResults);
+
               final CompletableFuture<FlowController.ResourceReservation>
                   resourceReservationRequest =
                       FutureConverter.toCompletable(
-                          this.flowController.asyncRequestResource(
-                              writeOperationInfo.requestResourcesDescription));
-              final Object[] secondaryResults =
-                  new Object[primarySplitResponse.allSuccessfulOperations.size()];
+                          this.flowController.asyncRequestResource(requestResourcesDescription));
 
               resourceReservationRequest.whenComplete(
                   (ignoredResourceReservation, resourceReservationError) -> {
                     completeSuccessfulResultFutures(resultFutures, primaryResults, numActions);
                     if (resourceReservationError != null) {
                       this.secondaryWriteErrorConsumer.consume(
-                          HBaseOperation.BATCH, primarySplitResponse.successfulWrites);
+                          HBaseOperation.BATCH, successfulReadWriteSplit.writeOperations);
                       return;
                     }
                     reserveFlowControlResourcesThenScheduleSecondary(
@@ -222,13 +233,13 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
                         resourceReservationRequest,
                         () ->
                             waitForAllWithErrorHandler(
-                                this.secondaryTable.batch(
-                                    primarySplitResponse.allSuccessfulOperations),
+                                this.secondaryTable.batch(operationsToScheduleOnSecondary),
                                 (idx, throwable) -> {},
                                 secondaryResults),
                         (ignoredPrimaryResult) ->
                             BatchHelpers.createBatchVerificationCallback(
-                                primarySplitResponse,
+                                failedSuccessfulSplit,
+                                successfulReadWriteSplit,
                                 secondaryResults,
                                 verificationContinuationFactory.getMismatchDetector(),
                                 secondaryWriteErrorConsumer,

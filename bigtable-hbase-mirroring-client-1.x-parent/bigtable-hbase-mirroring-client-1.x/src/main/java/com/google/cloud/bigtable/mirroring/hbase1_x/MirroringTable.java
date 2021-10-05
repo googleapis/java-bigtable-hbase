@@ -18,6 +18,8 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncTableWrapper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers.FailedSuccessfulSplit;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers.ReadWriteSplit;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOAndInterruptedException;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOException;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
@@ -498,11 +500,11 @@ public class MirroringTable implements Table, ListenableCloseable {
         e2.initCause(e);
         throw e2;
       } finally {
-        final BatchHelpers.SplitBatchResponse<Delete> splitResponse =
-            new BatchHelpers.SplitBatchResponse<>(deletes, results, resultIsFaultyPredicate);
+        final FailedSuccessfulSplit<Delete> failedSuccessfulSplit =
+            new FailedSuccessfulSplit<>(deletes, results, resultIsFaultyPredicate);
 
         deletes.clear();
-        deletes.addAll(splitResponse.failedWrites);
+        deletes.addAll(failedSuccessfulSplit.failedOperations);
       }
     }
   }
@@ -815,51 +817,59 @@ public class MirroringTable implements Table, ListenableCloseable {
   private void scheduleSecondaryWriteBatchOperations(
       final List<? extends Row> operations, final Object[] results) {
 
-    final BatchHelpers.SplitBatchResponse<?> primarySplitResponse =
-        new BatchHelpers.SplitBatchResponse<>(operations, results, resultIsFaultyPredicate);
+    final FailedSuccessfulSplit<? extends Row> failedSuccessfulSplit =
+        new FailedSuccessfulSplit<>(operations, results, resultIsFaultyPredicate);
 
-    if (primarySplitResponse.allSuccessfulOperations.size() == 0) {
+    if (failedSuccessfulSplit.successfulOperations.size() == 0) {
       return;
     }
 
-    final Object[] resultsSecondary =
-        new Object[primarySplitResponse.allSuccessfulOperations.size()];
+    List<? extends Row> operationsToScheduleOnSecondary =
+        failedSuccessfulSplit.successfulOperations;
+
+    final Object[] resultsSecondary = new Object[operationsToScheduleOnSecondary.size()];
+
+    final ReadWriteSplit<? extends Row, Result> successfulReadWriteSplit =
+        new ReadWriteSplit<>(
+            failedSuccessfulSplit.successfulOperations,
+            failedSuccessfulSplit.successfulResults,
+            Result.class);
 
     FutureCallback<Void> verificationFuture =
         BatchHelpers.createBatchVerificationCallback(
-            primarySplitResponse,
+            failedSuccessfulSplit,
+            successfulReadWriteSplit,
             resultsSecondary,
             verificationContinuationFactory.getMismatchDetector(),
             this.secondaryWriteErrorConsumer,
             resultIsFaultyPredicate,
             this.mirroringTracer);
 
-    RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
-        new MirroringTable.WriteOperationInfo(primarySplitResponse).requestResourcesDescription,
-        this.secondaryAsyncWrapper.batch(
-            primarySplitResponse.allSuccessfulOperations, resultsSecondary),
-        verificationFuture,
-        this.flowController,
-        this.mirroringTracer,
+    RequestResourcesDescription requestResourcesDescription =
+        new RequestResourcesDescription(
+            operationsToScheduleOnSecondary, successfulReadWriteSplit.readResults);
+
+    Runnable resourceReservationFailureCallback =
         new Runnable() {
           @Override
           public void run() {
             secondaryWriteErrorConsumer.consume(
-                HBaseOperation.BATCH, primarySplitResponse.successfulWrites);
+                HBaseOperation.BATCH, successfulReadWriteSplit.writeOperations);
           }
-        });
+        };
+
+    RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
+        requestResourcesDescription,
+        this.secondaryAsyncWrapper.batch(operationsToScheduleOnSecondary, resultsSecondary),
+        verificationFuture,
+        this.flowController,
+        this.mirroringTracer,
+        resourceReservationFailureCallback);
   }
 
   public static class WriteOperationInfo {
     public final RequestResourcesDescription requestResourcesDescription;
     public final List<? extends Row> operations;
-
-    public WriteOperationInfo(BatchHelpers.SplitBatchResponse<? extends Row> primarySplitResponse) {
-      this.operations = primarySplitResponse.allSuccessfulOperations;
-      this.requestResourcesDescription =
-          new RequestResourcesDescription(
-              this.operations, primarySplitResponse.successfulReadsResults);
-    }
 
     public WriteOperationInfo(Put operation) {
       this(new RequestResourcesDescription(operation), operation);
@@ -885,6 +895,12 @@ public class MirroringTable implements Table, ListenableCloseable {
         RequestResourcesDescription requestResourcesDescription, Row operation) {
       this.requestResourcesDescription = requestResourcesDescription;
       this.operations = Collections.singletonList(operation);
+    }
+
+    public WriteOperationInfo(List<? extends Row> successfulOperations, Result[] readResults) {
+      this.operations = successfulOperations;
+      this.requestResourcesDescription =
+          new RequestResourcesDescription(this.operations, readResults);
     }
   }
 }

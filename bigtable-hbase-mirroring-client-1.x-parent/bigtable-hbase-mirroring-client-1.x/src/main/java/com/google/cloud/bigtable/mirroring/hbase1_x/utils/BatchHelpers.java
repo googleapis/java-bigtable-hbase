@@ -21,16 +21,19 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetecto
 import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.FutureCallback;
 import io.opencensus.common.Scope;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Row;
+import org.apache.hadoop.hbase.client.Table;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 public class BatchHelpers {
   public static FutureCallback<Void> createBatchVerificationCallback(
-      final SplitBatchResponse<?> primarySplitResponse,
+      final FailedSuccessfulSplit<?> failedAndSuccessfulPrimaryOperations,
+      final ReadWriteSplit<?, Result> successfulPrimaryReadsAndWrites,
       final Object[] secondaryResults,
       final MismatchDetector mismatchDetector,
       final SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer,
@@ -40,18 +43,25 @@ public class BatchHelpers {
       @Override
       public void onSuccess(@NullableDecl Void t) {
         // Batch is successful - all results are correct.
-        List<? extends Row> secondaryOperations = primarySplitResponse.allSuccessfulOperations;
+        List<? extends Row> secondaryOperations =
+            failedAndSuccessfulPrimaryOperations.successfulOperations;
 
-        final SplitBatchResponse<?> secondarySplitResponse =
-            new SplitBatchResponse<>(
+        final FailedSuccessfulSplit<?> secondaryFailedAndSuccessfulOperations =
+            new FailedSuccessfulSplit<>(
                 secondaryOperations, secondaryResults, resultIsFaultyPredicate);
 
-        if (secondarySplitResponse.successfulReads.size() > 0) {
+        final ReadWriteSplit<?, Result> successfulSecondaryReadsAndWrites =
+            new ReadWriteSplit<>(
+                secondaryFailedAndSuccessfulOperations.successfulOperations,
+                secondaryFailedAndSuccessfulOperations.successfulResults,
+                Result.class);
+
+        if (successfulSecondaryReadsAndWrites.readOperations.size() > 0) {
           try (Scope scope = mirroringTracer.spanFactory.verificationScope()) {
             mismatchDetector.batch(
-                secondarySplitResponse.successfulReads,
-                primarySplitResponse.successfulReadsResults,
-                secondarySplitResponse.successfulReadsResults);
+                successfulSecondaryReadsAndWrites.readOperations,
+                successfulPrimaryReadsAndWrites.readResults,
+                successfulSecondaryReadsAndWrites.readResults);
           }
         }
       }
@@ -59,20 +69,34 @@ public class BatchHelpers {
       @Override
       public void onFailure(Throwable throwable) {
         // Batch has thrown - partial results might be available.
-        List<? extends Row> secondaryOperations = primarySplitResponse.allSuccessfulOperations;
+        List<? extends Row> secondaryOperations =
+            failedAndSuccessfulPrimaryOperations.successfulOperations;
 
-        final SplitBatchResponse<?> secondarySplitResponse =
-            new SplitBatchResponse<>(
+        final FailedSuccessfulSplit<?> secondaryFailedAndSuccessfulOperations =
+            new FailedSuccessfulSplit<>(
                 secondaryOperations, secondaryResults, resultIsFaultyPredicate);
 
-        if (secondarySplitResponse.failedWrites.size() > 0) {
+        final ReadWriteSplit<?, Result> successfulSecondaryReadsAndWrites =
+            new ReadWriteSplit<>(
+                secondaryFailedAndSuccessfulOperations.successfulOperations,
+                secondaryFailedAndSuccessfulOperations.successfulResults,
+                Result.class);
+
+        final ReadWriteSplit<?, ?> failedSecondaryReadsAndWrites =
+            new ReadWriteSplit<>(
+                secondaryFailedAndSuccessfulOperations.failedOperations,
+                secondaryFailedAndSuccessfulOperations.failedResults,
+                Object.class);
+
+        if (failedSecondaryReadsAndWrites.writeOperations.size() > 0) {
           try (Scope scope = mirroringTracer.spanFactory.writeErrorScope()) {
             secondaryWriteErrorConsumer.consume(
-                HBaseOperation.BATCH, secondarySplitResponse.failedWrites);
+                HBaseOperation.BATCH, failedSecondaryReadsAndWrites.writeOperations);
           }
         }
 
-        if (secondarySplitResponse.allReads.size() > 0) {
+        if (successfulSecondaryReadsAndWrites.readOperations.size() > 0
+            || failedSecondaryReadsAndWrites.readOperations.size() > 0) {
           // Some of the reads in this batch might have been not successful.
           // We want to verify successful reads and report the others.
 
@@ -83,14 +107,14 @@ public class BatchHelpers {
           MatchingSuccessfulReadsResults matchingSuccessfulReads =
               selectMatchingSuccessfulReads(
                   secondaryOperations,
-                  primarySplitResponse.allSuccessfulResults,
+                  failedAndSuccessfulPrimaryOperations.successfulResults,
                   secondaryResults,
                   resultIsFaultyPredicate);
 
           try (Scope scope = mirroringTracer.spanFactory.verificationScope()) {
             if (!matchingSuccessfulReads.successfulReads.isEmpty()) {
               mismatchDetector.batch(
-                  secondarySplitResponse.successfulReads,
+                  successfulSecondaryReadsAndWrites.readOperations,
                   matchingSuccessfulReads.primaryResults,
                   matchingSuccessfulReads.secondaryResults);
             }
@@ -171,53 +195,69 @@ public class BatchHelpers {
   }
 
   /**
-   * Helper class facilitating analysis of batch results. Basing on issued operations and results
-   * array splits provided operations into reads/writes, failed/successful.
+   * Helper class facilitating analysis of {@link Table#batch(List, Object[])} results. Splits
+   * operations and corresponding results into failed and successful based on contents of results.
    */
-  public static class SplitBatchResponse<T extends Row> {
-    public final List<Get> successfulReads = new ArrayList<>();
-    public final List<T> failedWrites = new ArrayList<>();
-    public final List<T> successfulWrites = new ArrayList<>();
-    public final List<T> allSuccessfulOperations = new ArrayList<>();
-    public final Result[] successfulReadsResults;
-    public final List<Get> allReads = new ArrayList<>();
-    public final Result[] allReadsResults;
-    public final Object[] allSuccessfulResults;
+  public static class FailedSuccessfulSplit<T extends Row> {
+    public final List<T> successfulOperations = new ArrayList<>();
+    public final Result[] successfulResults;
+    public final List<T> failedOperations = new ArrayList<>();
+    public final Object[] failedResults;
 
-    public SplitBatchResponse(
+    public FailedSuccessfulSplit(
         List<T> operations, Object[] results, Predicate<Object> resultIsFaultyPredicate) {
-      final List<Result> successfulReadsResults = new ArrayList<>();
-      final List<Result> allReadsResults = new ArrayList<>();
-      final List<Object> allSuccessfulResultsList = new ArrayList<>();
-
+      List<Result> successfulResultsList = new ArrayList<>();
+      List<Object> failedResultsList = new ArrayList<>();
       for (int i = 0; i < operations.size(); i++) {
         T operation = operations.get(i);
-        boolean isRead = operation instanceof Get;
-        boolean isFailed = resultIsFaultyPredicate.apply(results[i]);
+        Object result = results[i];
+        boolean isFailed = resultIsFaultyPredicate.apply(result);
         if (isFailed) {
-          if (isRead) {
-            this.allReads.add((Get) operation);
-            allReadsResults.add(null);
-          } else {
-            this.failedWrites.add(operation);
-          }
+          failedOperations.add(operation);
+          failedResultsList.add(result);
         } else {
-          if (isRead) {
-            this.successfulReads.add((Get) operation);
-            successfulReadsResults.add((Result) results[i]);
-
-            this.allReads.add((Get) operation);
-            allReadsResults.add((Result) results[i]);
-          } else {
-            this.successfulWrites.add(operation);
-          }
-          this.allSuccessfulOperations.add(operation);
-          allSuccessfulResultsList.add(results[i]);
+          successfulOperations.add(operation);
+          successfulResultsList.add((Result) result);
         }
       }
-      this.successfulReadsResults = successfulReadsResults.toArray(new Result[0]);
-      this.allReadsResults = allReadsResults.toArray(new Result[0]);
-      this.allSuccessfulResults = allSuccessfulResultsList.toArray(new Object[0]);
+      this.successfulResults = successfulResultsList.toArray(new Result[0]);
+      this.failedResults = failedResultsList.toArray(new Object[0]);
+    }
+  }
+
+  /**
+   * Helper class facilitating analysis of {@link Table#batch(List, Object[])} results. Splits
+   * operations and corresponding results into reads and writes based on types of operations.
+   */
+  public static class ReadWriteSplit<OperationType extends Row, ReadResultType> {
+    public final List<Get> readOperations = new ArrayList<>();
+    public final List<OperationType> writeOperations = new ArrayList<>();
+    public final ReadResultType[] readResults;
+    public final Object[] writeResults;
+
+    public ReadWriteSplit(
+        List<OperationType> operations,
+        Object[] results,
+        Class<ReadResultType> readResultTypeClass) {
+      final List<ReadResultType> readResultsList = new ArrayList<>();
+      final List<Object> writeResultsList = new ArrayList<>();
+
+      for (int i = 0; i < operations.size(); i++) {
+        OperationType operation = operations.get(i);
+        Object result = results[i];
+        boolean isRead = operation instanceof Get;
+        if (isRead) {
+          readOperations.add((Get) operation);
+          readResultsList.add((ReadResultType) result);
+        } else {
+          writeOperations.add(operation);
+          writeResultsList.add(result);
+        }
+      }
+
+      this.readResults =
+          readResultsList.toArray((ReadResultType[]) Array.newInstance(readResultTypeClass, 0));
+      this.writeResults = writeResultsList.toArray(new Object[0]);
     }
   }
 }
