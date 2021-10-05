@@ -527,7 +527,8 @@ public class RetryingReadRowsOperationTest {
     ByteString key2 = ByteString.copyFrom("SomeKey2", "UTF-8");
     underTest.onMessage(buildResponse(key1));
     underTest.onClose(
-        Status.INTERNAL.withDescription("HTTP/2 error code: INTERNAL_ERROR\nReceived Rst stream"),
+        Status.INTERNAL.withDescription(
+            "INTERNAL: HTTP/2 error code: INTERNAL_ERROR\nReceived Rst Stream"),
         null);
     Assert.assertFalse(underTest.getRowMerger().isComplete());
     underTest.onMessage(buildResponse(key2));
