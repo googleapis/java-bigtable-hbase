@@ -15,6 +15,10 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
+import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.createGet;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.createPut;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.createResult;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.setupFlowControllerMock;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.MIRRORING_LATENCY;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.PRIMARY_ERRORS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.PRIMARY_LATENCY;
@@ -28,7 +32,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -40,21 +43,17 @@ import static org.mockito.Mockito.when;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController.ResourceReservation;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringMetricsRecorder;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanFactory;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.DefaultMismatchDetector;
-import com.google.common.util.concurrent.SettableFuture;
 import io.opencensus.trace.Tracing;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -92,6 +91,7 @@ public class TestMirroringMetrics {
 
   @Before
   public void setUp() {
+    setupFlowControllerMock(flowController);
     MirroringSpanFactory mirroringSpanFactory =
         new MirroringSpanFactory(Tracing.getTracer(), mirroringMetricsRecorder);
     MirroringTracer tracer = new MirroringTracer(mirroringSpanFactory, mirroringMetricsRecorder);
@@ -108,32 +108,8 @@ public class TestMirroringMetrics {
                 tracer));
   }
 
-  private void mockFlowController() {
-    ResourceReservation resourceReservationMock = mock(ResourceReservation.class);
-
-    SettableFuture<ResourceReservation> resourceReservationFuture = SettableFuture.create();
-    resourceReservationFuture.set(resourceReservationMock);
-
-    doReturn(resourceReservationFuture)
-        .when(flowController)
-        .asyncRequestResource(any(RequestResourcesDescription.class));
-  }
-
-  private Result createResult(String key, String... values) {
-    ArrayList<Cell> cells = new ArrayList<>();
-    for (int i = 0; i < values.length; i++) {
-      cells.add(CellUtil.createCell(key.getBytes(), values[i].getBytes()));
-    }
-    return Result.create(cells);
-  }
-
-  private Get createGet(String key) {
-    return new Get(key.getBytes());
-  }
-
   @Test
   public void testOperationLatenciesAreRecorded() throws IOException {
-    mockFlowController();
     Get get = createGet("test");
     Result result1 = createResult("test", "value");
 
@@ -166,7 +142,6 @@ public class TestMirroringMetrics {
 
   @Test
   public void testReadMismatchIsRecorded() throws IOException {
-    mockFlowController();
     Get get = createGet("test");
     Result result1 = createResult("test", "value1");
     Result result2 = createResult("test", "value2");
@@ -184,7 +159,6 @@ public class TestMirroringMetrics {
 
   @Test
   public void testPrimaryErrorMetricIsRecorded() throws IOException {
-    mockFlowController();
     Get request = createGet("test");
     Result expectedResult = createResult("test", "value");
 
@@ -222,7 +196,6 @@ public class TestMirroringMetrics {
 
   @Test
   public void testSecondaryErrorMetricIsRecorded() throws IOException {
-    mockFlowController();
     Get request = createGet("test");
     Result expectedResult = createResult("test", "value");
 
@@ -254,15 +227,8 @@ public class TestMirroringMetrics {
         .recordWriteMismatches(any(HBaseOperation.class), anyInt());
   }
 
-  private Put createPut(String row, String family, String qualifier, String value) {
-    Put put = new Put(row.getBytes());
-    put.addColumn(family.getBytes(), qualifier.getBytes(), value.getBytes());
-    return put;
-  }
-
   @Test
   public void testSingleWriteErrorMetricIsRecorded() throws IOException {
-    mockFlowController();
     Put put = createPut("test", "f1", "q1", "v1");
 
     doNothing().when(primaryTable).put(put);
@@ -293,7 +259,6 @@ public class TestMirroringMetrics {
 
   @Test
   public void testMultipleWriteErrorMetricIsRecorded() throws IOException, InterruptedException {
-    mockFlowController();
     Put put1 = createPut("test", "f1", "q1", "v1");
     Put put2 = createPut("test", "f1", "q1", "v1");
     Put put3 = createPut("test", "f1", "q1", "v1");

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
+import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.setupFlowControllerMock;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_BUFFERED_MUTATOR_BYTES_TO_FLUSH;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
@@ -29,7 +30,6 @@ import static org.mockito.Mockito.verify;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController.ResourceReservation;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.common.primitives.Longs;
@@ -99,11 +99,7 @@ public class TestMirroringBufferedMutator {
         .when(secondaryConnection)
         .getBufferedMutator(secondaryBufferedMutatorParamsCaptor.capture());
 
-    SettableFuture<ResourceReservation> resourceReservationSettableFuture = SettableFuture.create();
-    resourceReservationSettableFuture.set(resourceReservation);
-    doReturn(resourceReservationSettableFuture)
-        .when(flowController)
-        .asyncRequestResource(any(RequestResourcesDescription.class));
+    resourceReservation = setupFlowControllerMock(flowController);
   }
 
   @Test

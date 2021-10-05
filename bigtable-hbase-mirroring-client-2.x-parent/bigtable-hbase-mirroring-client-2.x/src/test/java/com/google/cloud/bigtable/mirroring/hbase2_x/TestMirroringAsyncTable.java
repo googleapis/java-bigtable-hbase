@@ -15,11 +15,15 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase2_x;
 
+import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.createGet;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.createGets;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.createPut;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.createResult;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.setupFlowControllerMock;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.setupFlowControllerToRejectRequests;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -28,12 +32,10 @@ import static org.mockito.Mockito.when;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.common.primitives.Longs;
-import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -80,6 +82,7 @@ public class TestMirroringAsyncTable {
 
   @Before
   public void setUp() {
+    setupFlowControllerMock(flowController);
     this.mirroringTable =
         spy(
             new MirroringAsyncTable<ScanResultConsumerBase>(
@@ -91,53 +94,9 @@ public class TestMirroringAsyncTable {
                 new MirroringTracer()));
   }
 
-  private void mockFlowController() {
-    FlowController.ResourceReservation resourceReservationMock =
-        mock(FlowController.ResourceReservation.class);
-
-    SettableFuture<FlowController.ResourceReservation> resourceReservationFuture =
-        SettableFuture.create();
-    resourceReservationFuture.set(resourceReservationMock);
-
-    doReturn(resourceReservationFuture)
-        .when(flowController)
-        .asyncRequestResource(any(RequestResourcesDescription.class));
-  }
-
-  private void mockExceptionalFlowController() {
-    SettableFuture<FlowController.ResourceReservation> resourceReservationFuture =
-        SettableFuture.create();
-    resourceReservationFuture.setException(new IOException("expected"));
-
-    doReturn(resourceReservationFuture)
-        .when(flowController)
-        .asyncRequestResource(any(RequestResourcesDescription.class));
-  }
-
-  private Result createResult(String key, String... values) {
-    ArrayList<Cell> cells = new ArrayList<>();
-    for (int i = 0; i < values.length; i++) {
-      cells.add(CellUtil.createCell(key.getBytes(), values[i].getBytes()));
-    }
-    return Result.create(cells);
-  }
-
-  private Get createGet(String key) {
-    return new Get(key.getBytes());
-  }
-
-  private List<Get> createGets(String... keys) {
-    List<Get> result = new ArrayList<>();
-    for (String key : keys) {
-      result.add(createGet(key));
-    }
-    return result;
-  }
-
   @Test
   public void testMismatchDetectorIsCalledOnGetSingle()
       throws IOException, ExecutionException, InterruptedException {
-    mockFlowController();
     Get get = createGets("test").get(0);
     Result expectedResult = createResult("test", "value");
     CompletableFuture<Result> primaryFuture = new CompletableFuture<>();
@@ -161,7 +120,6 @@ public class TestMirroringAsyncTable {
   @Test
   public void testSecondaryReadExceptionCallsVerificationErrorHandlerOnSingleGet()
       throws IOException, ExecutionException, InterruptedException {
-    mockFlowController();
     Get get = createGet("test");
     Result expectedResult = createResult("test", "value");
     CompletableFuture<Result> primaryFuture = new CompletableFuture<>();
@@ -185,7 +143,6 @@ public class TestMirroringAsyncTable {
   @Test
   public void testMismatchDetectorIsCalledOnExists()
       throws IOException, ExecutionException, InterruptedException {
-    mockFlowController();
     Get get = createGet("test");
     boolean expectedResult = true;
     CompletableFuture<Boolean> primaryFuture = new CompletableFuture<>();
@@ -207,7 +164,6 @@ public class TestMirroringAsyncTable {
   @Test
   public void testMismatchDetectorIsCalledOnGetMultiple()
       throws IOException, ExecutionException, InterruptedException {
-    mockFlowController();
     List<Get> get = createGets("test");
     Result[] expectedResultArray = {createResult("test", "value")};
     CompletableFuture<Result> expectedFuture = new CompletableFuture<Result>();
@@ -233,7 +189,6 @@ public class TestMirroringAsyncTable {
   @Test
   public void testSecondaryReadExceptionCallsVerificationErrorHandlerOnGetMultiple()
       throws IOException, ExecutionException, InterruptedException {
-    mockFlowController();
     List<Get> get = createGets("test1", "test2");
     Result[] expectedResultArray = {
       createResult("test1", "value1"), createResult("test2", "value2")
@@ -274,7 +229,6 @@ public class TestMirroringAsyncTable {
   @Test
   public void testSecondaryReadExceptionCallsVerificationErrorHandlerOnExists()
       throws IOException, ExecutionException, InterruptedException {
-    mockFlowController();
     Get get = createGet("test");
     boolean expectedResult = true;
     CompletableFuture<Boolean> primaryFuture = new CompletableFuture<>();
@@ -294,15 +248,8 @@ public class TestMirroringAsyncTable {
     verify(mismatchDetector, times(1)).exists(get, expectedException);
   }
 
-  private Put createPut(String row, String family, String qualifier, String value) {
-    Put put = new Put(row.getBytes());
-    put.addColumn(family.getBytes(), qualifier.getBytes(), value.getBytes());
-    return put;
-  }
-
   @Test
   public void testPutIsMirrored() throws IOException, InterruptedException, ExecutionException {
-    mockFlowController();
     Put put = createPut("test", "f1", "q1", "v1");
     CompletableFuture<Void> primaryFuture = new CompletableFuture<>();
     CompletableFuture<Void> secondaryFuture = new CompletableFuture<>();
@@ -320,7 +267,6 @@ public class TestMirroringAsyncTable {
 
   @Test
   public void testPutWithErrorIsNotMirrored() throws IOException {
-    mockFlowController();
     final Put put = createPut("test", "f1", "q1", "v1");
     CompletableFuture<Void> primaryFuture = new CompletableFuture<>();
     when(primaryTable.put(put)).thenReturn(primaryFuture);
@@ -339,7 +285,6 @@ public class TestMirroringAsyncTable {
   @Test
   public void testPutWithSecondaryErrorCallsErrorHandler()
       throws IOException, ExecutionException, InterruptedException {
-    mockFlowController();
     final Put put = createPut("test", "f1", "q1", "v1");
     CompletableFuture<Void> primaryFuture = new CompletableFuture<>();
     CompletableFuture<Void> secondaryFuture = new CompletableFuture<>();
@@ -377,7 +322,6 @@ public class TestMirroringAsyncTable {
 
   @Test
   public void testEmptyBatch() {
-    mockFlowController();
     List<Get> requests = Arrays.asList();
     when(primaryTable.batch(requests)).thenReturn(Arrays.asList());
 
@@ -393,7 +337,6 @@ public class TestMirroringAsyncTable {
   @Test
   public void testBatchGetAndPutGetsAreVerifiedOnSuccess()
       throws IOException, InterruptedException, ExecutionException {
-    mockFlowController();
     Put put1 = createPut("test1", "f1", "q1", "v1");
     Get get1 = createGet("get1");
 
@@ -433,7 +376,6 @@ public class TestMirroringAsyncTable {
 
   @Test
   public void testBatchGetAndPut() throws IOException, InterruptedException, ExecutionException {
-    mockFlowController();
     Put put1 = createPut("test1", "f1", "q1", "v1");
     Put put2 = createPut("test2", "f2", "q2", "v2");
     Put put3 = createPut("test3", "f3", "q3", "v3");
@@ -513,7 +455,6 @@ public class TestMirroringAsyncTable {
   @Test
   public void testBatchGetsPrimaryFailsSecondaryOk()
       throws IOException, InterruptedException, ExecutionException {
-    mockFlowController();
     Get get1 = createGet("get1");
     Get get2 = createGet("get2");
 
@@ -560,7 +501,6 @@ public class TestMirroringAsyncTable {
 
   @Test
   public void testDelete() throws IOException, InterruptedException, ExecutionException {
-    mockFlowController();
     Delete delete = new Delete("r1".getBytes());
     CompletableFuture<Void> primaryFuture = new CompletableFuture<>();
     CompletableFuture<Void> secondaryFuture = new CompletableFuture<>();
@@ -576,7 +516,6 @@ public class TestMirroringAsyncTable {
 
   @Test
   public void testMutateRow() throws IOException, ExecutionException, InterruptedException {
-    mockFlowController();
     RowMutations mutations = new RowMutations("r1".getBytes());
     CompletableFuture<Void> primaryFuture = new CompletableFuture<>();
     CompletableFuture<Void> secondaryFuture = new CompletableFuture<>();
@@ -592,7 +531,6 @@ public class TestMirroringAsyncTable {
 
   @Test
   public void testIncrement() throws IOException, ExecutionException, InterruptedException {
-    mockFlowController();
     Increment increment = new Increment("r1".getBytes());
     Result incrementResult =
         Result.create(
@@ -624,7 +562,6 @@ public class TestMirroringAsyncTable {
 
   @Test
   public void testAppend() throws IOException, ExecutionException, InterruptedException {
-    mockFlowController();
     Append append = new Append("r1".getBytes());
     Result appendResult =
         Result.create(
@@ -647,7 +584,7 @@ public class TestMirroringAsyncTable {
   @Test
   public void TestExceptionalFlowControllerAndWriteInBatch()
       throws ExecutionException, InterruptedException {
-    mockExceptionalFlowController();
+    setupFlowControllerToRejectRequests(flowController);
     Put put1 = createPut("test1", "f1", "q1", "v1");
     Put put2 = createPut("test2", "f2", "q2", "v2");
     List<Put> requests = Arrays.asList(new Put[] {put1, put2});

@@ -15,34 +15,19 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
 
+import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.createCell;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.createResult;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.Comparators.resultsEqual;
 import static com.google.common.truth.Truth.assertThat;
 
 import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue.Type;
-import org.apache.hadoop.hbase.client.Result;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class TestResultComparator {
-  private Cell createCell(
-      String row, String family, String qualifier, int timestamp, Type type, String value) {
-    return CellUtil.createCell(
-        row.getBytes(),
-        family.getBytes(),
-        qualifier.getBytes(),
-        timestamp,
-        type.getCode(),
-        value.getBytes());
-  }
-
-  private Result createResult(Cell... cells) {
-    return Result.create(cells);
-  }
-
   @Test
   public void testEqualResults() {
     assertThat(
