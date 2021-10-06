@@ -299,12 +299,7 @@ public class TestMirroringAsyncTable {
 
     verify(primaryTable, times(1)).put(put);
     verify(secondaryTable, times(1)).put(put);
-
-    ArgumentCaptor<List<Row>> argument = ArgumentCaptor.forClass(List.class);
-    verify(secondaryWriteErrorConsumer, times(1))
-        .consume(eq(HBaseOperation.PUT), argument.capture());
-    assertThat(argument.getValue().size()).isEqualTo(1);
-    assertThat(argument.getValue().get(0)).isEqualTo(put);
+    verify(secondaryWriteErrorConsumer, times(1)).consume(HBaseOperation.PUT, put);
   }
 
   <T> List<T> waitForAll(List<CompletableFuture<T>> futures) {
