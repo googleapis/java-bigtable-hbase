@@ -108,7 +108,6 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     CompletableFuture<Void> primaryFuture = this.primaryTable.put(put);
     return writeWithFlowControl(
         new MirroringTable.WriteOperationInfo(put),
-        HBaseOperation.PUT,
         primaryFuture,
         () -> this.secondaryTable.put(put),
         () -> this.secondaryWriteErrorConsumer.consume(HBaseOperation.PUT, put));
@@ -119,7 +118,6 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     CompletableFuture<Void> primaryFuture = this.primaryTable.delete(delete);
     return writeWithFlowControl(
         new MirroringTable.WriteOperationInfo(delete),
-        HBaseOperation.DELETE,
         primaryFuture,
         () -> this.secondaryTable.delete(delete),
         () -> this.secondaryWriteErrorConsumer.consume(HBaseOperation.DELETE, delete));
@@ -130,7 +128,6 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     CompletableFuture<Result> primaryFuture = this.primaryTable.append(append);
     return writeWithFlowControl(
         new MirroringTable.WriteOperationInfo(append),
-        HBaseOperation.APPEND,
         primaryFuture,
         () -> this.secondaryTable.append(append),
         () -> this.secondaryWriteErrorConsumer.consume(HBaseOperation.APPEND, append));
@@ -141,7 +138,6 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     CompletableFuture<Result> primaryFuture = this.primaryTable.increment(increment);
     return writeWithFlowControl(
         new MirroringTable.WriteOperationInfo(increment),
-        HBaseOperation.INCREMENT,
         primaryFuture,
         () -> this.secondaryTable.increment(increment),
         () -> this.secondaryWriteErrorConsumer.consume(HBaseOperation.INCREMENT, increment));
@@ -152,7 +148,6 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     CompletableFuture<Void> primaryFuture = this.primaryTable.mutateRow(rowMutations);
     return writeWithFlowControl(
         new MirroringTable.WriteOperationInfo(rowMutations),
-        HBaseOperation.MUTATE_ROW,
         primaryFuture,
         () -> this.secondaryTable.mutateRow(rowMutations),
         () -> this.secondaryWriteErrorConsumer.consume(HBaseOperation.MUTATE_ROW, rowMutations));
@@ -315,10 +310,9 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
 
   private <T> CompletableFuture<T> writeWithFlowControl(
       final MirroringTable.WriteOperationInfo writeOperationInfo,
-      final HBaseOperation operation,
       final CompletableFuture<T> primaryFuture,
       final Supplier<CompletableFuture<T>> secondaryFutureSupplier,
-      final Runnable controlFlowReservationErrorHandler) {
+      final Runnable secondaryWriteErrorHandler) {
     return reserveFlowControlResourcesThenScheduleSecondary(
         primaryFuture,
         FutureConverter.toCompletable(
@@ -331,10 +325,10 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
 
               @Override
               public void onFailure(Throwable throwable) {
-                secondaryWriteErrorConsumer.consume(operation, writeOperationInfo.operations);
+                secondaryWriteErrorHandler.run();
               }
             },
-        controlFlowReservationErrorHandler);
+        secondaryWriteErrorHandler);
   }
 
   @Override
