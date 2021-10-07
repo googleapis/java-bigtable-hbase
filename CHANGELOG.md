@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.0.0-beta1](https://www.github.com/googleapis/java-bigtable-hbase/compare/v2.0.0-alpha2...v2.0.0-beta1) (2021-10-07)
+
+
+### Bug Fixes
+
+* adding validation for snapshot name for hbase import pipeline ([#3203](https://www.github.com/googleapis/java-bigtable-hbase/issues/3203)) ([fa9991a](https://www.github.com/googleapis/java-bigtable-hbase/commit/fa9991a2703c0faf4a1ba5737f5844619a497c17))
+* Clean up RowResultAdapter ([#3267](https://www.github.com/googleapis/java-bigtable-hbase/issues/3267)) ([1ccf063](https://www.github.com/googleapis/java-bigtable-hbase/commit/1ccf0634c73c5ccef1efc612009ed66e11798021))
+
+
+### Dependencies
+
+* update bigtable.version to v2.1.4 ([#3246](https://www.github.com/googleapis/java-bigtable-hbase/issues/3246)) ([8636efb](https://www.github.com/googleapis/java-bigtable-hbase/commit/8636efb8ba321d911f812a20e347f89a43365ec8))
+* update dependency com.google.cloud:google-cloud-bigtable-emulator to v0.138.4 ([#3247](https://www.github.com/googleapis/java-bigtable-hbase/issues/3247)) ([7a3057f](https://www.github.com/googleapis/java-bigtable-hbase/commit/7a3057fbdec07758d8c24d544b6ae371f4afa288))
+* update dependency org.codehaus.plexus:plexus-utils to v3.4.1 ([#3249](https://www.github.com/googleapis/java-bigtable-hbase/issues/3249)) ([dfb729f](https://www.github.com/googleapis/java-bigtable-hbase/commit/dfb729f5a4ab71f8789f304942e9154d6f546273))
+* update jmh.version to v1.33 ([#3254](https://www.github.com/googleapis/java-bigtable-hbase/issues/3254)) ([ce8110e](https://www.github.com/googleapis/java-bigtable-hbase/commit/ce8110e7639c7524f962282a6d397a33253bca62))
+
+
+### Miscellaneous Chores
+
+* bump next tag to 2.0.0-beta1 ([#3277](https://www.github.com/googleapis/java-bigtable-hbase/issues/3277)) ([499d48b](https://www.github.com/googleapis/java-bigtable-hbase/commit/499d48bbad69c1639cfc523bfb4d9226dd4c4a65))
+* make next tag 2.0.0-alpha3 ([#3207](https://www.github.com/googleapis/java-bigtable-hbase/issues/3207)) ([a6241e1](https://www.github.com/googleapis/java-bigtable-hbase/commit/a6241e1c800592e560d6bdd2bfa832e783bc1ed2))
+
 ## [2.0.0-alpha2](https://www.github.com/googleapis/java-bigtable-hbase/compare/v2.0.0-alpha1...v2.0.0-alpha2) (2021-08-19)
 
 
