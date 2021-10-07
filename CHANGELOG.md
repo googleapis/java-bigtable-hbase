@@ -2,6 +2,15 @@
 
 ## [2.0.0-beta1](https://www.github.com/googleapis/java-bigtable-hbase/compare/v2.0.0-alpha2...v2.0.0-beta1) (2021-10-07)
 
+**Note: This beta release is a work-in-progress. For the latest stable release of java-bigtable-hbase, please refer to version [1.25.0](https://github.com/googleapis/java-bigtable-hbase/releases/tag/v1.25.0).**
+
+This is the first beta release of Bigtable HBase 2.0.0. The main focus of Bigtable Hbase 2.0.0 is to migrate the internals from bigtable-client-core to [java-bigtable](https://github.com/googleapis/java-bigtable). 
+The primary difference from alpha is that bigtable-client-core has been completely removed and CloudBigtableIO has been migrated as well. 
+This release will remove the configuration available in alpha to switch between the core Bigtable layer (bigtable-client-core) and the [java-bigtable](https://github.com/googleapis/java-bigtable) client library, and will only use the java-bigtable client to connect to the Bigtable API.
+
+We look forward to hearing your feedback! Please let us know any comments or issues in our issue tracker.
+
+Complete release notes below:
 
 ### Bug Fixes
 
