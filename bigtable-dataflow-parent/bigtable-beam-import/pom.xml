@@ -45,6 +45,11 @@ limitations under the License.
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <dependency>
+        <groupId>com.google.cloud.bigdataoss</groupId>
+        <artifactId>gcsio</artifactId>
+        <version>2.2.2</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -158,12 +163,6 @@ limitations under the License.
       <artifactId>gcs-connector</artifactId>
       <version>hadoop2-2.2.2</version>
       <classifier>shaded</classifier>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.cloud.bigdataoss</groupId>
-          <artifactId>gcsio</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
 
