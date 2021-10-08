@@ -16,9 +16,11 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController.ResourceReservation;
@@ -28,12 +30,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue.Type;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 public class TestHelpers {
   public static Put createPut(String row, String family, String qualifier, String value) {
@@ -50,9 +55,17 @@ public class TestHelpers {
   }
 
   public static Result createResult(String key, String... values) {
+    byte[][] valuesBytes = new byte[values.length][];
+    for (int i = 0; i < values.length; i++) {
+      valuesBytes[i] = values[i].getBytes();
+    }
+    return createResult(key.getBytes(), valuesBytes);
+  }
+
+  public static Result createResult(byte[] key, byte[]... values) {
     ArrayList<Cell> cells = new ArrayList<>();
     for (int i = 0; i < values.length; i++) {
-      cells.add(CellUtil.createCell(key.getBytes(), values[i].getBytes()));
+      cells.add(CellUtil.createCell(key, values[i]));
     }
     return Result.create(cells);
   }
@@ -112,5 +125,32 @@ public class TestHelpers {
     doReturn(resourceReservationFuture)
         .when(flowController)
         .asyncRequestResource(any(RequestResourcesDescription.class));
+  }
+
+  public static <T> T blockMethodCall(
+      T table, final SettableFuture<Void> secondaryOperationAllowedFuture) {
+    return doAnswer(
+            new Answer<Object>() {
+              @Override
+              public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                secondaryOperationAllowedFuture.get(10, TimeUnit.SECONDS);
+                return invocationOnMock.callRealMethod();
+              }
+            })
+        .when(table);
+  }
+
+  public static <T> SettableFuture<Void> blockMethodCall(T methodCall) {
+    final SettableFuture<Void> secondaryOperationAllowedFuture = SettableFuture.create();
+    when(methodCall)
+        .thenAnswer(
+            new Answer<Object>() {
+              @Override
+              public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                secondaryOperationAllowedFuture.get(10, TimeUnit.SECONDS);
+                return invocationOnMock.callRealMethod();
+              }
+            });
+    return secondaryOperationAllowedFuture;
   }
 }
