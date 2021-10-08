@@ -41,6 +41,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import io.opencensus.common.Scope;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -190,7 +191,8 @@ public class MirroringTable implements Table, ListenableCloseable {
   }
 
   @Override
-  public boolean[] existsAll(final List<Get> list) throws IOException {
+  public boolean[] existsAll(final List<Get> inputList) throws IOException {
+    final List<Get> list = new ArrayList<>(inputList);
     try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.EXISTS_ALL)) {
       Log.trace("[%s] existsAll(gets=%s)", this.getName(), list);
 
@@ -212,8 +214,9 @@ public class MirroringTable implements Table, ListenableCloseable {
     }
   }
 
-  private void batchWithSpan(final List<? extends Row> operations, final Object[] results)
+  private void batchWithSpan(final List<? extends Row> inputOperations, final Object[] results)
       throws IOException, InterruptedException {
+    final List<? extends Row> operations = new ArrayList<>(inputOperations);
     Log.trace("[%s] batch(operations=%s, results)", this.getName(), operations);
     try {
       this.mirroringTracer.spanFactory.wrapPrimaryOperation(
@@ -248,8 +251,9 @@ public class MirroringTable implements Table, ListenableCloseable {
 
   @Override
   public <R> void batchCallback(
-      List<? extends Row> operations, Object[] results, Callback<R> callback)
+      List<? extends Row> inputOperations, Object[] results, Callback<R> callback)
       throws IOException, InterruptedException {
+    final List<? extends Row> operations = new ArrayList<>(inputOperations);
     try (Scope scope =
         this.mirroringTracer.spanFactory.operationScope(HBaseOperation.BATCH_CALLBACK)) {
       Log.trace(
@@ -298,7 +302,8 @@ public class MirroringTable implements Table, ListenableCloseable {
   }
 
   @Override
-  public Result[] get(final List<Get> list) throws IOException {
+  public Result[] get(final List<Get> inputList) throws IOException {
+    final List<Get> list = new ArrayList<>(inputList);
     try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.GET_LIST)) {
       Log.trace("[%s] get(gets=%s)", this.getName(), list);
 
