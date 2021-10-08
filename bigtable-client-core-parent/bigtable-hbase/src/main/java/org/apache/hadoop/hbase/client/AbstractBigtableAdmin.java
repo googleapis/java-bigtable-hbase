@@ -22,7 +22,6 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.FailedPreconditionException;
-import com.google.cloud.bigtable.admin.v2.internal.NameUtil;
 import com.google.cloud.bigtable.admin.v2.models.Backup;
 import com.google.cloud.bigtable.admin.v2.models.Cluster;
 import com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest;
@@ -30,8 +29,6 @@ import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.RestoreTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
-import com.google.cloud.bigtable.grpc.BigtableClusterName;
-import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.admin.TableAdapter;
 import com.google.cloud.bigtable.hbase.util.FutureUtil;
@@ -100,7 +97,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
   private final BigtableHBaseSettings settings;
   protected final CommonConnection connection;
   protected final AdminClientWrapper adminClientWrapper;
-  private BigtableClusterName bigtableSnapshotClusterName;
+  private String bigtableSnapshotClusterId;
 
   /**
    * Constructor for AbstractBigtableAdmin.
@@ -119,11 +116,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     String clusterId =
         configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
     if (clusterId != null) {
-      BigtableInstanceName bigtableInstanceName =
-          new BigtableInstanceName(
-              connection.getBigtableSettings().getProjectId(),
-              connection.getBigtableSettings().getInstanceId());
-      bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
+      bigtableSnapshotClusterId = clusterId;
     }
   }
 
@@ -919,8 +912,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
       return;
     }
 
-    FutureUtil.unwrap(
-        adminClientWrapper.deleteBackupAsync(getBackupClusterName().getClusterId(), snapshotId));
+    FutureUtil.unwrap(adminClientWrapper.deleteBackupAsync(getBackupClusterId(), snapshotId));
   }
 
   protected Backup snapshotTable(String snapshotId, TableName tableName) throws IOException {
@@ -928,7 +920,7 @@ public abstract class AbstractBigtableAdmin implements Admin {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(tableName.getNameAsString()));
 
     CreateBackupRequest request =
-        CreateBackupRequest.of(getBackupClusterName().getClusterId(), snapshotId)
+        CreateBackupRequest.of(getBackupClusterId(), snapshotId)
             .setSourceTableId(tableName.getNameAsString());
 
     int ttlSecondsForBackup = settings.getTtlSecondsForBackup();
@@ -988,23 +980,16 @@ public abstract class AbstractBigtableAdmin implements Admin {
   }
 
   protected synchronized String getBackupClusterId() {
-    return getBackupClusterName().getClusterId();
-  }
-
-  private synchronized BigtableClusterName getBackupClusterName() {
-    if (this.bigtableSnapshotClusterName == null) {
+    if (this.bigtableSnapshotClusterId == null) {
       List<Cluster> clusters = adminClientWrapper.listClusters(settings.getInstanceId());
       Preconditions.checkState(
           clusters.size() == 1,
           String.format(
               "Project '%s' / Instance '%s' has %d clusters. There must be exactly 1 for this operation to work.",
               settings.getProjectId(), settings.getInstanceId(), clusters.size()));
-      String clusterName =
-          NameUtil.formatClusterName(
-              settings.getProjectId(), settings.getInstanceId(), clusters.get(0).getId());
-      bigtableSnapshotClusterName = new BigtableClusterName(clusterName);
+      bigtableSnapshotClusterId = clusters.get(0).getId();
     }
-    return bigtableSnapshotClusterName;
+    return bigtableSnapshotClusterId;
   }
 
   /** {@inheritDoc} */

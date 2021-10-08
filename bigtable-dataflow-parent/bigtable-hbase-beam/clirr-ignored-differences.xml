@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- see http://www.mojohaus.org/clirr-maven-plugin/examples/ignored-differences.html -->
+<differences>
+    <difference>
+        <!-- In the migration to v2, BigtableOptions along with bigtable-client-core has been removed -->
+        <differenceType>7002</differenceType>
+        <className>com/google/cloud/bigtable/beam/CloudBigtableConfiguration</className>
+        <method>*toBigtableOptions*</method>
+    </difference>
+</differences>

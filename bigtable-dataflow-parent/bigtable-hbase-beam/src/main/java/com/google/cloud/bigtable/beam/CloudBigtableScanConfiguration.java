@@ -19,9 +19,9 @@ import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowRange;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowSet;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
@@ -98,21 +98,23 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     }
 
     /**
-     * Specifies the {@link ReadRowsRequest} that will be used to filter the table.
-     *
+     * @deprecated Please use {@link #withScan(Scan)} instead.
+     *     <p>Specifies the {@link ReadRowsRequest} that will be used to filter the table.
      * @param request The {@link ReadRowsRequest} to add to the configuration.
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
+    @Deprecated
     public Builder withRequest(ReadRowsRequest request) {
       return withRequest(StaticValueProvider.of(request));
     }
 
     /**
-     * Specifies the {@link ReadRowsRequest} that will be used to filter the table.
-     *
+     * @deprecated Please use {@link #withScan(Scan)} instead.
+     *     <p>Specifies the {@link ReadRowsRequest} that will be used to filter the table.
      * @param request The {@link ReadRowsRequest} to add to the configuration.
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
+    @Deprecated
     public Builder withRequest(ValueProvider<ReadRowsRequest> request) {
       this.request = request;
       return this;
@@ -273,9 +275,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     public ReadRowsRequest get() {
       if (cachedRequest == null) {
         if (request.get().getTableName().isEmpty()) {
-          BigtableInstanceName bigtableInstanceName =
-              new BigtableInstanceName(projectId.get(), instanceId.get());
-          String fullTableName = bigtableInstanceName.toTableNameStr(tableId.get());
+          String fullTableName =
+              NameUtil.formatTableName(projectId.get(), instanceId.get(), tableId.get());
           cachedRequest = request.get().toBuilder().setTableName(fullTableName).build();
         } else {
           cachedRequest = request.get();
@@ -326,6 +327,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    *
    * @return The {@link Scan}.
    */
+  @Deprecated
   public ReadRowsRequest getRequest() {
     return request.get();
   }

@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase.util;
 
 import com.google.api.core.InternalExtensionOnly;
-import com.google.cloud.bigtable.util.TracingUtilities;
 import io.opencensus.trace.Tracing;
 import java.util.Arrays;
 import java.util.List;
@@ -55,7 +54,6 @@ public final class HBaseTracingUtilities {
    * methods on the grpcz page.
    */
   public static void setupTracingConfig() {
-    TracingUtilities.setupTracingConfig();
     List<String> descriptors =
         Arrays.asList(
             "BigtableTable.getTableDescriptor",

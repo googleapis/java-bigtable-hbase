@@ -24,8 +24,6 @@ import com.google.cloud.bigtable.admin.v2.internal.NameUtil;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.ModifyColumnFamiliesRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
-import com.google.cloud.bigtable.grpc.BigtableClusterName;
-import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.test.helper.TestServerBuilder;
 import com.google.common.collect.Queues;
 import com.google.longrunning.GetOperationRequest;
@@ -58,12 +56,10 @@ public class TestAdminClientVeneerApi {
   private static final String TABLE_ID_2 = "fake-Table-id-2";
   private static final String TABLE_NAME =
       NameUtil.formatTableName(PROJECT_ID, INSTANCE_ID, TABLE_ID_1);
-  private static final BigtableInstanceName INSTANCE_NAME =
-      new BigtableInstanceName(PROJECT_ID, INSTANCE_ID);
   private static final String CLUSTER_ID = "fake-cluster-id";
   private static final String BACKUP_ID = "fake-backup-id";
-  private static final BigtableClusterName CLUSTER_NAME = INSTANCE_NAME.toClusterName(CLUSTER_ID);
-  private static final String BACKUP_NAME = CLUSTER_NAME.toBackupName(BACKUP_ID);
+  private static final String BACKUP_NAME =
+      BackupName.format(PROJECT_ID, INSTANCE_ID, CLUSTER_ID, BACKUP_ID);
   private static final AtomicInteger callCount = new AtomicInteger(1);
 
   private FakeBigtableAdmin fakeAdminService = new FakeBigtableAdmin();
