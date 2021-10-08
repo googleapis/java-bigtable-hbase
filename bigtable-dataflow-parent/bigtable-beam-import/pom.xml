@@ -76,11 +76,6 @@ limitations under the License.
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>com.google.cloud.bigdataoss</groupId>
-      <artifactId>gcsio</artifactId>
-      <version>2.2.2</version>
-    </dependency>
-    <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-io-hadoop-common</artifactId>
       <!-- used at runtime via WritableCoderProviderRegistrar service -->
@@ -163,6 +158,12 @@ limitations under the License.
       <artifactId>gcs-connector</artifactId>
       <version>hadoop2-2.2.2</version>
       <classifier>shaded</classifier>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.cloud.bigdataoss</groupId>
+          <artifactId>gcsio</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
 
