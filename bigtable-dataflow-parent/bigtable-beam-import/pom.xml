@@ -55,6 +55,12 @@ limitations under the License.
       <artifactId>beam-sdks-java-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.google.cloud.bigdataoss</groupId>
+      <artifactId>gcs-connector</artifactId>
+      <version>hadoop2-2.2.2</version>
+      <classifier>shaded</classifier>
+    </dependency>
+    <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>
         beam-sdks-java-extensions-google-cloud-platform-core
@@ -174,12 +180,6 @@ limitations under the License.
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-server</artifactId>
       <version>${hbase1.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.cloud.bigdataoss</groupId>
-      <artifactId>gcs-connector</artifactId>
-      <version>hadoop2-2.2.2</version>
-      <classifier>shaded</classifier>
     </dependency>
 
 
