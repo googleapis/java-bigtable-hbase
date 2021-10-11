@@ -73,6 +73,10 @@ limitations under the License.
           <groupId>com.google.api.grpc</groupId>
           <artifactId>grpc-google-cloud-bigtable-v2</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>org.hamcrest</groupId>
+          <artifactId>hamcrest</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -80,10 +84,22 @@ limitations under the License.
       <artifactId>beam-sdks-java-io-hadoop-common</artifactId>
       <!-- used at runtime via WritableCoderProviderRegistrar service -->
       <scope>runtime</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.hamcrest</groupId>
+          <artifactId>hamcrest</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-io-hadoop-format</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.hamcrest</groupId>
+          <artifactId>hamcrest</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- Used transitively by beam, and directly in tests -->
@@ -91,6 +107,12 @@ limitations under the License.
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-runners-core-construction-java</artifactId>
       <scope>runtime</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.hamcrest</groupId>
+          <artifactId>hamcrest</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.beam</groupId>
@@ -243,12 +265,6 @@ limitations under the License.
       <groupId>com.google.truth</groupId>
       <artifactId>truth</artifactId>
       <version>1.1.3</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest</artifactId>
-      <version>${hamcrest.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
