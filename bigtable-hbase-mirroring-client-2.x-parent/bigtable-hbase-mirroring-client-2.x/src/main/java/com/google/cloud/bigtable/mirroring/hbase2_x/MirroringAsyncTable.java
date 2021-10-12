@@ -109,8 +109,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     return writeWithFlowControl(
         new MirroringTable.WriteOperationInfo(put),
         primaryFuture,
-        () -> this.secondaryTable.put(put),
-        () -> this.secondaryWriteErrorConsumer.consume(HBaseOperation.PUT, put));
+        () -> this.secondaryTable.put(put));
   }
 
   @Override
@@ -119,8 +118,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     return writeWithFlowControl(
         new MirroringTable.WriteOperationInfo(delete),
         primaryFuture,
-        () -> this.secondaryTable.delete(delete),
-        () -> this.secondaryWriteErrorConsumer.consume(HBaseOperation.DELETE, delete));
+        () -> this.secondaryTable.delete(delete));
   }
 
   @Override
@@ -129,8 +127,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     return writeWithFlowControl(
         new MirroringTable.WriteOperationInfo(append),
         primaryFuture,
-        () -> this.secondaryTable.append(append),
-        () -> this.secondaryWriteErrorConsumer.consume(HBaseOperation.APPEND, append));
+        () -> this.secondaryTable.append(append));
   }
 
   @Override
@@ -139,8 +136,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     return writeWithFlowControl(
         new MirroringTable.WriteOperationInfo(increment),
         primaryFuture,
-        () -> this.secondaryTable.increment(increment),
-        () -> this.secondaryWriteErrorConsumer.consume(HBaseOperation.INCREMENT, increment));
+        () -> this.secondaryTable.increment(increment));
   }
 
   @Override
@@ -149,8 +145,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     return writeWithFlowControl(
         new MirroringTable.WriteOperationInfo(rowMutations),
         primaryFuture,
-        () -> this.secondaryTable.mutateRow(rowMutations),
-        () -> this.secondaryWriteErrorConsumer.consume(HBaseOperation.MUTATE_ROW, rowMutations));
+        () -> this.secondaryTable.mutateRow(rowMutations));
   }
 
   @Override
@@ -311,8 +306,12 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
   private <T> CompletableFuture<T> writeWithFlowControl(
       final MirroringTable.WriteOperationInfo writeOperationInfo,
       final CompletableFuture<T> primaryFuture,
-      final Supplier<CompletableFuture<T>> secondaryFutureSupplier,
-      final Runnable secondaryWriteErrorHandler) {
+      final Supplier<CompletableFuture<T>> secondaryFutureSupplier) {
+    final Runnable secondaryWriteErrorHandler =
+        () ->
+            this.secondaryWriteErrorConsumer.consume(
+                writeOperationInfo.hBaseOperation, writeOperationInfo.operations);
+
     return reserveFlowControlResourcesThenScheduleSecondary(
         primaryFuture,
         FutureConverter.toCompletable(
