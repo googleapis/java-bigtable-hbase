@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOException;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowControlStrategy;
@@ -52,6 +53,7 @@ public class MirroringConnection implements Connection {
   private final ListenableReferenceCounter referenceCounter;
   private final MirroringTracer mirroringTracer;
   private final SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumerWithMetrics;
+  private final ReadSampler readSampler;
   private MirroringConfiguration configuration;
   private Connection primaryConnection;
   private Connection secondaryConnection;
@@ -98,6 +100,7 @@ public class MirroringConnection implements Connection {
     this.secondaryWriteErrorConsumerWithMetrics =
         new SecondaryWriteErrorConsumerWithMetrics(
             this.mirroringTracer, secondaryWriteErrorConsumer);
+    this.readSampler = new ReadSampler(this.configuration.mirroringOptions.readSamplingRate);
   }
 
   @Override
@@ -134,6 +137,7 @@ public class MirroringConnection implements Connection {
               this.mismatchDetector,
               this.flowController,
               this.secondaryWriteErrorConsumerWithMetrics,
+              this.readSampler,
               this.mirroringTracer);
       this.referenceCounter.holdReferenceUntilClosing(table);
       return table;

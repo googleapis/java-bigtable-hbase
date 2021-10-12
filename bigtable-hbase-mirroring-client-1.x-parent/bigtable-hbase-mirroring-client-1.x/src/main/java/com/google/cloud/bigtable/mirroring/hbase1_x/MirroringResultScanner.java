@@ -67,6 +67,7 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
   private int readEntries;
 
   private FlowController flowController;
+  private boolean isVerificationEnabled;
 
   public MirroringResultScanner(
       Scan originalScan,
@@ -74,7 +75,8 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
       AsyncTableWrapper secondaryTableWrapper,
       VerificationContinuationFactory verificationContinuationFactory,
       FlowController flowController,
-      MirroringTracer mirroringTracer)
+      MirroringTracer mirroringTracer,
+      boolean isVerificationEnabled)
       throws IOException {
     this.originalScan = originalScan;
     this.primaryResultScanner = primaryResultScanner;
@@ -86,6 +88,7 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
 
     this.listenableReferenceCounter.holdReferenceUntilClosing(this.secondaryResultScannerWrapper);
     this.mirroringTracer = mirroringTracer;
+    this.isVerificationEnabled = isVerificationEnabled;
   }
 
   @Override
@@ -220,6 +223,9 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
       RequestResourcesDescription requestResourcesDescription,
       Supplier<ListenableFuture<T>> nextSupplier,
       FutureCallback<T> scannerNext) {
+    if (!this.isVerificationEnabled) {
+      return;
+    }
     this.listenableReferenceCounter.holdReferenceUntilCompletion(
         RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
             requestResourcesDescription,

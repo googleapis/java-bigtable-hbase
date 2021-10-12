@@ -17,10 +17,14 @@ package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 
 public class MirroringConfigurationHelper {
   /**
@@ -85,6 +89,19 @@ public class MirroringConfigurationHelper {
 
   public static final String MIRRORING_WRITE_ERROR_CONSUMER_CLASS =
       "google.bigtable.mirroring.write-error-consumer.impl";
+
+  /**
+   * Integer value representing percentage of read operations performed on primary database that
+   * should be verified against secondary. Each call to {@link Table#get(Get)}, {@link
+   * Table#get(List)}, {@link Table#exists(Get)}, {@link Table#existsAll(List)} {@link
+   * Table#batch(List, Object[])} (with overloads) and {@link Table#getScanner(Scan)} (with
+   * overloads) is counted as a single operation, independent of size of their arguments and
+   * results.
+   *
+   * <p>Correct values are a integers ranging from 0 to 100 inclusive.
+   */
+  public static final String MIRRORING_READ_VERIFICATION_RATE_PERCENT =
+      "google.bigtable.mirroring.read-verification-rate-percent";
 
   /**
    * Number of bytes that {@link MirroringBufferedMutator} should buffer before flushing underlying

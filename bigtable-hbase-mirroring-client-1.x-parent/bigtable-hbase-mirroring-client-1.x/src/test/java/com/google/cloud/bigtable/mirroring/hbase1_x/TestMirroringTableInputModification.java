@@ -28,6 +28,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
@@ -86,6 +87,7 @@ public class TestMirroringTableInputModification {
                 mismatchDetector,
                 flowController,
                 secondaryWriteErrorConsumer,
+                new ReadSampler(100),
                 new MirroringTracer()));
 
     mockExistsAll(this.primaryTable);
