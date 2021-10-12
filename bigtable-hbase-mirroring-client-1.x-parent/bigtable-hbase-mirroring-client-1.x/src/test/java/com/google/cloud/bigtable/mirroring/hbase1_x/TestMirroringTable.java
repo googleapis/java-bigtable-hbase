@@ -1139,4 +1139,42 @@ public class TestMirroringTable {
     verify(secondaryWriteErrorConsumer, times(1))
         .consume(HBaseOperation.BATCH, ImmutableList.of(put1, put2));
   }
+
+  @Test
+  public void testBatchWithAppendsAndIncrements() throws IOException, InterruptedException {
+    Increment increment = new Increment("i".getBytes());
+    increment.addColumn("f".getBytes(), "q".getBytes(), 1);
+
+    Append append = new Append("a".getBytes());
+    append.add("f".getBytes(), "q".getBytes(), "v".getBytes());
+    List<? extends Row> operations =
+        Arrays.asList(increment, append, createPut("p", "f", "q", "v"), createGet("g"));
+    Object[] results =
+        new Object[] {
+          createResult("i", "f", "q", 1, "1"),
+          createResult("a", "f", "q", 2, "2"),
+          new Result(),
+          createResult("g", "f", "q", 3, "3"),
+        };
+
+    List<? extends Row> expectedSecondaryOperations =
+        Arrays.asList(
+            createPut("i", "f", "q", 1, "1"),
+            createPut("a", "f", "q", 2, "2"),
+            createPut("p", "f", "q", "v"),
+            createGet("g"));
+    mirroringTable.batch(operations, results);
+    executorServiceRule.waitForExecutor();
+    verify(primaryTable, times(1)).batch(operations, results);
+    ArgumentCaptor<List<? extends Row>> argumentCaptor = ArgumentCaptor.forClass(List.class);
+    verify(secondaryTable, times(1)).batch(argumentCaptor.capture(), any(Object[].class));
+
+    assertPutsAreEqual(
+        (Put) argumentCaptor.getValue().get(0), (Put) expectedSecondaryOperations.get(0));
+    assertPutsAreEqual(
+        (Put) argumentCaptor.getValue().get(1), (Put) expectedSecondaryOperations.get(1));
+    assertPutsAreEqual(
+        (Put) argumentCaptor.getValue().get(2), (Put) expectedSecondaryOperations.get(2));
+    assertThat(argumentCaptor.getValue().get(3)).isEqualTo(expectedSecondaryOperations.get(3));
+  }
 }
