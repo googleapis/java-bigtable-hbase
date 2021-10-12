@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.AccumulatedExceptions;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOException;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger;
@@ -33,6 +34,7 @@ import java.io.InterruptedIOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
@@ -57,6 +59,8 @@ public class MirroringConnection implements Connection {
   private MirroringConfiguration configuration;
   private Connection primaryConnection;
   private Connection secondaryConnection;
+  private AtomicBoolean closed = new AtomicBoolean(false);
+  private AtomicBoolean aborted = new AtomicBoolean(false);
 
   /**
    * The constructor called from {@link
@@ -177,38 +181,69 @@ public class MirroringConnection implements Connection {
   }
 
   @Override
-  public void close() throws IOException {
+  public synchronized void close() throws IOException {
     try (Scope scope =
         this.mirroringTracer.spanFactory.operationScope(
             HBaseOperation.MIRRORING_CONNECTION_CLOSE)) {
-      Log.trace("close()");
-      this.referenceCounter.decrementReferenceCount();
+      if (this.closed.get()) {
+        return;
+      }
+      this.closed.set(true);
+
       try {
-        this.referenceCounter.getOnLastReferenceClosed().get();
-        Log.trace("close(): closed");
+        closeMirroringConnectionAndWaitForAsyncOperations();
       } catch (InterruptedException e) {
         IOException wrapperException = new InterruptedIOException();
         wrapperException.initCause(e);
         throw wrapperException;
-      } catch (ExecutionException e) {
-        throw new RuntimeException(e);
       }
+
+      AccumulatedExceptions exceptions = new AccumulatedExceptions();
+      try {
+        this.primaryConnection.close();
+      } catch (IOException e) {
+        exceptions.add(e);
+      }
+
+      try {
+        this.secondaryConnection.close();
+      } catch (IOException e) {
+        exceptions.add(e);
+      }
+
+      exceptions.rethrowIfCaptured();
     }
   }
 
   @Override
   public boolean isClosed() {
-    throw new UnsupportedOperationException();
+    return closed.get();
   }
 
   @Override
-  public void abort(String s, Throwable throwable) {
-    throw new UnsupportedOperationException();
+  public synchronized void abort(String s, Throwable throwable) {
+    try (Scope scope =
+        this.mirroringTracer.spanFactory.operationScope(
+            HBaseOperation.MIRRORING_CONNECTION_ABORT)) {
+      if (this.aborted.get()) {
+        return;
+      }
+      this.aborted.set(true);
+
+      try {
+        closeMirroringConnectionAndWaitForAsyncOperations();
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+
+      this.primaryConnection.abort(s, throwable);
+      this.secondaryConnection.abort(s, throwable);
+    }
   }
 
   @Override
   public boolean isAborted() {
-    throw new UnsupportedOperationException();
+    return this.aborted.get();
   }
 
   public Connection getPrimaryConnection() {
@@ -217,5 +252,14 @@ public class MirroringConnection implements Connection {
 
   public Connection getSecondaryConnection() {
     return this.secondaryConnection;
+  }
+
+  private void closeMirroringConnectionAndWaitForAsyncOperations() throws InterruptedException {
+    this.referenceCounter.decrementReferenceCount();
+    try {
+      this.referenceCounter.getOnLastReferenceClosed().get();
+    } catch (ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
