@@ -19,12 +19,14 @@ import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfig
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_STRATEGY_CLASS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_MISMATCH_DETECTOR_CLASS;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_READ_VERIFICATION_RATE_PERCENT;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_WRITE_ERROR_CONSUMER_CLASS;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.DefaultSecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestCountingFlowControlStrategy;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.DefaultMismatchDetector;
+import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 
 @InternalApi("For internal use only")
@@ -35,6 +37,7 @@ public class MirroringOptions {
   public final int flowControllerMaxOutstandingRequests;
   public final long bufferedMutatorBytesToFlush;
   public final String writeErrorConsumerClass;
+  public final int readSamplingRate;
 
   public MirroringOptions(Configuration configuration) {
     this.mismatchDetectorClass =
@@ -56,5 +59,9 @@ public class MirroringOptions {
         configuration.get(
             MIRRORING_WRITE_ERROR_CONSUMER_CLASS,
             DefaultSecondaryWriteErrorConsumer.class.getCanonicalName());
+    this.readSamplingRate =
+        Integer.parseInt(configuration.get(MIRRORING_READ_VERIFICATION_RATE_PERCENT, "100"));
+    Preconditions.checkArgument(this.readSamplingRate >= 0);
+    Preconditions.checkArgument(this.readSamplingRate <= 100);
   }
 }

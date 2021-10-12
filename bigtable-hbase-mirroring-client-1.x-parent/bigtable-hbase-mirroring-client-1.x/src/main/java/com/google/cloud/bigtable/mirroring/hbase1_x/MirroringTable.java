@@ -25,6 +25,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOExce
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.RequestScheduling;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
@@ -104,6 +105,8 @@ public class MirroringTable implements Table, ListenableCloseable {
   private final SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
   private final MirroringTracer mirroringTracer;
 
+  private final ReadSampler readSampler;
+
   /**
    * @param executorService ExecutorService is used to perform operations on secondaryTable and
    *     verification tasks.
@@ -118,10 +121,12 @@ public class MirroringTable implements Table, ListenableCloseable {
       MismatchDetector mismatchDetector,
       FlowController flowController,
       SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer,
+      ReadSampler readSampler,
       MirroringTracer mirroringTracer) {
     this.primaryTable = primaryTable;
     this.secondaryTable = secondaryTable;
     this.verificationContinuationFactory = new VerificationContinuationFactory(mismatchDetector);
+    this.readSampler = readSampler;
     this.secondaryAsyncWrapper =
         new AsyncTableWrapper(
             this.secondaryTable,
@@ -182,10 +187,12 @@ public class MirroringTable implements Table, ListenableCloseable {
               },
               HBaseOperation.EXISTS);
 
-      scheduleVerificationAndRequestWithFlowControl(
-          new RequestResourcesDescription(result),
-          this.secondaryAsyncWrapper.exists(get),
-          this.verificationContinuationFactory.exists(get, result));
+      if (this.readSampler.shouldNextReadOperationBeSampled()) {
+        scheduleVerificationAndRequestWithFlowControl(
+            new RequestResourcesDescription(result),
+            this.secondaryAsyncWrapper.exists(get),
+            this.verificationContinuationFactory.exists(get, result));
+      }
       return result;
     }
   }
@@ -206,10 +213,12 @@ public class MirroringTable implements Table, ListenableCloseable {
               },
               HBaseOperation.EXISTS_ALL);
 
-      scheduleVerificationAndRequestWithFlowControl(
-          new RequestResourcesDescription(result),
-          this.secondaryAsyncWrapper.existsAll(list),
-          this.verificationContinuationFactory.existsAll(list, result));
+      if (this.readSampler.shouldNextReadOperationBeSampled()) {
+        scheduleVerificationAndRequestWithFlowControl(
+            new RequestResourcesDescription(result),
+            this.secondaryAsyncWrapper.existsAll(list),
+            this.verificationContinuationFactory.existsAll(list, result));
+      }
       return result;
     }
   }
@@ -292,10 +301,12 @@ public class MirroringTable implements Table, ListenableCloseable {
               },
               HBaseOperation.GET);
 
-      scheduleVerificationAndRequestWithFlowControl(
-          new RequestResourcesDescription(result),
-          this.secondaryAsyncWrapper.get(get),
-          this.verificationContinuationFactory.get(get, result));
+      if (this.readSampler.shouldNextReadOperationBeSampled()) {
+        scheduleVerificationAndRequestWithFlowControl(
+            new RequestResourcesDescription(result),
+            this.secondaryAsyncWrapper.get(get),
+            this.verificationContinuationFactory.get(get, result));
+      }
 
       return result;
     }
@@ -317,11 +328,12 @@ public class MirroringTable implements Table, ListenableCloseable {
               },
               HBaseOperation.GET_LIST);
 
-      scheduleVerificationAndRequestWithFlowControl(
-          new RequestResourcesDescription(result),
-          this.secondaryAsyncWrapper.get(list),
-          this.verificationContinuationFactory.get(list, result));
-
+      if (this.readSampler.shouldNextReadOperationBeSampled()) {
+        scheduleVerificationAndRequestWithFlowControl(
+            new RequestResourcesDescription(result),
+            this.secondaryAsyncWrapper.get(list),
+            this.verificationContinuationFactory.get(list, result));
+      }
       return result;
     }
   }
@@ -338,7 +350,8 @@ public class MirroringTable implements Table, ListenableCloseable {
               this.secondaryAsyncWrapper,
               this.verificationContinuationFactory,
               this.flowController,
-              this.mirroringTracer);
+              this.mirroringTracer,
+              this.readSampler.shouldNextReadOperationBeSampled());
       this.referenceCounter.holdReferenceUntilClosing(scanner);
       return scanner;
     }
@@ -823,7 +836,7 @@ public class MirroringTable implements Table, ListenableCloseable {
       final List<? extends Row> operations, final Object[] results) {
 
     final FailedSuccessfulSplit<? extends Row> failedSuccessfulSplit =
-        new FailedSuccessfulSplit<>(operations, results, resultIsFaultyPredicate);
+        createOperationsSplit(operations, results);
 
     if (failedSuccessfulSplit.successfulOperations.size() == 0) {
       return;
@@ -870,6 +883,17 @@ public class MirroringTable implements Table, ListenableCloseable {
         this.flowController,
         this.mirroringTracer,
         resourceReservationFailureCallback);
+  }
+
+  private FailedSuccessfulSplit<? extends Row> createOperationsSplit(
+      List<? extends Row> operations, Object[] results) {
+    boolean skipReads = !this.readSampler.shouldNextReadOperationBeSampled();
+    if (skipReads) {
+      ReadWriteSplit<?, ?> readWriteSplit = new ReadWriteSplit<>(operations, results, Object.class);
+      return new FailedSuccessfulSplit<>(
+          readWriteSplit.writeOperations, readWriteSplit.writeResults, resultIsFaultyPredicate);
+    }
+    return new FailedSuccessfulSplit<>(operations, results, resultIsFaultyPredicate);
   }
 
   public static class WriteOperationInfo {

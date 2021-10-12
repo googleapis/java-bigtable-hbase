@@ -40,6 +40,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
@@ -105,6 +106,7 @@ public class TestMirroringMetrics {
                 flowController,
                 new SecondaryWriteErrorConsumerWithMetrics(
                     tracer, mock(SecondaryWriteErrorConsumer.class)),
+                new ReadSampler(100),
                 tracer));
   }
 

@@ -81,7 +81,8 @@ public class TestMirroringResultScanner {
             secondaryAsyncTableWrapperMock,
             continuationFactoryMock,
             flowController,
-            new MirroringTracer());
+            new MirroringTracer(),
+            true);
 
     doThrow(new RuntimeException("first")).when(primaryScannerMock).close();
 
@@ -119,7 +120,8 @@ public class TestMirroringResultScanner {
             secondaryAsyncTableWrapperMock,
             continuationFactoryMock,
             flowController,
-            new MirroringTracer());
+            new MirroringTracer(),
+            true);
 
     doThrow(new RuntimeException("second")).when(secondaryScannerWrapperMock).asyncClose();
 
@@ -157,7 +159,8 @@ public class TestMirroringResultScanner {
             secondaryAsyncTableWrapperMock,
             continuationFactoryMock,
             flowController,
-            new MirroringTracer());
+            new MirroringTracer(),
+            true);
 
     doThrow(new RuntimeException("first")).when(primaryScannerMock).close();
     doThrow(new RuntimeException("second")).when(secondaryScannerWrapperMock).asyncClose();
@@ -201,7 +204,8 @@ public class TestMirroringResultScanner {
             secondaryAsyncTableWrapperMock,
             continuationFactoryMock,
             flowController,
-            new MirroringTracer());
+            new MirroringTracer(),
+            true);
 
     mirroringScanner.close();
     mirroringScanner.close();

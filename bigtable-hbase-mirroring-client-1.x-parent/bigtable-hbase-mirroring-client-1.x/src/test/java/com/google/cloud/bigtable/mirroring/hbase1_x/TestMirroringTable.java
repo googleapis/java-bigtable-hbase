@@ -38,6 +38,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
@@ -114,6 +115,7 @@ public class TestMirroringTable {
                 mismatchDetector,
                 flowController,
                 secondaryWriteErrorConsumer,
+                new ReadSampler(100),
                 new MirroringTracer()));
   }
 
@@ -161,7 +163,7 @@ public class TestMirroringTable {
 
   @Test
   public void testMismatchDetectorIsCalledOnGetMultiple() throws IOException {
-    List<Get> get = Arrays.asList(createGets("test").get(0));
+    List<Get> get = Arrays.asList(createGet("test"));
     Result[] expectedResult = new Result[] {createResult("test", "value")};
 
     when(primaryTable.get(get)).thenReturn(expectedResult);
