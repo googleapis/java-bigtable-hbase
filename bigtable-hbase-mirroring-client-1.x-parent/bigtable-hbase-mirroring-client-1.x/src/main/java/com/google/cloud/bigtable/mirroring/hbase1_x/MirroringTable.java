@@ -866,13 +866,14 @@ public class MirroringTable implements Table, ListenableCloseable {
           }
         };
 
-    RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
-        requestResourcesDescription,
-        this.secondaryAsyncWrapper.batch(operationsToScheduleOnSecondary, resultsSecondary),
-        verificationFuture,
-        this.flowController,
-        this.mirroringTracer,
-        resourceReservationFailureCallback);
+    this.referenceCounter.holdReferenceUntilCompletion(
+        RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
+            requestResourcesDescription,
+            this.secondaryAsyncWrapper.batch(operationsToScheduleOnSecondary, resultsSecondary),
+            verificationFuture,
+            this.flowController,
+            this.mirroringTracer,
+            resourceReservationFailureCallback));
   }
 
   private FailedSuccessfulSplit<? extends Row> createOperationsSplit(
