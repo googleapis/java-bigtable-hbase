@@ -17,29 +17,30 @@ package com.google.cloud.bigtable.hbase.mirroring.utils;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 
 public class TestWriteErrorConsumer implements SecondaryWriteErrorConsumer {
-  static int errorCount;
+  static AtomicInteger errorCount = new AtomicInteger(0);
 
   public static int getErrorCount() {
-    return errorCount;
+    return errorCount.get();
   }
 
   public static void clearErrors() {
-    errorCount = 0;
+    errorCount.set(0);
   }
 
   @Override
   public void consume(Mutation r) {
-    errorCount++;
+    errorCount.incrementAndGet();
   }
 
   @Override
   public void consume(RowMutations r) {
-    errorCount++;
+    errorCount.incrementAndGet();
   }
 
   @Override
@@ -47,6 +48,6 @@ public class TestWriteErrorConsumer implements SecondaryWriteErrorConsumer {
     for (Row operation : operations) {
       assert operation instanceof Mutation || operation instanceof RowMutations;
     }
-    errorCount += operations.size();
+    errorCount.addAndGet(operations.size());
   }
 }
