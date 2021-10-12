@@ -91,6 +91,7 @@ public class MirroringSpanConstants {
     BUFFERED_MUTATOR_MUTATE("mutate"),
     BUFFERED_MUTATOR_MUTATE_LIST("mutateList"),
     MIRRORING_CONNECTION_CLOSE("MirroringConnection.close"),
+    MIRRORING_CONNECTION_ABORT("MirroringConnection.abort"),
     BUFFERED_MUTATOR_CLOSE("BufferedMutator.close");
 
     private final String string;

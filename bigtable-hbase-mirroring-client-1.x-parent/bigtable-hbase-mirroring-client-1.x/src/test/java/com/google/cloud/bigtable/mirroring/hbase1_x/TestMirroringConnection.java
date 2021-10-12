@@ -15,9 +15,18 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
-import static org.junit.Assert.assertTrue;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_PRIMARY_CONFIG_PREFIX_KEY;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_SECONDARY_CONFIG_PREFIX_KEY;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY;
+import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -34,75 +43,121 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 class TestConnection implements Connection {
-  public TestConnection(Configuration conf, boolean managed, ExecutorService pool, User user) {}
+  public static List<Connection> mocks = new ArrayList<>();
+  private Connection connectionMock;
+
+  public TestConnection(Configuration conf, boolean managed, ExecutorService pool, User user) {
+    connectionMock = mock(Connection.class);
+    mocks.add(connectionMock);
+  }
 
   @Override
   public Configuration getConfiguration() {
-    throw new UnsupportedOperationException();
+    return connectionMock.getConfiguration();
   }
 
   @Override
   public Table getTable(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException();
+    return connectionMock.getTable(tableName);
   }
 
   @Override
   public Table getTable(TableName tableName, ExecutorService executorService) throws IOException {
-    throw new UnsupportedOperationException();
+    return connectionMock.getTable(tableName, executorService);
   }
 
   @Override
   public BufferedMutator getBufferedMutator(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException();
+    return connectionMock.getBufferedMutator(tableName);
   }
 
   @Override
   public BufferedMutator getBufferedMutator(BufferedMutatorParams bufferedMutatorParams)
       throws IOException {
-    throw new UnsupportedOperationException();
+    return connectionMock.getBufferedMutator(bufferedMutatorParams);
   }
 
   @Override
   public RegionLocator getRegionLocator(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException();
+    return connectionMock.getRegionLocator(tableName);
   }
 
   @Override
   public Admin getAdmin() throws IOException {
-    throw new UnsupportedOperationException();
+    return connectionMock.getAdmin();
   }
 
   @Override
   public void close() throws IOException {
-    throw new UnsupportedOperationException();
+    connectionMock.close();
   }
 
   @Override
   public boolean isClosed() {
-    throw new UnsupportedOperationException();
+    return connectionMock.isClosed();
   }
 
   @Override
   public void abort(String s, Throwable throwable) {
-    throw new UnsupportedOperationException();
+    connectionMock.abort(s, throwable);
   }
 
   @Override
   public boolean isAborted() {
-    throw new UnsupportedOperationException();
+    return connectionMock.isAborted();
   }
 }
 
 @RunWith(JUnit4.class)
 public class TestMirroringConnection {
 
+  private Configuration createConfiguration() {
+    Configuration configuration = new Configuration();
+    configuration.set("hbase.client.connection.impl", MirroringConnection.class.getCanonicalName());
+    configuration.set(
+        MIRRORING_PRIMARY_CONNECTION_CLASS_KEY, TestConnection.class.getCanonicalName());
+    configuration.set(
+        MIRRORING_SECONDARY_CONNECTION_CLASS_KEY, TestConnection.class.getCanonicalName());
+    configuration.set(MIRRORING_PRIMARY_CONFIG_PREFIX_KEY, "1");
+    configuration.set(MIRRORING_SECONDARY_CONFIG_PREFIX_KEY, "2");
+    return configuration;
+  }
+
   @Test
   public void testConnectionFactoryCreatesMirroringConnection() throws IOException {
-    Configuration testConfiguration = new Configuration();
-    testConfiguration.set("hbase.client.connection.impl", TestConnection.class.getCanonicalName());
-    MirroringConfiguration configuration =
-        new MirroringConfiguration(testConfiguration, testConfiguration, testConfiguration);
+    Configuration configuration = createConfiguration();
     Connection connection = ConnectionFactory.createConnection(configuration);
-    assertTrue(connection instanceof MirroringConnection);
+    assertThat(connection).isInstanceOf(MirroringConnection.class);
+    assertThat(((MirroringConnection) connection).getPrimaryConnection())
+        .isInstanceOf(TestConnection.class);
+    assertThat(((MirroringConnection) connection).getSecondaryConnection())
+        .isInstanceOf(TestConnection.class);
+  }
+
+  @Test
+  public void testCloseClosesUnderlyingConnections() throws IOException {
+    TestConnection.mocks.clear();
+    Configuration configuration = createConfiguration();
+    Connection connection = ConnectionFactory.createConnection(configuration);
+
+    assertThat(TestConnection.mocks.size()).isEqualTo(2);
+    connection.close();
+    assertThat(connection.isClosed()).isTrue();
+    verify(TestConnection.mocks.get(0), times(1)).close();
+    verify(TestConnection.mocks.get(1), times(1)).close();
+  }
+
+  @Test
+  public void testAbortAbortsUnderlyingConnections() throws IOException {
+    TestConnection.mocks.clear();
+    Configuration configuration = createConfiguration();
+    Connection connection = ConnectionFactory.createConnection(configuration);
+
+    assertThat(TestConnection.mocks.size()).isEqualTo(2);
+    String expectedString = "expected";
+    Throwable expectedThrowable = new Exception();
+    connection.abort(expectedString, expectedThrowable);
+    verify(TestConnection.mocks.get(0), times(1)).abort(expectedString, expectedThrowable);
+    verify(TestConnection.mocks.get(1), times(1)).abort(expectedString, expectedThrowable);
   }
 }
