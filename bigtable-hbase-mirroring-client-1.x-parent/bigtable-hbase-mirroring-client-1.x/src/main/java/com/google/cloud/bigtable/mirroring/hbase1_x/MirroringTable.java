@@ -437,7 +437,7 @@ public class MirroringTable implements Table, ListenableCloseable {
           },
           HBaseOperation.PUT);
       scheduleWriteWithControlFlow(
-          new WriteOperationInfo(put), this.secondaryAsyncWrapper.put(put), this.flowController);
+          new WriteOperationInfo(put), this.secondaryAsyncWrapper.put(put));
     }
   }
 
@@ -494,9 +494,7 @@ public class MirroringTable implements Table, ListenableCloseable {
           },
           HBaseOperation.DELETE);
       scheduleWriteWithControlFlow(
-          new WriteOperationInfo(delete),
-          this.secondaryAsyncWrapper.delete(delete),
-          this.flowController);
+          new WriteOperationInfo(delete), this.secondaryAsyncWrapper.delete(delete));
     }
   }
 
@@ -563,9 +561,7 @@ public class MirroringTable implements Table, ListenableCloseable {
           HBaseOperation.MUTATE_ROW);
 
       scheduleWriteWithControlFlow(
-          new WriteOperationInfo(rowMutations),
-          this.secondaryAsyncWrapper.mutateRow(rowMutations),
-          this.flowController);
+          new WriteOperationInfo(rowMutations), this.secondaryAsyncWrapper.mutateRow(rowMutations));
     }
   }
 
@@ -587,7 +583,7 @@ public class MirroringTable implements Table, ListenableCloseable {
       Put put = makePutFromResult(result);
 
       scheduleWriteWithControlFlow(
-          new WriteOperationInfo(put), this.secondaryAsyncWrapper.put(put), this.flowController);
+          new WriteOperationInfo(put), this.secondaryAsyncWrapper.put(put));
       return result;
     }
   }
@@ -610,7 +606,7 @@ public class MirroringTable implements Table, ListenableCloseable {
       Put put = makePutFromResult(result);
 
       scheduleWriteWithControlFlow(
-          new WriteOperationInfo(put), this.secondaryAsyncWrapper.put(put), this.flowController);
+          new WriteOperationInfo(put), this.secondaryAsyncWrapper.put(put));
       return result;
     }
   }
@@ -710,9 +706,7 @@ public class MirroringTable implements Table, ListenableCloseable {
 
     if (wereMutationsApplied) {
       scheduleWriteWithControlFlow(
-          new WriteOperationInfo(rowMutations),
-          this.secondaryAsyncWrapper.mutateRow(rowMutations),
-          this.flowController);
+          new WriteOperationInfo(rowMutations), this.secondaryAsyncWrapper.mutateRow(rowMutations));
     }
     return wereMutationsApplied;
   }
@@ -798,8 +792,8 @@ public class MirroringTable implements Table, ListenableCloseable {
 
   private <T> void scheduleWriteWithControlFlow(
       final WriteOperationInfo writeOperationInfo,
-      final Supplier<ListenableFuture<T>> secondaryResultFutureSupplier,
-      final FlowController flowController) {
+      final Supplier<ListenableFuture<T>> secondaryResultFutureSupplier) {
+    final FlowController flowController = this.flowController;
     WriteOperationFutureCallback<T> writeErrorCallback =
         new WriteOperationFutureCallback<T>() {
           @Override
