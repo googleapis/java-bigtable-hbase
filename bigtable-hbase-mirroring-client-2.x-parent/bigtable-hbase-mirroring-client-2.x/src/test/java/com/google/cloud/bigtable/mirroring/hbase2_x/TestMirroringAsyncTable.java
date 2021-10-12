@@ -39,6 +39,7 @@ import com.google.common.primitives.Longs;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -299,7 +300,8 @@ public class TestMirroringAsyncTable {
 
     verify(primaryTable, times(1)).put(put);
     verify(secondaryTable, times(1)).put(put);
-    verify(secondaryWriteErrorConsumer, times(1)).consume(HBaseOperation.PUT, put);
+    verify(secondaryWriteErrorConsumer, times(1))
+        .consume(HBaseOperation.PUT, Collections.singletonList(put));
   }
 
   <T> List<T> waitForAll(List<CompletableFuture<T>> futures) {
