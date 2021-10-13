@@ -31,6 +31,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -70,7 +71,8 @@ public class AsyncTableWrapper implements ListenableCloseable {
    */
   private final ListenableReferenceCounter pendingOperationsReferenceCounter;
 
-  private SettableFuture<Void> closeResultFuture;
+  private final SettableFuture<Void> closeResultFuture = SettableFuture.create();
+  private final AtomicBoolean closed = new AtomicBoolean(false);
 
   public AsyncTableWrapper(
       Table table, ListeningExecutorService executorService, MirroringTracer mirroringTracer) {
@@ -128,15 +130,12 @@ public class AsyncTableWrapper implements ListenableCloseable {
         HBaseOperation.EXISTS_ALL);
   }
 
-  public synchronized ListenableFuture<Void> asyncClose() {
-    Log.trace("asyncClose()");
-    if (this.closeResultFuture != null) {
+  public ListenableFuture<Void> asyncClose() {
+    if (this.closed.getAndSet(true)) {
       return this.closeResultFuture;
     }
-    Log.trace("performing asyncClose()");
 
     this.pendingOperationsReferenceCounter.decrementReferenceCount();
-    this.closeResultFuture = SettableFuture.create();
 
     this.pendingOperationsReferenceCounter
         .getOnLastReferenceClosed()

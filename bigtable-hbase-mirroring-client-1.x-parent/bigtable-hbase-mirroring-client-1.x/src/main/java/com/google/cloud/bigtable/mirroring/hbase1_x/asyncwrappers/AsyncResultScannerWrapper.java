@@ -31,6 +31,7 @@ import io.opencensus.trace.Span;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
@@ -53,9 +54,9 @@ public class AsyncResultScannerWrapper implements ListenableCloseable {
    */
   private final ConcurrentLinkedQueue<ScannerRequestContext> nextContextQueue;
 
-  private ResultScanner scanner;
-  private ListeningExecutorService executorService;
-  private boolean closed;
+  private final ResultScanner scanner;
+  private final ListeningExecutorService executorService;
+  private final AtomicBoolean closed = new AtomicBoolean(false);
   /**
    * We are counting references to this object to be able to call {@link ResultScanner#close()} on
    * underlying scanner in a predictable way. The reference count is increased before submitting
@@ -78,7 +79,6 @@ public class AsyncResultScannerWrapper implements ListenableCloseable {
     this.mirroringTracer = mirroringTracer;
     this.pendingOperationsReferenceCounter = new ListenableReferenceCounter();
     this.executorService = executorService;
-    this.closed = false;
     this.nextContextQueue = new ConcurrentLinkedQueue<>();
   }
 
@@ -168,11 +168,10 @@ public class AsyncResultScannerWrapper implements ListenableCloseable {
         });
   }
 
-  public synchronized ListenableFuture<Void> asyncClose() {
-    if (this.closed) {
+  public ListenableFuture<Void> asyncClose() {
+    if (this.closed.getAndSet(true)) {
       return this.pendingOperationsReferenceCounter.getOnLastReferenceClosed();
     }
-    this.closed = true;
 
     this.pendingOperationsReferenceCounter.decrementReferenceCount();
     this.pendingOperationsReferenceCounter
