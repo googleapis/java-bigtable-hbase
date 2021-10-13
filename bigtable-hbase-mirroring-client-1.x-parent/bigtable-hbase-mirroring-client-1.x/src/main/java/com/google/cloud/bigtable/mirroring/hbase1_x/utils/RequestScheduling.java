@@ -20,6 +20,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowContro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController.ResourceReservation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
+import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -49,9 +50,11 @@ public class RequestScheduling {
         verificationCallback,
         flowController,
         mirroringTracer,
-        new Runnable() {
+        new Function<Throwable, Void>() {
           @Override
-          public void run() {}
+          public Void apply(Throwable t) {
+            return null;
+          }
         });
   }
 
@@ -61,7 +64,7 @@ public class RequestScheduling {
       final FutureCallback<T> verificationCallback,
       final FlowController flowController,
       final MirroringTracer mirroringTracer,
-      final Runnable flowControlReservationErrorConsumer) {
+      final Function<Throwable, Void> flowControlReservationErrorConsumer) {
     final SettableFuture<Void> verificationCompletedFuture = SettableFuture.create();
 
     final ListenableFuture<ResourceReservation> reservationRequest =
@@ -99,7 +102,7 @@ public class RequestScheduling {
               }),
           MoreExecutors.directExecutor());
     } catch (InterruptedException | ExecutionException e) {
-      flowControlReservationErrorConsumer.run();
+      flowControlReservationErrorConsumer.apply(e);
       FlowController.cancelRequest(reservationRequest);
 
       verificationCompletedFuture.set(null);

@@ -117,14 +117,16 @@ public class TestHelpers {
     return resourceReservationMock;
   }
 
-  public static void setupFlowControllerToRejectRequests(FlowController flowController) {
+  public static IOException setupFlowControllerToRejectRequests(FlowController flowController) {
+    IOException thrownException = new IOException("flow control expected exception");
     SettableFuture<FlowController.ResourceReservation> resourceReservationFuture =
         SettableFuture.create();
-    resourceReservationFuture.setException(new IOException("expected"));
+    resourceReservationFuture.setException(thrownException);
 
     doReturn(resourceReservationFuture)
         .when(flowController)
         .asyncRequestResource(any(RequestResourcesDescription.class));
+    return thrownException;
   }
 
   public static <T> T blockMethodCall(

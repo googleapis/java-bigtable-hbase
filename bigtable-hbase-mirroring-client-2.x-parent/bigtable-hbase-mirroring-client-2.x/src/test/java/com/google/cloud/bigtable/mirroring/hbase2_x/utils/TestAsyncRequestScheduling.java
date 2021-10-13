@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import org.junit.Test;
@@ -48,7 +49,7 @@ public class TestAsyncRequestScheduling {
 
     Supplier<CompletableFuture<Void>> secondaryFutureSupplier = mock(Supplier.class);
     Function<Void, FutureCallback<Void>> verificationCreator = mock(Function.class);
-    Runnable flowControlReservationErrorHandler = mock(Runnable.class);
+    Consumer<Throwable> flowControlReservationErrorHandler = mock(Consumer.class);
 
     CompletableFuture<Void> resultFuture =
         reserveFlowControlResourcesThenScheduleSecondary(
@@ -73,7 +74,7 @@ public class TestAsyncRequestScheduling {
     verify(resourceReservation, times(1)).release();
     verify(verificationCreator, never()).apply((Void) any());
     verify(secondaryFutureSupplier, never()).get();
-    verify(flowControlReservationErrorHandler, never()).run();
+    verify(flowControlReservationErrorHandler, never()).accept(any());
 
     assertThat(resourceReservationFuture.isCancelled());
   }
@@ -88,7 +89,7 @@ public class TestAsyncRequestScheduling {
 
     Supplier<CompletableFuture<Void>> secondaryFutureSupplier = mock(Supplier.class);
     Function<Void, FutureCallback<Void>> verificationCreator = mock(Function.class);
-    Runnable flowControlReservationErrorHandler = mock(Runnable.class);
+    Consumer<Throwable> flowControlReservationErrorHandler = mock(Consumer.class);
 
     CompletableFuture<Void> resultFuture =
         reserveFlowControlResourcesThenScheduleSecondary(
@@ -96,12 +97,12 @@ public class TestAsyncRequestScheduling {
             exceptionalFuture,
             secondaryFutureSupplier,
             verificationCreator,
-            flowControlReservationErrorHandler::run);
+            flowControlReservationErrorHandler);
 
     Void result = resultFuture.get();
 
     verify(verificationCreator, never()).apply((Void) any());
     verify(secondaryFutureSupplier, never()).get();
-    verify(flowControlReservationErrorHandler, times(1)).run();
+    verify(flowControlReservationErrorHandler, times(1)).accept(any());
   }
 }
