@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.25.1](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.25.0...v1.25.1) (2021-10-13)
+
+
+### Bug Fixes
+
+* fix rst stream error matching ([#3275](https://www.github.com/googleapis/java-bigtable-hbase/issues/3275)) ([0fce614](https://www.github.com/googleapis/java-bigtable-hbase/commit/0fce614e4b1b128ae565271845ffb96e972a8546))
+
 ## [1.25.0](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.24.0...v1.25.0) (2021-09-24)
 
 
