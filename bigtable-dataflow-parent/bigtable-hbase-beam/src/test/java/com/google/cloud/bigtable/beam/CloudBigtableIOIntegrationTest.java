@@ -173,7 +173,7 @@ public class CloudBigtableIOIntegrationTest {
                   QUALIFIER1,
                   Bytes.toBytes(RandomStringUtils.randomAlphanumeric(8))));
     }
-    return KV.of(tableName.getNameAsString(), mutations);
+    return KV.<String, Iterable<Mutation>>of(tableName.getNameAsString(), mutations);
   }
 
   private void writeThroughDataflow(DoFn<Mutation, Void> writer, int insertCount) throws Exception {
@@ -329,15 +329,18 @@ public class CloudBigtableIOIntegrationTest {
         try {
           for (final BoundedSource<Result> bundle : bundles) {
             es.submit(
-                () -> {
-                  try (BoundedReader<Result> reader = bundle.createReader(null)) {
-                    reader.start();
-                    while (reader.getCurrent() != null) {
-                      count.incrementAndGet();
-                      reader.advance();
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    try (BoundedReader<Result> reader = bundle.createReader(null)) {
+                      reader.start();
+                      while (reader.getCurrent() != null) {
+                        count.incrementAndGet();
+                        reader.advance();
+                      }
+                    } catch (IOException e) {
+                      LOG.warn("Could not read bundle: %s", e, bundle);
                     }
-                  } catch (IOException e) {
-                    LOG.warn("Could not read bundle: %s", e, bundle);
                   }
                 });
           }
