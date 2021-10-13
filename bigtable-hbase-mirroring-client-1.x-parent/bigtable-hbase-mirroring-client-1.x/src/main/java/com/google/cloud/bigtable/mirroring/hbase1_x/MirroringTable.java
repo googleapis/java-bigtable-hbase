@@ -34,6 +34,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.Mirro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
@@ -50,6 +51,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -95,13 +97,13 @@ public class MirroringTable implements Table, ListenableCloseable {
         }
       };
 
-  Table primaryTable;
-  Table secondaryTable;
-  AsyncTableWrapper secondaryAsyncWrapper;
-  VerificationContinuationFactory verificationContinuationFactory;
-  private FlowController flowController;
-  private ListenableReferenceCounter referenceCounter;
-  private boolean closed = false;
+  private final Table primaryTable;
+  private final Table secondaryTable;
+  private final AsyncTableWrapper secondaryAsyncWrapper;
+  private final VerificationContinuationFactory verificationContinuationFactory;
+  private final FlowController flowController;
+  private final ListenableReferenceCounter referenceCounter;
+  private final AtomicBoolean closed = new AtomicBoolean(false);
 
   private final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
   private final MirroringTracer mirroringTracer;
@@ -377,15 +379,14 @@ public class MirroringTable implements Table, ListenableCloseable {
     this.asyncClose();
   }
 
-  public synchronized ListenableFuture<Void> asyncClose() throws IOException {
+  @VisibleForTesting
+  ListenableFuture<Void> asyncClose() throws IOException {
     try (Scope scope =
         this.mirroringTracer.spanFactory.operationScope(HBaseOperation.TABLE_CLOSE)) {
-      Log.trace("[%s] asyncClose()", this.getName());
-      if (closed) {
+      if (this.closed.getAndSet(true)) {
         return this.referenceCounter.getOnLastReferenceClosed();
       }
 
-      this.closed = true;
       this.referenceCounter.decrementReferenceCount();
 
       IOException primaryException = null;

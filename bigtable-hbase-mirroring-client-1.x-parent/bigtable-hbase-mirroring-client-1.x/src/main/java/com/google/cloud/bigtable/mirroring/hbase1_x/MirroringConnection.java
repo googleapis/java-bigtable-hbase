@@ -56,11 +56,11 @@ public class MirroringConnection implements Connection {
   private final MirroringTracer mirroringTracer;
   private final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
   private final ReadSampler readSampler;
-  private MirroringConfiguration configuration;
-  private Connection primaryConnection;
-  private Connection secondaryConnection;
-  private AtomicBoolean closed = new AtomicBoolean(false);
-  private AtomicBoolean aborted = new AtomicBoolean(false);
+  private final MirroringConfiguration configuration;
+  private final Connection primaryConnection;
+  private final Connection secondaryConnection;
+  private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final AtomicBoolean aborted = new AtomicBoolean(false);
 
   /**
    * The constructor called from {@link
@@ -181,14 +181,13 @@ public class MirroringConnection implements Connection {
   }
 
   @Override
-  public synchronized void close() throws IOException {
+  public void close() throws IOException {
     try (Scope scope =
         this.mirroringTracer.spanFactory.operationScope(
             HBaseOperation.MIRRORING_CONNECTION_CLOSE)) {
-      if (this.closed.get()) {
+      if (this.closed.getAndSet(true)) {
         return;
       }
-      this.closed.set(true);
 
       try {
         closeMirroringConnectionAndWaitForAsyncOperations();
@@ -221,14 +220,13 @@ public class MirroringConnection implements Connection {
   }
 
   @Override
-  public synchronized void abort(String s, Throwable throwable) {
+  public void abort(String s, Throwable throwable) {
     try (Scope scope =
         this.mirroringTracer.spanFactory.operationScope(
             HBaseOperation.MIRRORING_CONNECTION_ABORT)) {
-      if (this.aborted.get()) {
+      if (this.aborted.getAndSet(true)) {
         return;
       }
-      this.aborted.set(true);
 
       try {
         closeMirroringConnectionAndWaitForAsyncOperations();

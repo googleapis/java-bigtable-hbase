@@ -28,6 +28,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestRes
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -35,6 +36,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import io.opencensus.common.Scope;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
@@ -54,12 +56,12 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
   private static final Log log = LogFactory.getLog(MirroringResultScanner.class);
   private final MirroringTracer mirroringTracer;
 
-  private Scan originalScan;
-  private ResultScanner primaryResultScanner;
-  private AsyncResultScannerWrapper secondaryResultScannerWrapper;
-  private VerificationContinuationFactory verificationContinuationFactory;
-  private ListenableReferenceCounter listenableReferenceCounter;
-  private boolean closed = false;
+  private final Scan originalScan;
+  private final ResultScanner primaryResultScanner;
+  private final AsyncResultScannerWrapper secondaryResultScannerWrapper;
+  private final VerificationContinuationFactory verificationContinuationFactory;
+  private final ListenableReferenceCounter listenableReferenceCounter;
+  private final AtomicBoolean closed = new AtomicBoolean(false);
   /**
    * Keeps track of number of entries already read from this scanner to provide context for
    * MismatchDetectors.
@@ -154,8 +156,8 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
   }
 
   @Override
-  public synchronized void close() {
-    if (this.closed) {
+  public void close() {
+    if (this.closed.getAndSet(true)) {
       return;
     }
 
@@ -179,17 +181,15 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
       }
     }
 
-    this.closed = true;
     if (firstException != null) {
       throw firstException;
     }
   }
 
-  public synchronized ListenableFuture<Void> asyncClose() {
-    if (!this.closed) {
-      this.secondaryResultScannerWrapper.asyncClose();
-      this.listenableReferenceCounter.decrementReferenceCount();
-    }
+  @VisibleForTesting
+  ListenableFuture<Void> asyncClose() {
+    this.secondaryResultScannerWrapper.asyncClose();
+    this.listenableReferenceCounter.decrementReferenceCount();
     return this.listenableReferenceCounter.getOnLastReferenceClosed();
   }
 
