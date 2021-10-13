@@ -22,7 +22,7 @@ import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 
-public class SecondaryWriteErrorConsumerWithMetrics {
+public class SecondaryWriteErrorConsumerWithMetrics implements SecondaryWriteErrorConsumer {
   private final MirroringTracer mirroringTracer;
   private final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
 
@@ -32,18 +32,21 @@ public class SecondaryWriteErrorConsumerWithMetrics {
     this.secondaryWriteErrorConsumer = secondaryWriteErrorConsumer;
   }
 
-  public void consume(HBaseOperation operation, Mutation r) {
+  @Override
+  public void consume(HBaseOperation operation, Mutation mutation, Throwable cause) {
     this.mirroringTracer.metricsRecorder.recordWriteMismatches(operation, 1);
-    this.secondaryWriteErrorConsumer.consume(r);
+    this.secondaryWriteErrorConsumer.consume(operation, mutation, cause);
   }
 
-  public void consume(HBaseOperation operation, RowMutations r) {
+  @Override
+  public void consume(HBaseOperation operation, RowMutations mutation, Throwable cause) {
     this.mirroringTracer.metricsRecorder.recordWriteMismatches(operation, 1);
-    this.secondaryWriteErrorConsumer.consume(r);
+    this.secondaryWriteErrorConsumer.consume(operation, mutation, cause);
   }
 
-  public void consume(HBaseOperation operation, List<? extends Row> operations) {
+  @Override
+  public void consume(HBaseOperation operation, List<? extends Row> operations, Throwable cause) {
     this.mirroringTracer.metricsRecorder.recordWriteMismatches(operation, operations.size());
-    this.secondaryWriteErrorConsumer.consume(operations);
+    this.secondaryWriteErrorConsumer.consume(operation, operations, cause);
   }
 }

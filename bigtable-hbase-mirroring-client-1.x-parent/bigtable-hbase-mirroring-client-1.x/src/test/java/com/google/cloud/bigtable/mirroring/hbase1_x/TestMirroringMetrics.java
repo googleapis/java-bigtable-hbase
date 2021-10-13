@@ -329,7 +329,7 @@ public class TestMirroringMetrics {
 
     verify(mirroringMetricsRecorder, never())
         .recordReadMismatches(any(HBaseOperation.class), anyInt());
-    verify(mirroringMetricsRecorder, times(1)).recordWriteMismatches(HBaseOperation.BATCH, 2);
+    verify(mirroringMetricsRecorder, times(2)).recordWriteMismatches(HBaseOperation.BATCH, 1);
   }
 
   @Test
@@ -346,20 +346,24 @@ public class TestMirroringMetrics {
         new SecondaryWriteErrorConsumerWithMetrics(mirroringTracer, secondaryWriteErrorConsumer);
 
     List<Put> puts = Arrays.asList(createPut("r1", "f", "q", "1"), createPut("r2", "f", "q", "v2"));
-    secondaryWriteErrorConsumerWithMetrics.consume(HBaseOperation.PUT_LIST, puts);
-    verify(secondaryWriteErrorConsumer, times(1)).consume(puts);
+    secondaryWriteErrorConsumerWithMetrics.consume(HBaseOperation.PUT_LIST, puts, new Throwable());
+    verify(secondaryWriteErrorConsumer, times(1))
+        .consume(eq(HBaseOperation.PUT_LIST), eq(puts), any(Throwable.class));
     verify(mirroringMetricsRecorder, times(1)).recordWriteMismatches(HBaseOperation.PUT_LIST, 2);
 
     Put put = createPut("r1", "f", "q", "1");
-    secondaryWriteErrorConsumerWithMetrics.consume(HBaseOperation.PUT, put);
+    secondaryWriteErrorConsumerWithMetrics.consume(HBaseOperation.PUT, put, new Throwable());
 
     verify(mirroringMetricsRecorder, times(1)).recordWriteMismatches(HBaseOperation.PUT, 1);
-    verify(secondaryWriteErrorConsumer, times(1)).consume(put);
+    verify(secondaryWriteErrorConsumer, times(1))
+        .consume(eq(HBaseOperation.PUT), eq(put), any(Throwable.class));
 
     RowMutations rowMutations = new RowMutations("r1".getBytes());
-    secondaryWriteErrorConsumerWithMetrics.consume(HBaseOperation.MUTATE_ROW, rowMutations);
+    secondaryWriteErrorConsumerWithMetrics.consume(
+        HBaseOperation.MUTATE_ROW, rowMutations, new Throwable());
 
-    verify(secondaryWriteErrorConsumer, times(1)).consume(rowMutations);
+    verify(secondaryWriteErrorConsumer, times(1))
+        .consume(eq(HBaseOperation.MUTATE_ROW), eq(rowMutations), any(Throwable.class));
     verify(mirroringMetricsRecorder, times(1)).recordWriteMismatches(HBaseOperation.MUTATE_ROW, 1);
   }
 }

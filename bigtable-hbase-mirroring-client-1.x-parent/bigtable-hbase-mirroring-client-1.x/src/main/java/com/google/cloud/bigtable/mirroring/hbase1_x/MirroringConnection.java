@@ -54,7 +54,7 @@ public class MirroringConnection implements Connection {
   private final MismatchDetector mismatchDetector;
   private final ListenableReferenceCounter referenceCounter;
   private final MirroringTracer mirroringTracer;
-  private final SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumerWithMetrics;
+  private final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
   private final ReadSampler readSampler;
   private MirroringConfiguration configuration;
   private Connection primaryConnection;
@@ -101,7 +101,7 @@ public class MirroringConnection implements Connection {
         ReflectionConstructor.construct(
             this.configuration.mirroringOptions.writeErrorConsumerClass);
 
-    this.secondaryWriteErrorConsumerWithMetrics =
+    this.secondaryWriteErrorConsumer =
         new SecondaryWriteErrorConsumerWithMetrics(
             this.mirroringTracer, secondaryWriteErrorConsumer);
     this.readSampler = new ReadSampler(this.configuration.mirroringOptions.readSamplingRate);
@@ -140,7 +140,7 @@ public class MirroringConnection implements Connection {
               executorService,
               this.mismatchDetector,
               this.flowController,
-              this.secondaryWriteErrorConsumerWithMetrics,
+              this.secondaryWriteErrorConsumer,
               this.readSampler,
               this.mirroringTracer);
       this.referenceCounter.holdReferenceUntilClosing(table);
@@ -165,7 +165,7 @@ public class MirroringConnection implements Connection {
           configuration,
           flowController,
           executorService,
-          secondaryWriteErrorConsumerWithMetrics,
+          secondaryWriteErrorConsumer,
           mirroringTracer);
     }
   }

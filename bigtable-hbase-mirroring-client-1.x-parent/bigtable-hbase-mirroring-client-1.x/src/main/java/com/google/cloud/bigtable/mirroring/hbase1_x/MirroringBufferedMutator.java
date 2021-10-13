@@ -19,7 +19,6 @@ import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOException;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController.ResourceReservation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
@@ -65,7 +64,7 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
  * bytes, we perform a flush in a worker thread. After flush we pass collected mutations to
  * secondary BufferedMutator and flush it. Writes that have failed on primary are not forwarded to
  * secondary, writes that have failed on secondary are forwarded to {@link
- * SecondaryWriteErrorConsumer#consume(Mutation)} handler.
+ * SecondaryWriteErrorConsumer#consume(HBaseOperation, Mutation, Throwable)} handler.
  *
  * <p>Moreover, we perform our custom flow control to prevent unbounded growth of memory - calls to
  * mutate() might block if secondary database lags behind. We account size of all operations that
@@ -79,7 +78,7 @@ public class MirroringBufferedMutator implements BufferedMutator {
   private final BufferedMutator secondaryBufferedMutator;
   private final FlowController flowController;
   private final ListeningExecutorService executorService;
-  private final SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
+  private final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
   private final MirroringTracer mirroringTracer;
 
   /** Configuration that was used to configure this instance. */
@@ -128,7 +127,7 @@ public class MirroringBufferedMutator implements BufferedMutator {
       MirroringConfiguration configuration,
       FlowController flowController,
       ExecutorService executorService,
-      SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer,
+      SecondaryWriteErrorConsumer secondaryWriteErrorConsumer,
       MirroringTracer mirroringTracer)
       throws IOException {
     final ExceptionListener userListener = bufferedMutatorParams.getListener();
@@ -149,7 +148,7 @@ public class MirroringBufferedMutator implements BufferedMutator {
           public void onException(
               RetriesExhaustedWithDetailsException e, BufferedMutator bufferedMutator)
               throws RetriesExhaustedWithDetailsException {
-            handleSecondaryExceptions(e);
+            reportWriteErrors(e);
           }
         };
 
@@ -242,7 +241,7 @@ public class MirroringBufferedMutator implements BufferedMutator {
     } catch (InterruptedException | ExecutionException e) {
       // We won't write those mutations to secondary database, they should be reported to
       // secondaryWriteErrorConsumer.
-      reportWriteErrors(mutations);
+      reportWriteErrors(mutations, e);
 
       setInterruptedFlagInInterruptedException(e);
       if (primaryException != null) {
@@ -269,10 +268,19 @@ public class MirroringBufferedMutator implements BufferedMutator {
     }
   }
 
-  private void reportWriteErrors(List<? extends Mutation> mutations) {
+  private void reportWriteErrors(RetriesExhaustedWithDetailsException e) {
+    try (Scope scope = this.mirroringTracer.spanFactory.writeErrorScope()) {
+      for (int i = 0; i < e.getNumExceptions(); i++) {
+        this.secondaryWriteErrorConsumer.consume(
+            HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST, (Mutation) e.getRow(i), e.getCause(i));
+      }
+    }
+  }
+
+  private void reportWriteErrors(List<? extends Mutation> mutations, Throwable cause) {
     try (Scope scope = this.mirroringTracer.spanFactory.writeErrorScope()) {
       this.secondaryWriteErrorConsumer.consume(
-          HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST, mutations);
+          HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST, mutations, cause);
     }
   }
 
@@ -359,14 +367,6 @@ public class MirroringBufferedMutator implements BufferedMutator {
     }
   }
 
-  private void handleSecondaryExceptions(RetriesExhaustedWithDetailsException e) {
-    List<Mutation> mutations = new ArrayList<>();
-    for (int i = 0; i < e.getNumExceptions(); i++) {
-      mutations.add((Mutation) e.getRow(i));
-    }
-    reportWriteErrors(mutations);
-  }
-
   private BufferedMutatorParams copyMutatorParamsAndSetListener(
       BufferedMutatorParams bufferedMutatorParams, ExceptionListener exceptionListener) {
     BufferedMutatorParams params = new BufferedMutatorParams(bufferedMutatorParams.getTableName());
@@ -447,7 +447,7 @@ public class MirroringBufferedMutator implements BufferedMutator {
                     // good idea - if current thread was interrupted then next flush might also
                     // be, only increasing our confusion, moreover, that may cause secondary
                     // writes that were not completed on primary.
-                    reportWriteErrors(dataToFlush);
+                    reportWriteErrors(dataToFlush, throwable);
                     releaseReservations(flushReservations);
                     secondaryFlushFinished.setException(throwable);
                   }
@@ -528,7 +528,7 @@ public class MirroringBufferedMutator implements BufferedMutator {
       // InterruptedIOException or some RuntimeError, in both cases we should consider operation as
       // not completed - the worst that can happen is that we will have some writes in both
       // secondary database and on-disk log.
-      reportWriteErrors(dataToFlush);
+      reportWriteErrors(dataToFlush, e);
       releaseReservations(flushReservations);
       completionFuture.setException(e);
     }

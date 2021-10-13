@@ -27,6 +27,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -603,7 +604,8 @@ public class TestMirroringTable {
 
     ArgumentCaptor<HBaseOperation> argument1 = ArgumentCaptor.forClass(HBaseOperation.class);
     ArgumentCaptor<List<Row>> argument2 = ArgumentCaptor.forClass(List.class);
-    verify(secondaryWriteErrorConsumer, times(1)).consume(argument1.capture(), argument2.capture());
+    verify(secondaryWriteErrorConsumer, times(1))
+        .consume(argument1.capture(), argument2.capture(), any(Throwable.class));
     assertThat(argument2.getValue().size()).isEqualTo(1);
     assertThat(argument2.getValue().get(0)).isEqualTo(put);
 
@@ -709,7 +711,7 @@ public class TestMirroringTable {
                 // secondary
                 result[0] = null; // put1 failed on secondary
                 result[1] = Result.create(new Cell[0]); // put3 ok on secondary
-                result[2] = null; // get1 - failed on secondary
+                result[2] = new IOException("test"); // get1 - failed on secondary
                 result[3] = get3Result; // get3 - ok
                 throw new IOException("test2");
               }
@@ -732,7 +734,7 @@ public class TestMirroringTable {
 
     // failed secondary writes were reported
     verify(secondaryWriteErrorConsumer, times(1))
-        .consume(HBaseOperation.BATCH, Arrays.asList(put1));
+        .consume(eq(HBaseOperation.BATCH), eq(put1), (Throwable) isNull());
 
     // successful secondary reads were reported
     verify(mismatchDetector, times(1))
@@ -1101,7 +1103,7 @@ public class TestMirroringTable {
     verify(primaryTable, times(1)).put(request);
     verify(secondaryTable, never()).get(any(Get.class));
     verify(secondaryWriteErrorConsumer, times(1))
-        .consume(HBaseOperation.PUT, ImmutableList.of(request));
+        .consume(eq(HBaseOperation.PUT), eq(ImmutableList.of(request)), any(Throwable.class));
   }
 
   @Test
@@ -1137,7 +1139,7 @@ public class TestMirroringTable {
     verify(primaryTable, times(1)).batch(request, results);
     verify(secondaryTable, never()).batch(ArgumentMatchers.<Row>anyList(), any(Object[].class));
     verify(secondaryWriteErrorConsumer, times(1))
-        .consume(HBaseOperation.BATCH, ImmutableList.of(put1, put2));
+        .consume(eq(HBaseOperation.BATCH), eq(ImmutableList.of(put1, put2)), any(Throwable.class));
   }
 
   @Test

@@ -25,8 +25,10 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Row;
+import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
@@ -36,7 +38,7 @@ public class BatchHelpers {
       final ReadWriteSplit<?, Result> successfulPrimaryReadsAndWrites,
       final Object[] secondaryResults,
       final MismatchDetector mismatchDetector,
-      final SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer,
+      final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer,
       final Predicate<Object> resultIsFaultyPredicate,
       final MirroringTracer mirroringTracer) {
     return new FutureCallback<Void>() {
@@ -89,10 +91,9 @@ public class BatchHelpers {
                 Object.class);
 
         if (failedSecondaryReadsAndWrites.writeOperations.size() > 0) {
-          try (Scope scope = mirroringTracer.spanFactory.writeErrorScope()) {
-            secondaryWriteErrorConsumer.consume(
-                HBaseOperation.BATCH, failedSecondaryReadsAndWrites.writeOperations);
-          }
+          consumeWriteErrors(
+              failedSecondaryReadsAndWrites.writeOperations,
+              failedSecondaryReadsAndWrites.writeResults);
         }
 
         if (successfulSecondaryReadsAndWrites.readOperations.size() > 0
@@ -121,6 +122,26 @@ public class BatchHelpers {
 
             if (!matchingSuccessfulReads.failedReads.isEmpty()) {
               mismatchDetector.batch(matchingSuccessfulReads.failedReads, throwable);
+            }
+          }
+        }
+      }
+
+      private void consumeWriteErrors(List<? extends Row> writeOperations, Object[] writeResults) {
+        try (Scope scope = mirroringTracer.spanFactory.writeErrorScope()) {
+          for (int i = 0; i < writeOperations.size(); i++) {
+            Throwable cause =
+                writeResults[i] instanceof Throwable ? (Throwable) writeResults[i] : null;
+
+            Row operation = writeOperations.get(i);
+            if (operation instanceof RowMutations) {
+              secondaryWriteErrorConsumer.consume(
+                  HBaseOperation.BATCH, (RowMutations) operation, cause);
+            } else if (operation instanceof Mutation) {
+              secondaryWriteErrorConsumer.consume(
+                  HBaseOperation.BATCH, (Mutation) operation, cause);
+            } else {
+              throw new IllegalArgumentException("Unsupported type.");
             }
           }
         }

@@ -20,6 +20,7 @@ import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfig
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -273,9 +274,11 @@ public class TestMirroringBufferedMutator {
         .mutate(Arrays.asList(mutation1, mutation2, mutation3, mutation4));
 
     verify(secondaryWriteErrorConsumerWithMetrics, atLeastOnce())
-        .consume(HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST, Arrays.asList(mutation1));
+        .consume(
+            eq(HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST), eq(mutation1), any(Throwable.class));
     verify(secondaryWriteErrorConsumerWithMetrics, atLeastOnce())
-        .consume(HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST, Arrays.asList(mutation3));
+        .consume(
+            eq(HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST), eq(mutation3), any(Throwable.class));
   }
 
   @Test
@@ -318,9 +321,11 @@ public class TestMirroringBufferedMutator {
     verify(secondaryBufferedMutator, atLeastOnce()).mutate(Arrays.asList(mutation3, mutation4));
 
     verify(secondaryWriteErrorConsumerWithMetrics, atLeastOnce())
-        .consume(HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST, Arrays.asList(mutation1));
+        .consume(
+            eq(HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST), eq(mutation1), any(Throwable.class));
     verify(secondaryWriteErrorConsumerWithMetrics, atLeastOnce())
-        .consume(HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST, Arrays.asList(mutation3));
+        .consume(
+            eq(HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST), eq(mutation3), any(Throwable.class));
   }
 
   @Test

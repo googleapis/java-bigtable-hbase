@@ -37,6 +37,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -215,7 +216,9 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
                     completeSuccessfulResultFutures(resultFutures, primaryResults, numActions);
                     if (resourceReservationError != null) {
                       this.secondaryWriteErrorConsumer.consume(
-                          HBaseOperation.BATCH, successfulReadWriteSplit.writeOperations);
+                          HBaseOperation.BATCH,
+                          successfulReadWriteSplit.writeOperations,
+                          resourceReservationError);
                       return;
                     }
                     reserveFlowControlResourcesThenScheduleSecondary(
@@ -307,11 +310,10 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
       final MirroringTable.WriteOperationInfo writeOperationInfo,
       final CompletableFuture<T> primaryFuture,
       final Supplier<CompletableFuture<T>> secondaryFutureSupplier) {
-    final Runnable secondaryWriteErrorHandler =
-        () ->
+    final Consumer<Throwable> secondaryWriteErrorHandler =
+        (error) ->
             this.secondaryWriteErrorConsumer.consume(
-                writeOperationInfo.hBaseOperation, writeOperationInfo.operations);
-
+                writeOperationInfo.hBaseOperation, writeOperationInfo.operations, error);
     return reserveFlowControlResourcesThenScheduleSecondary(
         primaryFuture,
         FutureConverter.toCompletable(
@@ -324,7 +326,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
 
               @Override
               public void onFailure(Throwable throwable) {
-                secondaryWriteErrorHandler.run();
+                secondaryWriteErrorHandler.accept(throwable);
               }
             },
         secondaryWriteErrorHandler);

@@ -54,6 +54,7 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Row;
@@ -300,7 +301,7 @@ public class TestMirroringAsyncTable {
     verify(primaryTable, times(1)).put(put);
     verify(secondaryTable, times(1)).put(put);
     verify(secondaryWriteErrorConsumer, times(1))
-        .consume(HBaseOperation.PUT, Collections.singletonList(put));
+        .consume(eq(HBaseOperation.PUT), eq(Collections.singletonList(put)), eq(expectedException));
   }
 
   <T> List<T> waitForAll(List<CompletableFuture<T>> futures) {
@@ -364,7 +365,8 @@ public class TestMirroringAsyncTable {
     verify(mismatchDetector, times(1))
         .batch(
             Collections.singletonList(get1), new Result[] {get1Result}, new Result[] {get1Result});
-    verify(secondaryWriteErrorConsumer, never()).consume(eq(HBaseOperation.BATCH), anyList());
+    verify(secondaryWriteErrorConsumer, never())
+        .consume(eq(HBaseOperation.BATCH), any(Mutation.class), any(Throwable.class));
   }
 
   @Test
@@ -444,7 +446,7 @@ public class TestMirroringAsyncTable {
             eq(new Result[] {get3Result}),
             eq(new Result[] {get3Result}));
     verify(secondaryWriteErrorConsumer, times(1))
-        .consume(HBaseOperation.BATCH, Collections.singletonList(put1));
+        .consume(eq(HBaseOperation.BATCH), eq(put1), eq(ioe));
   }
 
   @Test
@@ -581,13 +583,14 @@ public class TestMirroringAsyncTable {
   @Test
   public void TestExceptionalFlowControllerAndWriteInBatch()
       throws ExecutionException, InterruptedException {
-    setupFlowControllerToRejectRequests(flowController);
+    IOException flowControllerException = setupFlowControllerToRejectRequests(flowController);
     Put put1 = createPut("test1", "f1", "q1", "v1");
     Put put2 = createPut("test2", "f2", "q2", "v2");
     List<Put> requests = Arrays.asList(put1, put2);
 
     CompletableFuture<Void> exceptionalFuture = new CompletableFuture<>();
-    exceptionalFuture.completeExceptionally(new IOException("expected"));
+    IOException expectedFuture = new IOException("expected");
+    exceptionalFuture.completeExceptionally(expectedFuture);
 
     List<CompletableFuture<Void>> primaryResults =
         Arrays.asList(exceptionalFuture, CompletableFuture.completedFuture(null));
@@ -601,6 +604,6 @@ public class TestMirroringAsyncTable {
 
     verify(secondaryTable, never()).batch(any());
     verify(secondaryWriteErrorConsumer, times(1))
-        .consume(HBaseOperation.BATCH, Collections.singletonList(put2));
+        .consume(eq(HBaseOperation.BATCH), eq(Arrays.asList(put2)), eq(flowControllerException));
   }
 }
