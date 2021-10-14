@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncTableWrapper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.AccumulatedExceptions;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers.FailedSuccessfulSplit;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers.ReadWriteSplit;
@@ -389,7 +390,7 @@ public class MirroringTable implements Table, ListenableCloseable {
 
       this.referenceCounter.decrementReferenceCount();
 
-      IOException primaryException = null;
+      AccumulatedExceptions exceptionsList = new AccumulatedExceptions();
       try {
         this.mirroringTracer.spanFactory.wrapPrimaryOperation(
             new CallableThrowingIOException<Void>() {
@@ -401,26 +402,20 @@ public class MirroringTable implements Table, ListenableCloseable {
             },
             HBaseOperation.TABLE_CLOSE);
       } catch (IOException e) {
-        primaryException = e;
+        exceptionsList.add(e);
       }
 
       try {
         this.secondaryAsyncWrapper.asyncClose();
       } catch (RuntimeException e) {
-        if (primaryException != null) {
-          primaryException.addSuppressed(e);
-          throw primaryException;
-        } else {
-          throw e;
-        }
+        exceptionsList.add(e);
       }
 
-      if (primaryException != null) {
-        throw primaryException;
-      }
+      exceptionsList.rethrowIfCaptured();
+      return this.referenceCounter.getOnLastReferenceClosed();
+    } finally {
       this.mirroringTracer.spanFactory.asyncCloseSpanWhenCompleted(
           this.referenceCounter.getOnLastReferenceClosed());
-      return this.referenceCounter.getOnLastReferenceClosed();
     }
   }
 
