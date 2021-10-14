@@ -19,6 +19,7 @@ import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncResultScannerWrapper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncResultScannerWrapper.ScannerRequestContext;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncTableWrapper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.AccumulatedExceptions;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOException;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
@@ -161,29 +162,21 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
       return;
     }
 
-    RuntimeException firstException = null;
+    AccumulatedExceptions exceptionsList = new AccumulatedExceptions();
     try {
       this.primaryResultScanner.close();
     } catch (RuntimeException e) {
-      firstException = e;
+      exceptionsList.add(e);
     } finally {
       try {
         this.asyncClose();
       } catch (RuntimeException e) {
         log.error("Exception while scheduling this.close().", e);
-        if (firstException == null) {
-          firstException = e;
-        } else {
-          // Attach current exception as suppressed to make it visible in `firstException`s
-          // stacktrace.
-          firstException.addSuppressed(e);
-        }
+        exceptionsList.add(e);
       }
     }
 
-    if (firstException != null) {
-      throw firstException;
-    }
+    exceptionsList.rethrowAsRuntimeExceptionIfCaptured();
   }
 
   @VisibleForTesting
