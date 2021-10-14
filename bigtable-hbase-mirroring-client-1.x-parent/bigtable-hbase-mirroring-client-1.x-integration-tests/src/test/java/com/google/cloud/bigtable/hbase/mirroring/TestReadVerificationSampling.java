@@ -64,7 +64,7 @@ public class TestReadVerificationSampling {
     }
 
     Configuration configuration = ConfigurationHelper.newConfiguration();
-    configuration.set("google.bigtable.mirroring.read-verification-rate", "1");
+    configuration.set("google.bigtable.mirroring.read-verification-rate-percent", "1");
 
     try (MirroringConnection connection = databaseHelpers.createConnection(configuration)) {
       try (Table table = connection.getTable(tableName)) {
@@ -99,7 +99,7 @@ public class TestReadVerificationSampling {
     }
 
     Configuration configuration = ConfigurationHelper.newConfiguration();
-    configuration.set("google.bigtable.mirroring.read-verification-rate", "100");
+    configuration.set("google.bigtable.mirroring.read-verification-rate-percent", "100");
 
     try (MirroringConnection connection = databaseHelpers.createConnection(configuration)) {
       try (Table table = connection.getTable(tableName)) {
@@ -121,7 +121,7 @@ public class TestReadVerificationSampling {
     }
 
     Configuration configuration = ConfigurationHelper.newConfiguration();
-    configuration.set("google.bigtable.mirroring.read-verification-rate", "0");
+    configuration.set("google.bigtable.mirroring.read-verification-rate-percent", "0");
 
     try (MirroringConnection connection = databaseHelpers.createConnection(configuration)) {
       try (Table table = connection.getTable(tableName)) {
