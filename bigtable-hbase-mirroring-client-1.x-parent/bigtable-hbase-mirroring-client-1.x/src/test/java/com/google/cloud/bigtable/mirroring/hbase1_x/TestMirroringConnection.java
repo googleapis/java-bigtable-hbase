@@ -120,9 +120,11 @@ public class TestMirroringConnection {
         MIRRORING_SECONDARY_CONNECTION_CLASS_KEY, TestConnection.class.getCanonicalName());
     configuration.set(MIRRORING_PRIMARY_CONFIG_PREFIX_KEY, "1");
     configuration.set(MIRRORING_SECONDARY_CONFIG_PREFIX_KEY, "2");
-    configuration.set("google.bigtable.mirroring.appender.prefix-path", "/tmp/test-");
-    configuration.set("google.bigtable.mirroring.appender.max-buffer-size", "1024");
-    configuration.set("google.bigtable.mirroring.appender.drop-on-overflow", "false");
+    configuration.set(
+        "google.bigtable.mirroring.write-error-log.appender.prefix-path", "/tmp/test-");
+    configuration.set("google.bigtable.mirroring.write-error-log.appender.max-buffer-size", "1024");
+    configuration.set(
+        "google.bigtable.mirroring.write-error-log.appender.drop-on-overflow", "false");
     return configuration;
   }
 

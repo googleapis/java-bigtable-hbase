@@ -37,7 +37,7 @@ import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
  *
  * <p>Every log entry is guaranteed to be a single line.
  */
-class DefaultSerializer implements Serializer {
+public class DefaultSerializer implements Serializer {
   ObjectMapper objectMapper = new ObjectMapper();
 
   private LogEntry.OperationType operationTypeFromMutation(Mutation mutation) {

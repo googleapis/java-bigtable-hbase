@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.Logger;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import java.util.List;
 import org.apache.hadoop.hbase.client.Mutation;
@@ -22,15 +23,39 @@ import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 
 public class DefaultSecondaryWriteErrorConsumer implements SecondaryWriteErrorConsumer {
+  private static final com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger Log =
+      new com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger(
+          DefaultSecondaryWriteErrorConsumer.class);
+  private final Logger writeErrorLogger;
+
+  public DefaultSecondaryWriteErrorConsumer(Logger writeErrorLogger) {
+    this.writeErrorLogger = writeErrorLogger;
+  }
+
   @Override
   public void consume(HBaseOperation operation, Mutation r, Throwable cause) {
-    System.out.printf("Couldn't write row to secondary database %s", new String(r.getRow()));
+    try {
+      writeErrorLogger.mutationFailed(r, cause);
+    } catch (InterruptedException e) {
+      Log.error(
+          "Writing mutation that failed on secondary database to faillog interrupted: mutation=%s, failure_cause=%s, exception=%s",
+          r, cause, e);
+      Thread.currentThread().interrupt();
+    }
   }
 
   @Override
   public void consume(HBaseOperation operation, RowMutations r, Throwable cause) {
-    System.out.printf(
-        "Couldn't apply row mutations to secondary database %s", new String(r.getRow()));
+    for (Mutation m : r.getMutations()) {
+      try {
+        writeErrorLogger.mutationFailed(m, cause);
+      } catch (InterruptedException e) {
+        Log.error(
+            "Writing mutation that failed on secondary database to faillog interrupted: mutation=%s, failure_cause=%s, exception=%s",
+            r, cause, e);
+        Thread.currentThread().interrupt();
+      }
+    }
   }
 
   @Override

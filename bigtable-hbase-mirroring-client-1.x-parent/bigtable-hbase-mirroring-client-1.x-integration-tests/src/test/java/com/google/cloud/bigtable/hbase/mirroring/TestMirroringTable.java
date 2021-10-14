@@ -30,11 +30,16 @@ import com.google.cloud.bigtable.hbase.mirroring.utils.TestWriteErrorConsumer;
 import com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.FailingHBaseHRegion;
 import com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.FailingHBaseHRegionRule;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.DefaultAppender;
 import com.google.common.base.Predicate;
 import com.google.common.primitives.Longs;
+import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants.OperationStatusCode;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Delete;
@@ -43,6 +48,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
+import org.apache.hadoop.hbase.shaded.org.apache.commons.io.FileUtils;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.junit.Assume;
 import org.junit.ClassRule;
@@ -1223,17 +1229,53 @@ public class TestMirroringTable {
     }
   }
 
+  private static int getSecondaryWriteErrorLogMessagesWritten() throws IOException {
+    Configuration configuration = ConfigurationHelper.newConfiguration();
+    String prefixPath = configuration.get(DefaultAppender.PREFIX_PATH_KEY);
+    String[] prefixParts = prefixPath.split("/");
+    final String fileNamePrefix = prefixParts[prefixParts.length - 1];
+    String[] directoryParts = Arrays.copyOf(prefixParts, prefixParts.length - 1);
+    StringBuilder sb = new StringBuilder();
+    for (String directoryPart : directoryParts) {
+      sb.append(directoryPart);
+      sb.append("/");
+    }
+    String directoryPath = sb.toString();
+    File dir = new File(directoryPath);
+    File[] files =
+        dir.listFiles(
+            new FileFilter() {
+              @Override
+              public boolean accept(File file) {
+                return file.getName().startsWith(fileNamePrefix);
+              }
+            });
+
+    int numberOfLines = 0;
+    for (File f : files) {
+      String fileStr = FileUtils.readFileToString(f);
+      if (!fileStr.isEmpty()) {
+        numberOfLines += fileStr.split("\n").length;
+      }
+    }
+    return numberOfLines;
+  }
+
   static class ReportedErrorsContext {
     final int initialErrorsConsumed;
+    final int initialErrorsWritten;
 
     public ReportedErrorsContext() throws IOException {
       this.initialErrorsConsumed = TestWriteErrorConsumer.getErrorCount();
+      this.initialErrorsWritten = getSecondaryWriteErrorLogMessagesWritten();
     }
 
     public void assertNewErrorsReported(int expectedNewErrors) throws IOException {
       int errorsConsumed = TestWriteErrorConsumer.getErrorCount();
+      int errorsWritten = getSecondaryWriteErrorLogMessagesWritten();
 
       assertThat(errorsConsumed - initialErrorsConsumed).isEqualTo(expectedNewErrors);
+      assertThat(errorsWritten - initialErrorsWritten).isEqualTo(expectedNewErrors);
     }
   }
 }

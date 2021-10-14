@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.mirroring.hbase2_x;
 
 import static org.junit.Assert.assertTrue;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -120,16 +121,33 @@ class TestAsyncConnection implements AsyncConnection {
 public class TestMirroringAsyncConnection {
   @Test
   public void testConnectionFactoryCreatesMirroringAsyncConnection()
-      throws IOException, InterruptedException, ExecutionException, TimeoutException {
-    Configuration testConfiguration = new Configuration();
-    testConfiguration.set("hbase.client.registry.impl", TestRegistry.class.getCanonicalName());
-    testConfiguration.set(
-        "hbase.client.async.connection.impl", TestAsyncConnection.class.getCanonicalName());
-    MirroringAsyncConfiguration configuration =
-        new MirroringAsyncConfiguration(testConfiguration, testConfiguration, testConfiguration);
+      throws InterruptedException, ExecutionException, TimeoutException {
+    Configuration configuration = new Configuration();
     configuration.set("hbase.client.registry.impl", TestRegistry.class.getCanonicalName());
+    configuration.set(
+        "hbase.client.async.connection.impl", TestAsyncConnection.class.getCanonicalName());
+    configuration.set(
+        "google.bigtable.mirroring.primary-client.connection.impl",
+        MirroringConnection.class.getCanonicalName());
+    configuration.set(
+        "google.bigtable.mirroring.secondary-client.connection.impl",
+        MirroringConnection.class.getCanonicalName());
+
+    configuration.set(
+        "google.bigtable.mirroring.primary-client.async.connection.impl",
+        MirroringAsyncConnection.class.getCanonicalName());
+    configuration.set(
+        "google.bigtable.mirroring.secondary-client.async.connection.impl",
+        MirroringAsyncConnection.class.getCanonicalName());
+
+    configuration.set("google.bigtable.mirroring.primary-client.prefix", "prefix");
+    configuration.set(
+        "google.bigtable.mirroring.write-error-log.appender.prefix-path", "/tmp/test-");
+    configuration.set("google.bigtable.mirroring.write-error-log.appender.max-buffer-size", "1024");
+    configuration.set(
+        "google.bigtable.mirroring.write-error-log.appender.drop-on-overflow", "false");
     AsyncConnection connection =
         ConnectionFactory.createAsyncConnection(configuration).get(1, TimeUnit.SECONDS);
-    assertTrue(connection instanceof MirroringAsyncConnection);
+    assertTrue(connection instanceof TestAsyncConnection);
   }
 }
