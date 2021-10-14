@@ -15,7 +15,9 @@
  */
 package com.google.cloud.bigtable.hbase.mirroring.utils;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.DefaultSecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.Logger;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,6 +27,11 @@ import org.apache.hadoop.hbase.client.RowMutations;
 
 public class TestWriteErrorConsumer implements SecondaryWriteErrorConsumer {
   static AtomicInteger errorCount = new AtomicInteger(0);
+  private final DefaultSecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
+
+  public TestWriteErrorConsumer(Logger writeErrorLogger) {
+    this.secondaryWriteErrorConsumer = new DefaultSecondaryWriteErrorConsumer(writeErrorLogger);
+  }
 
   public static int getErrorCount() {
     return errorCount.get();
@@ -37,11 +44,13 @@ public class TestWriteErrorConsumer implements SecondaryWriteErrorConsumer {
   @Override
   public void consume(HBaseOperation operation, Mutation r, Throwable cause) {
     errorCount.incrementAndGet();
+    this.secondaryWriteErrorConsumer.consume(operation, r, cause);
   }
 
   @Override
   public void consume(HBaseOperation operation, RowMutations r, Throwable cause) {
     errorCount.incrementAndGet();
+    this.secondaryWriteErrorConsumer.consume(operation, r, cause);
   }
 
   @Override
@@ -50,5 +59,6 @@ public class TestWriteErrorConsumer implements SecondaryWriteErrorConsumer {
       assert row instanceof Mutation || row instanceof RowMutations;
     }
     errorCount.addAndGet(operations.size());
+    this.secondaryWriteErrorConsumer.consume(operation, operations, cause);
   }
 }

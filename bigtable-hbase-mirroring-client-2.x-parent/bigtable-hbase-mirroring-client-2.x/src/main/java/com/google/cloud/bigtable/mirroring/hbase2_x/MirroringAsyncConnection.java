@@ -15,7 +15,9 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase2_x;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.Logger;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.reflection.ReflectionConstructor;
@@ -85,11 +87,22 @@ public class MirroringAsyncConnection implements AsyncConnection {
     this.mismatchDetector =
         ReflectionConstructor.construct(
             this.configuration.mirroringOptions.mismatchDetectorClass, this.mirroringTracer);
-    this.secondaryWriteErrorConsumer =
-        new SecondaryWriteErrorConsumerWithMetrics(
-            this.mirroringTracer,
+
+    Logger failedWritesLogger =
+        new Logger(
             ReflectionConstructor.construct(
-                this.configuration.mirroringOptions.writeErrorConsumerClass));
+                this.configuration.mirroringOptions.writeErrorLogAppenderClass,
+                Configuration.class,
+                this.configuration),
+            ReflectionConstructor.construct(
+                this.configuration.mirroringOptions.writeErrorLogSerializerClass));
+
+    SecondaryWriteErrorConsumer writeErrorConsumer =
+        ReflectionConstructor.construct(
+            this.configuration.mirroringOptions.writeErrorConsumerClass, failedWritesLogger);
+
+    this.secondaryWriteErrorConsumer =
+        new SecondaryWriteErrorConsumerWithMetrics(this.mirroringTracer, writeErrorConsumer);
   }
 
   @Override

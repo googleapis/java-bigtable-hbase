@@ -21,9 +21,13 @@ import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfig
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_MISMATCH_DETECTOR_CLASS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_READ_VERIFICATION_RATE_PERCENT;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_WRITE_ERROR_CONSUMER_CLASS;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_WRITE_ERROR_LOG_APPENDER_CLASS;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_WRITE_ERROR_LOG_SERIALIZER_CLASS;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.DefaultSecondaryWriteErrorConsumer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.DefaultAppender;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.DefaultSerializer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestCountingFlowControlStrategy;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.DefaultMismatchDetector;
 import com.google.common.base.Preconditions;
@@ -38,6 +42,9 @@ public class MirroringOptions {
   public final long bufferedMutatorBytesToFlush;
   public final String writeErrorConsumerClass;
   public final int readSamplingRate;
+
+  public final String writeErrorLogAppenderClass;
+  public final String writeErrorLogSerializerClass;
 
   public MirroringOptions(Configuration configuration) {
     this.mismatchDetectorClass =
@@ -63,5 +70,11 @@ public class MirroringOptions {
         Integer.parseInt(configuration.get(MIRRORING_READ_VERIFICATION_RATE_PERCENT, "100"));
     Preconditions.checkArgument(this.readSamplingRate >= 0);
     Preconditions.checkArgument(this.readSamplingRate <= 100);
+    this.writeErrorLogAppenderClass =
+        configuration.get(
+            MIRRORING_WRITE_ERROR_LOG_APPENDER_CLASS, DefaultAppender.class.getCanonicalName());
+    this.writeErrorLogSerializerClass =
+        configuration.get(
+            MIRRORING_WRITE_ERROR_LOG_SERIALIZER_CLASS, DefaultSerializer.class.getCanonicalName());
   }
 }

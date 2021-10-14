@@ -35,6 +35,15 @@ public class ReflectionConstructor {
     }
   }
 
+  public static <T> T construct(String className, Class<?> paramClass, Object param) {
+    Constructor<T> constructor = getConstructor(className, paramClass);
+    try {
+      return constructor.newInstance(param);
+    } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private static <T> Constructor<T> getConstructor(String className, Class<?>... parameterTypes) {
     try {
       @SuppressWarnings("unchecked")

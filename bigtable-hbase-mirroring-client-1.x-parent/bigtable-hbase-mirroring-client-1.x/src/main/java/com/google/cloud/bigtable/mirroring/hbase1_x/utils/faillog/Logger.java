@@ -57,7 +57,7 @@ public class Logger implements AutoCloseable {
    * @param appender an object responsible for storing log entries
    * @param serializer on object responsible for transforming failed mutations into log entries
    */
-  Logger(Appender appender, Serializer serializer) {
+  public Logger(Appender appender, Serializer serializer) {
     this.appender = appender;
     this.serializer = serializer;
   }
@@ -71,7 +71,8 @@ public class Logger implements AutoCloseable {
    * @param failureCause the cause of the failure
    * @throws InterruptedException in case the appender thread was interrupted
    */
-  void mutationFailed(Mutation mutation, Throwable failureCause) throws InterruptedException {
+  public void mutationFailed(Mutation mutation, Throwable failureCause)
+      throws InterruptedException {
     byte[] serializedEntry = serializer.serialize(mutation, failureCause);
     appender.append(serializedEntry);
   }
