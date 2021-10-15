@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -154,5 +155,24 @@ public class TestHelpers {
               }
             });
     return secondaryOperationAllowedFuture;
+  }
+
+  public static void assertPutsAreEqual(
+      Put expectedPut, Put value, CellComparatorCompat cellComparator) {
+    assertThat(expectedPut.getRow()).isEqualTo(value.getRow());
+    assertThat(expectedPut.getFamilyCellMap().size()).isEqualTo(value.getFamilyCellMap().size());
+    for (byte[] family : expectedPut.getFamilyCellMap().keySet()) {
+      assertThat(value.getFamilyCellMap()).containsKey(family);
+      List<Cell> expectedCells = expectedPut.getFamilyCellMap().get(family);
+      List<Cell> valueCells = value.getFamilyCellMap().get(family);
+      assertThat(expectedCells.size()).isEqualTo(valueCells.size());
+      for (int i = 0; i < expectedCells.size(); i++) {
+        assertThat(cellComparator.compare(expectedCells.get(i), valueCells.get(i))).isEqualTo(0);
+      }
+    }
+  }
+
+  public interface CellComparatorCompat {
+    int compare(Cell a, Cell b);
   }
 }
