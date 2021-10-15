@@ -51,7 +51,7 @@ public class TestAsyncRequestScheduling {
     Function<Void, FutureCallback<Void>> verificationCreator = mock(Function.class);
     Consumer<Throwable> flowControlReservationErrorHandler = mock(Consumer.class);
 
-    CompletableFuture<Void> resultFuture =
+    AsyncRequestScheduling.OperationStages<CompletableFuture<Void>> result =
         reserveFlowControlResourcesThenScheduleSecondary(
             exceptionalFuture,
             resourceReservationFuture,
@@ -59,17 +59,18 @@ public class TestAsyncRequestScheduling {
             verificationCreator,
             flowControlReservationErrorHandler);
 
-    final List<Throwable> resultFutureThrowableList = new ArrayList<>();
-    resultFuture
+    result.getVerificationCompletedFuture().get();
+    final List<Throwable> resultThrowableList = new ArrayList<>();
+    result
+        .userNotified
         .exceptionally(
             t -> {
-              resultFutureThrowableList.add(t);
+              resultThrowableList.add(t);
               return null;
             })
         .get();
-
-    assertThat(resultFutureThrowableList.size()).isEqualTo(1);
-    assertThat(resultFutureThrowableList.get(0)).isEqualTo(ioe);
+    assertThat(resultThrowableList.size()).isEqualTo(1);
+    assertThat(resultThrowableList.get(0)).isEqualTo(ioe);
 
     verify(resourceReservation, times(1)).release();
     verify(verificationCreator, never()).apply((Void) any());
@@ -91,7 +92,7 @@ public class TestAsyncRequestScheduling {
     Function<Void, FutureCallback<Void>> verificationCreator = mock(Function.class);
     Consumer<Throwable> flowControlReservationErrorHandler = mock(Consumer.class);
 
-    CompletableFuture<Void> resultFuture =
+    AsyncRequestScheduling.OperationStages<CompletableFuture<Void>> result =
         reserveFlowControlResourcesThenScheduleSecondary(
             primaryFuture,
             exceptionalFuture,
@@ -99,7 +100,9 @@ public class TestAsyncRequestScheduling {
             verificationCreator,
             flowControlReservationErrorHandler);
 
-    Void result = resultFuture.get();
+    final List<Throwable> resultThrowableList = new ArrayList<>();
+    result.userNotified.get();
+    result.getVerificationCompletedFuture().get();
 
     verify(verificationCreator, never()).apply((Void) any());
     verify(secondaryFutureSupplier, never()).get();
