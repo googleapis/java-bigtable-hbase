@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.mirroring.hbase2_x;
 import static com.google.cloud.bigtable.mirroring.hbase2_x.utils.AsyncRequestScheduling.reserveFlowControlResourcesThenScheduleSecondary;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringTable;
+import com.google.cloud.bigtable.mirroring.hbase1_x.WriteOperationFutureCallback;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers.FailedSuccessfulSplit;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers.ReadWriteSplit;
@@ -46,6 +47,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.AsyncTable;
@@ -60,8 +62,8 @@ import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.ScanResultConsumerBase;
 import org.apache.hadoop.hbase.client.ServiceCaller;
+import org.apache.hadoop.hbase.io.TimeRange;
 import org.apache.hadoop.hbase.shaded.com.google.protobuf.RpcChannel;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements AsyncTable<C> {
   private final Predicate<Object> resultIsFaultyPredicate = (o) -> o instanceof Throwable;
@@ -312,18 +314,15 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
             returnedValue.verificationCompleted();
             return;
           }
-          AsyncRequestScheduling.OperationStages<CompletableFuture<T>> operationStages =
+          FutureUtils.forwardResult(
               reserveFlowControlResourcesThenScheduleSecondary(
                   primaryFuture,
                   FutureConverter.toCompletable(
                       flowController.asyncRequestResource(
                           resourcesDescriptionCreator.apply(primaryResult))),
                   secondaryFutureSupplier,
-                  verificationCallbackCreator);
-          FutureUtils.forwardResult(operationStages.userNotified, returnedValue.userNotified);
-          FutureUtils.forwardResult(
-              operationStages.getVerificationCompletedFuture(),
-              returnedValue.getVerificationCompletedFuture());
+                  verificationCallbackCreator),
+              returnedValue);
         });
     return wrapWithReferenceCounter(returnedValue);
   }
@@ -336,7 +335,6 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
         (error) ->
             this.secondaryWriteErrorConsumer.consume(
                 writeOperationInfo.hBaseOperation, writeOperationInfo.operations, error);
-
     return wrapWithReferenceCounter(
         reserveFlowControlResourcesThenScheduleSecondary(
             primaryFuture,
@@ -345,10 +343,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
                     writeOperationInfo.requestResourcesDescription)),
             secondaryFutureSupplier,
             (ignoredSecondaryResult) ->
-                new FutureCallback<T>() {
-                  @Override
-                  public void onSuccess(@NullableDecl T t) {}
-
+                new WriteOperationFutureCallback<T>() {
                   @Override
                   public void onFailure(Throwable throwable) {
                     secondaryWriteErrorHandler.accept(throwable);
@@ -405,8 +400,8 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
   }
 
   @Override
-  public CheckAndMutateBuilder checkAndMutate(byte[] bytes, byte[] bytes1) {
-    throw new UnsupportedOperationException();
+  public CheckAndMutateBuilder checkAndMutate(byte[] row, byte[] family) {
+    return new MirroringCheckAndMutateBuilder(this.primaryTable.checkAndMutate(row, family));
   }
 
   @Override
@@ -436,5 +431,94 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
       ServiceCaller<S, R> serviceCaller,
       CoprocessorCallback<R> coprocessorCallback) {
     throw new UnsupportedOperationException();
+  }
+
+  private class MirroringCheckAndMutateBuilder implements CheckAndMutateBuilder {
+    private final CheckAndMutateBuilder primaryBuilder;
+
+    public MirroringCheckAndMutateBuilder(CheckAndMutateBuilder primaryBuilder) {
+      this.primaryBuilder = primaryBuilder;
+    }
+
+    private AsyncRequestScheduling.OperationStages<CompletableFuture<Boolean>> checkAndMutate(
+        MirroringTable.WriteOperationInfo writeOperationInfo,
+        CompletableFuture<Boolean> primary,
+        Supplier<CompletableFuture<Void>> secondary) {
+      AsyncRequestScheduling.OperationStages<CompletableFuture<Boolean>> returnedValue =
+          new AsyncRequestScheduling.OperationStages<>(new CompletableFuture<>());
+      primary
+          .thenAccept(
+              (wereMutationsApplied) -> {
+                if (wereMutationsApplied) {
+                  FutureUtils.forwardResult(
+                      writeWithFlowControl(
+                          writeOperationInfo,
+                          CompletableFuture.completedFuture(wereMutationsApplied),
+                          () -> secondary.get().thenApply(ignored -> null)),
+                      returnedValue);
+                } else {
+                  returnedValue.userNotified.complete(wereMutationsApplied);
+                  returnedValue.verificationCompleted();
+                }
+              })
+          .exceptionally(
+              primaryError -> {
+                returnedValue.userNotified.completeExceptionally(primaryError);
+                returnedValue.verificationCompleted();
+                throw new CompletionException(primaryError);
+              });
+      return wrapWithReferenceCounter(returnedValue);
+    }
+
+    @Override
+    public CompletableFuture<Boolean> thenPut(Put put) {
+      return checkAndMutate(
+              new MirroringTable.WriteOperationInfo(put),
+              this.primaryBuilder.thenPut(put),
+              () -> secondaryTable.put(put))
+          .userNotified;
+    }
+
+    @Override
+    public CompletableFuture<Boolean> thenDelete(Delete delete) {
+      return checkAndMutate(
+              new MirroringTable.WriteOperationInfo(delete),
+              this.primaryBuilder.thenDelete(delete),
+              () -> secondaryTable.delete(delete))
+          .userNotified;
+    }
+
+    @Override
+    public CompletableFuture<Boolean> thenMutate(RowMutations rowMutations) {
+      return checkAndMutate(
+              new MirroringTable.WriteOperationInfo(rowMutations),
+              this.primaryBuilder.thenMutate(rowMutations),
+              () -> secondaryTable.mutateRow(rowMutations))
+          .userNotified;
+    }
+
+    @Override
+    public CheckAndMutateBuilder qualifier(byte[] bytes) {
+      this.primaryBuilder.qualifier(bytes);
+      return this;
+    }
+
+    @Override
+    public CheckAndMutateBuilder timeRange(TimeRange timeRange) {
+      this.primaryBuilder.timeRange(timeRange);
+      return this;
+    }
+
+    @Override
+    public CheckAndMutateBuilder ifNotExists() {
+      this.primaryBuilder.ifNotExists();
+      return this;
+    }
+
+    @Override
+    public CheckAndMutateBuilder ifMatches(CompareOperator compareOperator, byte[] bytes) {
+      this.primaryBuilder.ifMatches(compareOperator, bytes);
+      return this;
+    }
   }
 }

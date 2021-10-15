@@ -22,9 +22,11 @@ import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.createRes
 import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.setupFlowControllerMock;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.setupFlowControllerToRejectRequests;
 import static com.google.common.truth.Truth.assertThat;
+import static junit.framework.TestCase.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -61,6 +63,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.ScanResultConsumerBase;
+import org.apache.hadoop.hbase.io.TimeRange;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -81,6 +84,7 @@ public class TestMirroringAsyncTable {
   @Mock FlowController flowController;
   @Mock SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
   @Mock ListenableReferenceCounter referenceCounter;
+  @Mock AsyncTable.CheckAndMutateBuilder primaryBuilder;
 
   MirroringAsyncTable<ScanResultConsumerBase> mirroringTable;
 
@@ -97,6 +101,11 @@ public class TestMirroringAsyncTable {
                 secondaryWriteErrorConsumer,
                 new MirroringTracer(),
                 referenceCounter));
+
+    lenient()
+        .doReturn(primaryBuilder)
+        .when(primaryTable)
+        .checkAndMutate(any(byte[].class), any(byte[].class));
   }
 
   @Test
@@ -562,6 +571,117 @@ public class TestMirroringAsyncTable {
 
     // no read errors reported
     verify(mismatchDetector, never()).batch(anyList(), any(IOException.class));
+  }
+
+  @Test
+  public void testConditionalWriteHappensWhenConditionIsMet()
+      throws ExecutionException, InterruptedException {
+    Put put = new Put("r1".getBytes());
+    CompletableFuture<Boolean> primaryFuture = new CompletableFuture<>();
+    when(primaryBuilder.thenPut(put)).thenReturn(primaryFuture);
+
+    verify(referenceCounter, never()).incrementReferenceCount();
+    verify(referenceCounter, never()).decrementReferenceCount();
+    CompletableFuture<Boolean> resultFuture =
+        mirroringTable.checkAndMutate("r1".getBytes(), "f1".getBytes()).thenPut(put);
+
+    verify(referenceCounter, times(1)).incrementReferenceCount();
+    primaryFuture.complete(true);
+    // The reference count is incremented once at the beginning of checkAndMutate() and then for the
+    // second time in writeWithControlFlow().
+    // It's done this way so that the reference counting invariant isn't violated when refactoring
+    // brittle code around forwarding result of writeWithFlowControl().
+    resultFuture.get();
+    verify(referenceCounter, times(2)).incrementReferenceCount();
+    verify(referenceCounter, times(2)).decrementReferenceCount();
+
+    verify(secondaryTable, times(1)).put(put);
+  }
+
+  @Test
+  public void testConditionalWriteDoesntHappenWhenConditionIsNotMet()
+      throws ExecutionException, InterruptedException {
+    Put put = new Put("r1".getBytes());
+    CompletableFuture<Boolean> primaryFuture = new CompletableFuture<>();
+    when(primaryBuilder.thenPut(put)).thenReturn(primaryFuture);
+
+    CompletableFuture<Boolean> resultFuture =
+        mirroringTable.checkAndMutate("r1".getBytes(), "f1".getBytes()).thenPut(put);
+    verify(referenceCounter, times(1)).incrementReferenceCount();
+
+    primaryFuture.complete(false);
+    verify(referenceCounter, times(1)).decrementReferenceCount();
+
+    resultFuture.get();
+    verify(secondaryTable, never()).put(put);
+  }
+
+  @Test
+  public void testConditionalWriteWhenPrimaryErred()
+      throws ExecutionException, InterruptedException {
+    Put put = new Put("r1".getBytes());
+    CompletableFuture<Boolean> primaryFuture = new CompletableFuture<>();
+    IOException ioe = new IOException("expected");
+
+    when(primaryBuilder.thenPut(put)).thenReturn(primaryFuture);
+    CompletableFuture<Boolean> resultFuture =
+        mirroringTable.checkAndMutate("r1".getBytes(), "f1".getBytes()).thenPut(put);
+    verify(referenceCounter, times(1)).incrementReferenceCount();
+    verify(referenceCounter, never()).decrementReferenceCount();
+    primaryFuture.completeExceptionally(ioe);
+    verify(referenceCounter, times(1)).decrementReferenceCount();
+
+    try {
+      resultFuture.get();
+      fail("should've thrown");
+    } catch (ExecutionException e) {
+      assertThat(e.getCause()).isEqualTo(ioe);
+    }
+    verify(secondaryTable, never()).put(any(Put.class));
+  }
+
+  @Test
+  public void testCheckAndMutateBuilderChainingWhenInPlace() {
+    byte[] qual = "q1".getBytes();
+    TimeRange timeRange = new TimeRange();
+
+    when(primaryBuilder.ifNotExists()).thenReturn(primaryBuilder);
+    when(primaryBuilder.qualifier(any(byte[].class))).thenReturn(primaryBuilder);
+    when(primaryBuilder.timeRange(any(TimeRange.class))).thenReturn(primaryBuilder);
+
+    AsyncTable.CheckAndMutateBuilder builder =
+        spy(mirroringTable.checkAndMutate("r1".getBytes(), "f1".getBytes()))
+            .ifNotExists()
+            .qualifier(qual)
+            .timeRange(timeRange);
+
+    verify(primaryBuilder, times(1)).ifNotExists();
+    verify(primaryBuilder, times(1)).qualifier(qual);
+    verify(primaryBuilder, times(1)).timeRange(timeRange);
+  }
+
+  @Test
+  public void testCheckAndPut() throws ExecutionException, InterruptedException {
+    Put put = new Put("r1".getBytes());
+    when(primaryBuilder.thenPut(put)).thenReturn(CompletableFuture.completedFuture(true));
+    mirroringTable.checkAndMutate("r1".getBytes(), "f1".getBytes()).thenPut(put);
+    verify(secondaryTable, times(1)).put(put);
+  }
+
+  @Test
+  public void testCheckAndDelete() throws ExecutionException, InterruptedException {
+    Delete delete = new Delete("r1".getBytes());
+    when(primaryBuilder.thenDelete(delete)).thenReturn(CompletableFuture.completedFuture(true));
+    mirroringTable.checkAndMutate("r1".getBytes(), "f1".getBytes()).thenDelete(delete);
+    verify(secondaryTable, times(1)).delete(delete);
+  }
+
+  @Test
+  public void testCheckAndMutate() throws ExecutionException, InterruptedException {
+    RowMutations mutations = new RowMutations("r1".getBytes());
+    when(primaryBuilder.thenMutate(mutations)).thenReturn(CompletableFuture.completedFuture(true));
+    mirroringTable.checkAndMutate("r1".getBytes(), "f1".getBytes()).thenMutate(mutations).get();
+    verify(secondaryTable, times(1)).mutateRow(mutations);
   }
 
   @Test

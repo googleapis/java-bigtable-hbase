@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase2_x.utils.futures;
 
+import com.google.cloud.bigtable.mirroring.hbase2_x.utils.AsyncRequestScheduling;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
@@ -28,6 +29,13 @@ public class FutureUtils {
             to.complete(result);
           }
         });
+  }
+
+  public static <T> void forwardResult(
+      AsyncRequestScheduling.OperationStages<CompletableFuture<T>> from,
+      AsyncRequestScheduling.OperationStages<CompletableFuture<T>> to) {
+    forwardResult(from.userNotified, to.userNotified);
+    forwardResult(from.getVerificationCompletedFuture(), to.getVerificationCompletedFuture());
   }
 
   public static Throwable unwrapCompletionException(Throwable e) {
