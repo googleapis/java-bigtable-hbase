@@ -28,7 +28,10 @@ import java.io.InterruptedIOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -42,6 +45,7 @@ import org.apache.hadoop.hbase.client.AsyncTableRegionLocator;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Hbck;
 import org.apache.hadoop.hbase.client.ScanResultConsumer;
+import org.apache.hadoop.hbase.client.ScanResultConsumerBase;
 import org.apache.hadoop.hbase.security.User;
 
 public class MirroringAsyncConnection implements AsyncConnection {
@@ -116,19 +120,6 @@ public class MirroringAsyncConnection implements AsyncConnection {
     return this.configuration;
   }
 
-  // TODO(aczajkowski): use default method after implementing MirroringAsyncTableBuilder
-  @Override
-  public AsyncTable<ScanResultConsumer> getTable(TableName tableName, ExecutorService pool) {
-    return new MirroringAsyncTable(
-        this.primaryConnection.getTable(tableName),
-        this.secondaryConnection.getTable(tableName),
-        this.mismatchDetector,
-        this.flowController,
-        this.secondaryWriteErrorConsumer,
-        this.mirroringTracer,
-        this.referenceCounter);
-  }
-
   @Override
   public boolean isClosed() {
     return this.closed.get();
@@ -154,6 +145,20 @@ public class MirroringAsyncConnection implements AsyncConnection {
     }
   }
 
+  public AsyncTableBuilder<AdvancedScanResultConsumer> getTableBuilder(TableName tableName) {
+    return new MirroringAsyncTableBuilder<>(
+        this.primaryConnection.getTableBuilder(tableName),
+        this.secondaryConnection.getTableBuilder(tableName));
+  }
+
+  @Override
+  public AsyncTableBuilder<ScanResultConsumer> getTableBuilder(
+      TableName tableName, ExecutorService executorService) {
+    return new MirroringAsyncTableBuilder<>(
+        this.primaryConnection.getTableBuilder(tableName, executorService),
+        this.secondaryConnection.getTableBuilder(tableName, executorService));
+  }
+
   @Override
   public AsyncTableRegionLocator getRegionLocator(TableName tableName) {
     throw new UnsupportedOperationException();
@@ -161,17 +166,6 @@ public class MirroringAsyncConnection implements AsyncConnection {
 
   @Override
   public void clearRegionLocationCache() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public AsyncTableBuilder<AdvancedScanResultConsumer> getTableBuilder(TableName tableName) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public AsyncTableBuilder<ScanResultConsumer> getTableBuilder(
-      TableName tableName, ExecutorService executorService) {
     throw new UnsupportedOperationException();
   }
 
@@ -204,5 +198,127 @@ public class MirroringAsyncConnection implements AsyncConnection {
   @Override
   public Hbck getHbck(ServerName serverName) throws IOException {
     throw new UnsupportedOperationException();
+  }
+
+  private class MirroringAsyncTableBuilder<C extends ScanResultConsumerBase>
+      implements AsyncTableBuilder<C> {
+    private final AsyncTableBuilder<C> primaryTableBuilder;
+    private final AsyncTableBuilder<C> secondaryTableBuilder;
+
+    public MirroringAsyncTableBuilder(
+        AsyncTableBuilder<C> primaryTableBuilder, AsyncTableBuilder<C> secondaryTableBuilder) {
+      this.primaryTableBuilder = primaryTableBuilder;
+      this.secondaryTableBuilder = secondaryTableBuilder;
+    }
+
+    @Override
+    public AsyncTable<C> build() {
+      return new MirroringAsyncTable<C>(
+          this.primaryTableBuilder.build(),
+          this.secondaryTableBuilder.build(),
+          mismatchDetector,
+          flowController,
+          secondaryWriteErrorConsumer,
+          mirroringTracer,
+          referenceCounter);
+    }
+
+    private AsyncTableBuilder<C> setTimeParameter(
+        long timeAmount,
+        TimeUnit timeUnit,
+        BiFunction<Long, TimeUnit, AsyncTableBuilder<C>> primaryFunction,
+        BiFunction<Long, TimeUnit, AsyncTableBuilder<C>> secondaryFunction) {
+      primaryFunction.apply(timeAmount, timeUnit);
+      secondaryFunction.apply(timeAmount, timeUnit);
+      return this;
+    }
+
+    private AsyncTableBuilder<C> setIntegerParameter(
+        int value,
+        Function<Integer, AsyncTableBuilder<C>> primaryFunction,
+        Function<Integer, AsyncTableBuilder<C>> secondaryFunction) {
+      primaryFunction.apply(value);
+      secondaryFunction.apply(value);
+      return this;
+    }
+
+    @Override
+    public AsyncTableBuilder<C> setOperationTimeout(long timeout, TimeUnit unit) {
+      return setTimeParameter(
+          timeout,
+          unit,
+          this.primaryTableBuilder::setOperationTimeout,
+          this.secondaryTableBuilder::setOperationTimeout);
+    }
+
+    @Override
+    public AsyncTableBuilder<C> setScanTimeout(long timeout, TimeUnit unit) {
+      return setTimeParameter(
+          timeout,
+          unit,
+          this.primaryTableBuilder::setScanTimeout,
+          this.secondaryTableBuilder::setScanTimeout);
+    }
+
+    @Override
+    public AsyncTableBuilder<C> setRpcTimeout(long timeout, TimeUnit unit) {
+      return setTimeParameter(
+          timeout,
+          unit,
+          this.primaryTableBuilder::setRpcTimeout,
+          this.secondaryTableBuilder::setRpcTimeout);
+    }
+
+    @Override
+    public AsyncTableBuilder<C> setReadRpcTimeout(long timeout, TimeUnit unit) {
+      return setTimeParameter(
+          timeout,
+          unit,
+          this.primaryTableBuilder::setReadRpcTimeout,
+          this.secondaryTableBuilder::setReadRpcTimeout);
+    }
+
+    @Override
+    public AsyncTableBuilder<C> setWriteRpcTimeout(long timeout, TimeUnit unit) {
+      return setTimeParameter(
+          timeout,
+          unit,
+          this.primaryTableBuilder::setWriteRpcTimeout,
+          this.secondaryTableBuilder::setWriteRpcTimeout);
+    }
+
+    @Override
+    public AsyncTableBuilder<C> setRetryPause(long pause, TimeUnit unit) {
+      return setTimeParameter(
+          pause,
+          unit,
+          this.primaryTableBuilder::setRetryPause,
+          this.secondaryTableBuilder::setRetryPause);
+    }
+
+    @Override
+    public AsyncTableBuilder<C> setRetryPauseForCQTBE(long pause, TimeUnit unit) {
+      return setTimeParameter(
+          pause,
+          unit,
+          this.primaryTableBuilder::setRetryPauseForCQTBE,
+          this.secondaryTableBuilder::setRetryPauseForCQTBE);
+    }
+
+    @Override
+    public AsyncTableBuilder<C> setMaxAttempts(int maxAttempts) {
+      return setIntegerParameter(
+          maxAttempts,
+          this.primaryTableBuilder::setMaxAttempts,
+          this.secondaryTableBuilder::setMaxAttempts);
+    }
+
+    @Override
+    public AsyncTableBuilder<C> setStartLogErrorsCnt(int maxRetries) {
+      return setIntegerParameter(
+          maxRetries,
+          this.primaryTableBuilder::setStartLogErrorsCnt,
+          this.secondaryTableBuilder::setStartLogErrorsCnt);
+    }
   }
 }
