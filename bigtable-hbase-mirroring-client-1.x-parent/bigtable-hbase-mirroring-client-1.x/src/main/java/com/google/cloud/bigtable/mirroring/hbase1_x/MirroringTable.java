@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.OperationUtils.makePutFromResult;
+
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncTableWrapper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.AccumulatedExceptions;
@@ -49,8 +51,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.NavigableMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.conf.Configuration;
@@ -141,24 +141,6 @@ public class MirroringTable implements Table, ListenableCloseable {
     this.referenceCounter.holdReferenceUntilClosing(this.secondaryAsyncWrapper);
     this.secondaryWriteErrorConsumer = secondaryWriteErrorConsumer;
     this.mirroringTracer = mirroringTracer;
-  }
-
-  private static Put makePutFromResult(Result result) {
-    Put put = new Put(result.getRow());
-    for (Entry<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> familyEntry :
-        result.getMap().entrySet()) {
-      byte[] family = familyEntry.getKey();
-      for (Entry<byte[], NavigableMap<Long, byte[]>> qualifierEntry :
-          familyEntry.getValue().entrySet()) {
-        byte[] qualifier = qualifierEntry.getKey();
-        for (Entry<Long, byte[]> valueEntry : qualifierEntry.getValue().entrySet()) {
-          long timestamp = valueEntry.getKey();
-          byte[] value = valueEntry.getValue();
-          put.addColumn(family, qualifier, timestamp, value);
-        }
-      }
-    }
-    return put;
   }
 
   @Override

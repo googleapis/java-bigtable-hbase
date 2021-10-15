@@ -1018,18 +1018,15 @@ public class TestMirroringTable {
   }
 
   private void assertPutsAreEqual(Put expectedPut, Put value) {
-    assertThat(expectedPut.getRow()).isEqualTo(value.getRow());
-    assertThat(expectedPut.getFamilyCellMap().size()).isEqualTo(value.getFamilyCellMap().size());
-    CellComparator cellComparator = new CellComparator();
-    for (byte[] family : expectedPut.getFamilyCellMap().keySet()) {
-      assertThat(value.getFamilyCellMap()).containsKey(family);
-      List<Cell> expectedCells = expectedPut.getFamilyCellMap().get(family);
-      List<Cell> valueCells = value.getFamilyCellMap().get(family);
-      assertThat(expectedCells.size()).isEqualTo(valueCells.size());
-      for (int i = 0; i < expectedCells.size(); i++) {
-        assertThat(cellComparator.compare(expectedCells.get(i), valueCells.get(i))).isEqualTo(0);
-      }
-    }
+    TestHelpers.assertPutsAreEqual(
+        expectedPut,
+        value,
+        new TestHelpers.CellComparatorCompat() {
+          @Override
+          public int compare(Cell a, Cell b) {
+            return new CellComparator().compare(a, b);
+          }
+        });
   }
 
   @Test

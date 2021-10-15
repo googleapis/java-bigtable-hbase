@@ -33,7 +33,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.OperationUtils;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
@@ -51,6 +53,7 @@ import java.util.concurrent.ExecutionException;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellBuilderFactory;
 import org.apache.hadoop.hbase.CellBuilderType;
+import org.apache.hadoop.hbase.CellComparator;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.AsyncTable;
 import org.apache.hadoop.hbase.client.Delete;
@@ -714,6 +717,11 @@ public class TestMirroringAsyncTable {
     verify(secondaryTable, times(1)).mutateRow(mutations);
   }
 
+  private void assertPutsAreEqual(Put expectedPut, Put value) {
+    TestHelpers.assertPutsAreEqual(
+        expectedPut, value, (a, b) -> CellComparator.getInstance().compare(a, b));
+  }
+
   @Test
   public void testIncrement() throws ExecutionException, InterruptedException {
     Increment increment = new Increment("r1".getBytes());
@@ -729,21 +737,35 @@ public class TestMirroringAsyncTable {
                   .setValue(Longs.toByteArray(142))
                   .build()
             });
+    Put expectedPut = OperationUtils.makePutFromResult(incrementResult);
 
+    // increment() and append() modify the reference counter twice to make logic less brittle
     when(primaryTable.increment(any(Increment.class)))
         .thenReturn(CompletableFuture.completedFuture(incrementResult));
+    verify(referenceCounter, never()).decrementReferenceCount();
+    verify(referenceCounter, never()).incrementReferenceCount();
     mirroringTable.increment(increment).get();
+    verify(referenceCounter, times(2)).decrementReferenceCount();
+    verify(referenceCounter, times(2)).incrementReferenceCount();
     mirroringTable
         .incrementColumnValue("r1".getBytes(), "f1".getBytes(), "q1".getBytes(), 3L)
         .get();
+    verify(referenceCounter, times(4)).decrementReferenceCount();
+    verify(referenceCounter, times(4)).incrementReferenceCount();
     mirroringTable
         .incrementColumnValue(
             "r1".getBytes(), "f1".getBytes(), "q1".getBytes(), 3L, Durability.SYNC_WAL)
         .get();
+    verify(referenceCounter, times(6)).decrementReferenceCount();
+    verify(referenceCounter, times(6)).incrementReferenceCount();
 
-    ArgumentCaptor<Increment> argument = ArgumentCaptor.forClass(Increment.class);
-    verify(secondaryTable, times(3)).increment(argument.capture());
-    assertThat(argument.getAllValues().get(0)).isEqualTo(increment);
+    ArgumentCaptor<Put> argument = ArgumentCaptor.forClass(Put.class);
+    verify(secondaryTable, never()).increment(any(Increment.class));
+    verify(secondaryTable, times(3)).put(argument.capture());
+
+    assertPutsAreEqual(argument.getAllValues().get(0), expectedPut);
+    assertPutsAreEqual(argument.getAllValues().get(1), expectedPut);
+    assertPutsAreEqual(argument.getAllValues().get(2), expectedPut);
   }
 
   @Test
@@ -761,11 +783,23 @@ public class TestMirroringAsyncTable {
                   .setValue(Longs.toByteArray(142))
                   .build()
             });
+    Put expectedPut = OperationUtils.makePutFromResult(appendResult);
+
     when(primaryTable.append(any(Append.class)))
         .thenReturn(CompletableFuture.completedFuture(appendResult));
-    mirroringTable.append(append).get();
 
-    verify(secondaryTable, times(1)).append(append);
+    // increment() and append() modify the reference counter twice to make logic less brittle
+    verify(referenceCounter, never()).decrementReferenceCount();
+    verify(referenceCounter, never()).incrementReferenceCount();
+    mirroringTable.append(append).get();
+    verify(referenceCounter, times(2)).decrementReferenceCount();
+    verify(referenceCounter, times(2)).incrementReferenceCount();
+
+    ArgumentCaptor<Put> argument = ArgumentCaptor.forClass(Put.class);
+    verify(secondaryTable, times(1)).put(argument.capture());
+    assertPutsAreEqual(expectedPut, argument.getValue());
+
+    verify(secondaryTable, never()).append(any(Append.class));
   }
 
   @Test

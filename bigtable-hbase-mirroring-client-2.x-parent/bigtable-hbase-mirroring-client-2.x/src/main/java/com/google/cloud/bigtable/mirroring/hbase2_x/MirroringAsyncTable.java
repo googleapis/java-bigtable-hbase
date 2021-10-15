@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase2_x;
 
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.OperationUtils.makePutFromResult;
 import static com.google.cloud.bigtable.mirroring.hbase2_x.utils.AsyncRequestScheduling.reserveFlowControlResourcesThenScheduleSecondary;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringTable;
@@ -54,6 +55,7 @@ import org.apache.hadoop.hbase.client.AsyncTable;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -137,21 +139,13 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
   @Override
   public CompletableFuture<Result> append(Append append) {
     CompletableFuture<Result> primaryFuture = this.primaryTable.append(append);
-    return writeWithFlowControl(
-            new MirroringTable.WriteOperationInfo(append),
-            primaryFuture,
-            () -> this.secondaryTable.append(append))
-        .userNotified;
+    return mutationAsPut(primaryFuture).userNotified;
   }
 
   @Override
   public CompletableFuture<Result> increment(Increment increment) {
     CompletableFuture<Result> primaryFuture = this.primaryTable.increment(increment);
-    return writeWithFlowControl(
-            new MirroringTable.WriteOperationInfo(increment),
-            primaryFuture,
-            () -> this.secondaryTable.increment(increment))
-        .userNotified;
+    return mutationAsPut(primaryFuture).userNotified;
   }
 
   @Override
@@ -296,6 +290,31 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
                   }));
     }
     return CompletableFuture.allOf(handledFutures.toArray(new CompletableFuture[0]));
+  }
+
+  private <T extends Mutation>
+      AsyncRequestScheduling.OperationStages<CompletableFuture<Result>> mutationAsPut(
+          CompletableFuture<Result> primaryFuture) {
+    AsyncRequestScheduling.OperationStages<CompletableFuture<Result>> returnedValue =
+        new AsyncRequestScheduling.OperationStages<>(new CompletableFuture<>());
+    primaryFuture
+        .thenAccept(
+            (primaryResult) -> {
+              Put put = makePutFromResult(primaryResult);
+              FutureUtils.forwardResult(
+                  writeWithFlowControl(
+                      new MirroringTable.WriteOperationInfo(put),
+                      CompletableFuture.completedFuture(primaryResult),
+                      () -> this.secondaryTable.put(put).thenApply(ignored -> null)),
+                  returnedValue);
+            })
+        .exceptionally(
+            primaryError -> {
+              returnedValue.userNotified.completeExceptionally(primaryError);
+              returnedValue.verificationCompleted();
+              throw new CompletionException(primaryError);
+            });
+    return wrapWithReferenceCounter(returnedValue);
   }
 
   private <T>
