@@ -49,10 +49,13 @@ import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.CompactType;
 import org.apache.hadoop.hbase.client.CompactionState;
+import org.apache.hadoop.hbase.client.LogQueryFilter;
+import org.apache.hadoop.hbase.client.OnlineLogRecord;
 import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.client.SnapshotDescription;
 import org.apache.hadoop.hbase.client.SnapshotType;
 import org.apache.hadoop.hbase.client.TableDescriptor;
+import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.client.replication.TableCFs;
 import org.apache.hadoop.hbase.client.security.SecurityCapability;
 import org.apache.hadoop.hbase.quotas.QuotaFilter;
@@ -198,6 +201,11 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     return CompletableFuture.runAsync(() -> {});
   }
 
+  @Override
+  public String[] listNamespaces() throws IOException {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
   /** {@inheritDoc} */
   @Override
   public Future<Void> disableTableAsync(TableName tableName) throws IOException {
@@ -231,14 +239,18 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     snapshot(snapshotId, tableName);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @return
+   */
   @Override
-  public void snapshotAsync(SnapshotDescription snapshot)
+  public Future<Void> snapshotAsync(SnapshotDescription snapshot)
       throws IOException, SnapshotCreationException {
-    asyncAdmin.snapshot(snapshot);
     LOG.warn(
         "isSnapshotFinished() is not currently supported by BigtableAdmin.\n"
             + "You may poll for existence of the snapshot with listSnapshots(snapshotName)");
+    return asyncAdmin.snapshot(snapshot);
   }
 
   @Override
@@ -265,6 +277,11 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public Future<Void> deleteTableAsync(TableName tableName) throws IOException {
     return deleteTableAsyncInternal(tableName);
+  }
+
+  @Override
+  public int getSyncWaitTimeout() {
+    throw new UnsupportedOperationException("not implemented");
   }
 
   @Override
@@ -327,7 +344,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public void modifyTable(TableName tableName, TableDescriptor tableDescriptor) throws IOException {
-    super.modifyTable(tableName, new HTableDescriptor(tableDescriptor));
+    super.modifyTable(tableName, TableDescriptorBuilder.newBuilder(tableDescriptor).build());
   }
 
   @Override
@@ -426,6 +443,12 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
+  public Future<Void> cloneSnapshotAsync(String s, TableName tableName, boolean b)
+      throws IOException, TableExistsException, RestoreSnapshotException {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
   public void cloneTableSchema(TableName tableName, TableName tableName1, boolean b) {
     throw new UnsupportedOperationException("cloneTableSchema"); // TODO
   }
@@ -488,6 +511,27 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   public List<Boolean> hasUserPermissions(String userName, List<Permission> permissions)
       throws IOException {
     throw new UnsupportedOperationException("hasUserPermissions");
+  }
+
+  @Override
+  public boolean snapshotCleanupSwitch(boolean b, boolean b1) throws IOException {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
+  public boolean isSnapshotCleanupEnabled() throws IOException {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
+  public List<OnlineLogRecord> getSlowLogResponses(
+      Set<ServerName> set, LogQueryFilter logQueryFilter) throws IOException {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
+  public List<Boolean> clearSlowLogResponses(Set<ServerName> set) throws IOException {
+    throw new UnsupportedOperationException("not implemented");
   }
 
   @Override

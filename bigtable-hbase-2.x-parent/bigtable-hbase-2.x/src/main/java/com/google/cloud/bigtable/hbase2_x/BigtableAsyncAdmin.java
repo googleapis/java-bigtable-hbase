@@ -70,6 +70,8 @@ import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.CommonConnection;
 import org.apache.hadoop.hbase.client.CompactType;
 import org.apache.hadoop.hbase.client.CompactionState;
+import org.apache.hadoop.hbase.client.LogQueryFilter;
+import org.apache.hadoop.hbase.client.OnlineLogRecord;
 import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.client.ServiceCaller;
 import org.apache.hadoop.hbase.client.SnapshotDescription;
@@ -634,6 +636,27 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
+  public CompletableFuture<Boolean> snapshotCleanupSwitch(boolean b, boolean b1) {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
+  public CompletableFuture<Boolean> isSnapshotCleanupEnabled() {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
+  public CompletableFuture<List<OnlineLogRecord>> getSlowLogResponses(
+      Set<ServerName> set, LogQueryFilter logQueryFilter) {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
+  public CompletableFuture<List<Boolean>> clearSlowLogResponses(Set<ServerName> set) {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
   public CompletableFuture<List<SnapshotDescription>> listTableSnapshots(Pattern tableNamePattern) {
     throw new UnsupportedOperationException("Unsupported - please use listSnapshots");
   }
@@ -778,6 +801,11 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<NamespaceDescriptor> getNamespaceDescriptor(String arg0) {
     throw new UnsupportedOperationException("getNamespaceDescriptor"); // TODO
+  }
+
+  @Override
+  public CompletableFuture<List<String>> listNamespaces() {
+    throw new UnsupportedOperationException("not implemented");
   }
 
   @Override

@@ -65,7 +65,7 @@ limitations under the License.
     <!-- hbase dependency versions -->
     <hbase1.version>1.4.12</hbase1.version>
     <hbase1-metrics.version>3.1.2</hbase1-metrics.version>
-    <hbase2.version>2.2.3</hbase2.version>
+    <hbase2.version>2.3.6</hbase2.version>
     <hbase2-metrics.version>3.2.6</hbase2-metrics.version>
 
     <!-- testing dependency versions -->
@@ -221,22 +221,6 @@ limitations under the License.
       </plugins>
     </pluginManagement>
     <plugins>
-      <plugin>
-        <groupId>com.coveo</groupId>
-        <artifactId>fmt-maven-plugin</artifactId>
-        <version>2.9</version>
-        <executions>
-          <execution>
-            <phase>process-sources</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <style>google</style>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
