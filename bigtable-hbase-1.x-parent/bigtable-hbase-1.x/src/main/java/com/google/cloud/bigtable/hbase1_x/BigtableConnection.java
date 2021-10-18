@@ -63,7 +63,7 @@ public class BigtableConnection extends AbstractBigtableConnection {
 
   @Override
   public String getClusterId() throws IOException {
-    throw new UnsupportedOperationException("not supported");
+    throw new UnsupportedOperationException("not implemented");
   }
 
   protected SampledRowKeysAdapter createSampledRowKeysAdapter(
