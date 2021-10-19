@@ -61,6 +61,11 @@ public class BigtableConnection extends AbstractBigtableConnection {
     return new BigtableAdmin(this);
   }
 
+  @Override
+  public String getClusterId() throws IOException {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
   protected SampledRowKeysAdapter createSampledRowKeysAdapter(
       TableName tableName, ServerName serverName) {
     return new SampledRowKeysAdapter(tableName, serverName) {
