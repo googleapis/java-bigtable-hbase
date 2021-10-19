@@ -18,9 +18,7 @@ package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import java.util.List;
-import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Row;
-import org.apache.hadoop.hbase.client.RowMutations;
 
 public class SecondaryWriteErrorConsumerWithMetrics implements SecondaryWriteErrorConsumer {
   private final MirroringTracer mirroringTracer;
@@ -33,20 +31,14 @@ public class SecondaryWriteErrorConsumerWithMetrics implements SecondaryWriteErr
   }
 
   @Override
-  public void consume(HBaseOperation operation, Mutation mutation, Throwable cause) {
-    this.mirroringTracer.metricsRecorder.recordWriteMismatches(operation, 1);
-    this.secondaryWriteErrorConsumer.consume(operation, mutation, cause);
-  }
-
-  @Override
-  public void consume(HBaseOperation operation, RowMutations mutation, Throwable cause) {
-    this.mirroringTracer.metricsRecorder.recordWriteMismatches(operation, 1);
-    this.secondaryWriteErrorConsumer.consume(operation, mutation, cause);
-  }
-
-  @Override
   public void consume(HBaseOperation operation, List<? extends Row> operations, Throwable cause) {
     this.mirroringTracer.metricsRecorder.recordWriteMismatches(operation, operations.size());
     this.secondaryWriteErrorConsumer.consume(operation, operations, cause);
+  }
+
+  @Override
+  public void consume(HBaseOperation operation, Row row, Throwable cause) {
+    this.mirroringTracer.metricsRecorder.recordWriteMismatches(operation, 1);
+    this.secondaryWriteErrorConsumer.consume(operation, row, cause);
   }
 }

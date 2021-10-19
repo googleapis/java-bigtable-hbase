@@ -42,15 +42,10 @@ public class TestWriteErrorConsumer implements SecondaryWriteErrorConsumer {
   }
 
   @Override
-  public void consume(HBaseOperation operation, Mutation r, Throwable cause) {
-    errorCount.incrementAndGet();
-    this.secondaryWriteErrorConsumer.consume(operation, r, cause);
-  }
-
-  @Override
-  public void consume(HBaseOperation operation, RowMutations r, Throwable cause) {
-    errorCount.incrementAndGet();
-    this.secondaryWriteErrorConsumer.consume(operation, r, cause);
+  public void consume(HBaseOperation operation, Row row, Throwable cause) {
+    assert row instanceof Mutation || row instanceof RowMutations;
+    errorCount.addAndGet(1);
+    this.secondaryWriteErrorConsumer.consume(operation, row, cause);
   }
 
   @Override
