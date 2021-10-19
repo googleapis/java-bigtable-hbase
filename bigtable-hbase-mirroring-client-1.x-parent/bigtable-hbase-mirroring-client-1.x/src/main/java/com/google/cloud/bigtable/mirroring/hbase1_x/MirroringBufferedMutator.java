@@ -272,7 +272,7 @@ public class MirroringBufferedMutator implements BufferedMutator {
     try (Scope scope = this.mirroringTracer.spanFactory.writeErrorScope()) {
       for (int i = 0; i < e.getNumExceptions(); i++) {
         this.secondaryWriteErrorConsumer.consume(
-            HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST, (Mutation) e.getRow(i), e.getCause(i));
+            HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST, e.getRow(i), e.getCause(i));
       }
     }
   }

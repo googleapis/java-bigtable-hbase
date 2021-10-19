@@ -32,8 +32,7 @@ public class DefaultSecondaryWriteErrorConsumer implements SecondaryWriteErrorCo
     this.writeErrorLogger = writeErrorLogger;
   }
 
-  @Override
-  public void consume(HBaseOperation operation, Mutation r, Throwable cause) {
+  private void consume(Mutation r, Throwable cause) {
     try {
       writeErrorLogger.mutationFailed(r, cause);
     } catch (InterruptedException e) {
@@ -44,31 +43,28 @@ public class DefaultSecondaryWriteErrorConsumer implements SecondaryWriteErrorCo
     }
   }
 
-  @Override
-  public void consume(HBaseOperation operation, RowMutations r, Throwable cause) {
+  private void consume(RowMutations r, Throwable cause) {
     for (Mutation m : r.getMutations()) {
-      try {
-        writeErrorLogger.mutationFailed(m, cause);
-      } catch (InterruptedException e) {
-        Log.error(
-            "Writing mutation that failed on secondary database to faillog interrupted: mutation=%s, failure_cause=%s, exception=%s",
-            r, cause, e);
-        Thread.currentThread().interrupt();
-      }
+      consume(m, cause);
+    }
+  }
+
+  @Override
+  public void consume(HBaseOperation operation, Row row, Throwable cause) {
+    if (row instanceof Mutation) {
+      consume((Mutation) row, cause);
+    } else if (row instanceof RowMutations) {
+      consume((RowMutations) row, cause);
+    } else {
+      assert false;
+      throw new IllegalArgumentException("Not a write operation");
     }
   }
 
   @Override
   public void consume(HBaseOperation operation, List<? extends Row> operations, Throwable cause) {
     for (Row row : operations) {
-      if (row instanceof Mutation) {
-        consume(operation, (Mutation) row, cause);
-      } else if (row instanceof RowMutations) {
-        consume(operation, (RowMutations) row, cause);
-      } else {
-        assert false;
-        throw new IllegalArgumentException("Not a write operation");
-      }
+      consume(operation, row, cause);
     }
   }
 }
