@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<Configuration>
+    <Loggers>
+        <Root level="INFO"/>
+<!--        Uncomment the following line to get detailed logs on Schema Translator-->
+<!--        <Logger name="com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator" level="TRACE"/>-->
+    </Loggers>
+</Configuration>

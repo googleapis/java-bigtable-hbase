@@ -47,7 +47,12 @@ import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
-import org.apache.log4j.BasicConfigurator;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilder;
+import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilderFactory;
+import org.apache.logging.log4j.core.config.builder.api.RootLoggerComponentBuilder;
+import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -538,7 +543,19 @@ public class HBaseSchemaTranslator {
 
   public static void main(String[] args) throws IOException, DeserializationException {
     // Configure the logger.
-    BasicConfigurator.configure();
+    ConfigurationBuilder<BuiltConfiguration> builder =
+        ConfigurationBuilderFactory.newConfigurationBuilder();
+    RootLoggerComponentBuilder rootLoggerBuilder = builder.newRootLogger(Level.INFO);
+    builder.add(rootLoggerBuilder);
+
+    // Uncomment the following line to get detailed logs on Schema Translator
+
+    // LoggerComponentBuilder schemaTranslatorLogs =
+    // builder.newLogger("com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator",
+    // Level.TRACE);
+    // builder.add(schemaTranslatorLogs);
+
+    Configurator.initialize(builder.build());
 
     SchemaTranslationOptions options = SchemaTranslationOptions.loadOptionsFromSystemProperties();
     HBaseSchemaTranslator translator = new HBaseSchemaTranslator(options);
