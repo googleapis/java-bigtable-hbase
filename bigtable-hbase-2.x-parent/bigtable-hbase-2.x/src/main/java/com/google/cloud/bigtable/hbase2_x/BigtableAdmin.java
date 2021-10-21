@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.hbase.util.FutureUtil;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.collect.ImmutableList;
@@ -55,7 +56,6 @@ import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.client.SnapshotDescription;
 import org.apache.hadoop.hbase.client.SnapshotType;
 import org.apache.hadoop.hbase.client.TableDescriptor;
-import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.client.replication.TableCFs;
 import org.apache.hadoop.hbase.client.security.SecurityCapability;
 import org.apache.hadoop.hbase.quotas.QuotaFilter;
@@ -344,7 +344,7 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public void modifyTable(TableName tableName, TableDescriptor tableDescriptor) throws IOException {
-    super.modifyTable(tableName, TableDescriptorBuilder.newBuilder(tableDescriptor).build());
+    FutureUtil.unwrap(modifyTableAsync(tableName, tableDescriptor));
   }
 
   @Override
