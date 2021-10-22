@@ -90,6 +90,7 @@ public class TestVerificationSampling {
                 flowController,
                 secondaryWriteErrorConsumer,
                 readSampler,
+                false,
                 new MirroringTracer()));
   }
 
