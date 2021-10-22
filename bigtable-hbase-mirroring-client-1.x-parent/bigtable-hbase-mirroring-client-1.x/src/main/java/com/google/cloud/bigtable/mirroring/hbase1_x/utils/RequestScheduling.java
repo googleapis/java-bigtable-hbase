@@ -60,7 +60,7 @@ public class RequestScheduling {
 
   public static <T> ListenableFuture<Void> scheduleVerificationAndRequestWithFlowControl(
       final RequestResourcesDescription requestResourcesDescription,
-      final Supplier<ListenableFuture<T>> secondaryResultFutureSupplier,
+      final Supplier<ListenableFuture<T>> invokeOperation,
       final FutureCallback<T> verificationCallback,
       final FlowController flowController,
       final MirroringTracer mirroringTracer,
@@ -75,7 +75,7 @@ public class RequestScheduling {
         reservation = reservationRequest.get();
       }
       Futures.addCallback(
-          secondaryResultFutureSupplier.get(),
+          invokeOperation.get(),
           mirroringTracer.spanFactory.wrapWithCurrentSpan(
               new FutureCallback<T>() {
                 @Override
@@ -110,7 +110,9 @@ public class RequestScheduling {
       if (e instanceof InterruptedException) {
         Thread.currentThread().interrupt();
       }
+      return verificationCompletedFuture;
     }
+
     return verificationCompletedFuture;
   }
 }

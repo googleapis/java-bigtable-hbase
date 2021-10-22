@@ -119,6 +119,15 @@ public class MirroringConfigurationHelper {
   public static final String MIRRORING_BUFFERED_MUTATOR_BYTES_TO_FLUSH =
       "google.bigtable.mirroring.buffered-mutator.bytes-to-flush";
 
+  /**
+   * When set to {@code true} writes to primary and secondary databases will be performed
+   * concurrently. This option reduces write-latency to secondary database, but can cause additional
+   * inconsistency - some writes might complete successfully on secondary database and fail on
+   * primary database. Defaults to {@code false}.
+   */
+  public static final String MIRRORING_CONCURRENT_WRITES =
+      "google.bigtable.mirroring.concurrent-writes";
+
   public static void fillConnectionConfigWithClassImplementation(
       Configuration connectionConfig,
       Configuration config,

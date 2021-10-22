@@ -88,6 +88,7 @@ public class TestMirroringTableInputModification {
                 flowController,
                 secondaryWriteErrorConsumer,
                 new ReadSampler(100),
+                false,
                 new MirroringTracer()));
 
     mockExistsAll(this.primaryTable);

@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_BUFFERED_MUTATOR_BYTES_TO_FLUSH;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_CONCURRENT_WRITES;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_STRATEGY_CLASS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_MISMATCH_DETECTOR_CLASS;
@@ -45,6 +46,8 @@ public class MirroringOptions {
 
   public final String writeErrorLogAppenderClass;
   public final String writeErrorLogSerializerClass;
+
+  public final boolean performWritesConcurrently;
 
   public MirroringOptions(Configuration configuration) {
     this.mismatchDetectorClass =
@@ -76,5 +79,6 @@ public class MirroringOptions {
     this.writeErrorLogSerializerClass =
         configuration.get(
             MIRRORING_WRITE_ERROR_LOG_SERIALIZER_CLASS, DefaultSerializer.class.getCanonicalName());
+    this.performWritesConcurrently = configuration.getBoolean(MIRRORING_CONCURRENT_WRITES, false);
   }
 }
