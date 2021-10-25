@@ -117,9 +117,6 @@ limitations under the License.
             <requireMavenVersion>
               <version>[3.0,)</version>
             </requireMavenVersion>
-            <requireJavaVersion>
-              <version>[1.7,)</version>
-            </requireJavaVersion>
             <requireUpperBoundDeps>
               <excludes>
                 <exclude>com.google.guava:guava</exclude>
@@ -132,17 +129,6 @@ limitations under the License.
               </ignoreClasses>
             </banDuplicateClasses>
           </rules>
-        </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
-        <configuration>
-          <source>${compileSource.1.8}</source>
-          <target>${compileSource.1.8}</target>
-          <showWarnings>true</showWarnings>
-          <showDeprecation>false</showDeprecation>
-          <compilerArgument>-Xlint:-options</compilerArgument>
         </configuration>
       </plugin>
       <plugin>

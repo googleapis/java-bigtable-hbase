@@ -442,16 +442,6 @@ this is not used directly, but upgrading due to transitive vulnerabilities in ol
   <build>
     <plugins>
       <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>${compileSource.1.8}</source>
-          <target>${compileSource.1.8}</target>
-          <showWarnings>true</showWarnings>
-          <showDeprecation>false</showDeprecation>
-          <compilerArgument>-Xlint:-options</compilerArgument>
-        </configuration>
-      </plugin>
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-eclipse-plugin</artifactId>
         <configuration>
