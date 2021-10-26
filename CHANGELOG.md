@@ -1,5 +1,22 @@
 # Changelog
 
+### [1.25.1-sp.1](https://www.github.com/googleapis/java-bigtable-hbase/compare/1.25.1...v1.25.1-sp.1) (2021-10-26)
+
+
+### Bug Fixes
+
+* fix version numbers for sp release ([#3316](https://www.github.com/googleapis/java-bigtable-hbase/issues/3316)) ([d3b4f66](https://www.github.com/googleapis/java-bigtable-hbase/commit/d3b4f6619627060d8dedda01f1c764fe5c442327))
+
+
+### Dependencies
+
+* update bigtable.version to 2.2.0, upgrade compile to java 8 ([#3310](https://www.github.com/googleapis/java-bigtable-hbase/issues/3310)) ([b6e57b1](https://www.github.com/googleapis/java-bigtable-hbase/commit/b6e57b15683763c8ec379362864a3fdea37df4b7))
+
+
+### Miscellaneous Chores
+
+* fix tag to 1.25.2-sp.1, remove distribution management section ([#3319](https://www.github.com/googleapis/java-bigtable-hbase/issues/3319)) ([6b71324](https://www.github.com/googleapis/java-bigtable-hbase/commit/6b713244ef502e1e1121f8418bcc4349b9c77e47))
+
 ### [1.25.1](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.25.0...v1.25.1) (2021-10-13)
 
 
