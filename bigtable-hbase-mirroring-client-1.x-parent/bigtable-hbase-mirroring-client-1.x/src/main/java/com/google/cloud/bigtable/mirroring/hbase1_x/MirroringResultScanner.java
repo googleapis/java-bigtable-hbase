@@ -220,7 +220,7 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
       return;
     }
     this.listenableReferenceCounter.holdReferenceUntilCompletion(
-        RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
+        RequestScheduling.scheduleRequestAndVerificationWithFlowControl(
             requestResourcesDescription,
             nextSupplier,
             this.mirroringTracer.spanFactory.wrapReadVerificationCallback(scannerNext),
