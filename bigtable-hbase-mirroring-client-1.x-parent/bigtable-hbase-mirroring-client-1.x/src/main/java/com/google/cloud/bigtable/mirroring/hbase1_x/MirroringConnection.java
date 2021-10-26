@@ -204,6 +204,7 @@ public class MirroringConnection implements Connection {
         return;
       }
 
+      // TODO: we should add a timeout to prevent deadlock in case of a bug on our side.
       try {
         closeMirroringConnectionAndWaitForAsyncOperations();
       } catch (InterruptedException e) {
