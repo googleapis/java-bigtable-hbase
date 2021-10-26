@@ -1181,6 +1181,9 @@ public class TestMirroringTable {
       fail("should fail");
     } catch (IOException ignored) {
     }
+
+    this.executorServiceRule.waitForExecutor();
+
     inOrder.verify(flowController).asyncRequestResource(any(RequestResourcesDescription.class));
     inOrder.verify(primaryTable).batch(eq(Arrays.asList(put1)), any(Object[].class));
 
