@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-client-core-parent</artifactId>
-    <version>1.25.1-sp.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>1.25.2-sp.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <artifactId>bigtable-client-core</artifactId>
@@ -198,7 +198,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-metrics-api</artifactId>
-      <version>1.25.1-sp.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>1.25.2-sp.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>
 
     <dependency>
