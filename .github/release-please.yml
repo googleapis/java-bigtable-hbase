@@ -1,8 +1,10 @@
 releaseType: java-yoshi
 bumpMinorPreMajor: true
 extraFiles:
-  - bigtable-client-core-parent/bigtable-client-core/src/main/java/com/google/cloud/bigtable/config/BigtableVersionInfo.java
-  - bigtable-client-core-parent/bigtable-hbase/src/main/java/com/google/cloud/bigtable/hbase/BigtableHBaseVersion.java
+  - >-
+    bigtable-client-core-parent/bigtable-client-core/src/main/java/com/google/cloud/bigtable/config/BigtableVersionInfo.java
+  - >-
+    bigtable-client-core-parent/bigtable-hbase/src/main/java/com/google/cloud/bigtable/hbase/BigtableHBaseVersion.java
 handleGHRelease: true
 branches:
   - branch: bigtable-1.x
@@ -10,9 +12,20 @@ branches:
     bumpMinorPreMajor: true
     handleGHRelease: true
     extraFiles:
-      - bigtable-client-core-parent/bigtable-client-core/src/main/java/com/google/cloud/bigtable/config/BigtableVersionInfo.java
-      - bigtable-client-core-parent/bigtable-hbase/src/main/java/com/google/cloud/bigtable/hbase/BigtableHBaseVersion.java
+      - >-
+        bigtable-client-core-parent/bigtable-client-core/src/main/java/com/google/cloud/bigtable/config/BigtableVersionInfo.java
+      - >-
+        bigtable-client-core-parent/bigtable-hbase/src/main/java/com/google/cloud/bigtable/hbase/BigtableHBaseVersion.java
   - releaseType: java-lts
     bumpMinorPreMajor: true
     handleGHRelease: true
     branch: 1.20.0-sp
+  - releaseType: java-lts
+    bumpMinorPreMajor: true
+    extraFiles:
+      - >-
+        bigtable-client-core-parent/bigtable-client-core/src/main/java/com/google/cloud/bigtable/config/BigtableVersionInfo.java
+      - >-
+        bigtable-client-core-parent/bigtable-hbase/src/main/java/com/google/cloud/bigtable/hbase/BigtableHBaseVersion.java
+    handleGHRelease: true
+    branch: 1.25.2-sp

@@ -184,12 +184,11 @@ public class TestAbstractBigtableConnection {
 
     Metadata metadata = headerInterceptor.receivedMetadata.get();
     String userAgent = metadata.get(Key.of("user-agent", Metadata.ASCII_STRING_MARSHALLER));
-    Truth.assertThat(userAgent).contains("bigtable-" + Version.VERSION);
-    Truth.assertThat(userAgent).contains("bigtable-hbase-" + BigtableHBaseVersion.getVersion());
-    Truth.assertThat(userAgent).contains("hbase-" + VersionInfo.getVersion());
+    Truth.assertThat(userAgent).contains("bigtable-java/" + Version.VERSION);
+    Truth.assertThat(userAgent).contains("bigtable-hbase/" + BigtableHBaseVersion.getVersion());
+    Truth.assertThat(userAgent).contains("hbase/" + VersionInfo.getVersion());
     Truth.assertThat(userAgent)
         .contains("grpc-java-netty/" + GrpcUtil.getGrpcBuildVersion().getImplementationVersion());
-    Truth.assertThat(userAgent).contains("jdk-" + System.getProperty("java.specification.version"));
 
     String xGoogClient =
         metadata.get(Key.of("x-goog-api-client", Metadata.ASCII_STRING_MARSHALLER));
@@ -243,6 +242,11 @@ public class TestAbstractBigtableConnection {
     @Override
     public Admin getAdmin() {
       return mockBigtableAdmin;
+    }
+
+    @Override
+    public String getClusterId() throws IOException {
+      throw new UnsupportedOperationException("not implemented");
     }
 
     @Override

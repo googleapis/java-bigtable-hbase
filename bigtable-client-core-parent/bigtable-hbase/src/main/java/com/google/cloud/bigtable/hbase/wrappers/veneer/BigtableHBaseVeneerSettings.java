@@ -70,7 +70,6 @@ import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountJwtAccessCredentials;
-import com.google.cloud.bigtable.Version;
 import com.google.cloud.bigtable.admin.v2.BigtableInstanceAdminSettings;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.admin.v2.stub.BigtableInstanceAdminStubSettings;
@@ -465,17 +464,15 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   private void configureHeaderProvider(StubSettings.Builder<?, ?> stubSettings) {
     ImmutableMap.Builder<String, String> headersBuilder = ImmutableMap.<String, String>builder();
     List<String> userAgentParts = Lists.newArrayList();
-    userAgentParts.add("hbase-" + VersionInfo.getVersion());
-    userAgentParts.add("bigtable-" + Version.VERSION);
-    userAgentParts.add("bigtable-hbase-" + BigtableHBaseVersion.getVersion());
-    userAgentParts.add("jdk-" + System.getProperty("java.specification.version"));
+    userAgentParts.add("hbase/" + VersionInfo.getVersion());
+    userAgentParts.add("bigtable-hbase/" + BigtableHBaseVersion.getVersion());
 
     String customUserAgent = configuration.get(CUSTOM_USER_AGENT_KEY);
     if (customUserAgent != null) {
       userAgentParts.add(customUserAgent);
     }
 
-    String userAgent = Joiner.on(",").join(userAgentParts);
+    String userAgent = Joiner.on(" ").join(userAgentParts);
     headersBuilder.put(USER_AGENT_KEY.name(), userAgent);
 
     String tracingCookie = configuration.get(BigtableOptionsFactory.BIGTABLE_TRACING_COOKIE);
