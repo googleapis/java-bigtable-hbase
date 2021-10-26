@@ -38,13 +38,13 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 public class RequestScheduling {
   private static final Logger Log = new Logger(RequestScheduling.class);
 
-  public static <T> ListenableFuture<Void> scheduleVerificationAndRequestWithFlowControl(
+  public static <T> ListenableFuture<Void> scheduleRequestAndVerificationWithFlowControl(
       final RequestResourcesDescription requestResourcesDescription,
       final Supplier<ListenableFuture<T>> secondaryResultFutureSupplier,
       final FutureCallback<T> verificationCallback,
       final FlowController flowController,
       final MirroringTracer mirroringTracer) {
-    return scheduleVerificationAndRequestWithFlowControl(
+    return scheduleRequestAndVerificationWithFlowControl(
         requestResourcesDescription,
         secondaryResultFutureSupplier,
         verificationCallback,
@@ -58,7 +58,7 @@ public class RequestScheduling {
         });
   }
 
-  public static <T> ListenableFuture<Void> scheduleVerificationAndRequestWithFlowControl(
+  public static <T> ListenableFuture<Void> scheduleRequestAndVerificationWithFlowControl(
       final RequestResourcesDescription requestResourcesDescription,
       final Supplier<ListenableFuture<T>> invokeOperation,
       final FutureCallback<T> verificationCallback,
@@ -69,38 +69,11 @@ public class RequestScheduling {
 
     final ListenableFuture<ResourceReservation> reservationRequest =
         flowController.asyncRequestResource(requestResourcesDescription);
+    final ResourceReservation reservation;
     try {
-      final ResourceReservation reservation;
       try (Scope scope = mirroringTracer.spanFactory.flowControlScope()) {
         reservation = reservationRequest.get();
       }
-      Futures.addCallback(
-          invokeOperation.get(),
-          mirroringTracer.spanFactory.wrapWithCurrentSpan(
-              new FutureCallback<T>() {
-                @Override
-                public void onSuccess(@NullableDecl T t) {
-                  try {
-                    Log.trace("starting verification %s", t);
-                    verificationCallback.onSuccess(t);
-                    Log.trace("verification done %s", t);
-                  } finally {
-                    reservation.release();
-                    verificationCompletedFuture.set(null);
-                  }
-                }
-
-                @Override
-                public void onFailure(Throwable throwable) {
-                  try {
-                    verificationCallback.onFailure(throwable);
-                  } finally {
-                    reservation.release();
-                    verificationCompletedFuture.set(null);
-                  }
-                }
-              }),
-          MoreExecutors.directExecutor());
     } catch (InterruptedException | ExecutionException e) {
       flowControlReservationErrorConsumer.apply(e);
       FlowController.cancelRequest(reservationRequest);
@@ -112,6 +85,34 @@ public class RequestScheduling {
       }
       return verificationCompletedFuture;
     }
+
+    Futures.addCallback(
+        invokeOperation.get(),
+        mirroringTracer.spanFactory.wrapWithCurrentSpan(
+            new FutureCallback<T>() {
+              @Override
+              public void onSuccess(@NullableDecl T t) {
+                try {
+                  Log.trace("starting verification %s", t);
+                  verificationCallback.onSuccess(t);
+                  Log.trace("verification done %s", t);
+                } finally {
+                  reservation.release();
+                  verificationCompletedFuture.set(null);
+                }
+              }
+
+              @Override
+              public void onFailure(Throwable throwable) {
+                try {
+                  verificationCallback.onFailure(throwable);
+                } finally {
+                  reservation.release();
+                  verificationCompletedFuture.set(null);
+                }
+              }
+            }),
+        MoreExecutors.directExecutor());
 
     return verificationCompletedFuture;
   }

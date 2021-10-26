@@ -709,7 +709,7 @@ public class MirroringTable implements Table, ListenableCloseable {
       final Supplier<ListenableFuture<T>> secondaryGetFutureSupplier,
       final FutureCallback<T> verificationCallback) {
     this.referenceCounter.holdReferenceUntilCompletion(
-        RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
+        RequestScheduling.scheduleRequestAndVerificationWithFlowControl(
             resultInfo,
             secondaryGetFutureSupplier,
             this.mirroringTracer.spanFactory.wrapReadVerificationCallback(verificationCallback),
@@ -731,7 +731,7 @@ public class MirroringTable implements Table, ListenableCloseable {
         };
 
     this.referenceCounter.holdReferenceUntilCompletion(
-        RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
+        RequestScheduling.scheduleRequestAndVerificationWithFlowControl(
             writeOperationInfo.requestResourcesDescription,
             secondaryResultFutureSupplier,
             this.mirroringTracer.spanFactory.wrapWriteOperationCallback(writeErrorCallback),
@@ -896,7 +896,7 @@ public class MirroringTable implements Table, ListenableCloseable {
         };
 
     this.referenceCounter.holdReferenceUntilCompletion(
-        RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
+        RequestScheduling.scheduleRequestAndVerificationWithFlowControl(
             requestResourcesDescription,
             invokeBothOperations,
             verification,
@@ -973,7 +973,7 @@ public class MirroringTable implements Table, ListenableCloseable {
         };
 
     this.referenceCounter.holdReferenceUntilCompletion(
-        RequestScheduling.scheduleVerificationAndRequestWithFlowControl(
+        RequestScheduling.scheduleRequestAndVerificationWithFlowControl(
             requestResourcesDescription,
             this.secondaryAsyncWrapper.batch(operationsToScheduleOnSecondary, resultsSecondary),
             verificationFuture,
