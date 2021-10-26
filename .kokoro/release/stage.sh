@@ -28,9 +28,11 @@ setup_environment_secrets
 create_settings_xml_file "settings.xml"
 
 # attempt to stage 3 times with exponential backoff (starting with 10 seconds)
+# only build bigtable-hbase-beam and its dependents for sp branch
 retry_with_backoff 3 10 \
   mvn clean deploy -B \
     --settings ${MAVEN_SETTINGS_FILE} \
+    -am -pl  bigtable-dataflow-parent/bigtable-hbase-beam \
     -DskipTests=true \
     -DperformRelease=true \
     -Dgpg.executable=gpg \
