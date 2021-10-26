@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-2.x-parent</artifactId>
-    <version>1.25.1</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>1.25.1-sp.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <properties>
@@ -60,7 +60,7 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase</artifactId>
-      <version>1.25.1</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>1.25.1-sp.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>
 
     <dependency>
@@ -72,7 +72,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-metrics-api</artifactId>
-      <version>1.25.1</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>1.25.1-sp.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>
 
     <dependency>
@@ -184,17 +184,6 @@ limitations under the License.
         </configuration>
       </plugin>
       <!--  end skip publishing for sp-->
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
-        <configuration>
-          <source>${compileSource.1.8}</source>
-          <target>${compileSource.1.8}</target>
-          <showWarnings>true</showWarnings>
-          <showDeprecation>false</showDeprecation>
-          <compilerArgument>-Xlint:-options</compilerArgument>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
 </project>

@@ -25,6 +25,8 @@ java.common_templates(excludes=[
   '.github/snippet-bot.yml',
   '.github/release-please.yml', # don't clobber extraFiles
   '.github/workflows/*',
+  '.kokoro/release/snapshot.sh',
+  '.kokoro/release/stage.sh',
   '.kokoro/presubmit/integration.cfg',
   '.kokoro/nightly/integration.cfg',
   '.kokoro/presubmit/java7.cfg',
