@@ -128,9 +128,6 @@ limitations under the License.
                 <requireMavenVersion>
                   <version>[3.0,)</version>
                 </requireMavenVersion>
-                <requireJavaVersion>
-                  <version>[1.7,)</version>
-                </requireJavaVersion>
                 <requireUpperBoundDeps>
                   <!-- todo(kolea2): fix these temporary exclusions-->
                   <excludes>
