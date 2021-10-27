@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x-parent</artifactId>
-    <version>1.25.2-sp.1</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>1.25.2-sp.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-1.x-mapreduce</artifactId>
@@ -53,7 +53,7 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
-      <version>1.25.2-sp.1</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>1.25.2-sp.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <exclusions>
         <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
         pom.xml files when invoking the build from a parent project. So we have to manually exclude
