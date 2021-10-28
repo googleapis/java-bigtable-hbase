@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.0.0-beta2](https://www.github.com/googleapis/java-bigtable-hbase/compare/v2.0.0-beta1...v2.0.0-beta2) (2021-10-19)
+
+**Note: This beta release is a work-in-progress. For the latest stable release of java-bigtable-hbase, please refer to version [1.25.0](https://github.com/googleapis/java-bigtable-hbase/releases/tag/v1.25.0).**
+
+### Bug Fixes
+
+* fix user agent format ([#3288](https://www.github.com/googleapis/java-bigtable-hbase/issues/3288)) ([49ad39f](https://www.github.com/googleapis/java-bigtable-hbase/commit/49ad39f6ef5e5bd2c294202685816c9f2b61e74b))
+
+
+### Miscellaneous Chores
+
+* bump next tag to 2.0.0-beta2 ([#3283](https://www.github.com/googleapis/java-bigtable-hbase/issues/3283)) ([8753c30](https://www.github.com/googleapis/java-bigtable-hbase/commit/8753c309004e50b208f72e01bdc9318349297254))
+
+
+### Dependencies
+
+* upgrade beam to 2.30.0 ([#3284](https://www.github.com/googleapis/java-bigtable-hbase/issues/3284)) ([05e80e2](https://www.github.com/googleapis/java-bigtable-hbase/commit/05e80e20f0a9013a06c2a65d2a5cfc9221b5d5c1))
+* upgrade hbase1 to 1.7.1 ([#3270](https://www.github.com/googleapis/java-bigtable-hbase/issues/3270)) ([2c5bfe9](https://www.github.com/googleapis/java-bigtable-hbase/commit/2c5bfe934718371eed0069d6c8d3b08b5356a7d2))
+
 ## [2.0.0-beta1](https://www.github.com/googleapis/java-bigtable-hbase/compare/v2.0.0-alpha2...v2.0.0-beta1) (2021-10-07)
 
 **Note: This beta release is a work-in-progress. For the latest stable release of java-bigtable-hbase, please refer to version [1.25.0](https://github.com/googleapis/java-bigtable-hbase/releases/tag/v1.25.0).**
