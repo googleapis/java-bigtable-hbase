@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.MirroringBufferedMutator;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.AccumulatedExceptions;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOException;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
@@ -173,7 +174,8 @@ public class MirroringConnection implements Connection {
       throws IOException {
     try (Scope scope =
         this.mirroringTracer.spanFactory.operationScope(HBaseOperation.GET_BUFFERED_MUTATOR)) {
-      return new MirroringBufferedMutator(
+      return MirroringBufferedMutator.create(
+          performWritesConcurrently,
           primaryConnection,
           secondaryConnection,
           bufferedMutatorParams,

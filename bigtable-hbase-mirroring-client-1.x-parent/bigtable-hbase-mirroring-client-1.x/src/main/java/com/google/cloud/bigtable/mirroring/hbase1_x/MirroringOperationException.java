@@ -100,9 +100,11 @@ public class MirroringOperationException extends Exception {
   }
 
   public static <T extends Throwable> T markedAsBothException(
-      T e, ExceptionDetails e2, Row primaryOperation) {
+      T e, ExceptionDetails secondaryExceptionDetails, Row primaryOperation) {
     return markedWith(
-        e, new MirroringOperationException(DatabaseIdentifier.Both, primaryOperation, e2));
+        e,
+        new MirroringOperationException(
+            DatabaseIdentifier.Both, primaryOperation, secondaryExceptionDetails));
   }
 
   public static <T extends Throwable> T markedAsSecondaryException(T e, Row secondaryOperation) {

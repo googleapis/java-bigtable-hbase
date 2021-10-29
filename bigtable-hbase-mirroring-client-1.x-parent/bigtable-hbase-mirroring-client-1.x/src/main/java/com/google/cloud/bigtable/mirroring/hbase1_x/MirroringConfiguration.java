@@ -19,9 +19,9 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfiguration
 import org.apache.hadoop.conf.Configuration;
 
 public class MirroringConfiguration extends Configuration {
-  Configuration primaryConfiguration;
-  Configuration secondaryConfiguration;
-  MirroringOptions mirroringOptions;
+  public final Configuration primaryConfiguration;
+  public final Configuration secondaryConfiguration;
+  public final MirroringOptions mirroringOptions;
 
   public MirroringConfiguration(
       Configuration primaryConfiguration,
