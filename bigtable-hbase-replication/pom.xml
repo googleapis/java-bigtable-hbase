@@ -10,11 +10,12 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.google.cloud.bigtable</groupId>
-  <version>2.0.0-alpha3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+  <version>2.0.0-alpha3-SNAPSHOT
+  </version> <!-- {x-version-update:bigtable-client-parent:current} -->
   <artifactId>bigtable-hbase-replication</artifactId>
   <packaging>jar</packaging>
   <name>bigtable-hbase-replication</name>
-<!--  Library to enable one way replication from HBase to Cloud Bigtable.-->
+  <!--  Library to enable one way replication from HBase to Cloud Bigtable.-->
 
   <repositories>
     <repository>
@@ -134,7 +135,8 @@
               <goal>compile</goal>
             </goals>
             <configuration>
-              <protocArtifact>com.google.protobuf:protoc:3.14.0:exe:osx-x86_64</protocArtifact>
+              <protocArtifact>com.google.protobuf:protoc:3.14.0:exe:osx-x86_64
+              </protocArtifact>
               <checkStaleness>true</checkStaleness>
             </configuration>
           </execution>
@@ -173,11 +175,30 @@
       <version>1.5.0</version>
       <scope>provided</scope>
     </dependency>
-
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
-      <version>3.14.0</version>
+      <version>2.5.0</version>
     </dependency>
+    <!-- https://mvnrepository.com/artifact/org.apache.hbase/hbase-testing-util -->
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-testing-util</artifactId>
+      <version>1.4.12</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-bigtable-emulator</artifactId>
+      <version>0.125.1</version>
+      <scope>test</scope>
+    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>org.apache.hbase</groupId>-->
+<!--      <artifactId>hbase-shaded-client</artifactId>-->
+<!--      <version>2.2.3</version>-->
+<!--      <scope>test</scope>-->
+<!--    </dependency>-->
   </dependencies>
+
 </project>

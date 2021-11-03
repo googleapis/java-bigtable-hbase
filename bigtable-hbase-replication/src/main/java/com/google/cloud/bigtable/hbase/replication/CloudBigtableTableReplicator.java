@@ -29,7 +29,9 @@ import org.slf4j.LoggerFactory;
  */
 public class CloudBigtableTableReplicator {
 
-  // Not required, We can use normal HashMap with Bytes.ByteArrayComparator in org.apache.hadoop.hbase.util.
+  // TODO: remove this class and move to Bytes.ByteArrayComparator
+  // Not required, We can use normal HashMap with Bytes.ByteArrayComparator in
+  // org.apache.hadoop.hbase.util.
   public static final class BytesKey {
 
     private final byte[] array;
@@ -62,6 +64,7 @@ public class CloudBigtableTableReplicator {
 
   interface MutationBuilder {
 
+    // TODO: Add mechanism to indicate permanent failures?
     boolean canAcceptMutation(Cell mutation);
 
     void addMutation(Cell mutation) throws IOException;
@@ -71,7 +74,8 @@ public class CloudBigtableTableReplicator {
 
   static class PutMutationBuilder implements MutationBuilder {
 
-    Put put;
+    // TODO make it final
+    private Put put;
 
     PutMutationBuilder(byte[] rowKey) {
       put = new Put(rowKey);
@@ -103,7 +107,8 @@ public class CloudBigtableTableReplicator {
 
   static class DeleteMutationBuilder implements MutationBuilder {
 
-    Delete delete;
+    //TODO make it final
+    private Delete delete;
 
     public DeleteMutationBuilder(byte[] rowKey) {
       delete = new Delete(rowKey);
@@ -114,25 +119,34 @@ public class CloudBigtableTableReplicator {
       if (delete == null) {
         throw new IllegalStateException("Can't add mutations to a closed builder");
       }
+      // TODO Maybe check for permanent exceptions due to compatibility gaps?
       return CellUtil.isDelete(cell);
     }
 
     @Override
     public void addMutation(Cell cell) throws IOException {
+      //TODO track succesfully added mutations. If all the deletes are skipped, an empty Delete will
+      // delete the row which may be an un-intended consequence.
       if (delete == null) {
         throw new IllegalStateException("Can't add mutations to a closed builder");
       }
       /**
        * TODO Decide how to handle permanent errors? Maybe add a config to push such errors to
        * pubsub or a new BT table or a log file.
-       * TODO We should offer toggles for timestamp delete, if customers opt in for a best effort timestamp deltes
-       * we should do a get and delete. Or maybe a CheckAndMutate
-       * default behaviour can be handling as per permanent failure policy (log/pubsub/separate table)
+       *
+       * TODO We should offer toggles for timestamp delete,
+       * if customers opt in for a best effort timestamp deltes we should do a get and delete. Or
+       * maybe a CheckAndMutate default behaviour can be handling as per permanent failure policy
+       * (log/pubsub/separate table)
+       *
+       * TODO do a full compatibility check here. Maybe use a comaptibility checker form the hbase
+       * client
        */
       if (CellUtil.isDeleteType(cell)) {
         LOG.info("Deleting cell " + cell.toString() + " with ts: " + cell.getTimestamp());
         delete.addDeleteMarker(cell);
       } else if (CellUtil.isDeleteColumns(cell)) {
+        //
         LOG.info("Deleting columns " + cell.toString() + " with ts: " + cell.getTimestamp());
         delete.addDeleteMarker(cell);
       } else if (CellUtil.isDeleteFamily(cell)) {
@@ -162,8 +176,7 @@ public class CloudBigtableTableReplicator {
     }
   }
 
-  static class MutationBuilderFactory {
-
+  private static class MutationBuilderFactory {
     static MutationBuilder getMutationBuilder(Cell cell) {
       if (cell.getTypeByte() == KeyValue.Type.Put.getCode()) {
         return new PutMutationBuilder(CellUtil.cloneRow(cell));
@@ -176,8 +189,8 @@ public class CloudBigtableTableReplicator {
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(CloudBigtableTableReplicator.class);
-  private String tableName;
-  private Connection connection;
+  private final String tableName;
+  private final Connection connection;
   private final Table table;
 
   public CloudBigtableTableReplicator(String tableName, Connection connection) throws IOException {
@@ -186,13 +199,19 @@ public class CloudBigtableTableReplicator {
     this.table = connection.getTable(TableName.valueOf(tableName));
   }
 
-  // Returns true if replication was successful, false otherwise.
+  /**
+   * Replicates the list of WAL entries into CBT.
+   * @param walEntriesToReplicate
+   * @return true if replication was successful, false otherwise.
+   * @throws IOException
+   */
   public boolean replicateTable(List<WAL.Entry> walEntriesToReplicate) throws IOException {
     AtomicBoolean erred = new AtomicBoolean(false);
+    // TODO we may be able to process all the entries in 1 go. TOo many small entries will require
+    // many flushes and will slow down the replication.
     for (WAL.Entry walEntry : walEntriesToReplicate) {
       WALKey key = walEntry.getKey();
 
-      // TODO Extract processWALEntry method
       LOG.error("Starting WALKey: " + walEntry.getKey().toString());
       List<Cell> cellsToReplicate = walEntry.getEdit().getCells();
       // group the data by the rowkey.
@@ -226,6 +245,7 @@ public class CloudBigtableTableReplicator {
       Object[] futures = new Object[rowMutationsList.size()];
       try {
         LOG.error("Starting batch write");
+        // TODO: Decide if we want to tweak retry policies of the batch puts?
         table.batch(rowMutationsList, futures);
         LOG.error("Finishing batch write");
       } catch (Throwable t) {
