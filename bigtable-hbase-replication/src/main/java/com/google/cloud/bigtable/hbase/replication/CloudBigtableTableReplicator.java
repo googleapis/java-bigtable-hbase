@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HConstants;
@@ -24,8 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This replicator is responsible to apply the WAL logs for a single table for its peer in Cloud
- * Bigtable.
+ * TableReplicator is responsible for applying the HBase WAL logs for a single table to its peer in
+ * Cloud Bigtable.
  */
 public class CloudBigtableTableReplicator {
 
@@ -177,6 +176,7 @@ public class CloudBigtableTableReplicator {
   }
 
   private static class MutationBuilderFactory {
+
     static MutationBuilder getMutationBuilder(Cell cell) {
       if (cell.getTypeByte() == KeyValue.Type.Put.getCode()) {
         return new PutMutationBuilder(CellUtil.cloneRow(cell));
@@ -190,83 +190,87 @@ public class CloudBigtableTableReplicator {
 
   private static final Logger LOG = LoggerFactory.getLogger(CloudBigtableTableReplicator.class);
   private final String tableName;
-  private final Connection connection;
   private final Table table;
 
   public CloudBigtableTableReplicator(String tableName, Connection connection) throws IOException {
     this.tableName = tableName;
-    this.connection = connection;
     this.table = connection.getTable(TableName.valueOf(tableName));
   }
 
   /**
    * Replicates the list of WAL entries into CBT.
-   * @param walEntriesToReplicate
+   *
    * @return true if replication was successful, false otherwise.
-   * @throws IOException
    */
   public boolean replicateTable(List<WAL.Entry> walEntriesToReplicate) throws IOException {
-    AtomicBoolean erred = new AtomicBoolean(false);
-    // TODO we may be able to process all the entries in 1 go. TOo many small entries will require
-    // many flushes and will slow down the replication.
+    boolean succeeded = true;
+    // Collect all the cells to replicate in this call.
+    // To guarantee the atomic update for the same WAL edit, it needs to be flushed before starting
+    // the next one. However, if there are too many small WAL entries, the flushing is very
+    // inefficient. To avoid it, collect all the cells to replicated, create rowMutations for each
+    // row, while maintaining the order of writes. And then to a final batch update. The rowMutation
+    // will guarantee an atomic put while maintaining the order of mutations in them. The flush will
+    // more more efficient.
+    // The HBase region server is pushing all the WALs in memory, so this is presumably not creating
+    // too much overhead that what is already there.
+    List<Cell> cellsToReplicate = new ArrayList<>();
     for (WAL.Entry walEntry : walEntriesToReplicate) {
+      LOG.warn("Processing WALKey: " + walEntry.getKey().toString() + " with " + walEntry.getEdit()
+          .getCells() + " cells.");
       WALKey key = walEntry.getKey();
+      cellsToReplicate.addAll(walEntry.getEdit().getCells());
+    }
+    // group the data by the rowkey.
+    Map<BytesKey, List<Cell>> cellsToReplicateByRow =
+        cellsToReplicate.stream().collect(groupingBy(k -> new BytesKey(CellUtil.cloneRow(k))));
+    LOG.warn(
+        "Replicating {} rows, {} cells total.", cellsToReplicateByRow.size(),
+        cellsToReplicate.size());
 
-      LOG.error("Starting WALKey: " + walEntry.getKey().toString());
-      List<Cell> cellsToReplicate = walEntry.getEdit().getCells();
-      // group the data by the rowkey.
-      Map<BytesKey, List<Cell>> cellsToReplicateByRow =
-          cellsToReplicate.stream().collect(groupingBy(k -> new BytesKey(CellUtil.cloneRow(k))));
-      LOG.warn(
-          "Replicating {} rows, {} cells total.",
-          cellsToReplicateByRow.size(),
-          cellsToReplicate.size());
-      List<RowMutations> rowMutationsList = new ArrayList<>(cellsToReplicateByRow.size());
-      for (Map.Entry<BytesKey, List<Cell>> cellsByRow : cellsToReplicateByRow.entrySet()) {
-        byte[] rowKey = cellsByRow.getKey().array;
-        RowMutations rowMutations = new RowMutations(rowKey);
-        List<Cell> cellsForRow = cellsByRow.getValue();
-        // The list is never empty
-        MutationBuilder mutationBuilder =
-            MutationBuilderFactory.getMutationBuilder(cellsForRow.get(0));
+    // Build a row mutation per row.
+    List<RowMutations> rowMutationsList = new ArrayList<>(cellsToReplicateByRow.size());
+    for (Map.Entry<BytesKey, List<Cell>> cellsByRow : cellsToReplicateByRow.entrySet()) {
+      byte[] rowKey = cellsByRow.getKey().array;
+      RowMutations rowMutations = new RowMutations(rowKey);
+      List<Cell> cellsForRow = cellsByRow.getValue();
+      // TODO Make sure that there are < 100K cells per row Mutation
 
-        for (Cell cell : cellsForRow) {
-          if (mutationBuilder.canAcceptMutation(cell)) {
-            mutationBuilder.addMutation(cell);
-          } else {
-            mutationBuilder.buildAndUpdateRowMutations(rowMutations);
-            mutationBuilder = MutationBuilderFactory.getMutationBuilder(cell);
-          }
-        } // Single row exiting.
-        // finalize the last mutation which is yet to be closed.
-        mutationBuilder.buildAndUpdateRowMutations(rowMutations);
-        rowMutationsList.add(rowMutations);
-      } // By row exiting
-      Object[] futures = new Object[rowMutationsList.size()];
-      try {
-        LOG.error("Starting batch write");
-        // TODO: Decide if we want to tweak retry policies of the batch puts?
-        table.batch(rowMutationsList, futures);
-        LOG.error("Finishing batch write");
-      } catch (Throwable t) {
+      MutationBuilder mutationBuilder =
+          MutationBuilderFactory.getMutationBuilder(cellsForRow.get(0));
+      for (Cell cell : cellsForRow) {
+        if (mutationBuilder.canAcceptMutation(cell)) {
+          mutationBuilder.addMutation(cell);
+        } else {
+          mutationBuilder.buildAndUpdateRowMutations(rowMutations);
+          mutationBuilder = MutationBuilderFactory.getMutationBuilder(cell);
+          mutationBuilder.addMutation(cell);
+        }
+      } // Single row exiting.
+      // finalize the last mutation which is yet to be closed.
+      mutationBuilder.buildAndUpdateRowMutations(rowMutations);
+      rowMutationsList.add(rowMutations);
+    }
+
+    Object[] futures = new Object[rowMutationsList.size()];
+    try {
+      // TODO: Decide if we want to tweak retry policies of the batch puts?
+      table.batch(rowMutationsList, futures);
+    } catch (Throwable t) {
+      LOG.error(
+          "Encountered error while replicating wal entry.", t);
+      if (t.getCause() != null) {
+        LOG.error("chained exception ", t.getCause());
+      }
+      succeeded = false;
+    }
+    // Make sure that there were no errors returned via futures.
+    for (Object future : futures) {
+      if (future != null && future instanceof Throwable) {
         LOG.error(
-            "Encountered error while replicating wal entry: " + walEntry.getKey().toString(), t);
-        if (t.getCause() != null) {
-          LOG.error("chained exception ", t.getCause());
-        }
-        erred.set(true);
+            "{FUTURES} Encountered error while replicating wal entry.", (Throwable) future);
+        succeeded = false;
       }
-      for (Object future : futures) {
-        if (future != null && future instanceof Throwable) {
-          LOG.error(
-              "{FUTURES} Encountered error while replicating wal entry: "
-                  + walEntry.getKey().toString(),
-              (Throwable) future);
-          erred.set(true);
-        }
-      }
-      LOG.error("Ending WALKey: " + walEntry.getKey().toString() + " Erred: " + erred.get());
-    } // By WAL.ENTRY exiting
-    return !erred.get();
+    }
+    return succeeded;
   }
 }

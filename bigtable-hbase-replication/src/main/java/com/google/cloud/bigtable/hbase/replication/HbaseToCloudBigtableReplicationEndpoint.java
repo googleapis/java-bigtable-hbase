@@ -36,23 +36,34 @@ import org.slf4j.LoggerFactory;
 
 public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndpoint {
 
-  private static final AtomicLong numInstances = new AtomicLong();
   private static final Logger LOG =
       LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
+  // TODO: Clean up the debugging code
   private static final AtomicLong concurrentReplications = new AtomicLong();
 
-  // TODO update the settings in the Dataproc clusters
+  // Config keys to access project id and instance id from.
   private static final String PROJECT_KEY = "google.bigtable.project.id";
-  private static final String PROJECT_ID_KEY = "google.bigtable.project_id";
-  private static final String INSTANCE_ID_KEY = "google.bigtable.instance";
   private static final String INSTANCE_KEY = "google.bigtable.instance.id";
-  private static final String TABLE_ID_KEY = "google.bigtable.table";
   private static String projectId;
   private static String instanceId;
 
-  private static CloudBigtableTableReplicatorFactory replicatorFactory;
-
+  /**
+   * Bigtable connection owned by this class and shared by all the instances of this class. DO NOT
+   * CLOSE THIS CONNECTIONS from an instance  of the class. The state of this connection is
+   * maintained by this class via reference counting.
+   *
+   * Creating a Bigtable connection is expensive as it creates num_cpu * 4 gRpc connections. Hence,
+   * it is efficient and recommended to re-use the connection. Ref couting is required to properly
+   * close the connection.
+   */
   private static Connection connection;
+  /**
+   * Reference count for this connection.
+   */
+  private static int numConnectionReference = 0;
+
+  // A replicator factory that creates a TableReplicator per replicated table.
+  private CloudBigtableTableReplicatorFactory replicatorFactory;
 
   /**
    * Basic endpoint that listens to CDC from HBase and replicates to Cloud Bigtable. This
@@ -60,60 +71,63 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
    */
   public HbaseToCloudBigtableReplicationEndpoint() {
     super();
-    numInstances.incrementAndGet();
+    // TODO Cleanup the debugging code.
     LOG.error(
-        "Creating replication endpoint to CBT. NumInstances: " + numInstances.get() + "; ",
+        "Creating replication endpoint to CBT.",
         new RuntimeException("Dummy exception for stacktrace"));
     LogManager.getLogger(BigtableClientMetrics.class).setLevel(Level.DEBUG);
     LogManager.getLogger(HbaseToCloudBigtableReplicationEndpoint.class).setLevel(Level.DEBUG);
+    LogManager.getLogger("com.google.cloud.bigtable.hbase.replication").setLevel(Level.DEBUG);
     LogManager.getLogger(CloudBigtableTableReplicator.class).setLevel(Level.DEBUG);
   }
 
-  protected synchronized static void initBigtableState(Configuration configuration) {
+  private synchronized static void getOrCreateBigtableConnection(Configuration configuration) {
 
-    if (connection == null) {
-      projectId = configuration.get(PROJECT_ID_KEY);
-      instanceId = configuration.get(INSTANCE_ID_KEY);
-      LOG.error("Checking the endpoint for emulator: " + configuration
-          .get("google.bigtable.emulator.endpoint.host"));
+    if (numConnectionReference == 0) {
+      // We may overwrite teh project/instanceId but they are going to be the same throghtout the
+      // lifecycle of the JVM.
+      projectId = configuration.get(PROJECT_KEY);
+      instanceId = configuration.get(INSTANCE_KEY);
       connection = BigtableConfiguration.connect(configuration);
-      replicatorFactory = new CloudBigtableTableReplicatorFactory(connection);
       LOG.error("Created a connection to CBT. " + projectId + "--" + instanceId);
     }
+
+    numConnectionReference++;
   }
+
 
   @Override
   protected synchronized void doStart() {
-    LOG.error("NEW Starting replication to CBT. ");
+    LOG.error("Starting replication to CBT. ",
+        new RuntimeException("Dummy exception for stacktrace."));
 
-    // TODO remove this hack once dataproc is updated.
-    if(ctx.getConfiguration().get(PROJECT_ID_KEY) != null ){
-      String project = ctx.getConfiguration().get(PROJECT_ID_KEY);
-      if(ctx.getConfiguration().get(PROJECT_KEY) == null) {
-        LOG.error("##########Update configuration, you should be settting google.bigtable.project.id only");
-        ctx.getConfiguration().set(PROJECT_KEY, project);
-        // TODO migrate the dataproc configs
-        ctx.getConfiguration().set(INSTANCE_KEY, ctx.getConfiguration().get(INSTANCE_ID_KEY));
-      }
-    }
-
-    initBigtableState(ctx.getConfiguration());
+    getOrCreateBigtableConnection(ctx.getConfiguration());
+    replicatorFactory = new CloudBigtableTableReplicatorFactory(connection);
     notifyStarted();
   }
 
   @Override
   protected void doStop() {
 
-    LOG.error("Stopping replication to CBT. ");
-    try {
-      // TODO: Wait for each replicator to flush.
-      // TODO: Do ref counting and make sure all the bulk mutators are flushed. Maybe connection
-      // should be owned by the factory?
-      LOG.warn("Closing the CBT connection.");
-      connection.close();
-    } catch (IOException e) {
-      LOG.error("Failed to close connection ", e);
+    LOG.error("Stopping replication to CBT for this EndPoint. ");
+    // TODO: Do we need to call flush on all the TableReplicators? All the state is flushed per
+    // replicate call, so if HBase does not call close when a replicate call is active then we don't
+    // need to call a flush/close on the tableReplicator.
+
+    // Connection is shared by all the instances of this class, close it only if no one is using it.
+    // Closing the connection is required as it owns the underlying gRpc connections and gRpc does
+    // not like JVM shutting without closing the gRpc connections.
+    synchronized (HbaseToCloudBigtableReplicationEndpoint.class) {
+      if (--numConnectionReference == 0) {
+        try {
+          LOG.warn("Closing the Bigtable connection.");
+          connection.close();
+        } catch (IOException e) {
+          LOG.error("Failed to close Bigtable connection: ", e);
+        }
+      }
     }
+
     notifyStopped();
   }
 
@@ -166,7 +180,7 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
           succeeded.set(result & succeeded.get());
         } catch (IOException e) {
           LOG.error("Got IOException from table replicator: ", e);
-          // Supress the exception here and return false to the replication machinery.
+          // Suppress the exception here and return false to the replication machinery.
           succeeded.set(false);
         }
       } // Top level loop exiting
