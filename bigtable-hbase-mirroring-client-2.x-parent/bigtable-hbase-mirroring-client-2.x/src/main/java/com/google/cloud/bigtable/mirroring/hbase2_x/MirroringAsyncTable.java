@@ -96,6 +96,11 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
   }
 
   @Override
+  public TableName getName() {
+    return this.primaryTable.getName();
+  }
+
+  @Override
   public CompletableFuture<Result> get(Get get) {
     CompletableFuture<Result> primaryFuture = this.primaryTable.get(get);
     return readWithVerificationAndFlowControl(
@@ -424,11 +429,6 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     this.referenceCounter.incrementReferenceCount();
     future.whenComplete(
         (ignoredResult, ignoredError) -> this.referenceCounter.decrementReferenceCount());
-  }
-
-  @Override
-  public TableName getName() {
-    throw new UnsupportedOperationException();
   }
 
   @Override
