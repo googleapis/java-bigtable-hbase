@@ -15,18 +15,27 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringOperationException;
+import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringOperationException.ExceptionDetails;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.FutureCallback;
 import io.opencensus.common.Scope;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
+import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
+import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
@@ -275,5 +284,224 @@ public class BatchHelpers {
           readResultsList.toArray((ReadResultType[]) Array.newInstance(readResultTypeClass, 0));
       this.writeResults = writeResultsList.toArray(new Object[0]);
     }
+  }
+
+  private static ExceptionDetails getExceptionDetails(Map<Row, ExceptionDetails> map, Row key) {
+    ExceptionDetails value = map.get(key);
+    if (value == null) {
+      return new ExceptionDetails(new IOException("no details"));
+    }
+    return value;
+  }
+
+  public static void reconcileBatchResultsConcurrent(
+      Object[] outputResults,
+      BatchData primaryBatchData,
+      BatchData secondaryBatchData,
+      Predicate<Object> resultIsFaultyPredicate)
+      throws RetriesExhaustedWithDetailsException {
+    List<Row> failedRows = new ArrayList<>();
+    List<Throwable> failureCauses = new ArrayList<>();
+    List<String> hostnameAndPorts = new ArrayList<>();
+
+    Map<Row, ExceptionDetails> failedPrimaryOperations = makeMapOfFailedRows(primaryBatchData);
+    Map<Row, ExceptionDetails> failedSecondaryOperations = makeMapOfFailedRows(secondaryBatchData);
+
+    if (failedPrimaryOperations.isEmpty() && failedSecondaryOperations.isEmpty()) {
+      // No errors, return early to skip unnecessary computation.
+      // This is the common case.
+      return;
+    }
+
+    assert primaryBatchData.operations.size() == secondaryBatchData.operations.size();
+    for (int index = 0; index < primaryBatchData.operations.size(); index++) {
+      Object primaryResult = primaryBatchData.results[index];
+      Object secondaryResult = secondaryBatchData.results[index];
+      boolean primaryOperationFailed = resultIsFaultyPredicate.apply(primaryResult);
+      boolean secondaryOperationFailed = resultIsFaultyPredicate.apply(secondaryResult);
+      if (!primaryOperationFailed && !secondaryOperationFailed) {
+        continue;
+      }
+      Row primaryOperation = primaryBatchData.operations.get(index);
+      Row secondaryOperation = secondaryBatchData.operations.get(index);
+      ExceptionDetails primaryExceptionDetails =
+          getExceptionDetails(failedPrimaryOperations, primaryOperation);
+      ExceptionDetails secondaryExceptionDetails =
+          getExceptionDetails(failedSecondaryOperations, secondaryOperation);
+
+      Throwable exception;
+      String hostnameAndPort;
+      if (primaryOperationFailed && secondaryOperationFailed) {
+        exception =
+            MirroringOperationException.markedAsBothException(
+                primaryExceptionDetails.exception, secondaryExceptionDetails, secondaryOperation);
+        hostnameAndPort = primaryExceptionDetails.hostnameAndPort;
+      } else if (primaryOperationFailed) {
+        exception =
+            MirroringOperationException.markedAsPrimaryException(
+                primaryExceptionDetails.exception, primaryOperation);
+        hostnameAndPort = primaryExceptionDetails.hostnameAndPort;
+      } else { // secondaryOperationFailed
+        exception =
+            MirroringOperationException.markedAsSecondaryException(
+                secondaryExceptionDetails.exception, secondaryOperation);
+        hostnameAndPort = secondaryExceptionDetails.hostnameAndPort;
+      }
+      outputResults[index] = exception;
+      failureCauses.add(exception);
+      failedRows.add(primaryOperation);
+      hostnameAndPorts.add(hostnameAndPort);
+    }
+    if (!failedRows.isEmpty()) {
+      throw new RetriesExhaustedWithDetailsException(failureCauses, failedRows, hostnameAndPorts);
+    }
+  }
+
+  public static void reconcileBatchResultsSequential(
+      Object[] outputResults,
+      BatchData primaryBatchData,
+      BatchData secondaryBatchData,
+      Predicate<Object> resultIsFaultyPredicate)
+      throws RetriesExhaustedWithDetailsException {
+    List<Row> failedRows = new ArrayList<>();
+    List<Throwable> failureCauses = new ArrayList<>();
+    List<String> hostnameAndPorts = new ArrayList<>();
+
+    Map<Row, ExceptionDetails> failedPrimaryOperations = makeMapOfFailedRows(primaryBatchData);
+    Map<Row, ExceptionDetails> failedSecondaryOperations = makeMapOfFailedRows(secondaryBatchData);
+
+    if (failedPrimaryOperations.isEmpty() && failedSecondaryOperations.isEmpty()) {
+      // No errors, return early to skip unnecessary computation.
+      // This is the common case.
+      return;
+    }
+
+    assert primaryBatchData.operations.size() >= secondaryBatchData.operations.size();
+
+    // sizes are not equal, one or more of the following is possible
+    // - primary has reads that were excluded from secondary,
+    // - there were operations that failed on primary and were excluded from secondary.
+    // We match results from primary with corresponding result from secondary.
+    int primaryIndex = 0;
+    int secondaryIndex = 0;
+
+    while (primaryIndex < primaryBatchData.operations.size()) {
+      boolean primaryOperationFailed =
+          resultIsFaultyPredicate.apply(primaryBatchData.results[primaryIndex]);
+
+      // failed operations are always excluded from secondary.
+      if (primaryOperationFailed) {
+        Row operation = primaryBatchData.operations.get(primaryIndex);
+        failedRows.add(operation);
+
+        ExceptionDetails exceptionDetails = getExceptionDetails(failedPrimaryOperations, operation);
+
+        Throwable exception =
+            MirroringOperationException.markedAsPrimaryException(
+                exceptionDetails.exception, operation);
+        failureCauses.add(exception);
+        outputResults[primaryIndex] = exception;
+        hostnameAndPorts.add(exceptionDetails.hostnameAndPort);
+        primaryIndex++;
+        continue;
+      }
+      // Primary operation was successful, it might have been excluded from secondary if it was a
+      // read. We assume that either all successful reads are excluded or none of them.
+      boolean primaryIsRead = primaryBatchData.operations.get(primaryIndex) instanceof Get;
+      boolean secondaryIsRead = secondaryBatchData.operations.get(secondaryIndex) instanceof Get;
+      if (primaryIsRead && !secondaryIsRead) {
+        // read was excluded
+        primaryIndex++;
+        continue;
+      }
+
+      // Otherwise a successful write was excluded, which is not possible.
+      assert primaryIsRead == secondaryIsRead;
+
+      boolean secondaryOperationFailed =
+          resultIsFaultyPredicate.apply(secondaryBatchData.results[secondaryIndex]);
+      if (secondaryOperationFailed) {
+        Row primaryOperation = primaryBatchData.operations.get(primaryIndex);
+        Row secondaryOperation = secondaryBatchData.operations.get(secondaryIndex);
+        failedRows.add(primaryOperation);
+        ExceptionDetails exceptionDetails =
+            getExceptionDetails(failedSecondaryOperations, secondaryOperation);
+        Throwable exception =
+            MirroringOperationException.markedAsSecondaryException(
+                exceptionDetails.exception, secondaryOperation);
+        failureCauses.add(exception);
+        outputResults[primaryIndex] = exception;
+        hostnameAndPorts.add(exceptionDetails.hostnameAndPort);
+      }
+      primaryIndex++;
+      secondaryIndex++;
+    }
+    if (!failedRows.isEmpty()) {
+      throw new RetriesExhaustedWithDetailsException(failureCauses, failedRows, hostnameAndPorts);
+    }
+  }
+
+  public static Map<Row, ExceptionDetails> makeMapOfFailedRows(BatchData primaryBatchData) {
+    IdentityHashMap<Row, ExceptionDetails> result = new IdentityHashMap<>();
+
+    if (primaryBatchData.exception == null) {
+      return result;
+    }
+
+    if (primaryBatchData.exception instanceof RetriesExhaustedWithDetailsException) {
+      RetriesExhaustedWithDetailsException exception =
+          (RetriesExhaustedWithDetailsException) primaryBatchData.exception;
+      for (int i = 0; i < exception.getNumExceptions(); i++) {
+        result.put(
+            exception.getRow(i),
+            new ExceptionDetails(exception.getCause(i), exception.getHostnamePort(i)));
+      }
+    } else {
+      for (Row r : primaryBatchData.operations) {
+        result.put(r, new ExceptionDetails(primaryBatchData.exception));
+      }
+    }
+    return result;
+  }
+
+  public static class BatchData {
+    private final List<? extends Row> operations;
+    private final Object[] results;
+    private Throwable exception;
+
+    public BatchData(List<? extends Row> operations, Object[] results) {
+      this.operations = operations;
+      this.results = results;
+    }
+
+    public List<? extends Row> getOperations() {
+      return operations;
+    }
+
+    public Object[] getResults() {
+      return results;
+    }
+
+    public Throwable getException() {
+      return exception;
+    }
+
+    public void setException(Throwable t) {
+      this.exception = t;
+    }
+  }
+
+  public static boolean canBatchBePerformedConcurrently(List<? extends Row> operations) {
+    // Only Puts and Deletes can be performed concurrently.
+    // We assume that RowMutations can consist of only Puts and Deletes (which is true in HBase 1.x
+    // and 2.x).
+    for (Row operation : operations) {
+      if (!(operation instanceof Put)
+          && !(operation instanceof Delete)
+          && !(operation instanceof RowMutations)) {
+        return false;
+      }
+    }
+    return true;
   }
 }

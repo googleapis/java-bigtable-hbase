@@ -128,6 +128,19 @@ public class MirroringConfigurationHelper {
   public static final String MIRRORING_CONCURRENT_WRITES =
       "google.bigtable.mirroring.concurrent-writes";
 
+  /**
+   * When set to {@code true} mirroring client will wait for operations to be performed on secondary
+   * database before returning to the user. In this mode exceptions thrown by mirroring operations
+   * reflect errors that happened on one of the databases. Types of thrown exceptions are not
+   * changed, but a {@link com.google.cloud.bigtable.mirroring.hbase1_x.MirroringOperationException}
+   * is added as a root cause for thrown exceptions (For more details see {@link
+   * com.google.cloud.bigtable.mirroring.hbase1_x.MirroringOperationException}).
+   *
+   * <p>Defaults to {@code false}.
+   */
+  public static final String MIRRORING_SYNCHRONOUS_WRITES =
+      "google.bigtable.mirroring.synchronous-writes";
+
   public static void fillConnectionConfigWithClassImplementation(
       Configuration connectionConfig,
       Configuration config,

@@ -89,6 +89,7 @@ public class TestMirroringTableInputModification {
                 secondaryWriteErrorConsumer,
                 new ReadSampler(100),
                 false,
+                false,
                 new MirroringTracer()));
 
     mockExistsAll(this.primaryTable);

@@ -75,7 +75,11 @@ public class RequestScheduling {
         reservation = reservationRequest.get();
       }
     } catch (InterruptedException | ExecutionException e) {
-      flowControlReservationErrorConsumer.apply(e);
+      if (e instanceof InterruptedException) {
+        flowControlReservationErrorConsumer.apply(e);
+      } else {
+        flowControlReservationErrorConsumer.apply(e.getCause());
+      }
       FlowController.cancelRequest(reservationRequest);
 
       verificationCompletedFuture.set(null);

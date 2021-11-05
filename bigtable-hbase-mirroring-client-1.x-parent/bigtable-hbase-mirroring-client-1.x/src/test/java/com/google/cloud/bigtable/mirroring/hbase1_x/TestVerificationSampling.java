@@ -91,6 +91,7 @@ public class TestVerificationSampling {
                 secondaryWriteErrorConsumer,
                 readSampler,
                 false,
+                false,
                 new MirroringTracer()));
   }
 

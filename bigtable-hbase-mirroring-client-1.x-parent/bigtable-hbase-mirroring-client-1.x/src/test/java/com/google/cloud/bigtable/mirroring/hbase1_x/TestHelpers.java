@@ -41,6 +41,7 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.Table;
 import org.mockito.ArgumentMatchers;
@@ -221,13 +222,24 @@ public class TestHelpers {
         List<? extends Row> operations = (List<? extends Row>) args[0];
         Object[] result = (Object[]) args[1];
 
+        List<Throwable> exceptions = new ArrayList<>();
+        List<Row> failedOps = new ArrayList<>();
+        List<String> hostnameAndPorts = new ArrayList<>();
+
         for (int i = 0; i < operations.size(); i++) {
           Row operation = operations.get(i);
-          if (mapping.containsKey(operation)) {
-            Object value = mapping.get(operation);
+          if (mapping.containsKey(operation) || mapping.containsKey(operation.getClass())) {
+            Object value;
+            if (mapping.containsKey(operation)) {
+              value = mapping.get(operation);
+            } else {
+              value = mapping.get(operation.getClass());
+            }
             result[i] = value;
             if (value instanceof Throwable) {
-              shouldThrow = true;
+              failedOps.add(operation);
+              exceptions.add((Throwable) value);
+              hostnameAndPorts.add("test:1");
             }
           } else if (operation instanceof Get) {
             Get get = (Get) operation;
@@ -236,8 +248,8 @@ public class TestHelpers {
             result[i] = Result.create(new Cell[0]);
           }
         }
-        if (shouldThrow) {
-          throw new IOException();
+        if (!failedOps.isEmpty()) {
+          throw new RetriesExhaustedWithDetailsException(exceptions, failedOps, hostnameAndPorts);
         }
         return null;
       }

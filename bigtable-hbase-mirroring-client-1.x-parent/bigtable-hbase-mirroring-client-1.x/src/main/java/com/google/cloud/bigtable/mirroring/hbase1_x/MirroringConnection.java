@@ -66,6 +66,7 @@ public class MirroringConnection implements Connection {
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final AtomicBoolean aborted = new AtomicBoolean(false);
   private final boolean performWritesConcurrently;
+  private final boolean waitForSecondaryWrites;
 
   /**
    * The constructor called from {@link
@@ -120,6 +121,7 @@ public class MirroringConnection implements Connection {
             this.mirroringTracer, secondaryWriteErrorConsumer);
     this.readSampler = new ReadSampler(this.configuration.mirroringOptions.readSamplingRate);
     this.performWritesConcurrently = this.configuration.mirroringOptions.performWritesConcurrently;
+    this.waitForSecondaryWrites = this.configuration.mirroringOptions.waitForSecondaryWrites;
   }
 
   @Override
@@ -158,6 +160,7 @@ public class MirroringConnection implements Connection {
               this.secondaryWriteErrorConsumer,
               this.readSampler,
               this.performWritesConcurrently,
+              this.waitForSecondaryWrites,
               this.mirroringTracer);
       this.referenceCounter.holdReferenceUntilClosing(table);
       return table;

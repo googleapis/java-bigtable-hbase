@@ -126,6 +126,7 @@ public class TestMirroringTable {
                 secondaryWriteErrorConsumer,
                 new ReadSampler(100),
                 false,
+                false,
                 new MirroringTracer()));
   }
 
@@ -1168,6 +1169,7 @@ public class TestMirroringTable {
                 secondaryWriteErrorConsumer,
                 new ReadSampler(100),
                 true,
+                true,
                 new MirroringTracer()));
 
     Put put1 = createPut("r1", "f1", "q1", "v1");
@@ -1237,6 +1239,7 @@ public class TestMirroringTable {
                 secondaryWriteErrorConsumer,
                 new ReadSampler(100),
                 true,
+                true,
                 new MirroringTracer()));
   }
 
@@ -1277,9 +1280,7 @@ public class TestMirroringTable {
     //           |  p1  |  p2  |  p3  |  p4  |  d1  |  d2  |  d3  |  d4
     // primary   |  v   |  v   |  x   |  x   |  v   |  v   |  x   |  x
     // secondary |  v   |  x   |  v   |  x   |  v   |  x   |  v   |  x
-    // Primary errors should be visible in the results.
-    // Secondary errors should be written to the faillog.
-    // Operations that failed on both primary and secondary shouldn't be reported to the faillog.
+    // All errors should be visible in the results.
 
     IOException put2exception = new IOException("put2");
     IOException put3exception = new IOException("put3");
@@ -1334,24 +1335,34 @@ public class TestMirroringTable {
     } catch (IOException ignored) {
     }
     assertThat(results[0]).isInstanceOf(Result.class);
-    assertThat(results[1]).isInstanceOf(Result.class);
+    assertThat(results[1]).isEqualTo(put2exception);
     assertThat(results[2]).isEqualTo(put3exception);
     assertThat(results[3]).isEqualTo(put4exception);
 
     assertThat(results[4]).isInstanceOf(Result.class);
-    assertThat(results[5]).isInstanceOf(Result.class);
+    assertThat(results[5]).isEqualTo(delete2exception);
     assertThat(results[6]).isEqualTo(delete3exception);
     assertThat(results[7]).isEqualTo(delete4exception);
 
-    verify(secondaryWriteErrorConsumer, times(1))
-        .consume(HBaseOperation.BATCH, put2, put2exception);
-    verify(secondaryWriteErrorConsumer, times(1))
-        .consume(HBaseOperation.BATCH, delete2, delete2exception);
+    verify(secondaryWriteErrorConsumer, never())
+        .consume(any(HBaseOperation.class), any(Put.class), any(Throwable.class));
   }
 
   @Test
   public void testConcurrentOpsAreRunConcurrently() throws IOException, InterruptedException {
-    setupMirroringTableWithDirectExecutor();
+    this.mirroringTable =
+        spy(
+            new MirroringTable(
+                primaryTable,
+                secondaryTable,
+                this.executorServiceRule.executorService,
+                mismatchDetector,
+                flowController,
+                secondaryWriteErrorConsumer,
+                new ReadSampler(100),
+                true,
+                true,
+                new MirroringTracer()));
 
     Put put = createPut("test1", "f1", "q1", "v1");
     mockBatch(primaryTable, secondaryTable);
@@ -1400,9 +1411,8 @@ public class TestMirroringTable {
       mirroringTable.put(put);
       fail("should throw");
     } catch (IOException e) {
-      // FlowController exception is wrapped in IOException by mirroringTable and in
-      // ExecutionException by a future.
-      assertThat(e).hasCauseThat().hasCauseThat().isEqualTo(flowControllerExpection);
+      // FlowController exception is wrapped in IOException by mirroringTable.
+      assertThat(e).hasCauseThat().isEqualTo(flowControllerExpection);
     }
 
     verify(primaryTable, never()).batch(ArgumentMatchers.<Row>anyList(), any(Object[].class));

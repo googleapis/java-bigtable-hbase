@@ -107,6 +107,7 @@ public class TestMirroringMetrics {
                     tracer, mock(SecondaryWriteErrorConsumer.class)),
                 new ReadSampler(100),
                 false,
+                false,
                 tracer));
   }
 
