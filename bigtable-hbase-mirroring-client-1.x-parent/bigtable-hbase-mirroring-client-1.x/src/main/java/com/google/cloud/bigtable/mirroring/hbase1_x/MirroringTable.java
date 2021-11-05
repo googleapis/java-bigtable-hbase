@@ -451,8 +451,8 @@ public class MirroringTable implements Table, ListenableCloseable {
         e2.initCause(e);
         throw e2;
       } finally {
-        final FailedSuccessfulSplit<Delete> failedSuccessfulSplit =
-            new FailedSuccessfulSplit<>(deletes, results, resultIsFaultyPredicate);
+        final FailedSuccessfulSplit<Delete, Object> failedSuccessfulSplit =
+            new FailedSuccessfulSplit<>(deletes, results, resultIsFaultyPredicate, Object.class);
 
         deletes.clear();
         deletes.addAll(failedSuccessfulSplit.failedOperations);
@@ -927,7 +927,7 @@ public class MirroringTable implements Table, ListenableCloseable {
   private void scheduleSecondaryWriteBatchOperations(
       final List<? extends Row> operations, final Object[] results) {
 
-    final FailedSuccessfulSplit<? extends Row> failedSuccessfulSplit =
+    final FailedSuccessfulSplit<? extends Row, Result> failedSuccessfulSplit =
         createOperationsSplit(operations, results);
 
     if (failedSuccessfulSplit.successfulOperations.size() == 0) {
@@ -982,15 +982,18 @@ public class MirroringTable implements Table, ListenableCloseable {
             resourceReservationFailureCallback));
   }
 
-  private FailedSuccessfulSplit<? extends Row> createOperationsSplit(
+  private FailedSuccessfulSplit<? extends Row, Result> createOperationsSplit(
       List<? extends Row> operations, Object[] results) {
     boolean skipReads = !this.readSampler.shouldNextReadOperationBeSampled();
     if (skipReads) {
       ReadWriteSplit<?, ?> readWriteSplit = new ReadWriteSplit<>(operations, results, Object.class);
       return new FailedSuccessfulSplit<>(
-          readWriteSplit.writeOperations, readWriteSplit.writeResults, resultIsFaultyPredicate);
+          readWriteSplit.writeOperations,
+          readWriteSplit.writeResults,
+          resultIsFaultyPredicate,
+          Result.class);
     }
-    return new FailedSuccessfulSplit<>(operations, results, resultIsFaultyPredicate);
+    return new FailedSuccessfulSplit<>(operations, results, resultIsFaultyPredicate, Result.class);
   }
 
   private List<? extends Row> rewriteIncrementsAndAppendsAsPuts(

@@ -164,27 +164,6 @@ public class TestMirroringAsyncTable {
   }
 
   @Test
-  public void testMismatchDetectorIsCalledOnExists()
-      throws ExecutionException, InterruptedException {
-    Get get = createGet("test");
-    final boolean expectedResult = true;
-    CompletableFuture<Boolean> primaryFuture = new CompletableFuture<>();
-    CompletableFuture<Boolean> secondaryFuture = new CompletableFuture<>();
-    when(primaryTable.exists(get)).thenReturn(primaryFuture);
-    when(secondaryTable.exists(get)).thenReturn(secondaryFuture);
-
-    CompletableFuture<Boolean> resultFuture = mirroringTable.exists(get);
-    primaryFuture.complete(expectedResult);
-    secondaryFuture.complete(expectedResult);
-    Boolean result = resultFuture.get();
-
-    assertThat(result).isEqualTo(expectedResult);
-
-    verify(mismatchDetector, times(1)).exists(get, expectedResult, expectedResult);
-    verify(mismatchDetector, never()).exists(any(Get.class), any());
-  }
-
-  @Test
   public void testMismatchDetectorIsCalledOnGetMultiple()
       throws ExecutionException, InterruptedException {
     List<Get> get = createGets("test");
@@ -193,8 +172,8 @@ public class TestMirroringAsyncTable {
     List<CompletableFuture<Result>> expectedResultFutureList =
         Collections.singletonList(expectedFuture);
 
-    when(primaryTable.<Result>batch(get)).thenReturn(expectedResultFutureList);
-    when(secondaryTable.<Result>batch(get)).thenReturn(expectedResultFutureList);
+    when(primaryTable.get(get)).thenReturn(expectedResultFutureList);
+    when(secondaryTable.get(get)).thenReturn(expectedResultFutureList);
 
     List<CompletableFuture<Result>> resultFutures = mirroringTable.get(get);
     assertThat(resultFutures.size()).isEqualTo(1);
@@ -225,8 +204,8 @@ public class TestMirroringAsyncTable {
     List<CompletableFuture<Result>> exceptionalResultFutureList =
         Arrays.asList(exceptionalFuture, exceptionalFuture);
 
-    when(primaryTable.<Result>batch(get)).thenReturn(expectedResultFutureList);
-    when(secondaryTable.<Result>batch(get)).thenReturn(exceptionalResultFutureList);
+    when(primaryTable.get(get)).thenReturn(expectedResultFutureList);
+    when(secondaryTable.get(get)).thenReturn(exceptionalResultFutureList);
 
     List<CompletableFuture<Result>> resultFutures = mirroringTable.get(get);
     assertThat(resultFutures.size()).isEqualTo(2);
@@ -251,6 +230,27 @@ public class TestMirroringAsyncTable {
   }
 
   @Test
+  public void testMismatchDetectorIsCalledOnExistsSingle()
+      throws ExecutionException, InterruptedException {
+    Get get = createGet("test");
+    final boolean expectedResult = true;
+    CompletableFuture<Boolean> primaryFuture = new CompletableFuture<>();
+    CompletableFuture<Boolean> secondaryFuture = new CompletableFuture<>();
+    when(primaryTable.exists(get)).thenReturn(primaryFuture);
+    when(secondaryTable.exists(get)).thenReturn(secondaryFuture);
+
+    CompletableFuture<Boolean> resultFuture = mirroringTable.exists(get);
+    primaryFuture.complete(expectedResult);
+    secondaryFuture.complete(expectedResult);
+    Boolean result = resultFuture.get();
+
+    assertThat(result).isEqualTo(expectedResult);
+
+    verify(mismatchDetector, times(1)).exists(get, expectedResult, expectedResult);
+    verify(mismatchDetector, never()).exists(any(Get.class), any());
+  }
+
+  @Test
   public void testSecondaryReadExceptionCallsVerificationErrorHandlerOnExists()
       throws ExecutionException, InterruptedException {
     Get get = createGet("test");
@@ -270,6 +270,67 @@ public class TestMirroringAsyncTable {
     assertThat(result).isEqualTo(expectedResult);
 
     verify(mismatchDetector, times(1)).exists(get, expectedException);
+  }
+
+  @Test
+  public void testMismatchDetectorIsCalledOnExistsMultiple()
+      throws ExecutionException, InterruptedException {
+    List<Get> get = createGets("test");
+    boolean[] expectedResultArray = {false};
+    CompletableFuture<Boolean> expectedFuture = new CompletableFuture<>();
+    List<CompletableFuture<Boolean>> expectedResultFutureList =
+        Collections.singletonList(expectedFuture);
+
+    when(primaryTable.exists(get)).thenReturn(expectedResultFutureList);
+    when(secondaryTable.exists(get)).thenReturn(expectedResultFutureList);
+
+    List<CompletableFuture<Boolean>> resultFutures = mirroringTable.exists(get);
+    assertThat(resultFutures.size()).isEqualTo(1);
+
+    expectedFuture.complete(expectedResultArray[0]);
+    Boolean result = resultFutures.get(0).get();
+    assertThat(result).isEqualTo(expectedResultArray[0]);
+
+    verify(mismatchDetector, times(1))
+        .existsAll(eq(get), eq(expectedResultArray), eq(expectedResultArray));
+    verify(mismatchDetector, never()).batch(anyList(), any());
+    verify(mismatchDetector, never()).get(any(Get.class), any());
+    verify(mismatchDetector, never()).get(any(Get.class), any(), any());
+  }
+
+  @Test
+  public void testSecondaryReadExceptionCallsVerificationErrorHandlerOnExistsMultiple()
+      throws ExecutionException, InterruptedException {
+    List<Get> gets = createGets("test1", "test2");
+    boolean[] expectedResultArray = {true, false};
+    CompletableFuture<Boolean> expectedFuture1 = new CompletableFuture<>();
+    CompletableFuture<Boolean> expectedFuture2 = new CompletableFuture<>();
+    CompletableFuture<Boolean> exceptionalFuture = new CompletableFuture<>();
+    List<CompletableFuture<Boolean>> expectedResultFutureList =
+        Arrays.asList(expectedFuture1, expectedFuture2);
+    List<CompletableFuture<Boolean>> exceptionalResultFutureList =
+        Arrays.asList(exceptionalFuture, exceptionalFuture);
+
+    when(primaryTable.exists(gets)).thenReturn(expectedResultFutureList);
+    when(secondaryTable.exists(gets)).thenReturn(exceptionalResultFutureList);
+
+    List<CompletableFuture<Boolean>> resultFutures = mirroringTable.exists(gets);
+    assertThat(resultFutures.size()).isEqualTo(2);
+
+    expectedFuture1.complete(expectedResultArray[0]);
+    expectedFuture2.complete(expectedResultArray[1]);
+    IOException ioe = new IOException("expected");
+    exceptionalFuture.completeExceptionally(ioe);
+    Boolean result1 = resultFutures.get(0).get();
+    assertThat(result1).isEqualTo(expectedResultArray[0]);
+    Boolean result2 = resultFutures.get(1).get();
+    assertThat(result2).isEqualTo(expectedResultArray[1]);
+
+    verify(mismatchDetector, times(1)).existsAll(eq(gets), any(Throwable.class));
+
+    verify(mismatchDetector, never()).batch(anyList(), any(), any());
+    verify(mismatchDetector, never()).get(any(Get.class), any());
+    verify(mismatchDetector, never()).get(any(Get.class), any(), any());
   }
 
   @Test
@@ -405,9 +466,9 @@ public class TestMirroringAsyncTable {
         .consume(eq(HBaseOperation.BATCH), any(Mutation.class), any(Throwable.class));
   }
 
+  @Test
   public void testBatchAllPrimaryFailed()
       throws IOException, InterruptedException, ExecutionException {
-    setupFlowControllerMock(flowController);
     Put put1 = createPut("test1", "f1", "q1", "v1");
     Get get1 = createGet("get1");
 

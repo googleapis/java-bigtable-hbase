@@ -31,7 +31,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.Mirro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
-import com.google.cloud.bigtable.mirroring.hbase2_x.utils.AsyncRequestScheduling;
+import com.google.cloud.bigtable.mirroring.hbase2_x.utils.AsyncRequestScheduling.OperationStages;
 import com.google.cloud.bigtable.mirroring.hbase2_x.utils.futures.FutureConverter;
 import com.google.cloud.bigtable.mirroring.hbase2_x.utils.futures.FutureUtils;
 import com.google.common.base.Predicate;
@@ -66,6 +66,7 @@ import org.apache.hadoop.hbase.client.ScanResultConsumerBase;
 import org.apache.hadoop.hbase.client.ServiceCaller;
 import org.apache.hadoop.hbase.io.TimeRange;
 import org.apache.hadoop.hbase.shaded.com.google.protobuf.RpcChannel;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements AsyncTable<C> {
   private final Predicate<Object> resultIsFaultyPredicate = (o) -> o instanceof Throwable;
@@ -160,30 +161,74 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
 
   @Override
   public List<CompletableFuture<Result>> get(List<Get> list) {
-    return batch(list);
+    return generalBatch(
+            list,
+            this.primaryTable::get,
+            this.secondaryTable::get,
+            BatchBuilder<Get, Result>::new,
+            Result.class)
+        .userNotified;
   }
 
   @Override
   public List<CompletableFuture<Void>> put(List<Put> list) {
-    return batch(list);
+    return generalBatch(
+            list,
+            this.primaryTable::put,
+            this.secondaryTable::put,
+            BatchBuilder<Put, Void>::new,
+            Void.class)
+        .userNotified;
   }
 
   @Override
   public List<CompletableFuture<Void>> delete(List<Delete> list) {
-    return batch(list);
+    return generalBatch(
+            list,
+            this.primaryTable::delete,
+            this.secondaryTable::delete,
+            BatchBuilder<Delete, Void>::new,
+            Void.class)
+        .userNotified;
   }
 
   @Override
   public <T> List<CompletableFuture<T>> batch(List<? extends Row> actions) {
-    final int numActions = actions.size();
-    final AsyncRequestScheduling.OperationStages<List<CompletableFuture<T>>> returnedValue =
-        new AsyncRequestScheduling.OperationStages<>(
-            Stream.generate((Supplier<CompletableFuture<T>>) CompletableFuture::new)
-                .limit(numActions)
-                .collect(Collectors.toCollection(ArrayList::new)));
+    return this.<T, Row, Object>generalBatch(
+            actions,
+            this.primaryTable::batch,
+            this.secondaryTable::batch,
+            BatchBuilder<Row, Object>::new,
+            Object.class)
+        .userNotified;
+  }
 
-    final List<CompletableFuture<T>> primaryFutures = this.primaryTable.batch(actions);
-    // Unfortunately, we cannot create T[].
+  @Override
+  public List<CompletableFuture<Boolean>> exists(List<Get> list) {
+    return generalBatch(
+            list,
+            this.primaryTable::exists,
+            this.secondaryTable::exists,
+            ExistsBuilder::new,
+            Boolean.class)
+        .userNotified;
+  }
+
+  public <ResultType, ActionType extends Row, SuccessfulResultType>
+      OperationStages<List<CompletableFuture<ResultType>>> generalBatch(
+          List<? extends ActionType> userActions,
+          Function<List<ActionType>, List<CompletableFuture<ResultType>>> primaryFunction,
+          Function<List<ActionType>, List<CompletableFuture<ResultType>>> secondaryFunction,
+          Function<FailedSuccessfulSplit<ActionType, SuccessfulResultType>, GeneralBatchBuilder>
+              batchBuilderCreator,
+          Class<SuccessfulResultType> successfulResultTypeClass) {
+    List<ActionType> actions = new ArrayList<>(userActions);
+    final int numActions = actions.size();
+
+    final OperationStages<List<CompletableFuture<ResultType>>> returnedValue =
+        new OperationStages<>(generateList(numActions, CompletableFuture<ResultType>::new));
+
+    final List<CompletableFuture<ResultType>> primaryFutures = primaryFunction.apply(actions);
     final Object[] primaryResults = new Object[numActions];
 
     BiConsumer<Integer, Throwable> primaryErrorHandler =
@@ -191,31 +236,33 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     waitForAllWithErrorHandler(primaryFutures, primaryErrorHandler, primaryResults)
         .whenComplete(
             (ignoredResult, ignoredError) -> {
-              final FailedSuccessfulSplit<? extends Row> failedSuccessfulSplit =
-                  new FailedSuccessfulSplit<>(actions, primaryResults, resultIsFaultyPredicate);
+              final FailedSuccessfulSplit<ActionType, SuccessfulResultType> failedSuccessfulSplit =
+                  new FailedSuccessfulSplit<>(
+                      actions, primaryResults, resultIsFaultyPredicate, successfulResultTypeClass);
 
-              if (failedSuccessfulSplit.successfulOperations.size() == 0) {
+              if (failedSuccessfulSplit.successfulOperations.isEmpty()) {
                 // All results were instances of Throwable, so we already completed
-                // exceptionally result futures by errorHandler passed to
+                // exceptionally result futures with errorHandler passed to
                 // waitForAllWithErrorHandler.
-                returnedValue.getVerificationCompletedFuture().complete(null);
+                returnedValue.verificationCompleted();
                 return;
               }
 
-              final List<? extends Row> operationsToScheduleOnSecondary =
+              GeneralBatchBuilder batchBuilder = batchBuilderCreator.apply(failedSuccessfulSplit);
+
+              final List<ActionType> operationsToScheduleOnSecondary =
                   failedSuccessfulSplit.successfulOperations;
 
               final Object[] secondaryResults = new Object[operationsToScheduleOnSecondary.size()];
 
-              final ReadWriteSplit<? extends Row, Result> successfulReadWriteSplit =
+              ReadWriteSplit<ActionType, SuccessfulResultType> successfulReadWriteSplit =
                   new ReadWriteSplit<>(
                       failedSuccessfulSplit.successfulOperations,
                       failedSuccessfulSplit.successfulResults,
-                      Result.class);
+                      successfulResultTypeClass);
 
               final RequestResourcesDescription requestResourcesDescription =
-                  new RequestResourcesDescription(
-                      operationsToScheduleOnSecondary, successfulReadWriteSplit.readResults);
+                  batchBuilder.getRequestResourcesDescription(operationsToScheduleOnSecondary);
 
               final CompletableFuture<FlowController.ResourceReservation>
                   resourceReservationRequest =
@@ -224,13 +271,14 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
 
               resourceReservationRequest.whenComplete(
                   (ignoredResourceReservation, resourceReservationError) -> {
-                    completeSuccessfulResultFutures(
-                        returnedValue.userNotified, primaryResults, numActions);
+                    completeSuccessfulResultFutures(returnedValue.userNotified, primaryResults);
                     if (resourceReservationError != null) {
-                      this.secondaryWriteErrorConsumer.consume(
-                          HBaseOperation.BATCH,
-                          successfulReadWriteSplit.writeOperations,
-                          resourceReservationError);
+                      if (!successfulReadWriteSplit.writeOperations.isEmpty()) {
+                        this.secondaryWriteErrorConsumer.consume(
+                            HBaseOperation.BATCH,
+                            successfulReadWriteSplit.writeOperations,
+                            resourceReservationError);
+                      }
                       return;
                     }
                     FutureUtils.forwardResult(
@@ -239,28 +287,27 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
                                 resourceReservationRequest,
                                 () ->
                                     waitForAllWithErrorHandler(
-                                        this.secondaryTable.batch(operationsToScheduleOnSecondary),
+                                        secondaryFunction.apply(operationsToScheduleOnSecondary),
                                         (idx, throwable) -> {},
                                         secondaryResults),
                                 (ignoredPrimaryResult) ->
-                                    BatchHelpers.createBatchVerificationCallback(
-                                        failedSuccessfulSplit,
-                                        successfulReadWriteSplit,
-                                        secondaryResults,
-                                        verificationContinuationFactory.getMismatchDetector(),
-                                        secondaryWriteErrorConsumer,
-                                        resultIsFaultyPredicate,
-                                        mirroringTracer))
+                                    batchBuilder.getVerificationCallback(secondaryResults))
                             .getVerificationCompletedFuture(),
                         returnedValue.getVerificationCompletedFuture());
                   });
             });
-    return wrapWithReferenceCounter(returnedValue).userNotified;
+    return wrapWithReferenceCounter(returnedValue);
+  }
+
+  private <T> ArrayList<T> generateList(int size, Supplier<T> initializer) {
+    return Stream.generate(initializer)
+        .limit(size)
+        .collect(Collectors.toCollection(ArrayList::new));
   }
 
   private <T> void completeSuccessfulResultFutures(
-      List<CompletableFuture<T>> resultFutures, Object[] primaryResults, int numResults) {
-    for (int i = 0; i < numResults; i++) {
+      List<CompletableFuture<T>> resultFutures, Object[] primaryResults) {
+    for (int i = 0; i < primaryResults.length; i++) {
       if (!(resultIsFaultyPredicate.apply(primaryResults[i]))) {
         resultFutures.get(i).complete((T) primaryResults[i]);
       }
@@ -292,11 +339,10 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     return CompletableFuture.allOf(handledFutures.toArray(new CompletableFuture[0]));
   }
 
-  private <T extends Mutation>
-      AsyncRequestScheduling.OperationStages<CompletableFuture<Result>> mutationAsPut(
-          CompletableFuture<Result> primaryFuture) {
-    AsyncRequestScheduling.OperationStages<CompletableFuture<Result>> returnedValue =
-        new AsyncRequestScheduling.OperationStages<>(new CompletableFuture<>());
+  private <T extends Mutation> OperationStages<CompletableFuture<Result>> mutationAsPut(
+      CompletableFuture<Result> primaryFuture) {
+    OperationStages<CompletableFuture<Result>> returnedValue =
+        new OperationStages<>(new CompletableFuture<>());
     primaryFuture
         .thenAccept(
             (primaryResult) -> {
@@ -317,15 +363,13 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     return wrapWithReferenceCounter(returnedValue);
   }
 
-  private <T>
-      AsyncRequestScheduling.OperationStages<CompletableFuture<T>>
-          readWithVerificationAndFlowControl(
-              final Function<T, RequestResourcesDescription> resourcesDescriptionCreator,
-              final CompletableFuture<T> primaryFuture,
-              final Supplier<CompletableFuture<T>> secondaryFutureSupplier,
-              final Function<T, FutureCallback<T>> verificationCallbackCreator) {
-    AsyncRequestScheduling.OperationStages<CompletableFuture<T>> returnedValue =
-        new AsyncRequestScheduling.OperationStages<>(new CompletableFuture<>());
+  private <T> OperationStages<CompletableFuture<T>> readWithVerificationAndFlowControl(
+      final Function<T, RequestResourcesDescription> resourcesDescriptionCreator,
+      final CompletableFuture<T> primaryFuture,
+      final Supplier<CompletableFuture<T>> secondaryFutureSupplier,
+      final Function<T, FutureCallback<T>> verificationCallbackCreator) {
+    OperationStages<CompletableFuture<T>> returnedValue =
+        new OperationStages<>(new CompletableFuture<>());
     primaryFuture.whenComplete(
         (primaryResult, primaryError) -> {
           if (primaryError != null) {
@@ -346,7 +390,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     return wrapWithReferenceCounter(returnedValue);
   }
 
-  private <T> AsyncRequestScheduling.OperationStages<CompletableFuture<T>> writeWithFlowControl(
+  private <T> OperationStages<CompletableFuture<T>> writeWithFlowControl(
       final MirroringTable.WriteOperationInfo writeOperationInfo,
       final CompletableFuture<T> primaryFuture,
       final Supplier<CompletableFuture<T>> secondaryFutureSupplier) {
@@ -371,8 +415,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
             secondaryWriteErrorHandler));
   }
 
-  private <T> AsyncRequestScheduling.OperationStages<T> wrapWithReferenceCounter(
-      AsyncRequestScheduling.OperationStages<T> toBeReferenceCounted) {
+  private <T> OperationStages<T> wrapWithReferenceCounter(OperationStages<T> toBeReferenceCounted) {
     keepReferenceUntilOperationCompletes(toBeReferenceCounted.getVerificationCompletedFuture());
     return toBeReferenceCounted;
   }
@@ -459,12 +502,12 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
       this.primaryBuilder = primaryBuilder;
     }
 
-    private AsyncRequestScheduling.OperationStages<CompletableFuture<Boolean>> checkAndMutate(
+    private OperationStages<CompletableFuture<Boolean>> checkAndMutate(
         MirroringTable.WriteOperationInfo writeOperationInfo,
         CompletableFuture<Boolean> primary,
         Supplier<CompletableFuture<Void>> secondary) {
-      AsyncRequestScheduling.OperationStages<CompletableFuture<Boolean>> returnedValue =
-          new AsyncRequestScheduling.OperationStages<>(new CompletableFuture<>());
+      OperationStages<CompletableFuture<Boolean>> returnedValue =
+          new OperationStages<>(new CompletableFuture<>());
       primary
           .thenAccept(
               (wereMutationsApplied) -> {
@@ -538,6 +581,94 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     public CheckAndMutateBuilder ifMatches(CompareOperator compareOperator, byte[] bytes) {
       this.primaryBuilder.ifMatches(compareOperator, bytes);
       return this;
+    }
+  }
+
+  private interface GeneralBatchBuilder {
+    RequestResourcesDescription getRequestResourcesDescription(
+        List<? extends Row> operationsToPerformOnSecondary);
+
+    FutureCallback<Void> getVerificationCallback(Object[] secondaryResults);
+  }
+
+  private class BatchBuilder<ActionType extends Row, SuccessfulResultType>
+      implements GeneralBatchBuilder {
+    final FailedSuccessfulSplit<ActionType, SuccessfulResultType> failedSuccessfulSplit;
+    final ReadWriteSplit<ActionType, Result> successfulReadWriteSplit;
+
+    BatchBuilder(FailedSuccessfulSplit<ActionType, SuccessfulResultType> split) {
+      this.failedSuccessfulSplit = split;
+      this.successfulReadWriteSplit =
+          new ReadWriteSplit<>(
+              failedSuccessfulSplit.successfulOperations,
+              failedSuccessfulSplit.successfulResults,
+              Result.class);
+    }
+
+    @Override
+    public RequestResourcesDescription getRequestResourcesDescription(
+        List<? extends Row> operationsToPerformOnSecondary) {
+      return new RequestResourcesDescription(
+          operationsToPerformOnSecondary, successfulReadWriteSplit.readResults);
+    }
+
+    @Override
+    public FutureCallback<Void> getVerificationCallback(Object[] secondaryResults) {
+      return BatchHelpers.createBatchVerificationCallback(
+          this.failedSuccessfulSplit,
+          this.successfulReadWriteSplit,
+          secondaryResults,
+          verificationContinuationFactory.getMismatchDetector(),
+          secondaryWriteErrorConsumer,
+          resultIsFaultyPredicate,
+          mirroringTracer);
+    }
+  }
+
+  private class ExistsBuilder implements GeneralBatchBuilder {
+    final FailedSuccessfulSplit<Get, Boolean> primaryFailedSuccessfulSplit;
+    final boolean[] primarySuccessfulResults;
+
+    ExistsBuilder(FailedSuccessfulSplit<Get, Boolean> split) {
+      this.primaryFailedSuccessfulSplit = split;
+      this.primarySuccessfulResults =
+          new boolean[this.primaryFailedSuccessfulSplit.successfulResults.length];
+      for (int i = 0; i < this.primaryFailedSuccessfulSplit.successfulResults.length; i++) {
+        this.primarySuccessfulResults[i] = this.primaryFailedSuccessfulSplit.successfulResults[i];
+      }
+    }
+
+    @Override
+    public RequestResourcesDescription getRequestResourcesDescription(
+        List<? extends Row> operationsToPerformOnSecondary) {
+      return new RequestResourcesDescription(primarySuccessfulResults);
+    }
+
+    @Override
+    public FutureCallback<Void> getVerificationCallback(Object[] secondaryResults) {
+      return new FutureCallback<Void>() {
+        @Override
+        public void onSuccess(@NullableDecl Void unused) {
+          boolean[] booleanSecondaryResults = new boolean[secondaryResults.length];
+          for (int i = 0; i < secondaryResults.length; i++) {
+            booleanSecondaryResults[i] = (boolean) secondaryResults[i];
+          }
+
+          verificationContinuationFactory
+              .getMismatchDetector()
+              .existsAll(
+                  primaryFailedSuccessfulSplit.successfulOperations,
+                  primarySuccessfulResults,
+                  booleanSecondaryResults);
+        }
+
+        @Override
+        public void onFailure(Throwable error) {
+          verificationContinuationFactory
+              .getMismatchDetector()
+              .existsAll(primaryFailedSuccessfulSplit.successfulOperations, error);
+        }
+      };
     }
   }
 }

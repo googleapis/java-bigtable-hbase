@@ -32,7 +32,7 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 public class BatchHelpers {
   public static FutureCallback<Void> createBatchVerificationCallback(
-      final FailedSuccessfulSplit<?> failedAndSuccessfulPrimaryOperations,
+      final FailedSuccessfulSplit<?, ?> failedAndSuccessfulPrimaryOperations,
       final ReadWriteSplit<?, Result> successfulPrimaryReadsAndWrites,
       final Object[] secondaryResults,
       final MismatchDetector mismatchDetector,
@@ -46,9 +46,9 @@ public class BatchHelpers {
         List<? extends Row> secondaryOperations =
             failedAndSuccessfulPrimaryOperations.successfulOperations;
 
-        final FailedSuccessfulSplit<?> secondaryFailedAndSuccessfulOperations =
+        final FailedSuccessfulSplit<?, Object> secondaryFailedAndSuccessfulOperations =
             new FailedSuccessfulSplit<>(
-                secondaryOperations, secondaryResults, resultIsFaultyPredicate);
+                secondaryOperations, secondaryResults, resultIsFaultyPredicate, Object.class);
 
         final ReadWriteSplit<?, Result> successfulSecondaryReadsAndWrites =
             new ReadWriteSplit<>(
@@ -72,9 +72,9 @@ public class BatchHelpers {
         List<? extends Row> secondaryOperations =
             failedAndSuccessfulPrimaryOperations.successfulOperations;
 
-        final FailedSuccessfulSplit<?> secondaryFailedAndSuccessfulOperations =
+        final FailedSuccessfulSplit<?, Object> secondaryFailedAndSuccessfulOperations =
             new FailedSuccessfulSplit<>(
-                secondaryOperations, secondaryResults, resultIsFaultyPredicate);
+                secondaryOperations, secondaryResults, resultIsFaultyPredicate, Object.class);
 
         final ReadWriteSplit<?, Result> successfulSecondaryReadsAndWrites =
             new ReadWriteSplit<>(
@@ -209,18 +209,21 @@ public class BatchHelpers {
    * Helper class facilitating analysis of {@link Table#batch(List, Object[])} results. Splits
    * operations and corresponding results into failed and successful based on contents of results.
    */
-  public static class FailedSuccessfulSplit<T extends Row> {
-    public final List<T> successfulOperations = new ArrayList<>();
-    public final Result[] successfulResults;
-    public final List<T> failedOperations = new ArrayList<>();
+  public static class FailedSuccessfulSplit<OperationType extends Row, SuccessfulResultType> {
+    public final List<OperationType> successfulOperations = new ArrayList<>();
+    public final SuccessfulResultType[] successfulResults;
+    public final List<OperationType> failedOperations = new ArrayList<>();
     public final Object[] failedResults;
 
     public FailedSuccessfulSplit(
-        List<T> operations, Object[] results, Predicate<Object> resultIsFaultyPredicate) {
-      List<Result> successfulResultsList = new ArrayList<>();
+        List<OperationType> operations,
+        Object[] results,
+        Predicate<Object> resultIsFaultyPredicate,
+        Class<SuccessfulResultType> successfulResultTypeClass) {
+      List<SuccessfulResultType> successfulResultsList = new ArrayList<>();
       List<Object> failedResultsList = new ArrayList<>();
       for (int i = 0; i < operations.size(); i++) {
-        T operation = operations.get(i);
+        OperationType operation = operations.get(i);
         Object result = results[i];
         boolean isFailed = resultIsFaultyPredicate.apply(result);
         if (isFailed) {
@@ -228,10 +231,12 @@ public class BatchHelpers {
           failedResultsList.add(result);
         } else {
           successfulOperations.add(operation);
-          successfulResultsList.add((Result) result);
+          successfulResultsList.add((SuccessfulResultType) result);
         }
       }
-      this.successfulResults = successfulResultsList.toArray(new Result[0]);
+      this.successfulResults =
+          successfulResultsList.toArray(
+              (SuccessfulResultType[]) Array.newInstance(successfulResultTypeClass, 0));
       this.failedResults = failedResultsList.toArray(new Object[0]);
     }
   }

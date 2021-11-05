@@ -19,10 +19,10 @@ import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.blockMeth
 import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.createGet;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.createGets;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.createPut;
-import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.createResult;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.setupFlowControllerMock;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -41,7 +41,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.apache.hadoop.hbase.Cell;
+import java.util.stream.Collectors;
 import org.apache.hadoop.hbase.client.AsyncTable;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -54,11 +54,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
-import org.mockito.stubbing.Answer;
 
 @RunWith(JUnit4.class)
 public class TestMirroringAsyncTableInputModification {
@@ -72,11 +71,13 @@ public class TestMirroringAsyncTableInputModification {
   @Mock ListenableReferenceCounter referenceCounter;
 
   MirroringAsyncTable<ScanResultConsumerBase> mirroringTable;
+  CompletableFuture<Void> letPrimaryThroughFuture;
   SettableFuture<Void> secondaryOperationAllowedFuture;
 
   @Before
   public void setUp() {
     setupFlowControllerMock(flowController);
+    this.letPrimaryThroughFuture = new CompletableFuture<>();
     this.mirroringTable =
         spy(
             new MirroringAsyncTable<>(
@@ -89,10 +90,31 @@ public class TestMirroringAsyncTableInputModification {
                 referenceCounter));
 
     secondaryOperationAllowedFuture = SettableFuture.create();
+    blockMethodCall(secondaryTable, secondaryOperationAllowedFuture).exists(anyList());
+    blockMethodCall(secondaryTable, secondaryOperationAllowedFuture).get(anyList());
+    blockMethodCall(secondaryTable, secondaryOperationAllowedFuture).put(anyList());
+    blockMethodCall(secondaryTable, secondaryOperationAllowedFuture).delete(anyList());
     blockMethodCall(secondaryTable, secondaryOperationAllowedFuture).batch(anyList());
 
-    mockBatch(this.primaryTable);
-    mockBatch(this.secondaryTable);
+    lenient().doAnswer(this::answerWithSuccessfulNulls).when(primaryTable).exists(anyList());
+    lenient().doAnswer(this::answerWithSuccessfulNulls).when(primaryTable).get(anyList());
+    lenient().doAnswer(this::answerWithSuccessfulNulls).when(primaryTable).put(anyList());
+    lenient().doAnswer(this::answerWithSuccessfulNulls).when(primaryTable).delete(anyList());
+    lenient().doAnswer(this::answerWithSuccessfulNulls).when(primaryTable).batch(anyList());
+
+    lenient().doAnswer(this::answerWithSuccessfulNulls).when(secondaryTable).exists(anyList());
+    lenient().doAnswer(this::answerWithSuccessfulNulls).when(secondaryTable).get(anyList());
+    lenient().doAnswer(this::answerWithSuccessfulNulls).when(secondaryTable).put(anyList());
+    lenient().doAnswer(this::answerWithSuccessfulNulls).when(secondaryTable).delete(anyList());
+    lenient().doAnswer(this::answerWithSuccessfulNulls).when(secondaryTable).batch(anyList());
+  }
+
+  private <T> List<CompletableFuture<T>> answerWithSuccessfulNulls(
+      InvocationOnMock invocationOnMock) {
+    List<?> operations = (List<?>) invocationOnMock.getArguments()[0];
+    return operations.stream()
+        .map(ignored -> (CompletableFuture<T>) letPrimaryThroughFuture)
+        .collect(Collectors.toList());
   }
 
   @Test
@@ -100,9 +122,24 @@ public class TestMirroringAsyncTableInputModification {
     List<Get> gets = createGets("k1", "k2", "k3");
     List<Get> inputList = new ArrayList<>(gets);
 
+    CompletableFuture<Boolean> letExistsThroughFuture = new CompletableFuture<>();
+    List<CompletableFuture<Boolean>> expectedResult =
+        Collections.nCopies(gets.size(), letExistsThroughFuture);
+
+    blockMethodCall(secondaryTable, secondaryOperationAllowedFuture).exists(anyList());
+    doAnswer(ignored -> expectedResult).when(primaryTable).exists(anyList());
+    doAnswer(ignored -> expectedResult).when(secondaryTable).exists(anyList());
+
     List<CompletableFuture<Boolean>> results = this.mirroringTable.exists(inputList);
 
-    verifyWithInputModification(secondaryOperationAllowedFuture, gets, inputList, results);
+    inputList.clear();
+    letExistsThroughFuture.complete(true);
+
+    results.get(0).get(3, TimeUnit.SECONDS);
+    verify(this.primaryTable, times(1)).exists(gets);
+
+    secondaryOperationAllowedFuture.set(null);
+    verify(this.secondaryTable, times(1)).exists(gets);
   }
 
   @Test
@@ -112,7 +149,14 @@ public class TestMirroringAsyncTableInputModification {
 
     List<CompletableFuture<Result>> results = this.mirroringTable.get(inputList);
 
-    verifyWithInputModification(secondaryOperationAllowedFuture, gets, inputList, results);
+    inputList.clear();
+    letPrimaryThroughFuture.complete(null);
+
+    results.get(0).get(3, TimeUnit.SECONDS);
+    verify(this.primaryTable, times(1)).get(gets);
+
+    secondaryOperationAllowedFuture.set(null);
+    verify(this.secondaryTable, times(1)).get(gets);
   }
 
   @Test
@@ -122,7 +166,14 @@ public class TestMirroringAsyncTableInputModification {
 
     List<CompletableFuture<Void>> results = this.mirroringTable.put(inputList);
 
-    verifyWithInputModification(secondaryOperationAllowedFuture, puts, inputList, results);
+    inputList.clear();
+    letPrimaryThroughFuture.complete(null);
+
+    results.get(0).get(3, TimeUnit.SECONDS);
+    verify(this.primaryTable, times(1)).put(puts);
+
+    secondaryOperationAllowedFuture.set(null);
+    verify(this.secondaryTable, times(1)).put(puts);
   }
 
   @Test
@@ -132,7 +183,14 @@ public class TestMirroringAsyncTableInputModification {
 
     List<CompletableFuture<Void>> results = this.mirroringTable.delete(inputList);
 
-    verifyWithInputModification(secondaryOperationAllowedFuture, puts, inputList, results);
+    inputList.clear();
+    letPrimaryThroughFuture.complete(null);
+
+    results.get(0).get(3, TimeUnit.SECONDS);
+    verify(this.primaryTable, times(1)).delete(puts);
+
+    secondaryOperationAllowedFuture.set(null);
+    verify(this.primaryTable, times(1)).delete(puts);
   }
 
   @Test
@@ -142,47 +200,13 @@ public class TestMirroringAsyncTableInputModification {
 
     List<CompletableFuture<Void>> results = this.mirroringTable.batch(inputList);
 
-    verifyWithInputModification(secondaryOperationAllowedFuture, ops, inputList, results);
-  }
-
-  private <T> void verifyWithInputModification(
-      SettableFuture<Void> secondaryOperationAllowedFuture,
-      List<? extends Row> ops,
-      List<? extends Row> inputList,
-      List<CompletableFuture<T>> results)
-      throws InterruptedException, ExecutionException, TimeoutException {
+    inputList.clear();
+    letPrimaryThroughFuture.complete(null);
 
     results.get(0).get(3, TimeUnit.SECONDS);
     verify(this.primaryTable, times(1)).batch(ops);
-    inputList.clear(); // User modifies the list
 
     secondaryOperationAllowedFuture.set(null);
     verify(this.secondaryTable, times(1)).batch(ops);
-  }
-
-  void mockBatch(AsyncTable<?> table) {
-    doAnswer(
-            (Answer<List<CompletableFuture<Result>>>)
-                invocationOnMock -> {
-                  Object[] args = invocationOnMock.getArguments();
-                  List<? extends Row> operations = (List<? extends Row>) args[0];
-                  List<CompletableFuture<Result>> results = new ArrayList<>();
-
-                  for (Row operation : operations) {
-                    if (operation instanceof Get) {
-                      Get get = (Get) operation;
-                      CompletableFuture<Result> result = new CompletableFuture<>();
-                      result.complete(createResult(get.getRow(), get.getRow()));
-                      results.add(result);
-                    } else {
-                      CompletableFuture<Result> result = new CompletableFuture<>();
-                      result.complete(Result.create(new Cell[0]));
-                      results.add(result);
-                    }
-                  }
-                  return results;
-                })
-        .when(table)
-        .batch(ArgumentMatchers.anyList());
   }
 }
