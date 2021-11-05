@@ -51,38 +51,49 @@ import org.apache.hadoop.hbase.client.Table;
  */
 @InternalApi("For internal usage only")
 public class RequestCountingFlowControlStrategy extends SingleQueueFlowControlStrategy {
-  public RequestCountingFlowControlStrategy(int minDifferenceToBlock) {
-    super(new Ledger(minDifferenceToBlock));
+  public RequestCountingFlowControlStrategy(int minDifferenceToBlock, int maxUsedBytes) {
+    super(new Ledger(minDifferenceToBlock, maxUsedBytes));
   }
 
   public RequestCountingFlowControlStrategy(MirroringOptions options) {
-    this(options.flowControllerMaxOutstandingRequests);
+    this(options.flowControllerMaxOutstandingRequests, options.flowControllerMaxUsedBytes);
   }
 
   private static class Ledger implements SingleQueueFlowControlStrategy.Ledger {
-    private int minDifferenceToBlock;
-    private int primaryReadsAdvantage; // = completedPrimaryReads - completedSecondaryReads
+    private final int maxUsedBytes;
+    private final int minDifferenceToBlock;
 
-    private Ledger(int minDifferenceToBlock) {
+    private int primaryReadsAdvantage; // = completedPrimaryReads - completedSecondaryReads
+    private int usedBytes;
+
+    private Ledger(int minDifferenceToBlock, int maxUsedBytes) {
       this.minDifferenceToBlock = minDifferenceToBlock;
+      this.maxUsedBytes = maxUsedBytes;
       this.primaryReadsAdvantage = 0;
+      this.usedBytes = 0;
     }
 
     @Override
     public boolean canAcquireResource(RequestResourcesDescription requestResourcesDescription) {
       int neededEntries = requestResourcesDescription.numberOfResults;
-      return this.primaryReadsAdvantage == 0
-          || this.primaryReadsAdvantage + neededEntries <= this.minDifferenceToBlock;
+      if (this.primaryReadsAdvantage == 0) {
+        // Always allow at least one request into the flow controller, regardless of its size.
+        return true;
+      }
+      return this.primaryReadsAdvantage + neededEntries <= this.minDifferenceToBlock
+          && this.usedBytes + requestResourcesDescription.sizeInBytes <= this.maxUsedBytes;
     }
 
     @Override
     public void accountAcquiredResource(RequestResourcesDescription requestResourcesDescription) {
       this.primaryReadsAdvantage += requestResourcesDescription.numberOfResults;
+      this.usedBytes += requestResourcesDescription.sizeInBytes;
     }
 
     @Override
     public void accountReleasedResources(RequestResourcesDescription requestResourcesDescription) {
       this.primaryReadsAdvantage -= requestResourcesDescription.numberOfResults;
+      this.usedBytes -= requestResourcesDescription.sizeInBytes;
     }
   }
 }

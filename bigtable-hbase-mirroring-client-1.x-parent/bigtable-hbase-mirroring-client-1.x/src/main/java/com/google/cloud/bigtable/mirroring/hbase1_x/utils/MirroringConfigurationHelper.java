@@ -86,6 +86,8 @@ public class MirroringConfigurationHelper {
 
   public static final String MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS =
       "google.bigtable.mirroring.flow-controller.max-outstanding-requests";
+  public static final String MIRRORING_FLOW_CONTROLLER_MAX_USED_BYTES =
+      "google.bigtable.mirroring.flow-controller.max-used-bytes";
 
   public static final String MIRRORING_WRITE_ERROR_CONSUMER_CLASS =
       "google.bigtable.mirroring.write-error-consumer.impl";

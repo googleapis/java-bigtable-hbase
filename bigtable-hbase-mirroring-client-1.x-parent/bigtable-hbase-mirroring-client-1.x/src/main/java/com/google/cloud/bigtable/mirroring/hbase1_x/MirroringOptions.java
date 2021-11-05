@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_BUFFERED_MUTATOR_BYTES_TO_FLUSH;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_CONCURRENT_WRITES;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_MAX_USED_BYTES;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_STRATEGY_CLASS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_MISMATCH_DETECTOR_CLASS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_READ_VERIFICATION_RATE_PERCENT;
@@ -41,6 +42,7 @@ public class MirroringOptions {
   public final String mismatchDetectorClass;
   public final String flowControllerStrategyClass;
   public final int flowControllerMaxOutstandingRequests;
+  public final int flowControllerMaxUsedBytes;
   public final long bufferedMutatorBytesToFlush;
   public final String writeErrorConsumerClass;
   public final int readSamplingRate;
@@ -62,6 +64,8 @@ public class MirroringOptions {
     this.flowControllerMaxOutstandingRequests =
         Integer.parseInt(
             configuration.get(MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS, "500"));
+    this.flowControllerMaxUsedBytes =
+        Integer.parseInt(configuration.get(MIRRORING_FLOW_CONTROLLER_MAX_USED_BYTES, "268435456"));
     this.bufferedMutatorBytesToFlush =
         Integer.parseInt(
             configuration.get(

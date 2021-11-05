@@ -25,7 +25,7 @@ import org.junit.runners.JUnit4;
 public class TestRequestCountingFlowControlStrategy {
   @Test
   public void testBlockingWhenCounterReachesTheLimit() {
-    RequestCountingFlowControlStrategy fc = new RequestCountingFlowControlStrategy(2);
+    RequestCountingFlowControlStrategy fc = new RequestCountingFlowControlStrategy(2, 1000);
 
     assertThat(fc.tryAcquireResource(new RequestResourcesDescription(new boolean[] {})))
         .isTrue(); // 0
@@ -44,7 +44,7 @@ public class TestRequestCountingFlowControlStrategy {
 
   @Test
   public void testOversizedRequestIsAllowedIfNoOtherResourcesAreAcquired() {
-    RequestCountingFlowControlStrategy fc = new RequestCountingFlowControlStrategy(2);
+    RequestCountingFlowControlStrategy fc = new RequestCountingFlowControlStrategy(2, 1000);
 
     assertThat(
             fc.tryAcquireResource(
@@ -64,5 +64,24 @@ public class TestRequestCountingFlowControlStrategy {
             fc.tryAcquireResource(
                 new RequestResourcesDescription(new boolean[] {true, true, true})))
         .isTrue();
+  }
+
+  @Test
+  public void testBlockingOnRequestSize() {
+    RequestCountingFlowControlStrategy fc = new RequestCountingFlowControlStrategy(1000, 16);
+
+    assertThat(fc.tryAcquireResource(new RequestResourcesDescription(new boolean[] {})))
+        .isTrue(); // 0
+    assertThat(fc.tryAcquireResource(new RequestResourcesDescription(new boolean[] {true})))
+        .isTrue(); // 8
+    assertThat(fc.tryAcquireResource(new RequestResourcesDescription(new boolean[] {true})))
+        .isTrue(); // 16
+    assertThat(fc.tryAcquireResource(new RequestResourcesDescription(new boolean[] {true})))
+        .isFalse(); // 16
+    fc.releaseResource(new RequestResourcesDescription(new boolean[] {true})); // 8
+    assertThat(fc.tryAcquireResource(new RequestResourcesDescription(new boolean[] {true})))
+        .isTrue(); // 16
+    assertThat(fc.tryAcquireResource(new RequestResourcesDescription(new boolean[] {true})))
+        .isFalse(); // 16
   }
 }
