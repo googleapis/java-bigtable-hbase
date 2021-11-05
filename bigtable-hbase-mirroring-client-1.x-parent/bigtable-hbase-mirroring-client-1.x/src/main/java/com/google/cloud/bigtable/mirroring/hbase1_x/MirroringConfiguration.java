@@ -15,60 +15,44 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper;
 import org.apache.hadoop.conf.Configuration;
 
-public class MirroringConfiguration extends Configuration {
+@InternalApi("For internal use only")
+public class MirroringConfiguration {
   public final Configuration primaryConfiguration;
   public final Configuration secondaryConfiguration;
   public final MirroringOptions mirroringOptions;
+  public final Configuration baseConfiguration;
 
-  public MirroringConfiguration(
-      Configuration primaryConfiguration,
-      Configuration secondaryConfiguration,
-      Configuration mirroringConfiguration) {
-    super.set("hbase.client.connection.impl", MirroringConnection.class.getCanonicalName());
+  public MirroringConfiguration(Configuration configuration) {
+    MirroringConfigurationHelper.checkParameters(
+        configuration,
+        MirroringConfigurationHelper.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
+        MirroringConfigurationHelper.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY);
+
+    final Configuration primaryConfiguration =
+        MirroringConfigurationHelper.extractPrefixedConfig(
+            MirroringConfigurationHelper.MIRRORING_PRIMARY_CONFIG_PREFIX_KEY, configuration);
+    MirroringConfigurationHelper.fillConnectionConfigWithClassImplementation(
+        primaryConfiguration,
+        configuration,
+        MirroringConfigurationHelper.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
+        "hbase.client.connection.impl");
     this.primaryConfiguration = primaryConfiguration;
+
+    final Configuration secondaryConfiguration =
+        MirroringConfigurationHelper.extractPrefixedConfig(
+            MirroringConfigurationHelper.MIRRORING_SECONDARY_CONFIG_PREFIX_KEY, configuration);
+    MirroringConfigurationHelper.fillConnectionConfigWithClassImplementation(
+        secondaryConfiguration,
+        configuration,
+        MirroringConfigurationHelper.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY,
+        "hbase.client.connection.impl");
     this.secondaryConfiguration = secondaryConfiguration;
-    this.mirroringOptions = new MirroringOptions(mirroringConfiguration);
-  }
 
-  public MirroringConfiguration(Configuration conf) {
-    super(conf); // Copy-constructor
-    // In case the user constructed MirroringConfiguration by hand.
-    if (conf instanceof MirroringConfiguration) {
-      MirroringConfiguration mirroringConfiguration = (MirroringConfiguration) conf;
-      this.primaryConfiguration = new Configuration(mirroringConfiguration.primaryConfiguration);
-      this.secondaryConfiguration =
-          new Configuration(mirroringConfiguration.secondaryConfiguration);
-      this.mirroringOptions = mirroringConfiguration.mirroringOptions;
-    } else {
-      MirroringConfigurationHelper.checkParameters(
-          conf,
-          MirroringConfigurationHelper.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
-          MirroringConfigurationHelper.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY);
-
-      final Configuration primaryConfiguration =
-          MirroringConfigurationHelper.extractPrefixedConfig(
-              MirroringConfigurationHelper.MIRRORING_PRIMARY_CONFIG_PREFIX_KEY, conf);
-      MirroringConfigurationHelper.fillConnectionConfigWithClassImplementation(
-          primaryConfiguration,
-          conf,
-          MirroringConfigurationHelper.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
-          "hbase.client.connection.impl");
-      this.primaryConfiguration = primaryConfiguration;
-
-      final Configuration secondaryConfiguration =
-          MirroringConfigurationHelper.extractPrefixedConfig(
-              MirroringConfigurationHelper.MIRRORING_SECONDARY_CONFIG_PREFIX_KEY, conf);
-      MirroringConfigurationHelper.fillConnectionConfigWithClassImplementation(
-          secondaryConfiguration,
-          conf,
-          MirroringConfigurationHelper.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY,
-          "hbase.client.connection.impl");
-      this.secondaryConfiguration = secondaryConfiguration;
-
-      this.mirroringOptions = new MirroringOptions(conf);
-    }
+    this.mirroringOptions = new MirroringOptions(configuration);
+    this.baseConfiguration = configuration;
   }
 }

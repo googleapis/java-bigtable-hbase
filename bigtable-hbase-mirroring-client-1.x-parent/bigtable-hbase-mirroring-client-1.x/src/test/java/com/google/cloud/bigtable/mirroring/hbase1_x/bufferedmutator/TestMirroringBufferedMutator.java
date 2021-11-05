@@ -19,6 +19,8 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.ExecutorServiceRule;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration;
+import com.google.cloud.bigtable.mirroring.hbase1_x.TestConnection;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
@@ -40,9 +42,13 @@ public class TestMirroringBufferedMutator {
 
   @Test
   public void testMirroringBufferedMutatorFactory() throws IOException {
-    Configuration mirroringConfig = new Configuration();
-    MirroringConfiguration mc =
-        new MirroringConfiguration(new Configuration(), new Configuration(), mirroringConfig);
+    Configuration testConfiguration = new Configuration(false);
+    testConfiguration.set(
+        MirroringConfigurationHelper.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY,
+        TestConnection.class.getCanonicalName());
+    testConfiguration.set(
+        MirroringConfigurationHelper.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY, "default");
+    MirroringConfiguration configuration = new MirroringConfiguration(testConfiguration);
 
     assertThat(
             MirroringBufferedMutator.create(
@@ -50,7 +56,7 @@ public class TestMirroringBufferedMutator {
                 mutatorRule.primaryConnection,
                 mutatorRule.secondaryConnection,
                 mutatorRule.bufferedMutatorParams,
-                mc,
+                configuration,
                 mutatorRule.flowController,
                 executorServiceRule.executorService,
                 mutatorRule.secondaryWriteErrorConsumerWithMetrics,
@@ -63,7 +69,7 @@ public class TestMirroringBufferedMutator {
                 mutatorRule.primaryConnection,
                 mutatorRule.secondaryConnection,
                 mutatorRule.bufferedMutatorParams,
-                mc,
+                configuration,
                 mutatorRule.flowController,
                 executorServiceRule.executorService,
                 mutatorRule.secondaryWriteErrorConsumerWithMetrics,

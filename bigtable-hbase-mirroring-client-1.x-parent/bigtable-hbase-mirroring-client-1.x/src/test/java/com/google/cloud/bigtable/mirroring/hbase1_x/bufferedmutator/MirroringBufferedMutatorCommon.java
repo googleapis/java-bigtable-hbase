@@ -17,10 +17,16 @@ package com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator;
 
 import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.setupFlowControllerMock;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_BUFFERED_MUTATOR_BYTES_TO_FLUSH;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_PRIMARY_CONFIG_PREFIX_KEY;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_SECONDARY_CONFIG_PREFIX_KEY;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration;
+import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection;
+import com.google.cloud.bigtable.mirroring.hbase1_x.TestConnection;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController.ResourceReservation;
@@ -141,9 +147,18 @@ public class MirroringBufferedMutatorCommon {
 
   public static MirroringConfiguration makeConfigurationWithFlushThreshold(long flushThreshold) {
     Configuration mirroringConfig = new Configuration();
+    mirroringConfig.set(
+        "hbase.client.connection.impl", MirroringConnection.class.getCanonicalName());
+
+    mirroringConfig.set(
+        MIRRORING_PRIMARY_CONNECTION_CLASS_KEY, TestConnection.class.getCanonicalName());
+    mirroringConfig.set(MIRRORING_PRIMARY_CONFIG_PREFIX_KEY, "prefix1");
+    mirroringConfig.set(
+        MIRRORING_SECONDARY_CONNECTION_CLASS_KEY, TestConnection.class.getCanonicalName());
+    mirroringConfig.set(MIRRORING_SECONDARY_CONFIG_PREFIX_KEY, "prefix2");
     mirroringConfig.set(MIRRORING_BUFFERED_MUTATOR_BYTES_TO_FLUSH, String.valueOf(flushThreshold));
 
-    return new MirroringConfiguration(new Configuration(), new Configuration(), mirroringConfig);
+    return new MirroringConfiguration(mirroringConfig);
   }
 
   public static Answer<Void> blockedFlushes(

@@ -156,7 +156,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
     this.mutationsBufferFlushIntervalBytes =
         configuration.mirroringOptions.bufferedMutatorBytesToFlush;
     this.executorService = MoreExecutors.listeningDecorator(executorService);
-    this.configuration = configuration;
+    this.configuration = configuration.baseConfiguration;
     this.bufferedMutatorParams = bufferedMutatorParams;
 
     this.mutationEntries = new ArrayList<>();

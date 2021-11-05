@@ -117,7 +117,7 @@ public class MirroringAsyncConnection implements AsyncConnection {
 
   @Override
   public Configuration getConfiguration() {
-    return this.configuration;
+    return this.configuration.baseConfiguration;
   }
 
   @Override

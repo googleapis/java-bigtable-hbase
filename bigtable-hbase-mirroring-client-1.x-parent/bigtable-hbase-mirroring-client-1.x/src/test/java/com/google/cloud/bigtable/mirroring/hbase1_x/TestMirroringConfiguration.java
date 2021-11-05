@@ -215,14 +215,4 @@ public class TestMirroringConfiguration {
     assertThat(configuration.secondaryConfiguration.get("hbase.client.connection.impl"))
         .isEqualTo(null);
   }
-
-  @Test
-  public void testCopyConstructorSetsImplClasses() {
-    Configuration empty = new Configuration(false);
-    MirroringConfiguration emptyMirroringConfiguration =
-        new MirroringConfiguration(empty, empty, empty);
-    MirroringConfiguration configuration = new MirroringConfiguration(emptyMirroringConfiguration);
-    assertThat(configuration.get("hbase.client.connection.impl"))
-        .isEqualTo(MirroringConnection.class.getCanonicalName());
-  }
 }

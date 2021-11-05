@@ -18,8 +18,6 @@ package com.google.cloud.bigtable.mirroring.hbase2_x;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
-import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration;
-import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;
@@ -99,48 +97,5 @@ public class TestMirroringAsyncConfiguration {
         MirroringConfigurationHelper.MIRRORING_SECONDARY_CONFIG_PREFIX_KEY, "prefix");
 
     MirroringAsyncConfiguration config = new MirroringAsyncConfiguration(testConfiguration);
-  }
-
-  @Test
-  public void testCopyConstructorSetsImplClasses() {
-    Configuration empty = new Configuration(false);
-    MirroringAsyncConfiguration emptyMirroringConfiguration =
-        new MirroringAsyncConfiguration(empty, empty, empty);
-    MirroringAsyncConfiguration configuration =
-        new MirroringAsyncConfiguration(emptyMirroringConfiguration);
-    assertThat(configuration.get("hbase.client.connection.impl"))
-        .isEqualTo(MirroringConnection.class.getCanonicalName());
-    assertThat(configuration.get("hbase.client.async.connection.impl"))
-        .isEqualTo(MirroringAsyncConnection.class.getCanonicalName());
-  }
-
-  @Test
-  public void testManualConstructionIsntBackwardsCompatible() {
-    Configuration empty = new Configuration(false);
-    MirroringAsyncConfiguration emptyMirroringConfiguration =
-        new MirroringAsyncConfiguration(empty, empty, empty);
-    MirroringAsyncConfiguration configuration =
-        new MirroringAsyncConfiguration(emptyMirroringConfiguration);
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> {
-          new MirroringConfiguration(configuration);
-        });
-  }
-
-  @Test
-  public void testConfigurationConstructorIsBackwardsCompatible() {
-    Configuration testConfiguration = new Configuration(false);
-    testConfiguration.set(MirroringConfigurationHelper.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY, "1");
-    testConfiguration.set(
-        MirroringConfigurationHelper.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY, "2");
-    testConfiguration.set(
-        MirroringConfigurationHelper.MIRRORING_PRIMARY_ASYNC_CONNECTION_CLASS_KEY, "3");
-    testConfiguration.set(
-        MirroringConfigurationHelper.MIRRORING_SECONDARY_ASYNC_CONNECTION_CLASS_KEY, "4");
-    MirroringAsyncConfiguration mirroringAsyncConfiguration =
-        new MirroringAsyncConfiguration(testConfiguration);
-
-    new MirroringConfiguration(mirroringAsyncConfiguration);
   }
 }

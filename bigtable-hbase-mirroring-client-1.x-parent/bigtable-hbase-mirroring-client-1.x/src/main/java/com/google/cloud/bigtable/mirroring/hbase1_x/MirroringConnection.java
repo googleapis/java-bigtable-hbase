@@ -107,8 +107,7 @@ public class MirroringConnection implements Connection {
         new Logger(
             ReflectionConstructor.<Appender>construct(
                 this.configuration.mirroringOptions.writeErrorLogAppenderClass,
-                Configuration.class,
-                this.configuration),
+                this.configuration.baseConfiguration),
             ReflectionConstructor.<Serializer>construct(
                 this.configuration.mirroringOptions.writeErrorLogSerializerClass));
 
@@ -126,7 +125,7 @@ public class MirroringConnection implements Connection {
 
   @Override
   public Configuration getConfiguration() {
-    return this.configuration;
+    return this.configuration.baseConfiguration;
   }
 
   @Override
