@@ -88,6 +88,7 @@ public class MirroringConnection
                 secondaryWriteErrorConsumer,
                 readSampler,
                 performWritesConcurrently,
+                waitForSecondaryWrites,
                 mirroringTracer);
         referenceCounter.holdReferenceUntilClosing(table);
         return table;

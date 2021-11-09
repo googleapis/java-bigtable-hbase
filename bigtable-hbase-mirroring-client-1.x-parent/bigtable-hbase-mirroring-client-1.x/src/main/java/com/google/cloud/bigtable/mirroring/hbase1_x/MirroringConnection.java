@@ -66,7 +66,7 @@ public class MirroringConnection implements Connection {
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final AtomicBoolean aborted = new AtomicBoolean(false);
   protected final boolean performWritesConcurrently;
-  private final boolean waitForSecondaryWrites;
+  protected final boolean waitForSecondaryWrites;
 
   /**
    * The constructor called from {@link

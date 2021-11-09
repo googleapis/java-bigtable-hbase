@@ -38,6 +38,7 @@ public class MirroringTable extends com.google.cloud.bigtable.mirroring.hbase1_x
       SecondaryWriteErrorConsumer secondaryWriteErrorConsumer,
       ReadSampler readSampler,
       boolean performWritesConcurrently,
+      boolean waitForSecondaryWrites,
       MirroringTracer mirroringTracer) {
     super(
         primaryTable,
@@ -48,6 +49,7 @@ public class MirroringTable extends com.google.cloud.bigtable.mirroring.hbase1_x
         secondaryWriteErrorConsumer,
         readSampler,
         performWritesConcurrently,
+        waitForSecondaryWrites,
         mirroringTracer);
   }
 
