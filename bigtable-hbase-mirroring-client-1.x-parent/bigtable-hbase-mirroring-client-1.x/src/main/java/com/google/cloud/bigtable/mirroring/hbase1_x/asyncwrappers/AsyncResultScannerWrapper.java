@@ -35,7 +35,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.client.Table;
 
 /**
  * {@link MirroringResultScanner} schedules asynchronous next()s after synchronous operations to
@@ -46,7 +45,6 @@ import org.apache.hadoop.hbase.client.Table;
  */
 @InternalApi("For internal usage only")
 public class AsyncResultScannerWrapper implements ListenableCloseable {
-  private final Table table;
   private final MirroringTracer mirroringTracer;
   /**
    * We use this queue to ensure that asynchronous next()s are called in the same order and with the
@@ -69,12 +67,10 @@ public class AsyncResultScannerWrapper implements ListenableCloseable {
   private ListenableReferenceCounter pendingOperationsReferenceCounter;
 
   public AsyncResultScannerWrapper(
-      Table table,
       ResultScanner scanner,
       ListeningExecutorService executorService,
       MirroringTracer mirroringTracer) {
     super();
-    this.table = table;
     this.scanner = scanner;
     this.mirroringTracer = mirroringTracer;
     this.pendingOperationsReferenceCounter = new ListenableReferenceCounter();
@@ -100,7 +96,7 @@ public class AsyncResultScannerWrapper implements ListenableCloseable {
         new Callable<AsyncScannerVerificationPayload>() {
           @Override
           public AsyncScannerVerificationPayload call() throws AsyncScannerExceptionWithContext {
-            synchronized (AsyncResultScannerWrapper.this.table) {
+            synchronized (AsyncResultScannerWrapper.this) {
               final ScannerRequestContext requestContext =
                   AsyncResultScannerWrapper.this.nextContextQueue.remove();
               try (Scope scope =
@@ -160,7 +156,7 @@ public class AsyncResultScannerWrapper implements ListenableCloseable {
           @Override
           public Boolean call() {
             boolean result;
-            synchronized (table) {
+            synchronized (AsyncResultScannerWrapper.this) {
               result = scanner.renewLease();
             }
             return result;
@@ -180,7 +176,7 @@ public class AsyncResultScannerWrapper implements ListenableCloseable {
             new Runnable() {
               @Override
               public void run() {
-                synchronized (table) {
+                synchronized (AsyncResultScannerWrapper.this) {
                   scanner.close();
                 }
               }

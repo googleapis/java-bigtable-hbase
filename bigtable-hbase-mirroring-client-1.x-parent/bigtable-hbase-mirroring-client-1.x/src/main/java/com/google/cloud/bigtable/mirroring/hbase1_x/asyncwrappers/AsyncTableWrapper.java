@@ -173,7 +173,7 @@ public class AsyncTableWrapper implements ListenableCloseable {
     Log.trace("getScanner(Scan)");
     AsyncResultScannerWrapper result =
         new AsyncResultScannerWrapper(
-            this.table, this.table.getScanner(scan), this.executorService, this.mirroringTracer);
+            this.table.getScanner(scan), this.executorService, this.mirroringTracer);
     this.pendingOperationsReferenceCounter.holdReferenceUntilClosing(result);
     return result;
   }

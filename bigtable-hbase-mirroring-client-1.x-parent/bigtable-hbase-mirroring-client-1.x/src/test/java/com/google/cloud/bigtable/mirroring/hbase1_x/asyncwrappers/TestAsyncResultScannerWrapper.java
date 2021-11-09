@@ -27,7 +27,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Table;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -37,11 +36,9 @@ public class TestAsyncResultScannerWrapper {
   @Test
   public void testListenersAreCalledOnClose()
       throws InterruptedException, ExecutionException, TimeoutException {
-    Table table = mock(Table.class);
     ResultScanner resultScanner = mock(ResultScanner.class);
     AsyncResultScannerWrapper asyncResultScannerWrapper =
         new AsyncResultScannerWrapper(
-            table,
             resultScanner,
             MoreExecutors.listeningDecorator(MoreExecutors.newDirectExecutorService()),
             new MirroringTracer());
@@ -60,11 +57,9 @@ public class TestAsyncResultScannerWrapper {
   @Test
   public void testAsyncResultScannerWrapperClosedTwiceClosesScannerOnce()
       throws InterruptedException, ExecutionException, TimeoutException {
-    Table table = mock(Table.class);
     ResultScanner resultScanner = mock(ResultScanner.class);
     AsyncResultScannerWrapper asyncResultScannerWrapper =
         new AsyncResultScannerWrapper(
-            table,
             resultScanner,
             MoreExecutors.listeningDecorator(MoreExecutors.newDirectExecutorService()),
             new MirroringTracer());

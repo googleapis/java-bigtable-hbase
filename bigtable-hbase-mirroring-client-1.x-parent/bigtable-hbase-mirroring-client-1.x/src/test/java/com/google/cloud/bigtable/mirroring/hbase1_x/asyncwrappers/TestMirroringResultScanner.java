@@ -50,7 +50,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.client.Table;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.junit.Test;
 import org.junit.function.ThrowingRunnable;
@@ -220,7 +219,6 @@ public class TestMirroringResultScanner {
     when(secondaryAsyncTableWrapperMock.getScanner(any(Scan.class)))
         .thenReturn(secondaryScannerWrapperMock);
 
-    Table table = mock(Table.class);
     ResultScanner resultScanner = mock(ResultScanner.class);
 
     ReverseOrderExecutorService reverseOrderExecutorService = new ReverseOrderExecutorService();
@@ -229,7 +227,7 @@ public class TestMirroringResultScanner {
 
     final AsyncResultScannerWrapper asyncResultScannerWrapper =
         new AsyncResultScannerWrapper(
-            table, resultScanner, listeningExecutorService, new MirroringTracer());
+            resultScanner, listeningExecutorService, new MirroringTracer());
 
     final List<ScannerRequestContext> calls = new ArrayList<>();
 
