@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOException;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
@@ -115,6 +116,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
   protected long mutationsBufferSizeBytes;
 
   private boolean closed = false;
+  private ListenableReferenceCounter ongoingFlushesCounter = new ListenableReferenceCounter();
 
   public MirroringBufferedMutator(
       Connection primaryConnection,
@@ -229,6 +231,8 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
 
       try {
         scheduleFlush().secondaryFlushFinished.get();
+        this.ongoingFlushesCounter.decrementReferenceCount();
+        this.ongoingFlushesCounter.getOnLastReferenceClosed().get();
       } catch (InterruptedException | ExecutionException e) {
         setInterruptedFlagInInterruptedException(e);
         exceptions.add(new IOException(e));
@@ -317,11 +321,21 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
 
   protected final synchronized FlushFutures scheduleFlush() {
     try (Scope scope = this.mirroringTracer.spanFactory.scheduleFlushScope()) {
+      this.ongoingFlushesCounter.incrementReferenceCount();
       this.mutationsBufferSizeBytes = 0;
 
       final List<BufferEntryType> dataToFlush = this.mutationEntries;
       this.mutationEntries = new ArrayList<>();
-      return scheduleFlushScoped(dataToFlush);
+      FlushFutures resultFutures = scheduleFlushScoped(dataToFlush);
+      resultFutures.secondaryFlushFinished.addListener(
+          new Runnable() {
+            @Override
+            public void run() {
+              ongoingFlushesCounter.decrementReferenceCount();
+            }
+          },
+          MoreExecutors.directExecutor());
+      return resultFutures;
     }
   }
 

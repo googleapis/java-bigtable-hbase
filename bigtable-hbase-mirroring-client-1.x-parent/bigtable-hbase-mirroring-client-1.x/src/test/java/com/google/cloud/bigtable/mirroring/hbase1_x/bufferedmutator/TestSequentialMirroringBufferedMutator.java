@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator;
 
+import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.blockMethodCall;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.delayMethodCall;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.MirroringBufferedMutatorCommon.blockedFlushes;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.MirroringBufferedMutatorCommon.makeConfigurationWithFlushThreshold;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.MirroringBufferedMutatorCommon.mutateWithErrors;
@@ -35,8 +37,10 @@ import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -360,6 +364,66 @@ public class TestSequentialMirroringBufferedMutator {
 
     verify(common.secondaryBufferedMutator, never()).flush();
     verify(common.resourceReservation, times(3)).release();
+  }
+
+  @Test
+  public void testCloseWaitsForOngoingFlushes()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
+    final List<? extends Mutation> mutations =
+        Arrays.asList(
+            new Delete(Longs.toByteArray(0)),
+            new Delete(Longs.toByteArray(1)),
+            new Delete(Longs.toByteArray(2)));
+
+    long mutationSize = mutations.get(0).heapSize();
+
+    final SettableFuture<Void> closeStarted = SettableFuture.create();
+    final SettableFuture<Void> unlockSecondaryFlush = SettableFuture.create();
+
+    int numRunningFlushes = 10;
+
+    Semaphore semaphore = new Semaphore(numRunningFlushes);
+    semaphore.acquire(numRunningFlushes);
+
+    final BufferedMutator bm = getBufferedMutator((long) 4 * mutationSize);
+
+    blockMethodCall(common.secondaryBufferedMutator, unlockSecondaryFlush, semaphore).flush();
+    delayMethodCall(common.primaryBufferedMutator, 300).flush();
+
+    for (int i = 0; i < numRunningFlushes; i++) {
+      bm.mutate(mutations);
+      // Primary flush completes normally, secondary is blocked but releases one permit on the
+      // semaphore.
+      bm.flush();
+      // wait until flush is started
+      assertThat(semaphore.tryAcquire(1, TimeUnit.SECONDS)).isTrue();
+    }
+
+    Thread t =
+        new Thread(
+            new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  closeStarted.set(null);
+                  bm.close();
+                } catch (IOException e) {
+                  throw new RuntimeException(e);
+                }
+              }
+            });
+    t.start();
+    closeStarted.get(1, TimeUnit.SECONDS);
+
+    // best effort - we give the closing thread some time to run.
+    t.join(1000);
+    assertThat(t.isAlive()).isTrue();
+
+    unlockSecondaryFlush.set(null);
+    t.join(3000);
+    assertThat(t.isAlive()).isFalse();
+
+    executorServiceRule.waitForExecutor();
   }
 
   private MirroringBufferedMutator getBufferedMutator(long flushThreshold) throws IOException {

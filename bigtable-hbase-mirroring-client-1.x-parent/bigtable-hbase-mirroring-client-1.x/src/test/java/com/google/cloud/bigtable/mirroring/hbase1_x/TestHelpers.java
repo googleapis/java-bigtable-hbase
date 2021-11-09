@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -45,6 +46,7 @@ import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.Table;
 import org.mockito.ArgumentMatchers;
+import org.mockito.exceptions.base.MockitoException;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -142,16 +144,63 @@ public class TestHelpers {
   }
 
   public static <T> T blockMethodCall(
-      T table, final SettableFuture<Void> secondaryOperationAllowedFuture) {
+      T table, final SettableFuture<Void> futureToWaitFor, final Runnable before) {
     return doAnswer(
             new Answer<Object>() {
               @Override
               public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                secondaryOperationAllowedFuture.get(10, TimeUnit.SECONDS);
-                return invocationOnMock.callRealMethod();
+                before.run();
+                futureToWaitFor.get(10, TimeUnit.SECONDS);
+                try {
+                  return invocationOnMock.callRealMethod();
+                } catch (MockitoException e) {
+                  // there was no real method to call, ignore.
+                  return null;
+                }
               }
             })
         .when(table);
+  }
+
+  public static <T> T blockMethodCall(
+      T table, final SettableFuture<Void> secondaryOperationAllowedFuture) {
+    return blockMethodCall(
+        table,
+        secondaryOperationAllowedFuture,
+        new Runnable() {
+          @Override
+          public void run() {}
+        });
+  }
+
+  public static <T> T blockMethodCall(
+      T table,
+      final SettableFuture<Void> secondaryOperationAllowedFuture,
+      final SettableFuture<Void> startedFuture) {
+    return blockMethodCall(
+        table,
+        secondaryOperationAllowedFuture,
+        new Runnable() {
+          @Override
+          public void run() {
+            startedFuture.set(null);
+          }
+        });
+  }
+
+  public static <T> T blockMethodCall(
+      T table,
+      final SettableFuture<Void> secondaryOperationAllowedFuture,
+      final Semaphore startedSemaphore) {
+    return blockMethodCall(
+        table,
+        secondaryOperationAllowedFuture,
+        new Runnable() {
+          @Override
+          public void run() {
+            startedSemaphore.release();
+          }
+        });
   }
 
   public static <T> SettableFuture<Void> blockMethodCall(T methodCall) {
@@ -162,10 +211,32 @@ public class TestHelpers {
               @Override
               public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 secondaryOperationAllowedFuture.get(10, TimeUnit.SECONDS);
-                return invocationOnMock.callRealMethod();
+                try {
+                  return invocationOnMock.callRealMethod();
+                } catch (MockitoException e) {
+                  // there was no real method to call, ignore.
+                  return null;
+                }
               }
             });
     return secondaryOperationAllowedFuture;
+  }
+
+  public static <T> T delayMethodCall(T table, final int ms) {
+    return doAnswer(
+            new Answer<Object>() {
+              @Override
+              public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                Thread.sleep(ms);
+                try {
+                  return invocationOnMock.callRealMethod();
+                } catch (MockitoException e) {
+                  // there was no real method to call, ignore.
+                  return null;
+                }
+              }
+            })
+        .when(table);
   }
 
   public static void assertPutsAreEqual(
