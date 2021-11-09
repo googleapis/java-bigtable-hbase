@@ -107,7 +107,7 @@ public class MirroringTable implements Table, ListenableCloseable {
         }
       };
 
-  private final Table primaryTable;
+  protected final Table primaryTable;
   private final Table secondaryTable;
   private final AsyncTableWrapper secondaryAsyncWrapper;
   private final VerificationContinuationFactory verificationContinuationFactory;

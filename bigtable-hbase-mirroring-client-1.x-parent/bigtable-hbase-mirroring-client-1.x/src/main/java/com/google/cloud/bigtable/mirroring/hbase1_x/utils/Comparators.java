@@ -16,23 +16,45 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
 
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.compat.CellComparatorCompat;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.reflection.ReflectionConstructor;
 import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.CellComparator;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.util.Bytes;
 
 @InternalApi("For internal usage only")
 public class Comparators {
+  private static CellComparatorCompat cellComparator;
+
+  static {
+    // Try construct 2.x compat if it is available
+    final String comparatorCompat1xImplClass =
+        "com.google.cloud.bigtable.mirroring.hbase1_x.utils.compat.CellComparatorCompatImpl";
+    final String comparatorCompat2xImplClass =
+        "com.google.cloud.bigtable.mirroring.hbase2_x.utils.compat.CellComparatorCompatImpl";
+    String availableImplClass;
+    try {
+      Class.forName(comparatorCompat2xImplClass);
+      availableImplClass = comparatorCompat2xImplClass;
+    } catch (ClassNotFoundException e) {
+      try {
+        Class.forName(comparatorCompat1xImplClass);
+        availableImplClass = comparatorCompat1xImplClass;
+      } catch (ClassNotFoundException ex) {
+        assert false;
+        throw new RuntimeException(ex);
+      }
+    }
+
+    cellComparator = ReflectionConstructor.construct(availableImplClass);
+  }
+
   public static boolean resultsEqual(Result result1, Result result2) {
     if (result1 == null && result2 == null) {
       return true;
     }
     if (result1 == null || result2 == null) {
-      return false;
-    }
-    int rowsComparisionResult =
-        CellComparator.compareRows(result1.getRow(), 0, 0, result2.getRow(), 0, 0);
-    if (rowsComparisionResult != 0) {
       return false;
     }
     Cell[] cells1 = result1.rawCells();
@@ -49,8 +71,17 @@ public class Comparators {
     if (cells1.length != cells2.length) {
       return false;
     }
+
     for (int i = 0; i < cells1.length; i++) {
-      int cellResult = CellComparator.compare(cells1[i], cells2[i], true);
+      if (cells1[i] == null && cells2[i] == null) {
+        continue;
+      }
+
+      if (cells1[i] == null || cells2[i] == null) {
+        return false;
+      }
+
+      int cellResult = cellComparator.compareCells(cells1[i], cells2[i]);
       if (cellResult != 0) {
         return false;
       }
@@ -59,5 +90,14 @@ public class Comparators {
       }
     }
     return true;
+  }
+
+  private static boolean compareRows(Result result1, Result result2) {
+    byte[] row1 = result1.getRow();
+    byte[] row2 = result2.getRow();
+    if (row1 == null || row2 == null) {
+      return row1 == row2;
+    }
+    return Bytes.compareTo(row1, row2) == 0;
   }
 }
