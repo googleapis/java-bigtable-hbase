@@ -58,9 +58,11 @@ public class MirroringSpanConstants {
           "Count of read mismatches detected.",
           "1");
 
-  public static final MeasureLong WRITE_MISMATCHES =
+  public static final MeasureLong SECONDARY_WRITE_ERRORS =
       MeasureLong.create(
-          "com/google/cloud/bigtable/mirroring/mismatch/write", "Count of write mismatches.", "1");
+          "com/google/cloud/bigtable/mirroring/secondary/write_error_rate",
+          "Count of write errors on secondary database.",
+          "1");
 
   public static TagKey OPERATION_KEY = TagKey.create("operation");
 

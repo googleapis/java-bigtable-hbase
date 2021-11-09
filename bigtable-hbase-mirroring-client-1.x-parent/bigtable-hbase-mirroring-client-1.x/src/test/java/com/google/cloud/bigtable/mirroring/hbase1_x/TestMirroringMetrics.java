@@ -140,7 +140,7 @@ public class TestMirroringMetrics {
     verify(mirroringMetricsRecorder, never())
         .recordReadMismatches(any(HBaseOperation.class), anyInt());
     verify(mirroringMetricsRecorder, never())
-        .recordWriteMismatches(any(HBaseOperation.class), anyInt());
+        .recordSecondaryWriteErrors(any(HBaseOperation.class), anyInt());
   }
 
   @Test
@@ -157,7 +157,7 @@ public class TestMirroringMetrics {
 
     verify(mirroringMetricsRecorder, times(1)).recordReadMismatches(HBaseOperation.GET, 1);
     verify(mirroringMetricsRecorder, never())
-        .recordWriteMismatches(any(HBaseOperation.class), anyInt());
+        .recordSecondaryWriteErrors(any(HBaseOperation.class), anyInt());
   }
 
   @Test
@@ -194,7 +194,7 @@ public class TestMirroringMetrics {
     verify(mirroringMetricsRecorder, never())
         .recordReadMismatches(any(HBaseOperation.class), anyInt());
     verify(mirroringMetricsRecorder, never())
-        .recordWriteMismatches(any(HBaseOperation.class), anyInt());
+        .recordSecondaryWriteErrors(any(HBaseOperation.class), anyInt());
   }
 
   @Test
@@ -227,7 +227,7 @@ public class TestMirroringMetrics {
     verify(mirroringMetricsRecorder, never())
         .recordReadMismatches(any(HBaseOperation.class), anyInt());
     verify(mirroringMetricsRecorder, never())
-        .recordWriteMismatches(any(HBaseOperation.class), anyInt());
+        .recordSecondaryWriteErrors(any(HBaseOperation.class), anyInt());
   }
 
   @Test
@@ -261,7 +261,7 @@ public class TestMirroringMetrics {
 
     verify(mirroringMetricsRecorder, never())
         .recordReadMismatches(any(HBaseOperation.class), anyInt());
-    verify(mirroringMetricsRecorder, times(1)).recordWriteMismatches(HBaseOperation.BATCH, 1);
+    verify(mirroringMetricsRecorder, times(1)).recordSecondaryWriteErrors(HBaseOperation.BATCH, 1);
   }
 
   @Test
@@ -334,7 +334,7 @@ public class TestMirroringMetrics {
 
     verify(mirroringMetricsRecorder, never())
         .recordReadMismatches(any(HBaseOperation.class), anyInt());
-    verify(mirroringMetricsRecorder, times(2)).recordWriteMismatches(HBaseOperation.BATCH, 1);
+    verify(mirroringMetricsRecorder, times(2)).recordSecondaryWriteErrors(HBaseOperation.BATCH, 1);
   }
 
   @Test
@@ -354,12 +354,13 @@ public class TestMirroringMetrics {
     secondaryWriteErrorConsumerWithMetrics.consume(HBaseOperation.PUT_LIST, puts, new Throwable());
     verify(secondaryWriteErrorConsumer, times(1))
         .consume(eq(HBaseOperation.PUT_LIST), eq(puts), any(Throwable.class));
-    verify(mirroringMetricsRecorder, times(1)).recordWriteMismatches(HBaseOperation.PUT_LIST, 2);
+    verify(mirroringMetricsRecorder, times(1))
+        .recordSecondaryWriteErrors(HBaseOperation.PUT_LIST, 2);
 
     Put put = createPut("r1", "f", "q", "1");
     secondaryWriteErrorConsumerWithMetrics.consume(HBaseOperation.PUT, put, new Throwable());
 
-    verify(mirroringMetricsRecorder, times(1)).recordWriteMismatches(HBaseOperation.PUT, 1);
+    verify(mirroringMetricsRecorder, times(1)).recordSecondaryWriteErrors(HBaseOperation.PUT, 1);
     verify(secondaryWriteErrorConsumer, times(1))
         .consume(eq(HBaseOperation.PUT), eq(put), any(Throwable.class));
 
@@ -369,6 +370,7 @@ public class TestMirroringMetrics {
 
     verify(secondaryWriteErrorConsumer, times(1))
         .consume(eq(HBaseOperation.MUTATE_ROW), eq(rowMutations), any(Throwable.class));
-    verify(mirroringMetricsRecorder, times(1)).recordWriteMismatches(HBaseOperation.MUTATE_ROW, 1);
+    verify(mirroringMetricsRecorder, times(1))
+        .recordSecondaryWriteErrors(HBaseOperation.MUTATE_ROW, 1);
   }
 }

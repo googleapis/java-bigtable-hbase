@@ -22,7 +22,7 @@ import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetric
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.READ_MISMATCHES;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.SECONDARY_ERRORS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.SECONDARY_LATENCY;
-import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.WRITE_MISMATCHES;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.SECONDARY_WRITE_ERRORS;
 
 import com.google.api.core.InternalApi;
 import com.google.common.collect.ImmutableList;
@@ -107,12 +107,12 @@ public class MirroringMetricsViews {
           SUM,
           ImmutableList.of(OPERATION_KEY));
 
-  /** {@link View} for Mirroring client's secondary write mismatches. */
-  private static final View WRITE_MISMATCH_VIEW =
+  /** {@link View} for Mirroring client's secondary database write errors. */
+  private static final View SECONDARY_WRITE_ERROR_VIEW =
       View.create(
-          View.Name.create("cloud.google.com/java/mirroring/write_mismatch"),
-          "Detected write mismatches count.",
-          WRITE_MISMATCHES,
+          View.Name.create("cloud.google.com/java/mirroring/secondary_write_error"),
+          "Secondary database write error count.",
+          SECONDARY_WRITE_ERRORS,
           SUM,
           ImmutableList.of(OPERATION_KEY));
 
@@ -124,7 +124,7 @@ public class MirroringMetricsViews {
           SECONDARY_OPERATION_ERROR_VIEW,
           MIRRORING_OPERATION_LATENCY_VIEW,
           READ_MISMATCH_VIEW,
-          WRITE_MISMATCH_VIEW);
+          SECONDARY_WRITE_ERROR_VIEW);
 
   /** Registers all Mirroring client views to OpenCensus View. */
   public static void registerMirroringClientViews() {

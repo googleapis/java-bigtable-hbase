@@ -32,13 +32,13 @@ public class SecondaryWriteErrorConsumerWithMetrics implements SecondaryWriteErr
 
   @Override
   public void consume(HBaseOperation operation, List<? extends Row> operations, Throwable cause) {
-    this.mirroringTracer.metricsRecorder.recordWriteMismatches(operation, operations.size());
+    this.mirroringTracer.metricsRecorder.recordSecondaryWriteErrors(operation, operations.size());
     this.secondaryWriteErrorConsumer.consume(operation, operations, cause);
   }
 
   @Override
   public void consume(HBaseOperation operation, Row row, Throwable cause) {
-    this.mirroringTracer.metricsRecorder.recordWriteMismatches(operation, 1);
+    this.mirroringTracer.metricsRecorder.recordSecondaryWriteErrors(operation, 1);
     this.secondaryWriteErrorConsumer.consume(operation, row, cause);
   }
 }

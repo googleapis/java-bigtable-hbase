@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics;
 
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.OPERATION_KEY;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.READ_MISMATCHES;
-import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.WRITE_MISMATCHES;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.SECONDARY_WRITE_ERRORS;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
@@ -72,10 +72,10 @@ public class MirroringMetricsRecorder {
     map.record(tagContext);
   }
 
-  public void recordWriteMismatches(HBaseOperation operation, int numberOfMismatches) {
+  public void recordSecondaryWriteErrors(HBaseOperation operation, int numberOfErrors) {
     TagContext tagContext = getTagContext(operation);
     MeasureMap map = statsRecorder.newMeasureMap();
-    map.put(WRITE_MISMATCHES, numberOfMismatches);
+    map.put(SECONDARY_WRITE_ERRORS, numberOfErrors);
     map.record(tagContext);
   }
 }
