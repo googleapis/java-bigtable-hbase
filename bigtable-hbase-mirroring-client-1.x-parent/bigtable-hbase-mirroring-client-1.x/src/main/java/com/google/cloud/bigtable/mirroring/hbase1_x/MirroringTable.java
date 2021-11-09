@@ -954,8 +954,10 @@ public class MirroringTable implements Table, ListenableCloseable {
       final List<? extends Row> operations, final Object[] results) {
     final SettableFuture<BatchData> result = SettableFuture.create();
 
+    boolean skipReads = !readSampler.shouldNextReadOperationBeSampled();
     final FailedSuccessfulSplit<? extends Row, Result> failedSuccessfulSplit =
-        createOperationsSplit(operations, results);
+        BatchHelpers.createOperationsSplit(
+            operations, results, resultIsFaultyPredicate, Result.class, skipReads);
 
     if (failedSuccessfulSplit.successfulOperations.size() == 0) {
       result.set(new BatchData(Collections.<Row>emptyList(), new Object[0]));
@@ -1039,20 +1041,6 @@ public class MirroringTable implements Table, ListenableCloseable {
         MoreExecutors.directExecutor());
 
     return result;
-  }
-
-  private FailedSuccessfulSplit<? extends Row, Result> createOperationsSplit(
-      List<? extends Row> operations, Object[] results) {
-    boolean skipReads = !this.readSampler.shouldNextReadOperationBeSampled();
-    if (skipReads) {
-      ReadWriteSplit<?, ?> readWriteSplit = new ReadWriteSplit<>(operations, results, Object.class);
-      return new FailedSuccessfulSplit<>(
-          readWriteSplit.writeOperations,
-          readWriteSplit.writeResults,
-          resultIsFaultyPredicate,
-          Result.class);
-    }
-    return new FailedSuccessfulSplit<>(operations, results, resultIsFaultyPredicate, Result.class);
   }
 
   private List<? extends Row> rewriteIncrementsAndAppendsAsPuts(

@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.mirroring.hbase2_x;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.Logger;
@@ -58,6 +59,7 @@ public class MirroringAsyncConnection implements AsyncConnection {
   private final SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
   private final MirroringTracer mirroringTracer;
   private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final ReadSampler readSampler;
 
   /**
    * The constructor called from {@link
@@ -113,6 +115,8 @@ public class MirroringAsyncConnection implements AsyncConnection {
 
     this.secondaryWriteErrorConsumer =
         new SecondaryWriteErrorConsumerWithMetrics(this.mirroringTracer, writeErrorConsumer);
+
+    this.readSampler = new ReadSampler(this.configuration.mirroringOptions.readSamplingRate);
   }
 
   @Override
@@ -220,6 +224,7 @@ public class MirroringAsyncConnection implements AsyncConnection {
           flowController,
           secondaryWriteErrorConsumer,
           mirroringTracer,
+          readSampler,
           referenceCounter);
     }
 

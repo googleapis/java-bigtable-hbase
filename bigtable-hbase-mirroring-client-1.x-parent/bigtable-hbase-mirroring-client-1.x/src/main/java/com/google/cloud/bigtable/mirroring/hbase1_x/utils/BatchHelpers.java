@@ -504,4 +504,24 @@ public class BatchHelpers {
     }
     return true;
   }
+
+  public static <ActionType extends Row, ResultType>
+      FailedSuccessfulSplit<ActionType, ResultType> createOperationsSplit(
+          List<ActionType> operations,
+          Object[] results,
+          Predicate<Object> resultIsFaultyPredicate,
+          Class<ResultType> resultTypeClass,
+          boolean skipReads) {
+    if (skipReads) {
+      ReadWriteSplit<ActionType, ResultType> readWriteSplit =
+          new ReadWriteSplit<>(operations, results, resultTypeClass);
+      return new FailedSuccessfulSplit<>(
+          readWriteSplit.writeOperations,
+          readWriteSplit.writeResults,
+          resultIsFaultyPredicate,
+          resultTypeClass);
+    }
+    return new FailedSuccessfulSplit<>(
+        operations, results, resultIsFaultyPredicate, resultTypeClass);
+  }
 }

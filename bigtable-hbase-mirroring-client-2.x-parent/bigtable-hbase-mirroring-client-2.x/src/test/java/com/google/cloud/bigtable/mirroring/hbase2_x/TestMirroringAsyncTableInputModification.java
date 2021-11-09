@@ -28,6 +28,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
@@ -87,6 +88,7 @@ public class TestMirroringAsyncTableInputModification {
                 flowController,
                 secondaryWriteErrorConsumer,
                 new MirroringTracer(),
+                new ReadSampler(100),
                 referenceCounter));
 
     secondaryOperationAllowedFuture = SettableFuture.create();
