@@ -15,9 +15,12 @@
  */
 package com.google.cloud.bigtable.hbase.mirroring;
 
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_CONCURRENT_WRITES;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConfigurationHelper;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
@@ -30,12 +33,15 @@ import com.google.cloud.bigtable.hbase.mirroring.utils.TestWriteErrorConsumer;
 import com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.FailingHBaseHRegion;
 import com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.FailingHBaseHRegionRule;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection;
+import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringOperationException;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -56,10 +62,21 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class TestBufferedMutator {
+  @Parameterized.Parameters(name = "mutateConcurrently: {0}")
+  public static Object[] data() {
+    return new Object[] {false, true};
+  }
+
+  final boolean mutateConcurrently;
+
+  public TestBufferedMutator(boolean mutateConcurrently) {
+    this.mutateConcurrently = mutateConcurrently;
+  }
+
   @ClassRule public static ConnectionRule connectionRule = new ConnectionRule();
 
   @Rule public ExecutorServiceRule executorServiceRule = new ExecutorServiceRule();
@@ -111,6 +128,7 @@ public class TestBufferedMutator {
 
     Configuration config = ConfigurationHelper.newConfiguration();
     config.set(MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS, "10000");
+    config.set(MIRRORING_CONCURRENT_WRITES, String.valueOf(this.mutateConcurrently));
 
     TableName tableName;
     try (MirroringConnection connection = databaseHelpers.createConnection(config)) {
@@ -162,7 +180,7 @@ public class TestBufferedMutator {
   }
 
   @Test
-  public void testBufferedMutatorReportsFailedSecondaryWrites() throws IOException {
+  public void testBufferedMutatorSecondaryErrorHandling() throws IOException {
     Assume.assumeTrue(
         ConfigurationHelper.isSecondaryHBase() && ConfigurationHelper.isUsingHBaseMiniCluster());
 
@@ -174,8 +192,10 @@ public class TestBufferedMutator {
     configuration.set(
         "google.bigtable.mirroring.write-error-consumer.impl",
         TestWriteErrorConsumer.class.getCanonicalName());
+    configuration.set(MIRRORING_CONCURRENT_WRITES, String.valueOf(this.mutateConcurrently));
 
     TableName tableName;
+    List<Throwable> flushExceptions = null;
     try (MirroringConnection connection = databaseHelpers.createConnection(configuration)) {
       tableName = connectionRule.createTable(connection, columnFamily1);
       BufferedMutatorParams params = new BufferedMutatorParams(tableName);
@@ -186,12 +206,41 @@ public class TestBufferedMutator {
           put.addColumn(columnFamily1, columnQualifier1, Longs.toByteArray(intRowId));
           bm.mutate(put);
         }
-        bm.flush();
+        try {
+          bm.flush();
+        } catch (IOException e) {
+          if (e instanceof RetriesExhaustedWithDetailsException) {
+            flushExceptions = ((RetriesExhaustedWithDetailsException) e).getCauses();
+          } else {
+            assert false;
+          }
+        }
       }
     } // wait for secondary writes
 
-    // Two failed writes should have been reported
-    assertThat(TestWriteErrorConsumer.getErrorCount()).isEqualTo(2);
+    if (this.mutateConcurrently) {
+      // ConcurrentBufferedMutator does not report secondary write errors.
+      assertThat(TestWriteErrorConsumer.getErrorCount()).isEqualTo(0);
+
+      assertNotNull(flushExceptions);
+      assertEquals(2, flushExceptions.size());
+
+      for (Throwable e : flushExceptions) {
+        Throwable cause = e.getCause();
+        if (cause instanceof MirroringOperationException) {
+          assertEquals(
+              MirroringOperationException.DatabaseIdentifier.Secondary,
+              ((MirroringOperationException) cause).databaseIdentifier);
+        } else {
+          assert false;
+        }
+      }
+    } else {
+      // SequentialBufferedMutator should have reported two errors.
+      assertEquals(2, TestWriteErrorConsumer.getErrorCount());
+
+      assertNull(flushExceptions);
+    }
 
     try (MirroringConnection mirroringConnection = databaseHelpers.createConnection()) {
       try (Table table = mirroringConnection.getTable(tableName)) {
@@ -210,16 +259,20 @@ public class TestBufferedMutator {
   }
 
   @Test
-  public void testBufferedMutatorSkipsFailedPrimaryWrites() throws IOException {
+  public void testBufferedMutatorPrimaryErrorHandling() throws IOException {
     Assume.assumeTrue(
         ConfigurationHelper.isPrimaryHBase() && ConfigurationHelper.isUsingHBaseMiniCluster());
 
     FailingHBaseHRegion.failMutation(Longs.toByteArray(3), "row-3-error");
     FailingHBaseHRegion.failMutation(Longs.toByteArray(7), "row-7-error");
 
-    final List<ByteBuffer> thrownException = new ArrayList<>();
+    Configuration configuration = ConfigurationHelper.newConfiguration();
+    configuration.set(MIRRORING_CONCURRENT_WRITES, String.valueOf(this.mutateConcurrently));
+
+    final Set<Throwable> exceptionsThrown = new HashSet<>();
+    final List<ByteBuffer> exceptionRows = new ArrayList<>();
     TableName tableName;
-    try (MirroringConnection connection = databaseHelpers.createConnection()) {
+    try (MirroringConnection connection = databaseHelpers.createConnection(configuration)) {
       tableName = connectionRule.createTable(connection, columnFamily1);
       BufferedMutatorParams params = new BufferedMutatorParams(tableName);
       params.listener(
@@ -229,7 +282,8 @@ public class TestBufferedMutator {
                 RetriesExhaustedWithDetailsException e, BufferedMutator bufferedMutator)
                 throws RetriesExhaustedWithDetailsException {
               for (int i = 0; i < e.getNumExceptions(); i++) {
-                thrownException.add(ByteBuffer.wrap(e.getRow(i).getRow()));
+                exceptionRows.add(ByteBuffer.wrap(e.getRow(i).getRow()));
+                exceptionsThrown.addAll(e.getCauses());
               }
             }
           });
@@ -244,18 +298,35 @@ public class TestBufferedMutator {
       }
     } // wait for secondary writes
 
+    List<Long> secondaryRows = new ArrayList<>();
     try (MirroringConnection mirroringConnection = databaseHelpers.createConnection()) {
       Connection secondary = mirroringConnection.getSecondaryConnection();
       Table table = secondary.getTable(tableName);
       ResultScanner scanner = table.getScanner(columnFamily1);
-      List<Long> rows = new ArrayList<>();
       for (Result result : scanner) {
-        rows.add(Longs.fromByteArray(result.getRow()));
+        secondaryRows.add(Longs.fromByteArray(result.getRow()));
       }
-      assertThat(rows).containsExactly(0L, 1L, 2L, 4L, 5L, 6L, 8L, 9L);
     }
 
-    assertThat(thrownException).contains(ByteBuffer.wrap(Longs.toByteArray(3)));
-    assertThat(thrownException).contains(ByteBuffer.wrap(Longs.toByteArray(7)));
+    assertEquals(2, exceptionRows.size());
+    assertThat(exceptionRows).contains(ByteBuffer.wrap(Longs.toByteArray(3)));
+    assertThat(exceptionRows).contains(ByteBuffer.wrap(Longs.toByteArray(7)));
+
+    if (this.mutateConcurrently) {
+      assertEquals(2, exceptionsThrown.size());
+      for (Throwable e : exceptionsThrown) {
+        Throwable cause = e.getCause();
+        if (cause instanceof MirroringOperationException) {
+          assertEquals(
+              MirroringOperationException.DatabaseIdentifier.Primary,
+              ((MirroringOperationException) cause).databaseIdentifier);
+        } else {
+          assert false;
+        }
+      }
+      assertThat(secondaryRows).containsExactly(0L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L);
+    } else {
+      assertThat(secondaryRows).containsExactly(0L, 1L, 2L, 4L, 5L, 6L, 8L, 9L);
+    }
   }
 }
