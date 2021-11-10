@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncResultScannerWrapper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncResultScannerWrapper.ScannerRequestContext;
-import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncTableWrapper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.AccumulatedExceptions;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOException;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
@@ -75,15 +74,14 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
   public MirroringResultScanner(
       Scan originalScan,
       ResultScanner primaryResultScanner,
-      AsyncTableWrapper secondaryTableWrapper,
+      AsyncResultScannerWrapper secondaryResultScannerWrapper,
       VerificationContinuationFactory verificationContinuationFactory,
       FlowController flowController,
       MirroringTracer mirroringTracer,
-      boolean isVerificationEnabled)
-      throws IOException {
+      boolean isVerificationEnabled) {
     this.originalScan = originalScan;
     this.primaryResultScanner = primaryResultScanner;
-    this.secondaryResultScannerWrapper = secondaryTableWrapper.getScanner(originalScan);
+    this.secondaryResultScannerWrapper = secondaryResultScannerWrapper;
     this.verificationContinuationFactory = verificationContinuationFactory;
     this.listenableReferenceCounter = new ListenableReferenceCounter();
     this.flowController = flowController;

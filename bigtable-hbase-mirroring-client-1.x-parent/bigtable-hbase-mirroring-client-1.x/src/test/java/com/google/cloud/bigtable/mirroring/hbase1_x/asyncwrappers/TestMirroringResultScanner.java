@@ -69,15 +69,12 @@ public class TestMirroringResultScanner {
         mock(VerificationContinuationFactory.class);
 
     AsyncResultScannerWrapper secondaryScannerWrapperMock = mock(AsyncResultScannerWrapper.class);
-    AsyncTableWrapper secondaryAsyncTableWrapperMock = mock(AsyncTableWrapper.class);
-    when(secondaryAsyncTableWrapperMock.getScanner(any(Scan.class)))
-        .thenReturn(secondaryScannerWrapperMock);
 
     final ResultScanner mirroringScanner =
         new MirroringResultScanner(
             new Scan(),
             primaryScannerMock,
-            secondaryAsyncTableWrapperMock,
+            secondaryScannerWrapperMock,
             continuationFactoryMock,
             flowController,
             new MirroringTracer(),
@@ -108,15 +105,12 @@ public class TestMirroringResultScanner {
         mock(VerificationContinuationFactory.class);
 
     AsyncResultScannerWrapper secondaryScannerWrapperMock = mock(AsyncResultScannerWrapper.class);
-    AsyncTableWrapper secondaryAsyncTableWrapperMock = mock(AsyncTableWrapper.class);
-    when(secondaryAsyncTableWrapperMock.getScanner(any(Scan.class)))
-        .thenReturn(secondaryScannerWrapperMock);
 
     final ResultScanner mirroringScanner =
         new MirroringResultScanner(
             new Scan(),
             primaryScannerMock,
-            secondaryAsyncTableWrapperMock,
+            secondaryScannerWrapperMock,
             continuationFactoryMock,
             flowController,
             new MirroringTracer(),
@@ -147,15 +141,12 @@ public class TestMirroringResultScanner {
         mock(VerificationContinuationFactory.class);
 
     AsyncResultScannerWrapper secondaryScannerWrapperMock = mock(AsyncResultScannerWrapper.class);
-    AsyncTableWrapper secondaryAsyncTableWrapperMock = mock(AsyncTableWrapper.class);
-    when(secondaryAsyncTableWrapperMock.getScanner(any(Scan.class)))
-        .thenReturn(secondaryScannerWrapperMock);
 
     final ResultScanner mirroringScanner =
         new MirroringResultScanner(
             new Scan(),
             primaryScannerMock,
-            secondaryAsyncTableWrapperMock,
+            secondaryScannerWrapperMock,
             continuationFactoryMock,
             flowController,
             new MirroringTracer(),
@@ -192,15 +183,11 @@ public class TestMirroringResultScanner {
     closedFuture.set(null);
     when(secondaryScannerWrapperMock.asyncClose()).thenReturn(closedFuture);
 
-    AsyncTableWrapper secondaryAsyncTableWrapperMock = mock(AsyncTableWrapper.class);
-    when(secondaryAsyncTableWrapperMock.getScanner(any(Scan.class)))
-        .thenReturn(secondaryScannerWrapperMock);
-
     final ResultScanner mirroringScanner =
         new MirroringResultScanner(
             new Scan(),
             primaryScannerMock,
-            secondaryAsyncTableWrapperMock,
+            secondaryScannerWrapperMock,
             continuationFactoryMock,
             flowController,
             new MirroringTracer(),

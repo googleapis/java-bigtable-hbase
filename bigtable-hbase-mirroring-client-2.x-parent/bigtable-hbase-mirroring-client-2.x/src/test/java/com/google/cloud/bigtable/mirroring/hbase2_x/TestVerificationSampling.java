@@ -92,7 +92,8 @@ public class TestVerificationSampling {
                 secondaryWriteErrorConsumer,
                 new MirroringTracer(),
                 readSampler,
-                referenceCounter));
+                referenceCounter,
+                executorServiceRule.executorService));
   }
 
   public <T, R> T mockWithCompleteFuture(T table, R result) {
@@ -209,13 +210,13 @@ public class TestVerificationSampling {
     verify(secondaryTable, times(1)).batch(ImmutableList.of(put));
   }
 
-  @Test(expected = UnsupportedOperationException.class) // Disable until scanner is implemented
+  @Test
   public void isResultScannerSampled() {
     mirroringTable.getScanner(new Scan());
     verify(readSampler, times(1)).shouldNextReadOperationBeSampled();
   }
 
-  @Test(expected = UnsupportedOperationException.class) // Disable until scanner is implemented
+  @Test
   public void testResultScannerWithSampling() throws IOException {
     ResultScanner primaryScanner = mock(ResultScanner.class);
     ResultScanner secondaryScanner = mock(ResultScanner.class);
@@ -231,7 +232,7 @@ public class TestVerificationSampling {
     verify(secondaryScanner, times(1)).next();
   }
 
-  @Test(expected = UnsupportedOperationException.class) // Disable until scanner is implemented
+  @Test
   public void testResultScannerWithoutSampling() throws IOException {
     ResultScanner primaryScanner = mock(ResultScanner.class);
     ResultScanner secondaryScanner = mock(ResultScanner.class);

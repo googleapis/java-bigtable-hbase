@@ -33,6 +33,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringResultScanner;
 import com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.OperationUtils;
@@ -51,6 +52,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellBuilderFactory;
 import org.apache.hadoop.hbase.CellBuilderType;
@@ -64,8 +66,10 @@ import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.ScanResultConsumerBase;
 import org.apache.hadoop.hbase.io.TimeRange;
 import org.junit.Before;
@@ -89,6 +93,7 @@ public class TestMirroringAsyncTable {
   @Mock SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
   @Mock ListenableReferenceCounter referenceCounter;
   @Mock AsyncTable.CheckAndMutateBuilder primaryBuilder;
+  @Mock ExecutorService executorService;
 
   MirroringAsyncTable<ScanResultConsumerBase> mirroringTable;
 
@@ -105,7 +110,8 @@ public class TestMirroringAsyncTable {
                 secondaryWriteErrorConsumer,
                 new MirroringTracer(),
                 new ReadSampler(100),
-                referenceCounter));
+                referenceCounter,
+                executorService));
 
     lenient()
         .doReturn(primaryBuilder)
@@ -930,5 +936,14 @@ public class TestMirroringAsyncTable {
     assertPutsAreEqual(
         (Put) argumentCaptor.getValue().get(2), (Put) expectedSecondaryOperations.get(2));
     assertThat(argumentCaptor.getValue().get(3)).isEqualTo(expectedSecondaryOperations.get(3));
+  }
+
+  @Test
+  public void testGetScanner() {
+    Scan scan = new Scan();
+    ResultScanner scanner = mirroringTable.getScanner(scan);
+    verify(primaryTable, times(1)).getScanner(scan);
+    verify(secondaryTable, times(1)).getScanner(scan);
+    assertThat(scanner).isInstanceOf(MirroringResultScanner.class);
   }
 }

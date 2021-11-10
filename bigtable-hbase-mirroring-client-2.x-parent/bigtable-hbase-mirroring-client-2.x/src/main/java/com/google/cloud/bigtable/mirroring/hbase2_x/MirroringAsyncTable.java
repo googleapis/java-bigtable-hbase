@@ -18,8 +18,10 @@ package com.google.cloud.bigtable.mirroring.hbase2_x;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.OperationUtils.makePutFromResult;
 import static com.google.cloud.bigtable.mirroring.hbase2_x.utils.AsyncRequestScheduling.reserveFlowControlResourcesThenScheduleSecondary;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringResultScanner;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringTable;
 import com.google.cloud.bigtable.mirroring.hbase1_x.WriteOperationFutureCallback;
+import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncResultScannerWrapper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers.FailedSuccessfulSplit;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers.ReadWriteSplit;
@@ -37,10 +39,12 @@ import com.google.cloud.bigtable.mirroring.hbase2_x.utils.futures.FutureConverte
 import com.google.cloud.bigtable.mirroring.hbase2_x.utils.futures.FutureUtils;
 import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -79,6 +83,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
   private final MirroringTracer mirroringTracer;
   private final ListenableReferenceCounter referenceCounter;
   private final ReadSampler readSampler;
+  private final ExecutorService executorService;
 
   public MirroringAsyncTable(
       AsyncTable<C> primaryTable,
@@ -88,7 +93,8 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
       SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer,
       MirroringTracer mirroringTracer,
       ReadSampler readSampler,
-      ListenableReferenceCounter referenceCounter) {
+      ListenableReferenceCounter referenceCounter,
+      ExecutorService executorService) {
     this.primaryTable = primaryTable;
     this.secondaryTable = secondaryTable;
     this.verificationContinuationFactory = new VerificationContinuationFactory(mismatchDetector);
@@ -97,6 +103,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     this.mirroringTracer = mirroringTracer;
     this.referenceCounter = referenceCounter;
     this.readSampler = readSampler;
+    this.executorService = executorService;
   }
 
   @Override
@@ -454,6 +461,21 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
   }
 
   @Override
+  public ResultScanner getScanner(Scan scan) {
+    return new MirroringResultScanner(
+        scan,
+        this.primaryTable.getScanner(scan),
+        new AsyncResultScannerWrapper(
+            this.secondaryTable.getScanner(scan),
+            MoreExecutors.listeningDecorator(this.executorService),
+            mirroringTracer),
+        this.verificationContinuationFactory,
+        this.flowController,
+        this.mirroringTracer,
+        this.readSampler.shouldNextReadOperationBeSampled());
+  }
+
+  @Override
   public Configuration getConfiguration() {
     throw new UnsupportedOperationException();
   }
@@ -490,11 +512,6 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
 
   @Override
   public void scan(Scan scan, C c) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public ResultScanner getScanner(Scan scan) {
     throw new UnsupportedOperationException();
   }
 
