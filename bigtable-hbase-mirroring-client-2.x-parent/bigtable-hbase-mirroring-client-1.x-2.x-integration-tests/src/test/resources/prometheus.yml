@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 5s
+
+  external_labels:
+    monitor: 'bigtable-mirroring-client-integration-tests'
+
+scrape_configs:
+  - job_name: 'bigtable-mirroring-client-integration-tests'
+
+    scrape_interval: 5s
+
+    static_configs:
+      - targets: ['localhost:8888']

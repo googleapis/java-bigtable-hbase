@@ -21,11 +21,11 @@ limitations under the License.
 
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
-    <artifactId>bigtable-hbase-mirroring-client-1.x-parent</artifactId>
+    <artifactId>bigtable-hbase-mirroring-client-2.x-parent</artifactId>
     <version>2.0.0-alpha2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
-  <artifactId>bigtable-hbase-mirroring-client-1.x-integration-tests</artifactId>
+  <artifactId>bigtable-hbase-mirroring-client-1.x-2.x-integration-tests</artifactId>
   <packaging>jar</packaging>
   <name>${project.groupId}:${project.artifactId}</name>
   <description>
@@ -33,14 +33,14 @@ limitations under the License.
   </description>
 
   <properties>
-    <hbase.version>${hbase1.version}</hbase.version>
-    <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase1_x.BigtableConnection</google.bigtable.connection.impl>
+    <hbase.version>${hbase2.version}</hbase.version>
+    <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase2_x.BigtableConnection</google.bigtable.connection.impl>
     <test.timeout>1800</test.timeout>
   </properties>
 
   <profiles>
     <profile>
-      <id>HBaseToBigtableLocalIntegrationTests</id>
+      <id>HBase12ToBigtableLocalIntegrationTests</id>
       <build>
         <plugins>
           <plugin>
@@ -77,7 +77,8 @@ limitations under the License.
 
                   <systemPropertyVariables>
                     <integration-tests-config-file-name>hbase-to-bigtable-local-configuration.xml</integration-tests-config-file-name>
-                    <integrations.compat.table-creator-impl>com.google.cloud.bigtable.hbase.mirroring.utils.compat.TableCreator1x</integrations.compat.table-creator-impl>
+                    <integrations.compat.table-creator-impl>com.google.cloud.bigtable.hbase.mirroring.utils.compat.TableCreator2x</integrations.compat.table-creator-impl>
+                    <integrations.compat.failingregion.impl>org.apache.hadoop.hbase.regionserver.FailingHBaseHRegion2</integrations.compat.failingregion.impl>
                   </systemPropertyVariables>
 
                   <environmentVariables>
@@ -107,7 +108,7 @@ limitations under the License.
       </build>
     </profile>
     <profile>
-      <id>BigtableToHBaseLocalIntegrationTests</id>
+      <id>BigtableToHBase12LocalIntegrationTests</id>
       <build>
         <plugins>
           <plugin>
@@ -144,7 +145,8 @@ limitations under the License.
 
                   <systemPropertyVariables>
                     <integration-tests-config-file-name>bigtable-to-hbase-local-configuration.xml</integration-tests-config-file-name>
-                    <integrations.compat.table-creator-impl>com.google.cloud.bigtable.hbase.mirroring.utils.compat.TableCreator1x</integrations.compat.table-creator-impl>
+                    <integrations.compat.table-creator-impl>com.google.cloud.bigtable.hbase.mirroring.utils.compat.TableCreator2x</integrations.compat.table-creator-impl>
+                    <integrations.compat.failingregion.impl>org.apache.hadoop.hbase.regionserver.FailingHBaseHRegion2</integrations.compat.failingregion.impl>
                   </systemPropertyVariables>
 
                   <environmentVariables>
@@ -199,35 +201,14 @@ limitations under the License.
     <!-- Project Modules -->
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-hbase-mirroring-client-1.x</artifactId>
+      <artifactId>bigtable-hbase-mirroring-client-2.x</artifactId>
       <version>2.0.0-alpha2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-client-core</artifactId>
-      <version>${bigtable-client-core.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-hbase</artifactId>
-      <version>2.0.0-alpha2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
-      <scope>test</scope>
-      <exclusions>
-        <!-- included in hbase-shaded-testing-util -->
-        <exclusion>
-          <groupId>org.apache.hbase</groupId>
-          <artifactId>hbase-shaded-client</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>bigtable-hbase-1.x</artifactId>
+      <artifactId>bigtable-hbase-2.x</artifactId>
       <version>2.0.0-alpha2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <scope>test</scope>
       <exclusions>
@@ -251,7 +232,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-testing-util</artifactId>
-      <version>${hbase1.version}</version>
+      <version>${hbase2.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -329,6 +310,45 @@ limitations under the License.
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-core</artifactId>
       <version>2.14.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-hbase-mirroring-client-1.x-integration-tests</artifactId>
+      <version>2.0.0-alpha2-SNAPSHOT</version>
+      <scope>test</scope>
+      <type>test-jar</type>
+    </dependency>
+
+    <!-- Needed by MiniHBaseCluster -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+      <version>2.14.1</version>
+      <scope>test</scope>
+    </dependency>
+
+
+    <!-- Version of slf4j copied from HBase 2.4.5 pom.xml -->
+    <!-- Pinned to prevent Enforcer errors -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.30</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.7.30</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Pinned to prevent Enforcer errors -->
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+      <version>3.2.6</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

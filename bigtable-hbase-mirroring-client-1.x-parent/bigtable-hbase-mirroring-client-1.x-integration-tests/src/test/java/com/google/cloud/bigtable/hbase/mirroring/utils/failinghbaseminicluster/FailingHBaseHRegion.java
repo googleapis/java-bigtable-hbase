@@ -44,7 +44,68 @@ import org.apache.hadoop.hbase.regionserver.OperationStatus;
 import org.apache.hadoop.hbase.regionserver.RegionServerServices;
 import org.apache.hadoop.hbase.wal.WAL;
 
+/**
+ * Implementation of {@link HRegion} that rejects operations on registered rows. Used to simulate
+ * server-side errors in integration tests which use in-memory MiniCluster as HBase server.
+ */
 public class FailingHBaseHRegion extends HRegion {
+  public FailingHBaseHRegion(
+      HRegionFileSystem fs,
+      WAL wal,
+      Configuration confParam,
+      HTableDescriptor htd,
+      RegionServerServices rsServices) {
+    super(fs, wal, confParam, htd, rsServices);
+  }
+
+  public FailingHBaseHRegion(
+      Path tableDir,
+      WAL wal,
+      FileSystem fs,
+      Configuration confParam,
+      HRegionInfo regionInfo,
+      HTableDescriptor htd,
+      RegionServerServices rsServices) {
+    super(tableDir, wal, fs, confParam, regionInfo, htd, rsServices);
+  }
+
+  @Override
+  public void mutateRow(RowMutations rm) throws IOException {
+    processRowThrow(rm.getRow());
+    super.mutateRow(rm);
+  }
+
+  @Override
+  public OperationStatus[] batchMutate(
+      Mutation[] mutations, final long nonceGroup, final long nonce) throws IOException {
+    return batchMutateWithFailures(
+        mutations,
+        new FunctionThrowing<Mutation[], OperationStatus[], IOException>() {
+          @Override
+          public OperationStatus[] apply(Mutation[] mutations) throws IOException {
+            return FailingHBaseHRegion.super.batchMutate(mutations, nonceGroup, nonce);
+          }
+        });
+  }
+
+  @Override
+  public Result get(Get get) throws IOException {
+    processRowThrow(get.getRow());
+    return super.get(get);
+  }
+
+  @Override
+  public Result increment(Increment mutation, long nonceGroup, long nonce) throws IOException {
+    processRowThrow(mutation.getRow());
+    return super.increment(mutation, nonceGroup, nonce);
+  }
+
+  @Override
+  public Result append(Append mutation, long nonceGroup, long nonce) throws IOException {
+    processRowThrow(mutation.getRow());
+    return super.append(mutation, nonceGroup, nonce);
+  }
+
   private static Map<ByteBuffer, OperationStatus> fakeErrorsMap = new ConcurrentHashMap<>();
   private static Map<Predicate<byte[]>, OperationStatus> errorConditionMap =
       new ConcurrentHashMap<>();
@@ -73,79 +134,7 @@ public class FailingHBaseHRegion extends HRegion {
     errorConditionMap.clear();
   }
 
-  public FailingHBaseHRegion(
-      HRegionFileSystem fs,
-      WAL wal,
-      Configuration confParam,
-      HTableDescriptor htd,
-      RegionServerServices rsServices) {
-    super(fs, wal, confParam, htd, rsServices);
-  }
-
-  public FailingHBaseHRegion(
-      Path tableDir,
-      WAL wal,
-      FileSystem fs,
-      Configuration confParam,
-      HRegionInfo regionInfo,
-      HTableDescriptor htd,
-      RegionServerServices rsServices) {
-    super(tableDir, wal, fs, confParam, regionInfo, htd, rsServices);
-  }
-
-  @Override
-  public void mutateRow(RowMutations rm) throws IOException {
-    processRowThrow(rm.getRow());
-    super.mutateRow(rm);
-  }
-
-  @Override
-  public OperationStatus[] batchMutate(Mutation[] mutations, long nonceGroup, long nonce)
-      throws IOException {
-
-    OperationStatus[] result = new OperationStatus[mutations.length];
-    List<Mutation> mutationsToRun = new ArrayList<>();
-
-    for (int i = 0; i < mutations.length; i++) {
-      Mutation mutation = mutations[i];
-      OperationStatus r = processRowNoThrow(mutation.getRow());
-      if (r != null) {
-        result[i] = r;
-      } else {
-        mutationsToRun.add(mutation);
-      }
-    }
-    OperationStatus[] superResult =
-        super.batchMutate(mutationsToRun.toArray(new Mutation[0]), nonceGroup, nonce);
-    int redIndex = 0;
-    for (int i = 0; i < mutations.length; i++) {
-      if (result[i] == null) {
-        result[i] = superResult[redIndex];
-        redIndex++;
-      }
-    }
-    return result;
-  }
-
-  @Override
-  public Result get(Get get) throws IOException {
-    processRowThrow(get.getRow());
-    return super.get(get);
-  }
-
-  @Override
-  public Result increment(Increment mutation, long nonceGroup, long nonce) throws IOException {
-    processRowThrow(mutation.getRow());
-    return super.increment(mutation, nonceGroup, nonce);
-  }
-
-  @Override
-  public Result append(Append mutation, long nonceGroup, long nonce) throws IOException {
-    processRowThrow(mutation.getRow());
-    return super.append(mutation, nonceGroup, nonce);
-  }
-
-  private static OperationStatus processRowNoThrow(byte[] rowKey) {
+  public static OperationStatus processRowNoThrow(byte[] rowKey) {
     ByteBuffer row = ByteBuffer.wrap(rowKey);
     if (fakeErrorsMap.containsKey(row)) {
       return fakeErrorsMap.get(row);
@@ -158,7 +147,7 @@ public class FailingHBaseHRegion extends HRegion {
     return null;
   }
 
-  private static void processRowThrow(byte[] rowKey) throws IOException {
+  public static void processRowThrow(byte[] rowKey) throws IOException {
     throwError(processRowNoThrow(rowKey));
   }
 
@@ -176,5 +165,35 @@ public class FailingHBaseHRegion extends HRegion {
     } else {
       throw new DoNotRetryIOException(operationStatus.getExceptionMsg());
     }
+  }
+
+  public interface FunctionThrowing<T, R, E extends Throwable> {
+    R apply(T t) throws E;
+  }
+
+  public static OperationStatus[] batchMutateWithFailures(
+      Mutation[] mutations, FunctionThrowing<Mutation[], OperationStatus[], IOException> op)
+      throws IOException {
+    OperationStatus[] result = new OperationStatus[mutations.length];
+    List<Mutation> mutationsToRun = new ArrayList<>();
+
+    for (int i = 0; i < mutations.length; i++) {
+      Mutation mutation = mutations[i];
+      OperationStatus r = processRowNoThrow(mutation.getRow());
+      if (r != null) {
+        result[i] = r;
+      } else {
+        mutationsToRun.add(mutation);
+      }
+    }
+    OperationStatus[] superResult = op.apply(mutationsToRun.toArray(new Mutation[0]));
+    int redIndex = 0;
+    for (int i = 0; i < mutations.length; i++) {
+      if (result[i] == null) {
+        result[i] = superResult[redIndex];
+        redIndex++;
+      }
+    }
+    return result;
   }
 }

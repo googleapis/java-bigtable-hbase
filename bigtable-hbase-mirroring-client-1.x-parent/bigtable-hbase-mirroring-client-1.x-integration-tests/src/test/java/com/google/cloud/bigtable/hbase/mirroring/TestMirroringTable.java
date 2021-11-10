@@ -125,7 +125,8 @@ public class TestMirroringTable {
     Assume.assumeTrue(
         ConfigurationHelper.isPrimaryHBase() && ConfigurationHelper.isUsingHBaseMiniCluster());
 
-    FailingHBaseHRegion.failMutation(failPredicate, "failed");
+    FailingHBaseHRegion.failMutation(
+        failPredicate, OperationStatusCode.SANITY_CHECK_FAILURE, "failed");
 
     final TableName tableName1 = connectionRule.createTable(columnFamily1);
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
@@ -174,7 +175,8 @@ public class TestMirroringTable {
 
     int databaseEntriesCount = 1000;
 
-    FailingHBaseHRegion.failMutation(failPredicate, "failed");
+    FailingHBaseHRegion.failMutation(
+        failPredicate, OperationStatusCode.SANITY_CHECK_FAILURE, "failed");
 
     final TableName tableName1 = connectionRule.createTable(columnFamily1);
 
@@ -871,7 +873,8 @@ public class TestMirroringTable {
 
     TestWriteErrorConsumer.clearErrors();
 
-    FailingHBaseHRegion.failMutation(failPredicate, "failed");
+    FailingHBaseHRegion.failMutation(
+        failPredicate, OperationStatusCode.SANITY_CHECK_FAILURE, "failed");
 
     ReportedErrorsContext reportedErrorsContext1 = new ReportedErrorsContext();
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
@@ -961,7 +964,8 @@ public class TestMirroringTable {
 
     TestWriteErrorConsumer.clearErrors();
 
-    FailingHBaseHRegion.failMutation(failPredicate, "failed");
+    FailingHBaseHRegion.failMutation(
+        failPredicate, OperationStatusCode.SANITY_CHECK_FAILURE, "failed");
 
     ReportedErrorsContext reportedErrorsContext1 = new ReportedErrorsContext();
     try (MirroringConnection connection = databaseHelpers.createConnection()) {

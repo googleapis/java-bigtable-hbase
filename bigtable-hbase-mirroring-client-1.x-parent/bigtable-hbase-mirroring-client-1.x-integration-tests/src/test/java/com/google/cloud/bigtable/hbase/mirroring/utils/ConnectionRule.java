@@ -15,16 +15,15 @@
  */
 package com.google.cloud.bigtable.hbase.mirroring.utils;
 
+import com.google.cloud.bigtable.hbase.mirroring.utils.compat.TableCreator;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.reflection.ReflectionConstructor;
 import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.junit.rules.ExternalResource;
@@ -74,7 +73,7 @@ public class ConnectionRule extends ExternalResource {
 
   public TableName createTable(byte[]... columnFamilies) throws IOException {
     String tableName = createTableName();
-    try (MirroringConnection connection = createConnection(Executors.newSingleThreadExecutor())) {
+    try (MirroringConnection connection = createConnection(Executors.newFixedThreadPool(1))) {
       createTable(connection.getPrimaryConnection(), tableName, columnFamilies);
       createTable(connection.getSecondaryConnection(), tableName, columnFamilies);
       return TableName.valueOf(tableName);
@@ -91,12 +90,10 @@ public class ConnectionRule extends ExternalResource {
 
   public void createTable(Connection connection, String tableName, byte[]... columnFamilies)
       throws IOException {
-    Admin admin = connection.getAdmin();
 
-    HTableDescriptor descriptor = new HTableDescriptor(TableName.valueOf(tableName));
-    for (byte[] columnFamilyName : columnFamilies) {
-      descriptor.addFamily(new HColumnDescriptor(columnFamilyName));
-    }
-    admin.createTable(descriptor);
+    TableCreator tableCreator =
+        ReflectionConstructor.construct(
+            System.getProperty("integrations.compat.table-creator-impl"));
+    tableCreator.createTable(connection, tableName, columnFamilies);
   }
 }

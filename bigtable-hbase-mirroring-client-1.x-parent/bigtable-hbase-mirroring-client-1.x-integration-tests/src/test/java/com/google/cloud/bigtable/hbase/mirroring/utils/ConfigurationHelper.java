@@ -33,8 +33,8 @@ public class ConfigurationHelper {
 
   public static Configuration newConfiguration() {
     Configuration configuration = new Configuration();
-    fillDefaults(configuration);
     configuration.addResource(System.getProperty("integration-tests-config-file-name"));
+    fillDefaults(configuration);
     return configuration;
   }
 

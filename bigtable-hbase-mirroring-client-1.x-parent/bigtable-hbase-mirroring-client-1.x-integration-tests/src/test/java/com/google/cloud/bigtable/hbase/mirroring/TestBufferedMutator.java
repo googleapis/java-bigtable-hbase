@@ -46,6 +46,7 @@ import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.HConstants.OperationStatusCode;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
@@ -195,8 +196,10 @@ public class TestBufferedMutator {
     Assume.assumeTrue(
         ConfigurationHelper.isSecondaryHBase() && ConfigurationHelper.isUsingHBaseMiniCluster());
 
-    FailingHBaseHRegion.failMutation(Longs.toByteArray(3), "row-3-error");
-    FailingHBaseHRegion.failMutation(Longs.toByteArray(7), "row-7-error");
+    FailingHBaseHRegion.failMutation(
+        Longs.toByteArray(3), OperationStatusCode.SANITY_CHECK_FAILURE, "row-3-error");
+    FailingHBaseHRegion.failMutation(
+        Longs.toByteArray(7), OperationStatusCode.SANITY_CHECK_FAILURE, "row-7-error");
 
     TestWriteErrorConsumer.clearErrors();
     Configuration configuration = this.createConfiguration();
@@ -273,8 +276,10 @@ public class TestBufferedMutator {
     Assume.assumeTrue(
         ConfigurationHelper.isPrimaryHBase() && ConfigurationHelper.isUsingHBaseMiniCluster());
 
-    FailingHBaseHRegion.failMutation(Longs.toByteArray(3), "row-3-error");
-    FailingHBaseHRegion.failMutation(Longs.toByteArray(7), "row-7-error");
+    FailingHBaseHRegion.failMutation(
+        Longs.toByteArray(3), OperationStatusCode.SANITY_CHECK_FAILURE, "row-3-error");
+    FailingHBaseHRegion.failMutation(
+        Longs.toByteArray(7), OperationStatusCode.SANITY_CHECK_FAILURE, "row-7-error");
 
     Configuration configuration = this.createConfiguration();
 
