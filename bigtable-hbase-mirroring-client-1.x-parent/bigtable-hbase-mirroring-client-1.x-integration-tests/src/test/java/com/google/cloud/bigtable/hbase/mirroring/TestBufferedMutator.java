@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.mirroring;
 
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_CONCURRENT_WRITES;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_SYNCHRONOUS_WRITES;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -90,6 +91,17 @@ public class TestBufferedMutator {
   static final byte[] columnFamily1 = "cf1".getBytes();
   static final byte[] columnQualifier1 = "cq1".getBytes();
 
+  private Configuration createConfiguration() {
+    Configuration configuration = ConfigurationHelper.newConfiguration();
+    // MirroringOptions constructor verifies that MIRRORING_SYNCHRONOUS_WRITES is true when
+    // MIRRORING_CONCURRENT_WRITES is true (consult its constructor for more details).
+    // We are keeping MIRRORING_SYNCHRONOUS_WRITES false if we do not write concurrently (we are not
+    // testing the other case here anyways) and set it to true to meet the requirements otherwise.
+    configuration.set(MIRRORING_CONCURRENT_WRITES, String.valueOf(this.mutateConcurrently));
+    configuration.set(MIRRORING_SYNCHRONOUS_WRITES, String.valueOf(this.mutateConcurrently));
+    return configuration;
+  }
+
   @Test
   public void testBufferedMutatorPerformsMutations() throws IOException, InterruptedException {
     final int numThreads = 10;
@@ -126,9 +138,8 @@ public class TestBufferedMutator {
       }
     }
 
-    Configuration config = ConfigurationHelper.newConfiguration();
+    Configuration config = this.createConfiguration();
     config.set(MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS, "10000");
-    config.set(MIRRORING_CONCURRENT_WRITES, String.valueOf(this.mutateConcurrently));
 
     TableName tableName;
     try (MirroringConnection connection = databaseHelpers.createConnection(config)) {
@@ -188,11 +199,10 @@ public class TestBufferedMutator {
     FailingHBaseHRegion.failMutation(Longs.toByteArray(7), "row-7-error");
 
     TestWriteErrorConsumer.clearErrors();
-    Configuration configuration = ConfigurationHelper.newConfiguration();
+    Configuration configuration = this.createConfiguration();
     configuration.set(
         "google.bigtable.mirroring.write-error-consumer.impl",
         TestWriteErrorConsumer.class.getCanonicalName());
-    configuration.set(MIRRORING_CONCURRENT_WRITES, String.valueOf(this.mutateConcurrently));
 
     TableName tableName;
     List<Throwable> flushExceptions = null;
@@ -266,8 +276,7 @@ public class TestBufferedMutator {
     FailingHBaseHRegion.failMutation(Longs.toByteArray(3), "row-3-error");
     FailingHBaseHRegion.failMutation(Longs.toByteArray(7), "row-7-error");
 
-    Configuration configuration = ConfigurationHelper.newConfiguration();
-    configuration.set(MIRRORING_CONCURRENT_WRITES, String.valueOf(this.mutateConcurrently));
+    Configuration configuration = this.createConfiguration();
 
     final Set<Throwable> exceptionsThrown = new HashSet<>();
     final List<ByteBuffer> exceptionRows = new ArrayList<>();
