@@ -31,6 +31,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOExce
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.OperationUtils;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.RequestScheduling;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
@@ -519,7 +520,7 @@ public class MirroringTable implements Table, ListenableCloseable {
               },
               HBaseOperation.APPEND);
 
-      Put put = BatchHelpers.makePutFromResult(result);
+      Put put = OperationUtils.makePutFromResult(result);
 
       scheduleSequentialWriteOperation(
           new WriteOperationInfo(put), this.secondaryAsyncWrapper.put(put));
@@ -542,7 +543,7 @@ public class MirroringTable implements Table, ListenableCloseable {
               },
               HBaseOperation.INCREMENT);
 
-      Put put = BatchHelpers.makePutFromResult(result);
+      Put put = OperationUtils.makePutFromResult(result);
 
       scheduleSequentialWriteOperation(
           new WriteOperationInfo(put), this.secondaryAsyncWrapper.put(put));
