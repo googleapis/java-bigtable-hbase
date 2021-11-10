@@ -182,7 +182,9 @@ public class MirroringConfigurationHelper {
       } else {
         throw new IllegalArgumentException(
             String.format(
-                "Values of %s and %s should be different.",
+                "Values of %s and %s should be different. Prefixes are used to differentiate "
+                    + "between primary and secondary configurations. If you want to use the same "
+                    + "configuration for both databases then you shouldn't use prefixes at all.",
                 MIRRORING_PRIMARY_CONFIG_PREFIX_KEY, MIRRORING_SECONDARY_CONFIG_PREFIX_KEY));
       }
     }

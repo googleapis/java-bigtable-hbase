@@ -31,6 +31,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.Mirro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.reflection.ReflectionConstructor;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
+import com.google.common.base.Preconditions;
 import io.opencensus.common.Scope;
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -78,7 +79,8 @@ public class MirroringConnection implements Connection {
    */
   public MirroringConnection(Configuration conf, boolean managed, ExecutorService pool, User user)
       throws IOException {
-    assert !managed; // This is always-false legacy hbase parameter.
+    // This is an always-false legacy hbase parameter.
+    Preconditions.checkArgument(!managed, "Mirroring client doesn't support managed connections.");
     this.configuration = new MirroringConfiguration(conf);
     this.mirroringTracer = new MirroringTracer();
 

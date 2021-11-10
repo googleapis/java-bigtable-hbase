@@ -45,7 +45,7 @@ import org.apache.hadoop.hbase.client.Table;
 
 /**
  * MirroringClient verifies consistency between two databases asynchronously - after the results are
- * delivered to the user. HBase Table object does not have an synchronous API, so we simulate it by
+ * delivered to the user. HBase Table object does not have an asynchronous API, so we simulate it by
  * wrapping the regular Table into AsyncTableWrapper.
  *
  * <p>Table instances are not thread-safe, every operation is synchronized to prevent concurrent
