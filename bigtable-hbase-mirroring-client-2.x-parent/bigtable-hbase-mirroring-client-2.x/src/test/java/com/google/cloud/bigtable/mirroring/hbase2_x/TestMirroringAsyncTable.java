@@ -891,4 +891,44 @@ public class TestMirroringAsyncTable {
     verify(secondaryWriteErrorConsumer, times(1))
         .consume(eq(HBaseOperation.BATCH), eq(Arrays.asList(put2)), eq(flowControllerException));
   }
+
+  @Test
+  public void testBatchWithAppendsAndIncrements() {
+    Increment increment = new Increment("i".getBytes());
+    increment.addColumn("f".getBytes(), "q".getBytes(), 1);
+
+    Append append = new Append("a".getBytes());
+    append.add("f".getBytes(), "q".getBytes(), "v".getBytes());
+
+    List<? extends Row> operations =
+        Arrays.asList(increment, append, createPut("p", "f", "q", "v"), createGet("g"));
+    when(primaryTable.batch(operations))
+        .thenReturn(
+            Arrays.asList(
+                CompletableFuture.completedFuture(createResult("i", "f", "q", 1, "1")),
+                CompletableFuture.completedFuture(createResult("a", "f", "q", 2, "2")),
+                CompletableFuture.completedFuture(new Result()),
+                CompletableFuture.completedFuture(createResult("g", "f", "q", 3, "3"))));
+
+    List<? extends Row> expectedSecondaryOperations =
+        Arrays.asList(
+            createPut("i", "f", "q", 1, "1"),
+            createPut("a", "f", "q", 2, "2"),
+            createPut("p", "f", "q", "v"),
+            createGet("g"));
+
+    mirroringTable.batch(operations);
+
+    verify(primaryTable, times(1)).batch(operations);
+    ArgumentCaptor<List<? extends Row>> argumentCaptor = ArgumentCaptor.forClass(List.class);
+    verify(secondaryTable, times(1)).batch(argumentCaptor.capture());
+
+    assertPutsAreEqual(
+        (Put) argumentCaptor.getValue().get(0), (Put) expectedSecondaryOperations.get(0));
+    assertPutsAreEqual(
+        (Put) argumentCaptor.getValue().get(1), (Put) expectedSecondaryOperations.get(1));
+    assertPutsAreEqual(
+        (Put) argumentCaptor.getValue().get(2), (Put) expectedSecondaryOperations.get(2));
+    assertThat(argumentCaptor.getValue().get(3)).isEqualTo(expectedSecondaryOperations.get(3));
+  }
 }

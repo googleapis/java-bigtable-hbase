@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
 
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.OperationUtils.makePutFromResult;
+
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringOperationException;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringOperationException.ExceptionDetails;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
@@ -29,8 +31,12 @@ import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NavigableMap;
+import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
@@ -503,6 +509,25 @@ public class BatchHelpers {
       }
     }
     return true;
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <ActionType extends Row> List<ActionType> rewriteIncrementsAndAppendsAsPuts(
+      List<ActionType> successfulOperations, Object[] successfulResults) {
+    List<ActionType> rewrittenRows = new ArrayList<>(successfulOperations.size());
+    for (int i = 0; i < successfulOperations.size(); i++) {
+      ActionType operation = successfulOperations.get(i);
+      if (operation instanceof Increment || operation instanceof Append) {
+        Result result = (Result) successfulResults[i];
+        // This would fail iff ActionType == Increment || ActionType == Append, but if any of
+        // operations is an Increment or an Append, then we are performing a batch and ActionType ==
+        // Row
+        rewrittenRows.add((ActionType) makePutFromResult(result));
+      } else {
+        rewrittenRows.add(operation);
+      }
+    }
+    return rewrittenRows;
   }
 
   public static <ActionType extends Row, ResultType>

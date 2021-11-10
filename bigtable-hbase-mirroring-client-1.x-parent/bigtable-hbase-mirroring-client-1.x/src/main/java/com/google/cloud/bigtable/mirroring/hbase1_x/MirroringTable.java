@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers.canBatchBePerformedConcurrently;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers.reconcileBatchResultsConcurrent;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers.reconcileBatchResultsSequential;
-import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.OperationUtils.makePutFromResult;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncTableWrapper;
@@ -520,7 +519,7 @@ public class MirroringTable implements Table, ListenableCloseable {
               },
               HBaseOperation.APPEND);
 
-      Put put = makePutFromResult(result);
+      Put put = BatchHelpers.makePutFromResult(result);
 
       scheduleSequentialWriteOperation(
           new WriteOperationInfo(put), this.secondaryAsyncWrapper.put(put));
@@ -543,7 +542,7 @@ public class MirroringTable implements Table, ListenableCloseable {
               },
               HBaseOperation.INCREMENT);
 
-      Put put = makePutFromResult(result);
+      Put put = BatchHelpers.makePutFromResult(result);
 
       scheduleSequentialWriteOperation(
           new WriteOperationInfo(put), this.secondaryAsyncWrapper.put(put));
@@ -965,7 +964,7 @@ public class MirroringTable implements Table, ListenableCloseable {
     }
 
     List<? extends Row> operationsToScheduleOnSecondary =
-        rewriteIncrementsAndAppendsAsPuts(
+        BatchHelpers.rewriteIncrementsAndAppendsAsPuts(
             failedSuccessfulSplit.successfulOperations, failedSuccessfulSplit.successfulResults);
 
     final Object[] resultsSecondary = new Object[operationsToScheduleOnSecondary.size()];
@@ -1041,21 +1040,6 @@ public class MirroringTable implements Table, ListenableCloseable {
         MoreExecutors.directExecutor());
 
     return result;
-  }
-
-  private List<? extends Row> rewriteIncrementsAndAppendsAsPuts(
-      List<? extends Row> successfulOperations, Result[] successfulResults) {
-    List<Row> rewrittenRows = new ArrayList<>();
-    for (int i = 0; i < successfulOperations.size(); i++) {
-      Row operation = successfulOperations.get(i);
-      if (operation instanceof Increment || operation instanceof Append) {
-        Result result = successfulResults[i];
-        rewrittenRows.add(makePutFromResult(result));
-      } else {
-        rewrittenRows.add(operation);
-      }
-    }
-    return rewrittenRows;
   }
 
   public static class WriteOperationInfo {

@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NavigableMap;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
