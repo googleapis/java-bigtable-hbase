@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.0-sp.4](https://www.github.com/googleapis/java-bigtable-hbase/compare/1.20.0-sp.3...v1.20.0-sp.4) (2021-11-12)
+
+
+### Dependencies
+
+* update bigtable.version to 1.22.0-sp.3 ([#3334](https://www.github.com/googleapis/java-bigtable-hbase/issues/3334)) ([98f1258](https://www.github.com/googleapis/java-bigtable-hbase/commit/98f12584d800c11700c4f0ac8b1f96f8743f2740))
+
 ## [1.20.0-sp.3](https://www.github.com/googleapis/java-bigtable-hbase/compare/1.20.0-sp.2...v1.20.0-sp.3) (2021-09-10)
 
 
