@@ -1,8 +1,13 @@
 <?xml version="1.0" ?>
 <Configuration>
+    <Appenders>
+        <Console name="STDOUT" target="SYSTEM_OUT"/>
+    </Appenders>
     <Loggers>
         <Root level="INFO"/>
-<!--        Uncomment the following line to get detailed logs on Schema Translator-->
-<!--        <Logger name="com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator" level="TRACE"/>-->
+<!--        Uncomment the following lines to get detailed logs on Schema Translator-->
+<!--        <Logger name="com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator" level="TRACE">-->
+<!--            <AppenderRef ref="STDOUT"/>-->
+<!--        </Logger>-->
     </Loggers>
 </Configuration>
