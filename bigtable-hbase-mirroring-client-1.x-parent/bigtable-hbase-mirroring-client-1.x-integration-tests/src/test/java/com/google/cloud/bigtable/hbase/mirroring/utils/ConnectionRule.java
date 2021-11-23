@@ -51,12 +51,16 @@ public class ConnectionRule extends ExternalResource {
 
   public MirroringConnection createConnection(
       ExecutorService executorService, Configuration configuration) throws IOException {
-    if (baseMiniCluster != null) {
-      baseMiniCluster.updateConfigurationWithHbaseMiniClusterProps(configuration);
-    }
+    updateConfigurationWithHbaseMiniClusterProps(configuration);
 
     Connection conn = ConnectionFactory.createConnection(configuration, executorService);
     return (MirroringConnection) conn;
+  }
+
+  public void updateConfigurationWithHbaseMiniClusterProps(Configuration configuration) {
+    if (baseMiniCluster != null) {
+      baseMiniCluster.updateConfigurationWithHbaseMiniClusterProps(configuration);
+    }
   }
 
   @Override

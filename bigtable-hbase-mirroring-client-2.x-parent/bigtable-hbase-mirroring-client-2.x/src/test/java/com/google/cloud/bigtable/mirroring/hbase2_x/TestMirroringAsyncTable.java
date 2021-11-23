@@ -713,6 +713,39 @@ public class TestMirroringAsyncTable {
   }
 
   @Test
+  public void testConditionalWriteHappensWhenSecondaryErred()
+      throws ExecutionException, InterruptedException, IOException {
+    byte[] row = "r1".getBytes();
+    Put put = new Put(row);
+    RowMutations mutations = new RowMutations(row);
+    mutations.add(put);
+    CompletableFuture<Boolean> primaryFuture = new CompletableFuture<>();
+    when(primaryBuilder.thenMutate(mutations)).thenReturn(primaryFuture);
+
+    IOException ioe = new IOException("expected");
+    CompletableFuture<Void> exceptionalFuture = new CompletableFuture<>();
+    exceptionalFuture.completeExceptionally(ioe);
+    when(secondaryTable.mutateRow(mutations)).thenReturn(exceptionalFuture);
+
+    verify(referenceCounter, never()).incrementReferenceCount();
+    verify(referenceCounter, never()).decrementReferenceCount();
+    CompletableFuture<Boolean> resultFuture =
+        mirroringTable.checkAndMutate("r1".getBytes(), "f1".getBytes()).thenMutate(mutations);
+
+    verify(referenceCounter, times(1)).incrementReferenceCount();
+    primaryFuture.complete(true);
+    // The reference count is incremented once at the beginning of checkAndMutate() and then for the
+    // second time in writeWithControlFlow().
+    // It's done this way so that the reference counting invariant isn't violated when refactoring
+    // brittle code around forwarding result of writeWithFlowControl().
+    resultFuture.get();
+    verify(secondaryTable, times(1)).mutateRow(mutations);
+
+    verify(referenceCounter, times(2)).incrementReferenceCount();
+    verify(referenceCounter, times(2)).decrementReferenceCount();
+  }
+
+  @Test
   public void testCheckAndMutateBuilderChainingWhenInPlace() {
     byte[] qual = "q1".getBytes();
     TimeRange timeRange = new TimeRange();

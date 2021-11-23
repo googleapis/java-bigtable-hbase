@@ -24,6 +24,7 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.Append;
@@ -35,6 +36,8 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.TableDescriptor;
+import org.apache.hadoop.hbase.filter.ByteArrayComparable;
+import org.apache.hadoop.hbase.io.TimeRange;
 import org.apache.hadoop.hbase.wal.WAL;
 
 /**
@@ -119,5 +122,33 @@ public class FailingHBaseHRegion2 extends HRegion {
   public Result append(Append mutation, long nonceGroup, long nonce) throws IOException {
     processRowThrow(mutation.getRow());
     return super.append(mutation, nonceGroup, nonce);
+  }
+
+  @Override
+  public boolean checkAndMutate(
+      byte[] row,
+      byte[] family,
+      byte[] qualifier,
+      CompareOperator op,
+      ByteArrayComparable comparator,
+      TimeRange timeRange,
+      Mutation mutation)
+      throws IOException {
+    processRowThrow(row);
+    return super.checkAndMutate(row, family, qualifier, op, comparator, timeRange, mutation);
+  }
+
+  @Override
+  public boolean checkAndRowMutate(
+      byte[] row,
+      byte[] family,
+      byte[] qualifier,
+      CompareOperator op,
+      ByteArrayComparable comparator,
+      TimeRange timeRange,
+      RowMutations rm)
+      throws IOException {
+    processRowThrow(row);
+    return super.checkAndRowMutate(row, family, qualifier, op, comparator, timeRange, rm);
   }
 }

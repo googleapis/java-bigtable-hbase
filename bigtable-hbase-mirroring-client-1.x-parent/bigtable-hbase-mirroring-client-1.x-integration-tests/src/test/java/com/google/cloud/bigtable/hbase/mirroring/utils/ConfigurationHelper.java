@@ -71,6 +71,10 @@ public class ConfigurationHelper {
         "com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection");
 
     configuration.setIfUnset(
+        "hbase.client.async.connection.impl",
+        "com.google.cloud.bigtable.mirroring.hbase2_x.MirroringAsyncConnection");
+
+    configuration.setIfUnset(
         "google.bigtable.mirroring.mismatch-detector.impl",
         TestMismatchDetector.class.getCanonicalName());
 

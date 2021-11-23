@@ -107,7 +107,7 @@ public class MirroringAsyncConnection implements AsyncConnection {
             ReflectionConstructor.construct(
                 this.configuration.mirroringOptions.writeErrorLogAppenderClass,
                 Configuration.class,
-                this.configuration),
+                this.configuration.baseConfiguration),
             ReflectionConstructor.construct(
                 this.configuration.mirroringOptions.writeErrorLogSerializerClass));
 
@@ -120,6 +120,14 @@ public class MirroringAsyncConnection implements AsyncConnection {
 
     this.readSampler = new ReadSampler(this.configuration.mirroringOptions.readSamplingRate);
     this.executorService = Executors.newCachedThreadPool();
+  }
+
+  public AsyncConnection getPrimaryConnection() {
+    return this.primaryConnection;
+  }
+
+  public AsyncConnection getSecondaryConnection() {
+    return this.secondaryConnection;
   }
 
   @Override

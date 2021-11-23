@@ -25,7 +25,7 @@ limitations under the License.
     <version>2.0.0-alpha2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
-  <artifactId>bigtable-hbase-mirroring-client-1.x-2.x-integration-tests</artifactId>
+  <artifactId>bigtable-hbase-mirroring-client-2.x-integration-tests</artifactId>
   <packaging>jar</packaging>
   <name>${project.groupId}:${project.artifactId}</name>
   <description>
@@ -35,12 +35,13 @@ limitations under the License.
   <properties>
     <hbase.version>${hbase2.version}</hbase.version>
     <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase2_x.BigtableConnection</google.bigtable.connection.impl>
+    <google.bigtable.async.connection.impl>org.apache.hadoop.hbase.client.BigtableAsyncConnection</google.bigtable.async.connection.impl>
     <test.timeout>1800</test.timeout>
   </properties>
 
   <profiles>
     <profile>
-      <id>HBase12ToBigtableLocalIntegrationTests</id>
+      <id>HBase2ToBigtableLocalIntegrationTests</id>
       <build>
         <plugins>
           <plugin>
@@ -108,7 +109,7 @@ limitations under the License.
       </build>
     </profile>
     <profile>
-      <id>BigtableToHBase12LocalIntegrationTests</id>
+      <id>BigtableToHBase2LocalIntegrationTests</id>
       <build>
         <plugins>
           <plugin>
@@ -318,6 +319,19 @@ limitations under the License.
       <version>2.0.0-alpha2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <scope>test</scope>
       <type>test-jar</type>
+      <exclusions>
+        <exclusion>
+          <artifactId>org.apache.hbase</artifactId>
+          <groupId>*</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-hbase-mirroring-client-1.x-2.x-integration-tests</artifactId>
+      <version>2.0.0-alpha2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
 
     <!-- Needed by MiniHBaseCluster -->
@@ -428,6 +442,14 @@ limitations under the License.
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>8</source>
+          <target>8</target>
+        </configuration>
       </plugin>
     </plugins>
   </build>
