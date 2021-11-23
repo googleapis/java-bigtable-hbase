@@ -24,6 +24,10 @@ import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
+import javassist.Modifier;
+import javassist.util.proxy.MethodFilter;
+import javassist.util.proxy.MethodHandler;
+import javassist.util.proxy.ProxyFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
@@ -31,6 +35,7 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.CommonConnection;
 import org.apache.hadoop.hbase.client.Hbck;
 import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.client.RegionInfoBuilder;
@@ -83,7 +88,33 @@ public class BigtableConnection extends AbstractBigtableConnection {
   /** {@inheritDoc} */
   @Override
   public Admin getAdmin() throws IOException {
-    return new BigtableAdmin(this);
+    ProxyFactory factory = new ProxyFactory();
+    factory.setSuperclass(BigtableAdmin.class);
+    factory.setFilter(
+        new MethodFilter() {
+          @Override
+          public boolean isHandled(Method method) {
+            return Modifier.isAbstract(method.getModifiers());
+          }
+        });
+
+    MethodHandler handler =
+        new MethodHandler() {
+          @Override
+          public Object invoke(Object self, Method thisMethod, Method proceed, Object[] args)
+              throws Throwable {
+            throw new UnsupportedOperationException(thisMethod.getName());
+          }
+        };
+    try {
+      Admin admin =
+          (Admin)
+              factory.create(
+                  new Class<?>[] {CommonConnection.class}, new CommonConnection[] {this}, handler);
+      return admin;
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
   }
 
   /** {@inheritDoc} */

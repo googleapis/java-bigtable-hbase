@@ -142,6 +142,11 @@ limitations under the License.
       <groupId>org.threeten</groupId>
       <artifactId>threetenbp</artifactId>
     </dependency>
+    <dependency>
+      <groupId>javassist</groupId>
+      <artifactId>javassist</artifactId>
+      <version>3.12.1.GA</version>
+    </dependency>
 
     <!-- Test dependencies-->
     <dependency>

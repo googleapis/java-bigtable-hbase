@@ -21,54 +21,36 @@ import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Future;
 import java.util.regex.Pattern;
-import org.apache.hadoop.hbase.CacheEvictionStats;
+import javassist.Modifier;
+import javassist.util.proxy.MethodFilter;
+import javassist.util.proxy.MethodHandler;
+import javassist.util.proxy.ProxyFactory;
 import org.apache.hadoop.hbase.ClusterMetrics;
 import org.apache.hadoop.hbase.ClusterMetrics.Option;
 import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.NamespaceDescriptor;
-import org.apache.hadoop.hbase.RegionMetrics;
-import org.apache.hadoop.hbase.ServerName;
-import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
-import org.apache.hadoop.hbase.client.CompactType;
-import org.apache.hadoop.hbase.client.CompactionState;
+import org.apache.hadoop.hbase.client.CommonConnection;
 import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.client.SnapshotDescription;
 import org.apache.hadoop.hbase.client.SnapshotType;
 import org.apache.hadoop.hbase.client.TableDescriptor;
-import org.apache.hadoop.hbase.client.replication.TableCFs;
-import org.apache.hadoop.hbase.client.security.SecurityCapability;
-import org.apache.hadoop.hbase.quotas.QuotaFilter;
-import org.apache.hadoop.hbase.quotas.QuotaRetriever;
-import org.apache.hadoop.hbase.quotas.QuotaSettings;
-import org.apache.hadoop.hbase.quotas.SpaceQuotaSnapshotView;
-import org.apache.hadoop.hbase.replication.ReplicationException;
-import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
-import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
-import org.apache.hadoop.hbase.security.access.GetUserPermissionsRequest;
-import org.apache.hadoop.hbase.security.access.Permission;
-import org.apache.hadoop.hbase.security.access.UserPermission;
-import org.apache.hadoop.hbase.snapshot.HBaseSnapshotException;
-import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
-import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
@@ -77,13 +59,41 @@ import org.apache.hadoop.hbase.util.Bytes;
  * <p>For internal use only - public for technical reasons.
  */
 @InternalApi("For internal usage only")
-public class BigtableAdmin extends AbstractBigtableAdmin {
+public abstract class BigtableAdmin extends AbstractBigtableAdmin {
 
   private final BigtableAsyncAdmin asyncAdmin;
 
   public BigtableAdmin(AbstractBigtableConnection connection) throws IOException {
     super(connection);
-    asyncAdmin = new BigtableAsyncAdmin(connection);
+    ProxyFactory factory = new ProxyFactory();
+    factory.setSuperclass(BigtableAsyncAdmin.class);
+    factory.setFilter(
+        new MethodFilter() {
+          @Override
+          public boolean isHandled(Method method) {
+            return Modifier.isAbstract(method.getModifiers());
+          }
+        });
+
+    MethodHandler handler =
+        new MethodHandler() {
+          @Override
+          public Object invoke(Object self, Method thisMethod, Method proceed, Object[] args)
+              throws Throwable {
+            throw new UnsupportedOperationException(thisMethod.getName());
+          }
+        };
+    try {
+      BigtableAsyncAdmin admin =
+          (BigtableAsyncAdmin)
+              factory.create(
+                  new Class<?>[] {CommonConnection.class},
+                  new CommonConnection[] {connection},
+                  handler);
+      asyncAdmin = admin;
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
   }
 
   /** {@inheritDoc} */
@@ -149,11 +159,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
       response.add(new SnapshotDescription(backup));
     }
     return response;
-  }
-
-  @Override
-  public void deleteSnapshots(Pattern pattern) throws IOException {
-    throw new UnsupportedOperationException("use deleteSnapshot instead");
   }
 
   /**
@@ -303,18 +308,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public List<SnapshotDescription> listTableSnapshots(String tableName, String snapshotId)
-      throws IOException {
-    throw new UnsupportedOperationException("Unsupported - please use listSnapshots");
-  }
-
-  @Override
-  public List<SnapshotDescription> listTableSnapshots(Pattern tableName, Pattern snapshotName)
-      throws IOException {
-    throw new UnsupportedOperationException("Unsupported - please use listSnapshots");
-  }
-
-  @Override
   public Future<Void> modifyColumnFamilyAsync(
       TableName tableName, ColumnFamilyDescriptor columnFamily) throws IOException {
     return asyncAdmin.modifyColumnFamily(tableName, columnFamily);
@@ -365,229 +358,6 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
     return ApiFutureUtils.toCompletableFuture(
         adminClientWrapper.dropAllRowsAsync(tableName.getNameAsString()));
   }
-  /* ******* Unsupported methods *********** */
-
-  @Override
-  public boolean abortProcedure(long arg0, boolean arg1) throws IOException {
-    throw new UnsupportedOperationException("abortProcedure");
-  }
-
-  @Override
-  public Future<Boolean> abortProcedureAsync(long arg0, boolean arg1) throws IOException {
-    throw new UnsupportedOperationException("abortProcedureAsync");
-  }
-
-  @Override
-  public boolean balance() throws IOException {
-    throw new UnsupportedOperationException("balance");
-  }
-
-  @Override
-  public boolean balance(boolean arg0) throws IOException {
-    throw new UnsupportedOperationException("balance");
-  }
-
-  @Override
-  public boolean balancerSwitch(boolean arg0, boolean arg1) throws IOException {
-    throw new UnsupportedOperationException("balancerSwitch");
-  }
-
-  @Override
-  public boolean catalogJanitorSwitch(boolean arg0) throws IOException {
-    throw new UnsupportedOperationException("catalogJanitorSwitch");
-  }
-
-  @Override
-  public boolean cleanerChoreSwitch(boolean arg0) throws IOException {
-    throw new UnsupportedOperationException("cleanerChoreSwitch");
-  }
-
-  @Override
-  public void clearCompactionQueues(ServerName arg0, Set<String> arg1)
-      throws IOException, InterruptedException {
-    throw new UnsupportedOperationException("clearCompactionQueues");
-  }
-
-  @Override
-  public List<ServerName> clearDeadServers(List<ServerName> arg0) throws IOException {
-    throw new UnsupportedOperationException("clearDeadServers");
-  }
-
-  @Override
-  public void cloneSnapshot(String arg0, TableName arg1, boolean arg2)
-      throws IOException, TableExistsException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("cloneSnapshot");
-  }
-
-  @Override
-  public Future<Void> cloneSnapshotAsync(String arg0, TableName arg1)
-      throws IOException, TableExistsException {
-    throw new UnsupportedOperationException("cloneSnapshotAsync");
-  }
-
-  @Override
-  public void cloneTableSchema(TableName tableName, TableName tableName1, boolean b) {
-    throw new UnsupportedOperationException("cloneTableSchema"); // TODO
-  }
-
-  @Override
-  public boolean switchRpcThrottle(boolean enable) throws IOException {
-    throw new UnsupportedOperationException("switchRpcThrottle");
-  }
-
-  @Override
-  public boolean isRpcThrottleEnabled() throws IOException {
-    throw new UnsupportedOperationException("isRpcThrottleEnabled");
-  }
-
-  @Override
-  public boolean exceedThrottleQuotaSwitch(boolean b) throws IOException {
-    throw new UnsupportedOperationException("exceedThrottleQuotaSwitch");
-  }
-
-  @Override
-  public Map<TableName, Long> getSpaceQuotaTableSizes() throws IOException {
-    throw new UnsupportedOperationException("getSpaceQuotaTableSizes");
-  }
-
-  @Override
-  public Map<TableName, ? extends SpaceQuotaSnapshotView> getRegionServerSpaceQuotaSnapshots(
-      ServerName serverName) throws IOException {
-    throw new UnsupportedOperationException("getRegionServerSpaceQuotaSnapshots");
-  }
-
-  @Override
-  public SpaceQuotaSnapshotView getCurrentSpaceQuotaSnapshot(String namespace) throws IOException {
-    throw new UnsupportedOperationException("getCurrentSpaceQuotaSnapshot");
-  }
-
-  @Override
-  public SpaceQuotaSnapshotView getCurrentSpaceQuotaSnapshot(TableName tableName)
-      throws IOException {
-    throw new UnsupportedOperationException("getCurrentSpaceQuotaSnapshot");
-  }
-
-  @Override
-  public void grant(UserPermission userPermission, boolean mergeExistingPermissions)
-      throws IOException {
-    throw new UnsupportedOperationException("grant");
-  }
-
-  @Override
-  public void revoke(UserPermission userPermission) throws IOException {
-    throw new UnsupportedOperationException("revoke");
-  }
-
-  @Override
-  public List<UserPermission> getUserPermissions(
-      GetUserPermissionsRequest getUserPermissionsRequest) throws IOException {
-    throw new UnsupportedOperationException("getUserPermissions");
-  }
-
-  @Override
-  public List<Boolean> hasUserPermissions(String userName, List<Permission> permissions)
-      throws IOException {
-    throw new UnsupportedOperationException("hasUserPermissions");
-  }
-
-  @Override
-  public void compact(TableName arg0, CompactType arg1) throws IOException, InterruptedException {
-    throw new UnsupportedOperationException("compact");
-  }
-
-  @Override
-  public void compact(TableName arg0, byte[] arg1, CompactType arg2)
-      throws IOException, InterruptedException {
-    throw new UnsupportedOperationException("compact");
-  }
-
-  @Override
-  public Future<Void> createNamespaceAsync(NamespaceDescriptor arg0) throws IOException {
-    throw new UnsupportedOperationException("createNamespaceAsync");
-  }
-
-  @Override
-  public void decommissionRegionServers(List<ServerName> arg0, boolean arg1) throws IOException {
-    throw new UnsupportedOperationException("decommissionRegionServers");
-  }
-
-  @Override
-  public void disableTableReplication(TableName arg0) throws IOException {
-    throw new UnsupportedOperationException("disableTableReplication");
-  }
-
-  @Override
-  public void enableTableReplication(TableName arg0) throws IOException {
-    throw new UnsupportedOperationException("enableTableReplication");
-  }
-
-  @Override
-  public Future<Void> enableReplicationPeerAsync(String s) {
-    throw new UnsupportedOperationException("enableTableReplication");
-  }
-
-  @Override
-  public Future<Void> disableReplicationPeerAsync(String s) {
-    throw new UnsupportedOperationException("disableReplicationPeerAsync");
-  }
-
-  @Override
-  public byte[] execProcedureWithReturn(String arg0, String arg1, Map<String, String> arg2)
-      throws IOException {
-    throw new UnsupportedOperationException("execProcedureWithReturn");
-  }
-
-  @Override
-  public CompactionState getCompactionState(TableName arg0) throws IOException {
-    throw new UnsupportedOperationException("getCompactionState");
-  }
-
-  @Override
-  public CompactionState getCompactionState(TableName arg0, CompactType arg1) throws IOException {
-    throw new UnsupportedOperationException("getCompactionState");
-  }
-
-  @Override
-  public CompactionState getCompactionStateForRegion(byte[] arg0) throws IOException {
-    throw new UnsupportedOperationException("getCompactionStateForRegion");
-  }
-
-  @Override
-  public long getLastMajorCompactionTimestamp(TableName arg0) throws IOException {
-    throw new UnsupportedOperationException("getLastMajorCompactionTimestamp");
-  }
-
-  @Override
-  public long getLastMajorCompactionTimestampForRegion(byte[] arg0) throws IOException {
-    throw new UnsupportedOperationException("getLastMajorCompactionTimestamp");
-  }
-
-  @Override
-  public String getLocks() throws IOException {
-    // TODO : new in 2.0
-    throw new UnsupportedOperationException("getLocks");
-  }
-
-  @Override
-  public String getProcedures() throws IOException {
-    // TODO : new in 2.0
-    throw new UnsupportedOperationException("getProcedures");
-  }
-
-  @Override
-  public QuotaRetriever getQuotaRetriever(QuotaFilter arg0) throws IOException {
-    throw new UnsupportedOperationException("getQuotaRetriever");
-  }
-
-  @Override
-  public List<RegionInfo> getRegions(ServerName arg0) throws IOException {
-    throw new UnsupportedOperationException("getRegions");
-  }
-
-  @Override
-  public void flushRegionServer(ServerName serverName) throws IOException {
-    throw new UnsupportedOperationException("flushRegionServer");
-  }
 
   @Override
   public List<RegionInfo> getRegions(TableName tableName) throws IOException {
@@ -599,270 +369,8 @@ public class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   @Override
-  public List<SecurityCapability> getSecurityCapabilities() throws IOException {
-    throw new UnsupportedOperationException("getSecurityCapabilities");
-  }
-
-  @Override
-  public boolean isBalancerEnabled() throws IOException {
-    throw new UnsupportedOperationException("isBalancerEnabled");
-  }
-
-  @Override
-  public boolean isCleanerChoreEnabled() throws IOException {
-    throw new UnsupportedOperationException("isCleanerChoreEnabled");
-  }
-
-  @Override
-  public boolean isMasterInMaintenanceMode() throws IOException {
-    throw new UnsupportedOperationException("isMasterInMaintenanceMode");
-  }
-
-  @Override
-  public boolean isNormalizerEnabled() throws IOException {
-    throw new UnsupportedOperationException("isNormalizerEnabled");
-  }
-
-  @Override
-  public boolean isSnapshotFinished(SnapshotDescription arg0)
-      throws IOException, HBaseSnapshotException, UnknownSnapshotException {
-    throw new UnsupportedOperationException("isSnapshotFinished");
-  }
-
-  @Override
-  public List<ServerName> listDeadServers() throws IOException {
-    throw new UnsupportedOperationException("listDeadServers");
-  }
-
-  @Override
-  public List<ServerName> listDecommissionedRegionServers() throws IOException {
-    throw new UnsupportedOperationException("listDecommissionedRegionServers");
-  }
-
-  @Override
-  public List<TableCFs> listReplicatedTableCFs() throws IOException {
-    throw new UnsupportedOperationException("listReplicatedTableCFs");
-  }
-
-  @Override
-  public void majorCompact(TableName arg0, CompactType arg1)
-      throws IOException, InterruptedException {
-    throw new UnsupportedOperationException("majorCompact"); // TODO
-  }
-
-  @Override
-  public void majorCompact(TableName arg0, byte[] arg1, CompactType arg2)
-      throws IOException, InterruptedException {
-    throw new UnsupportedOperationException("majorCompact"); // TODO
-  }
-
-  @Override
-  public Map<ServerName, Boolean> compactionSwitch(
-      boolean switchState, List<String> serverNamesList) throws IOException {
-    throw new UnsupportedOperationException("compactionSwitch");
-  }
-
-  @Override
-  public Future<Void> mergeRegionsAsync(byte[][] arg0, boolean arg1) throws IOException {
-    throw new UnsupportedOperationException("mergeRegionsAsync"); // TODO
-  }
-
-  @Override
-  public Future<Void> splitRegionAsync(byte[] regionName) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync");
-  }
-
-  @Override
-  public Future<Void> mergeRegionsAsync(byte[] arg0, byte[] arg1, boolean arg2) throws IOException {
-    throw new UnsupportedOperationException("mergeRegionsAsync"); // TODO
-  }
-
-  @Override
-  public Future<Void> modifyNamespaceAsync(NamespaceDescriptor arg0) throws IOException {
-    throw new UnsupportedOperationException("modifyNamespaceAsync"); // TODO
-  }
-
-  @Override
-  public boolean normalize() throws IOException {
-    throw new UnsupportedOperationException("normalize"); // TODO
-  }
-
-  @Override
-  public boolean normalizerSwitch(boolean arg0) throws IOException {
-    throw new UnsupportedOperationException("normalizerSwitch"); // TODO
-  }
-
-  @Override
-  public void recommissionRegionServer(ServerName arg0, List<byte[]> arg1) throws IOException {
-    throw new UnsupportedOperationException("recommissionRegionServer"); // TODO
-  }
-
-  @Override
-  public void restoreSnapshot(String arg0, boolean arg1, boolean arg2)
-      throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshot"); // TODO
-  }
-
-  @Override
-  public Future<Void> restoreSnapshotAsync(String arg0)
-      throws IOException, RestoreSnapshotException {
-    throw new UnsupportedOperationException("restoreSnapshotAsync"); // TODO
-  }
-
-  @Override
-  public int runCatalogJanitor() throws IOException {
-    throw new UnsupportedOperationException("runCatalogJanitor"); // TODO
-  }
-
-  @Override
-  public boolean runCleanerChore() throws IOException {
-    throw new UnsupportedOperationException("runCleanerChore"); // TODO
-  }
-
-  @Override
-  public void setQuota(QuotaSettings arg0) throws IOException {
-    throw new UnsupportedOperationException("setQuota"); // TODO
-  }
-
-  @Override
-  public Future<Void> splitRegionAsync(byte[] arg0, byte[] arg1) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
-  }
-
-  @Override
-  public void addReplicationPeer(String arg0, ReplicationPeerConfig arg1, boolean arg2)
-      throws IOException {
-    throw new UnsupportedOperationException("addReplicationPeer"); // TODO
-  }
-
-  @Override
-  public Future<Void> addReplicationPeerAsync(String peerId, ReplicationPeerConfig peerConfig) {
-    throw new UnsupportedOperationException("addReplicationPeerAsync"); // TODO
-  }
-
-  @Override
-  public Future<Void> addReplicationPeerAsync(
-      String s, ReplicationPeerConfig replicationPeerConfig, boolean b) {
-    throw new UnsupportedOperationException("addReplicationPeerAsync"); // TODO
-  }
-
-  @Override
-  public void appendReplicationPeerTableCFs(String arg0, Map<TableName, List<String>> arg1)
-      throws ReplicationException, IOException {
-    throw new UnsupportedOperationException("appendReplicationPeerTableCFs"); // TODO
-  }
-
-  @Override
-  public CacheEvictionStats clearBlockCache(TableName arg0) throws IOException {
-    throw new UnsupportedOperationException("clearBlockCache"); // TODOv
-  }
-
-  @Override
-  public void compactRegionServer(ServerName arg0) throws IOException {
-    throw new UnsupportedOperationException("splitRegionAsync"); // TODO
-  }
-
-  @Override
-  public void disableReplicationPeer(String arg0) throws IOException {
-    throw new UnsupportedOperationException("disableReplicationPeer"); // TODO
-  }
-
-  @Override
-  public void enableReplicationPeer(String arg0) throws IOException {
-    throw new UnsupportedOperationException("enableReplicationPeer"); // TODO
-  }
-
-  @Override
   public ClusterMetrics getClusterMetrics(EnumSet<Option> arg0) throws IOException {
     return getClusterStatus(); // TODO
-  }
-
-  @Override
-  public List<QuotaSettings> getQuota(QuotaFilter arg0) throws IOException {
-    throw new UnsupportedOperationException("getQuota"); // TODO
-  }
-
-  @Override
-  public List<RegionMetrics> getRegionMetrics(ServerName arg0, TableName arg1) throws IOException {
-    throw new UnsupportedOperationException("getRegionMetrics"); // TODO
-  }
-
-  @Override
-  public ReplicationPeerConfig getReplicationPeerConfig(String arg0) throws IOException {
-    throw new UnsupportedOperationException("getReplicationPeerConfig"); // TODO
-  }
-
-  @Override
-  public boolean isMergeEnabled() throws IOException {
-    throw new UnsupportedOperationException("isMergeEnabled"); // TODO
-  }
-
-  @Override
-  public boolean isSplitEnabled() throws IOException {
-    throw new UnsupportedOperationException("isSplitEnabled"); // TODO
-  }
-
-  @Override
-  public List<ReplicationPeerDescription> listReplicationPeers() throws IOException {
-    throw new UnsupportedOperationException("listReplicationPeers"); // TODO
-  }
-
-  @Override
-  public List<ReplicationPeerDescription> listReplicationPeers(Pattern arg0) throws IOException {
-    throw new UnsupportedOperationException("listReplicationPeers"); // TODO
-  }
-
-  @Override
-  public void majorCompactRegionServer(ServerName arg0) throws IOException {
-    throw new UnsupportedOperationException("majorCompactRegionServer"); // TODO
-  }
-
-  @Override
-  public void move(byte[] encodedRegionName) throws IOException {
-    throw new UnsupportedOperationException("move");
-  }
-
-  @Override
-  public void move(byte[] encodedRegionName, ServerName destServerName) throws IOException {
-    throw new UnsupportedOperationException("move");
-  }
-
-  @Override
-  public boolean mergeSwitch(boolean arg0, boolean arg1) throws IOException {
-    throw new UnsupportedOperationException("mergeSwitch"); // TODO
-  }
-
-  @Override
-  public void removeReplicationPeer(String arg0) throws IOException {
-    throw new UnsupportedOperationException("removeReplicationPeer"); // TODO
-  }
-
-  @Override
-  public void removeReplicationPeerTableCFs(String arg0, Map<TableName, List<String>> arg1)
-      throws ReplicationException, IOException {
-    throw new UnsupportedOperationException("removeReplicationPeerTableCFs"); // TODO
-  }
-
-  @Override
-  public Future<Void> removeReplicationPeerAsync(String s) {
-    throw new UnsupportedOperationException("removeReplicationPeerAsync"); // TODO
-  }
-
-  @Override
-  public boolean splitSwitch(boolean arg0, boolean arg1) throws IOException {
-    throw new UnsupportedOperationException("splitSwitch"); // TODO
-  }
-
-  @Override
-  public void updateReplicationPeerConfig(String arg0, ReplicationPeerConfig arg1)
-      throws IOException {
-    throw new UnsupportedOperationException("updateReplicationPeerConfig"); // TODO
-  }
-
-  @Override
-  public Future<Void> updateReplicationPeerConfigAsync(
-      String s, ReplicationPeerConfig replicationPeerConfig) {
-    throw new UnsupportedOperationException("updateReplicationPeerConfigAsync"); // TODO
   }
 
   @Override
