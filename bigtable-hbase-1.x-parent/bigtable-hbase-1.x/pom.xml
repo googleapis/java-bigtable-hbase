@@ -146,6 +146,11 @@ limitations under the License.
       <artifactId>grpc-google-cloud-bigtable-v2</artifactId>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>javassist</groupId>
+      <artifactId>javassist</artifactId>
+      <version>3.12.1.GA</version>
+    </dependency>
 
     <!-- Test dependencies-->
     <dependency>
