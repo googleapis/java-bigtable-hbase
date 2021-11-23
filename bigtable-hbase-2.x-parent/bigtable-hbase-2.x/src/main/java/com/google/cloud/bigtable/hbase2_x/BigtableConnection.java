@@ -110,7 +110,7 @@ public class BigtableConnection extends AbstractBigtableConnection {
       Admin admin =
           (Admin)
               factory.create(
-                  new Class<?>[] {CommonConnection.class}, new CommonConnection[] {this}, handler);
+                  new Class<?>[] {AbstractBigtableConnection.class}, new AbstractBigtableConnection[] {this}, handler);
       return admin;
     } catch (Exception e) {
       throw new IOException(e);
