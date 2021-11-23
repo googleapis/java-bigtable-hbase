@@ -35,7 +35,6 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.CommonConnection;
 import org.apache.hadoop.hbase.client.Hbck;
 import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.client.RegionInfoBuilder;
@@ -110,7 +109,9 @@ public class BigtableConnection extends AbstractBigtableConnection {
       Admin admin =
           (Admin)
               factory.create(
-                  new Class<?>[] {AbstractBigtableConnection.class}, new AbstractBigtableConnection[] {this}, handler);
+                  new Class<?>[] {AbstractBigtableConnection.class},
+                  new AbstractBigtableConnection[] {this},
+                  handler);
       return admin;
     } catch (Exception e) {
       throw new IOException(e);
