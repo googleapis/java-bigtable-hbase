@@ -39,6 +39,7 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AdvancedScanResultConsumer;
 import org.apache.hadoop.hbase.client.AsyncAdminBuilder;
+import org.apache.hadoop.hbase.client.AsyncBufferedMutator;
 import org.apache.hadoop.hbase.client.AsyncBufferedMutatorBuilder;
 import org.apache.hadoop.hbase.client.AsyncConnection;
 import org.apache.hadoop.hbase.client.AsyncTable;
@@ -175,6 +176,19 @@ public class MirroringAsyncConnection implements AsyncConnection {
   }
 
   @Override
+  public AsyncBufferedMutatorBuilder getBufferedMutatorBuilder(TableName tableName) {
+    return new MirroringAsyncBufferedMutatorBuilder(
+        this.primaryConnection.getBufferedMutatorBuilder(tableName),
+        this.secondaryConnection.getBufferedMutatorBuilder(tableName));
+  }
+
+  @Override
+  public AsyncBufferedMutatorBuilder getBufferedMutatorBuilder(
+      TableName tableName, ExecutorService executorService) {
+    return getBufferedMutatorBuilder(tableName);
+  }
+
+  @Override
   public AsyncTableRegionLocator getRegionLocator(TableName tableName) {
     throw new UnsupportedOperationException();
   }
@@ -195,17 +209,6 @@ public class MirroringAsyncConnection implements AsyncConnection {
   }
 
   @Override
-  public AsyncBufferedMutatorBuilder getBufferedMutatorBuilder(TableName tableName) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public AsyncBufferedMutatorBuilder getBufferedMutatorBuilder(
-      TableName tableName, ExecutorService executorService) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public CompletableFuture<Hbck> getHbck() {
     throw new UnsupportedOperationException();
   }
@@ -216,7 +219,7 @@ public class MirroringAsyncConnection implements AsyncConnection {
   }
 
   private class MirroringAsyncTableBuilder<C extends ScanResultConsumerBase>
-      implements AsyncTableBuilder<C> {
+      extends BuilderParameterSetter<AsyncTableBuilder<C>> implements AsyncTableBuilder<C> {
     private final AsyncTableBuilder<C> primaryTableBuilder;
     private final AsyncTableBuilder<C> secondaryTableBuilder;
 
@@ -228,7 +231,7 @@ public class MirroringAsyncConnection implements AsyncConnection {
 
     @Override
     public AsyncTable<C> build() {
-      return new MirroringAsyncTable<C>(
+      return new MirroringAsyncTable<>(
           this.primaryTableBuilder.build(),
           this.secondaryTableBuilder.build(),
           mismatchDetector,
@@ -240,102 +243,204 @@ public class MirroringAsyncConnection implements AsyncConnection {
           executorService);
     }
 
-    private AsyncTableBuilder<C> setTimeParameter(
-        long timeAmount,
-        TimeUnit timeUnit,
-        BiFunction<Long, TimeUnit, AsyncTableBuilder<C>> primaryFunction,
-        BiFunction<Long, TimeUnit, AsyncTableBuilder<C>> secondaryFunction) {
-      primaryFunction.apply(timeAmount, timeUnit);
-      secondaryFunction.apply(timeAmount, timeUnit);
-      return this;
-    }
-
-    private AsyncTableBuilder<C> setIntegerParameter(
-        int value,
-        Function<Integer, AsyncTableBuilder<C>> primaryFunction,
-        Function<Integer, AsyncTableBuilder<C>> secondaryFunction) {
-      primaryFunction.apply(value);
-      secondaryFunction.apply(value);
-      return this;
-    }
-
     @Override
     public AsyncTableBuilder<C> setOperationTimeout(long timeout, TimeUnit unit) {
-      return setTimeParameter(
+      setTimeParameter(
           timeout,
           unit,
           this.primaryTableBuilder::setOperationTimeout,
           this.secondaryTableBuilder::setOperationTimeout);
+      return this;
     }
 
     @Override
     public AsyncTableBuilder<C> setScanTimeout(long timeout, TimeUnit unit) {
-      return setTimeParameter(
+      setTimeParameter(
           timeout,
           unit,
           this.primaryTableBuilder::setScanTimeout,
           this.secondaryTableBuilder::setScanTimeout);
+      return this;
     }
 
     @Override
     public AsyncTableBuilder<C> setRpcTimeout(long timeout, TimeUnit unit) {
-      return setTimeParameter(
+      setTimeParameter(
           timeout,
           unit,
           this.primaryTableBuilder::setRpcTimeout,
           this.secondaryTableBuilder::setRpcTimeout);
+      return this;
     }
 
     @Override
     public AsyncTableBuilder<C> setReadRpcTimeout(long timeout, TimeUnit unit) {
-      return setTimeParameter(
+      setTimeParameter(
           timeout,
           unit,
           this.primaryTableBuilder::setReadRpcTimeout,
           this.secondaryTableBuilder::setReadRpcTimeout);
+      return this;
     }
 
     @Override
     public AsyncTableBuilder<C> setWriteRpcTimeout(long timeout, TimeUnit unit) {
-      return setTimeParameter(
+      setTimeParameter(
           timeout,
           unit,
           this.primaryTableBuilder::setWriteRpcTimeout,
           this.secondaryTableBuilder::setWriteRpcTimeout);
+      return this;
     }
 
     @Override
     public AsyncTableBuilder<C> setRetryPause(long pause, TimeUnit unit) {
-      return setTimeParameter(
+      setTimeParameter(
           pause,
           unit,
           this.primaryTableBuilder::setRetryPause,
           this.secondaryTableBuilder::setRetryPause);
+      return this;
     }
 
     @Override
     public AsyncTableBuilder<C> setRetryPauseForCQTBE(long pause, TimeUnit unit) {
-      return setTimeParameter(
+      setTimeParameter(
           pause,
           unit,
           this.primaryTableBuilder::setRetryPauseForCQTBE,
           this.secondaryTableBuilder::setRetryPauseForCQTBE);
+      return this;
     }
 
     @Override
     public AsyncTableBuilder<C> setMaxAttempts(int maxAttempts) {
-      return setIntegerParameter(
+      setIntegerParameter(
           maxAttempts,
           this.primaryTableBuilder::setMaxAttempts,
           this.secondaryTableBuilder::setMaxAttempts);
+      return this;
     }
 
     @Override
     public AsyncTableBuilder<C> setStartLogErrorsCnt(int maxRetries) {
-      return setIntegerParameter(
+      setIntegerParameter(
           maxRetries,
           this.primaryTableBuilder::setStartLogErrorsCnt,
           this.secondaryTableBuilder::setStartLogErrorsCnt);
+      return this;
+    }
+  }
+
+  private class MirroringAsyncBufferedMutatorBuilder
+      extends BuilderParameterSetter<AsyncBufferedMutatorBuilder>
+      implements AsyncBufferedMutatorBuilder {
+    private final AsyncBufferedMutatorBuilder primaryMutatorBuilder;
+    private final AsyncBufferedMutatorBuilder secondaryMutatorBuilder;
+
+    public MirroringAsyncBufferedMutatorBuilder(
+        AsyncBufferedMutatorBuilder primaryMutatorBuilder,
+        AsyncBufferedMutatorBuilder secondaryMutatorBuilder) {
+      this.primaryMutatorBuilder = primaryMutatorBuilder;
+      this.secondaryMutatorBuilder = secondaryMutatorBuilder;
+    }
+
+    @Override
+    public AsyncBufferedMutator build() {
+      return new MirroringAsyncBufferedMutator(
+          this.primaryMutatorBuilder.build(),
+          this.secondaryMutatorBuilder.build(),
+          flowController,
+          secondaryWriteErrorConsumer);
+    }
+
+    @Override
+    public AsyncBufferedMutatorBuilder setOperationTimeout(long timeout, TimeUnit unit) {
+      setTimeParameter(
+          timeout,
+          unit,
+          this.primaryMutatorBuilder::setOperationTimeout,
+          this.secondaryMutatorBuilder::setOperationTimeout);
+      return this;
+    }
+
+    @Override
+    public AsyncBufferedMutatorBuilder setRpcTimeout(long timeout, TimeUnit unit) {
+      setTimeParameter(
+          timeout,
+          unit,
+          this.primaryMutatorBuilder::setRpcTimeout,
+          this.secondaryMutatorBuilder::setRpcTimeout);
+      return this;
+    }
+
+    @Override
+    public AsyncBufferedMutatorBuilder setRetryPause(long pause, TimeUnit unit) {
+      setTimeParameter(
+          pause,
+          unit,
+          this.primaryMutatorBuilder::setRetryPause,
+          this.secondaryMutatorBuilder::setRetryPause);
+      return this;
+    }
+
+    @Override
+    public AsyncBufferedMutatorBuilder setWriteBufferSize(long writeBufferSize) {
+      setLongParameter(
+          writeBufferSize,
+          this.primaryMutatorBuilder::setWriteBufferSize,
+          this.secondaryMutatorBuilder::setWriteBufferSize);
+      return this;
+    }
+
+    @Override
+    public AsyncBufferedMutatorBuilder setMaxAttempts(int maxAttempts) {
+      setIntegerParameter(
+          maxAttempts,
+          this.primaryMutatorBuilder::setMaxAttempts,
+          this.secondaryMutatorBuilder::setMaxAttempts);
+      return this;
+    }
+
+    @Override
+    public AsyncBufferedMutatorBuilder setStartLogErrorsCnt(int startLogErrorsCnt) {
+      setIntegerParameter(
+          startLogErrorsCnt,
+          this.primaryMutatorBuilder::setStartLogErrorsCnt,
+          this.secondaryMutatorBuilder::setStartLogErrorsCnt);
+      return this;
+    }
+
+    @Override
+    public AsyncBufferedMutatorBuilder setMaxKeyValueSize(int maxKeyValueSize) {
+      setIntegerParameter(
+          maxKeyValueSize,
+          this.primaryMutatorBuilder::setMaxKeyValueSize,
+          this.secondaryMutatorBuilder::setMaxKeyValueSize);
+      return this;
+    }
+  }
+
+  private static class BuilderParameterSetter<T> {
+    protected void setTimeParameter(
+        long timeAmount,
+        TimeUnit timeUnit,
+        BiFunction<Long, TimeUnit, T> primaryFunction,
+        BiFunction<Long, TimeUnit, T> secondaryFunction) {
+      primaryFunction.apply(timeAmount, timeUnit);
+      secondaryFunction.apply(timeAmount, timeUnit);
+    }
+
+    protected void setIntegerParameter(
+        int value, Function<Integer, T> primaryFunction, Function<Integer, T> secondaryFunction) {
+      primaryFunction.apply(value);
+      secondaryFunction.apply(value);
+    }
+
+    protected void setLongParameter(
+        long value, Function<Long, T> primaryFunction, Function<Long, T> secondaryFunction) {
+      primaryFunction.apply(value);
+      secondaryFunction.apply(value);
     }
   }
 }
