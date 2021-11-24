@@ -159,6 +159,7 @@ limitations under the License.
                     <exclude>META-INF/NOTICE</exclude>
                     <exclude>META-INF/DEPENDENCIES</exclude>
                     <exclude>META-INF/NOTICE.txt</exclude>
+                    <exclude>META-INF/versions/9/module-info.class</exclude>
                   </excludes>
                 </filter>
               </filters>
@@ -332,8 +333,8 @@ limitations under the License.
                   <shadedPattern>com.google.bigtable.repackaged.javax.annotation</shadedPattern>
                 </relocation>
                 <relocation>
-                  <pattern>javassist</pattern>
-                  <shadedPattern>com.google.bigtable.repackaged.javassist</shadedPattern>
+                  <pattern>net.bytebuddy</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.net.bytebuddy</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>

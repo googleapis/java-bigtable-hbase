@@ -34,8 +34,6 @@ import com.google.cloud.bigtable.hbase2_x.BigtableAsyncTable;
 import com.google.cloud.bigtable.hbase2_x.BigtableAsyncTableRegionLocator;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -45,10 +43,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import javassist.Modifier;
-import javassist.util.proxy.MethodFilter;
-import javassist.util.proxy.MethodHandler;
-import javassist.util.proxy.ProxyFactory;
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.implementation.InvocationHandlerAdapter;
+import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.matcher.ElementMatchers;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
@@ -177,38 +176,28 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
       @Override
       public AsyncAdmin build() {
         try {
-          ProxyFactory factory = new ProxyFactory();
-          factory.setSuperclass(BigtableAsyncAdmin.class);
-          factory.setFilter(
-              new MethodFilter() {
-                @Override
-                public boolean isHandled(Method method) {
-                  return Modifier.isAbstract(method.getModifiers());
-                }
-              });
-
-          MethodHandler handler =
-              new MethodHandler() {
-                @Override
-                public Object invoke(Object self, Method thisMethod, Method proceed, Object[] args)
-                    throws Throwable {
-                  throw new UnsupportedOperationException(thisMethod.getName());
-                }
-              };
-          try {
-            AsyncAdmin admin =
-                (AsyncAdmin)
-                    factory.create(
-                        new Class<?>[] {CommonConnection.class},
-                        new CommonConnection[] {BigtableAsyncConnection.this},
-                        handler);
-            return admin;
-          } catch (Exception e) {
-            throw new IOException(e);
-          }
-        } catch (IOException e) {
+          BigtableAsyncAdmin admin =
+              new ByteBuddy()
+                  .subclass(BigtableAsyncAdmin.class)
+                  .defineConstructor(Visibility.PUBLIC)
+                  .intercept(
+                      MethodCall.invoke(
+                              BigtableAsyncAdmin.class.getDeclaredConstructor(
+                                  CommonConnection.class))
+                          .with(BigtableAsyncConnection.this))
+                  .method(ElementMatchers.isAbstract())
+                  .intercept(
+                      InvocationHandlerAdapter.of(
+                          new AbstractBigtableAdmin.UnsupportedOperationsHandler()))
+                  .make()
+                  .load(BigtableAsyncAdmin.class.getClassLoader())
+                  .getLoaded()
+                  .getDeclaredConstructor()
+                  .newInstance();
+          return admin;
+        } catch (Exception e) {
           LOG.error("failed to build BigtableAsyncAdmin", e);
-          throw new UncheckedIOException("failed to build BigtableAsyncAdmin", e);
+          throw new RuntimeException("failed to build BigtableAsyncAdmin", e);
         }
       }
     };

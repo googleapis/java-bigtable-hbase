@@ -20,18 +20,19 @@ import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import javassist.Modifier;
-import javassist.util.proxy.MethodFilter;
-import javassist.util.proxy.MethodHandler;
-import javassist.util.proxy.ProxyFactory;
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.implementation.InvocationHandlerAdapter;
+import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.matcher.ElementMatchers;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.CommonConnection;
@@ -64,29 +65,24 @@ public class BigtableConnection extends AbstractBigtableConnection {
   /** {@inheritDoc} */
   @Override
   public Admin getAdmin() throws IOException {
-    ProxyFactory factory = new ProxyFactory();
-    factory.setSuperclass(BigtableAdmin.class);
-    factory.setFilter(
-        new MethodFilter() {
-          @Override
-          public boolean isHandled(Method method) {
-            return Modifier.isAbstract(method.getModifiers());
-          }
-        });
-
-    MethodHandler handler =
-        new MethodHandler() {
-          @Override
-          public Object invoke(Object self, Method thisMethod, Method proceed, Object[] args)
-              throws Throwable {
-            throw new UnsupportedOperationException(thisMethod.getName());
-          }
-        };
     try {
-      Admin admin =
-          (Admin)
-              factory.create(
-                  new Class<?>[] {CommonConnection.class}, new CommonConnection[] {this}, handler);
+      BigtableAdmin admin =
+          new ByteBuddy()
+              .subclass(BigtableAdmin.class)
+              .defineConstructor(Visibility.PUBLIC)
+              .intercept(
+                  MethodCall.invoke(
+                          BigtableAdmin.class.getDeclaredConstructor(CommonConnection.class))
+                      .with(this))
+              .method(ElementMatchers.isAbstract())
+              .intercept(
+                  InvocationHandlerAdapter.of(
+                      new AbstractBigtableAdmin.UnsupportedOperationsHandler()))
+              .make()
+              .load(BigtableAdmin.class.getClassLoader())
+              .getLoaded()
+              .getDeclaredConstructor()
+              .newInstance();
       return admin;
     } catch (Exception e) {
       throw new IOException(e);
