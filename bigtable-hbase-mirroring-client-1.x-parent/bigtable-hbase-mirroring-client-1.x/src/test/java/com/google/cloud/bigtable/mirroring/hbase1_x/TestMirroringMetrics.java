@@ -101,7 +101,7 @@ public class TestMirroringMetrics {
                 primaryTable,
                 secondaryTable,
                 this.executorServiceRule.executorService,
-                new DefaultMismatchDetector(tracer),
+                new DefaultMismatchDetector(tracer, 32),
                 flowController,
                 new SecondaryWriteErrorConsumerWithMetrics(
                     tracer, mock(SecondaryWriteErrorConsumer.class)),

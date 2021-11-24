@@ -98,6 +98,13 @@ public class MirroringConfigurationHelper {
       "google.bigtable.mirroring.write-error-log.serializer.impl";
 
   /**
+   * Integer value representing how many first bytes of binary values (such as row) should be
+   * converted to hex and then logged in case of error. Defaults to 32.
+   */
+  public static final String MIRRORING_WRITE_ERROR_LOG_MAX_BINARY_VALUE_LENGTH =
+      "google.bigtable.mirroring.write-error-log.max-binary-value-bytes-logged";
+
+  /**
    * Integer value representing percentage of read operations performed on primary database that
    * should be verified against secondary. Each call to {@link Table#get(Get)}, {@link
    * Table#get(List)}, {@link Table#exists(Get)}, {@link Table#existsAll(List)} {@link

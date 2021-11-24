@@ -52,9 +52,15 @@ public class MirroringSpanConstants {
           "Count of errors on secondary database.",
           "1");
 
+  public static final MeasureLong READ_MATCHES =
+      MeasureLong.create(
+          "com/google/cloud/bigtable/mirroring/read_verification/matches",
+          "Count of successfully verified reads.",
+          "1");
+
   public static final MeasureLong READ_MISMATCHES =
       MeasureLong.create(
-          "com/google/cloud/bigtable/mirroring/mismatch/read",
+          "com/google/cloud/bigtable/mirroring/read_verification/mismatches",
           "Count of read mismatches detected.",
           "1");
 

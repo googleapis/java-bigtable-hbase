@@ -101,7 +101,9 @@ public class MirroringAsyncConnection implements AsyncConnection {
                 this.configuration.mirroringOptions));
     this.mismatchDetector =
         ReflectionConstructor.construct(
-            this.configuration.mirroringOptions.mismatchDetectorClass, this.mirroringTracer);
+            this.configuration.mirroringOptions.mismatchDetectorClass,
+            this.mirroringTracer,
+            this.configuration.mirroringOptions.maxLoggedBinaryValueLength);
 
     Logger failedWritesLogger =
         new Logger(

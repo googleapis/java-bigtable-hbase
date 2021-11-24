@@ -103,7 +103,9 @@ public class MirroringConnection implements Connection {
                 this.configuration.mirroringOptions));
     this.mismatchDetector =
         ReflectionConstructor.construct(
-            this.configuration.mirroringOptions.mismatchDetectorClass, this.mirroringTracer);
+            this.configuration.mirroringOptions.mismatchDetectorClass,
+            this.mirroringTracer,
+            configuration.mirroringOptions.maxLoggedBinaryValueLength);
 
     this.failedWritesLogger =
         new Logger(

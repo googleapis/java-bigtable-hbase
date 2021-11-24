@@ -19,6 +19,7 @@ import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetric
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.OPERATION_KEY;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.PRIMARY_ERRORS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.PRIMARY_LATENCY;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.READ_MATCHES;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.READ_MISMATCHES;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.SECONDARY_ERRORS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.SECONDARY_LATENCY;
@@ -116,6 +117,15 @@ public class MirroringMetricsViews {
           SUM,
           ImmutableList.of(OPERATION_KEY));
 
+  /** {@link View} for Mirroring client's secondary read mismatches. */
+  private static final View READ_MATCH_VIEW =
+      View.create(
+          View.Name.create("cloud.google.com/java/mirroring/read_match"),
+          "Detected read matches count.",
+          READ_MATCHES,
+          SUM,
+          ImmutableList.of(OPERATION_KEY));
+
   private static final ImmutableSet<View> MIRRORING_CLIENT_VIEWS_SET =
       ImmutableSet.of(
           PRIMARY_OPERATION_LATENCY_VIEW,
@@ -123,6 +133,7 @@ public class MirroringMetricsViews {
           SECONDARY_OPERATION_LATENCY_VIEW,
           SECONDARY_OPERATION_ERROR_VIEW,
           MIRRORING_OPERATION_LATENCY_VIEW,
+          READ_MATCH_VIEW,
           READ_MISMATCH_VIEW,
           SECONDARY_WRITE_ERROR_VIEW);
 

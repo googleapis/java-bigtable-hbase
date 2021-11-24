@@ -25,6 +25,7 @@ import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfig
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_SYNCHRONOUS_WRITES;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_WRITE_ERROR_CONSUMER_CLASS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_WRITE_ERROR_LOG_APPENDER_CLASS;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_WRITE_ERROR_LOG_MAX_BINARY_VALUE_LENGTH;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_WRITE_ERROR_LOG_SERIALIZER_CLASS;
 
 import com.google.api.core.InternalApi;
@@ -45,6 +46,7 @@ public class MirroringOptions {
   public final int flowControllerMaxUsedBytes;
   public final long bufferedMutatorBytesToFlush;
   public final String writeErrorConsumerClass;
+  public final int maxLoggedBinaryValueLength;
   public final int readSamplingRate;
 
   public final String writeErrorLogAppenderClass;
@@ -85,6 +87,8 @@ public class MirroringOptions {
     this.writeErrorLogSerializerClass =
         configuration.get(
             MIRRORING_WRITE_ERROR_LOG_SERIALIZER_CLASS, DefaultSerializer.class.getCanonicalName());
+    this.maxLoggedBinaryValueLength =
+        configuration.getInt(MIRRORING_WRITE_ERROR_LOG_MAX_BINARY_VALUE_LENGTH, 32);
     this.performWritesConcurrently = configuration.getBoolean(MIRRORING_CONCURRENT_WRITES, false);
     this.waitForSecondaryWrites = configuration.getBoolean(MIRRORING_SYNCHRONOUS_WRITES, false);
 
