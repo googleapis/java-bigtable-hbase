@@ -20,8 +20,8 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.Mirro
 public class SlowMismatchDetector extends TestMismatchDetector {
   public static int sleepTime = 1000;
 
-  public SlowMismatchDetector(MirroringTracer tracer) {
-    super(tracer);
+  public SlowMismatchDetector(MirroringTracer tracer, Integer i) {
+    super(tracer, i);
   }
 
   @Override

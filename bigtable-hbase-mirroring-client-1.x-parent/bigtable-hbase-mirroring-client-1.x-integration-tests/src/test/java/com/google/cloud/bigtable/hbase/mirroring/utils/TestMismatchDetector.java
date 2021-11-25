@@ -28,7 +28,7 @@ public class TestMismatchDetector implements MismatchDetector {
   private final MismatchDetectorCounter mismatchCounter = MismatchDetectorCounter.getInstance();
   private final MirroringTracer tracer;
 
-  public TestMismatchDetector(MirroringTracer tracer) {
+  public TestMismatchDetector(MirroringTracer tracer, Integer ignored) {
     this.tracer = tracer;
   }
 
