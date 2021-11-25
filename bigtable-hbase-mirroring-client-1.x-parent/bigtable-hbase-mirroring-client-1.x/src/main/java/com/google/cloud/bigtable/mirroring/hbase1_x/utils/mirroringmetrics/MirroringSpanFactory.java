@@ -15,11 +15,13 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics;
 
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.FLOW_CONTROL_LATENCY;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.MIRRORING_LATENCY;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.PRIMARY_ERRORS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.PRIMARY_LATENCY;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.SECONDARY_ERRORS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.SECONDARY_LATENCY;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.SECONDARY_WRITE_ERROR_HANDLER_LATENCY;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.WriteOperationFutureCallback;
@@ -40,6 +42,12 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
+/**
+ * Used to create named spans for tracing (using {@link #tracer}) and recording metrics related to
+ * those spans (using {@link #mirroringMetricsRecorder}).
+ *
+ * <p>Created by {@link MirroringTracer}.
+ */
 @InternalApi("For internal usage only")
 public class MirroringSpanFactory {
   private final Tracer tracer;
@@ -110,37 +118,35 @@ public class MirroringSpanFactory {
   }
 
   public <T> T wrapPrimaryOperation(
-      CallableThrowingIOException<T> operationRunner, HBaseOperation operationName)
-      throws IOException {
+      CallableThrowingIOException<T> operations, HBaseOperation operationName) throws IOException {
     try {
-      return wrapPrimaryOperationAndMeasure(operationRunner, operationName);
+      return wrapPrimaryOperationAndMeasure(operations, operationName);
     } catch (InterruptedException e) {
-      assert false;
-      throw new IllegalStateException();
+      throw new IllegalStateException(
+          "CallableThrowingIOException shouldn't throw InterruptedException.");
     }
   }
 
   public <T> void wrapPrimaryOperation(
-      CallableThrowingIOAndInterruptedException<T> operationRunner, HBaseOperation operationName)
+      CallableThrowingIOAndInterruptedException<T> operations, HBaseOperation operationName)
       throws IOException, InterruptedException {
-    wrapPrimaryOperationAndMeasure(operationRunner, operationName);
+    wrapPrimaryOperationAndMeasure(operations, operationName);
   }
 
   public <T> T wrapSecondaryOperation(
-      CallableThrowingIOException<T> operationRunner, HBaseOperation operationName)
-      throws IOException {
+      CallableThrowingIOException<T> operations, HBaseOperation operationName) throws IOException {
     try {
-      return wrapSecondaryOperationAndMeasure(operationRunner, operationName);
+      return wrapSecondaryOperationAndMeasure(operations, operationName);
     } catch (InterruptedException e) {
-      assert false;
-      throw new IllegalStateException();
+      throw new IllegalStateException(
+          "CallableThrowingIOException shouldn't throw InterruptedException.");
     }
   }
 
   public <T> T wrapSecondaryOperation(
-      CallableThrowingIOAndInterruptedException<T> operationRunner, HBaseOperation operationName)
+      CallableThrowingIOAndInterruptedException<T> operations, HBaseOperation operationName)
       throws IOException, InterruptedException {
-    return wrapSecondaryOperationAndMeasure(operationRunner, operationName);
+    return wrapSecondaryOperationAndMeasure(operations, operationName);
   }
 
   public <T> FutureCallback<T> wrapReadVerificationCallback(final FutureCallback<T> callback) {
@@ -163,6 +169,8 @@ public class MirroringSpanFactory {
 
   public <T> WriteOperationFutureCallback<T> wrapWriteOperationCallback(
       final WriteOperationFutureCallback<T> callback) {
+    // WriteOperationFutureCallback already defines always empty `onSuccess` method, no need to wrap
+    // it.
     return new WriteOperationFutureCallback<T>() {
       @Override
       public void onFailure(Throwable throwable) {
@@ -174,7 +182,7 @@ public class MirroringSpanFactory {
   }
 
   public Scope flowControlScope() {
-    return flowControlSpanBuilder().startScopedSpan();
+    return new StopwatchScope(flowControlSpanBuilder().startScopedSpan(), FLOW_CONTROL_LATENCY);
   }
 
   public Scope verificationScope() {
@@ -182,7 +190,8 @@ public class MirroringSpanFactory {
   }
 
   public Scope writeErrorScope() {
-    return tracer.spanBuilder("writeErrors").startScopedSpan();
+    return new StopwatchScope(
+        tracer.spanBuilder("writeErrors").startScopedSpan(), SECONDARY_WRITE_ERROR_HANDLER_LATENCY);
   }
 
   public Scope operationScope(HBaseOperation name) {
@@ -202,21 +211,17 @@ public class MirroringSpanFactory {
   }
 
   private <T> T wrapPrimaryOperationAndMeasure(
-      CallableThrowingIOAndInterruptedException<T> operationRunner, HBaseOperation operationName)
+      CallableThrowingIOAndInterruptedException<T> operations, HBaseOperation operationName)
       throws IOException, InterruptedException {
     return wrapOperationAndMeasure(
-        operationRunner,
-        PRIMARY_LATENCY,
-        PRIMARY_ERRORS,
-        this.primaryOperationScope(),
-        operationName);
+        operations, PRIMARY_LATENCY, PRIMARY_ERRORS, this.primaryOperationScope(), operationName);
   }
 
   private <T> T wrapSecondaryOperationAndMeasure(
-      CallableThrowingIOAndInterruptedException<T> operationRunner, HBaseOperation operationName)
+      CallableThrowingIOAndInterruptedException<T> operations, HBaseOperation operationName)
       throws IOException, InterruptedException {
     return wrapOperationAndMeasure(
-        operationRunner,
+        operations,
         SECONDARY_LATENCY,
         SECONDARY_ERRORS,
         this.secondaryOperationsScope(),
@@ -224,7 +229,7 @@ public class MirroringSpanFactory {
   }
 
   private <T> T wrapOperationAndMeasure(
-      CallableThrowingIOAndInterruptedException<T> operationRunner,
+      CallableThrowingIOAndInterruptedException<T> operations,
       MeasureLong latencyMeasure,
       MeasureLong errorMeasure,
       Scope scope,
@@ -235,8 +240,8 @@ public class MirroringSpanFactory {
     Stopwatch stopwatch = Stopwatch.createUnstarted();
     try (Scope scope1 = scope) {
       stopwatch.start();
-      return operationRunner.call();
-    } catch (IOException | InterruptedException e) {
+      return operations.call();
+    } catch (IOException | InterruptedException | RuntimeException e) {
       operationFailed = true;
       throw e;
     } finally {
@@ -280,6 +285,26 @@ public class MirroringSpanFactory {
       MirroringSpanFactory.this.mirroringMetricsRecorder.recordOperation(
           this.operation, MIRRORING_LATENCY, this.stopwatch.elapsed(TimeUnit.MILLISECONDS));
       this.scope.close();
+    }
+  }
+
+  private class StopwatchScope implements Scope {
+    private final Stopwatch stopwatch;
+    private final Scope scope;
+    private final MeasureLong measure;
+
+    public StopwatchScope(Scope scope, MeasureLong measure) {
+      this.scope = scope;
+      this.stopwatch = Stopwatch.createStarted();
+      this.measure = measure;
+    }
+
+    @Override
+    public void close() {
+      this.stopwatch.stop();
+      this.scope.close();
+      MirroringSpanFactory.this.mirroringMetricsRecorder.recordLatency(
+          this.measure, this.stopwatch.elapsed(TimeUnit.MILLISECONDS));
     }
   }
 }

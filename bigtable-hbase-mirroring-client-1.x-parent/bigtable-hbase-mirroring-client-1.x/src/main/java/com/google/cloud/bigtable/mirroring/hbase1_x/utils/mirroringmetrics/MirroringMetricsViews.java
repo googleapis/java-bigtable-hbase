@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics;
 
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.FLOW_CONTROL_LATENCY;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.MIRRORING_LATENCY;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.OPERATION_KEY;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.PRIMARY_ERRORS;
@@ -24,6 +25,7 @@ import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetric
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.SECONDARY_ERRORS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.SECONDARY_LATENCY;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.SECONDARY_WRITE_ERRORS;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.SECONDARY_WRITE_ERROR_HANDLER_LATENCY;
 
 import com.google.api.core.InternalApi;
 import com.google.common.collect.ImmutableList;
@@ -36,6 +38,8 @@ import io.opencensus.stats.BucketBoundaries;
 import io.opencensus.stats.Stats;
 import io.opencensus.stats.View;
 import io.opencensus.stats.ViewManager;
+import io.opencensus.tags.TagKey;
+import java.util.ArrayList;
 
 @InternalApi("For internal usage only")
 public class MirroringMetricsViews {
@@ -126,6 +130,24 @@ public class MirroringMetricsViews {
           SUM,
           ImmutableList.of(OPERATION_KEY));
 
+  /** {@link View} for Mirroring client's secondary write error handling latency. */
+  private static final View FLOW_CONTROL_LATENCY_VIEW =
+      View.create(
+          View.Name.create("cloud.google.com/java/mirroring/flow_control_latency"),
+          "Distribution of latency of acquiring flow controller resources.",
+          FLOW_CONTROL_LATENCY,
+          AGGREGATION_WITH_MILLIS_HISTOGRAM,
+          new ArrayList<TagKey>());
+
+  /** {@link View} for Mirroring client's secondary write error handling latency. */
+  private static final View SECONDARY_WRITE_ERROR_HANDLER_LATENCY_VIEW =
+      View.create(
+          View.Name.create("cloud.google.com/java/mirroring/secondary_write_error_handler_latency"),
+          "Distribution of secondary write error handling latency.",
+          SECONDARY_WRITE_ERROR_HANDLER_LATENCY,
+          AGGREGATION_WITH_MILLIS_HISTOGRAM,
+          new ArrayList<TagKey>());
+
   private static final ImmutableSet<View> MIRRORING_CLIENT_VIEWS_SET =
       ImmutableSet.of(
           PRIMARY_OPERATION_LATENCY_VIEW,
@@ -135,7 +157,9 @@ public class MirroringMetricsViews {
           MIRRORING_OPERATION_LATENCY_VIEW,
           READ_MATCH_VIEW,
           READ_MISMATCH_VIEW,
-          SECONDARY_WRITE_ERROR_VIEW);
+          SECONDARY_WRITE_ERROR_VIEW,
+          FLOW_CONTROL_LATENCY_VIEW,
+          SECONDARY_WRITE_ERROR_HANDLER_LATENCY_VIEW);
 
   /** Registers all Mirroring client views to OpenCensus View. */
   public static void registerMirroringClientViews() {
