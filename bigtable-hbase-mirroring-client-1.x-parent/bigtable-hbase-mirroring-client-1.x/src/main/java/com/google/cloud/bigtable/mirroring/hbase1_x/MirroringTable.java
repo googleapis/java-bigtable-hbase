@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers.canBatchBePerformedConcurrently;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers.reconcileBatchResultsConcurrent;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers.reconcileBatchResultsSequential;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.OperationUtils.emptyResult;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncTableWrapper;
@@ -32,6 +33,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.OperationUtils;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.OperationUtils.RewrittenIncrementAndAppendIndicesInfo;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.RequestScheduling;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
@@ -106,7 +108,6 @@ public class MirroringTable implements Table, ListenableCloseable {
           return o == null || o instanceof Throwable;
         }
       };
-
   protected final Table primaryTable;
   private final Table secondaryTable;
   private final AsyncTableWrapper secondaryAsyncWrapper;
@@ -246,14 +247,13 @@ public class MirroringTable implements Table, ListenableCloseable {
   public <R> void batchCallback(
       List<? extends Row> inputOperations, Object[] results, final Callback<R> callback)
       throws IOException, InterruptedException {
-    final List<? extends Row> operations = new ArrayList<>(inputOperations);
     try (Scope scope =
         this.mirroringTracer.spanFactory.operationScope(HBaseOperation.BATCH_CALLBACK)) {
       Log.trace(
           "[%s] batchCallback(operations=%s, results, callback=%s)",
-          this.getName(), operations, callback);
+          this.getName(), inputOperations, callback);
 
-      batchWithSpan(operations, results, callback);
+      batchWithSpan(inputOperations, results, callback);
     }
   }
 
@@ -509,6 +509,8 @@ public class MirroringTable implements Table, ListenableCloseable {
   public Result append(final Append append) throws IOException {
     try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.APPEND)) {
       Log.trace("[%s] append(append=%s)", this.getName(), append);
+      boolean wantsResults = append.isReturnResults();
+      append.setReturnResults(true);
 
       Result result =
           this.mirroringTracer.spanFactory.wrapPrimaryOperation(
@@ -524,7 +526,9 @@ public class MirroringTable implements Table, ListenableCloseable {
 
       scheduleSequentialWriteOperation(
           new WriteOperationInfo(put), this.secondaryAsyncWrapper.put(put));
-      return result;
+
+      // HBase's append() returns null when isReturnResults is false.
+      return wantsResults ? result : null;
     }
   }
 
@@ -532,6 +536,8 @@ public class MirroringTable implements Table, ListenableCloseable {
   public Result increment(final Increment increment) throws IOException {
     try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.INCREMENT)) {
       Log.trace("[%s] increment(increment=%s)", this.getName(), increment);
+      boolean wantsResults = increment.isReturnResults();
+      increment.setReturnResults(true);
 
       Result result =
           this.mirroringTracer.spanFactory.wrapPrimaryOperation(
@@ -547,7 +553,7 @@ public class MirroringTable implements Table, ListenableCloseable {
 
       scheduleSequentialWriteOperation(
           new WriteOperationInfo(put), this.secondaryAsyncWrapper.put(put));
-      return result;
+      return wantsResults ? result : emptyResult();
     }
   }
 
@@ -787,8 +793,9 @@ public class MirroringTable implements Table, ListenableCloseable {
       final Object[] results,
       @Nullable final Callback<R> callback)
       throws IOException, InterruptedException {
-    final List<? extends Row> operations = new ArrayList<>(inputOperations);
-    Log.trace("[%s] batch(operations=%s, results)", this.getName(), operations);
+    final RewrittenIncrementAndAppendIndicesInfo<? extends Row> actions =
+        new RewrittenIncrementAndAppendIndicesInfo<>(inputOperations);
+    Log.trace("[%s] batch(operations=%s, results)", this.getName(), actions.operations);
 
     // We store batch results in a internal variable to prevent the user from modifying it when it
     // might still be used by asynchronous secondary operation.
@@ -799,22 +806,23 @@ public class MirroringTable implements Table, ListenableCloseable {
           @Override
           public Void call() throws IOException, InterruptedException {
             if (callback == null) {
-              MirroringTable.this.primaryTable.batch(operations, internalPrimaryResults);
+              MirroringTable.this.primaryTable.batch(actions.operations, internalPrimaryResults);
             } else {
               MirroringTable.this.primaryTable.batchCallback(
-                  operations, internalPrimaryResults, callback);
+                  actions.operations, internalPrimaryResults, callback);
             }
             return null;
           }
         };
 
     try {
-      if (!this.performWritesConcurrently || !canBatchBePerformedConcurrently(operations)) {
-        sequentialBatch(internalPrimaryResults, operations, primaryOperation);
+      if (!this.performWritesConcurrently || !canBatchBePerformedConcurrently(actions.operations)) {
+        sequentialBatch(internalPrimaryResults, actions.operations, primaryOperation);
       } else {
-        concurrentBatch(internalPrimaryResults, operations, primaryOperation);
+        concurrentBatch(internalPrimaryResults, actions.operations, primaryOperation);
       }
     } finally {
+      actions.discardUnwantedResults(internalPrimaryResults);
       System.arraycopy(internalPrimaryResults, 0, results, 0, results.length);
     }
   }

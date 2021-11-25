@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase2_x;
 
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.OperationUtils.emptyResult;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.OperationUtils.makePutFromResult;
 import static com.google.cloud.bigtable.mirroring.hbase2_x.utils.AsyncRequestScheduling.reserveFlowControlResourcesThenScheduleSecondary;
 
@@ -26,6 +27,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers.FailedSuccessfulSplit;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.BatchHelpers.ReadWriteSplit;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.OperationUtils;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
@@ -75,6 +77,7 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements AsyncTable<C> {
   private final Predicate<Object> resultIsFaultyPredicate = (o) -> o instanceof Throwable;
+
   private final AsyncTable<C> primaryTable;
   private final AsyncTable<C> secondaryTable;
   private final VerificationContinuationFactory verificationContinuationFactory;
@@ -155,14 +158,22 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
 
   @Override
   public CompletableFuture<Result> append(Append append) {
-    CompletableFuture<Result> primaryFuture = this.primaryTable.append(append);
-    return mutationAsPut(primaryFuture).userNotified;
+    boolean wantsResults = append.isReturnResults();
+    CompletableFuture<Result> primaryFuture =
+        this.primaryTable.append(append.setReturnResults(true));
+    return mutationAsPut(primaryFuture)
+        .userNotified
+        .thenApply(primaryResult -> wantsResults ? primaryResult : emptyResult());
   }
 
   @Override
   public CompletableFuture<Result> increment(Increment increment) {
-    CompletableFuture<Result> primaryFuture = this.primaryTable.increment(increment);
-    return mutationAsPut(primaryFuture).userNotified;
+    boolean wantsResults = increment.isReturnResults();
+    CompletableFuture<Result> primaryFuture =
+        this.primaryTable.increment(increment.setReturnResults(true));
+    return mutationAsPut(primaryFuture)
+        .userNotified
+        .thenApply(primaryResult -> wantsResults ? primaryResult : emptyResult());
   }
 
   @Override
@@ -238,13 +249,15 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
           Function<FailedSuccessfulSplit<ActionType, SuccessfulResultType>, GeneralBatchBuilder>
               batchBuilderCreator,
           Class<SuccessfulResultType> successfulResultTypeClass) {
-    List<ActionType> actions = new ArrayList<>(userActions);
-    final int numActions = actions.size();
+    OperationUtils.RewrittenIncrementAndAppendIndicesInfo<ActionType> actions =
+        new OperationUtils.RewrittenIncrementAndAppendIndicesInfo<>(userActions);
+    final int numActions = actions.operations.size();
 
     final OperationStages<List<CompletableFuture<ResultType>>> returnedValue =
         new OperationStages<>(generateList(numActions, CompletableFuture<ResultType>::new));
 
-    final List<CompletableFuture<ResultType>> primaryFutures = primaryFunction.apply(actions);
+    final List<CompletableFuture<ResultType>> primaryFutures =
+        primaryFunction.apply(actions.operations);
     final Object[] primaryResults = new Object[numActions];
 
     BiConsumer<Integer, Throwable> primaryErrorHandler =
@@ -255,7 +268,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
               boolean skipReads = !readSampler.shouldNextReadOperationBeSampled();
               final FailedSuccessfulSplit<ActionType, SuccessfulResultType> failedSuccessfulSplit =
                   BatchHelpers.createOperationsSplit(
-                      actions,
+                      actions.operations,
                       primaryResults,
                       resultIsFaultyPredicate,
                       successfulResultTypeClass,
@@ -269,7 +282,8 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
                 // - Reads were successful but were excluded from the split due to sampling and we
                 // should forward primary results to a list returned to the user.
                 if (skipReads) {
-                  completeSuccessfulResultFutures(returnedValue.userNotified, primaryResults);
+                  completeSuccessfulResultFutures(
+                      returnedValue.userNotified, primaryResults, actions);
                 }
                 returnedValue.verificationCompleted();
                 return;
@@ -300,7 +314,8 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
 
               resourceReservationRequest.whenComplete(
                   (ignoredResourceReservation, resourceReservationError) -> {
-                    completeSuccessfulResultFutures(returnedValue.userNotified, primaryResults);
+                    completeSuccessfulResultFutures(
+                        returnedValue.userNotified, primaryResults, actions);
                     if (resourceReservationError != null) {
                       if (!successfulReadWriteSplit.writeOperations.isEmpty()) {
                         this.secondaryWriteErrorConsumer.consume(
@@ -334,8 +349,12 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
         .collect(Collectors.toCollection(ArrayList::new));
   }
 
-  private <T> void completeSuccessfulResultFutures(
-      List<CompletableFuture<T>> resultFutures, Object[] primaryResults) {
+  private <T, U extends Row> void completeSuccessfulResultFutures(
+      List<CompletableFuture<T>> resultFutures,
+      Object[] primaryResults,
+      OperationUtils.RewrittenIncrementAndAppendIndicesInfo<U>
+          rewrittenIncrementAndAppendIndicesInfo) {
+    rewrittenIncrementAndAppendIndicesInfo.discardUnwantedResults(primaryResults);
     for (int i = 0; i < primaryResults.length; i++) {
       if (!(resultIsFaultyPredicate.apply(primaryResults[i]))) {
         resultFutures.get(i).complete((T) primaryResults[i]);

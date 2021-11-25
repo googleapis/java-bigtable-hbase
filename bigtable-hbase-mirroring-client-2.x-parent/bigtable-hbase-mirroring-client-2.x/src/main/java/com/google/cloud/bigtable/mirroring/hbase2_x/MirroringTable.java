@@ -23,7 +23,10 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetecto
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 
@@ -61,5 +64,15 @@ public class MirroringTable extends com.google.cloud.bigtable.mirroring.hbase1_x
   @Override
   public boolean[] exists(List<Get> gets) throws IOException {
     return existsAll(gets);
+  }
+
+  /**
+   * HBase 1.x's {@link Table#append} returns {@code null} when {@link Append#isReturnResults} is
+   * {@code false}
+   */
+  @Override
+  public Result append(Append append) throws IOException {
+    Result result = super.append(append);
+    return result == null ? Result.create(new Cell[0]) : result;
   }
 }
