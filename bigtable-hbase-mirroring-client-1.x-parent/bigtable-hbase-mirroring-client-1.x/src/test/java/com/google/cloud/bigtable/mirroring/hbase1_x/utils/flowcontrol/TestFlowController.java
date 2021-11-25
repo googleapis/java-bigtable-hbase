@@ -47,7 +47,6 @@ public class TestFlowController {
       this.limit = limit;
     }
 
-    @Override
     public boolean canAcquireResource(RequestResourcesDescription resource) {
       if (this.futureToNotifyWhenCanAcquireResourceIsCalled != null) {
         this.futureToNotifyWhenCanAcquireResourceIsCalled.set(null);
@@ -57,10 +56,14 @@ public class TestFlowController {
     }
 
     @Override
-    public void accountAcquiredResource(RequestResourcesDescription resource) {
-      this.acquireOrdering.add(resource);
-      this.numRequestInFlight += 1;
-      this.maxInFlightRequests = Math.max(this.maxInFlightRequests, this.numRequestInFlight);
+    public boolean tryAcquireResource(RequestResourcesDescription resource) {
+      if (this.canAcquireResource(resource)) {
+        this.acquireOrdering.add(resource);
+        this.numRequestInFlight += 1;
+        this.maxInFlightRequests = Math.max(this.maxInFlightRequests, this.numRequestInFlight);
+        return true;
+      }
+      return false;
     }
 
     @Override

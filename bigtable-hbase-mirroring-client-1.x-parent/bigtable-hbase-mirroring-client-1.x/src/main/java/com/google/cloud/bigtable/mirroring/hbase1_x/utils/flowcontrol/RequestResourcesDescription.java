@@ -202,7 +202,8 @@ public class RequestResourcesDescription {
       } else if (row instanceof Get) {
         totalSize += calculateSize((Get) row);
       } else {
-        assert false;
+        throw new IllegalArgumentException(
+            String.format("calculateSize expected Mutation, RowMutations or Get, not %s.", row));
       }
     }
     return totalSize;

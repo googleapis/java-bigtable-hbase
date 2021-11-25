@@ -26,13 +26,13 @@ import org.apache.hadoop.hbase.client.Table;
  * counter by more than one, for example when calling {@link Table#get(List)}, the number of
  * elements in list is counted.
  *
- * <p>If the number of scheduled entries reaches {@link Ledger#minDifferenceToBlock} then {@link
- * #tryAcquireResource(RequestResourcesDescription)} will return false and reservation request from
- * {@link FlowController#asyncRequestResource(RequestResourcesDescription)} won't be resolved
- * immediately.
+ * <p>If the number of scheduled entries reaches {@link Ledger#outstandingRequestsThreshold} then
+ * {@link #tryAcquireResource(RequestResourcesDescription)} will return false and reservation
+ * request from {@link FlowController#asyncRequestResource(RequestResourcesDescription)} won't be
+ * resolved immediately.
  *
- * <p>Requests that want to acquire more tickets than {@link Ledger#minDifferenceToBlock} are
- * allowed to perform their actions only if all other resources were released. Along with
+ * <p>Requests that want to acquire more tickets than {@link Ledger#outstandingRequestsThreshold}
+ * are allowed to perform their actions only if all other resources were released. Along with
  * FlowController's guarantees of waking requests in order of arrival it guarantees that an
  * over-sized request will be the only running request, without any other running concurrently. It
  * also means that:
@@ -46,54 +46,64 @@ import org.apache.hadoop.hbase.client.Table;
  *
  * <p>For those reasons such requests can greatly reduce concurrency and the limit should be chosen
  * with care.
- *
- * <p>Not thread-safe.
  */
 @InternalApi("For internal usage only")
 public class RequestCountingFlowControlStrategy extends SingleQueueFlowControlStrategy {
-  public RequestCountingFlowControlStrategy(int minDifferenceToBlock, int maxUsedBytes) {
-    super(new Ledger(minDifferenceToBlock, maxUsedBytes));
+  public RequestCountingFlowControlStrategy(
+      int outstandingRequestsThreshold, int usedBytesThreshold) {
+    super(new Ledger(outstandingRequestsThreshold, usedBytesThreshold));
   }
 
   public RequestCountingFlowControlStrategy(MirroringOptions options) {
     this(options.flowControllerMaxOutstandingRequests, options.flowControllerMaxUsedBytes);
   }
 
+  /** Not thread-safe, access is synchronized by {@link SingleQueueFlowControlStrategy}. */
   private static class Ledger implements SingleQueueFlowControlStrategy.Ledger {
-    private final int maxUsedBytes;
-    private final int minDifferenceToBlock;
+    private final int usedBytesThreshold;
+    private final int outstandingRequestsThreshold;
 
     private int primaryReadsAdvantage; // = completedPrimaryReads - completedSecondaryReads
     private int usedBytes;
 
-    private Ledger(int minDifferenceToBlock, int maxUsedBytes) {
-      this.minDifferenceToBlock = minDifferenceToBlock;
-      this.maxUsedBytes = maxUsedBytes;
+    private Ledger(int outstandingRequestsThreshold, int usedBytesThreshold) {
+      this.outstandingRequestsThreshold = outstandingRequestsThreshold;
+      this.usedBytesThreshold = usedBytesThreshold;
       this.primaryReadsAdvantage = 0;
       this.usedBytes = 0;
     }
 
-    @Override
     public boolean canAcquireResource(RequestResourcesDescription requestResourcesDescription) {
       int neededEntries = requestResourcesDescription.numberOfResults;
       if (this.primaryReadsAdvantage == 0) {
         // Always allow at least one request into the flow controller, regardless of its size.
         return true;
       }
-      return this.primaryReadsAdvantage + neededEntries <= this.minDifferenceToBlock
-          && this.usedBytes + requestResourcesDescription.sizeInBytes <= this.maxUsedBytes;
+      return this.primaryReadsAdvantage + neededEntries <= this.outstandingRequestsThreshold
+          && this.usedBytes + requestResourcesDescription.sizeInBytes <= this.usedBytesThreshold;
     }
 
     @Override
-    public void accountAcquiredResource(RequestResourcesDescription requestResourcesDescription) {
-      this.primaryReadsAdvantage += requestResourcesDescription.numberOfResults;
-      this.usedBytes += requestResourcesDescription.sizeInBytes;
+    public boolean tryAcquireResource(RequestResourcesDescription requestResourcesDescription) {
+      if (this.canAcquireResource(requestResourcesDescription)) {
+        this.primaryReadsAdvantage += requestResourcesDescription.numberOfResults;
+        this.usedBytes += requestResourcesDescription.sizeInBytes;
+        return true;
+      }
+      return false;
     }
 
     @Override
     public void accountReleasedResources(RequestResourcesDescription requestResourcesDescription) {
       this.primaryReadsAdvantage -= requestResourcesDescription.numberOfResults;
       this.usedBytes -= requestResourcesDescription.sizeInBytes;
+    }
+  }
+
+  public static class Factory implements FlowControlStrategy.Factory {
+    @Override
+    public FlowControlStrategy create(MirroringOptions options) {
+      return new RequestCountingFlowControlStrategy(options);
     }
   }
 }
