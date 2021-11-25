@@ -38,41 +38,105 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 public class RequestScheduling {
   private static final Logger Log = new Logger(RequestScheduling.class);
 
-  public static <T> ListenableFuture<Void> scheduleRequestAndVerificationWithFlowControl(
+  /**
+   * This method starts supplied asynchronous operation after obtaining resource reservation from
+   * the flow controller and registers a callback to be run after the operation is finished. If the
+   * flow controller rejects the resource reservation or waiting for the reservation is interrupted,
+   * the operation is not started and user-provided {@code flowControlReservationErrorConsumer} is
+   * invoked.
+   *
+   * @param requestResourcesDescription Description of resources that should be reserved from the
+   *     flow controller.
+   * @param operation Asynchronous operation to start after obtaining resources.
+   * @param callback Callback to be called after {@code operation} completes.
+   * @param flowController Flow controller that should reserve the resources.
+   * @param mirroringTracer Tracer used for tracing flow control and callback operations.
+   * @param flowControlReservationErrorConsumer Handler that should be called if obtaining the
+   *     reservation from the flow controller fails.
+   * @return Future that will be set when the operation and callback scheduled by this operation
+   *     finish running. The future will also be set if the flow controller rejects reservation
+   *     request.
+   */
+  public static <T> ListenableFuture<Void> scheduleRequestWithCallback(
       final RequestResourcesDescription requestResourcesDescription,
-      final Supplier<ListenableFuture<T>> secondaryResultFutureSupplier,
-      final FutureCallback<T> verificationCallback,
+      final Supplier<ListenableFuture<T>> operation,
+      final FutureCallback<T> callback,
       final FlowController flowController,
-      final MirroringTracer mirroringTracer) {
-    return scheduleRequestAndVerificationWithFlowControl(
-        requestResourcesDescription,
-        secondaryResultFutureSupplier,
-        verificationCallback,
-        flowController,
-        mirroringTracer,
-        new Function<Throwable, Void>() {
+      final MirroringTracer mirroringTracer,
+      final Function<Throwable, Void> flowControlReservationErrorConsumer) {
+    final SettableFuture<Void> callbackCompletedFuture = SettableFuture.create();
+
+    final ListenableFuture<ResourceReservation> reservationRequest =
+        flowController.asyncRequestResource(requestResourcesDescription);
+
+    final ResourceReservation reservation =
+        waitForReservation(
+            reservationRequest, flowControlReservationErrorConsumer, mirroringTracer);
+
+    if (reservation == null) {
+      callbackCompletedFuture.set(null);
+      return callbackCompletedFuture;
+    }
+
+    // Creates a callback that will release the reservation and set `callbackCompletedFuture` after
+    // callback is finished.
+    FutureCallback<? super T> wrappedCallback =
+        wrapCallbackWithReleasingReservationAndCompletingFuture(
+            callback, reservation, callbackCompletedFuture, mirroringTracer);
+
+    // Start the asynchronous operation.
+    ListenableFuture<T> operationsResult = operation.get();
+
+    Futures.addCallback(operationsResult, wrappedCallback, MoreExecutors.directExecutor());
+
+    return callbackCompletedFuture;
+  }
+
+  private static <T>
+      FutureCallback<? super T> wrapCallbackWithReleasingReservationAndCompletingFuture(
+          final FutureCallback<T> callback,
+          final ResourceReservation reservation,
+          final SettableFuture<Void> verificationCompletedFuture,
+          MirroringTracer mirroringTracer) {
+    return mirroringTracer.spanFactory.wrapWithCurrentSpan(
+        new FutureCallback<T>() {
           @Override
-          public Void apply(Throwable t) {
-            return null;
+          public void onSuccess(@NullableDecl T t) {
+            try {
+              Log.trace("starting verification %s", t);
+              callback.onSuccess(t);
+              Log.trace("verification done %s", t);
+            } finally {
+              reservation.release();
+              verificationCompletedFuture.set(null);
+            }
+          }
+
+          @Override
+          public void onFailure(Throwable throwable) {
+            try {
+              callback.onFailure(throwable);
+            } finally {
+              reservation.release();
+              verificationCompletedFuture.set(null);
+            }
           }
         });
   }
 
-  public static <T> ListenableFuture<Void> scheduleRequestAndVerificationWithFlowControl(
-      final RequestResourcesDescription requestResourcesDescription,
-      final Supplier<ListenableFuture<T>> invokeOperation,
-      final FutureCallback<T> verificationCallback,
-      final FlowController flowController,
-      final MirroringTracer mirroringTracer,
-      final Function<Throwable, Void> flowControlReservationErrorConsumer) {
-    final SettableFuture<Void> verificationCompletedFuture = SettableFuture.create();
-
-    final ListenableFuture<ResourceReservation> reservationRequest =
-        flowController.asyncRequestResource(requestResourcesDescription);
-    final ResourceReservation reservation;
+  /**
+   * Waits until reservation is obtained, rejected or interrupted.
+   *
+   * @return Obtained {@link ResourceReservation} or {@code null} in case of rejection or
+   *     interruption.
+   */
+  private static ResourceReservation waitForReservation(
+      ListenableFuture<ResourceReservation> reservationRequest,
+      Function<Throwable, Void> flowControlReservationErrorConsumer,
+      MirroringTracer mirroringTracer) {
     try {
       try (Scope scope = mirroringTracer.spanFactory.flowControlScope()) {
-        reservation = reservationRequest.get();
+        return reservationRequest.get();
       }
     } catch (InterruptedException | ExecutionException e) {
       if (e instanceof InterruptedException) {
@@ -82,42 +146,10 @@ public class RequestScheduling {
       }
       FlowController.cancelRequest(reservationRequest);
 
-      verificationCompletedFuture.set(null);
-
       if (e instanceof InterruptedException) {
         Thread.currentThread().interrupt();
       }
-      return verificationCompletedFuture;
+      return null;
     }
-
-    Futures.addCallback(
-        invokeOperation.get(),
-        mirroringTracer.spanFactory.wrapWithCurrentSpan(
-            new FutureCallback<T>() {
-              @Override
-              public void onSuccess(@NullableDecl T t) {
-                try {
-                  Log.trace("starting verification %s", t);
-                  verificationCallback.onSuccess(t);
-                  Log.trace("verification done %s", t);
-                } finally {
-                  reservation.release();
-                  verificationCompletedFuture.set(null);
-                }
-              }
-
-              @Override
-              public void onFailure(Throwable throwable) {
-                try {
-                  verificationCallback.onFailure(throwable);
-                } finally {
-                  reservation.release();
-                  verificationCompletedFuture.set(null);
-                }
-              }
-            }),
-        MoreExecutors.directExecutor());
-
-    return verificationCompletedFuture;
   }
 }

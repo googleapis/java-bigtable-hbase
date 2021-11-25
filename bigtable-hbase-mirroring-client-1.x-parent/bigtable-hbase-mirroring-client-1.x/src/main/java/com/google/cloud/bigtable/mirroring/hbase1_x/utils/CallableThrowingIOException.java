@@ -17,7 +17,15 @@ package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
 
 import com.google.api.core.InternalApi;
 import java.io.IOException;
+import java.util.concurrent.Callable;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
 
+/**
+ * A specialization of {@link Callable} that tightens list of thrown exceptions to {@link
+ * IOException}, which is the only exceptions thrown by some of operations in HBase API ({@link
+ * Table#put(Put)}). Facilitates error handling when such operations are used as callbacks.
+ */
 @InternalApi("For internal usage only")
 public interface CallableThrowingIOException<T>
     extends CallableThrowingIOAndInterruptedException<T> {

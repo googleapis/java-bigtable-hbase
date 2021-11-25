@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
@@ -22,22 +24,34 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.BufferedMutatorParams;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.RegionLocator;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.security.User;
 
 public class TestConnection implements Connection {
-  public static List<Connection> mocks = new ArrayList<>();
+  public static List<Connection> connectionMocks = new ArrayList<>();
+  public static List<Table> tableMocks = new ArrayList<>();
+  public static List<ResultScanner> scannerMocks = new ArrayList<>();
   private Connection connectionMock;
 
   public TestConnection(Configuration conf, boolean managed, ExecutorService pool, User user) {
     connectionMock = mock(Connection.class);
-    mocks.add(connectionMock);
+    connectionMocks.add(connectionMock);
+  }
+
+  public static void reset() {
+    connectionMocks.clear();
+    tableMocks.clear();
+    scannerMocks.clear();
   }
 
   @Override
@@ -47,12 +61,20 @@ public class TestConnection implements Connection {
 
   @Override
   public Table getTable(TableName tableName) throws IOException {
-    return connectionMock.getTable(tableName);
+    ResultScanner scanner = mock(ResultScanner.class);
+    doReturn(Result.create(new Cell[0])).when(scanner).next();
+
+    Table table = mock(Table.class);
+    doReturn(scanner).when(table).getScanner(any(Scan.class));
+
+    scannerMocks.add(scanner);
+    tableMocks.add(table);
+    return table;
   }
 
   @Override
   public Table getTable(TableName tableName, ExecutorService executorService) throws IOException {
-    return connectionMock.getTable(tableName, executorService);
+    return getTable(tableName);
   }
 
   @Override

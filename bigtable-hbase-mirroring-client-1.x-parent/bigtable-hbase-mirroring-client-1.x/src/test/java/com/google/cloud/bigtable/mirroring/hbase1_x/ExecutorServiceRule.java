@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 
 import static org.mockito.Mockito.spy;
 
-import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -33,30 +33,50 @@ public class ExecutorServiceRule extends ExternalResource {
 
   public final int numThreads;
   public final Type type;
-  public ListeningExecutorService executorService;
+  public ExecutorService executorService;
+  public final boolean spyed;
 
-  private ExecutorServiceRule(Type type, int numThreads) {
+  private ExecutorServiceRule(Type type, int numThreads, boolean spyed) {
     this.type = type;
     this.numThreads = numThreads;
+    this.spyed = spyed;
   }
 
   public static ExecutorServiceRule singleThreadedExecutor() {
-    return new ExecutorServiceRule(Type.Single, 1);
+    return new ExecutorServiceRule(Type.Single, 1, false);
+  }
+
+  public static ExecutorServiceRule spyedSingleThreadedExecutor() {
+    return new ExecutorServiceRule(Type.Single, 1, true);
   }
 
   public static ExecutorServiceRule cachedPoolExecutor() {
-    return new ExecutorServiceRule(Type.Cached, 0);
+    return new ExecutorServiceRule(Type.Cached, 0, false);
+  }
+
+  public static ExecutorServiceRule spyedCachedPoolExecutor() {
+    return new ExecutorServiceRule(Type.Cached, 0, true);
   }
 
   public static ExecutorServiceRule fixedPoolExecutor(int numThreads) {
-    assert numThreads > 0;
-    return new ExecutorServiceRule(Type.Fixed, numThreads);
+    Preconditions.checkArgument(numThreads > 0);
+    return new ExecutorServiceRule(Type.Fixed, numThreads, false);
+  }
+
+  public static ExecutorServiceRule spyedFixedPoolExecutor(int numThreads) {
+    Preconditions.checkArgument(numThreads > 0);
+    return new ExecutorServiceRule(Type.Fixed, numThreads, true);
   }
 
   @Override
   protected void before() throws Throwable {
     super.before();
-    this.executorService = spy(MoreExecutors.listeningDecorator(createExecutor()));
+    ExecutorService executorService = createExecutor();
+    if (this.spyed) {
+      this.executorService = spy(MoreExecutors.listeningDecorator(executorService));
+    } else {
+      this.executorService = executorService;
+    }
   }
 
   private ExecutorService createExecutor() {

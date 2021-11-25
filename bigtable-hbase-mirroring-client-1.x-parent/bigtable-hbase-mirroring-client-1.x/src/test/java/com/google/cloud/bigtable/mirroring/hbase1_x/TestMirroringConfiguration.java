@@ -19,6 +19,8 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowControlStrategy;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestCountingFlowControlStrategy;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;
 import org.junit.function.ThrowingRunnable;
@@ -177,12 +179,21 @@ public class TestMirroringConfiguration {
         TestConnection.class.getCanonicalName());
     testConfiguration.set(
         MirroringConfigurationHelper.MIRRORING_SECONDARY_CONNECTION_CLASS_KEY, "test");
+
+    try {
+      new RequestCountingFlowControlStrategy(null);
+    } catch (NullPointerException ignored) {
+
+    }
+
     testConfiguration.set(
-        MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_STRATEGY_CLASS, "test-1");
+        MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_STRATEGY_FACTORY_CLASS,
+        RequestCountingFlowControlStrategy.Factory.class.getName());
 
     MirroringConfiguration configuration = new MirroringConfiguration(testConfiguration);
 
-    assertThat(configuration.mirroringOptions.flowControllerStrategyClass).isEqualTo("test-1");
+    assertThat(configuration.mirroringOptions.flowControllerStrategyFactoryClass)
+        .isEqualTo(RequestCountingFlowControlStrategy.Factory.class);
   }
 
   @Test
@@ -214,5 +225,12 @@ public class TestMirroringConfiguration {
 
     assertThat(configuration.secondaryConfiguration.get("hbase.client.connection.impl"))
         .isEqualTo(null);
+  }
+
+  public static class TestFactory implements FlowControlStrategy.Factory {
+    @Override
+    public FlowControlStrategy create(MirroringOptions options) throws Throwable {
+      return null;
+    }
   }
 }

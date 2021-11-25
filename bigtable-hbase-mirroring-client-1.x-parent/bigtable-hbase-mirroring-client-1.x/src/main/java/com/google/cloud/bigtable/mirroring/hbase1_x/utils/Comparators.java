@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.compat.CellComparatorCompat;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.reflection.ReflectionConstructor;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
@@ -28,26 +27,22 @@ public class Comparators {
   private static CellComparatorCompat cellComparator;
 
   static {
-    // Try construct 2.x compat if it is available
+    // Try to construct 2.x CellComparator compatibility wrapper if available.
     final String comparatorCompat1xImplClass =
         "com.google.cloud.bigtable.mirroring.hbase1_x.utils.compat.CellComparatorCompatImpl";
     final String comparatorCompat2xImplClass =
         "com.google.cloud.bigtable.mirroring.hbase2_x.utils.compat.CellComparatorCompatImpl";
-    String availableImplClass;
     try {
-      Class.forName(comparatorCompat2xImplClass);
-      availableImplClass = comparatorCompat2xImplClass;
-    } catch (ClassNotFoundException e) {
+      cellComparator =
+          (CellComparatorCompat) Class.forName(comparatorCompat2xImplClass).newInstance();
+    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
       try {
-        Class.forName(comparatorCompat1xImplClass);
-        availableImplClass = comparatorCompat1xImplClass;
-      } catch (ClassNotFoundException ex) {
-        assert false;
-        throw new RuntimeException(ex);
+        cellComparator =
+            (CellComparatorCompat) Class.forName(comparatorCompat1xImplClass).newInstance();
+      } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
+        throw new IllegalStateException(ex);
       }
     }
-
-    cellComparator = ReflectionConstructor.construct(availableImplClass);
   }
 
   public static boolean resultsEqual(Result result1, Result result2) {

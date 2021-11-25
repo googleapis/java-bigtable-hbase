@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController.ResourceReservation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -259,7 +260,7 @@ public class TestHelpers {
   }
 
   public static Map<Object, Object> mapOf(Object... keyValuePairs) {
-    assert keyValuePairs.length % 2 == 0;
+    Preconditions.checkArgument(keyValuePairs.length % 2 == 0);
     Map<Object, Object> mapping = new HashMap<>();
     for (int i = 0; i < keyValuePairs.length; i += 2) {
       mapping.put(keyValuePairs[i], keyValuePairs[i + 1]);

@@ -78,24 +78,24 @@ public class MirroringConfigurationHelper {
   public static final String MIRRORING_SECONDARY_CONFIG_PREFIX_KEY =
       "google.bigtable.mirroring.secondary-client.prefix";
 
-  public static final String MIRRORING_MISMATCH_DETECTOR_CLASS =
-      "google.bigtable.mirroring.mismatch-detector.impl";
+  public static final String MIRRORING_MISMATCH_DETECTOR_FACTORY_CLASS =
+      "google.bigtable.mirroring.mismatch-detector.factory-impl";
 
-  public static final String MIRRORING_FLOW_CONTROLLER_STRATEGY_CLASS =
-      "google.bigtable.mirroring.flow-controller.impl";
+  public static final String MIRRORING_FLOW_CONTROLLER_STRATEGY_FACTORY_CLASS =
+      "google.bigtable.mirroring.flow-controller.factory-impl";
 
   public static final String MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS =
       "google.bigtable.mirroring.flow-controller.max-outstanding-requests";
   public static final String MIRRORING_FLOW_CONTROLLER_MAX_USED_BYTES =
       "google.bigtable.mirroring.flow-controller.max-used-bytes";
 
-  public static final String MIRRORING_WRITE_ERROR_CONSUMER_CLASS =
-      "google.bigtable.mirroring.write-error-consumer.impl";
+  public static final String MIRRORING_WRITE_ERROR_CONSUMER_FACTORY_CLASS =
+      "google.bigtable.mirroring.write-error-consumer.factory-impl";
 
-  public static final String MIRRORING_WRITE_ERROR_LOG_APPENDER_CLASS =
-      "google.bigtable.mirroring.write-error-log.appender.impl";
-  public static final String MIRRORING_WRITE_ERROR_LOG_SERIALIZER_CLASS =
-      "google.bigtable.mirroring.write-error-log.serializer.impl";
+  public static final String MIRRORING_WRITE_ERROR_LOG_APPENDER_FACTORY_CLASS =
+      "google.bigtable.mirroring.write-error-log.appender.factory-impl";
+  public static final String MIRRORING_WRITE_ERROR_LOG_SERIALIZER_FACTORY_CLASS =
+      "google.bigtable.mirroring.write-error-log.serializer.factory-impl";
 
   /**
    * Integer value representing how many first bytes of binary values (such as row) should be
@@ -149,6 +149,40 @@ public class MirroringConfigurationHelper {
    */
   public static final String MIRRORING_SYNCHRONOUS_WRITES =
       "google.bigtable.mirroring.synchronous-writes";
+
+  /**
+   * Determines the path prefix used for generating the failed mutations log file names.
+   *
+   * <p>In default mode secondary mutations are executed asynchronously, so their status is not
+   * reported to the user. Instead, they are logged to a failed mutation log, which can be inspected
+   * manually, collected or read programatically to retry the mutations.
+   *
+   * <p>This property should not be empty. Example value: {@code
+   * "/tmp/hbase_mirroring_client_failed_mutations"}.
+   */
+  public static final String MIRRORING_FAILLOG_PREFIX_PATH_KEY =
+      "google.bigtable.mirroring.write-error-log.appender.prefix-path";
+
+  /**
+   * Maximum size of the buffer holding failed mutations before they are logged to persistent
+   * storage.
+   *
+   * <p>Defaults to {@code 20 * 1024 * 1024}.
+   */
+  public static final String MIRRORING_FAILLOG_MAX_BUFFER_SIZE_KEY =
+      "google.bigtable.mirroring.write-error-log.appender.max-buffer-size";
+
+  /**
+   * Controls the behavior of the failed mutation log on persistent storage not keeping up with
+   * writing the mutations.
+   *
+   * <p>If set to {@code true}, mutations will be dropped, otherwise they will block the thread
+   * until the storage catches up.
+   *
+   * <p>Defaults to {@code false}.
+   */
+  public static final String MIRRORING_FAILLOG_DROP_ON_OVERFLOW_KEY =
+      "google.bigtable.mirroring.write-error-log.appender.drop-on-overflow";
 
   public static void fillConnectionConfigWithClassImplementation(
       Configuration connectionConfig,

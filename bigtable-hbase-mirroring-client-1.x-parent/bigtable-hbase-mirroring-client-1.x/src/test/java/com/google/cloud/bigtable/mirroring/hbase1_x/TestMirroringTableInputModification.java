@@ -24,6 +24,7 @@ import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.setupFlow
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -32,6 +33,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
@@ -76,7 +78,7 @@ public class TestMirroringTableInputModification {
   SettableFuture<Void> secondaryOperationAllowedFuture;
 
   @Before
-  public void setUp() throws IOException, InterruptedException {
+  public void setUp() {
     setupFlowControllerMock(flowController);
     this.mirroringTable =
         spy(
@@ -90,24 +92,17 @@ public class TestMirroringTableInputModification {
                 new ReadSampler(100),
                 false,
                 false,
-                new MirroringTracer()));
-
-    mockExistsAll(this.primaryTable);
-    mockGet(this.primaryTable);
-    mockBatch(this.primaryTable);
-
-    secondaryOperationAllowedFuture = SettableFuture.create();
-
-    blockMethodCall(secondaryTable, secondaryOperationAllowedFuture)
-        .existsAll(ArgumentMatchers.<Get>anyList());
-    blockMethodCall(this.secondaryTable, secondaryOperationAllowedFuture)
-        .batch(ArgumentMatchers.<Put>anyList(), (Object[]) any());
-    blockMethodCall(this.secondaryTable, secondaryOperationAllowedFuture)
-        .get(ArgumentMatchers.<Get>anyList());
+                new MirroringTracer(),
+                mock(ReferenceCounter.class)));
+    this.secondaryOperationAllowedFuture = SettableFuture.create();
   }
 
   @Test
   public void testExistsAll() throws IOException {
+    mockExistsAll(this.primaryTable);
+    blockMethodCall(secondaryTable, secondaryOperationAllowedFuture)
+        .existsAll(ArgumentMatchers.<Get>anyList());
+
     List<Get> gets = createGets("k1", "k2", "k3");
     List<Get> inputList = new ArrayList<>(gets);
 
@@ -123,6 +118,10 @@ public class TestMirroringTableInputModification {
 
   @Test
   public void testGet() throws IOException {
+    mockGet(this.primaryTable);
+    blockMethodCall(this.secondaryTable, secondaryOperationAllowedFuture)
+        .get(ArgumentMatchers.<Get>anyList());
+
     List<Get> gets = createGets("k1", "k2", "k3");
     List<Get> inputList = new ArrayList<>(gets);
 
@@ -138,6 +137,10 @@ public class TestMirroringTableInputModification {
 
   @Test
   public void testPut() throws IOException, InterruptedException {
+    mockBatch(this.primaryTable);
+    blockMethodCall(this.secondaryTable, secondaryOperationAllowedFuture)
+        .batch(ArgumentMatchers.<Put>anyList(), (Object[]) any());
+
     List<Put> puts = Collections.singletonList(createPut("r", "f", "q", "v"));
     List<Put> inputList = new ArrayList<>(puts);
 
@@ -153,6 +156,10 @@ public class TestMirroringTableInputModification {
 
   @Test
   public void testDelete() throws IOException, InterruptedException {
+    mockBatch(this.primaryTable);
+    blockMethodCall(this.secondaryTable, secondaryOperationAllowedFuture)
+        .batch(ArgumentMatchers.<Put>anyList(), (Object[]) any());
+
     List<Delete> puts = Collections.singletonList(new Delete("r".getBytes()));
     List<Delete> inputList = new ArrayList<>(puts);
 
@@ -167,6 +174,10 @@ public class TestMirroringTableInputModification {
 
   @Test
   public void testBatch() throws IOException, InterruptedException {
+    mockBatch(this.primaryTable);
+    blockMethodCall(this.secondaryTable, secondaryOperationAllowedFuture)
+        .batch(ArgumentMatchers.<Put>anyList(), (Object[]) any());
+
     List<? extends Row> ops = Arrays.asList(new Delete("r".getBytes()), createGet("k"));
     List<? extends Row> inputList = new ArrayList<>(ops);
 
