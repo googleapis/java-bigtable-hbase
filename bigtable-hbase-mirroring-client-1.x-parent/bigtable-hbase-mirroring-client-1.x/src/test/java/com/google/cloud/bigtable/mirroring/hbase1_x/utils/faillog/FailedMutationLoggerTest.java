@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.junit.Rule;
@@ -30,18 +31,19 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 @RunWith(JUnit4.class)
-public class LoggerTest {
+public class FailedMutationLoggerTest {
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
   @Mock Serializer serializer;
   @Mock Appender appender;
 
   @Test
   public void mutationsAreSerializedAndAppended() throws Exception {
-    try (Logger logger = new Logger(appender, serializer)) {
+    try (FailedMutationLogger failedMutationLogger =
+        new FailedMutationLogger(new MirroringTracer(), appender, serializer)) {
       try {
         throw new RuntimeException("OMG!");
       } catch (RuntimeException e) {
-        logger.mutationFailed(new Put(new byte[] {'r'}), e);
+        failedMutationLogger.mutationFailed(new Put(new byte[] {'r'}), e);
       }
     }
     verify(serializer, times(1))
