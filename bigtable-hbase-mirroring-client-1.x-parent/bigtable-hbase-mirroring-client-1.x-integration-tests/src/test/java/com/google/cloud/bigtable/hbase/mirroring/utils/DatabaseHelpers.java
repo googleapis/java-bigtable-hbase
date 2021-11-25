@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.ExecutorServiceRule;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Comparators;
 import com.google.common.base.Predicate;

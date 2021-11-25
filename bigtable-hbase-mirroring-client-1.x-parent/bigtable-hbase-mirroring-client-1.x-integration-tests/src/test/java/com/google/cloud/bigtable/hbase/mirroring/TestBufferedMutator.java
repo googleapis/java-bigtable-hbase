@@ -22,17 +22,18 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConfigurationHelper;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.DatabaseHelpers;
-import com.google.cloud.bigtable.hbase.mirroring.utils.ExecutorServiceRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounter;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.PropagatingThread;
 import com.google.cloud.bigtable.hbase.mirroring.utils.TestWriteErrorConsumer;
 import com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.FailingHBaseHRegion;
 import com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.FailingHBaseHRegionRule;
+import com.google.cloud.bigtable.mirroring.hbase1_x.ExecutorServiceRule;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringOperationException;
 import com.google.common.primitives.Ints;
@@ -68,29 +69,30 @@ import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
 public class TestBufferedMutator {
-  @Parameterized.Parameters(name = "mutateConcurrently: {0}")
-  public static Object[] data() {
-    return new Object[] {false, true};
-  }
-
-  final boolean mutateConcurrently;
-
-  public TestBufferedMutator(boolean mutateConcurrently) {
-    this.mutateConcurrently = mutateConcurrently;
-  }
-
   @ClassRule public static ConnectionRule connectionRule = new ConnectionRule();
-
-  @Rule public ExecutorServiceRule executorServiceRule = new ExecutorServiceRule();
-  @Rule public FailingHBaseHRegionRule failingHBaseHRegionRule = new FailingHBaseHRegionRule();
-  public DatabaseHelpers databaseHelpers = new DatabaseHelpers(connectionRule, executorServiceRule);
+  @Rule public ExecutorServiceRule executorServiceRule = ExecutorServiceRule.cachedPoolExecutor();
+  private DatabaseHelpers databaseHelpers =
+      new DatabaseHelpers(connectionRule, executorServiceRule);
 
   @Rule
   public MismatchDetectorCounterRule mismatchDetectorCounterRule =
       new MismatchDetectorCounterRule();
 
-  static final byte[] columnFamily1 = "cf1".getBytes();
-  static final byte[] columnQualifier1 = "cq1".getBytes();
+  @Rule public FailingHBaseHRegionRule failingHBaseHRegionRule = new FailingHBaseHRegionRule();
+
+  private static final byte[] columnFamily1 = "cf1".getBytes();
+  private static final byte[] qualifier1 = "cq1".getBytes();
+
+  @Parameterized.Parameters(name = "mutateConcurrently: {0}")
+  public static Object[] data() {
+    return new Object[] {false, true};
+  }
+
+  private final boolean mutateConcurrently;
+
+  public TestBufferedMutator(boolean mutateConcurrently) {
+    this.mutateConcurrently = mutateConcurrently;
+  }
 
   private Configuration createConfiguration() {
     Configuration configuration = ConfigurationHelper.newConfiguration();
@@ -108,6 +110,10 @@ public class TestBufferedMutator {
     final int numThreads = 10;
     final int numMutationsInBatch = 100;
     final int numBatchesPerThread = 1000;
+
+    // We will run `numThreads` threads, each performing `numBatchesPerThread` batches of mutations,
+    // `numMutationsInBatch` each, using our MirroringClient. After all the operations are over we
+    // will verify if primary and secondary databases have the same contents.
 
     class WorkerThread extends PropagatingThread {
       final BufferedMutator bufferedMutator;
@@ -140,6 +146,7 @@ public class TestBufferedMutator {
     }
 
     Configuration config = this.createConfiguration();
+    // Set flow controller requests limit to high value to increase concurrency.
     config.set(MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS, "10000");
 
     TableName tableName;
@@ -204,8 +211,8 @@ public class TestBufferedMutator {
     TestWriteErrorConsumer.clearErrors();
     Configuration configuration = this.createConfiguration();
     configuration.set(
-        "google.bigtable.mirroring.write-error-consumer.impl",
-        TestWriteErrorConsumer.class.getCanonicalName());
+        "google.bigtable.mirroring.write-error-consumer.factory-impl",
+        TestWriteErrorConsumer.Factory.class.getName());
 
     TableName tableName;
     List<Throwable> flushExceptions = null;
@@ -216,7 +223,7 @@ public class TestBufferedMutator {
         for (int intRowId = 0; intRowId < 10; intRowId++) {
           byte[] rowId = Longs.toByteArray(intRowId);
           Put put = new Put(rowId, System.currentTimeMillis());
-          put.addColumn(columnFamily1, columnQualifier1, Longs.toByteArray(intRowId));
+          put.addColumn(columnFamily1, qualifier1, Longs.toByteArray(intRowId));
           bm.mutate(put);
         }
         try {
@@ -225,7 +232,7 @@ public class TestBufferedMutator {
           if (e instanceof RetriesExhaustedWithDetailsException) {
             flushExceptions = ((RetriesExhaustedWithDetailsException) e).getCauses();
           } else {
-            assert false;
+            fail();
           }
         }
       }
@@ -245,7 +252,7 @@ public class TestBufferedMutator {
               MirroringOperationException.DatabaseIdentifier.Secondary,
               ((MirroringOperationException) cause).databaseIdentifier);
         } else {
-          assert false;
+          fail();
         }
       }
     } else {
@@ -305,7 +312,7 @@ public class TestBufferedMutator {
         for (int intRowId = 0; intRowId < 10; intRowId++) {
           byte[] rowId = Longs.toByteArray(intRowId);
           Put put = new Put(rowId, System.currentTimeMillis());
-          put.addColumn(columnFamily1, columnQualifier1, Longs.toByteArray(intRowId));
+          put.addColumn(columnFamily1, qualifier1, Longs.toByteArray(intRowId));
           bm.mutate(put);
         }
         bm.flush();
@@ -335,7 +342,7 @@ public class TestBufferedMutator {
               MirroringOperationException.DatabaseIdentifier.Primary,
               ((MirroringOperationException) cause).databaseIdentifier);
         } else {
-          assert false;
+          fail();
         }
       }
       assertThat(secondaryRows).containsExactly(0L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L);

@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -116,7 +117,7 @@ public class FailingHBaseHRegion extends HRegion {
 
   public static void failMutation(byte[] row, OperationStatusCode statusCode, String message) {
     ByteBuffer byteBufferRow = ByteBuffer.wrap(row);
-    assert !fakeErrorsMap.containsKey(byteBufferRow);
+    Preconditions.checkArgument(!fakeErrorsMap.containsKey(byteBufferRow));
     fakeErrorsMap.put(byteBufferRow, new OperationStatus(statusCode, message));
   }
 

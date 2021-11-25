@@ -203,4 +203,13 @@ public class TestMismatchDetector implements MismatchDetector {
     onError(HBaseOperation.BATCH, "failed", throwable.getMessage());
     onVerificationFinished();
   }
+
+  public static class Factory implements MismatchDetector.Factory {
+
+    @Override
+    public MismatchDetector create(
+        MirroringTracer mirroringTracer, Integer maxLoggedBinaryValueLength) {
+      return new TestMismatchDetector(mirroringTracer, maxLoggedBinaryValueLength);
+    }
+  }
 }

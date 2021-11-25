@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.mirroring.utils;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 
 public class SlowMismatchDetector extends TestMismatchDetector {
   public static int sleepTime = 1000;
@@ -31,6 +32,14 @@ public class SlowMismatchDetector extends TestMismatchDetector {
       Thread.sleep(sleepTime);
     } catch (InterruptedException ignored) {
 
+    }
+  }
+
+  public static class Factory implements MismatchDetector.Factory {
+    @Override
+    public MismatchDetector create(
+        MirroringTracer mirroringTracer, Integer maxLoggedBinaryValueLength) {
+      return new SlowMismatchDetector(mirroringTracer, maxLoggedBinaryValueLength);
     }
   }
 }

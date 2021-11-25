@@ -16,14 +16,12 @@
 package com.google.cloud.bigtable.hbase.mirroring;
 
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS;
-import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_MISMATCH_DETECTOR_CLASS;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_MISMATCH_DETECTOR_FACTORY_CLASS;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.bigtable.hbase.mirroring.utils.AsyncConnectionRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConfigurationHelper;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
-import com.google.cloud.bigtable.hbase.mirroring.utils.DatabaseHelpers;
-import com.google.cloud.bigtable.hbase.mirroring.utils.ExecutorServiceRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.Helpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounter;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRule;
@@ -53,16 +51,14 @@ public class TestBlocking {
   public MismatchDetectorCounterRule mismatchDetectorCounterRule =
       new MismatchDetectorCounterRule();
 
-  @Rule public ExecutorServiceRule executorServiceRule = new ExecutorServiceRule();
-  public DatabaseHelpers databaseHelpers = new DatabaseHelpers(connectionRule, executorServiceRule);
-
   @Test
   public void testConnectionCloseBlocksUntilAllRequestsHaveBeenVerified() throws IOException {
     long beforeConnectionClose;
     long afterConnectionClose;
 
     Configuration config = ConfigurationHelper.newConfiguration();
-    config.set(MIRRORING_MISMATCH_DETECTOR_CLASS, SlowMismatchDetector.class.getCanonicalName());
+    config.set(
+        MIRRORING_MISMATCH_DETECTOR_FACTORY_CLASS, SlowMismatchDetector.Factory.class.getName());
     SlowMismatchDetector.sleepTime = 1000;
 
     TableName tableName = connectionRule.createTable(columnFamily1);
@@ -93,7 +89,8 @@ public class TestBlocking {
         ConfigurationHelper.isPrimaryHBase() && ConfigurationHelper.isUsingHBaseMiniCluster());
 
     Configuration config = ConfigurationHelper.newConfiguration();
-    config.set(MIRRORING_MISMATCH_DETECTOR_CLASS, SlowMismatchDetector.class.getCanonicalName());
+    config.set(
+        MIRRORING_MISMATCH_DETECTOR_FACTORY_CLASS, SlowMismatchDetector.Factory.class.getName());
     SlowMismatchDetector.sleepTime = 100;
     config.set(MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS, "10");
     TableName tableName = connectionRule.createTable(columnFamily1);

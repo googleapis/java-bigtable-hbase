@@ -22,13 +22,11 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.DatabaseHelpers;
-import com.google.cloud.bigtable.hbase.mirroring.utils.ExecutorServiceRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.Helpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounter;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRule;
-import com.google.cloud.bigtable.hbase.mirroring.utils.PrometheusStatsCollectionRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.PropagatingThread;
-import com.google.cloud.bigtable.hbase.mirroring.utils.ZipkinTracingRule;
+import com.google.cloud.bigtable.mirroring.hbase1_x.ExecutorServiceRule;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection;
 import com.google.common.primitives.Longs;
 import java.io.IOException;
@@ -51,22 +49,17 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class TestErrorDetection {
-  static final byte[] columnFamily1 = "cf1".getBytes();
-  static final byte[] qualifier1 = "q1".getBytes();
   @ClassRule public static ConnectionRule connectionRule = new ConnectionRule();
-  @ClassRule public static ZipkinTracingRule zipkinTracingRule = new ZipkinTracingRule();
-
-  @ClassRule
-  public static PrometheusStatsCollectionRule prometheusStatsCollectionRule =
-      new PrometheusStatsCollectionRule();
-
-  @Rule public ExecutorServiceRule executorServiceRule = new ExecutorServiceRule();
+  @Rule public ExecutorServiceRule executorServiceRule = ExecutorServiceRule.cachedPoolExecutor();
+  private DatabaseHelpers databaseHelpers =
+      new DatabaseHelpers(connectionRule, executorServiceRule);
 
   @Rule
   public MismatchDetectorCounterRule mismatchDetectorCounterRule =
       new MismatchDetectorCounterRule();
 
-  public DatabaseHelpers databaseHelpers = new DatabaseHelpers(connectionRule, executorServiceRule);
+  private static final byte[] columnFamily1 = "cf1".getBytes();
+  private static final byte[] qualifier1 = "q1".getBytes();
 
   @Test
   public void readsAndWritesArePerformed() throws IOException {

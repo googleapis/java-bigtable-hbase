@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase.mirroring.utils;
 
 import com.google.cloud.bigtable.hbase.mirroring.utils.compat.TableCreator;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.reflection.ReflectionConstructor;
 import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
@@ -94,10 +93,14 @@ public class ConnectionRule extends ExternalResource {
 
   public void createTable(Connection connection, String tableName, byte[]... columnFamilies)
       throws IOException {
-
-    TableCreator tableCreator =
-        ReflectionConstructor.construct(
-            System.getProperty("integrations.compat.table-creator-impl"));
-    tableCreator.createTable(connection, tableName, columnFamilies);
+    try {
+      TableCreator tableCreator =
+          (TableCreator)
+              Class.forName(System.getProperty("integrations.compat.table-creator-impl"))
+                  .newInstance();
+      tableCreator.createTable(connection, tableName, columnFamilies);
+    } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+      throw new IOException(e);
+    }
   }
 }
