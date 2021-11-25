@@ -95,8 +95,8 @@ public class DefaultMismatchDetector implements MismatchDetector {
       Log.debug(
           "get(row=%s) mismatch: (%s, %s)",
           new LazyBytesHexlifier(request.getRow(), maxValueBytesLogged),
-          new LazyBytesHexlifier(primary.value(), maxValueBytesLogged),
-          new LazyBytesHexlifier(secondary.value(), maxValueBytesLogged));
+          new LazyBytesHexlifier(getResultValue(primary), maxValueBytesLogged),
+          new LazyBytesHexlifier(getResultValue(secondary), maxValueBytesLogged));
       this.metricsRecorder.recordReadMismatches(HBaseOperation.GET, 1);
     }
   }
@@ -129,8 +129,8 @@ public class DefaultMismatchDetector implements MismatchDetector {
           "scan[id=%s, entriesRead=%d] mismatch: (%s, %s)",
           request.getId(),
           entriesAlreadyRead,
-          new LazyBytesHexlifier(primary.value(), maxValueBytesLogged),
-          new LazyBytesHexlifier(secondary.value(), maxValueBytesLogged));
+          new LazyBytesHexlifier(getResultValue(primary), maxValueBytesLogged),
+          new LazyBytesHexlifier(getResultValue(secondary), maxValueBytesLogged));
       this.metricsRecorder.recordReadMismatches(HBaseOperation.NEXT, 1);
     }
   }
@@ -185,9 +185,9 @@ public class DefaultMismatchDetector implements MismatchDetector {
         Log.debug(
             "%s(row=%s) mismatch: (%s, %s)",
             operationName,
-            new LazyBytesHexlifier(primary[i].getRow(), maxValueBytesLogged),
-            new LazyBytesHexlifier(primary[i].value(), maxValueBytesLogged),
-            new LazyBytesHexlifier(secondary[i].value(), maxValueBytesLogged));
+            new LazyBytesHexlifier(getResultRow(primary[i]), maxValueBytesLogged),
+            new LazyBytesHexlifier(getResultValue(primary[i]), maxValueBytesLogged),
+            new LazyBytesHexlifier(getResultValue(secondary[i]), maxValueBytesLogged));
         errors++;
       }
     }
@@ -197,6 +197,20 @@ public class DefaultMismatchDetector implements MismatchDetector {
     if (errors > 0) {
       this.metricsRecorder.recordReadMismatches(operation, errors);
     }
+  }
+
+  private byte[] getResultValue(Result primary) {
+    if (primary == null) {
+      return null;
+    }
+    return primary.value();
+  }
+
+  private byte[] getResultRow(Result result) {
+    if (result == null) {
+      return null;
+    }
+    return result.getRow();
   }
 
   // Used for logging. Overrides toString() in order to be as lazy as possible.
@@ -232,6 +246,10 @@ public class DefaultMismatchDetector implements MismatchDetector {
 
     @Override
     public String toString() {
+      if (this.bytes == null) {
+        return "null";
+      }
+
       int bytesToPrint = Math.min(this.bytes.length, maxBytesPrinted);
       if (bytesToPrint <= 0) {
         return "";
@@ -258,6 +276,13 @@ public class DefaultMismatchDetector implements MismatchDetector {
         bytesToHex(out, 0, 0, bytesToPrint);
       }
       return new String(out);
+    }
+  }
+
+  public static class Factory implements MismatchDetector.Factory {
+    @Override
+    public MismatchDetector create(MirroringTracer mirroringTracer, Integer maxValueBytesLogged) {
+      return new DefaultMismatchDetector(mirroringTracer, maxValueBytesLogged);
     }
   }
 }
