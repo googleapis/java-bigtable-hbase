@@ -22,6 +22,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringOperationException.
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.FutureCallback;
 import io.opencensus.common.Scope;
@@ -187,8 +188,8 @@ public class BatchHelpers {
       Object[] primaryResults,
       Object[] secondaryResults,
       Predicate<Object> resultIsFaultyPredicate) {
-    assert operations.size() == secondaryResults.length;
-    assert primaryResults.length == secondaryResults.length;
+    Preconditions.checkArgument(operations.size() == secondaryResults.length);
+    Preconditions.checkArgument(primaryResults.length == secondaryResults.length);
 
     List<Result> primaryMatchingReads = new ArrayList<>();
     List<Result> secondaryMatchingReads = new ArrayList<>();
@@ -290,14 +291,15 @@ public class BatchHelpers {
     }
   }
 
-  private static ExceptionDetails getExceptionDetails(Map<Row, ExceptionDetails> map, Row key) {
-    ExceptionDetails value = map.get(key);
-    if (value == null) {
-      return new ExceptionDetails(new IOException("no details"));
-    }
-    return value;
-  }
-
+  /**
+   * Analyses results of two batch operations run concurrently and gathers results into {@code
+   * outputResult} array.
+   *
+   * <p>If there were any failed operations in one of the batches a {@link
+   * RetriesExhaustedWithDetailsException} is thrown. Exceptions stored inside the thrown exception
+   * and in {@code outputResults} are marked with {@link MirroringOperationException} denoting
+   * whether operation have failed on primary, on secondary or on both databases.
+   */
   public static void reconcileBatchResultsConcurrent(
       Object[] outputResults,
       BatchData primaryBatchData,
@@ -317,7 +319,8 @@ public class BatchHelpers {
       return;
     }
 
-    assert primaryBatchData.operations.size() == secondaryBatchData.operations.size();
+    Preconditions.checkArgument(
+        primaryBatchData.operations.size() == secondaryBatchData.operations.size());
     for (int index = 0; index < primaryBatchData.operations.size(); index++) {
       Object primaryResult = primaryBatchData.results[index];
       Object secondaryResult = secondaryBatchData.results[index];
@@ -361,6 +364,15 @@ public class BatchHelpers {
     }
   }
 
+  /**
+   * Analyses results of two batch operations run sequentially (failed primary operation were not
+   * mirrored to secondary) and gathers results and errors in {@code outputResults} array.
+   *
+   * <p>If there were any failed operations in one of the batches a {@link
+   * RetriesExhaustedWithDetailsException} is thrown. Exceptions stored inside the thrown exception
+   * and in {@code outputResults} are marked with {@link MirroringOperationException} denoting
+   * whether operation have failed on primary or on secondary database.
+   */
   public static void reconcileBatchResultsSequential(
       Object[] outputResults,
       BatchData primaryBatchData,
@@ -380,7 +392,8 @@ public class BatchHelpers {
       return;
     }
 
-    assert primaryBatchData.operations.size() >= secondaryBatchData.operations.size();
+    Preconditions.checkArgument(
+        primaryBatchData.operations.size() >= secondaryBatchData.operations.size());
 
     // sizes are not equal, one or more of the following is possible
     // - primary has reads that were excluded from secondary,
@@ -420,7 +433,7 @@ public class BatchHelpers {
       }
 
       // Otherwise a successful write was excluded, which is not possible.
-      assert primaryIsRead == secondaryIsRead;
+      Preconditions.checkState(primaryIsRead == secondaryIsRead);
 
       boolean secondaryOperationFailed =
           resultIsFaultyPredicate.apply(secondaryBatchData.results[secondaryIndex]);
@@ -445,7 +458,15 @@ public class BatchHelpers {
     }
   }
 
-  public static Map<Row, ExceptionDetails> makeMapOfFailedRows(BatchData primaryBatchData) {
+  private static ExceptionDetails getExceptionDetails(Map<Row, ExceptionDetails> map, Row key) {
+    ExceptionDetails value = map.get(key);
+    if (value == null) {
+      return new ExceptionDetails(new IOException("no details"));
+    }
+    return value;
+  }
+
+  private static Map<Row, ExceptionDetails> makeMapOfFailedRows(BatchData primaryBatchData) {
     IdentityHashMap<Row, ExceptionDetails> result = new IdentityHashMap<>();
 
     if (primaryBatchData.exception == null) {
