@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
+package com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting;
 
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ReferenceCounterUtils.holdReferenceUntilCompletion;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -54,7 +55,7 @@ public class TestListenableReferenceCounter {
     ListenableReferenceCounter listenableReferenceCounter = spy(new ListenableReferenceCounter());
     SettableFuture<Void> future = SettableFuture.create();
     verify(listenableReferenceCounter, never()).incrementReferenceCount();
-    listenableReferenceCounter.holdReferenceUntilCompletion(future);
+    holdReferenceUntilCompletion(listenableReferenceCounter, future);
     verify(listenableReferenceCounter, times(1)).incrementReferenceCount();
     verify(listenableReferenceCounter, never()).decrementReferenceCount();
     future.set(null);
@@ -67,7 +68,7 @@ public class TestListenableReferenceCounter {
     ListenableReferenceCounter listenableReferenceCounter = spy(new ListenableReferenceCounter());
     SettableFuture<Void> future = SettableFuture.create();
     verify(listenableReferenceCounter, never()).incrementReferenceCount();
-    listenableReferenceCounter.holdReferenceUntilCompletion(future);
+    holdReferenceUntilCompletion(listenableReferenceCounter, future);
     verify(listenableReferenceCounter, times(1)).incrementReferenceCount();
     verify(listenableReferenceCounter, never()).decrementReferenceCount();
     future.setException(new Exception("expected"));

@@ -18,16 +18,12 @@ package com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOAndInterruptedException;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOException;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -55,23 +51,11 @@ import org.apache.hadoop.hbase.client.Table;
  * used in callbacks.
  */
 @InternalApi("For internal usage only")
-public class AsyncTableWrapper implements ListenableCloseable {
+public class AsyncTableWrapper {
   private static final Logger Log = new Logger(AsyncTableWrapper.class);
   private final Table table;
   private final ListeningExecutorService executorService;
   private final MirroringTracer mirroringTracer;
-  /**
-   * We are counting references to this object to be able to call {@link Table#close()} on
-   * underlying table in a predictable way. The reference count is increased before submitting each
-   * asynchronous task or when creating a ResultScanner, and decreased after it finishes. Moreover,
-   * this object holds an implicit self-reference, which in released in {@link #asyncClose()}.
-   *
-   * <p>In this way we are able to call Table#close() only if all scheduled tasks have finished, all
-   * scanners are closed, and #asyncClose() was called.
-   */
-  private final ListenableReferenceCounter pendingOperationsReferenceCounter;
-
-  private final SettableFuture<Void> closeResultFuture = SettableFuture.create();
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
   public AsyncTableWrapper(
@@ -79,7 +63,6 @@ public class AsyncTableWrapper implements ListenableCloseable {
     this.table = table;
     this.executorService = executorService;
     this.mirroringTracer = mirroringTracer;
-    this.pendingOperationsReferenceCounter = new ListenableReferenceCounter();
   }
 
   public Supplier<ListenableFuture<Result>> get(final Get gets) {
@@ -130,52 +113,33 @@ public class AsyncTableWrapper implements ListenableCloseable {
         HBaseOperation.EXISTS_ALL);
   }
 
-  public ListenableFuture<Void> asyncClose() {
+  public void close() throws IOException {
     if (this.closed.getAndSet(true)) {
-      return this.closeResultFuture;
+      return;
     }
 
-    this.pendingOperationsReferenceCounter.decrementReferenceCount();
-
-    this.pendingOperationsReferenceCounter
-        .getOnLastReferenceClosed()
-        .addListener(
-            this.mirroringTracer.spanFactory.wrapWithCurrentSpan(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    try {
-                      AsyncTableWrapper.this.mirroringTracer.spanFactory.wrapSecondaryOperation(
-                          new CallableThrowingIOException<Void>() {
-                            @Override
-                            public Void call() throws IOException {
-                              synchronized (table) {
-                                Log.trace("performing close()");
-                                table.close();
-                              }
-                              AsyncTableWrapper.this.closeResultFuture.set(null);
-                              return null;
-                            }
-                          },
-                          HBaseOperation.TABLE_CLOSE);
-                    } catch (IOException e) {
-                      AsyncTableWrapper.this.closeResultFuture.setException(e);
-                    } finally {
-                      Log.trace("asyncClose() completed");
-                    }
-                  }
-                }),
-            MoreExecutors.directExecutor());
-    return this.closeResultFuture;
+    try {
+      this.mirroringTracer.spanFactory.wrapSecondaryOperation(
+          new CallableThrowingIOException<Void>() {
+            @Override
+            public Void call() throws IOException {
+              synchronized (table) {
+                Log.trace("performing close()");
+                table.close();
+              }
+              return null;
+            }
+          },
+          HBaseOperation.TABLE_CLOSE);
+    } finally {
+      Log.trace("asyncClose() completed");
+    }
   }
 
   public AsyncResultScannerWrapper getScanner(Scan scan) throws IOException {
     Log.trace("getScanner(Scan)");
-    AsyncResultScannerWrapper result =
-        new AsyncResultScannerWrapper(
-            this.table.getScanner(scan), this.executorService, this.mirroringTracer);
-    this.pendingOperationsReferenceCounter.holdReferenceUntilClosing(result);
-    return result;
+    return new AsyncResultScannerWrapper(
+        this.table.getScanner(scan), this.executorService, this.mirroringTracer);
   }
 
   public <T> Supplier<ListenableFuture<T>> createSubmitTaskSupplier(
@@ -209,9 +173,7 @@ public class AsyncTableWrapper implements ListenableCloseable {
   }
 
   public <T> ListenableFuture<T> submitTask(Callable<T> task) {
-    ListenableFuture<T> future = this.executorService.submit(task);
-    this.pendingOperationsReferenceCounter.holdReferenceUntilCompletion(future);
-    return future;
+    return this.executorService.submit(task);
   }
 
   public Supplier<ListenableFuture<Void>> put(final Put put) {
@@ -291,12 +253,5 @@ public class AsyncTableWrapper implements ListenableCloseable {
           }
         },
         HBaseOperation.BATCH);
-  }
-
-  @Override
-  public void addOnCloseListener(Runnable listener) {
-    this.pendingOperationsReferenceCounter
-        .getOnLastReferenceClosed()
-        .addListener(listener, MoreExecutors.directExecutor());
   }
 }

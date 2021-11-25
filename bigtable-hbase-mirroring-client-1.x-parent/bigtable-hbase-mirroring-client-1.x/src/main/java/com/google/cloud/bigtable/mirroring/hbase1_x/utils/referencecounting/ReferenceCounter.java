@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
+package com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting;
 
 /**
- * Objects that can run registered listeners after they are closed. Facilitates reference counting
- * using {@link ListenableReferenceCounter}, objects of classes implementing this interface can be
- * used in {@link ListenableReferenceCounter#holdReferenceUntilClosing(ListenableCloseable)}, the
- * reference is decreased after the referenced object is closed.
+ * Common interface for {@link HierarchicalReferenceCounter} and {@link ListenableReferenceCounter}.
+ * Consult their documentation for description of use cases.
  */
-public interface ListenableCloseable {
-  void addOnCloseListener(Runnable listener);
+public interface ReferenceCounter {
+  void incrementReferenceCount();
+
+  void decrementReferenceCount();
 }

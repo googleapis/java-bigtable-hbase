@@ -27,11 +27,11 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.common.util.concurrent.SettableFuture;
 import java.util.ArrayList;
@@ -95,11 +95,6 @@ public class TestMirroringAsyncTableInputModification {
                 executorService));
 
     secondaryOperationAllowedFuture = SettableFuture.create();
-    blockMethodCall(secondaryTable, secondaryOperationAllowedFuture).exists(anyList());
-    blockMethodCall(secondaryTable, secondaryOperationAllowedFuture).get(anyList());
-    blockMethodCall(secondaryTable, secondaryOperationAllowedFuture).put(anyList());
-    blockMethodCall(secondaryTable, secondaryOperationAllowedFuture).delete(anyList());
-    blockMethodCall(secondaryTable, secondaryOperationAllowedFuture).batch(anyList());
 
     lenient().doAnswer(this::answerWithSuccessfulNulls).when(primaryTable).exists(anyList());
     lenient().doAnswer(this::answerWithSuccessfulNulls).when(primaryTable).get(anyList());

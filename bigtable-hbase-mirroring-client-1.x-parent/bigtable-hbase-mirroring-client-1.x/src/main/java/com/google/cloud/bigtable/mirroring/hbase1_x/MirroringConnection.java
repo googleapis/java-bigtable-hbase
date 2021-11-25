@@ -18,19 +18,16 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 import com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.MirroringBufferedMutator;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.AccumulatedExceptions;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOException;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.Appender;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.Logger;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.Serializer;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowControlStrategy;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.FailedMutationLogger;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.reflection.ReflectionConstructor;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.opencensus.common.Scope;
 import java.io.IOException;
@@ -56,11 +53,17 @@ public class MirroringConnection implements Connection {
   protected final FlowController flowController;
   protected final ExecutorService executorService;
   protected final MismatchDetector mismatchDetector;
+  /**
+   * Counter of all asynchronous operations that are using the secondary connection. Incremented
+   * when scheduling operations by underlying {@link MirroringTable} and {@link
+   * MirroringResultScanner}.
+   */
   protected final ListenableReferenceCounter referenceCounter;
+
   protected final MirroringTracer mirroringTracer;
   protected final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
   protected final ReadSampler readSampler;
-  private final Logger failedWritesLogger;
+  private final FailedMutationLogger failedMutationLogger;
   private final MirroringConfiguration configuration;
   private final Connection primaryConnection;
   private final Connection secondaryConnection;
@@ -78,7 +81,7 @@ public class MirroringConnection implements Connection {
    * are passed back to the user.
    */
   public MirroringConnection(Configuration conf, boolean managed, ExecutorService pool, User user)
-      throws IOException {
+      throws Throwable {
     // This is an always-false legacy hbase parameter.
     Preconditions.checkArgument(!managed, "Mirroring client doesn't support managed connections.");
     this.configuration = new MirroringConfiguration(conf);
@@ -98,26 +101,41 @@ public class MirroringConnection implements Connection {
     referenceCounter = new ListenableReferenceCounter();
     this.flowController =
         new FlowController(
-            ReflectionConstructor.<FlowControlStrategy>construct(
-                this.configuration.mirroringOptions.flowControllerStrategyClass,
-                this.configuration.mirroringOptions));
+            this.configuration
+                .mirroringOptions
+                .flowControllerStrategyFactoryClass
+                .newInstance()
+                .create(this.configuration.mirroringOptions));
     this.mismatchDetector =
-        ReflectionConstructor.construct(
-            this.configuration.mirroringOptions.mismatchDetectorClass,
-            this.mirroringTracer,
-            configuration.mirroringOptions.maxLoggedBinaryValueLength);
+        this.configuration
+            .mirroringOptions
+            .mismatchDetectorFactoryClass
+            .newInstance()
+            .create(
+                this.mirroringTracer, configuration.mirroringOptions.maxLoggedBinaryValueLength);
 
-    this.failedWritesLogger =
-        new Logger(
-            ReflectionConstructor.<Appender>construct(
-                this.configuration.mirroringOptions.writeErrorLogAppenderClass,
-                this.configuration.baseConfiguration),
-            ReflectionConstructor.<Serializer>construct(
-                this.configuration.mirroringOptions.writeErrorLogSerializerClass));
+    this.failedMutationLogger =
+        new FailedMutationLogger(
+            mirroringTracer,
+            this.configuration
+                .mirroringOptions
+                .faillog
+                .writeErrorLogAppenderFactoryClass
+                .newInstance()
+                .create(this.configuration.mirroringOptions.faillog),
+            this.configuration
+                .mirroringOptions
+                .faillog
+                .writeErrorLogSerializerFactoryClass
+                .newInstance()
+                .create());
 
     final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer =
-        ReflectionConstructor.construct(
-            this.configuration.mirroringOptions.writeErrorConsumerClass, this.failedWritesLogger);
+        this.configuration
+            .mirroringOptions
+            .writeErrorConsumerFactoryClass
+            .newInstance()
+            .create(this.failedMutationLogger);
 
     this.secondaryWriteErrorConsumer =
         new SecondaryWriteErrorConsumerWithMetrics(
@@ -153,20 +171,18 @@ public class MirroringConnection implements Connection {
               },
               HBaseOperation.GET_TABLE);
       Table secondaryTable = this.secondaryConnection.getTable(tableName);
-      MirroringTable table =
-          new MirroringTable(
-              primaryTable,
-              secondaryTable,
-              executorService,
-              this.mismatchDetector,
-              this.flowController,
-              this.secondaryWriteErrorConsumer,
-              this.readSampler,
-              this.performWritesConcurrently,
-              this.waitForSecondaryWrites,
-              this.mirroringTracer);
-      this.referenceCounter.holdReferenceUntilClosing(table);
-      return table;
+      return new MirroringTable(
+          primaryTable,
+          secondaryTable,
+          executorService,
+          this.mismatchDetector,
+          this.flowController,
+          this.secondaryWriteErrorConsumer,
+          this.readSampler,
+          this.performWritesConcurrently,
+          this.waitForSecondaryWrites,
+          this.mirroringTracer,
+          this.referenceCounter);
     }
   }
 
@@ -195,7 +211,7 @@ public class MirroringConnection implements Connection {
 
   @Override
   public RegionLocator getRegionLocator(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException();
+    return this.primaryConnection.getRegionLocator(tableName);
   }
 
   @Override
@@ -220,7 +236,7 @@ public class MirroringConnection implements Connection {
         throw wrapperException;
       } finally {
         try {
-          this.failedWritesLogger.close();
+          this.failedMutationLogger.close();
         } catch (Exception e) {
           throw new IOException(e);
         }
@@ -273,10 +289,12 @@ public class MirroringConnection implements Connection {
     return this.aborted.get();
   }
 
+  @VisibleForTesting
   public Connection getPrimaryConnection() {
     return this.primaryConnection;
   }
 
+  @VisibleForTesting
   public Connection getSecondaryConnection() {
     return this.secondaryConnection;
   }

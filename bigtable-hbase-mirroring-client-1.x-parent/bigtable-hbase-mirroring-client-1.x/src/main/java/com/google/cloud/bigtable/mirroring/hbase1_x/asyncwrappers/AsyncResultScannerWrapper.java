@@ -18,14 +18,11 @@ package com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringResultScanner;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOException;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import io.opencensus.common.Scope;
 import io.opencensus.trace.Span;
 import java.io.IOException;
@@ -44,7 +41,7 @@ import org.apache.hadoop.hbase.client.Scan;
  * <p>Note that next() method returns a Supplier<> as its result is used only in callbacks
  */
 @InternalApi("For internal usage only")
-public class AsyncResultScannerWrapper implements ListenableCloseable {
+public class AsyncResultScannerWrapper {
   private final MirroringTracer mirroringTracer;
   /**
    * We use this queue to ensure that asynchronous next()s are called in the same order and with the
@@ -55,25 +52,13 @@ public class AsyncResultScannerWrapper implements ListenableCloseable {
   private final ResultScanner scanner;
   private final ListeningExecutorService executorService;
   private final AtomicBoolean closed = new AtomicBoolean(false);
-  /**
-   * We are counting references to this object to be able to call {@link ResultScanner#close()} on
-   * underlying scanner in a predictable way. The reference count is increased before submitting
-   * each asynchronous task, and decreased after it finishes. Moreover, this object holds an
-   * implicit self-reference, which in released in {@link #asyncClose()}.
-   *
-   * <p>In this way we are able to call ResultScanner#close() only if all scheduled tasks have
-   * finished and #asyncClose() was called.
-   */
-  private ListenableReferenceCounter pendingOperationsReferenceCounter;
 
   public AsyncResultScannerWrapper(
       ResultScanner scanner,
       ListeningExecutorService executorService,
       MirroringTracer mirroringTracer) {
-    super();
     this.scanner = scanner;
     this.mirroringTracer = mirroringTracer;
-    this.pendingOperationsReferenceCounter = new ListenableReferenceCounter();
     this.executorService = executorService;
     this.nextContextQueue = new ConcurrentLinkedQueue<>();
   }
@@ -84,9 +69,7 @@ public class AsyncResultScannerWrapper implements ListenableCloseable {
       @Override
       public ListenableFuture<AsyncScannerVerificationPayload> get() {
         nextContextQueue.add(context);
-        ListenableFuture<AsyncScannerVerificationPayload> future = scheduleNext();
-        pendingOperationsReferenceCounter.holdReferenceUntilCompletion(future);
-        return future;
+        return scheduleNext();
       }
     };
   }
@@ -150,52 +133,24 @@ public class AsyncResultScannerWrapper implements ListenableCloseable {
     return new AsyncScannerVerificationPayload(requestContext, result);
   }
 
-  public ListenableFuture<Boolean> renewLease() {
-    return submitTask(
-        new Callable<Boolean>() {
-          @Override
-          public Boolean call() {
-            boolean result;
-            synchronized (AsyncResultScannerWrapper.this) {
-              result = scanner.renewLease();
-            }
-            return result;
-          }
-        });
+  /**
+   * This operation is thread-safe, but not asynchronous, because there is no need to invoke it
+   * asynchronously.
+   */
+  public boolean renewLease() {
+    synchronized (this) {
+      return scanner.renewLease();
+    }
   }
 
-  public ListenableFuture<Void> asyncClose() {
+  public void close() {
     if (this.closed.getAndSet(true)) {
-      return this.pendingOperationsReferenceCounter.getOnLastReferenceClosed();
+      return;
     }
 
-    this.pendingOperationsReferenceCounter.decrementReferenceCount();
-    this.pendingOperationsReferenceCounter
-        .getOnLastReferenceClosed()
-        .addListener(
-            new Runnable() {
-              @Override
-              public void run() {
-                synchronized (AsyncResultScannerWrapper.this) {
-                  scanner.close();
-                }
-              }
-            },
-            MoreExecutors.directExecutor());
-    return this.pendingOperationsReferenceCounter.getOnLastReferenceClosed();
-  }
-
-  public <T> ListenableFuture<T> submitTask(Callable<T> task) {
-    ListenableFuture<T> future = this.executorService.submit(task);
-    this.pendingOperationsReferenceCounter.holdReferenceUntilCompletion(future);
-    return future;
-  }
-
-  @Override
-  public void addOnCloseListener(Runnable listener) {
-    this.pendingOperationsReferenceCounter
-        .getOnLastReferenceClosed()
-        .addListener(listener, MoreExecutors.directExecutor());
+    synchronized (this) {
+      scanner.close();
+    }
   }
 
   /**

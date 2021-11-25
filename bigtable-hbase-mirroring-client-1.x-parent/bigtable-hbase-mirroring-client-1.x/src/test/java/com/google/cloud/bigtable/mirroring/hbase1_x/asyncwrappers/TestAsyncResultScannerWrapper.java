@@ -15,17 +15,12 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers;
 
-import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,37 +29,15 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class TestAsyncResultScannerWrapper {
   @Test
-  public void testListenersAreCalledOnClose()
-      throws InterruptedException, ExecutionException, TimeoutException {
+  public void testAsyncResultScannerWrapperClosedTwiceClosesScannerOnce() {
     ResultScanner resultScanner = mock(ResultScanner.class);
     AsyncResultScannerWrapper asyncResultScannerWrapper =
         new AsyncResultScannerWrapper(
             resultScanner,
             MoreExecutors.listeningDecorator(MoreExecutors.newDirectExecutorService()),
             new MirroringTracer());
-    final SettableFuture<Void> listenerFuture = SettableFuture.create();
-    asyncResultScannerWrapper.addOnCloseListener(
-        new Runnable() {
-          @Override
-          public void run() {
-            listenerFuture.set(null);
-          }
-        });
-    asyncResultScannerWrapper.asyncClose().get(3, TimeUnit.SECONDS);
-    assertThat(listenerFuture.get(3, TimeUnit.SECONDS)).isNull();
-  }
-
-  @Test
-  public void testAsyncResultScannerWrapperClosedTwiceClosesScannerOnce()
-      throws InterruptedException, ExecutionException, TimeoutException {
-    ResultScanner resultScanner = mock(ResultScanner.class);
-    AsyncResultScannerWrapper asyncResultScannerWrapper =
-        new AsyncResultScannerWrapper(
-            resultScanner,
-            MoreExecutors.listeningDecorator(MoreExecutors.newDirectExecutorService()),
-            new MirroringTracer());
-    asyncResultScannerWrapper.asyncClose().get(3, TimeUnit.SECONDS);
-    asyncResultScannerWrapper.asyncClose().get(3, TimeUnit.SECONDS);
+    asyncResultScannerWrapper.close();
+    asyncResultScannerWrapper.close();
     verify(resultScanner, times(1)).close();
   }
 }

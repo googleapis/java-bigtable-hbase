@@ -15,27 +15,28 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ReferenceCounterUtils.holdReferenceUntilCompletion;
+
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringTable.RequestScheduler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncResultScannerWrapper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncResultScannerWrapper.ScannerRequestContext;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.AccumulatedExceptions;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOException;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.RequestScheduling;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.HierarchicalReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import io.opencensus.common.Scope;
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -52,7 +53,7 @@ import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
  * succeeded, asynchronously on secondary `ResultScanner`.
  */
 @InternalApi("For internal usage only")
-public class MirroringResultScanner extends AbstractClientScanner implements ListenableCloseable {
+public class MirroringResultScanner extends AbstractClientScanner {
   private static final Log log = LogFactory.getLog(MirroringResultScanner.class);
   private final MirroringTracer mirroringTracer;
 
@@ -60,34 +61,44 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
   private final ResultScanner primaryResultScanner;
   private final AsyncResultScannerWrapper secondaryResultScannerWrapper;
   private final VerificationContinuationFactory verificationContinuationFactory;
-  private final ListenableReferenceCounter listenableReferenceCounter;
+  /**
+   *
+   *
+   * <ul>
+   *   <li>HBase 1.x: Counter for MirroringConnection, MirroringTable and MirroringResultScanner.
+   *   <li>HBase 2.x: Counter for MirroringAsyncConnection and MirroringResultScanner.
+   * </ul>
+   */
+  private final HierarchicalReferenceCounter referenceCounter;
+
+  private final boolean isVerificationEnabled;
+  private final RequestScheduler requestScheduler;
+
   private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final SettableFuture<Void> closedFuture = SettableFuture.create();
   /**
    * Keeps track of number of entries already read from this scanner to provide context for
    * MismatchDetectors.
    */
   private int readEntries;
 
-  private FlowController flowController;
-  private boolean isVerificationEnabled;
-
   public MirroringResultScanner(
       Scan originalScan,
       ResultScanner primaryResultScanner,
       AsyncResultScannerWrapper secondaryResultScannerWrapper,
       VerificationContinuationFactory verificationContinuationFactory,
-      FlowController flowController,
       MirroringTracer mirroringTracer,
-      boolean isVerificationEnabled) {
+      boolean isVerificationEnabled,
+      RequestScheduler requestScheduler,
+      ReferenceCounter parentReferenceCounter) {
     this.originalScan = originalScan;
     this.primaryResultScanner = primaryResultScanner;
     this.secondaryResultScannerWrapper = secondaryResultScannerWrapper;
     this.verificationContinuationFactory = verificationContinuationFactory;
-    this.listenableReferenceCounter = new ListenableReferenceCounter();
-    this.flowController = flowController;
-    this.readEntries = 0;
+    this.referenceCounter = new HierarchicalReferenceCounter(parentReferenceCounter);
+    this.requestScheduler = requestScheduler.withReferenceCounter(this.referenceCounter);
 
-    this.listenableReferenceCounter.holdReferenceUntilClosing(this.secondaryResultScannerWrapper);
+    this.readEntries = 0;
     this.mirroringTracer = mirroringTracer;
     this.isVerificationEnabled = isVerificationEnabled;
   }
@@ -156,58 +167,99 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
 
   @Override
   public void close() {
+    asyncClose();
+  }
+
+  @VisibleForTesting
+  ListenableFuture<Void> asyncClose() {
     if (this.closed.getAndSet(true)) {
-      return;
+      return this.closedFuture;
     }
+
+    // We are freeing the initial reference to current level reference counter.
+    this.referenceCounter.current.decrementReferenceCount();
+    // But we are scheduling asynchronous secondary operation and we should increment our parent's
+    // ref counter until this operation is finished.
+    holdReferenceUntilCompletion(this.referenceCounter.parent, this.closedFuture);
 
     AccumulatedExceptions exceptionsList = new AccumulatedExceptions();
     try {
       this.primaryResultScanner.close();
     } catch (RuntimeException e) {
       exceptionsList.add(e);
-    } finally {
-      try {
-        this.asyncClose();
-      } catch (RuntimeException e) {
-        log.error("Exception while scheduling this.close().", e);
-        exceptionsList.add(e);
-      }
-    }
-
-    exceptionsList.rethrowAsRuntimeExceptionIfCaptured();
-  }
-
-  @VisibleForTesting
-  ListenableFuture<Void> asyncClose() {
-    this.secondaryResultScannerWrapper.asyncClose();
-    this.listenableReferenceCounter.decrementReferenceCount();
-    return this.listenableReferenceCounter.getOnLastReferenceClosed();
-  }
-
-  @Override
-  public boolean renewLease() {
-    boolean primaryLease = this.primaryResultScanner.renewLease();
-    if (!primaryLease) {
-      return false;
     }
 
     try {
-      return this.secondaryResultScannerWrapper.renewLease().get();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      return false;
-    } catch (ExecutionException e) {
-      log.error("Execution exception in secondaryResultScannerWrapper.renewLease().", e.getCause());
-      return false;
-    } catch (Exception e) {
-      log.error("Exception while scheduling secondaryResultScannerWrapper.renewLease().", e);
-      return false;
+      // Close secondary wrapper (what will close secondary scanner) after all scheduled requests
+      // have finished.
+      this.referenceCounter
+          .current
+          .getOnLastReferenceClosed()
+          .addListener(
+              new Runnable() {
+                @Override
+                public void run() {
+                  try {
+                    secondaryResultScannerWrapper.close();
+                    closedFuture.set(null);
+                  } catch (RuntimeException e) {
+                    closedFuture.setException(e);
+                  }
+                }
+              },
+              MoreExecutors.directExecutor());
+    } catch (RuntimeException e) {
+      exceptionsList.add(e);
+    }
+
+    exceptionsList.rethrowAsRuntimeExceptionIfCaptured();
+
+    return this.closedFuture;
+  }
+
+  /**
+   * Renews the lease on primary and secondary scanners, synchronously. If any of the {@link
+   * ResultScanner#renewLease()} calls returns a {@code false} we return {@code false}. If primary
+   * {@code renewLease()} succeeds and secondary fails we still return {@code false} and leave
+   * primary with renewed lease because we have no way of cancelling it - we assume that it will be
+   * cleaned up after it expires or when scanner is closed.
+   *
+   * <p>Bigtable client doesn't support this operation and throws {@link
+   * UnsupportedOperationException}, but in fact renewing leases is not needed in Bigtable, thus
+   * whenever we encounter {@link UnsupportedOperationException} we assume that is was bigtable
+   * throwing it and it means that renewing the lease is not needed and we treat as if it returned
+   * {@code true}.
+   */
+  @Override
+  public boolean renewLease() {
+    try {
+      boolean primaryLease = this.primaryResultScanner.renewLease();
+      if (!primaryLease) {
+        return false;
+      }
+    } catch (UnsupportedOperationException e) {
+      // We assume that UnsupportedOperationExceptions are thrown by Bigtable client and Bigtable
+      // doesn't need to renew scanner's leases. We are behaving as if it returned true.
+    }
+
+    try {
+      // If secondary won't renew the lease we will return false even though primary has managed to
+      // renewed its lease. There is no way of cancelling it so we are just leaving it up to HBase
+      // to collect if after it expires again.
+      // This operation is not asynchronous because we need to forward its result and forward it
+      // to the user. Unfortunately we have to wait until mutex guarding the secondaryScanner is
+      // released.
+      return this.secondaryResultScannerWrapper.renewLease();
+    } catch (UnsupportedOperationException e) {
+      // We assume that UnsupportedOperationExceptions are thrown by Bigtable client and Bigtable
+      // doesn't need to renew scanner's leases. We are behaving as if it returned true.
+      return true;
     }
   }
 
   @Override
   public ScanMetrics getScanMetrics() {
-    throw new UnsupportedOperationException();
+    return this.primaryResultScanner.getScanMetrics();
   }
 
   private <T> void scheduleRequest(
@@ -217,19 +269,10 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
     if (!this.isVerificationEnabled) {
       return;
     }
-    this.listenableReferenceCounter.holdReferenceUntilCompletion(
-        RequestScheduling.scheduleRequestAndVerificationWithFlowControl(
-            requestResourcesDescription,
-            nextSupplier,
-            this.mirroringTracer.spanFactory.wrapReadVerificationCallback(scannerNext),
-            this.flowController,
-            this.mirroringTracer));
-  }
-
-  @Override
-  public void addOnCloseListener(Runnable listener) {
-    this.listenableReferenceCounter
-        .getOnLastReferenceClosed()
-        .addListener(listener, MoreExecutors.directExecutor());
+    // requestScheduler handles reference counting of async requests.
+    this.requestScheduler.scheduleRequestWithCallback(
+        requestResourcesDescription,
+        nextSupplier,
+        this.mirroringTracer.spanFactory.wrapReadVerificationCallback(scannerNext));
   }
 }

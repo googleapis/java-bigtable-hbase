@@ -23,6 +23,7 @@ import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.setupFlow
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -33,6 +34,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import java.io.IOException;
 import java.util.Arrays;
@@ -88,7 +90,8 @@ public class TestMirroringTableSynchronousMode {
                 new ReadSampler(100),
                 concurrent,
                 true,
-                new MirroringTracer()));
+                new MirroringTracer(),
+                mock(ReferenceCounter.class)));
   }
 
   @Test
