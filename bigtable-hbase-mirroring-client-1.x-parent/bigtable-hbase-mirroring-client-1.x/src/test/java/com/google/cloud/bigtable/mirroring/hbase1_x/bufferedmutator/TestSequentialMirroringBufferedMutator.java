@@ -17,21 +17,17 @@ package com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator;
 
 import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.blockMethodCall;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.delayMethodCall;
-import static com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.MirroringBufferedMutatorCommon.blockedFlushes;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.MirroringBufferedMutatorCommon.makeConfigurationWithFlushThreshold;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.MirroringBufferedMutatorCommon.mutateWithErrors;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.ExecutorServiceRule;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.SettableFuture;
@@ -40,7 +36,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -54,6 +49,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentMatchers;
+import org.mockito.InOrder;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
@@ -64,7 +61,8 @@ public class TestSequentialMirroringBufferedMutator {
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Rule
-  public final ExecutorServiceRule executorServiceRule = ExecutorServiceRule.cachedPoolExecutor();
+  public final ExecutorServiceRule executorServiceRule =
+      ExecutorServiceRule.spyedCachedPoolExecutor();
 
   public final MirroringBufferedMutatorCommon common = new MirroringBufferedMutatorCommon();
 
@@ -138,36 +136,35 @@ public class TestSequentialMirroringBufferedMutator {
   }
 
   @Test
-  public void testFlushesCanBeScheduledSimultaneously()
-      throws IOException, InterruptedException, TimeoutException, ExecutionException {
-    final AtomicInteger ongoingFlushes = new AtomicInteger(0);
-    final SettableFuture<Void> allFlushesStarted = SettableFuture.create();
-    final SettableFuture<Void> endFlush = SettableFuture.create();
+  public void testFlushesCanBeScheduledSimultaneouslyAndAreExecutedInOrder() throws IOException {
+    BufferedMutator bm = getBufferedMutator((long) (common.mutationSize * 0.5));
 
-    doAnswer(blockedFlushes(ongoingFlushes, allFlushesStarted, endFlush, 4))
-        .when(common.primaryBufferedMutator)
-        .flush();
+    final SettableFuture<Void> startFlush = SettableFuture.create();
+    blockMethodCall(common.primaryBufferedMutator, startFlush).flush();
 
-    BufferedMutator bm = getBufferedMutator((long) (common.mutationSize * 1.5));
+    InOrder inOrder1 = Mockito.inOrder(common.primaryBufferedMutator);
+    InOrder inOrder2 = Mockito.inOrder(common.secondaryBufferedMutator);
 
     bm.mutate(common.mutation1);
-    bm.mutate(common.mutation1);
+    bm.mutate(common.mutation2);
+    bm.mutate(common.mutation3);
+    bm.mutate(common.mutation4);
 
-    bm.mutate(common.mutation1);
-    bm.mutate(common.mutation1);
-
-    bm.mutate(common.mutation1);
-    bm.mutate(common.mutation1);
-
-    bm.mutate(common.mutation1);
-    bm.mutate(common.mutation1);
-
-    allFlushesStarted.get(3, TimeUnit.SECONDS);
-    assertThat(ongoingFlushes.get()).isEqualTo(4);
-    endFlush.set(null);
+    startFlush.set(null);
     executorServiceRule.waitForExecutor();
+
+    inOrder1.verify(common.primaryBufferedMutator).mutate(Arrays.asList(common.mutation1));
+    inOrder1.verify(common.primaryBufferedMutator).mutate(Arrays.asList(common.mutation2));
+    inOrder1.verify(common.primaryBufferedMutator).mutate(Arrays.asList(common.mutation3));
+    inOrder1.verify(common.primaryBufferedMutator).mutate(Arrays.asList(common.mutation4));
+
+    inOrder2.verify(common.secondaryBufferedMutator).mutate(Arrays.asList(common.mutation1));
+    inOrder2.verify(common.secondaryBufferedMutator).mutate(Arrays.asList(common.mutation2));
+    inOrder2.verify(common.secondaryBufferedMutator).mutate(Arrays.asList(common.mutation3));
+    inOrder2.verify(common.secondaryBufferedMutator).mutate(Arrays.asList(common.mutation4));
+
     verify(common.secondaryBufferedMutator, times(4)).mutate(ArgumentMatchers.<Mutation>anyList());
-    verify(common.resourceReservation, times(8)).release();
+    verify(common.resourceReservation, times(4)).release();
   }
 
   @Test
@@ -183,91 +180,21 @@ public class TestSequentialMirroringBufferedMutator {
 
     BufferedMutator bm = getBufferedMutator((long) (common.mutationSize * 3.5));
 
-    bm.mutate(common.mutation1);
+    try {
+      bm.mutate(common.mutation1);
+    } catch (IOException ignored) {
+
+    }
     bm.mutate(common.mutation2);
-    bm.mutate(common.mutation3);
+    try {
+      bm.mutate(common.mutation3);
+    } catch (IOException ignored) {
+
+    }
     bm.mutate(common.mutation4);
     executorServiceRule.waitForExecutor();
     verify(common.secondaryBufferedMutator, times(1))
         .mutate(Arrays.asList(common.mutation2, common.mutation4));
-  }
-
-  @Test
-  public void testErrorsReportedBySecondaryAreReportedAsWriteErrors() throws IOException {
-    doAnswer(
-            mutateWithErrors(
-                this.common.secondaryBufferedMutatorParamsCaptor,
-                common.secondaryBufferedMutator,
-                common.mutation1,
-                common.mutation3))
-        .when(common.secondaryBufferedMutator)
-        .mutate(ArgumentMatchers.<Mutation>anyList());
-
-    MirroringBufferedMutator bm = getBufferedMutator((long) (common.mutationSize * 3.5));
-
-    bm.mutate(
-        Arrays.asList(common.mutation1, common.mutation2, common.mutation3, common.mutation4));
-    executorServiceRule.waitForExecutor();
-    verify(common.secondaryBufferedMutator, times(1))
-        .mutate(
-            Arrays.asList(common.mutation1, common.mutation2, common.mutation3, common.mutation4));
-
-    verify(common.secondaryWriteErrorConsumerWithMetrics, atLeastOnce())
-        .consume(
-            eq(HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST),
-            eq(common.mutation1),
-            any(Throwable.class));
-    verify(common.secondaryWriteErrorConsumerWithMetrics, atLeastOnce())
-        .consume(
-            eq(HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST),
-            eq(common.mutation3),
-            any(Throwable.class));
-  }
-
-  @Test
-  public void testSecondaryErrorsDuringSimultaneousFlushes()
-      throws IOException, InterruptedException, ExecutionException, TimeoutException {
-    final AtomicInteger ongoingFlushes = new AtomicInteger(0);
-    final SettableFuture<Void> allFlushesStarted = SettableFuture.create();
-    final SettableFuture<Void> endFlush = SettableFuture.create();
-
-    doAnswer(blockedFlushes(ongoingFlushes, allFlushesStarted, endFlush, 2))
-        .when(common.primaryBufferedMutator)
-        .flush();
-
-    doAnswer(
-            mutateWithErrors(
-                this.common.secondaryBufferedMutatorParamsCaptor,
-                common.secondaryBufferedMutator,
-                common.mutation1,
-                common.mutation3))
-        .when(common.secondaryBufferedMutator)
-        .mutate(ArgumentMatchers.<Mutation>anyList());
-
-    MirroringBufferedMutator bm = getBufferedMutator((long) (common.mutationSize * 1.5));
-
-    bm.mutate(Arrays.asList(common.mutation1, common.mutation2));
-    bm.mutate(Arrays.asList(common.mutation3, common.mutation4));
-    allFlushesStarted.get(3, TimeUnit.SECONDS);
-
-    endFlush.set(null);
-
-    executorServiceRule.waitForExecutor();
-    verify(common.secondaryBufferedMutator, atLeastOnce())
-        .mutate(Arrays.asList(common.mutation1, common.mutation2));
-    verify(common.secondaryBufferedMutator, atLeastOnce())
-        .mutate(Arrays.asList(common.mutation3, common.mutation4));
-
-    verify(common.secondaryWriteErrorConsumerWithMetrics, atLeastOnce())
-        .consume(
-            eq(HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST),
-            eq(common.mutation1),
-            any(Throwable.class));
-    verify(common.secondaryWriteErrorConsumerWithMetrics, atLeastOnce())
-        .consume(
-            eq(HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST),
-            eq(common.mutation3),
-            any(Throwable.class));
   }
 
   @Test
@@ -288,11 +215,9 @@ public class TestSequentialMirroringBufferedMutator {
             new Answer() {
               @Override
               public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                int value = runningFlushes.decrementAndGet();
-                if (value == 0) {
-                  flushesStarted.set(null);
-                }
+                flushesStarted.set(null);
                 performFlush.get();
+                int value = runningFlushes.decrementAndGet();
 
                 long id = Longs.fromByteArray(mutations[value].getRow());
                 RetriesExhaustedWithDetailsException e =
@@ -313,20 +238,11 @@ public class TestSequentialMirroringBufferedMutator {
 
     final BufferedMutator bm = getBufferedMutator(1);
 
-    bm.mutate(mutations[2]);
     // Wait until flush is started to ensure to ensure that flushes are scheduled in the same order
     // as mutations.
-    while (runningFlushes.get() == 3) {
-      Thread.sleep(100);
-    }
+    bm.mutate(mutations[2]);
     bm.mutate(mutations[1]);
-    while (runningFlushes.get() == 2) {
-      Thread.sleep(100);
-    }
     bm.mutate(mutations[0]);
-    while (runningFlushes.get() == 1) {
-      Thread.sleep(100);
-    }
     flushesStarted.get(1, TimeUnit.SECONDS);
     performFlush.set(null);
 
@@ -378,25 +294,20 @@ public class TestSequentialMirroringBufferedMutator {
     long mutationSize = mutations.get(0).heapSize();
 
     final SettableFuture<Void> closeStarted = SettableFuture.create();
+    final SettableFuture<Void> closeEnded = SettableFuture.create();
     final SettableFuture<Void> unlockSecondaryFlush = SettableFuture.create();
 
     int numRunningFlushes = 10;
 
-    Semaphore semaphore = new Semaphore(numRunningFlushes);
-    semaphore.acquire(numRunningFlushes);
-
     final BufferedMutator bm = getBufferedMutator((long) 4 * mutationSize);
 
-    blockMethodCall(common.secondaryBufferedMutator, unlockSecondaryFlush, semaphore).flush();
+    blockMethodCall(common.secondaryBufferedMutator, unlockSecondaryFlush).flush();
     delayMethodCall(common.primaryBufferedMutator, 300).flush();
 
     for (int i = 0; i < numRunningFlushes; i++) {
       bm.mutate(mutations);
-      // Primary flush completes normally, secondary is blocked but releases one permit on the
-      // semaphore.
+      // Primary flush completes normally, secondary is blocked.
       bm.flush();
-      // wait until flush is started
-      assertThat(semaphore.tryAcquire(1, TimeUnit.SECONDS)).isTrue();
     }
 
     Thread t =
@@ -407,6 +318,7 @@ public class TestSequentialMirroringBufferedMutator {
                 try {
                   closeStarted.set(null);
                   bm.close();
+                  closeEnded.set(null);
                 } catch (IOException e) {
                   throw new RuntimeException(e);
                 }
@@ -416,17 +328,30 @@ public class TestSequentialMirroringBufferedMutator {
     closeStarted.get(1, TimeUnit.SECONDS);
 
     // best effort - we give the closing thread some time to run.
-    t.join(1000);
-    assertThat(t.isAlive()).isTrue();
+    try {
+      closeEnded.get(1, TimeUnit.SECONDS);
+      fail("Should have thrown.");
+    } catch (TimeoutException ignored) {
+    }
+
+    // primary flushes have completed
+    // + 1 because close() also calls flush
+    verify(common.primaryBufferedMutator, times(numRunningFlushes + 1)).flush();
+    // but only the first of secondary flushes was called (and is blocking now).
+    verify(common.secondaryBufferedMutator, times(1)).flush();
 
     unlockSecondaryFlush.set(null);
-    t.join(3000);
+    closeEnded.get(3, TimeUnit.SECONDS);
+    t.join(1000);
     assertThat(t.isAlive()).isFalse();
+
+    // close() won't call flush on secondary because there won't be any data to be flushed.
+    verify(common.secondaryBufferedMutator, times(numRunningFlushes)).flush();
 
     executorServiceRule.waitForExecutor();
   }
 
-  private MirroringBufferedMutator getBufferedMutator(long flushThreshold) throws IOException {
+  private BufferedMutator getBufferedMutator(long flushThreshold) throws IOException {
     return new SequentialMirroringBufferedMutator(
         common.primaryConnection,
         common.secondaryConnection,

@@ -15,12 +15,13 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator;
 
-import static com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.MirroringBufferedMutatorCommon.blockedFlushes;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.blockMethodCall;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.MirroringBufferedMutatorCommon.flushWithErrors;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.MirroringBufferedMutatorCommon.makeConfigurationWithFlushThreshold;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.MirroringBufferedMutatorCommon.mutateWithErrors;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -36,10 +37,6 @@ import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
@@ -49,6 +46,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentMatchers;
+import org.mockito.InOrder;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
@@ -136,36 +135,76 @@ public class TestConcurrentMirroringBufferedMutator {
   }
 
   @Test
-  public void testFlushesCanBeScheduledSimultaneously()
-      throws IOException, InterruptedException, TimeoutException, ExecutionException {
-    final AtomicInteger ongoingFlushes = new AtomicInteger(0);
-    final SettableFuture<Void> allFlushesStarted = SettableFuture.create();
-    final SettableFuture<Void> endFlush = SettableFuture.create();
+  public void testBlockedPrimaryFlushesDoNotPreventSecondaryAsyncFlushes() throws IOException {
+    final SettableFuture<Void> startPrimaryFlush = SettableFuture.create();
+    final SettableFuture<Void> startSecondaryFlush = SettableFuture.create();
 
-    doAnswer(blockedFlushes(ongoingFlushes, allFlushesStarted, endFlush, 4))
-        .when(common.primaryBufferedMutator)
-        .flush();
+    blockMethodCall(common.primaryBufferedMutator, startPrimaryFlush).flush();
+    blockMethodCall(common.secondaryBufferedMutator, startSecondaryFlush).flush();
 
-    BufferedMutator bm = getBufferedMutator((long) (common.mutationSize * 1.5));
+    BufferedMutator bm = getBufferedMutator((long) (common.mutationSize * 0.5));
 
     bm.mutate(common.mutation1);
-    bm.mutate(common.mutation1);
-
-    bm.mutate(common.mutation1);
-    bm.mutate(common.mutation1);
-
-    bm.mutate(common.mutation1);
-    bm.mutate(common.mutation1);
-
-    bm.mutate(common.mutation1);
-    bm.mutate(common.mutation1);
-
-    allFlushesStarted.get(3, TimeUnit.SECONDS);
-    assertThat(ongoingFlushes.get()).isEqualTo(4);
-    endFlush.set(null);
+    bm.mutate(common.mutation2);
+    startPrimaryFlush.set(null);
     executorServiceRule.waitForExecutor();
-    verify(common.primaryBufferedMutator, times(8)).mutate(ArgumentMatchers.<Mutation>anyList());
-    verify(common.secondaryBufferedMutator, times(8)).mutate(ArgumentMatchers.<Mutation>anyList());
+
+    verify(common.primaryBufferedMutator, times(2)).flush();
+    verify(common.secondaryBufferedMutator, times(1)).flush();
+  }
+
+  @Test
+  public void testBlockedSecondaryFlushesDoNotPreventPrimaryAsyncFlushes() throws IOException {
+    final SettableFuture<Void> startPrimaryFlush = SettableFuture.create();
+    final SettableFuture<Void> startSecondaryFlush = SettableFuture.create();
+
+    blockMethodCall(common.primaryBufferedMutator, startPrimaryFlush).flush();
+    blockMethodCall(common.secondaryBufferedMutator, startSecondaryFlush).flush();
+
+    BufferedMutator bm = getBufferedMutator((long) (common.mutationSize * 0.5));
+
+    bm.mutate(common.mutation1);
+    bm.mutate(common.mutation2);
+    startSecondaryFlush.set(null);
+    executorServiceRule.waitForExecutor();
+
+    verify(common.secondaryBufferedMutator, times(2)).flush();
+    verify(common.primaryBufferedMutator, times(1)).flush();
+  }
+
+  @Test
+  public void testFlushesCanBeScheduledSimultaneouslyAndAreExecutedInOrder() throws IOException {
+    final SettableFuture<Void> startFlush = SettableFuture.create();
+
+    blockMethodCall(common.primaryBufferedMutator, startFlush).flush();
+
+    BufferedMutator bm = getBufferedMutator((long) (common.mutationSize * 0.5));
+
+    InOrder inOrder1 = Mockito.inOrder(common.primaryBufferedMutator);
+    InOrder inOrder2 = Mockito.inOrder(common.secondaryBufferedMutator);
+
+    bm.mutate(common.mutation1);
+    bm.mutate(common.mutation2);
+    bm.mutate(common.mutation3);
+    bm.mutate(common.mutation4);
+    startFlush.set(null);
+    executorServiceRule.waitForExecutor();
+
+    inOrder1.verify(common.primaryBufferedMutator).mutate(Arrays.asList(common.mutation1));
+    inOrder1.verify(common.primaryBufferedMutator).mutate(Arrays.asList(common.mutation2));
+    inOrder1.verify(common.primaryBufferedMutator).mutate(Arrays.asList(common.mutation3));
+    inOrder1.verify(common.primaryBufferedMutator).mutate(Arrays.asList(common.mutation4));
+    // First flush happened somewhere between mutation1 and now, others are guaranteed to be called
+    // after startFlush was set.
+    inOrder1.verify(common.primaryBufferedMutator, atLeast(3)).flush();
+
+    inOrder2.verify(common.secondaryBufferedMutator).mutate(Arrays.asList(common.mutation1));
+    inOrder2.verify(common.secondaryBufferedMutator).mutate(Arrays.asList(common.mutation2));
+    inOrder2.verify(common.secondaryBufferedMutator).mutate(Arrays.asList(common.mutation3));
+    inOrder2.verify(common.secondaryBufferedMutator).mutate(Arrays.asList(common.mutation4));
+
+    verify(common.primaryBufferedMutator, times(4)).mutate(ArgumentMatchers.<Mutation>anyList());
+    verify(common.secondaryBufferedMutator, times(4)).mutate(ArgumentMatchers.<Mutation>anyList());
     verify(common.secondaryBufferedMutator, times(4)).flush();
     verify(common.flowController, never())
         .asyncRequestResource(any(RequestResourcesDescription.class));
