@@ -27,6 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -59,6 +60,7 @@ import org.apache.hadoop.hbase.CellBuilderType;
 import org.apache.hadoop.hbase.CellComparator;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.client.AdvancedScanResultConsumer;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.AsyncTable;
 import org.apache.hadoop.hbase.client.Delete;
@@ -72,6 +74,7 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.ScanResultConsumer;
 import org.apache.hadoop.hbase.client.ScanResultConsumerBase;
 import org.apache.hadoop.hbase.io.TimeRange;
 import org.junit.Before;
@@ -1096,5 +1099,38 @@ public class TestMirroringAsyncTable {
     verify(primaryTable, times(1)).getScanner(scan);
     verify(secondaryTable, times(1)).getScanner(scan);
     assertThat(scanner).isInstanceOf(MirroringResultScanner.class);
+  }
+
+  @Test
+  public void testScanWithScanResultConsumer() {
+    Scan scan = new Scan();
+    ScanResultConsumer consumer = mock(ScanResultConsumer.class);
+    mirroringTable.scan(scan, consumer);
+
+    verify(primaryTable, times(1)).scan(eq(scan), any(ScanResultConsumer.class));
+    verify(secondaryTable, never()).scan(any(Scan.class), any(ScanResultConsumer.class));
+  }
+
+  @Test
+  public void testScanWithAdvancedScanResultConsumer() {
+    Scan scan = new Scan();
+    AdvancedScanResultConsumer consumer = mock(AdvancedScanResultConsumer.class);
+    mirroringTable.scan(scan, consumer);
+
+    verify(primaryTable, times(1)).scan(eq(scan), any(AdvancedScanResultConsumer.class));
+    verify(secondaryTable, never()).scan(any(Scan.class), any(AdvancedScanResultConsumer.class));
+  }
+
+  @Test
+  public void testScanAll() {
+    Scan scan = new Scan();
+
+    CompletableFuture<List<Result>> scanAllFuture = new CompletableFuture<>();
+    when(primaryTable.scanAll(any(Scan.class))).thenReturn(scanAllFuture);
+
+    CompletableFuture<List<Result>> results = mirroringTable.scanAll(scan);
+    verify(primaryTable, times(1)).scanAll(scan);
+    verify(secondaryTable, never()).scanAll(any(Scan.class));
+    assertThat(results).isEqualTo(scanAllFuture);
   }
 }

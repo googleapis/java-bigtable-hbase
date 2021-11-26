@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.hadoop.conf.Configuration;
@@ -49,6 +50,8 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.ScanResultConsumer;
 import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -1355,6 +1358,61 @@ public class TestMirroringAsyncTable {
         assertThat(Iterators.size(scanner.iterator())).isEqualTo(databaseEntriesCount);
       }
     }
+  }
+
+  @Test
+  public void testScanAll() throws IOException, ExecutionException, InterruptedException {
+    int databaseEntriesCount = 1000;
+
+    TableName tableName = connectionRule.createTable(columnFamily1);
+    databaseHelpers.fillTable(tableName, databaseEntriesCount, columnFamily1, qualifier1);
+
+    try (MirroringAsyncConnection asyncConnection =
+        asyncConnectionRule.createAsyncConnection(config)) {
+      assertThat(asyncConnection.getTable(tableName).scanAll(new Scan()).get().size())
+          .isEqualTo(databaseEntriesCount);
+    }
+  }
+
+  @Test
+  public void testBasicScan() throws IOException, ExecutionException, InterruptedException {
+    int databaseEntriesCount = 1000;
+
+    TableName tableName = connectionRule.createTable(columnFamily1);
+    databaseHelpers.fillTable(tableName, databaseEntriesCount, columnFamily1, qualifier1);
+
+    AtomicInteger read = new AtomicInteger(0);
+    CompletableFuture<Void> scanConsumerEnded = new CompletableFuture<>();
+
+    ScanResultConsumer consumer =
+        new ScanResultConsumer() {
+          @Override
+          public boolean onNext(Result result) {
+            read.incrementAndGet();
+            return true;
+          }
+
+          @Override
+          public void onError(Throwable throwable) {
+            scanConsumerEnded.completeExceptionally(throwable);
+          }
+
+          @Override
+          public void onComplete() {
+            scanConsumerEnded.complete(null);
+          }
+        };
+
+    try (MirroringAsyncConnection asyncConnection =
+        asyncConnectionRule.createAsyncConnection(config)) {
+      asyncConnection
+          .getTableBuilder(tableName, this.executorServiceRule.executorService)
+          .build()
+          .scan(new Scan(), consumer);
+    }
+    scanConsumerEnded.get();
+
+    assertThat(read.get()).isEqualTo(databaseEntriesCount);
   }
 
   private void checkIfShouldHaveThrown(CompletableFuture<?> future, byte[] rowKey) {

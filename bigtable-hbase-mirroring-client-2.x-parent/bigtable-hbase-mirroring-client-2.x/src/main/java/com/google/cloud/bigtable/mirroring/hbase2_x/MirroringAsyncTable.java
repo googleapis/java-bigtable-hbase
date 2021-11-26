@@ -478,7 +478,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     return toBeReferenceCounted;
   }
 
-  private void keepReferenceUntilOperationCompletes(CompletableFuture<Void> future) {
+  private <T> void keepReferenceUntilOperationCompletes(CompletableFuture<T> future) {
     this.referenceCounter.incrementReferenceCount();
     future.whenComplete(
         (ignoredResult, ignoredError) -> this.referenceCounter.decrementReferenceCount());
@@ -506,18 +506,20 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
   }
 
   @Override
-  public Configuration getConfiguration() {
-    return primaryTable.getConfiguration();
-  }
-
-  @Override
-  public void scan(Scan scan, C c) {
-    throw new UnsupportedOperationException();
+  public void scan(Scan scan, C consumer) {
+    this.primaryTable.scan(scan, consumer);
   }
 
   @Override
   public CompletableFuture<List<Result>> scanAll(Scan scan) {
-    throw new UnsupportedOperationException();
+    CompletableFuture<List<Result>> result = this.primaryTable.scanAll(scan);
+    keepReferenceUntilOperationCompletes(result);
+    return result;
+  }
+
+  @Override
+  public Configuration getConfiguration() {
+    return primaryTable.getConfiguration();
   }
 
   private class MirroringCheckAndMutateBuilder implements CheckAndMutateBuilder {
