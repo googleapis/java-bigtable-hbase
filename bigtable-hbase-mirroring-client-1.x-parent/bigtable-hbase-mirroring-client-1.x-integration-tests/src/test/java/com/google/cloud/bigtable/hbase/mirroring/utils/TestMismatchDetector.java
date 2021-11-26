@@ -19,6 +19,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Comparators;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
@@ -32,12 +33,24 @@ public class TestMismatchDetector implements MismatchDetector {
     this.tracer = tracer;
   }
 
-  public void onError(HBaseOperation operation, String errorType, String details) {
-    System.out.printf("onError: %s: %s, %s", operation, errorType, details);
-    mismatchCounter.reportError(operation.getString(), errorType, details);
-    if (errorType.equals("mismatch")) {
-      tracer.metricsRecorder.recordReadMismatches(operation, 1);
-    }
+  public void onFailure(HBaseOperation operation, Throwable throwable) {
+    System.out.printf("onFailure: %s: %s", operation, throwable.getMessage());
+    mismatchCounter.reportFailure(operation, throwable);
+  }
+
+  public void onMismatch(HBaseOperation operation, byte[] primary, byte[] secondary) {
+    System.out.printf(
+        "onMismatch: %s: %s", operation, String.format("%s != %s", primary, secondary));
+    mismatchCounter.reportMismatch(operation, primary, secondary);
+    tracer.metricsRecorder.recordReadMismatches(operation, 1);
+  }
+
+  public void onLengthMismatch(HBaseOperation operation, int primaryLength, int secondaryLength) {
+    System.out.printf(
+        "onMismatch: %s: %s",
+        operation, String.format("length: %s != %s", primaryLength, secondaryLength));
+    mismatchCounter.reportLengthMismatch(operation, primaryLength, secondaryLength);
+    tracer.metricsRecorder.recordReadMismatches(operation, 1);
   }
 
   public void onVerificationStarted() {
@@ -51,7 +64,10 @@ public class TestMismatchDetector implements MismatchDetector {
   public void exists(Get request, boolean primary, boolean secondary) {
     onVerificationStarted();
     if (primary != secondary) {
-      onError(HBaseOperation.EXISTS, "mismatch", String.format("%s != %s", primary, secondary));
+      onMismatch(
+          HBaseOperation.EXISTS,
+          new byte[] {booleanToByte(primary)},
+          new byte[] {booleanToByte(secondary)});
     }
     onVerificationFinished();
   }
@@ -59,20 +75,25 @@ public class TestMismatchDetector implements MismatchDetector {
   @Override
   public void exists(Get request, Throwable throwable) {
     onVerificationStarted();
-    onError(HBaseOperation.EXISTS, "failure", throwable.getMessage());
+    onFailure(HBaseOperation.EXISTS, throwable);
     onVerificationFinished();
   }
 
   @Override
   public void existsAll(List<Get> request, boolean[] primary, boolean[] secondary) {
     onVerificationStarted();
-    for (int i = 0; i < primary.length; i++) {
-      if (primary[i] != secondary[i]) {
-        onError(
-            HBaseOperation.EXISTS_ALL,
-            "mismatch",
-            String.format("%s != %s", primary[i], secondary[i]));
+    if (!Arrays.equals(primary, secondary)) {
+      byte[] primaryValues = new byte[primary.length];
+      byte[] secondaryValues = new byte[secondary.length];
+
+      for (int i = 0; i < primary.length; i++) {
+        primaryValues[i] = booleanToByte(primary[i]);
       }
+
+      for (int i = 0; i < secondary.length; i++) {
+        secondaryValues[i] = booleanToByte(secondary[i]);
+      }
+      onMismatch(HBaseOperation.EXISTS_ALL, primaryValues, secondaryValues);
     }
     onVerificationFinished();
   }
@@ -80,14 +101,14 @@ public class TestMismatchDetector implements MismatchDetector {
   @Override
   public void existsAll(List<Get> request, Throwable throwable) {
     onVerificationStarted();
-    onError(HBaseOperation.EXISTS_ALL, "failure", throwable.getMessage());
+    onFailure(HBaseOperation.EXISTS_ALL, throwable);
     onVerificationFinished();
   }
 
   public void get(Get request, Result primary, Result secondary) {
     onVerificationStarted();
     if (!Comparators.resultsEqual(primary, secondary)) {
-      onError(HBaseOperation.GET, "mismatch", String.format("%s != %s", primary, secondary));
+      onMismatch(HBaseOperation.GET, primary.value(), secondary.value());
     }
     onVerificationFinished();
   }
@@ -95,7 +116,7 @@ public class TestMismatchDetector implements MismatchDetector {
   @Override
   public void get(Get request, Throwable throwable) {
     onVerificationStarted();
-    onError(HBaseOperation.GET, "failure", throwable.getMessage());
+    onFailure(HBaseOperation.GET, throwable);
     onVerificationFinished();
   }
 
@@ -103,19 +124,13 @@ public class TestMismatchDetector implements MismatchDetector {
   public void get(List<Get> request, Result[] primary, Result[] secondary) {
     onVerificationStarted();
     if (primary.length != secondary.length) {
-      onError(
-          HBaseOperation.GET_LIST,
-          "length mismatch",
-          String.format("%s != %s", primary.length, secondary.length));
+      onLengthMismatch(HBaseOperation.GET_LIST, primary.length, secondary.length);
       return;
     }
 
     for (int i = 0; i < primary.length; i++) {
       if (Comparators.resultsEqual(primary[i], secondary[i])) {
-        onError(
-            HBaseOperation.GET_LIST,
-            "mismatch",
-            String.format("(index=%s), %s != %s", i, primary[i], secondary[i]));
+        onMismatch(HBaseOperation.GET_LIST, primary[i].value(), secondary[i].value());
       }
     }
     onVerificationFinished();
@@ -124,7 +139,7 @@ public class TestMismatchDetector implements MismatchDetector {
   @Override
   public void get(List<Get> request, Throwable throwable) {
     onVerificationStarted();
-    onError(HBaseOperation.GET_LIST, "failed", throwable.getMessage());
+    onFailure(HBaseOperation.GET_LIST, throwable);
     onVerificationFinished();
   }
 
@@ -132,7 +147,10 @@ public class TestMismatchDetector implements MismatchDetector {
   public void scannerNext(Scan request, int entriesAlreadyRead, Result primary, Result secondary) {
     onVerificationStarted();
     if (!Comparators.resultsEqual(primary, secondary)) {
-      onError(HBaseOperation.NEXT, "mismatch", String.format("%s != %s", primary, secondary));
+      onMismatch(
+          HBaseOperation.NEXT,
+          primary == null ? null : primary.value(),
+          secondary == null ? null : secondary.value());
     }
     onVerificationFinished();
   }
@@ -140,7 +158,8 @@ public class TestMismatchDetector implements MismatchDetector {
   @Override
   public void scannerNext(Scan request, int entriesAlreadyRead, Throwable throwable) {
     onVerificationStarted();
-    onError(HBaseOperation.NEXT, "failed", throwable.getMessage());
+    onFailure(HBaseOperation.NEXT, throwable);
+    onVerificationFinished();
   }
 
   @Override
@@ -148,20 +167,13 @@ public class TestMismatchDetector implements MismatchDetector {
       Scan request, int entriesAlreadyRead, Result[] primary, Result[] secondary) {
     onVerificationStarted();
     if (primary.length != secondary.length) {
-      onError(
-          HBaseOperation.NEXT_MULTIPLE,
-          "length mismatch",
-          String.format("%s != %s", primary.length, secondary.length));
+      onLengthMismatch(HBaseOperation.NEXT_MULTIPLE, primary.length, secondary.length);
       return;
     }
 
     for (int i = 0; i < primary.length; i++) {
       if (!Comparators.resultsEqual(primary[i], secondary[i])) {
-        onError(
-            HBaseOperation.NEXT_MULTIPLE,
-            "mismatch",
-            String.format(
-                "(index=%s), %s != %s", entriesAlreadyRead + i, primary[i], secondary[i]));
+        onMismatch(HBaseOperation.NEXT_MULTIPLE, primary[i].value(), secondary[i].value());
       }
     }
     onVerificationFinished();
@@ -171,7 +183,7 @@ public class TestMismatchDetector implements MismatchDetector {
   public void scannerNext(
       Scan request, int entriesAlreadyRead, int entriesRequested, Throwable throwable) {
     onVerificationStarted();
-    onError(HBaseOperation.NEXT_MULTIPLE, "failure", throwable.getMessage());
+    onFailure(HBaseOperation.NEXT_MULTIPLE, throwable);
     onVerificationFinished();
   }
 
@@ -179,19 +191,13 @@ public class TestMismatchDetector implements MismatchDetector {
   public void batch(List<Get> request, Result[] primary, Result[] secondary) {
     onVerificationStarted();
     if (primary.length != secondary.length) {
-      onError(
-          HBaseOperation.BATCH,
-          "length mismatch",
-          String.format("%s != %s", primary.length, secondary.length));
+      onLengthMismatch(HBaseOperation.BATCH, primary.length, secondary.length);
       return;
     }
 
     for (int i = 0; i < primary.length; i++) {
       if (!Comparators.resultsEqual(primary[i], secondary[i])) {
-        onError(
-            HBaseOperation.BATCH,
-            "mismatch",
-            String.format("(index=%s), %s != %s", i, primary[i], secondary[i]));
+        onMismatch(HBaseOperation.BATCH, primary[i].value(), secondary[i].value());
       }
     }
     onVerificationFinished();
@@ -200,7 +206,7 @@ public class TestMismatchDetector implements MismatchDetector {
   @Override
   public void batch(List<Get> request, Throwable throwable) {
     onVerificationStarted();
-    onError(HBaseOperation.BATCH, "failed", throwable.getMessage());
+    onFailure(HBaseOperation.BATCH, throwable);
     onVerificationFinished();
   }
 
@@ -211,5 +217,9 @@ public class TestMismatchDetector implements MismatchDetector {
         MirroringTracer mirroringTracer, Integer maxLoggedBinaryValueLength) {
       return new TestMismatchDetector(mirroringTracer, maxLoggedBinaryValueLength);
     }
+  }
+
+  private static byte booleanToByte(boolean b) {
+    return (byte) (b ? 1 : 0);
   }
 }

@@ -144,6 +144,9 @@ public class DatabaseHelpers {
         });
   }
 
+  // Predicate allows to exclude some rows from primary database from consistency check.
+  // The row is excluded iff predicate applied to its key returns true.
+  // It's useful after injecting some errors in secondary database.
   public void verifyTableConsistency(TableName tableName, Predicate<byte[]> secondaryErrorPredicate)
       throws IOException {
     try (MirroringConnection connection = createConnection()) {

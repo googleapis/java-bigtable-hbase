@@ -178,6 +178,8 @@ public class FailingHBaseHRegion extends HRegion {
     OperationStatus[] result = new OperationStatus[mutations.length];
     List<Mutation> mutationsToRun = new ArrayList<>();
 
+    // We fill some positions in result[] if the mutation is to err
+    // according to fakeErrorsMap and errorConditionMap.
     for (int i = 0; i < mutations.length; i++) {
       Mutation mutation = mutations[i];
       OperationStatus r = processRowNoThrow(mutation.getRow());
@@ -187,12 +189,14 @@ public class FailingHBaseHRegion extends HRegion {
         mutationsToRun.add(mutation);
       }
     }
+
+    // We fill the remaining positions in result[] with results of op().
     OperationStatus[] superResult = op.apply(mutationsToRun.toArray(new Mutation[0]));
-    int redIndex = 0;
+    int correspondingSuperResultIdx = 0;
     for (int i = 0; i < mutations.length; i++) {
       if (result[i] == null) {
-        result[i] = superResult[redIndex];
-        redIndex++;
+        result[i] = superResult[correspondingSuperResultIdx];
+        correspondingSuperResultIdx++;
       }
     }
     return result;

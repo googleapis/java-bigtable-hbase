@@ -17,11 +17,22 @@ package com.google.cloud.bigtable.hbase.mirroring.utils;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
+import com.google.common.util.concurrent.SettableFuture;
+import java.util.concurrent.ExecutionException;
 
-public class SlowMismatchDetector extends TestMismatchDetector {
-  public static int sleepTime = 1000;
+public class BlockingMismatchDetector extends TestMismatchDetector {
 
-  public SlowMismatchDetector(MirroringTracer tracer, Integer i) {
+  private static SettableFuture<Void> unblock;
+
+  public static void reset() {
+    unblock = SettableFuture.create();
+  }
+
+  public static void unblock() {
+    unblock.set(null);
+  }
+
+  public BlockingMismatchDetector(MirroringTracer tracer, Integer i) {
     super(tracer, i);
   }
 
@@ -29,17 +40,18 @@ public class SlowMismatchDetector extends TestMismatchDetector {
   public void onVerificationStarted() {
     super.onVerificationStarted();
     try {
-      Thread.sleep(sleepTime);
-    } catch (InterruptedException ignored) {
-
+      unblock.get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
     }
   }
 
   public static class Factory implements MismatchDetector.Factory {
+
     @Override
     public MismatchDetector create(
         MirroringTracer mirroringTracer, Integer maxLoggedBinaryValueLength) {
-      return new SlowMismatchDetector(mirroringTracer, maxLoggedBinaryValueLength);
+      return new BlockingMismatchDetector(mirroringTracer, maxLoggedBinaryValueLength);
     }
   }
 }

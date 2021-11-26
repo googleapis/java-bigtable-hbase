@@ -33,6 +33,7 @@ import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -66,28 +67,33 @@ public class TestSequentialMirroringBufferedMutator {
 
   public final MirroringBufferedMutatorCommon common = new MirroringBufferedMutatorCommon();
 
+  private final List<Mutation> singletonMutation1 = Collections.singletonList(common.mutation1);
+
   @Test
   public void testBufferedWritesWithoutErrors() throws IOException, InterruptedException {
     BufferedMutator bm = getBufferedMutator((long) (common.mutationSize * 3.5));
 
     bm.mutate(common.mutation1);
-    verify(common.primaryBufferedMutator, times(1)).mutate(ArgumentMatchers.<Mutation>anyList());
+    verify(common.primaryBufferedMutator, times(1)).mutate(singletonMutation1);
     verify(common.secondaryBufferedMutator, never()).mutate(ArgumentMatchers.<Mutation>anyList());
     verify(common.secondaryBufferedMutator, never()).mutate(any(Mutation.class));
     bm.mutate(common.mutation1);
-    verify(common.primaryBufferedMutator, times(2)).mutate(ArgumentMatchers.<Mutation>anyList());
+    verify(common.primaryBufferedMutator, times(2)).mutate(singletonMutation1);
     verify(common.secondaryBufferedMutator, never()).mutate(ArgumentMatchers.<Mutation>anyList());
     verify(common.secondaryBufferedMutator, never()).mutate(any(Mutation.class));
     bm.mutate(common.mutation1);
-    verify(common.primaryBufferedMutator, times(3)).mutate(ArgumentMatchers.<Mutation>anyList());
+    verify(common.primaryBufferedMutator, times(3)).mutate(singletonMutation1);
     verify(common.secondaryBufferedMutator, never()).mutate(ArgumentMatchers.<Mutation>anyList());
     verify(common.secondaryBufferedMutator, never()).mutate(any(Mutation.class));
     bm.mutate(common.mutation1);
     Thread.sleep(300);
     executorServiceRule.waitForExecutor();
-    verify(common.primaryBufferedMutator, times(4)).mutate(ArgumentMatchers.<Mutation>anyList());
-    verify(common.secondaryBufferedMutator, times(1)).mutate(ArgumentMatchers.<Mutation>anyList());
+    verify(common.primaryBufferedMutator, times(4)).mutate(singletonMutation1);
+    verify(common.secondaryBufferedMutator, times(1))
+        .mutate(
+            Arrays.asList(common.mutation1, common.mutation1, common.mutation1, common.mutation1));
     verify(common.secondaryBufferedMutator, never()).mutate(any(Mutation.class));
+    verify(common.primaryBufferedMutator, times(1)).flush();
     verify(common.secondaryBufferedMutator, times(1)).flush();
     verify(common.resourceReservation, times(4)).release();
   }
@@ -101,8 +107,9 @@ public class TestSequentialMirroringBufferedMutator {
     bm.mutate(common.mutation1);
     bm.flush();
     executorServiceRule.waitForExecutor();
-    verify(common.primaryBufferedMutator, times(3)).mutate(ArgumentMatchers.<Mutation>anyList());
-    verify(common.secondaryBufferedMutator, times(1)).mutate(ArgumentMatchers.<Mutation>anyList());
+    verify(common.primaryBufferedMutator, times(3)).mutate(singletonMutation1);
+    verify(common.secondaryBufferedMutator, times(1))
+        .mutate(Arrays.asList(common.mutation1, common.mutation1, common.mutation1));
     verify(common.secondaryBufferedMutator, never()).mutate(any(Mutation.class));
     verify(common.secondaryBufferedMutator, times(1)).flush();
     verify(common.resourceReservation, times(3)).release();
@@ -116,8 +123,9 @@ public class TestSequentialMirroringBufferedMutator {
     bm.mutate(common.mutation1);
     bm.mutate(common.mutation1);
     bm.close();
-    verify(common.primaryBufferedMutator, times(3)).mutate(ArgumentMatchers.<Mutation>anyList());
-    verify(common.secondaryBufferedMutator, times(1)).mutate(ArgumentMatchers.<Mutation>anyList());
+    verify(common.primaryBufferedMutator, times(3)).mutate(singletonMutation1);
+    verify(common.secondaryBufferedMutator, times(1))
+        .mutate(Arrays.asList(common.mutation1, common.mutation1, common.mutation1));
     verify(common.secondaryBufferedMutator, times(1)).flush();
     verify(common.resourceReservation, times(3)).release();
   }
@@ -163,6 +171,7 @@ public class TestSequentialMirroringBufferedMutator {
     inOrder2.verify(common.secondaryBufferedMutator).mutate(Arrays.asList(common.mutation3));
     inOrder2.verify(common.secondaryBufferedMutator).mutate(Arrays.asList(common.mutation4));
 
+    verify(common.primaryBufferedMutator, times(4)).mutate(ArgumentMatchers.<Mutation>anyList());
     verify(common.secondaryBufferedMutator, times(4)).mutate(ArgumentMatchers.<Mutation>anyList());
     verify(common.resourceReservation, times(4)).release();
   }
@@ -238,7 +247,7 @@ public class TestSequentialMirroringBufferedMutator {
 
     final BufferedMutator bm = getBufferedMutator(1);
 
-    // Wait until flush is started to ensure to ensure that flushes are scheduled in the same order
+    // Wait until flush is started to ensure that flushes are scheduled in the same order
     // as mutations.
     bm.mutate(mutations[2]);
     bm.mutate(mutations[1]);
@@ -246,12 +255,9 @@ public class TestSequentialMirroringBufferedMutator {
     flushesStarted.get(1, TimeUnit.SECONDS);
     performFlush.set(null);
 
+    // It waits for ExecutorService by shutting it down synchronously.
+    // After this call we can't send new tasks to it.
     executorServiceRule.waitForExecutor();
-
-    verify(common.secondaryBufferedMutator, never()).flush();
-    verify(common.resourceReservation, times(3)).release();
-
-    // We have killed the executor, mock next submits.
     doAnswer(
             new Answer() {
               @Override
@@ -262,6 +268,12 @@ public class TestSequentialMirroringBufferedMutator {
         .when(executorServiceRule.executorService)
         .submit(any(Callable.class));
 
+    verify(common.secondaryBufferedMutator, never()).flush();
+    verify(common.resourceReservation, times(3)).release();
+
+    // We previously used mutate() and thus scheduled asynchronous mutations.
+    // In this scenario asynchronous flush() on primary threw an exception after mutate() returned.
+    // Because of that we throw an exception the next time mutate() is called.
     try {
       bm.mutate(mutations[0]);
       verify(executorServiceRule.executorService, times(1)).submit(any(Callable.class));

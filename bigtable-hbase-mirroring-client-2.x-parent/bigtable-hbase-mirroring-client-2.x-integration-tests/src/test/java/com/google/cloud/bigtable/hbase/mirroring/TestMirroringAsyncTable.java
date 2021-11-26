@@ -1160,9 +1160,9 @@ public class TestMirroringAsyncTable {
     }
     assertThat(MismatchDetectorCounter.getInstance().getErrorCount())
         .isEqualTo(databaseEntriesCount / 2);
-    assertThat(MismatchDetectorCounter.getInstance().getErrorCount("failure"))
+    assertThat(MismatchDetectorCounter.getInstance().getFailureCount())
         .isEqualTo(databaseEntriesCount / 2);
-    assertThat(MismatchDetectorCounter.getInstance().getErrorCount("mismatch")).isEqualTo(0);
+    assertThat(MismatchDetectorCounter.getInstance().getMismatchCount()).isEqualTo(0);
   }
 
   @Test
@@ -1239,9 +1239,9 @@ public class TestMirroringAsyncTable {
     }
     assertThat(MismatchDetectorCounter.getInstance().getErrorCount())
         .isEqualTo(databaseEntriesCount / 2);
-    assertThat(MismatchDetectorCounter.getInstance().getErrorCount("failure"))
+    assertThat(MismatchDetectorCounter.getInstance().getFailureCount())
         .isEqualTo(databaseEntriesCount / 2);
-    assertThat(MismatchDetectorCounter.getInstance().getErrorCount("mismatch")).isEqualTo(0);
+    assertThat(MismatchDetectorCounter.getInstance().getMismatchCount()).isEqualTo(0);
   }
 
   @Test

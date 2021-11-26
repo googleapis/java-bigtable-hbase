@@ -86,8 +86,13 @@ public class TestReadVerificationSampling {
       }
     }
 
+    // ReadSampler decides whether to verify read per whole request (e.g. it verifies all Gets in a
+    // batch or none). We sent 1000 requests. None of them should fail or be a mismatch.
+    // Our ReadSampler is probabilistic. We have a 0.01 chance of verifying a request.
+    // Assuming that our random number generator really is random and there are no unexpected
+    // errors, probability that this counter is at least 25 is about 0.000042.
     assertThat(MismatchDetectorCounter.getInstance().getVerificationsFinishedCounter())
-        .isLessThan(20);
+        .isLessThan(25);
   }
 
   @Test

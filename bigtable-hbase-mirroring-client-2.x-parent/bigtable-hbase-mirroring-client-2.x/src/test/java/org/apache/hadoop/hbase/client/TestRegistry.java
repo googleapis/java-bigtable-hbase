@@ -15,7 +15,12 @@
  */
 package org.apache.hadoop.hbase.client;
 /**
- * AsyncRegistry is private in org.apache.hadoop.hbase.client so this mock must be in the same
+ * It's necessary for unit testing of {@link
+ * com.google.cloud.bigtable.mirroring.hbase2_x.MirroringAsyncConnection} as {@link
+ * org.apache.hadoop.hbase.client.ConnectionFactory#createAsyncConnection()} checks cluster id
+ * during {@link org.apache.hadoop.hbase.client.AsyncConnection} creation.
+ *
+ * <p>AsyncRegistry is private in org.apache.hadoop.hbase.client so this mock must be in the same
  * package.
  */
 import java.util.concurrent.CompletableFuture;

@@ -75,7 +75,7 @@ public class TestMirroringTableInputModification {
   @Mock SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
 
   MirroringTable mirroringTable;
-  SettableFuture<Void> secondaryOperationAllowedFuture;
+  SettableFuture<Void> secondaryOperationBlockingFuture;
 
   @Before
   public void setUp() {
@@ -94,13 +94,13 @@ public class TestMirroringTableInputModification {
                 false,
                 new MirroringTracer(),
                 mock(ReferenceCounter.class)));
-    this.secondaryOperationAllowedFuture = SettableFuture.create();
+    this.secondaryOperationBlockingFuture = SettableFuture.create();
   }
 
   @Test
   public void testExistsAll() throws IOException {
     mockExistsAll(this.primaryTable);
-    blockMethodCall(secondaryTable, secondaryOperationAllowedFuture)
+    blockMethodCall(secondaryTable, secondaryOperationBlockingFuture)
         .existsAll(ArgumentMatchers.<Get>anyList());
 
     List<Get> gets = createGets("k1", "k2", "k3");
@@ -110,7 +110,7 @@ public class TestMirroringTableInputModification {
     verify(this.primaryTable, times(1)).existsAll(inputList);
     inputList.clear(); // User modifies the list
 
-    secondaryOperationAllowedFuture.set(null);
+    secondaryOperationBlockingFuture.set(null);
     executorServiceRule.waitForExecutor();
 
     verify(this.secondaryTable, times(1)).existsAll(gets);
@@ -119,7 +119,7 @@ public class TestMirroringTableInputModification {
   @Test
   public void testGet() throws IOException {
     mockGet(this.primaryTable);
-    blockMethodCall(this.secondaryTable, secondaryOperationAllowedFuture)
+    blockMethodCall(this.secondaryTable, secondaryOperationBlockingFuture)
         .get(ArgumentMatchers.<Get>anyList());
 
     List<Get> gets = createGets("k1", "k2", "k3");
@@ -129,7 +129,7 @@ public class TestMirroringTableInputModification {
     verify(this.primaryTable, times(1)).get(inputList);
     inputList.clear(); // User modifies the list
 
-    secondaryOperationAllowedFuture.set(null);
+    secondaryOperationBlockingFuture.set(null);
     executorServiceRule.waitForExecutor();
 
     verify(this.secondaryTable, times(1)).get(gets);
@@ -138,7 +138,7 @@ public class TestMirroringTableInputModification {
   @Test
   public void testPut() throws IOException, InterruptedException {
     mockBatch(this.primaryTable);
-    blockMethodCall(this.secondaryTable, secondaryOperationAllowedFuture)
+    blockMethodCall(this.secondaryTable, secondaryOperationBlockingFuture)
         .batch(ArgumentMatchers.<Put>anyList(), (Object[]) any());
 
     List<Put> puts = Collections.singletonList(createPut("r", "f", "q", "v"));
@@ -148,7 +148,7 @@ public class TestMirroringTableInputModification {
     verify(this.primaryTable, times(1)).batch(eq(inputList), (Object[]) any());
     inputList.clear(); // User modifies the list
 
-    secondaryOperationAllowedFuture.set(null);
+    secondaryOperationBlockingFuture.set(null);
     executorServiceRule.waitForExecutor();
 
     verify(this.secondaryTable, times(1)).batch(eq(puts), (Object[]) any());
@@ -157,7 +157,7 @@ public class TestMirroringTableInputModification {
   @Test
   public void testDelete() throws IOException, InterruptedException {
     mockBatch(this.primaryTable);
-    blockMethodCall(this.secondaryTable, secondaryOperationAllowedFuture)
+    blockMethodCall(this.secondaryTable, secondaryOperationBlockingFuture)
         .batch(ArgumentMatchers.<Put>anyList(), (Object[]) any());
 
     List<Delete> puts = Collections.singletonList(new Delete("r".getBytes()));
@@ -166,7 +166,7 @@ public class TestMirroringTableInputModification {
     this.mirroringTable.delete(inputList); // inputList is modified by the call
     verify(this.primaryTable, times(1)).batch(eq(puts), (Object[]) any());
 
-    secondaryOperationAllowedFuture.set(null);
+    secondaryOperationBlockingFuture.set(null);
     executorServiceRule.waitForExecutor();
 
     verify(this.secondaryTable, times(1)).batch(eq(puts), (Object[]) any());
@@ -175,7 +175,7 @@ public class TestMirroringTableInputModification {
   @Test
   public void testBatch() throws IOException, InterruptedException {
     mockBatch(this.primaryTable);
-    blockMethodCall(this.secondaryTable, secondaryOperationAllowedFuture)
+    blockMethodCall(this.secondaryTable, secondaryOperationBlockingFuture)
         .batch(ArgumentMatchers.<Put>anyList(), (Object[]) any());
 
     List<? extends Row> ops = Arrays.asList(new Delete("r".getBytes()), createGet("k"));
@@ -185,7 +185,7 @@ public class TestMirroringTableInputModification {
     verify(this.primaryTable, times(1)).batch(eq(ops), (Object[]) any());
     inputList.clear(); // User modifies the list
 
-    secondaryOperationAllowedFuture.set(null);
+    secondaryOperationBlockingFuture.set(null);
     executorServiceRule.waitForExecutor();
 
     verify(this.secondaryTable, times(1)).batch(eq(ops), (Object[]) any());

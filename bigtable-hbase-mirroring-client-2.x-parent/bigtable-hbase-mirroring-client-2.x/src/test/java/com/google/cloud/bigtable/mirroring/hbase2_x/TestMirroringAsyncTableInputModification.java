@@ -75,7 +75,7 @@ public class TestMirroringAsyncTableInputModification {
 
   MirroringAsyncTable<ScanResultConsumerBase> mirroringTable;
   CompletableFuture<Void> letPrimaryThroughFuture;
-  SettableFuture<Void> secondaryOperationAllowedFuture;
+  SettableFuture<Void> secondaryOperationBlockedOnFuture;
 
   @Before
   public void setUp() {
@@ -94,7 +94,7 @@ public class TestMirroringAsyncTableInputModification {
                 referenceCounter,
                 executorService));
 
-    secondaryOperationAllowedFuture = SettableFuture.create();
+    secondaryOperationBlockedOnFuture = SettableFuture.create();
 
     lenient().doAnswer(this::answerWithSuccessfulNulls).when(primaryTable).exists(anyList());
     lenient().doAnswer(this::answerWithSuccessfulNulls).when(primaryTable).get(anyList());
@@ -126,7 +126,7 @@ public class TestMirroringAsyncTableInputModification {
     List<CompletableFuture<Boolean>> expectedResult =
         Collections.nCopies(gets.size(), letExistsThroughFuture);
 
-    blockMethodCall(secondaryTable, secondaryOperationAllowedFuture).exists(anyList());
+    blockMethodCall(secondaryTable, secondaryOperationBlockedOnFuture).exists(anyList());
     doAnswer(ignored -> expectedResult).when(primaryTable).exists(anyList());
     doAnswer(ignored -> expectedResult).when(secondaryTable).exists(anyList());
 
@@ -138,12 +138,12 @@ public class TestMirroringAsyncTableInputModification {
     results.get(0).get(3, TimeUnit.SECONDS);
     verify(this.primaryTable, times(1)).exists(gets);
 
-    secondaryOperationAllowedFuture.set(null);
+    secondaryOperationBlockedOnFuture.set(null);
     verify(this.secondaryTable, times(1)).exists(gets);
   }
 
   @Test
-  public void testGet() throws InterruptedException, TimeoutException, ExecutionException {
+  public void testGets() throws InterruptedException, TimeoutException, ExecutionException {
     List<Get> gets = createGets("k1", "k2", "k3");
     List<Get> inputList = new ArrayList<>(gets);
 
@@ -155,12 +155,12 @@ public class TestMirroringAsyncTableInputModification {
     results.get(0).get(3, TimeUnit.SECONDS);
     verify(this.primaryTable, times(1)).get(gets);
 
-    secondaryOperationAllowedFuture.set(null);
+    secondaryOperationBlockedOnFuture.set(null);
     verify(this.secondaryTable, times(1)).get(gets);
   }
 
   @Test
-  public void testPut() throws InterruptedException, TimeoutException, ExecutionException {
+  public void testPuts() throws InterruptedException, TimeoutException, ExecutionException {
     List<Put> puts = Collections.singletonList(createPut("r", "f", "q", "v"));
     List<Put> inputList = new ArrayList<>(puts);
 
@@ -172,12 +172,12 @@ public class TestMirroringAsyncTableInputModification {
     results.get(0).get(3, TimeUnit.SECONDS);
     verify(this.primaryTable, times(1)).put(puts);
 
-    secondaryOperationAllowedFuture.set(null);
+    secondaryOperationBlockedOnFuture.set(null);
     verify(this.secondaryTable, times(1)).put(puts);
   }
 
   @Test
-  public void testDelete() throws InterruptedException, TimeoutException, ExecutionException {
+  public void testDeletes() throws InterruptedException, TimeoutException, ExecutionException {
     List<Delete> puts = Collections.singletonList(new Delete("r".getBytes()));
     List<Delete> inputList = new ArrayList<>(puts);
 
@@ -189,7 +189,7 @@ public class TestMirroringAsyncTableInputModification {
     results.get(0).get(3, TimeUnit.SECONDS);
     verify(this.primaryTable, times(1)).delete(puts);
 
-    secondaryOperationAllowedFuture.set(null);
+    secondaryOperationBlockedOnFuture.set(null);
     verify(this.primaryTable, times(1)).delete(puts);
   }
 
@@ -206,7 +206,7 @@ public class TestMirroringAsyncTableInputModification {
     results.get(0).get(3, TimeUnit.SECONDS);
     verify(this.primaryTable, times(1)).batch(ops);
 
-    secondaryOperationAllowedFuture.set(null);
+    secondaryOperationBlockedOnFuture.set(null);
     verify(this.secondaryTable, times(1)).batch(ops);
   }
 }

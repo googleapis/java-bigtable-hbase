@@ -15,18 +15,17 @@
  */
 package com.google.cloud.bigtable.hbase.mirroring.utils;
 
-import com.google.common.base.Joiner;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 public class MismatchDetectorCounter {
-  private int errorCounter;
   private int verificationsStartedCounter;
   private int verificationsFinishedCounter;
-  private List<String> errors;
-  private Map<String, Integer> typeErrorMap;
+  private int lengthMismatches;
+  private List<Mismatch> mismatches;
+  private List<Failure> failures;
 
   private MismatchDetectorCounter() {
     clearErrors();
@@ -41,40 +40,42 @@ public class MismatchDetectorCounter {
     return instance;
   }
 
-  public synchronized void reportError(String operation, String errorType, String details) {
-    this.errors.add(String.format("%s %s %s", operation, errorType, details));
-    if (!this.typeErrorMap.containsKey(errorType)) {
-      this.typeErrorMap.put(errorType, 0);
-    }
-    this.typeErrorMap.put(errorType, this.typeErrorMap.get(errorType) + 1);
-    this.errorCounter += 1;
+  public synchronized void reportFailure(HBaseOperation operation, Throwable error) {
+    this.failures.add(new Failure(operation, error));
+  }
+
+  public synchronized void reportMismatch(
+      HBaseOperation operation, byte[] primary, byte[] secondary) {
+    this.mismatches.add(new Mismatch(operation, primary, secondary));
+  }
+
+  public synchronized void reportLengthMismatch(
+      HBaseOperation operation, int primaryLength, int secondaryLength) {
+    this.lengthMismatches += 1;
   }
 
   public synchronized void clearErrors() {
-    this.errorCounter = 0;
+    this.lengthMismatches = 0;
     this.verificationsStartedCounter = 0;
     this.verificationsFinishedCounter = 0;
-    this.errors = new ArrayList<>();
-    this.typeErrorMap = new HashMap<>();
+    this.mismatches = new ArrayList<>();
+    this.failures = new ArrayList<>();
   }
 
   public synchronized int getErrorCount() {
-    return this.errorCounter;
+    return this.getLengthMismatchesCount() + this.getFailureCount() + this.getMismatchCount();
   }
 
-  public synchronized int getErrorCount(String type) {
-    if (!this.typeErrorMap.containsKey(type)) {
-      return 0;
-    }
-    return this.typeErrorMap.get(type);
+  public synchronized int getFailureCount() {
+    return this.failures.size();
   }
 
-  public synchronized List<String> getErrors() {
-    return this.errors;
+  public synchronized int getMismatchCount() {
+    return this.mismatches.size();
   }
 
-  public synchronized String getErrorsAsString() {
-    return Joiner.on('\n').join(this.errors);
+  public synchronized int getLengthMismatchesCount() {
+    return this.lengthMismatches;
   }
 
   public synchronized void onVerificationStarted() {
@@ -91,5 +92,47 @@ public class MismatchDetectorCounter {
 
   public int getVerificationsFinishedCounter() {
     return verificationsFinishedCounter;
+  }
+
+  public synchronized List<Mismatch> getMismatches() {
+    return this.mismatches;
+  }
+
+  public static class Mismatch {
+    public final byte[] primary;
+    public final byte[] secondary;
+    public final HBaseOperation operation;
+
+    public Mismatch(HBaseOperation operation, byte[] primary, byte[] secondary) {
+      this.primary = primary;
+      this.secondary = secondary;
+      this.operation = operation;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o instanceof Mismatch) {
+        Mismatch other = (Mismatch) o;
+        return this.operation == other.operation
+            && Arrays.equals(this.primary, other.primary)
+            && Arrays.equals(this.secondary, other.secondary);
+      }
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return this.operation.hashCode() + this.primary.hashCode() + this.secondary.hashCode();
+    }
+  }
+
+  public static class Failure {
+    public final Throwable error;
+    public final HBaseOperation operation;
+
+    public Failure(HBaseOperation operation, Throwable throwable) {
+      this.operation = operation;
+      this.error = throwable;
+    }
   }
 }

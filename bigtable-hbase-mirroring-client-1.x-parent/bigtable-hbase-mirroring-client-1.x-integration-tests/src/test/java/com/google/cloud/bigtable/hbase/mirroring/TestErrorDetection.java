@@ -15,11 +15,14 @@
  */
 package com.google.cloud.bigtable.hbase.mirroring;
 
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_READ_VERIFICATION_RATE_PERCENT;
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.google.cloud.bigtable.hbase.mirroring.utils.ConfigurationHelper;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.DatabaseHelpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.Helpers;
@@ -34,6 +37,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Put;
@@ -60,6 +64,8 @@ public class TestErrorDetection {
 
   private static final byte[] columnFamily1 = "cf1".getBytes();
   private static final byte[] qualifier1 = "q1".getBytes();
+  private static final byte[] row1 = "r1".getBytes();
+  private static final byte[] value1 = "v1".getBytes();
 
   @Test
   public void readsAndWritesArePerformed() throws IOException {
@@ -68,15 +74,15 @@ public class TestErrorDetection {
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
       tableName = connectionRule.createTable(connection, columnFamily1);
       try (Table t1 = connection.getTable(tableName)) {
-        t1.put(Helpers.createPut("1".getBytes(), columnFamily1, qualifier1, "1".getBytes()));
+        t1.put(Helpers.createPut(row1, columnFamily1, qualifier1, value1));
       }
     }
 
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table t2 = connection.getTable(tableName)) {
-        Result result = t2.get(Helpers.createGet("1".getBytes(), columnFamily1, qualifier1));
-        assertArrayEquals(result.getRow(), "1".getBytes());
-        assertArrayEquals(result.getValue(columnFamily1, qualifier1), "1".getBytes());
+        Result result = t2.get(Helpers.createGet(row1, columnFamily1, qualifier1));
+        assertArrayEquals(result.getRow(), row1);
+        assertArrayEquals(result.getValue(columnFamily1, qualifier1), value1);
         assertEquals(MismatchDetectorCounter.getInstance().getErrorCount(), 0);
       }
     }
@@ -88,25 +94,22 @@ public class TestErrorDetection {
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
       tableName = connectionRule.createTable(connection, columnFamily1);
       try (Table mirroredTable = connection.getTable(tableName)) {
-        mirroredTable.put(
-            Helpers.createPut("1".getBytes(), columnFamily1, qualifier1, "1".getBytes()));
+        mirroredTable.put(Helpers.createPut(row1, columnFamily1, qualifier1, value1));
       }
     }
 
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table secondaryTable = connection.getSecondaryConnection().getTable(tableName)) {
-        secondaryTable.put(
-            Helpers.createPut("1".getBytes(), columnFamily1, qualifier1, "2".getBytes()));
+        secondaryTable.put(Helpers.createPut(row1, columnFamily1, qualifier1, value1));
       }
     }
 
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table mirroredTable = connection.getTable(tableName)) {
-        Result result =
-            mirroredTable.get(Helpers.createGet("1".getBytes(), columnFamily1, qualifier1));
+        Result result = mirroredTable.get(Helpers.createGet(row1, columnFamily1, qualifier1));
         // Data from primary is returned.
-        assertArrayEquals(result.getRow(), "1".getBytes());
-        assertArrayEquals(result.getValue(columnFamily1, qualifier1), "1".getBytes());
+        assertArrayEquals(result.getRow(), row1);
+        assertArrayEquals(result.getValue(columnFamily1, qualifier1), value1);
       }
     }
 
@@ -115,20 +118,25 @@ public class TestErrorDetection {
 
   @Test
   public void concurrentInsertionAndReadingInsertsWithScanner()
-      throws IOException, InterruptedException, TimeoutException {
+      throws IOException, TimeoutException {
 
     class WorkerThread extends PropagatingThread {
       private final long workerId;
-      private final long batchSize = 100;
+      private final long batchSize;
       private final Connection connection;
       private final TableName tableName;
       private final long entriesPerWorker;
       private final long numberOfBatches;
 
       public WorkerThread(
-          int workerId, Connection connection, TableName tableName, long numberOfBatches) {
+          int workerId,
+          Connection connection,
+          TableName tableName,
+          long numberOfBatches,
+          long batchSize) {
         this.workerId = workerId;
         this.connection = connection;
+        this.batchSize = batchSize;
         this.entriesPerWorker = numberOfBatches * batchSize;
         this.numberOfBatches = numberOfBatches;
         this.tableName = tableName;
@@ -142,12 +150,12 @@ public class TestErrorDetection {
             for (long batchEntryId = 0; batchEntryId < this.batchSize; batchEntryId++) {
               long putIndex =
                   this.workerId * this.entriesPerWorker + batchId * this.batchSize + batchEntryId;
-              long putValue = putIndex + 1;
+              long putTimestamp = putIndex + 1;
               byte[] putIndexBytes = Longs.toByteArray(putIndex);
-              byte[] putValueBytes = Longs.toByteArray(putValue);
+              byte[] putValueBytes = ("value-" + putIndex).getBytes();
               puts.add(
                   Helpers.createPut(
-                      putIndexBytes, columnFamily1, qualifier1, putValue, putValueBytes));
+                      putIndexBytes, columnFamily1, qualifier1, putTimestamp, putValueBytes));
             }
             table.put(puts);
           }
@@ -157,6 +165,7 @@ public class TestErrorDetection {
 
     final int numberOfWorkers = 100;
     final int numberOfBatches = 100;
+    final long batchSize = 100;
 
     TableName tableName;
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
@@ -164,7 +173,8 @@ public class TestErrorDetection {
 
       List<PropagatingThread> workers = new ArrayList<>();
       for (int i = 0; i < numberOfWorkers; i++) {
-        PropagatingThread worker = new WorkerThread(i, connection, tableName, numberOfBatches);
+        PropagatingThread worker =
+            new WorkerThread(i, connection, tableName, numberOfBatches, batchSize);
         worker.start();
         workers.add(worker);
       }
@@ -174,25 +184,32 @@ public class TestErrorDetection {
       }
     }
 
-    try (MirroringConnection connection = databaseHelpers.createConnection()) {
+    Configuration configuration = ConfigurationHelper.newConfiguration();
+    configuration.set(MIRRORING_READ_VERIFICATION_RATE_PERCENT, "100");
+
+    try (MirroringConnection connection = databaseHelpers.createConnection(configuration)) {
       try (Table t = connection.getTable(tableName)) {
         try (ResultScanner s = t.getScanner(columnFamily1, qualifier1)) {
           long counter = 0;
           for (Result r : s) {
             long row = Longs.fromByteArray(r.getRow());
-            long value = Longs.fromByteArray(r.getValue(columnFamily1, qualifier1));
-            assertEquals(counter, row);
-            assertEquals(counter + 1, value);
+            byte[] value = r.getValue(columnFamily1, qualifier1);
+            assertThat(counter).isEqualTo(row);
+            assertThat(("value-" + counter).getBytes()).isEqualTo(value);
             counter += 1;
           }
         }
       }
     }
 
+    assertEquals(0, MismatchDetectorCounter.getInstance().getErrorCount());
+    // + 1 because we also verify the final `null` denoting end of results.
     assertEquals(
-        MismatchDetectorCounter.getInstance().getErrorsAsString(),
-        0,
-        MismatchDetectorCounter.getInstance().getErrorCount());
+        numberOfWorkers * numberOfBatches * batchSize + 1,
+        MismatchDetectorCounter.getInstance().getVerificationsFinishedCounter());
+    assertEquals(
+        numberOfWorkers * numberOfBatches * batchSize + 1,
+        MismatchDetectorCounter.getInstance().getVerificationsStartedCounter());
   }
 
   @Test
@@ -258,13 +275,16 @@ public class TestErrorDetection {
       }
     }
 
-    try (MirroringConnection connection = databaseHelpers.createConnection()) {
+    Configuration configuration = ConfigurationHelper.newConfiguration();
+    configuration.set(MIRRORING_READ_VERIFICATION_RATE_PERCENT, "100");
+
+    try (MirroringConnection connection = databaseHelpers.createConnection(configuration)) {
       try (Table t = connection.getTable(tableName)) {
         try (ResultScanner s = t.getScanner(columnFamily1, qualifier1)) {
           int counter = 0;
           for (Result r : s) {
             assertEquals(
-                new String(r.getRow(), Charset.defaultCharset()),
+                String.format("Row %s mismatch in checkAndPut test", r.getRow()),
                 String.valueOf(numberOfOperations),
                 new String(r.getValue(columnFamily1, qualifier1), Charset.defaultCharset()));
             counter++;
@@ -280,9 +300,6 @@ public class TestErrorDetection {
     assertEquals(
         numberOfWorkers + 1,
         MismatchDetectorCounter.getInstance().getVerificationsFinishedCounter());
-    assertEquals(
-        MismatchDetectorCounter.getInstance().getErrorsAsString(),
-        0,
-        MismatchDetectorCounter.getInstance().getErrorCount());
+    assertEquals(0, MismatchDetectorCounter.getInstance().getErrorCount());
   }
 }

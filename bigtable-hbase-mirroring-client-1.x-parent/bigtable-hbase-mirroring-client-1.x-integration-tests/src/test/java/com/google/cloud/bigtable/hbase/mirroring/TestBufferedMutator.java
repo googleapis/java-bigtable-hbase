@@ -28,6 +28,7 @@ import com.google.cloud.bigtable.hbase.mirroring.utils.ConfigurationHelper;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.DatabaseHelpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounter;
+import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounter.Mismatch;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.PropagatingThread;
 import com.google.cloud.bigtable.hbase.mirroring.utils.TestWriteErrorConsumer;
@@ -36,6 +37,7 @@ import com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.F
 import com.google.cloud.bigtable.mirroring.hbase1_x.ExecutorServiceRule;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringOperationException;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import java.io.IOException;
@@ -163,7 +165,7 @@ public class TestBufferedMutator {
           thread.propagatingJoin();
         }
       }
-    } // wait for secondary writes
+    } // connection close will wait for secondary writes
 
     long readEntries = 0;
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
@@ -236,7 +238,7 @@ public class TestBufferedMutator {
           }
         }
       }
-    } // wait for secondary writes
+    } // connection close will wait for secondary writes
 
     if (this.mutateConcurrently) {
       // ConcurrentBufferedMutator does not report secondary write errors.
@@ -274,8 +276,22 @@ public class TestBufferedMutator {
       }
     }
 
-    // First mismatch happens when primary returns 3 and secondary returns 4
-    assertThat(MismatchDetectorCounter.getInstance().getErrorCount()).isEqualTo(7);
+    List<Mismatch> mismatches = MismatchDetectorCounter.getInstance().getMismatches();
+    assertThat(mismatches.size()).isEqualTo(7);
+    assertThat(mismatches).contains(scannerMismatch(3, 4));
+    assertThat(mismatches).contains(scannerMismatch(4, 5));
+    assertThat(mismatches).contains(scannerMismatch(5, 6));
+    assertThat(mismatches).contains(scannerMismatch(6, 8));
+    assertThat(mismatches).contains(scannerMismatch(7, 9));
+    assertThat(mismatches).contains(scannerMismatch(8, null));
+    assertThat(mismatches).contains(scannerMismatch(9, null));
+  }
+
+  private Mismatch scannerMismatch(int primary, Integer secondary) {
+    return new Mismatch(
+        HBaseOperation.NEXT,
+        Longs.toByteArray(primary),
+        secondary == null ? null : Longs.toByteArray(secondary));
   }
 
   @Test
@@ -317,7 +333,7 @@ public class TestBufferedMutator {
         }
         bm.flush();
       }
-    } // wait for secondary writes
+    } // connection close will wait for secondary writes
 
     List<Long> secondaryRows = new ArrayList<>();
     try (MirroringConnection mirroringConnection = databaseHelpers.createConnection()) {

@@ -36,6 +36,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.Mirro
 import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Mutation;
@@ -60,24 +61,27 @@ public class TestConcurrentMirroringBufferedMutator {
 
   public final MirroringBufferedMutatorCommon common = new MirroringBufferedMutatorCommon();
 
+  private final List<Mutation> singletonMutation1 = Collections.singletonList(common.mutation1);
+
   @Test
   public void testBufferedWritesWithoutErrors() throws IOException, InterruptedException {
     BufferedMutator bm = getBufferedMutator((long) (common.mutationSize * 3.5));
 
     bm.mutate(common.mutation1);
-    verify(common.primaryBufferedMutator, times(1)).mutate(ArgumentMatchers.<Mutation>anyList());
-    verify(common.secondaryBufferedMutator, times(1)).mutate(ArgumentMatchers.<Mutation>anyList());
+    verify(common.primaryBufferedMutator, times(1)).mutate(singletonMutation1);
+    verify(common.secondaryBufferedMutator, times(1)).mutate(singletonMutation1);
     bm.mutate(common.mutation1);
-    verify(common.primaryBufferedMutator, times(2)).mutate(ArgumentMatchers.<Mutation>anyList());
-    verify(common.secondaryBufferedMutator, times(2)).mutate(ArgumentMatchers.<Mutation>anyList());
+    verify(common.primaryBufferedMutator, times(2)).mutate(singletonMutation1);
+    verify(common.secondaryBufferedMutator, times(2)).mutate(singletonMutation1);
     bm.mutate(common.mutation1);
-    verify(common.primaryBufferedMutator, times(3)).mutate(ArgumentMatchers.<Mutation>anyList());
-    verify(common.secondaryBufferedMutator, times(3)).mutate(ArgumentMatchers.<Mutation>anyList());
+    verify(common.primaryBufferedMutator, times(3)).mutate(singletonMutation1);
+    verify(common.secondaryBufferedMutator, times(3)).mutate(singletonMutation1);
     bm.mutate(common.mutation1);
     Thread.sleep(300);
     executorServiceRule.waitForExecutor();
-    verify(common.primaryBufferedMutator, times(4)).mutate(ArgumentMatchers.<Mutation>anyList());
-    verify(common.secondaryBufferedMutator, times(4)).mutate(ArgumentMatchers.<Mutation>anyList());
+    verify(common.primaryBufferedMutator, times(4)).mutate(singletonMutation1);
+    verify(common.secondaryBufferedMutator, times(4)).mutate(singletonMutation1);
+    verify(common.primaryBufferedMutator, times(1)).flush();
     verify(common.secondaryBufferedMutator, times(1)).flush();
     verify(common.flowController, never())
         .asyncRequestResource(any(RequestResourcesDescription.class));
@@ -93,8 +97,8 @@ public class TestConcurrentMirroringBufferedMutator {
     bm.mutate(common.mutation1);
     bm.flush();
     executorServiceRule.waitForExecutor();
-    verify(common.primaryBufferedMutator, times(3)).mutate(ArgumentMatchers.<Mutation>anyList());
-    verify(common.secondaryBufferedMutator, times(3)).mutate(ArgumentMatchers.<Mutation>anyList());
+    verify(common.primaryBufferedMutator, times(3)).mutate(singletonMutation1);
+    verify(common.secondaryBufferedMutator, times(3)).mutate(singletonMutation1);
     verify(common.primaryBufferedMutator, times(1)).flush();
     verify(common.secondaryBufferedMutator, times(1)).flush();
     verify(common.flowController, never())
@@ -110,8 +114,8 @@ public class TestConcurrentMirroringBufferedMutator {
     bm.mutate(common.mutation1);
     bm.mutate(common.mutation1);
     bm.close();
-    verify(common.primaryBufferedMutator, times(3)).mutate(ArgumentMatchers.<Mutation>anyList());
-    verify(common.secondaryBufferedMutator, times(3)).mutate(ArgumentMatchers.<Mutation>anyList());
+    verify(common.primaryBufferedMutator, times(3)).mutate(singletonMutation1);
+    verify(common.secondaryBufferedMutator, times(3)).mutate(singletonMutation1);
     verify(common.primaryBufferedMutator, times(1)).flush();
     verify(common.secondaryBufferedMutator, times(1)).flush();
     verify(common.flowController, never())

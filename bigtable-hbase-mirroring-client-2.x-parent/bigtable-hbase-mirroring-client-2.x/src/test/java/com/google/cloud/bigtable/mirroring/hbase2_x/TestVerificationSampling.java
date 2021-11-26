@@ -190,7 +190,24 @@ public class TestVerificationSampling {
   }
 
   @Test
-  public void isBatchSampled() throws InterruptedException, ExecutionException, TimeoutException {
+  public void isBatchSampledWithSamplingEnabled()
+      throws InterruptedException, ExecutionException, TimeoutException {
+    Put put = createPut("test", "test", "test", "test");
+    List<? extends Row> ops = ImmutableList.of(get, put);
+    mockWithCompleteFutureList(primaryTable, 2, new Result()).batch(ops);
+    mockWithCompleteFutureList(secondaryTable, 2, new Result()).batch(ops);
+
+    withSamplingEnabled(true);
+    allOfList(mirroringTable.batch(ops)).get(1, TimeUnit.SECONDS);
+    executorServiceRule.waitForExecutor();
+    verify(readSampler, times(1)).shouldNextReadOperationBeSampled();
+    verify(primaryTable, times(1)).batch(ops);
+    verify(secondaryTable, times(1)).batch(ops);
+  }
+
+  @Test
+  public void isBatchSampledWithSamplingDisabled()
+      throws InterruptedException, ExecutionException, TimeoutException {
     Put put = createPut("test", "test", "test", "test");
     List<? extends Row> ops = ImmutableList.of(get, put);
     mockWithCompleteFutureList(primaryTable, 2, new Result()).batch(ops);
@@ -198,15 +215,9 @@ public class TestVerificationSampling {
 
     withSamplingEnabled(false);
     allOfList(mirroringTable.batch(ops)).get(1, TimeUnit.SECONDS);
+    executorServiceRule.waitForExecutor();
     verify(readSampler, times(1)).shouldNextReadOperationBeSampled();
     verify(primaryTable, times(1)).batch(ops);
-
-    withSamplingEnabled(true);
-    allOfList(mirroringTable.batch(ops)).get(1, TimeUnit.SECONDS);
-    executorServiceRule.waitForExecutor();
-    verify(readSampler, times(2)).shouldNextReadOperationBeSampled();
-    verify(primaryTable, times(2)).batch(ops);
-    verify(secondaryTable, times(1)).batch(ops);
     verify(secondaryTable, times(1)).batch(ImmutableList.of(put));
   }
 

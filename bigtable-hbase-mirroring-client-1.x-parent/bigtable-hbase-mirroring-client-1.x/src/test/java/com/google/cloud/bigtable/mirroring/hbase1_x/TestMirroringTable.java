@@ -156,6 +156,24 @@ public class TestMirroringTable {
   }
 
   @Test
+  public void testPrimaryReadExceptionDoesntCallSecondaryNorVerification() throws IOException {
+    Get request = createGet("test");
+    IOException expectedException = new IOException("expected");
+    when(primaryTable.get(request)).thenThrow(expectedException);
+
+    try {
+      mirroringTable.get(request);
+      fail("should have thrown");
+    } catch (IOException e) {
+      assertThat(e).isEqualTo(expectedException);
+    }
+    executorServiceRule.waitForExecutor();
+
+    verify(secondaryTable, never()).get(any(Get.class));
+    verify(mismatchDetector, never()).get(request, expectedException);
+  }
+
+  @Test
   public void testSecondaryReadExceptionCallsVerificationErrorHandlerOnSingleGet()
       throws IOException {
     Get request = createGet("test");
@@ -310,8 +328,6 @@ public class TestMirroringTable {
     verify(mismatchDetector, times(1)).scannerNext(scan, 0, expected1, expected1);
     verify(mismatchDetector, times(1)).scannerNext(scan, 1, expected2, expected2);
     verify(mismatchDetector, times(1)).scannerNext(scan, 2, (Result) null, null);
-    verify(mismatchDetector, times(3))
-        .scannerNext(eq(scan), anyInt(), (Result) any(), (Result) any());
   }
 
   @Test
@@ -613,7 +629,7 @@ public class TestMirroringTable {
     verify(secondaryTable, times(1)).batch(eq(secondaryRequests), argument.capture());
     assertThat(argument.getValue().length).isEqualTo(2);
 
-    // successful secondary reads were reported
+    // failed secondary reads were reported
     verify(mismatchDetector, times(1))
         .batch(Arrays.asList(get1), new Result[] {get1Result}, new Result[] {get1Result});
   }
@@ -687,11 +703,11 @@ public class TestMirroringTable {
     verify(secondaryWriteErrorConsumer, times(1))
         .consume(eq(HBaseOperation.BATCH), eq(put1), (Throwable) isNull());
 
-    // successful secondary reads were reported
+    // failed secondary reads were reported
     verify(mismatchDetector, times(1))
         .batch(Arrays.asList(get3), new Result[] {get3Result}, new Result[] {get3Result});
 
-    // successful secondary reads were reported
+    // failed secondary reads were reported
     verify(mismatchDetector, times(1)).batch(eq(Arrays.asList(get1)), any(IOException.class));
   }
 
@@ -728,7 +744,7 @@ public class TestMirroringTable {
     verify(secondaryTable, times(1)).batch(eq(secondaryRequests), argument.capture());
     assertThat(argument.getValue().length).isEqualTo(1);
 
-    // successful secondary reads were reported
+    // failed secondary reads were reported
     verify(mismatchDetector, times(1))
         .batch(Arrays.asList(get2), new Result[] {get2Result}, new Result[] {get2Result});
 
@@ -791,12 +807,7 @@ public class TestMirroringTable {
         .thenReturn(true);
 
     mirroringTable.checkAndPut(
-        "r1".getBytes(),
-        "f1".getBytes(),
-        "q1".getBytes(),
-        CompareOp.GREATER_OR_EQUAL,
-        "v1".getBytes(),
-        put);
+        "r1".getBytes(), "f1".getBytes(), "q1".getBytes(), "v1".getBytes(), put);
     executorServiceRule.waitForExecutor();
 
     verify(secondaryTable, times(1)).mutateRow(any(RowMutations.class));
@@ -815,18 +826,10 @@ public class TestMirroringTable {
         .thenReturn(true);
 
     mirroringTable.checkAndDelete(
-        "r1".getBytes(),
-        "f1".getBytes(),
-        "q1".getBytes(),
-        CompareOp.GREATER_OR_EQUAL,
-        "v1".getBytes(),
-        delete);
-
-    mirroringTable.checkAndDelete(
         "r1".getBytes(), "f1".getBytes(), "q1".getBytes(), "v1".getBytes(), delete);
     executorServiceRule.waitForExecutor();
 
-    verify(secondaryTable, times(2)).mutateRow(any(RowMutations.class));
+    verify(secondaryTable, times(1)).mutateRow(any(RowMutations.class));
   }
 
   @Test
@@ -1229,6 +1232,8 @@ public class TestMirroringTable {
   @Test
   public void testConcurrentWritesAreFlowControlledBeforePrimaryAction()
       throws IOException, InterruptedException {
+    boolean performWritesConcurrently = true;
+    boolean waitForSecondaryWrites = true;
     this.mirroringTable =
         spy(
             new MirroringTable(
@@ -1239,8 +1244,8 @@ public class TestMirroringTable {
                 flowController,
                 secondaryWriteErrorConsumer,
                 new ReadSampler(100),
-                true,
-                true,
+                performWritesConcurrently,
+                waitForSecondaryWrites,
                 new MirroringTracer(),
                 this.referenceCounter));
 
@@ -1268,13 +1273,19 @@ public class TestMirroringTable {
   @Test
   public void testNonConcurrentOpsWontBePerformedConcurrently()
       throws IOException, InterruptedException {
-    setupMirroringTableWithDirectExecutor();
+    setupConcurrentMirroringTableWithDirectExecutor();
     Get get = createGet("get1");
     Increment increment = new Increment("row".getBytes());
     Append append = new Append("row".getBytes());
 
     Put put = createPut("test1", "f1", "q1", "v1");
     Delete delete = createDelete("test2");
+
+    Put putMutation = createPut("test3", "f1", "q1", "v1");
+    Delete deleteMutation = createDelete("test3");
+    RowMutations rowMutations = new RowMutations("test3".getBytes());
+    rowMutations.add(putMutation);
+    rowMutations.add(deleteMutation);
 
     mockBatch(
         primaryTable,
@@ -1286,20 +1297,32 @@ public class TestMirroringTable {
         append,
         createResult("row", "v2"));
 
+    // Only Puts and Deletes (and RowMutations which can contain only Puts and Deletes)
+    // can be performed concurrently. Other operations force us to wait for primary result
+    // (e.g. we implement Increment on secondary as a Put of result from primary).
+    // We expect that even though our MirroringTable is concurrent, the operations which cannot be
+    // performed concurrently will be performed sequentially.
+
+    // Batch contains an operation which causes the batch to be performed sequentially.
     checkBatchCalledSequentially(Arrays.asList(get));
     checkBatchCalledSequentially(Arrays.asList(increment));
     checkBatchCalledSequentially(Arrays.asList(append));
 
+    // Batch contains only operations which can be performed concurrently.
     checkBatchCalledConcurrently(Arrays.asList(put));
     checkBatchCalledConcurrently(Arrays.asList(delete));
-    checkBatchCalledConcurrently(Arrays.asList(put, delete));
+    checkBatchCalledConcurrently(Arrays.asList(rowMutations));
+    checkBatchCalledConcurrently(Arrays.asList(put, delete, rowMutations));
 
-    checkBatchCalledSequentially(Arrays.asList(put, delete, get));
-    checkBatchCalledSequentially(Arrays.asList(put, delete, increment));
-    checkBatchCalledSequentially(Arrays.asList(put, delete, append));
+    // Batch contains an operation which causes the batch to be performed sequentially.
+    checkBatchCalledSequentially(Arrays.asList(put, delete, rowMutations, get));
+    checkBatchCalledSequentially(Arrays.asList(put, delete, rowMutations, increment));
+    checkBatchCalledSequentially(Arrays.asList(put, delete, rowMutations, append));
   }
 
-  private void setupMirroringTableWithDirectExecutor() {
+  private void setupConcurrentMirroringTableWithDirectExecutor() {
+    boolean performWritesConcurrently = true;
+    boolean waitForSecondaryWrites = true;
     this.mirroringTable =
         spy(
             new MirroringTable(
@@ -1310,8 +1333,8 @@ public class TestMirroringTable {
                 flowController,
                 secondaryWriteErrorConsumer,
                 new ReadSampler(100),
-                true,
-                true,
+                performWritesConcurrently,
+                waitForSecondaryWrites,
                 new MirroringTracer(),
                 this.referenceCounter));
   }
@@ -1330,13 +1353,19 @@ public class TestMirroringTable {
     InOrder inOrder = Mockito.inOrder(primaryTable, flowController, secondaryTable);
     this.mirroringTable.batch(requests, new Object[requests.size()]);
     inOrder.verify(flowController).asyncRequestResource(any(RequestResourcesDescription.class));
+    // When batch is performed concurrently first secondary database request is scheduled
+    // asynchronously, then primary request is executed synchronously.
+    // Then depending on configuration the mirroring client may wait for secondary result.
+    // In order to be able to verify that the batch is called concurrently we configure the
+    // MirroringTable to wait for secondary results and use DirectExecutor.
+    // That guarantees us that the method on secondary table is called first.
     inOrder.verify(secondaryTable).batch(eq(requests), any(Object[].class));
     inOrder.verify(primaryTable).batch(eq(requests), any(Object[].class));
   }
 
   @Test
   public void testConcurrentWritesWithErrors() throws IOException, InterruptedException {
-    setupMirroringTableWithDirectExecutor();
+    setupConcurrentMirroringTableWithDirectExecutor();
 
     Put put1 = createPut("test1", "f1", "q1", "v1");
     Put put2 = createPut("test2", "f2", "q2", "v2");
@@ -1423,6 +1452,8 @@ public class TestMirroringTable {
 
   @Test
   public void testConcurrentOpsAreRunConcurrently() throws IOException, InterruptedException {
+    boolean performWritesConcurrently = true;
+    boolean waitForSecondaryWrites = true;
     this.mirroringTable =
         spy(
             new MirroringTable(
@@ -1433,8 +1464,8 @@ public class TestMirroringTable {
                 flowController,
                 secondaryWriteErrorConsumer,
                 new ReadSampler(100),
-                true,
-                true,
+                performWritesConcurrently,
+                waitForSecondaryWrites,
                 new MirroringTracer(),
                 this.referenceCounter));
 
@@ -1478,7 +1509,7 @@ public class TestMirroringTable {
   public void testConcurrentOpsAreNotPerformedWhenFlowControllerRejectsRequest()
       throws IOException, InterruptedException {
     IOException flowControllerExpection = setupFlowControllerToRejectRequests(flowController);
-    setupMirroringTableWithDirectExecutor();
+    setupConcurrentMirroringTableWithDirectExecutor();
 
     Put put = createPut("test1", "f1", "q1", "v1");
     try {

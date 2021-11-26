@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.mirroring;
 
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_READ_VERIFICATION_RATE_PERCENT;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -75,6 +76,10 @@ public class TestErrorDetection {
   public DatabaseHelpers databaseHelpers = new DatabaseHelpers(connectionRule, executorServiceRule);
 
   public static Configuration config = ConfigurationHelper.newConfiguration();
+
+  static {
+    config.set(MIRRORING_READ_VERIFICATION_RATE_PERCENT, "100");
+  }
 
   @Test
   public void readsAndWritesArePerformed()
@@ -168,12 +173,12 @@ public class TestErrorDetection {
           for (long batchEntryId = 0; batchEntryId < this.batchSize; batchEntryId++) {
             long putIndex =
                 this.workerId * this.entriesPerWorker + batchId * this.batchSize + batchEntryId;
-            long putValue = putIndex + 1;
+            long putTimestamp = putIndex + 1;
             byte[] putIndexBytes = Longs.toByteArray(putIndex);
-            byte[] putValueBytes = Longs.toByteArray(putValue);
+            byte[] putValueBytes = ("value-" + putIndex).getBytes();
             puts.add(
                 Helpers.createPut(
-                    putIndexBytes, columnFamily1, qualifier1, putValue, putValueBytes));
+                    putIndexBytes, columnFamily1, qualifier1, putTimestamp, putValueBytes));
           }
           CompletableFuture.allOf(table.put(puts).toArray(new CompletableFuture[0])).get();
         }
@@ -202,18 +207,15 @@ public class TestErrorDetection {
         long counter = 0;
         for (Result r : s) {
           long row = Longs.fromByteArray(r.getRow());
-          long value = Longs.fromByteArray(r.getValue(columnFamily1, qualifier1));
+          byte[] value = r.getValue(columnFamily1, qualifier1);
           assertEquals(counter, row);
-          assertEquals(counter + 1, value);
+          assertEquals(("value-" + counter).getBytes(), value);
           counter += 1;
         }
       }
     }
 
-    assertEquals(
-        MismatchDetectorCounter.getInstance().getErrorsAsString(),
-        0,
-        MismatchDetectorCounter.getInstance().getErrorCount());
+    assertEquals(0, MismatchDetectorCounter.getInstance().getErrorCount());
   }
 
   @Test
@@ -300,9 +302,6 @@ public class TestErrorDetection {
     assertEquals(
         numberOfWorkers + 1,
         MismatchDetectorCounter.getInstance().getVerificationsFinishedCounter());
-    assertEquals(
-        MismatchDetectorCounter.getInstance().getErrorsAsString(),
-        0,
-        MismatchDetectorCounter.getInstance().getErrorCount());
+    assertEquals(0, MismatchDetectorCounter.getInstance().getErrorCount());
   }
 }

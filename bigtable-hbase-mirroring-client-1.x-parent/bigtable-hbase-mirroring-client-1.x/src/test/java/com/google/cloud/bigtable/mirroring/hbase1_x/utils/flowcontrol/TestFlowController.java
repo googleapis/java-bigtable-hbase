@@ -16,10 +16,13 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController.ResourceReservation;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -35,24 +38,25 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class TestFlowController {
-  static class Ledger implements SingleQueueFlowControlStrategy.Ledger {
+  static class SingleQueueTestLedger implements SingleQueueFlowControlStrategy.Ledger {
     public int numRequestInFlight = 0;
     public int canAcquireResourcesCallsCount = 0;
     public int maxInFlightRequests = 0;
-    public final int limit;
+    public final int limitInFlightRequests;
     public List<RequestResourcesDescription> acquireOrdering = new ArrayList<>();
     public SettableFuture<Void> futureToNotifyWhenCanAcquireResourceIsCalled = null;
 
-    Ledger(int limit) {
-      this.limit = limit;
+    SingleQueueTestLedger(int limitInFlightRequests) {
+      this.limitInFlightRequests = limitInFlightRequests;
     }
 
     public boolean canAcquireResource(RequestResourcesDescription resource) {
       if (this.futureToNotifyWhenCanAcquireResourceIsCalled != null) {
         this.futureToNotifyWhenCanAcquireResourceIsCalled.set(null);
       }
+
       this.canAcquireResourcesCallsCount += 1;
-      return this.numRequestInFlight < this.limit;
+      return this.numRequestInFlight < this.limitInFlightRequests;
     }
 
     @Override
@@ -77,8 +81,8 @@ public class TestFlowController {
       throws ExecutionException, InterruptedException, TimeoutException {
 
     // Mutex
-    Ledger ledger = new Ledger(1);
-    FlowControlStrategy flowControlStrategy = new SingleQueueFlowControlStrategy(ledger);
+    SingleQueueTestLedger testLedger = new SingleQueueTestLedger(1);
+    FlowControlStrategy flowControlStrategy = new SingleQueueFlowControlStrategy(testLedger);
     final FlowController fc = new FlowController(flowControlStrategy);
 
     final SettableFuture<Void> threadStarted = SettableFuture.create();
@@ -86,8 +90,7 @@ public class TestFlowController {
 
     RequestResourcesDescription description = createRequest(1);
     ResourceReservation resourceReservation = fc.asyncRequestResource(description).get();
-
-    int canAcquireCalls = ledger.canAcquireResourcesCallsCount;
+    assertThat(testLedger.canAcquireResourcesCallsCount).isEqualTo(1);
 
     Thread thread =
         new Thread() {
@@ -109,11 +112,11 @@ public class TestFlowController {
     threadStarted.get(3, TimeUnit.SECONDS);
     Thread.sleep(300);
     assertThat(threadEnded.isDone()).isFalse();
-    assertThat(ledger.canAcquireResourcesCallsCount).isEqualTo(canAcquireCalls + 1);
+    assertThat(testLedger.canAcquireResourcesCallsCount).isEqualTo(2);
 
     resourceReservation.release();
     threadEnded.get(3, TimeUnit.SECONDS);
-    assertThat(ledger.canAcquireResourcesCallsCount).isEqualTo(canAcquireCalls + 2);
+    assertThat(testLedger.canAcquireResourcesCallsCount).isEqualTo(3);
   }
 
   private RequestResourcesDescription createRequest(int size) {
@@ -121,25 +124,24 @@ public class TestFlowController {
   }
 
   @Test
-  public void testLockingAndUnlockingOrdering()
+  public void testSingleQueueStrategyAllowsRequestsInOrder()
       throws ExecutionException, InterruptedException, TimeoutException {
 
-    Ledger ledger = new Ledger(2);
-    FlowControlStrategy flowControlStrategy = new SingleQueueFlowControlStrategy(ledger);
+    int limitRequestsInFlight = 2;
+    SingleQueueTestLedger testLedger = new SingleQueueTestLedger(limitRequestsInFlight);
+    FlowControlStrategy flowControlStrategy = new SingleQueueFlowControlStrategy(testLedger);
     final FlowController fc = new FlowController(flowControlStrategy);
+    // This FlowController limits number of requests in flight and admits them in order.
 
-    RequestResourcesDescription description1 = createRequest(2);
-    RequestResourcesDescription description2 = createRequest(1);
-
-    // Critical section is full.
-    ResourceReservation reservation1 = fc.asyncRequestResource(description1).get();
-    ResourceReservation reservation2 = fc.asyncRequestResource(description2).get();
+    ResourceReservation reservation1 = fc.asyncRequestResource(createRequest(2)).get();
+    ResourceReservation reservation2 = fc.asyncRequestResource(createRequest(1)).get();
+    // Maximal number of requests in flight has been reached.
 
     final int numThreads = 1000;
     List<Thread> threads = new ArrayList<>();
     for (int threadId = 0; threadId < numThreads; threadId++) {
-      final SettableFuture<Void> threadStarted = SettableFuture.create();
-      ledger.futureToNotifyWhenCanAcquireResourceIsCalled = threadStarted;
+      final SettableFuture<Void> threadBlockedOnAcquiringResources = SettableFuture.create();
+      testLedger.futureToNotifyWhenCanAcquireResourceIsCalled = threadBlockedOnAcquiringResources;
 
       final int finalThreadId = threadId;
       Thread thread =
@@ -150,6 +152,7 @@ public class TestFlowController {
                 RequestResourcesDescription r = createRequest(finalThreadId);
                 fc.asyncRequestResource(r).get().release();
               } catch (InterruptedException | ExecutionException ignored) {
+                fail("shouldn't have thrown");
               }
             }
           };
@@ -158,8 +161,10 @@ public class TestFlowController {
       thread.start();
       threads.add(thread);
 
-      // Wait until `fc.acquire` is called before starting next thread to ensure ordering.
-      threadStarted.get(3, TimeUnit.SECONDS);
+      // We want to check that our threads are given resources in order they asked for them, so to
+      // have a well-defined order we can only have one thread running before it blocks on future
+      // received from FlowController.
+      threadBlockedOnAcquiringResources.get(3, TimeUnit.SECONDS);
     }
 
     reservation1.release();
@@ -169,21 +174,21 @@ public class TestFlowController {
       t.join();
     }
 
-    assertThat(ledger.acquireOrdering).hasSize(numThreads + 2); // + 2 initial entries
-    assertThat(ledger.maxInFlightRequests).isEqualTo(2);
+    assertThat(testLedger.acquireOrdering).hasSize(numThreads + 2); // + 2 initial entries
+    assertThat(testLedger.maxInFlightRequests).isEqualTo(limitRequestsInFlight);
 
-    for (int i = 0; i < ledger.acquireOrdering.size(); i++) {
-      RequestResourcesDescription d = ledger.acquireOrdering.get(i);
+    for (int i = 0; i < testLedger.acquireOrdering.size(); i++) {
+      RequestResourcesDescription resourceDescriptor = testLedger.acquireOrdering.get(i);
       int expectedValue = Math.abs(i - 2);
-      assertThat(d.numberOfResults).isEqualTo(expectedValue);
+      assertThat(resourceDescriptor.numberOfResults).isEqualTo(expectedValue);
     }
   }
 
   @Test
   public void testCancelledReservationFutureIsRemovedFromFlowControllerWaitersList()
       throws ExecutionException, InterruptedException, TimeoutException {
-    Ledger ledger = new Ledger(1);
-    FlowControlStrategy flowControlStrategy = new SingleQueueFlowControlStrategy(ledger);
+    SingleQueueTestLedger testLedger = new SingleQueueTestLedger(1);
+    FlowControlStrategy flowControlStrategy = new SingleQueueFlowControlStrategy(testLedger);
     final FlowController fc = new FlowController(flowControlStrategy);
 
     RequestResourcesDescription description = createRequest(1);
@@ -200,7 +205,7 @@ public class TestFlowController {
     assertThat(reservationFuture1.cancel(true)).isTrue();
 
     Thread.sleep(300);
-    assertThat(ledger.maxInFlightRequests).isEqualTo(1);
+    assertThat(testLedger.maxInFlightRequests).isEqualTo(1);
 
     // Releasing the resource should allow second future.
     resourceReservation.release();
@@ -210,8 +215,8 @@ public class TestFlowController {
   @Test
   public void testCancellingGrantedReservationIsNotSuccessful()
       throws ExecutionException, InterruptedException {
-    Ledger ledger = new Ledger(1);
-    FlowControlStrategy flowControlStrategy = new SingleQueueFlowControlStrategy(ledger);
+    SingleQueueTestLedger testLedger = new SingleQueueTestLedger(1);
+    FlowControlStrategy flowControlStrategy = new SingleQueueFlowControlStrategy(testLedger);
     final FlowController fc = new FlowController(flowControlStrategy);
 
     ListenableFuture<ResourceReservation> reservationFuture1 =
@@ -232,12 +237,16 @@ public class TestFlowController {
   }
 
   @Test
-  public void testCancellingPendingReservationFuture() {
-    ResourceReservation reservation = mock(ResourceReservation.class);
-    SettableFuture<ResourceReservation> grantedFuture = SettableFuture.create();
+  public void testCancellingPendingReservationFuture()
+      throws ExecutionException, InterruptedException {
+    ExecutionException flowControllerException =
+        new ExecutionException(new Exception("FlowController rejected request"));
 
-    FlowController.cancelRequest(grantedFuture);
-    verify(reservation, never()).release();
+    ListenableFuture<ResourceReservation> pendingFuture = mock(ListenableFuture.class);
+    when(pendingFuture.cancel(anyBoolean())).thenReturn(false);
+    when(pendingFuture.get()).thenThrow(flowControllerException);
+
+    FlowController.cancelRequest(pendingFuture);
   }
 
   @Test

@@ -34,8 +34,15 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class TestMirroringConnection {
-
   private Connection connection;
+
+  @Before
+  public void setUp() throws IOException {
+    TestConnection.reset();
+    Configuration configuration = createConfiguration();
+    connection = ConnectionFactory.createConnection(configuration);
+    assertThat(TestConnection.connectionMocks.size()).isEqualTo(2);
+  }
 
   private Configuration createConfiguration() {
     Configuration configuration = new Configuration();
@@ -54,15 +61,6 @@ public class TestMirroringConnection {
     configuration.set(
         "google.bigtable.mirroring.write-error-log.appender.drop-on-overflow", "false");
     return configuration;
-  }
-
-  @Before
-  public void setUp() throws IOException {
-    TestConnection.reset();
-    Configuration configuration = createConfiguration();
-    connection = ConnectionFactory.createConnection(configuration);
-
-    assertThat(TestConnection.connectionMocks.size()).isEqualTo(2);
   }
 
   @Test

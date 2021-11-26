@@ -15,20 +15,26 @@
  */
 package com.google.cloud.bigtable.hbase.mirroring;
 
-import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_STRATEGY_FACTORY_CLASS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_MISMATCH_DETECTOR_FACTORY_CLASS;
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.fail;
 
+import com.google.cloud.bigtable.hbase.mirroring.utils.BlockingFlowControllerStrategy;
+import com.google.cloud.bigtable.hbase.mirroring.utils.BlockingMismatchDetector;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConfigurationHelper;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.DatabaseHelpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.Helpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounter;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRule;
-import com.google.cloud.bigtable.hbase.mirroring.utils.SlowMismatchDetector;
 import com.google.cloud.bigtable.mirroring.hbase1_x.ExecutorServiceRule;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection;
+import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Get;
@@ -61,100 +67,112 @@ public class TestBlocking {
     this.tableName = connectionRule.createTable(columnFamily1);
   }
 
-  @Test
+  @Test(timeout = 10000)
   public void testConnectionCloseBlocksUntilAllRequestsHaveBeenVerified()
-      throws IOException, InterruptedException {
-    long beforeTableClose;
-    long afterTableClose;
-    long afterConnectionClose;
-
+      throws IOException, InterruptedException, TimeoutException, ExecutionException {
     Configuration config = ConfigurationHelper.newConfiguration();
     config.set(
-        MIRRORING_MISMATCH_DETECTOR_FACTORY_CLASS, SlowMismatchDetector.Factory.class.getName());
-    SlowMismatchDetector.sleepTime = 1000;
+        MIRRORING_MISMATCH_DETECTOR_FACTORY_CLASS,
+        BlockingMismatchDetector.Factory.class.getName());
+    BlockingMismatchDetector.reset();
 
     TableName tableName;
-    try (MirroringConnection connection = databaseHelpers.createConnection(config)) {
-      tableName = connectionRule.createTable(connection, columnFamily1);
-      try (Table t = connection.getTable(tableName)) {
-        for (int i = 0; i < 10; i++) {
-          Get get = new Get("1".getBytes());
-          get.addColumn(columnFamily1, qualifier1);
-          t.get(get);
-        }
-        beforeTableClose = System.currentTimeMillis();
+    final MirroringConnection connection = databaseHelpers.createConnection(config);
+    tableName = connectionRule.createTable(connection, columnFamily1);
+    try (Table t = connection.getTable(tableName)) {
+      for (int i = 0; i < 10; i++) {
+        Get get = new Get("1".getBytes());
+        get.addColumn(columnFamily1, qualifier1);
+        t.get(get);
       }
-      afterTableClose = System.currentTimeMillis();
+    } // There are in-flight requests but closing a Table object shouldn't block.
+
+    final SettableFuture<Void> closingThreadStarted = SettableFuture.create();
+    final SettableFuture<Void> closingThreadEnded = SettableFuture.create();
+
+    Thread closingThread =
+        new Thread() {
+          @Override
+          public void run() {
+            try {
+              closingThreadStarted.set(null);
+              connection.close();
+              closingThreadEnded.set(null);
+            } catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          }
+        };
+    closingThread.start();
+
+    // Wait until closing thread starts.
+    closingThreadStarted.get(1, TimeUnit.SECONDS);
+
+    // And give it some time to run, to verify that is has blocked.
+    try {
+      closingThreadEnded.get(5, TimeUnit.SECONDS);
+      fail("should throw");
+    } catch (TimeoutException ignored) {
+      // expected
     }
-    afterConnectionClose = System.currentTimeMillis();
-    long tableCloseDuration = afterTableClose - beforeTableClose;
-    long connectionCloseDuration = afterConnectionClose - afterTableClose;
-    assertThat(tableCloseDuration).isLessThan(100);
-    assertThat(connectionCloseDuration).isGreaterThan(900);
-    assertThat(MismatchDetectorCounter.getInstance().getVerificationsStartedCounter())
-        .isEqualTo(10);
+
+    // Finish running verifications
+    BlockingMismatchDetector.unblock();
+
+    // And now Connection#close() should unblock.
+    closingThreadEnded.get(1, TimeUnit.SECONDS);
+
+    // And all verification should have finished.
     assertThat(MismatchDetectorCounter.getInstance().getVerificationsFinishedCounter())
         .isEqualTo(10);
   }
 
-  @Test
-  public void testSlowSecondaryConnection() throws IOException {
+  @Test(timeout = 10000)
+  public void flowControllerBlocksScheduling()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
     Configuration config = ConfigurationHelper.newConfiguration();
     config.set(
-        MIRRORING_MISMATCH_DETECTOR_FACTORY_CLASS, SlowMismatchDetector.Factory.class.getName());
-    SlowMismatchDetector.sleepTime = 100;
-    config.set(MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS, "10");
+        MIRRORING_FLOW_CONTROLLER_STRATEGY_FACTORY_CLASS,
+        BlockingFlowControllerStrategy.Factory.class.getName());
+    BlockingFlowControllerStrategy.reset();
 
-    byte[] row = "1".getBytes();
-    try (MirroringConnection connection = databaseHelpers.createConnection(config)) {
-      try (Table table = connection.getTable(tableName)) {
-        table.put(Helpers.createPut(row, columnFamily1, qualifier1, "1".getBytes()));
-      }
-    }
-
-    long startTime;
-    long endTime;
-    long duration;
+    final byte[] row = "1".getBytes();
+    final SettableFuture<Void> closingThreadStarted = SettableFuture.create();
+    final SettableFuture<Void> closingThreadEnded = SettableFuture.create();
 
     try (MirroringConnection connection = databaseHelpers.createConnection(config)) {
-      startTime = System.currentTimeMillis();
       try (Table table = connection.getTable(tableName)) {
-        for (int i = 0; i < 1000; i++) {
-          table.get(Helpers.createGet(row, columnFamily1, qualifier1));
+        Thread t =
+            new Thread() {
+              @Override
+              public void run() {
+                closingThreadStarted.set(null);
+                try {
+                  table.put(Helpers.createPut(row, columnFamily1, qualifier1, "1".getBytes()));
+                  closingThreadEnded.set(null);
+                } catch (IOException e) {
+                  closingThreadEnded.setException(e);
+                  throw new RuntimeException(e);
+                }
+              }
+            };
+        t.start();
+
+        // Wait until thread starts.
+        closingThreadStarted.get(1, TimeUnit.SECONDS);
+
+        // Give it some time to run, to verify that is has blocked.
+        try {
+          closingThreadEnded.get(5, TimeUnit.SECONDS);
+          fail("should throw");
+        } catch (TimeoutException ignored) {
+          // expected
         }
+        // Unlock flow controller.
+        BlockingFlowControllerStrategy.unblock();
+        // And verify that it has unblocked.
+        closingThreadEnded.get(1, TimeUnit.SECONDS);
       }
     }
-    endTime = System.currentTimeMillis();
-    duration = endTime - startTime;
-    // 1000 requests * 100 ms / 10 concurrent requests
-    assertThat(duration).isGreaterThan(10000);
-
-    config.set(MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS, "50");
-    try (MirroringConnection connection = databaseHelpers.createConnection(config)) {
-      startTime = System.currentTimeMillis();
-      try (Table table = connection.getTable(tableName)) {
-        for (int i = 0; i < 1000; i++) {
-          table.get(Helpers.createGet(row, columnFamily1, qualifier1));
-        }
-      }
-    }
-    endTime = System.currentTimeMillis();
-    duration = endTime - startTime;
-    // 1000 requests * 100 ms / 50 concurrent requests
-    assertThat(duration).isGreaterThan(2000);
-
-    config.set(MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS, "1000");
-    try (MirroringConnection connection = databaseHelpers.createConnection(config)) {
-      startTime = System.currentTimeMillis();
-      try (Table table = connection.getTable(tableName)) {
-        for (int i = 0; i < 1000; i++) {
-          table.get(Helpers.createGet(row, columnFamily1, qualifier1));
-        }
-      }
-    }
-    endTime = System.currentTimeMillis();
-    duration = endTime - startTime;
-    // 1000 requests * 100 ms / 1000 concurrent requests
-    assertThat(duration).isLessThan(1000);
   }
 }

@@ -320,12 +320,7 @@ public class TestMirroringMetrics {
         .when(secondaryTable)
         .batch(ArgumentMatchers.<Row>anyList(), any(Object[].class));
 
-    try {
-      mirroringTable.put(put);
-    } catch (RetriesExhaustedWithDetailsException e) {
-
-    }
-
+    mirroringTable.put(put);
     executorServiceRule.waitForExecutor();
 
     verify(mirroringMetricsRecorder, times(1))

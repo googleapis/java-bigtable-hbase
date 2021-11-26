@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -138,14 +137,29 @@ public class TestHelpers {
         SettableFuture.create();
     resourceReservationFuture.setException(thrownException);
 
-    doReturn(resourceReservationFuture)
+    lenient()
+        .doReturn(resourceReservationFuture)
         .when(flowController)
         .asyncRequestResource(any(RequestResourcesDescription.class));
     return thrownException;
   }
 
+  /**
+   * A helper function that blocks method on a mock until a future is set or default timeout is
+   * reached.
+   *
+   * <p>Once unblocked by {@link SettableFuture#set} the call is unblocked and let through.
+   *
+   * <p>When timeout is reached a TimeoutException is thrown and blocked method is never called.
+   *
+   * @param mock mock whose method is blocked
+   * @param futureToWaitFor future which unblocks method calls
+   * @param before action to be called before waiting for {@param futureToWaitFor}
+   * @param <T> - type of {@param mock}
+   * @return {@param mock}
+   */
   public static <T> T blockMethodCall(
-      T table, final SettableFuture<Void> futureToWaitFor, final Runnable before) {
+      T mock, final SettableFuture<Void> futureToWaitFor, final Runnable before) {
     return doAnswer(
             new Answer<Object>() {
               @Override
@@ -160,13 +174,13 @@ public class TestHelpers {
                 }
               }
             })
-        .when(table);
+        .when(mock);
   }
 
   public static <T> T blockMethodCall(
-      T table, final SettableFuture<Void> secondaryOperationAllowedFuture) {
+      T mock, final SettableFuture<Void> secondaryOperationAllowedFuture) {
     return blockMethodCall(
-        table,
+        mock,
         secondaryOperationAllowedFuture,
         new Runnable() {
           @Override
@@ -175,11 +189,11 @@ public class TestHelpers {
   }
 
   public static <T> T blockMethodCall(
-      T table,
+      T mock,
       final SettableFuture<Void> secondaryOperationAllowedFuture,
       final SettableFuture<Void> startedFuture) {
     return blockMethodCall(
-        table,
+        mock,
         secondaryOperationAllowedFuture,
         new Runnable() {
           @Override
@@ -190,11 +204,11 @@ public class TestHelpers {
   }
 
   public static <T> T blockMethodCall(
-      T table,
+      T mock,
       final SettableFuture<Void> secondaryOperationAllowedFuture,
       final Semaphore startedSemaphore) {
     return blockMethodCall(
-        table,
+        mock,
         secondaryOperationAllowedFuture,
         new Runnable() {
           @Override
@@ -223,7 +237,7 @@ public class TestHelpers {
     return secondaryOperationAllowedFuture;
   }
 
-  public static <T> T delayMethodCall(T table, final int ms) {
+  public static <T> T delayMethodCall(T mock, final int ms) {
     return doAnswer(
             new Answer<Object>() {
               @Override
@@ -237,7 +251,7 @@ public class TestHelpers {
                 }
               }
             })
-        .when(table);
+        .when(mock);
   }
 
   public static void assertPutsAreEqual(
@@ -283,13 +297,24 @@ public class TestHelpers {
         .batch(ArgumentMatchers.<Row>anyList(), any(Object[].class));
   }
 
+  /**
+   * Function used to mock Table.batch(operations, results) call by filling the result Array.
+   *
+   * <p>For objects in {@param keyValuePairs} returns a provided value, otherwise constructs a
+   * default one.
+   *
+   * <p>Throws iff any of the values returned to caller of batch is a Throwable.
+   *
+   * @param keyValuePairs - key:value pairs of objects, key may be either operation or operation
+   *     class
+   * @return {@link Answer} for use in {@link org.mockito.stubbing.BaseStubber#doAnswer(Answer)}
+   */
   public static Answer<Void> createMockBatchAnswer(final Object... keyValuePairs) {
     final Map<Object, Object> mapping = mapOf(keyValuePairs);
 
     return new Answer<Void>() {
       @Override
       public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
-        boolean shouldThrow = false;
         Object[] args = invocationOnMock.getArguments();
         List<? extends Row> operations = (List<? extends Row>) args[0];
         Object[] result = (Object[]) args[1];

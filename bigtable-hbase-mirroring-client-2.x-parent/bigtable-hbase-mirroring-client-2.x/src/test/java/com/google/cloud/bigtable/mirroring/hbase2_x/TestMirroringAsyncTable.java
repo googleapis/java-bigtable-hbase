@@ -23,6 +23,7 @@ import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.setupFlow
 import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.setupFlowControllerToRejectRequests;
 import static com.google.common.truth.Truth.assertThat;
 import static junit.framework.TestCase.fail;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
@@ -44,6 +45,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.Mirro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
+import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Longs;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -148,6 +150,22 @@ public class TestMirroringAsyncTable {
     verify(mismatchDetector, times(1)).get(get, expectedResult, expectedResult);
     verify(mismatchDetector, never()).get((Get) any(), any());
     verify(mismatchDetector, never()).get(anyList(), any(Result[].class), any(Result[].class));
+  }
+
+  @Test
+  public void testPrimaryReadExceptionDoesntCallSecondaryNorVerification() throws IOException {
+    Get request = createGet("test");
+    IOException expectedException = new IOException("expected");
+    CompletableFuture<Result> primaryFuture = new CompletableFuture<>();
+    primaryFuture.completeExceptionally(expectedException);
+    when(primaryTable.get(request)).thenReturn(primaryFuture);
+
+    Exception thrownException =
+        assertThrows(ExecutionException.class, () -> mirroringTable.get(request).get());
+    assertThat(thrownException.getCause()).isEqualTo(expectedException);
+
+    verify(secondaryTable, never()).get(any(Get.class));
+    verify(mismatchDetector, never()).get(request, expectedException);
   }
 
   @Test
@@ -365,6 +383,21 @@ public class TestMirroringAsyncTable {
 
     verify(primaryTable, times(1)).put(put);
     verify(secondaryTable, times(1)).put(put);
+  }
+
+  @Test
+  public void testPutListIsMirrored() throws ExecutionException, InterruptedException {
+    Put put = createPut("test", "f1", "q1", "v1");
+    List<Put> puts = Arrays.asList(put);
+
+    when(primaryTable.put(puts))
+        .thenReturn(
+            Arrays.asList(
+                CompletableFuture.completedFuture(null), CompletableFuture.completedFuture(null)));
+    CompletableFuture.allOf(mirroringTable.put(puts).toArray(new CompletableFuture[0])).get();
+
+    verify(primaryTable, times(1)).put(eq(puts));
+    verify(secondaryTable, times(1)).put(eq(puts));
   }
 
   @Test
@@ -1050,6 +1083,60 @@ public class TestMirroringAsyncTable {
     verify(secondaryTable, never()).batch(any());
     verify(secondaryWriteErrorConsumer, times(1))
         .consume(eq(HBaseOperation.BATCH), eq(Arrays.asList(put2)), eq(flowControllerException));
+  }
+
+  @Test
+  public void testFlowControllerExceptionInGetPreventsSecondaryOperation()
+      throws ExecutionException, InterruptedException {
+    setupFlowControllerToRejectRequests(flowController);
+
+    Get request = createGet("test");
+    Result expectedResult = createResult("test", "value");
+    when(primaryTable.get(request)).thenReturn(CompletableFuture.completedFuture(expectedResult));
+    Result result = mirroringTable.get(request).get();
+    assertThat(result).isEqualTo(expectedResult);
+
+    verify(primaryTable, times(1)).get(request);
+    verify(secondaryTable, never()).get(any(Get.class));
+  }
+
+  @Test
+  public void testFlowControllerExceptionInPutExecutesWriteErrorHandler()
+      throws ExecutionException, InterruptedException {
+    setupFlowControllerToRejectRequests(flowController);
+
+    Put put = createPut("test", "f1", "q1", "v1");
+    when(primaryTable.put(any(Put.class))).thenReturn(CompletableFuture.completedFuture(null));
+    mirroringTable.put(put).get();
+
+    verify(primaryTable, times(1)).put(put);
+    verify(secondaryTable, never()).put(put);
+    verify(secondaryWriteErrorConsumer, times(1))
+        .consume(eq(HBaseOperation.PUT), eq(ImmutableList.of(put)), any(Throwable.class));
+  }
+
+  @Test
+  public void testFlowControllerExceptionInBatchExecutesWriteErrorHandler()
+      throws ExecutionException, InterruptedException {
+    setupFlowControllerToRejectRequests(flowController);
+
+    Put put1 = createPut("test0", "f1", "q1", "v1");
+    Put put2 = createPut("test1", "f1", "q2", "v1");
+    Get get1 = createGet("test2");
+    List<? extends Row> request = ImmutableList.of(put1, put2, get1);
+
+    when(primaryTable.batch(request))
+        .thenReturn(
+            Arrays.asList(
+                CompletableFuture.completedFuture(null),
+                CompletableFuture.completedFuture(null),
+                CompletableFuture.completedFuture(Result.create(new Cell[0]))));
+    CompletableFuture.allOf(mirroringTable.batch(request).toArray(new CompletableFuture[0])).get();
+
+    verify(primaryTable, times(1)).batch(eq(request));
+    verify(secondaryTable, never()).batch(eq(request));
+    verify(secondaryWriteErrorConsumer, times(1))
+        .consume(eq(HBaseOperation.BATCH), eq(ImmutableList.of(put1, put2)), any(Throwable.class));
   }
 
   @Test
