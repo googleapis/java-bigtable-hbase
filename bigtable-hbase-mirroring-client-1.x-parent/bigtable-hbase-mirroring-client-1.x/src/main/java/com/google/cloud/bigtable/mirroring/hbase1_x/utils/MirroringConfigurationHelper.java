@@ -184,6 +184,20 @@ public class MirroringConfigurationHelper {
   public static final String MIRRORING_FAILLOG_DROP_ON_OVERFLOW_KEY =
       "google.bigtable.mirroring.write-error-log.appender.drop-on-overflow";
 
+  /*
+   * Number of milliseconds that {@link
+   * com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection} should wait synchronously for
+   * pending operations before terminating connection with secondary database.
+   *
+   * <p>If the timeout is reached, some of the operations on secondary database are still be
+   * in-flight and would be lost if we closed the secondary connection immediately. Those requests
+   * are not cancelled and will be performed asynchronously until the program terminates.
+   *
+   * <p>Defaults to 60000.
+   */
+  public static final String MIRRORING_CONNECTION_CONNECTION_TERMINATION_TIMEOUT =
+      "google.bigtable.mirroring.connection.termination-timeout";
+
   public static void fillConnectionConfigWithClassImplementation(
       Configuration connectionConfig,
       Configuration config,

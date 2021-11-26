@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_BUFFERED_MUTATOR_BYTES_TO_FLUSH;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_CONCURRENT_WRITES;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_CONNECTION_CONNECTION_TERMINATION_TIMEOUT;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FAILLOG_DROP_ON_OVERFLOW_KEY;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FAILLOG_MAX_BUFFER_SIZE_KEY;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FAILLOG_PREFIX_PATH_KEY;
@@ -82,6 +83,7 @@ public class MirroringOptions {
   public final Class<? extends SecondaryWriteErrorConsumer.Factory> writeErrorConsumerFactoryClass;
   public final int maxLoggedBinaryValueLength;
   public final int readSamplingRate;
+  public final long connectionTerminationTimeoutMillis;
 
   public final boolean performWritesConcurrently;
   public final boolean waitForSecondaryWrites;
@@ -120,6 +122,8 @@ public class MirroringOptions {
     Preconditions.checkArgument(this.readSamplingRate <= 100);
     this.performWritesConcurrently = configuration.getBoolean(MIRRORING_CONCURRENT_WRITES, false);
     this.waitForSecondaryWrites = configuration.getBoolean(MIRRORING_SYNCHRONOUS_WRITES, false);
+    this.connectionTerminationTimeoutMillis =
+        configuration.getLong(MIRRORING_CONNECTION_CONNECTION_TERMINATION_TIMEOUT, 60000);
 
     Preconditions.checkArgument(
         !(this.performWritesConcurrently && !this.waitForSecondaryWrites),

@@ -29,12 +29,15 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.List
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import io.opencensus.common.Scope;
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -228,29 +231,28 @@ public class MirroringConnection implements Connection {
         return;
       }
 
+      final AccumulatedExceptions exceptions = new AccumulatedExceptions();
       try {
-        closeMirroringConnectionAndWaitForAsyncOperations();
-      } catch (InterruptedException e) {
-        IOException wrapperException = new InterruptedIOException();
-        wrapperException.initCause(e);
-        throw wrapperException;
-      } finally {
-        try {
-          this.failedMutationLogger.close();
-        } catch (Exception e) {
-          throw new IOException(e);
-        }
-      }
-
-      AccumulatedExceptions exceptions = new AccumulatedExceptions();
-      try {
-        this.primaryConnection.close();
+        primaryConnection.close();
       } catch (IOException e) {
         exceptions.add(e);
       }
 
+      CallableThrowingIOException<Void> closeSecondaryConnection =
+          new CallableThrowingIOException<Void>() {
+            @Override
+            public Void call() {
+              try {
+                secondaryConnection.close();
+              } catch (IOException e) {
+                exceptions.add(e);
+              }
+              return null;
+            }
+          };
+
       try {
-        this.secondaryConnection.close();
+        terminateSecondaryConnectionWithTimeout(closeSecondaryConnection);
       } catch (IOException e) {
         exceptions.add(e);
       }
@@ -265,7 +267,7 @@ public class MirroringConnection implements Connection {
   }
 
   @Override
-  public void abort(String s, Throwable throwable) {
+  public void abort(final String s, final Throwable throwable) {
     try (Scope scope =
         this.mirroringTracer.spanFactory.operationScope(
             HBaseOperation.MIRRORING_CONNECTION_ABORT)) {
@@ -273,14 +275,23 @@ public class MirroringConnection implements Connection {
         return;
       }
 
-      try {
-        closeMirroringConnectionAndWaitForAsyncOperations();
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
+      primaryConnection.abort(s, throwable);
 
-      this.primaryConnection.abort(s, throwable);
-      this.secondaryConnection.abort(s, throwable);
+      final CallableThrowingIOException<Void> abortSecondaryConnection =
+          new CallableThrowingIOException<Void>() {
+            @Override
+            public Void call() {
+              secondaryConnection.abort(s, throwable);
+              return null;
+            }
+          };
+      try {
+        terminateSecondaryConnectionWithTimeout(abortSecondaryConnection);
+      } catch (IOException e) {
+        if (e.getCause() instanceof InterruptedException) {
+          throw new RuntimeException(e.getCause());
+        }
+      }
     }
   }
 
@@ -299,12 +310,44 @@ public class MirroringConnection implements Connection {
     return this.secondaryConnection;
   }
 
-  private void closeMirroringConnectionAndWaitForAsyncOperations() throws InterruptedException {
+  private void terminateSecondaryConnectionWithTimeout(
+      final CallableThrowingIOException<Void> terminatingAction) throws IOException {
+    final SettableFuture<Void> terminationFinishedFuture = SettableFuture.create();
+
+    // The secondary termination action should be run after all in-flight requests are finished.
+    this.referenceCounter
+        .getOnLastReferenceClosed()
+        .addListener(
+            new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  terminatingAction.call();
+                  terminationFinishedFuture.set(null);
+                } catch (Throwable e) {
+                  terminationFinishedFuture.setException(e);
+                }
+              }
+            },
+            MoreExecutors.directExecutor());
+
     this.referenceCounter.decrementReferenceCount();
     try {
-      this.referenceCounter.getOnLastReferenceClosed().get();
-    } catch (ExecutionException e) {
-      throw new RuntimeException(e);
+      // Wait for in-flight requests to be finished but with a timeout to prevent deadlock.
+      terminationFinishedFuture.get(
+          this.configuration.mirroringOptions.connectionTerminationTimeoutMillis,
+          TimeUnit.MILLISECONDS);
+    } catch (ExecutionException | InterruptedException e) {
+      // If the secondary terminating action has thrown while we were waiting, the error will be
+      // propagated to the user.
+      throw new IOException(e);
+    } catch (TimeoutException e) {
+      // But if the timeout was reached, we just leave the operation pending.
+      Log.error(
+          "MirroringConnection#close() timed out. Some of operations on secondary "
+              + "database are still in-flight and might be lost, but are not cancelled and "
+              + "will be performed asynchronously until the program terminates.");
+      // This error is not reported to the user.
     }
   }
 }

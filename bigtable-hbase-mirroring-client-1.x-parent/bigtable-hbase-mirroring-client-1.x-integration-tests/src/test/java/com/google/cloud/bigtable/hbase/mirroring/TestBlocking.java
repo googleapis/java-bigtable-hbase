@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.mirroring;
 
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_CONNECTION_CONNECTION_TERMINATION_TIMEOUT;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_STRATEGY_FACTORY_CLASS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_MISMATCH_DETECTOR_FACTORY_CLASS;
 import static com.google.common.truth.Truth.assertThat;
@@ -30,6 +31,7 @@ import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounter;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRule;
 import com.google.cloud.bigtable.mirroring.hbase1_x.ExecutorServiceRule;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection;
+import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
@@ -174,5 +176,67 @@ public class TestBlocking {
         closingThreadEnded.get(1, TimeUnit.SECONDS);
       }
     }
+  }
+
+  @Test(timeout = 10000)
+  public void testMirroringConnectionCloseTimeout()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
+    long timeoutMillis = 1000;
+
+    final Configuration config = ConfigurationHelper.newConfiguration();
+    config.set(MIRRORING_CONNECTION_CONNECTION_TERMINATION_TIMEOUT, String.valueOf(timeoutMillis));
+    config.set(
+        MIRRORING_MISMATCH_DETECTOR_FACTORY_CLASS,
+        BlockingMismatchDetector.Factory.class.getName());
+    BlockingMismatchDetector.reset();
+
+    final byte[] row = "1".getBytes();
+
+    final TableName tableName = connectionRule.createTable(columnFamily1);
+    final SettableFuture<MirroringConnection> closingThreadStartedFuture = SettableFuture.create();
+    final SettableFuture<Long> closingThreadFinishedFuture = SettableFuture.create();
+
+    Thread t =
+        new Thread() {
+          @Override
+          public void run() {
+            try {
+              // Not in try-with-resources, we are calling close() explicitly.
+              MirroringConnection connection = databaseHelpers.createConnection(config);
+              Table table = connection.getTable(tableName);
+              table.get(Helpers.createGet(row, columnFamily1, qualifier1));
+              table.close();
+
+              closingThreadStartedFuture.set(connection);
+              Stopwatch stopwatch = Stopwatch.createStarted();
+              connection.close();
+              stopwatch.stop();
+              closingThreadFinishedFuture.set(stopwatch.elapsed(TimeUnit.MILLISECONDS));
+            } catch (IOException e) {
+              closingThreadFinishedFuture.setException(e);
+            }
+          }
+        };
+
+    t.start();
+
+    // Wait until the thread starts.
+    MirroringConnection c = closingThreadStartedFuture.get(1, TimeUnit.SECONDS);
+    // And wait for it to finish. It should time-out after 1 second.
+    long closeDuration = closingThreadFinishedFuture.get(3, TimeUnit.SECONDS);
+    // Just knowing that the future did not time out is enough to know that it closing the
+    // connection lasted no longer than 3 seconds, but we also need to check that it waited at least
+    // `timeoutMillis`. `closeDuration` is strictly greater than timeout because it includes some
+    // overhead, but `timeoutMillis` >> expected overhead, thus false-positives are unlikely.
+    assertThat(closeDuration).isGreaterThan(timeoutMillis);
+    assertThat(c.getPrimaryConnection().isClosed()).isTrue();
+    assertThat(c.getSecondaryConnection().isClosed()).isFalse();
+
+    // Finish asynchronous operation.
+    BlockingMismatchDetector.unblock();
+    // Give it a second to run.
+    Thread.sleep(1000);
+    assertThat(c.getPrimaryConnection().isClosed()).isTrue();
+    assertThat(c.getSecondaryConnection().isClosed()).isTrue();
   }
 }
