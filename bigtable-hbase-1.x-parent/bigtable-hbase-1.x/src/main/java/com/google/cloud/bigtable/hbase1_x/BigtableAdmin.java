@@ -19,6 +19,7 @@ import com.google.api.core.InternalApi;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -183,10 +184,16 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
   public static Admin createInstance(CommonConnection connection) throws IOException {
     try {
       return getSubclass().getDeclaredConstructor(CommonConnection.class).newInstance(connection);
-    } catch (Exception e) {
-      // convert exceptions to IOException because
+    } catch (InvocationTargetException e) {
+      // unwrap IOExceptions and convert other exceptions to IOException because
       // org.apache.hadoop.hbase.client.Connection#getAdmin() only throws
       // IOException
+      if (e.getTargetException() instanceof IOException) {
+        throw ((IOException) e.getTargetException());
+      } else {
+        throw new IOException(e);
+      }
+    } catch (Exception e) {
       throw new IOException(e);
     }
   }

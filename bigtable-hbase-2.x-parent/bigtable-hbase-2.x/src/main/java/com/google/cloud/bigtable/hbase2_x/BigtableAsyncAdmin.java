@@ -38,6 +38,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import io.grpc.Status;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -601,10 +602,16 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
   public static BigtableAsyncAdmin createInstance(CommonConnection connection) throws IOException {
     try {
       return getSubclass().getDeclaredConstructor(CommonConnection.class).newInstance(connection);
-    } catch (Exception e) {
-      // convert exceptions to IOException because
+    } catch (InvocationTargetException e) {
+      // unwrap IOExceptions and convert other exceptions to IOException because
       // org.apache.hadoop.hbase.client.Connection#getAdmin() only throws
       // IOException
+      if (e.getTargetException().getClass().equals(IOException.class)) {
+        throw ((IOException) e.getTargetException());
+      } else {
+        throw new IOException(e);
+      }
+    } catch (Exception e) {
       throw new IOException(e);
     }
   }

@@ -21,6 +21,7 @@ import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -387,10 +388,16 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
       return getSubclass()
           .getDeclaredConstructor(AbstractBigtableConnection.class)
           .newInstance(connection);
-    } catch (Exception e) {
-      // convert exceptions to IOException because
+    } catch (InvocationTargetException e) {
+      // unwrap IOExceptions and convert other exceptions to IOException because
       // org.apache.hadoop.hbase.client.Connection#getAdmin() only throws
       // IOException
+      if (e.getTargetException().getClass().equals(IOException.class)) {
+        throw ((IOException) e.getTargetException());
+      } else {
+        throw new IOException(e);
+      }
+    } catch (Exception e) {
       throw new IOException(e);
     }
   }
