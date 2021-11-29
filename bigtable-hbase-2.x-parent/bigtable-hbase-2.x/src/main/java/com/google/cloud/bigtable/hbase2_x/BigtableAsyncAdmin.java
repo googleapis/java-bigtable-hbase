@@ -35,6 +35,7 @@ import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import io.grpc.Status;
 import java.io.IOException;
@@ -603,14 +604,13 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
     try {
       return getSubclass().getDeclaredConstructor(CommonConnection.class).newInstance(connection);
     } catch (InvocationTargetException e) {
-      // unwrap IOExceptions and convert other exceptions to IOException because
+      // Unwrap and throw IOException or RuntimeException as is, and convert all other exceptions to
+      // IOException because
       // org.apache.hadoop.hbase.client.Connection#getAdmin() only throws
       // IOException
-      if (e.getTargetException().getClass().equals(IOException.class)) {
-        throw ((IOException) e.getTargetException());
-      } else {
-        throw new IOException(e);
-      }
+      Throwables.throwIfInstanceOf(e.getTargetException(), IOException.class);
+      Throwables.throwIfInstanceOf(e.getTargetException(), RuntimeException.class);
+      throw new IOException(e);
     } catch (Exception e) {
       throw new IOException(e);
     }

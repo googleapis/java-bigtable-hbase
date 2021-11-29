@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase1_x;
 
 import com.google.api.core.InternalApi;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
@@ -185,14 +186,13 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
     try {
       return getSubclass().getDeclaredConstructor(CommonConnection.class).newInstance(connection);
     } catch (InvocationTargetException e) {
-      // unwrap IOExceptions and convert other exceptions to IOException because
+      // Unwrap and throw IOException or RuntimeException as is, and convert all other exceptions to
+      // IOException because
       // org.apache.hadoop.hbase.client.Connection#getAdmin() only throws
       // IOException
-      if (e.getTargetException() instanceof IOException) {
-        throw ((IOException) e.getTargetException());
-      } else {
-        throw new IOException(e);
-      }
+      Throwables.throwIfInstanceOf(e.getTargetException(), IOException.class);
+      Throwables.throwIfInstanceOf(e.getTargetException(), RuntimeException.class);
+      throw new IOException(e);
     } catch (Exception e) {
       throw new IOException(e);
     }
