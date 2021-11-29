@@ -26,9 +26,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.implementation.InvocationHandlerAdapter;
-import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.matcher.ElementMatchers;
 import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.ServerName;
@@ -160,19 +158,13 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
 
   private static Class<? extends BigtableAdmin> adminClass = null;
 
-  private static synchronized Class<? extends BigtableAdmin> getSubclass(
-      CommonConnection connection) throws Exception {
+  private static synchronized Class<? extends BigtableAdmin> getSubclass() {
     if (adminClass == null) {
       // create the class at runtime so incompatible changes in methods won't be accessed unless the
       // methods are called
       adminClass =
           new ByteBuddy()
               .subclass(BigtableAdmin.class)
-              .defineConstructor(Visibility.PUBLIC)
-              .intercept(
-                  MethodCall.invoke(
-                          BigtableAdmin.class.getDeclaredConstructor(CommonConnection.class))
-                      .with(connection))
               .method(ElementMatchers.isAbstract())
               .intercept(
                   InvocationHandlerAdapter.of(
@@ -185,6 +177,6 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   public static Admin createInstance(CommonConnection connection) throws Exception {
-    return getSubclass(connection).getDeclaredConstructor().newInstance();
+    return getSubclass().getDeclaredConstructor(CommonConnection.class).newInstance(connection);
   }
 }

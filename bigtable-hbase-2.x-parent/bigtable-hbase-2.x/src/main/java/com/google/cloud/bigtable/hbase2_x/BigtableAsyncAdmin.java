@@ -51,9 +51,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.implementation.InvocationHandlerAdapter;
-import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.matcher.ElementMatchers;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -577,19 +575,13 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
 
   private static Class<? extends BigtableAsyncAdmin> asyncAdminClass = null;
 
-  private static synchronized Class<? extends BigtableAsyncAdmin> getSubclass(
-      CommonConnection connection) throws Exception {
+  private static synchronized Class<? extends BigtableAsyncAdmin> getSubclass() {
     if (asyncAdminClass == null) {
       // create the class at runtime so incompatible changes in methods won't be accessed unless the
       // methods are called
       asyncAdminClass =
           new ByteBuddy()
               .subclass(BigtableAsyncAdmin.class)
-              .defineConstructor(Visibility.PUBLIC)
-              .intercept(
-                  MethodCall.invoke(
-                          BigtableAsyncAdmin.class.getDeclaredConstructor(CommonConnection.class))
-                      .with(connection))
               .method(ElementMatchers.isAbstract())
               .intercept(
                   InvocationHandlerAdapter.of(
@@ -602,6 +594,6 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   public static BigtableAsyncAdmin createInstance(CommonConnection connection) throws Exception {
-    return getSubclass(connection).getDeclaredConstructor().newInstance();
+    return getSubclass().getDeclaredConstructor(CommonConnection.class).newInstance(connection);
   }
 }

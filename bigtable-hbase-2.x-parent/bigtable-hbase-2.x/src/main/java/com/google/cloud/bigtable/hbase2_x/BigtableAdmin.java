@@ -32,9 +32,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.implementation.InvocationHandlerAdapter;
-import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.matcher.ElementMatchers;
 import org.apache.hadoop.hbase.ClusterMetrics;
 import org.apache.hadoop.hbase.ClusterMetrics.Option;
@@ -45,7 +43,6 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
-import org.apache.hadoop.hbase.client.CommonConnection;
 import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.client.SnapshotDescription;
 import org.apache.hadoop.hbase.client.SnapshotType;
@@ -366,20 +363,13 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
 
   private static Class<? extends BigtableAdmin> adminClass = null;
 
-  private static synchronized Class<? extends BigtableAdmin> getSubclass(
-      CommonConnection connection) throws Exception {
+  private static synchronized Class<? extends BigtableAdmin> getSubclass() {
     if (adminClass == null) {
       // create the class at runtime so incompatible changes in methods won't be accessed unless the
       // methods are called
       adminClass =
           new ByteBuddy()
               .subclass(BigtableAdmin.class)
-              .defineConstructor(Visibility.PUBLIC)
-              .intercept(
-                  MethodCall.invoke(
-                          BigtableAdmin.class.getDeclaredConstructor(
-                              AbstractBigtableConnection.class))
-                      .with(connection))
               .method(ElementMatchers.isAbstract())
               .intercept(
                   InvocationHandlerAdapter.of(
@@ -391,7 +381,10 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
     return adminClass;
   }
 
-  public static BigtableAdmin createInstance(CommonConnection connection) throws Exception {
-    return getSubclass(connection).getDeclaredConstructor().newInstance();
+  public static BigtableAdmin createInstance(AbstractBigtableConnection connection)
+      throws Exception {
+    return getSubclass()
+        .getDeclaredConstructor(AbstractBigtableConnection.class)
+        .newInstance(connection);
   }
 }
