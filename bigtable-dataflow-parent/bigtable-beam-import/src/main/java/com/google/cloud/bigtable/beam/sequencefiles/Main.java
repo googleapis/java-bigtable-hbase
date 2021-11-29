@@ -65,7 +65,8 @@ public class Main {
 
     System.out.printf(
         "java -jar %s <action> <action_params>\n"
-            + "Where <action> can be 'export', 'import' or 'create-table'. To get further help, run: \n"
+            + "Where <action> can be 'export', 'import' or 'create-table'. To get further help,"
+            + " run: \n"
             + "java -jar %s <action> --help\n",
         jarName, jarName);
   }

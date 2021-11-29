@@ -49,7 +49,8 @@ class BufferedHadoopHashTableSource extends BoundedSource<KV<String, List<RangeH
 
   private static final int DEFAULT_BATCH_SIZE = 50;
   private static final Coder<KV<String, List<RangeHash>>> CODER =
-      KvCoder.of(StringUtf8Coder.of(), ListCoder.of(RangeHashCoder.of()));;
+      KvCoder.of(StringUtf8Coder.of(), ListCoder.of(RangeHashCoder.of()));
+  ;
 
   // Max number of RangeHashes to buffer.
   private final int maxBufferSize;

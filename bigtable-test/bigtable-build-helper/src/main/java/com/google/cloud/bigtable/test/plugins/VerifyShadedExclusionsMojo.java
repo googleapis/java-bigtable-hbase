@@ -107,7 +107,8 @@ public class VerifyShadedExclusionsMojo extends AbstractMojo {
     Collections.sort(missingDeps);
     for (String coordinate : missingDeps) {
       LOGGER.error(
-          "{} was excluded from the shaded jar, but is not listed in the dependency-reduced-pom.xml",
+          "{} was excluded from the shaded jar, but is not listed in the"
+              + " dependency-reduced-pom.xml",
           coordinate);
     }
 

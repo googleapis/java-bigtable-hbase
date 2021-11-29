@@ -544,7 +544,8 @@ public class BigtableAsyncAdmin implements AsyncAdmin {
       Preconditions.checkState(
           clusters.size() == 1,
           String.format(
-              "Project '%s' / Instance '%s' has %d clusters. There must be exactly 1 for this operation to work.",
+              "Project '%s' / Instance '%s' has %d clusters. There must be exactly 1 for this"
+                  + " operation to work.",
               asyncConnection.getBigtableSettings().getProjectId(),
               asyncConnection.getBigtableSettings().getInstanceId(),
               clusters.size()));

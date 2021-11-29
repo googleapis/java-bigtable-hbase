@@ -68,7 +68,8 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
       System.out.println("ERROR: " + errorMsg);
     }
     System.out.println(
-        "Usage: hadoop jar <JAR> <CLASS> <properties> <snapshot-name> <snapshot-dir> <tablename> <temp-dir>\n"
+        "Usage: hadoop jar <JAR> <CLASS> <properties> <snapshot-name> <snapshot-dir> <tablename>"
+            + " <temp-dir>\n"
             + "Required properties: \n"
             + "  -D"
             + BigtableOptionsFactory.PROJECT_ID_KEY
@@ -78,9 +79,11 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
             + "=<bigtable-instance-id>\n"
             + "Required arguments:\n"
             + "  snapshot-name     - name of hbase snapshot to read\n"
-            + "  snapshot-dir      - directory of snapshot, e.g., gs://hbase-migration-table1-bucket/export/table1-snapshot\n"
+            + "  snapshot-dir      - directory of snapshot, e.g.,"
+            + " gs://hbase-migration-table1-bucket/export/table1-snapshot\n"
             + "  tablename         - bigtable table to import into\n"
-            + "  temp-dir          - a temporary base directory to restore hlinks of the snapshot into for read, e.g., gs://hbase-migration-table1-bucket/export/table1-restore\n"
+            + "  temp-dir          - a temporary base directory to restore hlinks of the snapshot"
+            + " into for read, e.g., gs://hbase-migration-table1-bucket/export/table1-restore\n"
             + "Optional properties: \n"
             + "  -D"
             + BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING

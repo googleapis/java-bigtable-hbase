@@ -55,7 +55,8 @@ public class AssemblyConfigTest {
     // If this fails, the provided dependencySet in assembly/shaded-byo-hadoop.xml should be updated
     // to reflect the deps specified by TableMapReduceUtil.
     Assert.assertEquals(
-        "The assembly descriptor `shaded-byo-hadoop.xml` must be in sync with TableMapReduceUtil dependency jars",
+        "The assembly descriptor `shaded-byo-hadoop.xml` must be in sync with TableMapReduceUtil"
+            + " dependency jars",
         extractHBaseBaseArtifactDeps(),
         extractAssemblyBaseArtifactIncludes(new File("assembly/shaded-byo-hadoop.xml")));
   }
@@ -68,7 +69,8 @@ public class AssemblyConfigTest {
         xPathFactory
             .newXPath()
             .compile(
-                "/assembly/dependencySets/dependencySet[scope='provided' and includes/include='org.apache.hbase:hbase-common']");
+                "/assembly/dependencySets/dependencySet[scope='provided' and"
+                    + " includes/include='org.apache.hbase:hbase-common']");
 
     NodeList depSetNodes = (NodeList) depSetPath.evaluate(doc, XPathConstants.NODESET);
     Assert.assertEquals(

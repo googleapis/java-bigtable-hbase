@@ -531,8 +531,9 @@ public class HBaseSchemaTranslator {
         "  Additionally, you can filter tables to create when using HBase as source");
     System.err.println("   -D " + TABLE_NAME_FILTER_KEY + "=<table name regex>");
     System.err.println(
-        "  Optionally, the tables can be renamed by providing a JSON map. Example JSON "
-            + "{\"source-table\": \"destination-table\", \"namespace:source-table2\": \"namespace-destination-table2\"}.");
+        "  Optionally, the tables can be renamed by providing a JSON map. Example JSON"
+            + " {\"source-table\": \"destination-table\", \"namespace:source-table2\":"
+            + " \"namespace-destination-table2\"}.");
     System.err.println("   -D " + SCHEMA_MAPPING_FILEPATH + "=/schema/mapping/file/path.json");
   }
 

@@ -473,12 +473,11 @@ public class Import extends Configured implements Tool {
     System.err.println(
         " NOTE: The filter will be applied BEFORE doing key renames via the "
             + CF_RENAME_PROP
-            + " property. Futher, filters will only use the"
-            + " Filter#filterRowKey(byte[] buffer, int offset, int length) method to identify "
-            + " whether the current row needs to be ignored completely for processing and "
-            + " Filter#filterKeyValue(KeyValue) method to determine if the KeyValue should be added;"
-            + " Filter.ReturnCode#INCLUDE and #INCLUDE_AND_NEXT_COL will be considered as including"
-            + " the KeyValue.");
+            + " property. Futher, filters will only use the Filter#filterRowKey(byte[] buffer, int"
+            + " offset, int length) method to identify  whether the current row needs to be ignored"
+            + " completely for processing and  Filter#filterKeyValue(KeyValue) method to determine"
+            + " if the KeyValue should be added; Filter.ReturnCode#INCLUDE and"
+            + " #INCLUDE_AND_NEXT_COL will be considered as including the KeyValue.");
     System.err.println(
         "   -D "
             + JOB_NAME_CONF_KEY

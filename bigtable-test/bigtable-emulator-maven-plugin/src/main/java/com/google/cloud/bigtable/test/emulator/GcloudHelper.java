@@ -51,7 +51,8 @@ class GcloudHelper {
     if (!Arrays.asList(components).contains(BIGTABLE_EMULATOR_ID)) {
       throw new RuntimeException(
           String.format(
-              "Bigtable emulator is not installed, please install via `gcloud components install %s`",
+              "Bigtable emulator is not installed, please install via `gcloud components install"
+                  + " %s`",
               BIGTABLE_EMULATOR_ID));
     }
 

@@ -191,7 +191,8 @@ public class Export {
     System.err.println("  For example: ");
     System.err.println("   -D mapreduce.output.fileoutputformat.compress=true");
     System.err.println(
-        "   -D mapreduce.output.fileoutputformat.compress.codec=org.apache.hadoop.io.compress.GzipCodec");
+        "   -D"
+            + " mapreduce.output.fileoutputformat.compress.codec=org.apache.hadoop.io.compress.GzipCodec");
     System.err.println("   -D mapreduce.output.fileoutputformat.compress.type=BLOCK");
     System.err.println("  Additionally, the following SCAN properties can be specified");
     System.err.println("  to control/limit what is exported..");

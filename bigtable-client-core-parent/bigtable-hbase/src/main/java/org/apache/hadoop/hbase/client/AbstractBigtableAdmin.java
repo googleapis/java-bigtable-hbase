@@ -985,7 +985,8 @@ public abstract class AbstractBigtableAdmin implements Admin {
       Preconditions.checkState(
           clusters.size() == 1,
           String.format(
-              "Project '%s' / Instance '%s' has %d clusters. There must be exactly 1 for this operation to work.",
+              "Project '%s' / Instance '%s' has %d clusters. There must be exactly 1 for this"
+                  + " operation to work.",
               settings.getProjectId(), settings.getInstanceId(), clusters.size()));
       bigtableSnapshotClusterId = clusters.get(0).getId();
     }

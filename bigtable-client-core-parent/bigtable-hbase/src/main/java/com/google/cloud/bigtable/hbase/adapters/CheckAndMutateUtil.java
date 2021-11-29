@@ -119,8 +119,8 @@ public class CheckAndMutateUtil {
       this.qualifier =
           Preconditions.checkNotNull(
               qualifier,
-              "qualifier is null. Consider using"
-                  + " an empty byte array, or just do not call this method if you want a null qualifier");
+              "qualifier is null. Consider using an empty byte array, or just do not call this"
+                  + " method if you want a null qualifier");
       return this;
     }
 
