@@ -18,6 +18,13 @@ package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringResultScanner;
+import com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.MirroringBufferedMutator;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.Appender;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.DefaultAppender;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.DefaultSerializer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.Serializer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestCountingFlowControlStrategy;
+import com.google.cloud.bigtable.mirroring.hbase1_x.verification.DefaultMismatchDetector;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,6 +39,8 @@ public class MirroringConfigurationHelper {
    * Key to set to a name of Connection class that should be used to connect to primary database. It
    * is used as hbase.client.connection.impl when creating connection to primary database. Set to
    * {@code default} to use default HBase connection class.
+   *
+   * <p>Required.
    */
   public static final String MIRRORING_PRIMARY_CONNECTION_CLASS_KEY =
       "google.bigtable.mirroring.primary-client.connection.impl";
@@ -40,6 +49,8 @@ public class MirroringConfigurationHelper {
    * Key to set to a name of Connection class that should be used to connect to secondary database.
    * It is used as hbase.client.connection.impl when creating connection to secondary database. Set
    * to an {@code default} to use default HBase connection class.
+   *
+   * <p>Required.
    */
   public static final String MIRRORING_SECONDARY_CONNECTION_CLASS_KEY =
       "google.bigtable.mirroring.secondary-client.connection.impl";
@@ -48,6 +59,8 @@ public class MirroringConfigurationHelper {
    * Key to set to a name of Connection class that should be used to connect asynchronously to
    * primary database. It is used as hbase.client.async.connection.impl when creating connection to
    * primary database. Set to {@code default} to use default HBase connection class.
+   *
+   * <p>Required when using HBase 2.x.
    */
   public static final String MIRRORING_PRIMARY_ASYNC_CONNECTION_CLASS_KEY =
       "google.bigtable.mirroring.primary-client.async.connection.impl";
@@ -56,6 +69,8 @@ public class MirroringConfigurationHelper {
    * Key to set to a name of Connection class that should be used to connect asynchronously to
    * secondary database. It is used as hbase.client.async.connection.impl when creating connection
    * to secondary database. Set to {@code default} to use default HBase connection class.
+   *
+   * <p>Required when using HBase 2.x.
    */
   public static final String MIRRORING_SECONDARY_ASYNC_CONNECTION_CLASS_KEY =
       "google.bigtable.mirroring.secondary-client.async.connection.impl";
@@ -68,6 +83,8 @@ public class MirroringConfigurationHelper {
    * passed to each of connections, e.g. zookeeper url.
    *
    * <p>Prefixes should not contain dot at the end.
+   *
+   * <p>default: empty
    */
   public static final String MIRRORING_PRIMARY_CONFIG_PREFIX_KEY =
       "google.bigtable.mirroring.primary-client.prefix";
@@ -75,35 +92,87 @@ public class MirroringConfigurationHelper {
   /**
    * If this key is set, then only parameters that start with given prefix are passed to secondary
    * Connection.
+   *
+   * <p>default: empty
    */
   public static final String MIRRORING_SECONDARY_CONFIG_PREFIX_KEY =
       "google.bigtable.mirroring.secondary-client.prefix";
 
+  /**
+   * Path to {@link
+   * com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector.Factory} of
+   * MismatchDetector.
+   *
+   * <p>default: {@link DefaultMismatchDetector.Factory}, logs detected mismatches to stdout and
+   * reports them as OpenCensus metrics.
+   */
   public static final String MIRRORING_MISMATCH_DETECTOR_FACTORY_CLASS =
       "google.bigtable.mirroring.mismatch-detector.factory-impl";
 
+  /**
+   * Path to class to be used as FlowControllerStrategy.
+   *
+   * <p>default: {@link RequestCountingFlowControlStrategy}.
+   */
   public static final String MIRRORING_FLOW_CONTROLLER_STRATEGY_FACTORY_CLASS =
       "google.bigtable.mirroring.flow-controller.factory-impl";
 
-  public static final String MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS =
-      "google.bigtable.mirroring.flow-controller.max-outstanding-requests";
-  public static final String MIRRORING_FLOW_CONTROLLER_MAX_USED_BYTES =
-      "google.bigtable.mirroring.flow-controller.max-used-bytes";
+  /**
+   * Maximal number of outstanding secondary database requests before throttling requests to primary
+   * database.
+   *
+   * <p>default: 500.
+   */
+  public static final String MIRRORING_FLOW_CONTROLLER_STRATEGY_MAX_OUTSTANDING_REQUESTS =
+      "google.bigtable.mirroring.flow-controller-strategy.max-outstanding-requests";
 
-  public static final String MIRRORING_WRITE_ERROR_CONSUMER_FACTORY_CLASS =
-      "google.bigtable.mirroring.write-error-consumer.factory-impl";
-
-  public static final String MIRRORING_WRITE_ERROR_LOG_APPENDER_FACTORY_CLASS =
-      "google.bigtable.mirroring.write-error-log.appender.factory-impl";
-  public static final String MIRRORING_WRITE_ERROR_LOG_SERIALIZER_FACTORY_CLASS =
-      "google.bigtable.mirroring.write-error-log.serializer.factory-impl";
+  /**
+   * Maximal number of bytes used by internal buffers for asynchronous requests before throttling
+   * requests to primary database.
+   *
+   * <p>default: 256MB.
+   */
+  public static final String MIRRORING_FLOW_CONTROLLER_STRATEGY_MAX_USED_BYTES =
+      "google.bigtable.mirroring.flow-controller-strategy.max-used-bytes";
 
   /**
    * Integer value representing how many first bytes of binary values (such as row) should be
-   * converted to hex and then logged in case of error. Defaults to 32.
+   * converted to hex and then logged in case of error.
+   *
+   * <p>default: 32.
    */
   public static final String MIRRORING_WRITE_ERROR_LOG_MAX_BINARY_VALUE_LENGTH =
       "google.bigtable.mirroring.write-error-log.max-binary-value-bytes-logged";
+
+  /**
+   * Path to class to be used as a {@link SecondaryWriteErrorConsumer.Factory} for consumer of
+   * secondary database write errors.
+   *
+   * <p>default: {@link DefaultSecondaryWriteErrorConsumer.Factory}, forwards errors to faillog
+   * using Appender and Serializer.
+   */
+  public static final String MIRRORING_WRITE_ERROR_CONSUMER_FACTORY_CLASS =
+      "google.bigtable.mirroring.write-error-consumer.factory-impl";
+
+  /**
+   * Faillog Appender {@link Appender.Factory} implementation.
+   *
+   * <p>default: {@link DefaultAppender.Factory}, writes data serialized by Serializer
+   * implementation to file on disk.
+   */
+  public static final String MIRRORING_WRITE_ERROR_LOG_APPENDER_FACTORY_CLASS =
+      "google.bigtable.mirroring.write-error-log.appender.factory-impl";
+
+  /**
+   * Faillog {@link Serializer.Factory} implementation, responsible for serializing write errors
+   * reported by the Logger to binary representation, which is later appended to resulting file by
+   * the {@link Appender}.
+   *
+   * <p>default: {@link DefaultSerializer}, dumps supplied mutation along with error stacktrace as
+   * JSON.
+   */
+  public static final String MIRRORING_WRITE_ERROR_LOG_SERIALIZER_FACTORY_CLASS =
+      "google.bigtable.mirroring.write-error-log.serializer.factory-impl";
 
   /**
    * Integer value representing percentage of read operations performed on primary database that
@@ -114,6 +183,8 @@ public class MirroringConfigurationHelper {
    * results.
    *
    * <p>Correct values are a integers ranging from 0 to 100 inclusive.
+   *
+   * <p>default: 100
    */
   public static final String MIRRORING_READ_VERIFICATION_RATE_PERCENT =
       "google.bigtable.mirroring.read-verification-rate-percent";

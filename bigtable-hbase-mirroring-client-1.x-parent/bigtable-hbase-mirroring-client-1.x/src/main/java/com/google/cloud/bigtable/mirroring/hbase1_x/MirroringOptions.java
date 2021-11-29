@@ -21,9 +21,9 @@ import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfig
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FAILLOG_DROP_ON_OVERFLOW_KEY;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FAILLOG_MAX_BUFFER_SIZE_KEY;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FAILLOG_PREFIX_PATH_KEY;
-import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS;
-import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_MAX_USED_BYTES;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_STRATEGY_FACTORY_CLASS;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_STRATEGY_MAX_OUTSTANDING_REQUESTS;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_STRATEGY_MAX_USED_BYTES;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_MISMATCH_DETECTOR_FACTORY_CLASS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_READ_VERIFICATION_RATE_PERCENT;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_SCANNER_BUFFERED_MISMATCHED_READS;
@@ -104,9 +104,9 @@ public class MirroringOptions {
             RequestCountingFlowControlStrategy.Factory.class,
             FlowControlStrategy.Factory.class);
     this.flowControllerMaxOutstandingRequests =
-        configuration.getInt(MIRRORING_FLOW_CONTROLLER_MAX_OUTSTANDING_REQUESTS, 500);
+        configuration.getInt(MIRRORING_FLOW_CONTROLLER_STRATEGY_MAX_OUTSTANDING_REQUESTS, 500);
     this.flowControllerMaxUsedBytes =
-        configuration.getInt(MIRRORING_FLOW_CONTROLLER_MAX_USED_BYTES, 268435456);
+        configuration.getInt(MIRRORING_FLOW_CONTROLLER_STRATEGY_MAX_USED_BYTES, 268435456);
     this.bufferedMutatorBytesToFlush =
         configuration.getInt(
             MIRRORING_BUFFERED_MUTATOR_BYTES_TO_FLUSH,
