@@ -122,7 +122,9 @@ public class MismatchDetectorCounter {
 
     @Override
     public int hashCode() {
-      return this.operation.hashCode() + this.primary.hashCode() + this.secondary.hashCode();
+      return this.operation.hashCode()
+          + Arrays.hashCode(this.primary)
+          + Arrays.hashCode(this.secondary);
     }
   }
 

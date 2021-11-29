@@ -224,10 +224,18 @@ public class TestMismatchDetector implements MismatchDetector {
 
       for (int i = 0; i < primary.length; i++) {
         if (!Comparators.resultsEqual(primary[i], secondary[i])) {
-          onMismatch(HBaseOperation.NEXT_MULTIPLE, primary[i].value(), secondary[i].value());
+          onMismatch(
+              HBaseOperation.NEXT_MULTIPLE, valueOrNull(primary[i]), valueOrNull(secondary[i]));
         }
       }
       onVerificationFinished();
+    }
+
+    private byte[] valueOrNull(Result result) {
+      if (result == null) {
+        return null;
+      }
+      return result.value();
     }
 
     @Override

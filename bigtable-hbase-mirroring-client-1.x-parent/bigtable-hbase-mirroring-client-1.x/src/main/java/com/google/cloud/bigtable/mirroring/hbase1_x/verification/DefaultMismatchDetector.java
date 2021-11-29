@@ -234,8 +234,8 @@ public class DefaultMismatchDetector implements MismatchDetector {
 
     @Override
     public void flush() {
-      this.shrinkBuffer(this.primaryMismatchBuffer, "primary", 0);
-      this.shrinkBuffer(this.secondaryMismatchBuffer, "secondary", 0);
+      this.shrinkBuffer(this.primaryMismatchBuffer, this.primaryKeys, "primary", 0);
+      this.shrinkBuffer(this.secondaryMismatchBuffer, this.secondaryKeys, "secondary", 0);
     }
 
     @Override
@@ -246,13 +246,16 @@ public class DefaultMismatchDetector implements MismatchDetector {
     }
 
     private void shrinkBuffers() {
-      this.shrinkBuffer(this.primaryMismatchBuffer, "primary", this.sizeLimit);
-      this.shrinkBuffer(this.secondaryMismatchBuffer, "secondary", this.sizeLimit);
+      this.shrinkBuffer(this.primaryMismatchBuffer, this.primaryKeys, "primary", this.sizeLimit);
+      this.shrinkBuffer(
+          this.secondaryMismatchBuffer, this.secondaryKeys, "secondary", this.sizeLimit);
     }
 
     private void extendBuffers(Result[] primary, Result[] secondary) {
       for (Result result : primary) {
-        if (result == null) {
+        // result.getRow() is not expected to return `null`, but we are handling this case to ease
+        // mocking in unit tests.
+        if (result == null || result.getRow() == null) {
           continue;
         }
         this.primaryMismatchBuffer.add(result);
@@ -264,7 +267,9 @@ public class DefaultMismatchDetector implements MismatchDetector {
       }
 
       for (Result result : secondary) {
-        if (result == null) {
+        // result.getRow() is not expected to return `null`, but we are handling this case to ease
+        // mocking in unit tests.
+        if (result == null || result.getRow() == null) {
           continue;
         }
         this.secondaryMismatchBuffer.add(result);
@@ -319,10 +324,13 @@ public class DefaultMismatchDetector implements MismatchDetector {
       return null;
     }
 
-    private void shrinkBuffer(Deque<Result> mismatchBuffer, String type, int targetSize) {
+    private void shrinkBuffer(
+        Deque<Result> mismatchBuffer, Set<ResultRowKey> keySet, String type, int targetSize) {
       int toRemove = Math.max(0, mismatchBuffer.size() - targetSize);
       for (int i = 0; i < toRemove; i++) {
-        logAndReportMissingEntry(mismatchBuffer.removeFirst(), type);
+        Result result = mismatchBuffer.removeFirst();
+        logAndReportMissingEntry(result, type);
+        keySet.remove(new ResultRowKey(result.getRow()));
       }
     }
 

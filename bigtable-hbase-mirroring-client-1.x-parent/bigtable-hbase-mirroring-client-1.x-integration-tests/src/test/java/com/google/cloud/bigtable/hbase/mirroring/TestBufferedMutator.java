@@ -289,7 +289,7 @@ public class TestBufferedMutator {
 
   private Mismatch scannerMismatch(int primary, Integer secondary) {
     return new Mismatch(
-        HBaseOperation.NEXT,
+        HBaseOperation.NEXT_MULTIPLE,
         Longs.toByteArray(primary),
         secondary == null ? null : Longs.toByteArray(secondary));
   }
