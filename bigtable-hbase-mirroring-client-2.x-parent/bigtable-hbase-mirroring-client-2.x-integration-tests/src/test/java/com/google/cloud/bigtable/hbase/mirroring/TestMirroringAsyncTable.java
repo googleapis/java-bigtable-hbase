@@ -1409,8 +1409,8 @@ public class TestMirroringAsyncTable {
           .getTableBuilder(tableName, this.executorServiceRule.executorService)
           .build()
           .scan(new Scan(), consumer);
+      scanConsumerEnded.get();
     }
-    scanConsumerEnded.get();
 
     assertThat(read.get()).isEqualTo(databaseEntriesCount);
   }
