@@ -25,11 +25,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.implementation.InvocationHandlerAdapter;
+import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.matcher.ElementMatchers;
 import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
+import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.CommonConnection;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos;
@@ -150,5 +156,35 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
         return Collections.emptyList();
       }
     };
+  }
+
+  private static Class<? extends BigtableAdmin> adminClass = null;
+
+  private static synchronized Class<? extends BigtableAdmin> getSubclass(
+      CommonConnection connection) throws Exception {
+    if (adminClass == null) {
+      // create the class at runtime so incompatible changes in methods won't be accessed unless the
+      // methods are called
+      adminClass =
+          new ByteBuddy()
+              .subclass(BigtableAdmin.class)
+              .defineConstructor(Visibility.PUBLIC)
+              .intercept(
+                  MethodCall.invoke(
+                          BigtableAdmin.class.getDeclaredConstructor(CommonConnection.class))
+                      .with(connection))
+              .method(ElementMatchers.isAbstract())
+              .intercept(
+                  InvocationHandlerAdapter.of(
+                      new AbstractBigtableAdmin.UnsupportedOperationsHandler()))
+              .make()
+              .load(BigtableAdmin.class.getClassLoader())
+              .getLoaded();
+    }
+    return adminClass;
+  }
+
+  public static Admin createInstance(CommonConnection connection) throws Exception {
+    return getSubclass(connection).getDeclaredConstructor().newInstance();
   }
 }

@@ -43,11 +43,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.description.modifier.Visibility;
-import net.bytebuddy.implementation.InvocationHandlerAdapter;
-import net.bytebuddy.implementation.MethodCall;
-import net.bytebuddy.matcher.ElementMatchers;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
@@ -176,25 +171,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
       @Override
       public AsyncAdmin build() {
         try {
-          BigtableAsyncAdmin admin =
-              new ByteBuddy()
-                  .subclass(BigtableAsyncAdmin.class)
-                  .defineConstructor(Visibility.PUBLIC)
-                  .intercept(
-                      MethodCall.invoke(
-                              BigtableAsyncAdmin.class.getDeclaredConstructor(
-                                  CommonConnection.class))
-                          .with(BigtableAsyncConnection.this))
-                  .method(ElementMatchers.isAbstract())
-                  .intercept(
-                      InvocationHandlerAdapter.of(
-                          new AbstractBigtableAdmin.UnsupportedOperationsHandler()))
-                  .make()
-                  .load(BigtableAsyncAdmin.class.getClassLoader())
-                  .getLoaded()
-                  .getDeclaredConstructor()
-                  .newInstance();
-          return admin;
+          return BigtableAsyncAdmin.createInstance(BigtableAsyncConnection.this);
         } catch (Exception e) {
           LOG.error("failed to build BigtableAsyncAdmin", e);
           throw new RuntimeException("failed to build BigtableAsyncAdmin", e);

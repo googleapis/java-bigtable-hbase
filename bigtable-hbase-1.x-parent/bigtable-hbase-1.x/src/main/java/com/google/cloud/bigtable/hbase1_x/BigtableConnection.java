@@ -22,20 +22,13 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.description.modifier.Visibility;
-import net.bytebuddy.implementation.InvocationHandlerAdapter;
-import net.bytebuddy.implementation.MethodCall;
-import net.bytebuddy.matcher.ElementMatchers;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.CommonConnection;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.security.User;
 
@@ -66,24 +59,7 @@ public class BigtableConnection extends AbstractBigtableConnection {
   @Override
   public Admin getAdmin() throws IOException {
     try {
-      BigtableAdmin admin =
-          new ByteBuddy()
-              .subclass(BigtableAdmin.class)
-              .defineConstructor(Visibility.PUBLIC)
-              .intercept(
-                  MethodCall.invoke(
-                          BigtableAdmin.class.getDeclaredConstructor(CommonConnection.class))
-                      .with(this))
-              .method(ElementMatchers.isAbstract())
-              .intercept(
-                  InvocationHandlerAdapter.of(
-                      new AbstractBigtableAdmin.UnsupportedOperationsHandler()))
-              .make()
-              .load(BigtableAdmin.class.getClassLoader())
-              .getLoaded()
-              .getDeclaredConstructor()
-              .newInstance();
-      return admin;
+      return BigtableAdmin.createInstance(this);
     } catch (Exception e) {
       throw new IOException(e);
     }

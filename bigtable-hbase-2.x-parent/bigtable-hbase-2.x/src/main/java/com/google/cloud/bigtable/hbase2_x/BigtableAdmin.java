@@ -66,24 +66,7 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
   public BigtableAdmin(AbstractBigtableConnection connection) throws IOException {
     super(connection);
     try {
-      BigtableAsyncAdmin admin =
-          new ByteBuddy()
-              .subclass(BigtableAsyncAdmin.class)
-              .defineConstructor(Visibility.PUBLIC)
-              .intercept(
-                  MethodCall.invoke(
-                          BigtableAsyncAdmin.class.getDeclaredConstructor(CommonConnection.class))
-                      .with(connection))
-              .method(ElementMatchers.isAbstract())
-              .intercept(
-                  InvocationHandlerAdapter.of(
-                      new AbstractBigtableAdmin.UnsupportedOperationsHandler()))
-              .make()
-              .load(BigtableAsyncAdmin.class.getClassLoader())
-              .getLoaded()
-              .getDeclaredConstructor()
-              .newInstance();
-      asyncAdmin = admin;
+      asyncAdmin = BigtableAsyncAdmin.createInstance(connection);
     } catch (Exception e) {
       throw new IOException(e);
     }
@@ -379,5 +362,36 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
         new String[0],
         false,
         -1);
+  }
+
+  private static Class<? extends BigtableAdmin> adminClass = null;
+
+  private static synchronized Class<? extends BigtableAdmin> getSubclass(
+      CommonConnection connection) throws Exception {
+    if (adminClass == null) {
+      // create the class at runtime so incompatible changes in methods won't be accessed unless the
+      // methods are called
+      adminClass =
+          new ByteBuddy()
+              .subclass(BigtableAdmin.class)
+              .defineConstructor(Visibility.PUBLIC)
+              .intercept(
+                  MethodCall.invoke(
+                          BigtableAdmin.class.getDeclaredConstructor(
+                              AbstractBigtableConnection.class))
+                      .with(connection))
+              .method(ElementMatchers.isAbstract())
+              .intercept(
+                  InvocationHandlerAdapter.of(
+                      new AbstractBigtableAdmin.UnsupportedOperationsHandler()))
+              .make()
+              .load(BigtableAdmin.class.getClassLoader())
+              .getLoaded();
+    }
+    return adminClass;
+  }
+
+  public static BigtableAdmin createInstance(CommonConnection connection) throws Exception {
+    return getSubclass(connection).getDeclaredConstructor().newInstance();
   }
 }
