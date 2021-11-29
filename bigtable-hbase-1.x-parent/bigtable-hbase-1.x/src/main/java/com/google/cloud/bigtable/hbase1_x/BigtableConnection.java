@@ -58,7 +58,7 @@ public class BigtableConnection extends AbstractBigtableConnection {
   /** {@inheritDoc} */
   @Override
   public Admin getAdmin() throws IOException {
-    return new BigtableAdmin(this);
+    return BigtableAdmin.createInstance(this);
   }
 
   @Override

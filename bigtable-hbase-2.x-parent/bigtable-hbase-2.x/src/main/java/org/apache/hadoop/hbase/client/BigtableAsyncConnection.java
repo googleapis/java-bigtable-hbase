@@ -172,7 +172,7 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
       @Override
       public AsyncAdmin build() {
         try {
-          return new BigtableAsyncAdmin(BigtableAsyncConnection.this);
+          return BigtableAsyncAdmin.createInstance(BigtableAsyncConnection.this);
         } catch (IOException e) {
           LOG.error("failed to build BigtableAsyncAdmin", e);
           throw new UncheckedIOException("failed to build BigtableAsyncAdmin", e);

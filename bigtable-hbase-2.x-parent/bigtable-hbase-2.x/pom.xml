@@ -142,6 +142,11 @@ limitations under the License.
       <groupId>org.threeten</groupId>
       <artifactId>threetenbp</artifactId>
     </dependency>
+    <dependency>
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy</artifactId>
+      <version>1.12.2</version>
+    </dependency>
 
     <!-- Test dependencies-->
     <dependency>
