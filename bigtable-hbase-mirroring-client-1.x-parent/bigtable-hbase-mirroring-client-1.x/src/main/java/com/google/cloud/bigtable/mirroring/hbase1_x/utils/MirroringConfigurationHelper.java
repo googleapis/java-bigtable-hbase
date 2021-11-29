@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringResultScanner;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -184,7 +185,7 @@ public class MirroringConfigurationHelper {
   public static final String MIRRORING_FAILLOG_DROP_ON_OVERFLOW_KEY =
       "google.bigtable.mirroring.write-error-log.appender.drop-on-overflow";
 
-  /*
+  /**
    * Number of milliseconds that {@link
    * com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection} should wait synchronously for
    * pending operations before terminating connection with secondary database.
@@ -197,6 +198,16 @@ public class MirroringConfigurationHelper {
    */
   public static final String MIRRORING_CONNECTION_CONNECTION_TERMINATION_TIMEOUT =
       "google.bigtable.mirroring.connection.termination-timeout";
+
+  /**
+   * Number of previous unmatched results that {@link MirroringResultScanner} should check before
+   * declaring scan's results erroneous.
+   *
+   * <p>If not set uses default value of 5. Matching to one of buffered results removes earlier
+   * entries from the buffer.
+   */
+  public static final String MIRRORING_SCANNER_BUFFERED_MISMATCHED_READS =
+      "google.bigtable.mirroring.result-scanner.buffered-mismatched-reads";
 
   public static void fillConnectionConfigWithClassImplementation(
       Configuration connectionConfig,

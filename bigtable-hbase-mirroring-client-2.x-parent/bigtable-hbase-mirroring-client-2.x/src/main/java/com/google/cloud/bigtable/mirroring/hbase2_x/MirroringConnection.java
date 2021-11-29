@@ -87,7 +87,11 @@ public class MirroringConnection
             performWritesConcurrently,
             waitForSecondaryWrites,
             mirroringTracer,
-            referenceCounter);
+            referenceCounter,
+            MirroringConnection.super
+                .configuration
+                .mirroringOptions
+                .resultScannerBufferedMismatchedResults);
       }
     };
   }

@@ -44,7 +44,8 @@ public class MirroringTable extends com.google.cloud.bigtable.mirroring.hbase1_x
       boolean performWritesConcurrently,
       boolean waitForSecondaryWrites,
       MirroringTracer mirroringTracer,
-      ReferenceCounter referenceCounter) {
+      ReferenceCounter referenceCounter,
+      int resultScannerBufferedMismatchedResults) {
     super(
         primaryTable,
         secondaryTable,
@@ -56,7 +57,8 @@ public class MirroringTable extends com.google.cloud.bigtable.mirroring.hbase1_x
         performWritesConcurrently,
         waitForSecondaryWrites,
         mirroringTracer,
-        referenceCounter);
+        referenceCounter,
+        resultScannerBufferedMismatchedResults);
   }
 
   @Override

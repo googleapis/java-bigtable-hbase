@@ -118,7 +118,8 @@ public class TestMirroringAsyncTable {
                 new MirroringTracer(),
                 new ReadSampler(100),
                 referenceCounter,
-                executorService));
+                executorService,
+                10));
 
     lenient()
         .doReturn(primaryBuilder)

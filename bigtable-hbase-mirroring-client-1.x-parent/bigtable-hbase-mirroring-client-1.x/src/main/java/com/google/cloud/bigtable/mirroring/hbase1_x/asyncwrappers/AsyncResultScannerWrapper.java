@@ -49,6 +49,12 @@ public class AsyncResultScannerWrapper {
    */
   private final ConcurrentLinkedQueue<ScannerRequestContext> nextContextQueue;
 
+  /**
+   * We use this queue to ensure that asynchronous verification of scan results is called in the
+   * same order as next()s on primary result scanner.
+   */
+  public final ConcurrentLinkedQueue<AsyncScannerVerificationPayload> nextResultQueue;
+
   private final ResultScanner scanner;
   private final ListeningExecutorService executorService;
   private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -61,31 +67,32 @@ public class AsyncResultScannerWrapper {
     this.mirroringTracer = mirroringTracer;
     this.executorService = executorService;
     this.nextContextQueue = new ConcurrentLinkedQueue<>();
+    this.nextResultQueue = new ConcurrentLinkedQueue<>();
   }
 
-  public Supplier<ListenableFuture<AsyncScannerVerificationPayload>> next(
-      final ScannerRequestContext context) {
-    return new Supplier<ListenableFuture<AsyncScannerVerificationPayload>>() {
+  public Supplier<ListenableFuture<Void>> next(final ScannerRequestContext context) {
+    return new Supplier<ListenableFuture<Void>>() {
       @Override
-      public ListenableFuture<AsyncScannerVerificationPayload> get() {
+      public ListenableFuture<Void> get() {
         nextContextQueue.add(context);
         return scheduleNext();
       }
     };
   }
 
-  private ListenableFuture<AsyncScannerVerificationPayload> scheduleNext() {
+  private ListenableFuture<Void> scheduleNext() {
     return this.executorService.submit(
-        new Callable<AsyncScannerVerificationPayload>() {
+        new Callable<Void>() {
           @Override
-          public AsyncScannerVerificationPayload call() throws AsyncScannerExceptionWithContext {
+          public Void call() throws AsyncScannerExceptionWithContext {
             synchronized (AsyncResultScannerWrapper.this) {
               final ScannerRequestContext requestContext =
                   AsyncResultScannerWrapper.this.nextContextQueue.remove();
               try (Scope scope =
                   AsyncResultScannerWrapper.this.mirroringTracer.spanFactory.spanAsScope(
                       requestContext.span)) {
-                return performNext(requestContext);
+                AsyncResultScannerWrapper.this.nextResultQueue.add(performNext(requestContext));
+                return null;
               }
             }
           }
@@ -163,8 +170,6 @@ public class AsyncResultScannerWrapper {
     public final Scan scan;
     /** Results of corresponding scan operation on primary ResultScanner. */
     public final Result[] result;
-    /** Number of Results that were retrieved from this scanner before current request. */
-    public final int startingIndex;
     /** Number of Results requested in current next call. */
     public final int numRequests;
     /** Tracing Span will be used as a parent span of current request. */
@@ -177,27 +182,20 @@ public class AsyncResultScannerWrapper {
     public final boolean singleNext;
 
     private ScannerRequestContext(
-        Scan scan,
-        Result[] result,
-        int startingIndex,
-        int numRequests,
-        boolean singleNext,
-        Span span) {
+        Scan scan, Result[] result, int numRequests, boolean singleNext, Span span) {
       this.scan = scan;
       this.result = result;
-      this.startingIndex = startingIndex;
       this.numRequests = numRequests;
       this.span = span;
       this.singleNext = singleNext;
     }
 
-    public ScannerRequestContext(
-        Scan scan, Result[] result, int startingIndex, int numRequests, Span span) {
-      this(scan, result, startingIndex, numRequests, false, span);
+    public ScannerRequestContext(Scan scan, Result[] result, int numRequests, Span span) {
+      this(scan, result, numRequests, false, span);
     }
 
-    public ScannerRequestContext(Scan scan, Result result, int startingIndex, Span span) {
-      this(scan, new Result[] {result}, startingIndex, 1, true, span);
+    public ScannerRequestContext(Scan scan, Result result, Span span) {
+      this(scan, new Result[] {result}, 1, true, span);
     }
   }
 

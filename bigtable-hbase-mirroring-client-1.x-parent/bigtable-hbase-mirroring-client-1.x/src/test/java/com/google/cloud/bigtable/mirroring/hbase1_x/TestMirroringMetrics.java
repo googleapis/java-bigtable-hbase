@@ -119,7 +119,8 @@ public class TestMirroringMetrics {
                 false,
                 false,
                 tracer,
-                mock(ReferenceCounter.class)));
+                mock(ReferenceCounter.class),
+                10));
   }
 
   @Test

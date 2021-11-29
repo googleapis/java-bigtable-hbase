@@ -78,7 +78,7 @@ public class TestMirroringTableInputModification {
   SettableFuture<Void> secondaryOperationBlockingFuture;
 
   @Before
-  public void setUp() {
+  public void setUp() throws IOException, InterruptedException {
     setupFlowControllerMock(flowController);
     this.mirroringTable =
         spy(
@@ -93,8 +93,23 @@ public class TestMirroringTableInputModification {
                 false,
                 false,
                 new MirroringTracer(),
-                mock(ReferenceCounter.class)));
+                mock(ReferenceCounter.class),
+                10));
+
     this.secondaryOperationBlockingFuture = SettableFuture.create();
+
+    mockExistsAll(this.primaryTable);
+    mockGet(this.primaryTable);
+    mockBatch(this.primaryTable);
+
+    secondaryOperationBlockingFuture = SettableFuture.create();
+
+    blockMethodCall(secondaryTable, secondaryOperationBlockingFuture)
+        .existsAll(ArgumentMatchers.<Get>anyList());
+    blockMethodCall(this.secondaryTable, secondaryOperationBlockingFuture)
+        .batch(ArgumentMatchers.<Put>anyList(), (Object[]) any());
+    blockMethodCall(this.secondaryTable, secondaryOperationBlockingFuture)
+        .get(ArgumentMatchers.<Get>anyList());
   }
 
   @Test

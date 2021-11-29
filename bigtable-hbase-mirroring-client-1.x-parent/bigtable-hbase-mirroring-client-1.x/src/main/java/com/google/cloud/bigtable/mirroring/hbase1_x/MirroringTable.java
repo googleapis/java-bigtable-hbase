@@ -113,7 +113,7 @@ public class MirroringTable implements Table {
   private final Batcher batcher;
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final SettableFuture<Void> closedFuture = SettableFuture.create();
-
+  private final int resultScannerBufferedMismatchedResults;
   /**
    * @param executorService ExecutorService is used to perform operations on secondaryTable and
    *     verification tasks.
@@ -132,7 +132,8 @@ public class MirroringTable implements Table {
       boolean performWritesConcurrently,
       boolean waitForSecondaryWrites,
       MirroringTracer mirroringTracer,
-      ReferenceCounter parentReferenceCounter) {
+      ReferenceCounter parentReferenceCounter,
+      int resultScannerBufferedMismatchedResults) {
     this.primaryTable = primaryTable;
     this.verificationContinuationFactory = new VerificationContinuationFactory(mismatchDetector);
     this.readSampler = readSampler;
@@ -159,6 +160,7 @@ public class MirroringTable implements Table {
             waitForSecondaryWrites,
             performWritesConcurrently,
             this.mirroringTracer);
+    this.resultScannerBufferedMismatchedResults = resultScannerBufferedMismatchedResults;
   }
 
   @Override
@@ -269,7 +271,8 @@ public class MirroringTable implements Table {
               this.mirroringTracer,
               this.readSampler.shouldNextReadOperationBeSampled(),
               this.requestScheduler,
-              this.referenceCounter);
+              this.referenceCounter,
+              this.resultScannerBufferedMismatchedResults);
       return scanner;
     }
   }

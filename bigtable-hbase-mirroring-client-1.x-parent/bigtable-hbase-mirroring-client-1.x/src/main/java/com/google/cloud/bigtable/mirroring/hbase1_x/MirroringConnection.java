@@ -67,7 +67,7 @@ public class MirroringConnection implements Connection {
   protected final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
   protected final ReadSampler readSampler;
   private final FailedMutationLogger failedMutationLogger;
-  private final MirroringConfiguration configuration;
+  protected final MirroringConfiguration configuration;
   private final Connection primaryConnection;
   private final Connection secondaryConnection;
   private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -185,7 +185,8 @@ public class MirroringConnection implements Connection {
           this.performWritesConcurrently,
           this.waitForSecondaryWrites,
           this.mirroringTracer,
-          this.referenceCounter);
+          this.referenceCounter,
+          this.configuration.mirroringOptions.maxLoggedBinaryValueLength);
     }
   }
 

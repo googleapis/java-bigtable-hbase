@@ -94,6 +94,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
   private final ReadSampler readSampler;
   private final ExecutorService executorService;
   private final RequestScheduler requestScheduler;
+  private final int resultScannerBufferedMismatchedResults;
 
   public MirroringAsyncTable(
       AsyncTable<C> primaryTable,
@@ -104,7 +105,8 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
       MirroringTracer mirroringTracer,
       ReadSampler readSampler,
       ListenableReferenceCounter referenceCounter,
-      ExecutorService executorService) {
+      ExecutorService executorService,
+      int resultScannerBufferedMismatchedResults) {
     this.primaryTable = primaryTable;
     this.secondaryTable = secondaryTable;
     this.verificationContinuationFactory = new VerificationContinuationFactory(mismatchDetector);
@@ -116,6 +118,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     this.executorService = executorService;
     this.requestScheduler =
         new RequestScheduler(this.flowController, this.mirroringTracer, this.referenceCounter);
+    this.resultScannerBufferedMismatchedResults = resultScannerBufferedMismatchedResults;
   }
 
   @Override
@@ -497,7 +500,8 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
         this.mirroringTracer,
         this.readSampler.shouldNextReadOperationBeSampled(),
         this.requestScheduler,
-        this.referenceCounter);
+        this.referenceCounter,
+        this.resultScannerBufferedMismatchedResults);
   }
 
   @Override

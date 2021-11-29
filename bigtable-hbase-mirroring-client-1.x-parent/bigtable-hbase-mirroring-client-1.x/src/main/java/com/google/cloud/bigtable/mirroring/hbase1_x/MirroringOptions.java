@@ -26,6 +26,7 @@ import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfig
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FLOW_CONTROLLER_STRATEGY_FACTORY_CLASS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_MISMATCH_DETECTOR_FACTORY_CLASS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_READ_VERIFICATION_RATE_PERCENT;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_SCANNER_BUFFERED_MISMATCHED_READS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_SYNCHRONOUS_WRITES;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_WRITE_ERROR_CONSUMER_FACTORY_CLASS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_WRITE_ERROR_LOG_APPENDER_FACTORY_CLASS;
@@ -89,6 +90,8 @@ public class MirroringOptions {
   public final boolean waitForSecondaryWrites;
   public final Faillog faillog;
 
+  public final int resultScannerBufferedMismatchedResults;
+
   public MirroringOptions(Configuration configuration) {
     this.mismatchDetectorFactoryClass =
         configuration.getClass(
@@ -114,16 +117,21 @@ public class MirroringOptions {
             DefaultSecondaryWriteErrorConsumer.Factory.class,
             SecondaryWriteErrorConsumer.Factory.class);
     this.readSamplingRate = configuration.getInt(MIRRORING_READ_VERIFICATION_RATE_PERCENT, 100);
-
-    this.maxLoggedBinaryValueLength =
-        configuration.getInt(MIRRORING_WRITE_ERROR_LOG_MAX_BINARY_VALUE_LENGTH, 32);
-
     Preconditions.checkArgument(this.readSamplingRate >= 0);
     Preconditions.checkArgument(this.readSamplingRate <= 100);
+
     this.performWritesConcurrently = configuration.getBoolean(MIRRORING_CONCURRENT_WRITES, false);
     this.waitForSecondaryWrites = configuration.getBoolean(MIRRORING_SYNCHRONOUS_WRITES, false);
     this.connectionTerminationTimeoutMillis =
         configuration.getLong(MIRRORING_CONNECTION_CONNECTION_TERMINATION_TIMEOUT, 60000);
+
+    this.resultScannerBufferedMismatchedResults =
+        configuration.getInt(MIRRORING_SCANNER_BUFFERED_MISMATCHED_READS, 5);
+    Preconditions.checkArgument(this.resultScannerBufferedMismatchedResults >= 0);
+
+    this.maxLoggedBinaryValueLength =
+        configuration.getInt(MIRRORING_WRITE_ERROR_LOG_MAX_BINARY_VALUE_LENGTH, 32);
+    Preconditions.checkArgument(this.maxLoggedBinaryValueLength >= 0);
 
     Preconditions.checkArgument(
         !(this.performWritesConcurrently && !this.waitForSecondaryWrites),

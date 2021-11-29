@@ -91,7 +91,8 @@ public class TestMirroringTableSynchronousMode {
                 concurrent,
                 true,
                 new MirroringTracer(),
-                mock(ReferenceCounter.class)));
+                mock(ReferenceCounter.class),
+                5));
   }
 
   @Test

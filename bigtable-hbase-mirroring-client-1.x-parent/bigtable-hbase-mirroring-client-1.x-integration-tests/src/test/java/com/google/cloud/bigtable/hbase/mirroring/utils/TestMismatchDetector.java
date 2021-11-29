@@ -144,15 +144,9 @@ public class TestMismatchDetector implements MismatchDetector {
   }
 
   @Override
-  public void scannerNext(Scan request, int entriesAlreadyRead, Result primary, Result secondary) {
-    onVerificationStarted();
-    if (!Comparators.resultsEqual(primary, secondary)) {
-      onMismatch(
-          HBaseOperation.NEXT,
-          primary == null ? null : primary.value(),
-          secondary == null ? null : secondary.value());
-    }
-    onVerificationFinished();
+  public void scannerNext(
+      Scan request, ScannerResultVerifier verifier, Result primary, Result secondary) {
+    verifier.verify(new Result[] {primary}, new Result[] {secondary});
   }
 
   @Override
@@ -164,24 +158,12 @@ public class TestMismatchDetector implements MismatchDetector {
 
   @Override
   public void scannerNext(
-      Scan request, int entriesAlreadyRead, Result[] primary, Result[] secondary) {
-    onVerificationStarted();
-    if (primary.length != secondary.length) {
-      onLengthMismatch(HBaseOperation.NEXT_MULTIPLE, primary.length, secondary.length);
-      return;
-    }
-
-    for (int i = 0; i < primary.length; i++) {
-      if (!Comparators.resultsEqual(primary[i], secondary[i])) {
-        onMismatch(HBaseOperation.NEXT_MULTIPLE, primary[i].value(), secondary[i].value());
-      }
-    }
-    onVerificationFinished();
+      Scan request, ScannerResultVerifier verifier, Result[] primary, Result[] secondary) {
+    verifier.verify(primary, secondary);
   }
 
   @Override
-  public void scannerNext(
-      Scan request, int entriesAlreadyRead, int entriesRequested, Throwable throwable) {
+  public void scannerNext(Scan request, Throwable throwable) {
     onVerificationStarted();
     onFailure(HBaseOperation.NEXT_MULTIPLE, throwable);
     onVerificationFinished();
@@ -210,6 +192,16 @@ public class TestMismatchDetector implements MismatchDetector {
     onVerificationFinished();
   }
 
+  private static byte booleanToByte(boolean b) {
+    return (byte) (b ? 1 : 0);
+  }
+
+  @Override
+  public MismatchDetector.ScannerResultVerifier createScannerResultVerifier(
+      Scan request, int maxBufferedResults) {
+    return new MemorylessScannerResultVerifier();
+  }
+
   public static class Factory implements MismatchDetector.Factory {
 
     @Override
@@ -219,7 +211,26 @@ public class TestMismatchDetector implements MismatchDetector {
     }
   }
 
-  private static byte booleanToByte(boolean b) {
-    return (byte) (b ? 1 : 0);
+  public class MemorylessScannerResultVerifier implements MismatchDetector.ScannerResultVerifier {
+    public MemorylessScannerResultVerifier() {}
+
+    @Override
+    public void verify(Result[] primary, Result[] secondary) {
+      onVerificationStarted();
+      if (primary.length != secondary.length) {
+        onLengthMismatch(HBaseOperation.NEXT_MULTIPLE, primary.length, secondary.length);
+        return;
+      }
+
+      for (int i = 0; i < primary.length; i++) {
+        if (!Comparators.resultsEqual(primary[i], secondary[i])) {
+          onMismatch(HBaseOperation.NEXT_MULTIPLE, primary[i].value(), secondary[i].value());
+        }
+      }
+      onVerificationFinished();
+    }
+
+    @Override
+    public void flush() {}
   }
 }

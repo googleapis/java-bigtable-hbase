@@ -92,7 +92,8 @@ public class TestMirroringAsyncTableInputModification {
                 new MirroringTracer(),
                 new ReadSampler(100),
                 referenceCounter,
-                executorService));
+                executorService,
+                10));
 
     secondaryOperationBlockedOnFuture = SettableFuture.create();
 

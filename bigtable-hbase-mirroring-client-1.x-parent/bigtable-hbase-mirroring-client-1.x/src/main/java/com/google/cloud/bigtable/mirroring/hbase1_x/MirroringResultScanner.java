@@ -28,18 +28,16 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.Mirro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.HierarchicalReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import io.opencensus.common.Scope;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -54,7 +52,6 @@ import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
  */
 @InternalApi("For internal usage only")
 public class MirroringResultScanner extends AbstractClientScanner {
-  private static final Log log = LogFactory.getLog(MirroringResultScanner.class);
   private final MirroringTracer mirroringTracer;
 
   private final Scan originalScan;
@@ -76,11 +73,14 @@ public class MirroringResultScanner extends AbstractClientScanner {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final SettableFuture<Void> closedFuture = SettableFuture.create();
+
   /**
-   * Keeps track of number of entries already read from this scanner to provide context for
-   * MismatchDetectors.
+   * We use this object in a synchronized block to ensure that stateful asynchronous verification of
+   * scan results remains correct.
    */
-  private int readEntries;
+  private final Object verificationLock = new Object();
+
+  private final MismatchDetector.ScannerResultVerifier scannerResultVerifier;
 
   public MirroringResultScanner(
       Scan originalScan,
@@ -90,17 +90,20 @@ public class MirroringResultScanner extends AbstractClientScanner {
       MirroringTracer mirroringTracer,
       boolean isVerificationEnabled,
       RequestScheduler requestScheduler,
-      ReferenceCounter parentReferenceCounter) {
+      ReferenceCounter parentReferenceCounter,
+      int resultScannerBufferedMismatchedResults) {
     this.originalScan = originalScan;
     this.primaryResultScanner = primaryResultScanner;
     this.secondaryResultScannerWrapper = secondaryResultScannerWrapper;
     this.verificationContinuationFactory = verificationContinuationFactory;
     this.referenceCounter = new HierarchicalReferenceCounter(parentReferenceCounter);
     this.requestScheduler = requestScheduler.withReferenceCounter(this.referenceCounter);
-
-    this.readEntries = 0;
     this.mirroringTracer = mirroringTracer;
     this.isVerificationEnabled = isVerificationEnabled;
+    this.scannerResultVerifier =
+        this.verificationContinuationFactory
+            .getMismatchDetector()
+            .createScannerResultVerifier(this.originalScan, resultScannerBufferedMismatchedResults);
   }
 
   @Override
@@ -117,19 +120,13 @@ public class MirroringResultScanner extends AbstractClientScanner {
               },
               HBaseOperation.NEXT);
 
-      int startingIndex = this.readEntries;
-      this.readEntries += 1;
       ScannerRequestContext context =
           new ScannerRequestContext(
-              this.originalScan,
-              result,
-              startingIndex,
-              this.mirroringTracer.spanFactory.getCurrentSpan());
+              this.originalScan, result, this.mirroringTracer.spanFactory.getCurrentSpan());
 
       this.scheduleRequest(
           new RequestResourcesDescription(result),
-          this.secondaryResultScannerWrapper.next(context),
-          this.verificationContinuationFactory.scannerNext());
+          this.secondaryResultScannerWrapper.next(context));
       return result;
     }
   }
@@ -148,19 +145,15 @@ public class MirroringResultScanner extends AbstractClientScanner {
               },
               HBaseOperation.NEXT_MULTIPLE);
 
-      int startingIndex = this.readEntries;
-      this.readEntries += entriesToRead;
       ScannerRequestContext context =
           new ScannerRequestContext(
               this.originalScan,
               results,
-              startingIndex,
               entriesToRead,
               this.mirroringTracer.spanFactory.getCurrentSpan());
       this.scheduleRequest(
           new RequestResourcesDescription(results),
-          this.secondaryResultScannerWrapper.next(context),
-          this.verificationContinuationFactory.scannerNext());
+          this.secondaryResultScannerWrapper.next(context));
       return results;
     }
   }
@@ -200,6 +193,7 @@ public class MirroringResultScanner extends AbstractClientScanner {
                 @Override
                 public void run() {
                   try {
+                    scannerResultVerifier.flush();
                     secondaryResultScannerWrapper.close();
                     closedFuture.set(null);
                   } catch (RuntimeException e) {
@@ -262,10 +256,9 @@ public class MirroringResultScanner extends AbstractClientScanner {
     return this.primaryResultScanner.getScanMetrics();
   }
 
-  private <T> void scheduleRequest(
+  private void scheduleRequest(
       RequestResourcesDescription requestResourcesDescription,
-      Supplier<ListenableFuture<T>> nextSupplier,
-      FutureCallback<T> scannerNext) {
+      Supplier<ListenableFuture<Void>> nextSupplier) {
     if (!this.isVerificationEnabled) {
       return;
     }
@@ -273,6 +266,10 @@ public class MirroringResultScanner extends AbstractClientScanner {
     this.requestScheduler.scheduleRequestWithCallback(
         requestResourcesDescription,
         nextSupplier,
-        this.mirroringTracer.spanFactory.wrapReadVerificationCallback(scannerNext));
+        this.mirroringTracer.spanFactory.wrapReadVerificationCallback(
+            this.verificationContinuationFactory.scannerNext(
+                this.verificationLock,
+                this.secondaryResultScannerWrapper.nextResultQueue,
+                this.scannerResultVerifier)));
   }
 }

@@ -94,7 +94,8 @@ public class TestVerificationSampling {
                 false,
                 false,
                 new MirroringTracer(),
-                mock(ReferenceCounter.class)));
+                mock(ReferenceCounter.class),
+                10));
   }
 
   @Test

@@ -256,7 +256,8 @@ public class MirroringAsyncConnection implements AsyncConnection {
           mirroringTracer,
           readSampler,
           referenceCounter,
-          executorService);
+          executorService,
+          configuration.mirroringOptions.resultScannerBufferedMismatchedResults);
     }
 
     @Override

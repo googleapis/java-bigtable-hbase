@@ -93,7 +93,8 @@ public class TestVerificationSampling {
                 new MirroringTracer(),
                 readSampler,
                 referenceCounter,
-                executorServiceRule.executorService));
+                executorServiceRule.executorService,
+                10));
   }
 
   public <T, R> T mockWithCompleteFuture(T table, R result) {

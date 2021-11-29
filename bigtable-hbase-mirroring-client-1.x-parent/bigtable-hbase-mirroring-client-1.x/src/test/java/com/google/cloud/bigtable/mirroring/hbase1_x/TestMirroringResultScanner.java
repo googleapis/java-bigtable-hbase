@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -34,9 +35,9 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowContro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
 import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -56,6 +57,7 @@ import java.util.concurrent.TimeoutException;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.function.ThrowingRunnable;
 import org.junit.runner.RunWith;
@@ -65,13 +67,21 @@ import org.mockito.Mock;
 @RunWith(JUnit4.class)
 public class TestMirroringResultScanner {
   @Mock FlowController flowController;
+  VerificationContinuationFactory continuationFactoryMock =
+      mock(VerificationContinuationFactory.class);
+
+  @Before
+  public void setUp() {
+    MismatchDetector mismatchDetectorMock = mock(MismatchDetector.class);
+    when(mismatchDetectorMock.createScannerResultVerifier(any(Scan.class), anyInt()))
+        .thenReturn(mock(MismatchDetector.ScannerResultVerifier.class));
+
+    when(continuationFactoryMock.getMismatchDetector()).thenReturn(mismatchDetectorMock);
+  }
 
   @Test
   public void testScannerCloseWhenFirstCloseThrows() throws IOException {
     ResultScanner primaryScannerMock = mock(ResultScanner.class);
-
-    VerificationContinuationFactory continuationFactoryMock =
-        mock(VerificationContinuationFactory.class);
 
     AsyncResultScannerWrapper secondaryScannerWrapperMock = mock(AsyncResultScannerWrapper.class);
 
@@ -85,8 +95,8 @@ public class TestMirroringResultScanner {
             true,
             new RequestScheduler(
                 flowController, new MirroringTracer(), mock(ListenableReferenceCounter.class)),
-            mock(ReferenceCounter.class));
-
+            mock(ReferenceCounter.class),
+            10);
     doThrow(new RuntimeException("first")).when(primaryScannerMock).close();
 
     Exception thrown =
@@ -109,9 +119,6 @@ public class TestMirroringResultScanner {
       throws TimeoutException, InterruptedException {
     ResultScanner primaryScannerMock = mock(ResultScanner.class);
 
-    VerificationContinuationFactory continuationFactoryMock =
-        mock(VerificationContinuationFactory.class);
-
     AsyncResultScannerWrapper secondaryScannerWrapperMock = mock(AsyncResultScannerWrapper.class);
 
     final MirroringResultScanner mirroringScanner =
@@ -124,7 +131,8 @@ public class TestMirroringResultScanner {
             true,
             new RequestScheduler(
                 flowController, new MirroringTracer(), mock(ListenableReferenceCounter.class)),
-            mock(ReferenceCounter.class));
+            mock(ReferenceCounter.class),
+            10);
 
     doThrow(new RuntimeException("second")).when(secondaryScannerWrapperMock).close();
 
@@ -143,9 +151,6 @@ public class TestMirroringResultScanner {
   public void testScannerCloseWhenBothCloseThrow() throws InterruptedException, TimeoutException {
     ResultScanner primaryScannerMock = mock(ResultScanner.class);
 
-    VerificationContinuationFactory continuationFactoryMock =
-        mock(VerificationContinuationFactory.class);
-
     AsyncResultScannerWrapper secondaryScannerWrapperMock = mock(AsyncResultScannerWrapper.class);
 
     final MirroringResultScanner mirroringScanner =
@@ -158,7 +163,8 @@ public class TestMirroringResultScanner {
             true,
             new RequestScheduler(
                 flowController, new MirroringTracer(), mock(ListenableReferenceCounter.class)),
-            mock(ReferenceCounter.class));
+            mock(ReferenceCounter.class),
+            10);
 
     doThrow(new RuntimeException("first")).when(primaryScannerMock).close();
     doThrow(new RuntimeException("second")).when(secondaryScannerWrapperMock).close();
@@ -193,8 +199,6 @@ public class TestMirroringResultScanner {
   public void testMultipleCloseCallsCloseScannersOnlyOnce() throws IOException {
     ResultScanner primaryScannerMock = mock(ResultScanner.class);
 
-    VerificationContinuationFactory continuationFactoryMock =
-        mock(VerificationContinuationFactory.class);
     AsyncResultScannerWrapper secondaryScannerWrapperMock = mock(AsyncResultScannerWrapper.class);
 
     final ResultScanner mirroringScanner =
@@ -207,7 +211,8 @@ public class TestMirroringResultScanner {
             true,
             new RequestScheduler(
                 flowController, new MirroringTracer(), mock(ListenableReferenceCounter.class)),
-            mock(ReferenceCounter.class));
+            mock(ReferenceCounter.class),
+            10);
 
     mirroringScanner.close();
     mirroringScanner.close();
@@ -220,7 +225,7 @@ public class TestMirroringResultScanner {
     // AsyncRequestWrapper has a concurrent queue of primary scanner results (with some context).
     // When a next() is requested, it puts its context into the queue.
     // Then it acquires a mutex and while holding it pops a context from the queue
-    // and runs next() on underlying ResultScanner from secondary database.
+    // and then runs next() on underlying ResultScanner from secondary database.
     // Later it joins the primary and secondary results in an object further passed to
     // MismatchDetector.
     // This test proves that even if the asynchronous requests get reordered, the
@@ -247,48 +252,26 @@ public class TestMirroringResultScanner {
 
     Span span = Tracing.getTracer().spanBuilder("test").startSpan();
 
-    ScannerRequestContext c1 = new ScannerRequestContext(null, null, 1, span);
-    ScannerRequestContext c2 = new ScannerRequestContext(null, null, 2, span);
-    ScannerRequestContext c3 = new ScannerRequestContext(null, null, 3, span);
-    ScannerRequestContext c4 = new ScannerRequestContext(null, null, 4, span);
-    ScannerRequestContext c5 = new ScannerRequestContext(null, null, 5, span);
-    ScannerRequestContext c6 = new ScannerRequestContext(null, null, 6, span);
+    List<ScannerRequestContext> contexts =
+        Arrays.asList(
+            new ScannerRequestContext(null, null, 1, span),
+            new ScannerRequestContext(null, null, 2, span),
+            new ScannerRequestContext(null, null, 3, span),
+            new ScannerRequestContext(null, null, 4, span),
+            new ScannerRequestContext(null, null, 5, span),
+            new ScannerRequestContext(null, null, 6, span));
 
-    // asyncResultScannerWrapper.next(c1).get() schedules the requests asynchronously.
-    // All requests are scheduled and a callback is added to place its result in `calls` list.
-    // Later we will verify if elements on that list are in correct order, even though we won't run
-    // scheduled requests in order of scheduling.
-    Futures.addCallback(
-        asyncResultScannerWrapper.next(c1).get(),
-        addContextToListCallback(calls),
-        MoreExecutors.directExecutor());
-    Futures.addCallback(
-        asyncResultScannerWrapper.next(c2).get(),
-        addContextToListCallback(calls),
-        MoreExecutors.directExecutor());
-    Futures.addCallback(
-        asyncResultScannerWrapper.next(c3).get(),
-        addContextToListCallback(calls),
-        MoreExecutors.directExecutor());
-    Futures.addCallback(
-        asyncResultScannerWrapper.next(c4).get(),
-        addContextToListCallback(calls),
-        MoreExecutors.directExecutor());
-    Futures.addCallback(
-        asyncResultScannerWrapper.next(c5).get(),
-        addContextToListCallback(calls),
-        MoreExecutors.directExecutor());
-    Futures.addCallback(
-        asyncResultScannerWrapper.next(c6).get(),
-        addContextToListCallback(calls),
-        MoreExecutors.directExecutor());
+    for (ScannerRequestContext ctx : contexts) {
+      asyncResultScannerWrapper.next(ctx).get();
+    }
 
     reverseOrderExecutorService.callScheduledCallables();
+    verify(resultScanner, times(6)).next(anyInt());
 
-    verify(resultScanner, times(6)).next();
-    // Even though the secondary requests were reordered by reverseOrderExecutorService,
-    // the contexts were picked from the queue in order.
-    assertThat(calls).isEqualTo(Arrays.asList(c1, c2, c3, c4, c5, c6));
+    for (int i = 0; i < contexts.size(); i++) {
+      assertThat(asyncResultScannerWrapper.nextResultQueue.remove().context)
+          .isEqualTo(contexts.get(i));
+    }
   }
 
   private FutureCallback<AsyncScannerVerificationPayload> addContextToListCallback(
