@@ -72,6 +72,7 @@
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-core</artifactId>
       <version>${log4j2.version}</version>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
@@ -123,16 +124,6 @@
               </mainClass>
             </manifest>
           </archive>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <ignoredDependencies>
-            <!-- log4j-core is required on the classpath to run the tool with logging enabled-->
-            <dependency>org.apache.logging.log4j:log4j-core</dependency>
-          </ignoredDependencies>
         </configuration>
       </plugin>
     </plugins>
