@@ -11,6 +11,7 @@
 
   <properties>
     <mainclass>com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator</mainclass>
+    <log4j2.version>2.14.1</log4j2.version>
   </properties>
   <artifactId>bigtable-hbase-1.x-tools</artifactId>
 
@@ -58,19 +59,20 @@
       <version>${guava.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${slf4j.version}</version>
-    </dependency>
-    <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
       <version>3.0.2</version>
     </dependency>
     <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.17</version>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <version>${log4j2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>${log4j2.version}</version>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
