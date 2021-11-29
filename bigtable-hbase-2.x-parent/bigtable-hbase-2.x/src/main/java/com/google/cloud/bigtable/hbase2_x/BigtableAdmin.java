@@ -62,11 +62,7 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
 
   public BigtableAdmin(AbstractBigtableConnection connection) throws IOException {
     super(connection);
-    try {
-      asyncAdmin = BigtableAsyncAdmin.createInstance(connection);
-    } catch (Exception e) {
-      throw new IOException(e);
-    }
+    asyncAdmin = BigtableAsyncAdmin.createInstance(connection);
   }
 
   /** {@inheritDoc} */
@@ -363,10 +359,14 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
 
   private static Class<? extends BigtableAdmin> adminClass = null;
 
+  /**
+   * This is a workaround for incompatible changes in hbase minor versions. Dynamically generates a
+   * class that extends BigtableAdmin so incompatible methods won't be accessed unless the methods
+   * are called. If a method is implemented by BigtableAdmin, the generated class will invoke the
+   * implementation in BigtableAdmin. Otherwise it'll throw {@link UnsupportedOperationException}.
+   */
   private static synchronized Class<? extends BigtableAdmin> getSubclass() {
     if (adminClass == null) {
-      // create the class at runtime so incompatible changes in methods won't be accessed unless the
-      // methods are called
       adminClass =
           new ByteBuddy()
               .subclass(BigtableAdmin.class)
@@ -382,9 +382,16 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   public static BigtableAdmin createInstance(AbstractBigtableConnection connection)
-      throws Exception {
-    return getSubclass()
-        .getDeclaredConstructor(AbstractBigtableConnection.class)
-        .newInstance(connection);
+      throws IOException {
+    try {
+      return getSubclass()
+          .getDeclaredConstructor(AbstractBigtableConnection.class)
+          .newInstance(connection);
+    } catch (Exception e) {
+      // convert exceptions to IOException because
+      // org.apache.hadoop.hbase.client.Connection#getAdmin() only throws
+      // IOException
+      throw new IOException(e);
+    }
   }
 }

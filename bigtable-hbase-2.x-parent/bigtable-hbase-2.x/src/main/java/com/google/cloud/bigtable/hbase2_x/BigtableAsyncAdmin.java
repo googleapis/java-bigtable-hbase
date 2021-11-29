@@ -575,10 +575,15 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
 
   private static Class<? extends BigtableAsyncAdmin> asyncAdminClass = null;
 
+  /**
+   * This is a workaround for incompatible changes in hbase minor versions. Dynamically generates a
+   * class that extends BigtableAsyncAdmin so incompatible methods won't be accessed unless the
+   * methods are called. If a method is implemented by BigtableAsyncAdmin, the generated class will
+   * invoke the implementation in BigtableAsyncAdmin. Otherwise it'll throw {@link
+   * UnsupportedOperationException}.
+   */
   private static synchronized Class<? extends BigtableAsyncAdmin> getSubclass() {
     if (asyncAdminClass == null) {
-      // create the class at runtime so incompatible changes in methods won't be accessed unless the
-      // methods are called
       asyncAdminClass =
           new ByteBuddy()
               .subclass(BigtableAsyncAdmin.class)
@@ -593,7 +598,14 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
     return asyncAdminClass;
   }
 
-  public static BigtableAsyncAdmin createInstance(CommonConnection connection) throws Exception {
-    return getSubclass().getDeclaredConstructor(CommonConnection.class).newInstance(connection);
+  public static BigtableAsyncAdmin createInstance(CommonConnection connection) throws IOException {
+    try {
+      return getSubclass().getDeclaredConstructor(CommonConnection.class).newInstance(connection);
+    } catch (Exception e) {
+      // convert exceptions to IOException because
+      // org.apache.hadoop.hbase.client.Connection#getAdmin() only throws
+      // IOException
+      throw new IOException(e);
+    }
   }
 }

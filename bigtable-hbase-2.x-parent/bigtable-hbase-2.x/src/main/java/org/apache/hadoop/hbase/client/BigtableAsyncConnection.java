@@ -34,6 +34,7 @@ import com.google.cloud.bigtable.hbase2_x.BigtableAsyncTable;
 import com.google.cloud.bigtable.hbase2_x.BigtableAsyncTableRegionLocator;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -172,9 +173,9 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
       public AsyncAdmin build() {
         try {
           return BigtableAsyncAdmin.createInstance(BigtableAsyncConnection.this);
-        } catch (Exception e) {
+        } catch (IOException e) {
           LOG.error("failed to build BigtableAsyncAdmin", e);
-          throw new RuntimeException("failed to build BigtableAsyncAdmin", e);
+          throw new UncheckedIOException("failed to build BigtableAsyncAdmin", e);
         }
       }
     };
