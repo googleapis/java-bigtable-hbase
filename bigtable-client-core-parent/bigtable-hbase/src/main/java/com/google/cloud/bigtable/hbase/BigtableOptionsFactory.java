@@ -256,18 +256,18 @@ public class BigtableOptionsFactory {
       "google.bigtable.rpc.attempt.timeout.ms";
 
   /**
-   * If timeouts are set, how many milliseconds should pass before a DEADLINE_EXCEEDED for a long
-   * read? Currently, this feature is experimental.
+   * If timeouts are set, how many milliseconds should pass before a DEADLINE_EXCEEDED for a batch
+   * read or scan? Currently, this feature is experimental.
    *
-   * @deprecated Please use {@link #BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY} or {@link
-   *     #BIGTABLE_READ_RPC_TIMEOUT_MS_KEY} based on long operation.
+   * @deprecated Please use {@link #BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY} for batch mutation or {@link
+   *     #BIGTABLE_READ_RPC_TIMEOUT_MS_KEY} for batch read or scan.
    */
   @Deprecated
   public static final String BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY =
       "google.bigtable.long.rpc.timeout.ms";
 
   /**
-   * If timeouts are set, how many milliseconds should pass before a DEADLINE_EXCEEDED for a long
+   * If timeouts are set, how many milliseconds should pass before a DEADLINE_EXCEEDED for a batch
    * mutation. Currently, this feature is experimental.
    */
   public static final String BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY =
@@ -275,7 +275,7 @@ public class BigtableOptionsFactory {
 
   /**
    * If timeouts are set, how many milliseconds should pass before a DEADLINE_EXCEEDED for an RPC
-   * attempt within a long mutation. Note that multiple attempts may happen within an overall
+   * attempt within a batch mutation. Note that multiple attempts may happen within an overall
    * operation, whose timeout is governed by {@link #BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY}. Currently,
    * this feature is experimental.
    */
@@ -284,17 +284,17 @@ public class BigtableOptionsFactory {
       "google.bigtable.mutate.rpc.attempt.timeout.ms";
 
   /**
-   * If timeouts are set, how many milliseconds should pass before a DEADLINE_EXCEEDED for a long
-   * read. Currently, this feature is experimental.
+   * If timeouts are set, how many milliseconds should pass before a DEADLINE_EXCEEDED for a batch
+   * read or scan. Currently, this feature is experimental.
    */
   public static final String BIGTABLE_READ_RPC_TIMEOUT_MS_KEY =
       "google.bigtable.read.rpc.timeout.ms";
 
   /**
    * If timeouts are set, how many milliseconds should pass before a DEADLINE_EXCEEDED for an RPC
-   * attempt within a long read. Note that multiple attempts may happen within an overall operation,
-   * whose timeout is governed by {@link #BIGTABLE_READ_RPC_TIMEOUT_MS_KEY}. Currently, this feature
-   * is experimental.
+   * attempt within a batch read or scan. Note that multiple attempts may happen within an overall
+   * operation, whose timeout is governed by {@link #BIGTABLE_READ_RPC_TIMEOUT_MS_KEY}. Currently,
+   * this feature is experimental.
    */
   @BetaApi("The API for setting attempt timeouts is not yet stable and may change in the future")
   public static final String BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY =
