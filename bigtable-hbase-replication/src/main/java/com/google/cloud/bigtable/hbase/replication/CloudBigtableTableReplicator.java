@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.groupingBy;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.Cell;
@@ -17,6 +16,8 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.util.ByteRange;
+import org.apache.hadoop.hbase.util.SimpleByteRange;
 import org.apache.hadoop.hbase.wal.WAL;
 import org.apache.hadoop.hbase.wal.WALKey;
 import org.slf4j.Logger;
@@ -27,39 +28,6 @@ import org.slf4j.LoggerFactory;
  * Cloud Bigtable.
  */
 public class CloudBigtableTableReplicator {
-
-  // TODO: remove this class and move to Bytes.ByteArrayComparator
-  // Not required, We can use normal HashMap with Bytes.ByteArrayComparator in
-  // org.apache.hadoop.hbase.util.
-  public static final class BytesKey {
-
-    private final byte[] array;
-
-    public BytesKey(byte[] array) {
-      this.array = array;
-    }
-
-    public byte[] getBytes() {
-      return this.array;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      BytesKey bytesKey = (BytesKey) o;
-      return Arrays.equals(array, bytesKey.array);
-    }
-
-    @Override
-    public int hashCode() {
-      return Arrays.hashCode(array);
-    }
-  }
 
   interface MutationBuilder {
 
@@ -155,10 +123,8 @@ public class CloudBigtableTableReplicator {
               "SKIPPING family deletion before timestamp as it is not supported by CBT. "
                   + cell.toString());
         } else {
-          delete.addDeleteMarker(cell);
+          delete.addFamily(CellUtil.cloneFamily(cell));
         }
-
-        // delete.addFamily(CellUtil.cloneFamily(cell), cell.getTimestamp());
       } else if (CellUtil.isDeleteFamilyVersion(cell)) {
         LOG.info("SKIPPING family version as it is not supported by CBT. " + cell.toString());
       } else {
@@ -221,17 +187,16 @@ public class CloudBigtableTableReplicator {
       cellsToReplicate.addAll(walEntry.getEdit().getCells());
     }
     // group the data by the rowkey.
-    Map<BytesKey, List<Cell>> cellsToReplicateByRow =
-        cellsToReplicate.stream().collect(groupingBy(k -> new BytesKey(CellUtil.cloneRow(k))));
+    Map<ByteRange, List<Cell>> cellsToReplicateByRow =
+        cellsToReplicate.stream().collect(groupingBy(k -> new SimpleByteRange(k.getRowArray(),  k.getRowOffset(),k.getRowLength())));
     LOG.warn(
         "Replicating {} rows, {} cells total.", cellsToReplicateByRow.size(),
         cellsToReplicate.size());
 
     // Build a row mutation per row.
     List<RowMutations> rowMutationsList = new ArrayList<>(cellsToReplicateByRow.size());
-    for (Map.Entry<BytesKey, List<Cell>> cellsByRow : cellsToReplicateByRow.entrySet()) {
-      byte[] rowKey = cellsByRow.getKey().array;
-      RowMutations rowMutations = new RowMutations(rowKey);
+    for (Map.Entry<ByteRange, List<Cell>> cellsByRow : cellsToReplicateByRow.entrySet()) {
+      RowMutations rowMutations = new RowMutations(cellsByRow.getKey().deepCopyToNewArray());
       List<Cell> cellsForRow = cellsByRow.getValue();
       // TODO Make sure that there are < 100K cells per row Mutation
 
