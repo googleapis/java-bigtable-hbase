@@ -255,6 +255,12 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
   }
 
   @Override
+  protected void flushBufferedMutatorBeforeClosing()
+      throws ExecutionException, InterruptedException {
+    scheduleFlushAll().secondaryFlushFinished.get();
+  }
+
+  @Override
   protected FlushFutures scheduleFlushScoped(
       final List<Entry> dataToFlush, final FlushFutures previousFlushFutures) {
     final SettableFuture<Void> secondaryFlushFinished = SettableFuture.create();

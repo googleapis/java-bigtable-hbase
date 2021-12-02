@@ -172,6 +172,12 @@ public class ConcurrentMirroringBufferedMutator
   }
 
   @Override
+  protected void flushBufferedMutatorBeforeClosing()
+      throws ExecutionException, InterruptedException {
+    scheduleFlushAll().bothFlushesFinished.get();
+  }
+
+  @Override
   protected FlushFutures scheduleFlushScoped(
       final List<List<? extends Mutation>> dataToFlush, FlushFutures previousFlushFutures) {
     final SettableFuture<Void> bothFlushesFinished = SettableFuture.create();

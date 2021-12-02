@@ -319,6 +319,13 @@ limitations under the License.
       <scope>test</scope>
       <type>test-jar</type>
     </dependency>
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-hbase-mirroring-client-1.x</artifactId>
+      <version>2.0.0-alpha2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <scope>test</scope>
+      <type>test-jar</type>
+    </dependency>
 
     <!-- Needed by MiniHBaseCluster -->
     <dependency>

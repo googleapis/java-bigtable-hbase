@@ -228,7 +228,7 @@ public class TestBlocking {
     // connection lasted no longer than 3 seconds, but we also need to check that it waited at least
     // `timeoutMillis`. `closeDuration` is strictly greater than timeout because it includes some
     // overhead, but `timeoutMillis` >> expected overhead, thus false-positives are unlikely.
-    assertThat(closeDuration).isGreaterThan(timeoutMillis);
+    assertThat(closeDuration).isAtLeast(timeoutMillis);
     assertThat(c.getPrimaryConnection().isClosed()).isTrue();
     assertThat(c.getSecondaryConnection().isClosed()).isFalse();
 

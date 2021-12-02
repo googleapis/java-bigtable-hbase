@@ -210,6 +210,9 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
     return this.flushSerializer.scheduleFlushAll();
   }
 
+  protected abstract void flushBufferedMutatorBeforeClosing()
+      throws ExecutionException, InterruptedException;
+
   @Override
   public final void close() throws IOException {
     try (Scope scope =
@@ -225,7 +228,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
       List<IOException> exceptions = new ArrayList<>();
 
       try {
-        scheduleFlushAll().secondaryFlushFinished.get();
+        flushBufferedMutatorBeforeClosing();
         this.ongoingFlushesCounter.decrementReferenceCount();
         this.ongoingFlushesCounter.getOnLastReferenceClosed().get();
       } catch (InterruptedException | ExecutionException e) {
