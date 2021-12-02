@@ -382,7 +382,6 @@ public class MirroringTable implements Table, ListenableCloseable {
     }
   }
 
-  // TODO: add a config option to fill a timestamp if not present.
   @Override
   public void put(final Put put) throws IOException {
     try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.PUT)) {
@@ -518,8 +517,6 @@ public class MirroringTable implements Table, ListenableCloseable {
 
   @Override
   public Result increment(final Increment increment) throws IOException {
-    // TODO: bug - we should force increment to return results
-    // increment.setReturnResults(true);
     try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.INCREMENT)) {
       Log.trace("[%s] increment(increment=%s)", this.getName(), increment);
 
@@ -927,10 +924,6 @@ public class MirroringTable implements Table, ListenableCloseable {
     }
   }
 
-  // TODO: force increments and appends to return resutlts.
-  // TODO: we had a discussion about this code - it is not so readable and not optimal, maybe this
-  // code can be somehow simplified, for example, maybe we could split the batch in two parts -
-  // reads and writes.
   private void scheduleSecondaryWriteBatchOperations(
       final List<? extends Row> operations, final Object[] results) {
 

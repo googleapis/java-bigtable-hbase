@@ -87,7 +87,6 @@ public class AsyncResultScannerWrapper implements ListenableCloseable {
     return new Supplier<ListenableFuture<AsyncScannerVerificationPayload>>() {
       @Override
       public ListenableFuture<AsyncScannerVerificationPayload> get() {
-        // TODO(mwalkiewicz): this is not locked - check if it is ok?
         nextContextQueue.add(context);
         ListenableFuture<AsyncScannerVerificationPayload> future = scheduleNext();
         pendingOperationsReferenceCounter.holdReferenceUntilCompletion(future);
@@ -101,7 +100,6 @@ public class AsyncResultScannerWrapper implements ListenableCloseable {
         new Callable<AsyncScannerVerificationPayload>() {
           @Override
           public AsyncScannerVerificationPayload call() throws AsyncScannerExceptionWithContext {
-            // TODO: verify if lock on table is required or the lock on the scanner would be enough.
             synchronized (AsyncResultScannerWrapper.this.table) {
               final ScannerRequestContext requestContext =
                   AsyncResultScannerWrapper.this.nextContextQueue.remove();

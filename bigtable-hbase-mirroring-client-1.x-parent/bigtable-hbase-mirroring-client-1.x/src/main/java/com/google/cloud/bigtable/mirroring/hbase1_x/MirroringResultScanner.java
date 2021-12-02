@@ -139,7 +139,6 @@ public class MirroringResultScanner extends AbstractClientScanner implements Lis
               },
               HBaseOperation.NEXT_MULTIPLE);
 
-      // TODO: remove this index, it doesn't tell the user anything.
       int startingIndex = this.readEntries;
       this.readEntries += entriesToRead;
       ScannerRequestContext context =

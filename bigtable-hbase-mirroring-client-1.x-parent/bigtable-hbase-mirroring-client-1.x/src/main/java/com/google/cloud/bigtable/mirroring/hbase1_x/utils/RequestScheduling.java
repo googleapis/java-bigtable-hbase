@@ -58,7 +58,6 @@ public class RequestScheduling {
         });
   }
 
-  // TODO: remove Verification from the name because it is confusing when used with writes.
   public static <T> ListenableFuture<Void> scheduleRequestAndVerificationWithFlowControl(
       final RequestResourcesDescription requestResourcesDescription,
       final Supplier<ListenableFuture<T>> invokeOperation,
@@ -68,7 +67,6 @@ public class RequestScheduling {
       final Function<Throwable, Void> flowControlReservationErrorConsumer) {
     final SettableFuture<Void> verificationCompletedFuture = SettableFuture.create();
 
-    // TODO: no option to drop requests in flow controller is full.
     final ListenableFuture<ResourceReservation> reservationRequest =
         flowController.asyncRequestResource(requestResourcesDescription);
     final ResourceReservation reservation;
@@ -88,7 +86,6 @@ public class RequestScheduling {
       return verificationCompletedFuture;
     }
 
-    // TODO: what happens to reference count when the thread dies while performing the verification?
     Futures.addCallback(
         invokeOperation.get(),
         mirroringTracer.spanFactory.wrapWithCurrentSpan(

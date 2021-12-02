@@ -36,7 +36,6 @@ public class DefaultMismatchDetector implements MismatchDetector {
 
   public void exists(Get request, boolean primary, boolean secondary) {
     if (primary != secondary) {
-      // TODO: change system.out.println to Log.trace()
       System.out.println("exists mismatch");
       this.metricsRecorder.recordReadMismatches(HBaseOperation.EXISTS, 1);
     }
@@ -98,7 +97,6 @@ public class DefaultMismatchDetector implements MismatchDetector {
   @Override
   public void scannerNext(
       Scan request, int entriesAlreadyRead, Result[] primary, Result[] secondary) {
-    // TODO: try to find all matching elements and report only those that were not successful
     verifyResults(primary, secondary, "scan(i) mismatch", HBaseOperation.NEXT_MULTIPLE);
   }
 
@@ -124,7 +122,6 @@ public class DefaultMismatchDetector implements MismatchDetector {
     int errors = Math.max(primary.length, secondary.length) - minLength;
     for (int i = 0; i < minLength; i++) {
       if (Comparators.resultsEqual(primary[i], secondary[i])) {
-        // TODO: We can use code from bigtable client to properly crop row keys which might be very long.
         System.out.println(errorMessage);
         errors++;
       }
