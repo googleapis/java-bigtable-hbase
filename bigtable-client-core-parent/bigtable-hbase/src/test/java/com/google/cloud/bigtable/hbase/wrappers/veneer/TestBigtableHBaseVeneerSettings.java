@@ -224,7 +224,6 @@ public class TestBigtableHBaseVeneerSettings {
     BigtableHBaseVeneerSettings settings = BigtableHBaseVeneerSettings.create(configuration);
     BigtableDataSettings dataSettings = settings.getDataSettings();
 
-    assertTrue(settings.getClientTimeouts().getUseTimeouts());
     assertEquals(
         Optional.of(Duration.ofMillis(rpcTimeoutMs)),
         settings.getClientTimeouts().getUnaryTimeouts().getOperationTimeout());
