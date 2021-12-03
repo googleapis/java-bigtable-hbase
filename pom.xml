@@ -54,7 +54,7 @@ limitations under the License.
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- core dependency versions -->
-    <bigtable.version>2.2.0</bigtable.version>
+    <bigtable.version>2.3.0</bigtable.version>
     <bigtable-client-core.version>1.23.0</bigtable-client-core.version>
     <grpc-conscrypt.version>2.5.1</grpc-conscrypt.version>
     <!--  keeping at this version to align with hbase-->
@@ -239,7 +239,13 @@ limitations under the License.
                 </requireSameVersions>
                 <requireSameVersions>
                   <dependencies>
-                    <dependency>io.opencensus:*</dependency>
+                    <!-- gax-grpc transitvely brings in opencensus-proto, which the latest version is 0.2.0-->
+                    <!-- Explicitly list the opencensus deps so we can allow both 0.2.0 and latest for other modules-->
+                    <dependency>io.opencensus:opencensus-api</dependency>
+                    <dependency>io.opencensus:opencensus-impl</dependency>
+                    <dependency>io.opencensus:opencensus-contrib-zpages</dependency>
+                    <dependency>io.opencensus:opencensus-exporter-stats-stackdriver</dependency>
+                    <dependency>io.opencensus:opencensus-exporter-trace-stackdriver</dependency>
                   </dependencies>
                 </requireSameVersions>
                 <requireSameVersions>
