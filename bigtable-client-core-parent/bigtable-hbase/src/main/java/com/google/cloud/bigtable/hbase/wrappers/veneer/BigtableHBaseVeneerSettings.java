@@ -128,6 +128,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
               Optional.absent(),
               Optional.of(Duration.ofMinutes(1)),
               Optional.of(Duration.ofMinutes(10))));
+  private static final int MAX_CONSECUTIVE_SCAN_ATTEMPTS = 10;
 
   private final Configuration configuration;
   private final BigtableDataSettings dataSettings;
@@ -643,7 +644,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     // exist, instead we use READ_PARTIAL_ROW_TIMEOUT_MS as the intra-row timeout
     if (!configuration.getBoolean(ENABLE_GRPC_RETRIES_KEY, true)) {
       // user explicitly disabled retries, treat it as a non-idempotent method
-      readRowsSettings.setRetryableCodes(Collections.<StatusCode.Code>emptySet());
+      readRowsSettings.setRetryableCodes(Collections.emptySet());
     } else {
       // apply user user retry settings
       readRowsSettings.setRetryableCodes(
@@ -665,10 +666,10 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
         }
       }
 
-      String maxAttemptsStr = configuration.get(MAX_SCAN_TIMEOUT_RETRIES);
-      if (!Strings.isNullOrEmpty(maxAttemptsStr)) {
-        readRowsSettings.retrySettings().setMaxAttempts(Integer.parseInt(maxAttemptsStr));
-      }
+      readRowsSettings
+          .retrySettings()
+          .setMaxAttempts(
+              configuration.getInt(MAX_SCAN_TIMEOUT_RETRIES, MAX_CONSECUTIVE_SCAN_ATTEMPTS));
     }
 
     // Per response timeouts (note: gax maps rpcTimeouts to response timeouts for streaming rpcs)

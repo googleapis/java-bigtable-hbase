@@ -302,8 +302,8 @@ public class TestBigtableHBaseVeneerSettings {
   @Ignore("Re-enable this test once veneer default align with hbase")
   @Test
   public void testVerifyRetrySettings() throws IOException {
-    BigtableDataSettings dataSettings = BigtableHBaseVeneerSettings.create(configuration)
-        .getDataSettings();
+    BigtableDataSettings dataSettings =
+        BigtableHBaseVeneerSettings.create(configuration).getDataSettings();
     BigtableDataSettings defaultDataSettings =
         BigtableDataSettings.newBuilder()
             .setProjectId("project-id")
