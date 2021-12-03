@@ -69,6 +69,7 @@ import java.io.IOException;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -298,12 +299,11 @@ public class TestBigtableHBaseVeneerSettings {
     assertNull(adminSettings.getStubSettings().getCredentialsProvider().getCredentials());
   }
 
+  @Ignore("Re-enable this test once veneer default align with hbase")
   @Test
   public void testVerifyRetrySettings() throws IOException {
-    configuration.set(BIGTABLE_USE_TIMEOUTS_KEY, "true");
-    BigtableDataSettings dataSettings =
-        ((BigtableHBaseVeneerSettings) BigtableHBaseVeneerSettings.create(configuration))
-            .getDataSettings();
+    BigtableDataSettings dataSettings = BigtableHBaseVeneerSettings.create(configuration)
+        .getDataSettings();
     BigtableDataSettings defaultDataSettings =
         BigtableDataSettings.newBuilder()
             .setProjectId("project-id")
@@ -420,6 +420,7 @@ public class TestBigtableHBaseVeneerSettings {
     assertTrue(credProvider instanceof NoCredentialsProvider);
   }
 
+  @Ignore("Re-enable this test once veneer default align with hbase")
   @Test
   public void testRpcMethodWithoutRetry() throws IOException {
     configuration.set(ENABLE_GRPC_RETRIES_KEY, "false");
