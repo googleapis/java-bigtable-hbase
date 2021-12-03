@@ -607,7 +607,9 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       int maxInflightRpcCount = Integer.parseInt(maxInflightRpcStr);
 
       long bulkMaxRowKeyCount =
-          Objects.requireNonNull(builder.getBatchingSettings().getElementCountThreshold());
+          Strings.isNullOrEmpty(bulkMaxRowKeyCountStr)
+              ? builder.getBatchingSettings().getElementCountThreshold()
+              : Long.parseLong(bulkMaxRowKeyCountStr);
 
       // TODO: either deprecate maxInflightRpcCount and expose the max outstanding elements
       // in user configuration or introduce maxInflightRpcCount to gax
