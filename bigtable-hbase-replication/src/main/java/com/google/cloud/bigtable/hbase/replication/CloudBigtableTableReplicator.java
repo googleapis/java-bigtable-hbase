@@ -76,6 +76,7 @@ public class CloudBigtableTableReplicator {
 
     //TODO make it final
     private Delete delete;
+    private int numDeletes = 0;
 
     public DeleteMutationBuilder(byte[] rowKey) {
       delete = new Delete(rowKey);
@@ -112,10 +113,11 @@ public class CloudBigtableTableReplicator {
       if (CellUtil.isDeleteType(cell)) {
         LOG.info("Deleting cell " + cell.toString() + " with ts: " + cell.getTimestamp());
         delete.addDeleteMarker(cell);
+        numDeletes++;
       } else if (CellUtil.isDeleteColumns(cell)) {
-        //
         LOG.info("Deleting columns " + cell.toString() + " with ts: " + cell.getTimestamp());
         delete.addDeleteMarker(cell);
+        numDeletes++;
       } else if (CellUtil.isDeleteFamily(cell)) {
         LOG.info("Deleting family with ts: " + cell.getTimestamp());
         if (cell.getTimestamp() != HConstants.LATEST_TIMESTAMP) {
@@ -124,6 +126,7 @@ public class CloudBigtableTableReplicator {
                   + cell.toString());
         } else {
           delete.addFamily(CellUtil.cloneFamily(cell));
+          numDeletes++;
         }
       } else if (CellUtil.isDeleteFamilyVersion(cell)) {
         LOG.info("SKIPPING family version as it is not supported by CBT. " + cell.toString());
@@ -134,7 +137,10 @@ public class CloudBigtableTableReplicator {
 
     @Override
     public void buildAndUpdateRowMutations(RowMutations rowMutations) throws IOException {
-      // Add a check for empty delete. An empty delete basically deletes a row.
+      if(numDeletes==0){
+        // This row only had incompatible deletes. adding an empty delete, deletes the whole row.
+        return;
+      }
       rowMutations.add(delete);
       LOG.error("Build a delete mutation with " + delete.size() + " entries.");
       delete = null;
@@ -186,9 +192,14 @@ public class CloudBigtableTableReplicator {
       WALKey key = walEntry.getKey();
       cellsToReplicate.addAll(walEntry.getEdit().getCells());
     }
+
     // group the data by the rowkey.
+    // TODO no point in using these auxilary collections. Don't use any streams. Loop on WALEntries
+    // and construct a Map<Rowkey, RowMutation>, that way you always have the WALKey with writeTime
+    // when creating a mutation. Later just send the valueSet of mutationMap to bufferedMutator.
     Map<ByteRange, List<Cell>> cellsToReplicateByRow =
-        cellsToReplicate.stream().collect(groupingBy(k -> new SimpleByteRange(k.getRowArray(),  k.getRowOffset(),k.getRowLength())));
+        cellsToReplicate.stream().collect(groupingBy(
+            k -> new SimpleByteRange(k.getRowArray(), k.getRowOffset(), k.getRowLength())));
     LOG.warn(
         "Replicating {} rows, {} cells total.", cellsToReplicateByRow.size(),
         cellsToReplicate.size());

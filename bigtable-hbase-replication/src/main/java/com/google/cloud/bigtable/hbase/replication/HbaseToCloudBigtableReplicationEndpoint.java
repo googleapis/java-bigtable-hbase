@@ -44,8 +44,11 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
   // Config keys to access project id and instance id from.
   private static final String PROJECT_KEY = "google.bigtable.project.id";
   private static final String INSTANCE_KEY = "google.bigtable.instance.id";
+  private static final String APP_PROFILE_KEY = "google.bigtable.app_profile.id";
+  // TODO add instance profile
   private static String projectId;
   private static String instanceId;
+  private static String appProfileId;
 
   /**
    * Bigtable connection owned by this class and shared by all the instances of this class. DO NOT
@@ -88,6 +91,7 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
       // lifecycle of the JVM.
       projectId = configuration.get(PROJECT_KEY);
       instanceId = configuration.get(INSTANCE_KEY);
+      // If an App profile is provided, it will be picked automatically by the connection.
       connection = BigtableConfiguration.connect(configuration);
       LOG.error("Created a connection to CBT. " + projectId + "--" + instanceId);
     }
@@ -184,6 +188,7 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
           succeeded.set(false);
         }
       } // Top level loop exiting
+      // TODO update sink metrics, if everything was successful
     } catch (Exception e) {
       LOG.error("Failed to replicate some  WAL with exception: ", e);
       succeeded.set(false);
