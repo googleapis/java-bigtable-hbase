@@ -106,7 +106,6 @@ public class MirroringSpanConstants {
     BATCH_CALLBACK("batchCallback"),
     TABLE_CLOSE("close"),
     GET_TABLE("getTable"),
-    GET_BUFFERED_MUTATOR("getBufferedMutator"),
     BUFFERED_MUTATOR_FLUSH("flush"),
     BUFFERED_MUTATOR_MUTATE("mutate"),
     BUFFERED_MUTATOR_MUTATE_LIST("mutateList"),

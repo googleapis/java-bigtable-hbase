@@ -201,7 +201,8 @@ public class TestFlowController {
     ListenableFuture<ResourceReservation> reservationFuture2 =
         fc.asyncRequestResource(createRequest(1));
 
-    // Current thread is in critical section, future is first in the queue, thread is second.
+    // Current thread is in critical section, futures are queued.
+    // reservationFuture1 is first and reservationFuture2 is second.
     assertThat(reservationFuture1.cancel(true)).isTrue();
 
     Thread.sleep(300);

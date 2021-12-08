@@ -198,19 +198,16 @@ public class MirroringConnection implements Connection {
   @Override
   public BufferedMutator getBufferedMutator(BufferedMutatorParams bufferedMutatorParams)
       throws IOException {
-    try (Scope scope =
-        this.mirroringTracer.spanFactory.operationScope(HBaseOperation.GET_BUFFERED_MUTATOR)) {
-      return MirroringBufferedMutator.create(
-          performWritesConcurrently,
-          primaryConnection,
-          secondaryConnection,
-          bufferedMutatorParams,
-          configuration,
-          flowController,
-          executorService,
-          secondaryWriteErrorConsumer,
-          mirroringTracer);
-    }
+    return MirroringBufferedMutator.create(
+        performWritesConcurrently,
+        primaryConnection,
+        secondaryConnection,
+        bufferedMutatorParams,
+        configuration,
+        flowController,
+        executorService,
+        secondaryWriteErrorConsumer,
+        mirroringTracer);
   }
 
   @Override

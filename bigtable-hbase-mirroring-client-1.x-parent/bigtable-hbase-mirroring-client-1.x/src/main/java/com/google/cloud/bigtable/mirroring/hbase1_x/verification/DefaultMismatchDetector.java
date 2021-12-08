@@ -53,6 +53,7 @@ public class DefaultMismatchDetector implements MismatchDetector {
   public void exists(Get request, boolean primary, boolean secondary) {
     if (primary == secondary) {
       this.metricsRecorder.recordReadMatches(HBaseOperation.EXISTS, 1);
+      this.metricsRecorder.recordReadMismatches(HBaseOperation.EXISTS, 0);
     } else {
       Log.debug(
           "exists(row=%s) mismatch: (%b, %b)",
@@ -87,6 +88,8 @@ public class DefaultMismatchDetector implements MismatchDetector {
             HBaseOperation.EXISTS_ALL, primary.length - mismatches);
       }
       this.metricsRecorder.recordReadMismatches(HBaseOperation.EXISTS_ALL, mismatches);
+    } else {
+      this.metricsRecorder.recordReadMismatches(HBaseOperation.EXISTS_ALL, 0);
     }
   }
 
@@ -100,6 +103,7 @@ public class DefaultMismatchDetector implements MismatchDetector {
   public void get(Get request, Result primary, Result secondary) {
     if (Comparators.resultsEqual(primary, secondary)) {
       this.metricsRecorder.recordReadMatches(HBaseOperation.GET, 1);
+      this.metricsRecorder.recordReadMismatches(HBaseOperation.GET, 0);
     } else {
       Log.debug(
           "get(row=%s) mismatch: (%s, %s)",
@@ -186,9 +190,7 @@ public class DefaultMismatchDetector implements MismatchDetector {
     if (matches > 0) {
       this.metricsRecorder.recordReadMatches(operation, matches);
     }
-    if (errors > 0) {
-      this.metricsRecorder.recordReadMismatches(operation, errors);
-    }
+    this.metricsRecorder.recordReadMismatches(operation, errors);
   }
 
   private byte[] getResultValue(Result result) {
@@ -300,6 +302,7 @@ public class DefaultMismatchDetector implements MismatchDetector {
         logAndRecordScanMismatch(primaryMatchingResult, secondaryMatchingResult);
       } else {
         metricsRecorder.recordReadMatches(HBaseOperation.NEXT, 1);
+        metricsRecorder.recordReadMismatches(HBaseOperation.NEXT, 0);
       }
     }
 

@@ -31,6 +31,9 @@ import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRu
 import com.google.cloud.bigtable.mirroring.hbase2_x.MirroringAsyncConnection;
 import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -64,7 +67,7 @@ public class TestBlocking {
     this.tableName = connectionRule.createTable(columnFamily1);
   }
 
-  @Test(timeout = 10000)
+  @Test(timeout = 15000)
   public void testConnectionCloseBlocksUntilAllRequestsHaveBeenVerified()
       throws InterruptedException, TimeoutException, ExecutionException {
     Configuration config = ConfigurationHelper.newConfiguration();
@@ -75,10 +78,11 @@ public class TestBlocking {
 
     final MirroringAsyncConnection connection = asyncConnectionRule.createAsyncConnection(config);
     AsyncTable<?> t = connection.getTable(tableName);
+    final List<CompletableFuture<?>> getFutures = new ArrayList<>();
     for (int i = 0; i < 10; i++) {
       Get get = new Get("1".getBytes());
       get.addColumn(columnFamily1, qualifier1);
-      t.get(get);
+      getFutures.add(t.get(get));
     }
 
     final SettableFuture<Void> closingThreadStarted = SettableFuture.create();
@@ -89,9 +93,10 @@ public class TestBlocking {
             () -> {
               try {
                 closingThreadStarted.set(null);
+                CompletableFuture.allOf(getFutures.toArray(new CompletableFuture[0])).get();
                 connection.close();
                 closingThreadEnded.set(null);
-              } catch (IOException e) {
+              } catch (Exception e) {
                 throw new RuntimeException(e);
               }
             });

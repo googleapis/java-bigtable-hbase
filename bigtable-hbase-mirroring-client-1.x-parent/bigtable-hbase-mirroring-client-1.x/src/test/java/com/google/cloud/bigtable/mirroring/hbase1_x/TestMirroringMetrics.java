@@ -149,8 +149,8 @@ public class TestMirroringMetrics {
     verify(mirroringMetricsRecorder, times(1))
         .recordOperation(eq(HBaseOperation.GET), eq(MIRRORING_LATENCY), anyLong());
 
-    verify(mirroringMetricsRecorder, never())
-        .recordReadMismatches(any(HBaseOperation.class), anyInt());
+    verify(mirroringMetricsRecorder, times(1))
+        .recordReadMismatches(any(HBaseOperation.class), eq(0));
     verify(mirroringMetricsRecorder, never())
         .recordSecondaryWriteErrors(any(HBaseOperation.class), anyInt());
   }

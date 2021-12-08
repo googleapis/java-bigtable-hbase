@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase2_x;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.AccumulatedExceptions;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
@@ -23,13 +25,14 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowContro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -51,6 +54,8 @@ import org.apache.hadoop.hbase.client.ScanResultConsumerBase;
 import org.apache.hadoop.hbase.security.User;
 
 public class MirroringAsyncConnection implements AsyncConnection {
+  private static final Logger Log = new Logger(MirroringAsyncConnection.class);
+
   private final MirroringAsyncConfiguration configuration;
   private final AsyncConnection primaryConnection;
   private final AsyncConnection secondaryConnection;
@@ -163,18 +168,49 @@ public class MirroringAsyncConnection implements AsyncConnection {
       return;
     }
 
+    final AccumulatedExceptions exceptions = new AccumulatedExceptions();
+    try {
+      primaryConnection.close();
+    } catch (IOException e) {
+      exceptions.add(e);
+    }
+
+    CompletableFuture<Void> closingFinishedFuture = new CompletableFuture<>();
+
+    // The secondary connection can only be closed after all in-flight requests are finished.
+    this.referenceCounter
+        .getOnLastReferenceClosed()
+        .addListener(
+            () -> {
+              try {
+                secondaryConnection.close();
+                closingFinishedFuture.complete(null);
+              } catch (IOException e) {
+                closingFinishedFuture.completeExceptionally(e);
+              }
+            },
+            MoreExecutors.directExecutor());
+
     this.referenceCounter.decrementReferenceCount();
     try {
-      this.referenceCounter.getOnLastReferenceClosed().get();
-      this.primaryConnection.close();
-      this.secondaryConnection.close();
-    } catch (InterruptedException e) {
-      IOException wrapperException = new InterruptedIOException();
-      wrapperException.initCause(e);
-      throw wrapperException;
-    } catch (ExecutionException e) {
-      throw new RuntimeException(e);
+      // Wait for in-flight requests to be finished but with a timeout to prevent deadlock.
+      closingFinishedFuture.get(
+          this.configuration.mirroringOptions.connectionTerminationTimeoutMillis,
+          TimeUnit.MILLISECONDS);
+    } catch (ExecutionException | InterruptedException e) {
+      // If the secondary close has thrown while we were waiting, the error will be
+      // propagated to the user.
+      exceptions.add(new IOException(e));
+    } catch (TimeoutException e) {
+      // But if the timeout was reached, we just leave the operation pending.
+      Log.error(
+          "MirroringAsyncConnection#close() timed out. Some of operations on secondary "
+              + "database are still in-flight and might be lost, but are not cancelled and "
+              + "will be performed asynchronously until the program terminates.");
+      // This error is not reported to the user.
     }
+
+    exceptions.rethrowIfCaptured();
   }
 
   public AsyncTableBuilder<AdvancedScanResultConsumer> getTableBuilder(TableName tableName) {

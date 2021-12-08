@@ -86,7 +86,22 @@ public class MirroringOptions {
   public final int readSamplingRate;
   public final long connectionTerminationTimeoutMillis;
 
+  /**
+   * Enables concurrent writes mode. Should always be enabled together with {@link
+   * #waitForSecondaryWrites}.
+   *
+   * <p>In this mode some of the writes ({@link org.apache.hadoop.hbase.client.Put}s, {@link
+   * org.apache.hadoop.hbase.client.Delete}s and {@link
+   * org.apache.hadoop.hbase.client.RowMutations}) performed using {@link
+   * org.apache.hadoop.hbase.client.Table} API will be performed concurrently and {@link
+   * com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.ConcurrentMirroringBufferedMutator}
+   * instances will be returned by {@link
+   * org.apache.hadoop.hbase.client.Connection#getBufferedMutator}. Moreover, all operations in this
+   * mode wait for secondary database operation to finish before returning to the user (because
+   * {@link #waitForSecondaryWrites} should be set).
+   */
   public final boolean performWritesConcurrently;
+
   public final boolean waitForSecondaryWrites;
   public final Faillog faillog;
 

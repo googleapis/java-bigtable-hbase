@@ -90,19 +90,22 @@ public class TestMirroringTable {
   public void testPut() throws IOException {
     int databaseEntriesCount = 1000;
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName = connectionRule.createTable(columnFamily1);
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
-      try (Table t1 = connection.getTable(tableName1)) {
+      try (Table t1 = connection.getTable(tableName)) {
         for (int i = 0; i < databaseEntriesCount; i++) {
           t1.put(Helpers.createPut(i, columnFamily1, qualifier1));
         }
       }
     }
-    databaseHelpers.verifyTableConsistency(tableName1);
+    databaseHelpers.verifyTableConsistency(tableName);
+  }
 
-    final TableName tableName2 = connectionRule.createTable(columnFamily1);
+  @Test
+  public void testPuts() throws IOException {
+    final TableName tableName = connectionRule.createTable(columnFamily1);
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
-      try (Table t1 = connection.getTable(tableName2)) {
+      try (Table t1 = connection.getTable(tableName)) {
         int id = 0;
         for (int i = 0; i < 10; i++) {
           List<Put> puts = new ArrayList<>();
@@ -114,7 +117,7 @@ public class TestMirroringTable {
         }
       }
     }
-    databaseHelpers.verifyTableConsistency(tableName2);
+    databaseHelpers.verifyTableConsistency(tableName);
   }
 
   @Test
@@ -1200,6 +1203,10 @@ public class TestMirroringTable {
             t1.batch(batch, result);
           } catch (RetriesExhaustedWithDetailsException e) {
             assertThat(e.getNumExceptions()).isEqualTo(50);
+            for (int i = 0; i < e.getNumExceptions(); i++) {
+              byte[] r = e.getRow(i).getRow();
+              assertThat(failEvenRowKeysPredicate.apply(r)).isTrue();
+            }
             int correctResults = 0;
             for (Object o : result) {
               if (o instanceof Result) {

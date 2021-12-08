@@ -213,32 +213,22 @@ public class TestErrorDetection {
   }
 
   @Test
-  public void conditionalMutationsPreserveConsistency()
-      throws IOException, InterruptedException, TimeoutException {
+  public void conditionalMutationsPreserveConsistency() throws IOException {
     final int numberOfOperations = 50;
     final int numberOfWorkers = 100;
 
     final byte[] canary = "canary-value".getBytes();
 
-    class WorkerThread extends PropagatingThread {
-      private final long workerId;
-      private final Connection connection;
-      private final TableName tableName;
-
-      public WorkerThread(int workerId, Connection connection, TableName tableName) {
-        this.workerId = workerId;
-        this.connection = connection;
-        this.tableName = tableName;
-      }
-
-      @Override
-      public void performTask() throws Throwable {
-        try (Table table = this.connection.getTable(tableName)) {
-          byte[] row = String.format("r%s", workerId).getBytes();
+    TableName tableName;
+    try (MirroringConnection connection = databaseHelpers.createConnection()) {
+      tableName = connectionRule.createTable(connection, columnFamily1);
+      for (int i = 0; i < numberOfWorkers; i++) {
+        try (Table table = connection.getTable(tableName)) {
+          byte[] row = String.format("r%s", i).getBytes();
           table.put(Helpers.createPut(row, columnFamily1, qualifier1, 0, "0".getBytes()));
-          for (int i = 0; i < numberOfOperations; i++) {
-            byte[] currentValue = String.valueOf(i).getBytes();
-            byte[] nextValue = String.valueOf(i + 1).getBytes();
+          for (int j = 0; j < numberOfOperations; j++) {
+            byte[] currentValue = String.valueOf(j).getBytes();
+            byte[] nextValue = String.valueOf(j + 1).getBytes();
             assertFalse(
                 table.checkAndPut(
                     row,
@@ -246,7 +236,7 @@ public class TestErrorDetection {
                     qualifier1,
                     CompareOp.NOT_EQUAL,
                     currentValue,
-                    Helpers.createPut(row, columnFamily1, qualifier1, i, canary)));
+                    Helpers.createPut(row, columnFamily1, qualifier1, j, canary)));
             assertTrue(
                 table.checkAndPut(
                     row,
@@ -254,24 +244,9 @@ public class TestErrorDetection {
                     qualifier1,
                     CompareOp.EQUAL,
                     currentValue,
-                    Helpers.createPut(row, columnFamily1, qualifier1, i, nextValue)));
+                    Helpers.createPut(row, columnFamily1, qualifier1, j, nextValue)));
           }
         }
-      }
-    }
-
-    TableName tableName;
-    try (MirroringConnection connection = databaseHelpers.createConnection()) {
-      tableName = connectionRule.createTable(connection, columnFamily1);
-      List<PropagatingThread> workers = new ArrayList<>();
-      for (int i = 0; i < numberOfWorkers; i++) {
-        PropagatingThread worker = new WorkerThread(i, connection, tableName);
-        worker.start();
-        workers.add(worker);
-      }
-
-      for (PropagatingThread worker : workers) {
-        worker.propagatingJoin(30000);
       }
     }
 

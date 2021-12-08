@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.mirroring;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.PrometheusStatsCollectionRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ZipkinTracingRule;
+import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -43,12 +44,13 @@ import org.junit.runners.Suite;
  * secondary, the second file configures it the other way. Path to configuration XML file should be
  * provided in {@code integration-tests-config-file-name} system property.
  *
- * <p>To test cases when one of the databases fails to perform an operation, can only be tested when
- * one of the tested databases is a in-memory HBase MiniCluster instance that is automatically
- * started by ITs. We use custom HBase {@link org.apache.hadoop.hbase.regionserver.Region}
- * implementation ({@link
+ * <p>Cases when one of the databases fails to perform an operation can only be tested when one of
+ * the tested databases is a in-memory HBase MiniCluster instance that is automatically started by
+ * ITs. We use custom HBase {@link org.apache.hadoop.hbase.regionserver.Region} implementation
+ * ({@link
  * com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.FailingHBaseHRegion}) and
- * inject it into the MiniCluster to reject some of operations.
+ * inject it into the MiniCluster to reject some of operations. {@link Assume} guards tests that
+ * should be only run under those circumstances.
  *
  * <p>ITs can be run using Maven and one of test profiles defined in {@code
  * bigtable-hbase-mirroring-client-1.x-integration-tests/pom.xml} file - {@code

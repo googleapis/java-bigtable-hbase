@@ -86,7 +86,6 @@ public class TestSequentialMirroringBufferedMutator {
     verify(common.secondaryBufferedMutator, never()).mutate(ArgumentMatchers.<Mutation>anyList());
     verify(common.secondaryBufferedMutator, never()).mutate(any(Mutation.class));
     bm.mutate(common.mutation1);
-    Thread.sleep(300);
     executorServiceRule.waitForExecutor();
     verify(common.primaryBufferedMutator, times(4)).mutate(singletonMutation1);
     verify(common.secondaryBufferedMutator, times(1))
