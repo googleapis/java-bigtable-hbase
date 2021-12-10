@@ -35,6 +35,7 @@ import org.apache.hadoop.hbase.client.Delete;
  */
 @InternalApi("For internal usage only")
 public class DeleteAdapter extends MutationAdapter<Delete> {
+
   static boolean isPointDelete(Cell cell) {
     return cell.getTypeByte() == KeyValue.Type.Delete.getCode();
   }
@@ -115,6 +116,24 @@ public class DeleteAdapter extends MutationAdapter<Delete> {
     }
   }
 
+  /**
+   * Throws {@link UnsupportedOperationException} for deletes that are not supported by Cloud
+   * Bigtable. Does nothing otherwise.
+   *
+   * @param cell the delete to validate.
+   */
+  public static void isValidDelete(Cell cell) {
+    if (isPointDelete(cell)) {
+      throwIfUnsupportedPointDelete(cell);
+    } else if (isFamilyDelete(cell)) {
+      throwIfUnsupportedDeleteFamily(cell);
+    } else if (isFamilyVersionDelete(cell)) {
+      throwOnUnsupportedDeleteFamilyVersion(cell);
+    } else {
+      throwOnUnsupportedCellType(cell);
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void adapt(
@@ -129,19 +148,12 @@ public class DeleteAdapter extends MutationAdapter<Delete> {
         ByteString familyByteString = ByteString.copyFrom(entry.getKey());
 
         for (Cell cell : entry.getValue()) {
+          isValidDelete(cell);
+          // We have validated and deletes are supported by CBT.
           if (isColumnDelete(cell) || isPointDelete(cell)) {
-            if (isPointDelete(cell)) {
-              throwIfUnsupportedPointDelete(cell);
-            }
             addDeleteFromColumnMods(familyByteString, cell, mutation);
           } else if (isFamilyDelete(cell)) {
-            throwIfUnsupportedDeleteFamily(cell);
-
             mutation.deleteFamily(familyByteString.toStringUtf8());
-          } else if (isFamilyVersionDelete(cell)) {
-            throwOnUnsupportedDeleteFamilyVersion(cell);
-          } else {
-            throwOnUnsupportedCellType(cell);
           }
         }
       }

@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters;
 
+import static org.apache.hadoop.hbase.HConstants.LATEST_TIMESTAMP;
+
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.Mutation;
 import com.google.bigtable.v2.Mutation.MutationCase;
@@ -24,6 +26,8 @@ import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.protobuf.ByteString;
 import java.util.concurrent.TimeUnit;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
@@ -47,6 +51,44 @@ public class TestDeleteAdapter {
 
   protected DeleteAdapter deleteAdapter = new DeleteAdapter();
   protected DataGenerationHelper randomHelper = new DataGenerationHelper();
+
+  @Test
+  public void testDeleteLatestCellIsNotValid() {
+    byte[] rowKey = randomHelper.randomData("rk1-");
+    byte[] family = randomHelper.randomData("fam-");
+    byte[] qualifier = randomHelper.randomData("qual-");
+    Cell delete = new KeyValue(rowKey, family, qualifier, LATEST_TIMESTAMP, KeyValue.Type.Delete);
+
+    expectedException.expect(UnsupportedOperationException.class);
+    expectedException.expectMessage("Cannot delete single latest cell.");
+
+    DeleteAdapter.isValidDelete(delete);
+  }
+
+  @Test
+  public void testColumnFamilyDeleteAtTimestampIsNotValid() {
+    byte[] rowKey = randomHelper.randomData("rk1-");
+    byte[] family = randomHelper.randomData("fam-");
+    Cell delete = new KeyValue(rowKey, family, (byte[]) null, 1000l, KeyValue.Type.DeleteFamily);
+
+    expectedException.expect(UnsupportedOperationException.class);
+    expectedException.expectMessage("Cannot perform column family deletion before timestamp");
+
+    DeleteAdapter.isValidDelete(delete);
+  }
+
+  @Test
+  public void testColumnFamilyVersionIsNotValid() {
+    byte[] rowKey = randomHelper.randomData("rk1-");
+    byte[] family = randomHelper.randomData("fam-");
+    Cell delete =
+        new KeyValue(rowKey, family, (byte[]) null, 1000l, KeyValue.Type.DeleteFamilyVersion);
+
+    expectedException.expect(UnsupportedOperationException.class);
+    expectedException.expectMessage("Cannot perform column family deletion at timestamp");
+
+    DeleteAdapter.isValidDelete(delete);
+  }
 
   @Test
   public void testFullRowDelete() {
