@@ -1,5 +1,38 @@
 # Changelog
 
+## [2.0.0-beta3](https://www.github.com/googleapis/java-bigtable-hbase/compare/v2.0.0-beta2...v2.0.0-beta3) (2021-12-10)
+
+
+### Bug Fixes
+
+* dynamically load BigtableAdmin and BigtableAsyncAdmin  ([#3341](https://www.github.com/googleapis/java-bigtable-hbase/issues/3341)) ([18b2e18](https://www.github.com/googleapis/java-bigtable-hbase/commit/18b2e18b71d0ce8ab437f9d492d8c30b498727ba))
+* fix flow controller setting and option javadocs ([#3338](https://www.github.com/googleapis/java-bigtable-hbase/issues/3338)) ([2d62e34](https://www.github.com/googleapis/java-bigtable-hbase/commit/2d62e348962246a9ab42d46039cd067418f384a8))
+
+
+### Documentation
+
+* **fix:** Fix paths in HBase tools readme ([#3345](https://www.github.com/googleapis/java-bigtable-hbase/issues/3345)) ([09ba0f3](https://www.github.com/googleapis/java-bigtable-hbase/commit/09ba0f3d19543a68dede6f72bc728d87daa4ffb5))
+
+
+### Dependencies
+
+* beam 2.33.0 ([#3314](https://www.github.com/googleapis/java-bigtable-hbase/issues/3314)) ([08b4da4](https://www.github.com/googleapis/java-bigtable-hbase/commit/08b4da406f7cac110cfe8a675f0f0804c03a9684))
+* migrate to log4j-core ([#3326](https://www.github.com/googleapis/java-bigtable-hbase/issues/3326)) ([001df8e](https://www.github.com/googleapis/java-bigtable-hbase/commit/001df8e9504189001b158f92b9d882e30cc56176))
+* update beam.version to v2.34.0 ([#3333](https://www.github.com/googleapis/java-bigtable-hbase/issues/3333)) ([3bfc672](https://www.github.com/googleapis/java-bigtable-hbase/commit/3bfc672adc188cd0b25aca038b304b820db6e486))
+* update dependency com.google.cloud:google-cloud-bigtable-emulator to v0.139.0 ([#3302](https://www.github.com/googleapis/java-bigtable-hbase/issues/3302)) ([322d4f9](https://www.github.com/googleapis/java-bigtable-hbase/commit/322d4f94a1251e50b1cbed333e7d6f0d6d9e18b1))
+* update dependency com.google.cloud:google-cloud-bigtable-emulator to v0.140.0 ([#3350](https://www.github.com/googleapis/java-bigtable-hbase/issues/3350)) ([386f1c5](https://www.github.com/googleapis/java-bigtable-hbase/commit/386f1c50ce44688e05dd58de0ae68bdfdc83af45))
+* update dependency com.google.cloud:google-cloud-bigtable-emulator to v0.140.1 ([#3355](https://www.github.com/googleapis/java-bigtable-hbase/issues/3355)) ([1ecd396](https://www.github.com/googleapis/java-bigtable-hbase/commit/1ecd396c20b0a095a21d863cfc50f84842d1b116))
+* update dependency com.google.cloud:google-cloud-bigtable-emulator to v0.141.0 ([#3368](https://www.github.com/googleapis/java-bigtable-hbase/issues/3368)) ([dfe3f17](https://www.github.com/googleapis/java-bigtable-hbase/commit/dfe3f171a08767395bb0518eaac15f55bd5eb9d7))
+* update dependency com.google.errorprone:error_prone_annotations to v2.10.0 ([#3330](https://www.github.com/googleapis/java-bigtable-hbase/issues/3330)) ([387073f](https://www.github.com/googleapis/java-bigtable-hbase/commit/387073f02b4555bdec0743bd5638831493aad0bc))
+* update dependency com.google.guava:guava ([#3298](https://www.github.com/googleapis/java-bigtable-hbase/issues/3298)) ([6b0f56e](https://www.github.com/googleapis/java-bigtable-hbase/commit/6b0f56eb47e01c9c0c11dbc5e3f69bd119e30a6a))
+* update log4j2.version to v2.15.0 ([#3373](https://www.github.com/googleapis/java-bigtable-hbase/issues/3373)) ([8eef232](https://www.github.com/googleapis/java-bigtable-hbase/commit/8eef232fba19969368015b066bd88cbdc55f0f2b))
+* upgrade bigtable.version to 2.2.0 ([#3304](https://www.github.com/googleapis/java-bigtable-hbase/issues/3304)) ([1ecdbe9](https://www.github.com/googleapis/java-bigtable-hbase/commit/1ecdbe9e2557df04ad0085de443c7ae1a7b57db5))
+
+
+### Miscellaneous Chores
+
+* make next tag 2.0.0-beta3 ([#3374](https://www.github.com/googleapis/java-bigtable-hbase/issues/3374)) ([6a51dd1](https://www.github.com/googleapis/java-bigtable-hbase/commit/6a51dd1fcdb9699b51ceb7f92aa994199123eacd))
+
 ## [2.0.0-beta2](https://www.github.com/googleapis/java-bigtable-hbase/compare/v2.0.0-beta1...v2.0.0-beta2) (2021-10-19)
 
 **Note: This beta release is a work-in-progress. For the latest stable release of java-bigtable-hbase, please refer to version [1.25.0](https://github.com/googleapis/java-bigtable-hbase/releases/tag/v1.25.0).**
