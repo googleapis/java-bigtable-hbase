@@ -29,7 +29,8 @@ package com.google.cloud.bigtable.hbase;
 // import org.junit.runners.JUnit4;
 //
 // /**
-//  * This is a test to ensure that {@link BigtableConfiguration} can find {@link BigtableConnection}
+//  * This is a test to ensure that {@link BigtableConfiguration} can find {@link
+// BigtableConnection}
 //  */
 // @RunWith(JUnit4.class)
 // public class TestBigtableConnection {
@@ -52,7 +53,8 @@ package com.google.cloud.bigtable.hbase;
 //
 //   @Test
 //   public void testConfig_AppProfile() {
-//     Configuration conf = BigtableConfiguration.configure("projectId", "instanceId", "appProfileId");
+//     Configuration conf = BigtableConfiguration.configure("projectId", "instanceId",
+// "appProfileId");
 //     Assert.assertEquals(conf.get(BigtableOptionsFactory.PROJECT_ID_KEY), "projectId");
 //     Assert.assertEquals(conf.get(BigtableOptionsFactory.INSTANCE_ID_KEY), "instanceId");
 //     Assert.assertEquals(conf.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY), "appProfileId");
@@ -63,7 +65,8 @@ package com.google.cloud.bigtable.hbase;
 //
 //   @Test
 //   public void testTable() throws IOException {
-//     Configuration conf = BigtableConfiguration.configure("projectId", "instanceId", "appProfileId");
+//     Configuration conf = BigtableConfiguration.configure("projectId", "instanceId",
+// "appProfileId");
 //     conf.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
 //     conf.set(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, "false");
 //     BigtableConnection connection = new BigtableConnection(conf);

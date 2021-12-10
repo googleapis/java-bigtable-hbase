@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.replication;
 import static java.util.stream.Collectors.groupingBy;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapterFactory;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import java.io.IOException;
 import java.util.List;
@@ -44,25 +45,21 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
   // Config keys to access project id and instance id from.
   private static final String PROJECT_KEY = "google.bigtable.project.id";
   private static final String INSTANCE_KEY = "google.bigtable.instance.id";
-  private static final String APP_PROFILE_KEY = "google.bigtable.app_profile.id";
-  // TODO add instance profile
+
   private static String projectId;
   private static String instanceId;
-  private static String appProfileId;
 
   /**
    * Bigtable connection owned by this class and shared by all the instances of this class. DO NOT
-   * CLOSE THIS CONNECTIONS from an instance  of the class. The state of this connection is
+   * CLOSE THIS CONNECTIONS from an instance of the class. The state of this connection is
    * maintained by this class via reference counting.
    *
-   * Creating a Bigtable connection is expensive as it creates num_cpu * 4 gRpc connections. Hence,
-   * it is efficient and recommended to re-use the connection. Ref couting is required to properly
-   * close the connection.
+   * <p>Creating a Bigtable connection is expensive as it creates num_cpu * 4 gRpc connections.
+   * Hence, it is efficient and recommended to re-use the connection. Ref counting is required to
+   * properly close the connection.
    */
   private static Connection connection;
-  /**
-   * Reference count for this connection.
-   */
+  /** Reference count for this connection. */
   private static int numConnectionReference = 0;
 
   // A replicator factory that creates a TableReplicator per replicated table.
@@ -84,7 +81,7 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
     LogManager.getLogger(CloudBigtableTableReplicator.class).setLevel(Level.DEBUG);
   }
 
-  private synchronized static void getOrCreateBigtableConnection(Configuration configuration) {
+  private static synchronized void getOrCreateBigtableConnection(Configuration configuration) {
 
     if (numConnectionReference == 0) {
       // We may overwrite teh project/instanceId but they are going to be the same throghtout the
@@ -99,14 +96,13 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
     numConnectionReference++;
   }
 
-
   @Override
   protected synchronized void doStart() {
-    LOG.error("Starting replication to CBT. ",
-        new RuntimeException("Dummy exception for stacktrace."));
+    LOG.error(
+        "Starting replication to CBT. ", new RuntimeException("Dummy exception for stacktrace."));
 
     getOrCreateBigtableConnection(ctx.getConfiguration());
-    replicatorFactory = new CloudBigtableTableReplicatorFactory(connection);
+    replicatorFactory = new CloudBigtableTableReplicatorFactory(ctx, connection);
     notifyStarted();
   }
 
@@ -174,7 +170,8 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
         // TODO: MAKE IT PARALLEL
         try {
           boolean result =
-              replicatorFactory.getReplicator(tableName)
+              replicatorFactory
+                  .getReplicator(tableName)
                   .replicateTable(walEntriesForTable.getValue());
           if (!result) {
             LOG.error(

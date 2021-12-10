@@ -173,6 +173,8 @@
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-server</artifactId>
       <version>1.5.0</version>
+<!--       The library is running on the HBase region server,-->
+<!--       use the HBase server from the HBase environment-->
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -193,12 +195,12 @@
       <version>0.125.1</version>
       <scope>test</scope>
     </dependency>
-<!--    <dependency>-->
-<!--      <groupId>org.apache.hbase</groupId>-->
-<!--      <artifactId>hbase-shaded-client</artifactId>-->
-<!--      <version>2.2.3</version>-->
-<!--      <scope>test</scope>-->
-<!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>org.apache.hbase</groupId>-->
+    <!--      <artifactId>hbase-shaded-client</artifactId>-->
+    <!--      <version>2.2.3</version>-->
+    <!--      <scope>test</scope>-->
+    <!--    </dependency>-->
   </dependencies>
 
 </project>

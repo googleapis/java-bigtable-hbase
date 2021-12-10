@@ -55,8 +55,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
   private Configuration hbaseConfig;
   private ReplicationAdmin replicationAdmin;
 
-  @Rule
-  public final BigtableEmulatorRule bigtableEmulator = BigtableEmulatorRule.create();
+  @Rule public final BigtableEmulatorRule bigtableEmulator = BigtableEmulatorRule.create();
   private Connection cbtConnection;
 
   private Table hbaseTable;
@@ -98,8 +97,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
     // Setup Replication in HBase mini cluster
     ReplicationPeerConfig peerConfig = new ReplicationPeerConfig();
-    peerConfig
-        .setReplicationEndpointImpl(HbaseToCloudBigtableReplicationEndpoint.class.getTypeName());
+    peerConfig.setReplicationEndpointImpl(
+        HbaseToCloudBigtableReplicationEndpoint.class.getTypeName());
     // Cluster key is required, we don't really have a clusterKey for CBT.
     peerConfig.setClusterKey(hbaseTestingUtil.getClusterKey());
     replicationAdmin.addPeer("cbt", peerConfig);
@@ -152,9 +151,9 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     // assert peer configuration is correct
     ReplicationPeerConfig peerConfig = replicationAdmin.getPeerConfig("cbt");
     Assert.assertNotNull(peerConfig);
-    Assert.assertEquals(peerConfig.getReplicationEndpointImpl(),
+    Assert.assertEquals(
+        peerConfig.getReplicationEndpointImpl(),
         HbaseToCloudBigtableReplicationEndpoint.class.getName());
-
   }
 
   @Test
@@ -169,7 +168,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     }
 
     // Wait for replication to catch up
-    // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini cluster
+    // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini
+    // cluster
     Thread.sleep(2000);
     //   Waiter.waitFor(CONF, 60000, () -> TestEndpoint.getEntries().size() >= cellNum);
 
@@ -209,18 +209,18 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     delete.addColumns(CF1, COL_QUALIFIER_2); // Delete all cells from col2
     hbaseTable.delete(delete);
 
-    // TODO add delete family and delete row once failedMutations are handled.
-    // delete = new Delete(getRowKey(2));
+    delete = new Delete(getRowKey(2));
     // Delete a family
-    // delete.addFamily(CF1);
-    // table.delete(delete);
+    delete.addFamily(CF1);
+    hbaseTable.delete(delete);
 
     // Delete a row
-    // delete = new Delete(getRowKey(3));
-    // table.delete(delete)
+    delete = new Delete(getRowKey(3));
+    hbaseTable.delete(delete);
 
     // Wait for replication to catch up
-    // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini cluster
+    // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini
+    // cluster
     //   Waiter.waitFor(CONF, 60000, () -> TestEndpoint.getEntries().size() >= cellNum);
     Thread.sleep(2000);
 
@@ -243,7 +243,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     table.increment(increment);
 
     // Wait for replication to catch up
-    // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini cluster
+    // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini
+    // cluster
     Thread.sleep(2000);
     //   Waiter.waitFor(CONF, 60000, () -> TestEndpoint.getEntries().size() >= cellNum);
 
@@ -266,7 +267,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     table.append(append);
 
     // Wait for replication to catch up
-    // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini cluster
+    // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini
+    // cluster
     Thread.sleep(2000);
     //   Waiter.waitFor(CONF, 60000, () -> TestEndpoint.getEntries().size() >= cellNum);
 
@@ -301,7 +303,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     }
 
     // Wait for replication to catch up
-    // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini cluster
+    // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini
+    // cluster
     Thread.sleep(2000);
     //   Waiter.waitFor(CONF, 60000, () -> TestEndpoint.getEntries().size() >= cellNum);
 
@@ -327,24 +330,23 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     hbaseTable.put(put);
 
     // Wait for replication to catch up
-    // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini cluster
+    // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini
+    // cluster
     Thread.sleep(2000);
     //   Waiter.waitFor(CONF, 60000, () -> TestEndpoint.getEntries().size() >= cellNum);
 
     List<Cell> actualCells = cbtTable.get(new Get(ROW_KEY).setMaxVersions()).listCells();
-    Assert.assertEquals("Number of cells mismatched, actual cells: " + actualCells, 2,
-        actualCells.size());
+    Assert.assertEquals(
+        "Number of cells mismatched, actual cells: " + actualCells, 2, actualCells.size());
     // Cells are received in reversed chronological order
-    TestUtils.assertEquals("Qualifiers mismatch", COL_QUALIFIER,
-        CellUtil.cloneQualifier(actualCells.get(0)));
-    TestUtils.assertEquals("Value mismatch", getValue(1),
-        CellUtil.cloneValue(actualCells.get(0)));
+    TestUtils.assertEquals(
+        "Qualifiers mismatch", COL_QUALIFIER, CellUtil.cloneQualifier(actualCells.get(0)));
+    TestUtils.assertEquals("Value mismatch", getValue(1), CellUtil.cloneValue(actualCells.get(0)));
     Assert.assertEquals(1, actualCells.get(0).getTimestamp());
 
-    TestUtils.assertEquals("Qualifiers mismatch", COL_QUALIFIER,
-        CellUtil.cloneQualifier(actualCells.get(1)));
-    TestUtils.assertEquals("Value mismatch", getValue(0),
-        CellUtil.cloneValue(actualCells.get(1)));
+    TestUtils.assertEquals(
+        "Qualifiers mismatch", COL_QUALIFIER, CellUtil.cloneQualifier(actualCells.get(1)));
+    TestUtils.assertEquals("Value mismatch", getValue(0), CellUtil.cloneValue(actualCells.get(1)));
     Assert.assertEquals(0, actualCells.get(1).getTimestamp());
   }
 }

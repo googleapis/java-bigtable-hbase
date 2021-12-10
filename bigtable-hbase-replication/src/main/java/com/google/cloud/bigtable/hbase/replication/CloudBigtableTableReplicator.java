@@ -2,6 +2,8 @@ package com.google.cloud.bigtable.hbase.replication;
 
 import static java.util.stream.Collectors.groupingBy;
 
+import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapter;
+import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapterFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +18,7 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.WALEntry;
 import org.apache.hadoop.hbase.util.ByteRange;
 import org.apache.hadoop.hbase.util.SimpleByteRange;
 import org.apache.hadoop.hbase.wal.WAL;
@@ -74,7 +77,7 @@ public class CloudBigtableTableReplicator {
 
   static class DeleteMutationBuilder implements MutationBuilder {
 
-    //TODO make it final
+    // TODO make it final
     private Delete delete;
     private int numDeletes = 0;
 
@@ -93,7 +96,8 @@ public class CloudBigtableTableReplicator {
 
     @Override
     public void addMutation(Cell cell) throws IOException {
-      //TODO track succesfully added mutations. If all the deletes are skipped, an empty Delete will
+      // TODO track succesfully added mutations. If all the deletes are skipped, an empty Delete
+      // will
       // delete the row which may be an un-intended consequence.
       if (delete == null) {
         throw new IllegalStateException("Can't add mutations to a closed builder");
@@ -102,13 +106,12 @@ public class CloudBigtableTableReplicator {
        * TODO Decide how to handle permanent errors? Maybe add a config to push such errors to
        * pubsub or a new BT table or a log file.
        *
-       * TODO We should offer toggles for timestamp delete,
-       * if customers opt in for a best effort timestamp deltes we should do a get and delete. Or
-       * maybe a CheckAndMutate default behaviour can be handling as per permanent failure policy
-       * (log/pubsub/separate table)
+       * <p>TODO We should offer toggles for timestamp delete, if customers opt in for a best effort
+       * timestamp deltes we should do a get and delete. Or maybe a CheckAndMutate default behaviour
+       * can be handling as per permanent failure policy (log/pubsub/separate table)
        *
-       * TODO do a full compatibility check here. Maybe use a comaptibility checker form the hbase
-       * client
+       * <p>TODO do a full compatibility check here. Maybe use a comaptibility checker form the
+       * hbase client
        */
       if (CellUtil.isDeleteType(cell)) {
         LOG.info("Deleting cell " + cell.toString() + " with ts: " + cell.getTimestamp());
@@ -137,7 +140,7 @@ public class CloudBigtableTableReplicator {
 
     @Override
     public void buildAndUpdateRowMutations(RowMutations rowMutations) throws IOException {
-      if(numDeletes==0){
+      if (numDeletes == 0) {
         // This row only had incompatible deletes. adding an empty delete, deletes the whole row.
         return;
       }
@@ -161,12 +164,14 @@ public class CloudBigtableTableReplicator {
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(CloudBigtableTableReplicator.class);
-  private final String tableName;
   private final Table table;
+  private final IncompatibleMutationAdapter incompatibleMutationAdapter;
 
-  public CloudBigtableTableReplicator(String tableName, Connection connection) throws IOException {
-    this.tableName = tableName;
+  public CloudBigtableTableReplicator(String tableName, Connection connection,
+      IncompatibleMutationAdapterFactory incompatibleMutationAdapterFactory) throws IOException {
     this.table = connection.getTable(TableName.valueOf(tableName));
+    this.incompatibleMutationAdapter = incompatibleMutationAdapterFactory.getIncompatibleMutationAdapter(
+        this.table);
   }
 
   /**
@@ -187,10 +192,16 @@ public class CloudBigtableTableReplicator {
     // too much overhead that what is already there.
     List<Cell> cellsToReplicate = new ArrayList<>();
     for (WAL.Entry walEntry : walEntriesToReplicate) {
-      LOG.warn("Processing WALKey: " + walEntry.getKey().toString() + " with " + walEntry.getEdit()
-          .getCells() + " cells.");
-      WALKey key = walEntry.getKey();
-      cellsToReplicate.addAll(walEntry.getEdit().getCells());
+      LOG.warn(
+          "Processing WALKey: "
+              + walEntry.getKey().toString()
+              + " with "
+              + walEntry.getEdit().getCells()
+              + " cells.");
+
+      // Translate the incompatible mutations.
+      List<Cell> compatibleCells = incompatibleMutationAdapter.adapt(walEntry);
+      cellsToReplicate.addAll(compatibleCells);
     }
 
     // group the data by the rowkey.
@@ -198,10 +209,13 @@ public class CloudBigtableTableReplicator {
     // and construct a Map<Rowkey, RowMutation>, that way you always have the WALKey with writeTime
     // when creating a mutation. Later just send the valueSet of mutationMap to bufferedMutator.
     Map<ByteRange, List<Cell>> cellsToReplicateByRow =
-        cellsToReplicate.stream().collect(groupingBy(
-            k -> new SimpleByteRange(k.getRowArray(), k.getRowOffset(), k.getRowLength())));
+        cellsToReplicate.stream()
+            .collect(
+                groupingBy(
+                    k -> new SimpleByteRange(k.getRowArray(), k.getRowOffset(), k.getRowLength())));
     LOG.warn(
-        "Replicating {} rows, {} cells total.", cellsToReplicateByRow.size(),
+        "Replicating {} rows, {} cells total.",
+        cellsToReplicateByRow.size(),
         cellsToReplicate.size());
 
     // Build a row mutation per row.
@@ -232,8 +246,7 @@ public class CloudBigtableTableReplicator {
       // TODO: Decide if we want to tweak retry policies of the batch puts?
       table.batch(rowMutationsList, futures);
     } catch (Throwable t) {
-      LOG.error(
-          "Encountered error while replicating wal entry.", t);
+      LOG.error("Encountered error while replicating wal entry.", t);
       if (t.getCause() != null) {
         LOG.error("chained exception ", t.getCause());
       }
@@ -242,8 +255,7 @@ public class CloudBigtableTableReplicator {
     // Make sure that there were no errors returned via futures.
     for (Object future : futures) {
       if (future != null && future instanceof Throwable) {
-        LOG.error(
-            "{FUTURES} Encountered error while replicating wal entry.", (Throwable) future);
+        LOG.error("{FUTURES} Encountered error while replicating wal entry.", (Throwable) future);
         succeeded = false;
       }
     }
