@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.26.0](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.25.1...v1.26.0) (2021-12-10)
+
+
+### Features
+
+* bump next 1.x release to 1.26.0 ([#3327](https://www.github.com/googleapis/java-bigtable-hbase/issues/3327)) ([7da8fc2](https://www.github.com/googleapis/java-bigtable-hbase/commit/7da8fc24b29c0b9f01eda960630018421e2b1ee9))
+
+
+### Dependencies
+
+* migrate to log4j-core ([#3326](https://www.github.com/googleapis/java-bigtable-hbase/issues/3326)) ([#3375](https://www.github.com/googleapis/java-bigtable-hbase/issues/3375)) ([9142f13](https://www.github.com/googleapis/java-bigtable-hbase/commit/9142f1341f4542c8a48976cc3cf4675f76fe05db))
+
 ### [1.25.1](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.25.0...v1.25.1) (2021-10-13)
 
 
