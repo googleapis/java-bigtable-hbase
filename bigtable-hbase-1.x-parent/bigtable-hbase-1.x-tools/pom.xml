@@ -11,6 +11,7 @@
 
   <properties>
     <mainclass>com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator</mainclass>
+    <log4j2.version>2.15.0</log4j2.version>
   </properties>
   <artifactId>bigtable-hbase-1.x-tools</artifactId>
 
@@ -54,14 +55,15 @@
       <version>30.1.1-android</version>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${slf4j.version}</version>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <version>${log4j2.version}</version>
     </dependency>
     <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.17</version>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>${log4j2.version}</version>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
