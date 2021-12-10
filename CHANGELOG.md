@@ -2,6 +2,7 @@
 
 ## [2.0.0-beta3](https://www.github.com/googleapis/java-bigtable-hbase/compare/v2.0.0-beta2...v2.0.0-beta3) (2021-12-10)
 
+**Note: This beta release is a work-in-progress. For the latest stable release of java-bigtable-hbase, please refer to version [1.26.0](https://github.com/googleapis/java-bigtable-hbase/releases/tag/v1.26.0).**
 
 ### Bug Fixes
 
