@@ -123,7 +123,7 @@ public class DeleteAdapter extends MutationAdapter<Delete> {
    * @param cell the delete to validate.
    */
   public static void isValidDelete(Cell cell) {
-    if(isColumnDelete(cell)){
+    if (isColumnDelete(cell)) {
       // All column deletes are valid.
       return;
     }
