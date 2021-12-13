@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.hbase.replication;
 import static java.util.stream.Collectors.groupingBy;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
-import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapterFactory;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import java.io.IOException;
 import java.util.List;
@@ -59,7 +58,9 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
    * properly close the connection.
    */
   private static Connection connection;
-  /** Reference count for this connection. */
+  /**
+   * Reference count for this connection.
+   */
   private static int numConnectionReference = 0;
 
   // A replicator factory that creates a TableReplicator per replicated table.
@@ -109,7 +110,8 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
   @Override
   protected void doStop() {
 
-    LOG.error("Stopping replication to CBT for this EndPoint. ");
+    LOG.error("Stopping replication to CBT for this EndPoint. ",
+        new RuntimeException("Dummy exception for stacktrace"));
     // TODO: Do we need to call flush on all the TableReplicators? All the state is flushed per
     // replicate call, so if HBase does not call close when a replicate call is active then we don't
     // need to call a flush/close on the tableReplicator.
@@ -190,8 +192,30 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
       LOG.error("Failed to replicate some  WAL with exception: ", e);
       succeeded.set(false);
     } finally {
+      long age = 0;
+      long age_global = 0;
+      try {
+        if (succeeded.get()) {
+          WAL.Entry lastEntry = replicateContext.getEntries()
+              .get(replicateContext.getEntries().size() - 1);
+          ctx.getMetrics().setAgeOfLastShippedOp(lastEntry.getKey().getWriteTime(),
+              replicateContext.getWalGroupId());
+          age = ctx.getMetrics().getAgeofLastShippedOp(replicateContext.getWalGroupId());
+          age_global = ctx.getMetrics().getAgeOfLastShippedOp();
+
+          // TODO MetricSource on HBase side updates these metrics. We need to update the per table
+          // metrics, maybe.
+          // ctx.getMetrics().setAgeOfLastShippedOpByTable(lastEntry.getKey().getWriteTime(),
+          //     lastEntry.getKey().getTablename().getNameAsString());
+          // } else {
+          //   ctx.getMetrics().refreshAgeOfLastShippedOp(replicateContext.getWalGroupId());
+        }
+      } catch (Exception e) {
+        LOG.error("Failed to update metrics ", e);
+      }
       LOG.error(
-          "Exiting CBT replicate method after {} ms, Succeeded: {}",
+          "Exiting CBT replicate method after {} ms, Succeeded: {} " + "age " + age + " age_global "
+              + age_global,
           (System.currentTimeMillis() - startTime),
           succeeded.get());
       concurrentReplications.getAndDecrement();

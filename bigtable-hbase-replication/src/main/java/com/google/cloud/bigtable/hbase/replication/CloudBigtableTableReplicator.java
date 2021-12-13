@@ -18,11 +18,9 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.WALEntry;
 import org.apache.hadoop.hbase.util.ByteRange;
 import org.apache.hadoop.hbase.util.SimpleByteRange;
 import org.apache.hadoop.hbase.wal.WAL;
-import org.apache.hadoop.hbase.wal.WALKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +68,7 @@ public class CloudBigtableTableReplicator {
     @Override
     public void buildAndUpdateRowMutations(RowMutations rowMutations) throws IOException {
       rowMutations.add(put);
-      LOG.error("Build a put mutation with " + put.size() + " entries.");
+      // LOG.error("Build a put mutation with " + put.size() + " entries.");
       put = null;
     }
   }
@@ -145,7 +143,7 @@ public class CloudBigtableTableReplicator {
         return;
       }
       rowMutations.add(delete);
-      LOG.error("Build a delete mutation with " + delete.size() + " entries.");
+      // LOG.error("Build a delete mutation with " + delete.size() + " entries.");
       delete = null;
     }
   }
@@ -192,15 +190,15 @@ public class CloudBigtableTableReplicator {
     // too much overhead that what is already there.
     List<Cell> cellsToReplicate = new ArrayList<>();
     for (WAL.Entry walEntry : walEntriesToReplicate) {
-      LOG.warn(
-          "Processing WALKey: "
-              + walEntry.getKey().toString()
-              + " with "
-              + walEntry.getEdit().getCells()
-              + " cells.");
+      // LOG.warn(
+      //     "Processing WALKey: "
+      //         + walEntry.getKey().toString()
+      //         + " with "
+      //         + walEntry.getEdit().getCells().size()
+      //         + " cells.");
 
       // Translate the incompatible mutations.
-      List<Cell> compatibleCells = incompatibleMutationAdapter.adapt(walEntry);
+      List<Cell> compatibleCells = incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry);
       cellsToReplicate.addAll(compatibleCells);
     }
 

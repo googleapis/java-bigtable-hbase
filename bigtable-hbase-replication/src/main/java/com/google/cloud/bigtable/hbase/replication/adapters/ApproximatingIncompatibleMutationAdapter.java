@@ -37,12 +37,13 @@ public class ApproximatingIncompatibleMutationAdapter extends IncompatibleMutati
     if (CellUtil.isDeleteFamily(cell)) {
       // TODO Check if its epoch is millis or micros
       if (walEntry.getKey().getWriteTime() >= cell.getTimestamp() &&
-          cell.getTimestamp() + 100 > walEntry.getKey().getWriteTime()) {
+          cell.getTimestamp() + deleteFamilyWriteTimeThreshold > walEntry.getKey().getWriteTime()) {
         return Arrays.asList(
             new KeyValue(CellUtil.cloneRow(cell), CellUtil.cloneFamily(cell), (byte[]) null,
                 LATEST_TIMESTAMP, KeyValue.Type.DeleteFamily));
       }
     }
+    // Can't convert any other type of mutation.
     throw new UnsupportedOperationException("Unsupported deletes: " + cell);
   }
 }

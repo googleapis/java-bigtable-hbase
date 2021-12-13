@@ -180,7 +180,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
   @Test
   public void testDelete() throws IOException, InterruptedException {
 
-    // Add 3 rows with many cells/column
+    // Add 4 rows with many cells/column
     for (int i = 0; i < 4; i++) {
       Put put = new Put(getRowKey(i));
       put.addColumn(CF1, COL_QUALIFIER, 0, getValue(10 + i));

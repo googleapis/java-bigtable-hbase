@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
  * Base class for adapters that translate CBT incompatible mutations into compatible mutations. See
  * <a href="https://cloud.google.com/bigtable/docs/hbase-differences#mutations_and_deletions">cbt
  * docs</a> for detailed list of incompatible mutations.
+ *
+ * Subclasses must expose the constructor ChildClass(Configuration, MetricSource, Table).
  */
 public abstract class IncompatibleMutationAdapter {
 
@@ -25,8 +27,8 @@ public abstract class IncompatibleMutationAdapter {
   private final Configuration conf;
   private final MetricsSource metricSource;
 
-  private static final String INCOMPATIBLE_MUTATION_METRIC_KEY = "google.bigtable.incompatible.mutations";
-  private static final String DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY = "google.bigtable.dropped.incompatible.mutations";
+  private static final String INCOMPATIBLE_MUTATION_METRIC_KEY = "bigtableIncompatibleMutations";
+  private static final String DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY = "bigtableDroppedIncompatibleMutations";
 
   protected void incrementDroppedIncompatibleMutations() {
     metricSource.incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
@@ -36,11 +38,25 @@ public abstract class IncompatibleMutationAdapter {
     metricSource.incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
   }
 
+  /**
+   * Creates an IncompatibleMutationAdapter with HBase configuration, MetricSource, and CBT Table.
+   *
+   * All subclasses must expose this constructor.
+   * @param conf HBase configuration. All the configurations required by subclases should come from here.
+   * @param metricsSource Hadoop metric source exposed by HBase Replication Endpoint.
+   * @param destinationTable CBT table taht is destination of the replicated edits. This reference
+   * help the subclasses to query destination table for certain incompatible mutation.
+   */
   public IncompatibleMutationAdapter(Configuration conf, MetricsSource metricsSource,
       Table destinationTable) {
     this.conf = conf;
     this.destinationTable = destinationTable;
     this.metricSource = metricsSource;
+    LOG.warn("Setting up metrics with context: " + metricSource.getMetricsContext() + " " +
+        metricsSource.getMetricsJmxContext());
+    // Make sure that the counters show up.
+    metricsSource.incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    metricsSource.incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
   }
 
   /**
@@ -49,7 +65,7 @@ public abstract class IncompatibleMutationAdapter {
    *
    * <p>This method should never throw permanent exceptions.
    */
-  public final List<Cell> adapt(WAL.Entry walEntry) {
+  public final List<Cell> adaptIncompatibleMutations(WAL.Entry walEntry) {
     List<Cell> returnedCells = new ArrayList<>(walEntry.getEdit().size());
     int index = 0;
     for (Cell cell : walEntry.getEdit().getCells()) {
