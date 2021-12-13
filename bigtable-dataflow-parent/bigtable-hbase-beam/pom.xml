@@ -27,6 +27,20 @@ limitations under the License.
     and writers in Google Cloud Dataflow.
   </description>
 
+  <properties>
+    <log4j2.version>2.15.0</log4j2.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-api</artifactId>
+        <version>${log4j2.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <!-- to use HBaseCoderProviderRegistrar-->
     <dependency>

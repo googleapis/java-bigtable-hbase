@@ -26,6 +26,7 @@ limitations under the License.
 
   <properties>
     <mainClass>com.google.cloud.bigtable.beam.Main</mainClass>
+    <log4j2.version>2.15.0</log4j2.version>
   </properties>
 
   <!-- Adding this to resolve version conflict within beam sdk-->
@@ -37,6 +38,11 @@ limitations under the License.
         <version>${beam-grpc.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-api</artifactId>
+        <version>${log4j2.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
