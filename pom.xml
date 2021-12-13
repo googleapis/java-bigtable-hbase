@@ -276,7 +276,7 @@ limitations under the License.
                 <!-- ban all log4j 2.x deps with CVEs -->
                 <bannedDependencies>
                   <excludes>
-                    <exclude>org.apache.logging.log4j:*:[2.0-beta9, 2.14.1]</exclude>
+                    <exclude>org.apache.logging.log4j:*:[2.0-alpha1,2.14.1]</exclude>
                   </excludes>
                 </bannedDependencies>
               </rules>
