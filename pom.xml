@@ -65,7 +65,6 @@ limitations under the License.
     <jsr305.version>3.0.2</jsr305.version>
     <log4j2.version>2.16.0</log4j2.version>
 
-
     <!-- hbase dependency versions -->
     <hbase.version.1>1.4.12</hbase.version.1>
     <hbase.version.2>2.2.3</hbase.version.2>
