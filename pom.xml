@@ -63,7 +63,7 @@ limitations under the License.
     <slf4j.version>1.7.25</slf4j.version>
     <commons-logging.version>1.2</commons-logging.version>
     <jsr305.version>3.0.2</jsr305.version>
-    <log4j2.version>2.15.0</log4j2.version>
+    <log4j2.version>2.16.0</log4j2.version>
 
 
     <!-- hbase dependency versions -->
