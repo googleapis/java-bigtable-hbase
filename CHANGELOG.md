@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.0.0-beta4](https://www.github.com/googleapis/java-bigtable-hbase/compare/v2.0.0-beta3...v2.0.0-beta4) (2021-12-14)
+
+
+### Miscellaneous Chores
+
+* make next tag 2.0.0-beta4 ([#3387](https://www.github.com/googleapis/java-bigtable-hbase/issues/3387)) ([01010e9](https://www.github.com/googleapis/java-bigtable-hbase/commit/01010e9975c7c13130980e8837e8dbce2b1cd705))
+
+
+### Dependencies
+
+* **fix:** bump log4j2 to 2.16.0 and ban all 2.x.x versions which are < 2.16.0 ([#3388](https://www.github.com/googleapis/java-bigtable-hbase/issues/3388)) ([265f042](https://www.github.com/googleapis/java-bigtable-hbase/commit/265f042191bc79609e19c53a9624e8e25c589608))
+
 ## [2.0.0-beta3](https://www.github.com/googleapis/java-bigtable-hbase/compare/v2.0.0-beta2...v2.0.0-beta3) (2021-12-10)
 
 **Note: This beta release is a work-in-progress. For the latest stable release of java-bigtable-hbase, please refer to version [1.26.0](https://github.com/googleapis/java-bigtable-hbase/releases/tag/v1.26.0).**
