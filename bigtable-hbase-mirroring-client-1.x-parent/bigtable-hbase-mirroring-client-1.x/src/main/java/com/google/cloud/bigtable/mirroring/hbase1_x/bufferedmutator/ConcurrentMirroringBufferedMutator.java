@@ -145,17 +145,6 @@ public class ConcurrentMirroringBufferedMutator
   }
 
   @Override
-  protected void scopedFlush() throws IOException {
-    try {
-      scheduleFlushAll().bothFlushesFinished.get();
-    } catch (InterruptedException | ExecutionException e) {
-      setInterruptedFlagIfInterruptedException(e);
-      throw new IOException(e);
-    }
-    throwExceptionIfAvailable();
-  }
-
-  @Override
   protected void handlePrimaryException(RetriesExhaustedWithDetailsException e) {
     for (int i = 0; i < e.getNumExceptions(); i++) {
       failedPrimaryOperations.put(
@@ -221,7 +210,8 @@ public class ConcurrentMirroringBufferedMutator
 
               @Override
               public void onFailure(Throwable throwable) {
-                // RetriesExhaustedWithDetailsException is ignored, it was reported to the handler.
+                // RetriesExhaustedWithDetailsException is ignored, it was reported to the handler
+                // and stored in failedPrimaryOperations buffer.
                 if (!(throwable instanceof RetriesExhaustedWithDetailsException)) {
                   mirroringExceptionBuilder.setPrimaryException(throwable);
                 }
@@ -241,7 +231,8 @@ public class ConcurrentMirroringBufferedMutator
 
               @Override
               public void onFailure(Throwable throwable) {
-                // RetriesExhaustedWithDetailsException is ignored, it was reported to the handler.
+                // RetriesExhaustedWithDetailsException is ignored, it was reported to the handler
+                // and stored in failedSecondaryOperations buffer.
                 if (!(throwable instanceof RetriesExhaustedWithDetailsException)) {
                   mirroringExceptionBuilder.setSecondaryException(throwable);
                 }
@@ -250,7 +241,12 @@ public class ConcurrentMirroringBufferedMutator
             }),
         MoreExecutors.directExecutor());
 
-    return new FlushFutures(primaryFlushFinished, secondaryFlushFinished, bothFlushesFinished);
+    return new FlushFutures(
+        primaryFlushFinished,
+        secondaryFlushFinished,
+        bothFlushesFinished,
+        // Flush operation can be unblocked when both flushes have finished.
+        bothFlushesFinished);
   }
 
   private ListenableFuture<Void> scheduleSecondaryFlush(
@@ -304,7 +300,8 @@ public class ConcurrentMirroringBufferedMutator
    * Throws exceptions that were reported by last flush operation or RetiresExhaustedException for
    * rows that were reported as failed.
    */
-  private void throwExceptionIfAvailable() throws IOException {
+  @Override
+  protected void throwExceptionIfAvailable() throws IOException {
     throwPrimaryFlushExceptionIfAvailable();
     RetriesExhaustedWithDetailsException e = retriesExhaustedExceptionBuilder.clearAndBuild();
     if (e != null) {

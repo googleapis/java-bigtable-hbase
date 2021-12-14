@@ -55,6 +55,8 @@ import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
  *
  * <p>This base class handles tracing, management of internal mutations buffer and starting
  * asynchronous flushes.
+ *
+ * <p>Sharing code by inheritance was the cleanest approach we could come up with.
  */
 @InternalApi("For internal usage only")
 public abstract class MirroringBufferedMutator<BufferEntryType> implements BufferedMutator {
@@ -190,11 +192,43 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
   public void flush() throws IOException {
     try (Scope scope =
         this.mirroringTracer.spanFactory.operationScope(HBaseOperation.BUFFERED_MUTATOR_FLUSH)) {
-      scopedFlush();
+      try {
+        // Wait until flush has finished.
+        scheduleFlushAll().flushOperationCanContinueFuture.get();
+      } catch (InterruptedException | ExecutionException e) {
+        setInterruptedFlagIfInterruptedException(e);
+        throw new IOException(e);
+      }
+      // If the #flush() above has thrown an exception, it will be propagated to the user now.
+      // Otherwise we might still have an exception from an asynchronous #flush() to propagate.
+
+      // If the flush operation started in this method throws, we guarantee that the exception will
+      // be propagated to the user. The rationale depends on whether we use the synchronous or
+      // concurrent implementation.
+      // Synchronous case:
+      //   flushOperationCanContinueFuture is completed after primaryFlushErrorsReported is set,
+      //   which happens after storing errors in the exceptionsToBeReportedToTheUser.
+      // Concurrent case:
+      //   flushOperationCanContinueFuture is completed after bothFlushesFinished is set,
+      //   which happens after storing errors from both primary and secondary flushes in the
+      //   mirroringExceptionBuilder.
+      throwExceptionIfAvailable();
     }
   }
 
-  protected abstract void scopedFlush() throws IOException;
+  protected abstract void throwExceptionIfAvailable() throws IOException;
+
+  /**
+   * Schedules asynchronous flushes of both buffered mutators (either sequentially or concurrently).
+   *
+   * @param dataToFlush List of entries that are were accumulated since last flush and should be
+   *     flushed now.
+   * @param previousFlushFutures Futures that will be completed when previously scheduled flush will
+   *     finish. Used to serialize asynchronous flushes.
+   * @return a pack of Futures that complete in various stages of flush operation.
+   */
+  protected abstract FlushFutures scheduleFlushScoped(
+      List<BufferEntryType> dataToFlush, FlushFutures previousFlushFutures);
 
   abstract void handlePrimaryException(RetriesExhaustedWithDetailsException e)
       throws RetriesExhaustedWithDetailsException;
@@ -203,7 +237,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
 
   protected final void storeResourcesAndFlushIfNeeded(
       BufferEntryType entry, RequestResourcesDescription resourcesDescription) {
-    this.flushSerializer.storeResourcesAndFlushIfNeeded(entry, resourcesDescription);
+    this.flushSerializer.storeResourcesAndFlushIfThresholdIsExceeded(entry, resourcesDescription);
   }
 
   protected final FlushFutures scheduleFlushAll() {
@@ -287,39 +321,6 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
     return this.configuration;
   }
 
-  /**
-   * Create a new instance of {@link BufferedMutatorParams} based on supplied parameters but with
-   * replaced listener. Objects created by this method can be safely used for creating underlying
-   * buffered mutator.
-   */
-  private static BufferedMutatorParams createBufferedMutatorParamsWithListener(
-      BufferedMutatorParams bufferedMutatorParams, ExceptionListener exceptionListener) {
-    BufferedMutatorParams params = new BufferedMutatorParams(bufferedMutatorParams.getTableName());
-    params.writeBufferSize(bufferedMutatorParams.getWriteBufferSize());
-    params.pool(bufferedMutatorParams.getPool());
-    params.maxKeyValueSize(bufferedMutatorParams.getMaxKeyValueSize());
-    params.listener(exceptionListener);
-    return params;
-  }
-
-  protected static class FlushFutures {
-    public final ListenableFuture<Void> primaryFlushFinished;
-    public final ListenableFuture<Void> secondaryFlushFinished;
-    public final ListenableFuture<Void> bothFlushesFinished;
-
-    public FlushFutures(
-        ListenableFuture<Void> primaryFlushFinished,
-        ListenableFuture<Void> secondaryFlushFinished,
-        ListenableFuture<Void> bothFlushesFinished) {
-      this.primaryFlushFinished = primaryFlushFinished;
-      this.secondaryFlushFinished = secondaryFlushFinished;
-      this.bothFlushesFinished = bothFlushesFinished;
-    }
-  }
-
-  protected abstract FlushFutures scheduleFlushScoped(
-      List<BufferEntryType> dataToFlush, FlushFutures previousFlushFutures);
-
   protected final ListenableFuture<Void> schedulePrimaryFlush(
       final ListenableFuture<?> previousFlushCompletedFuture) {
     return this.executorService.submit(
@@ -359,12 +360,81 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
   }
 
   /**
+   * Create a new instance of {@link BufferedMutatorParams} based on supplied parameters but with
+   * replaced listener. Objects created by this method can be safely used for creating underlying
+   * buffered mutator.
+   */
+  private static BufferedMutatorParams createBufferedMutatorParamsWithListener(
+      BufferedMutatorParams bufferedMutatorParams, ExceptionListener exceptionListener) {
+    BufferedMutatorParams params = new BufferedMutatorParams(bufferedMutatorParams.getTableName());
+    params.writeBufferSize(bufferedMutatorParams.getWriteBufferSize());
+    params.pool(bufferedMutatorParams.getPool());
+    params.maxKeyValueSize(bufferedMutatorParams.getMaxKeyValueSize());
+    params.listener(exceptionListener);
+    return params;
+  }
+
+  protected static class FlushFutures {
+
+    /**
+     * Future completed when the primary operation is finished. Used to sequence asynchronous
+     * flushes of the primary buffered mutator.
+     */
+    public final ListenableFuture<Void> primaryFlushFinished;
+
+    /**
+     * Future completed when the secondary operation is finished. Used to sequence asynchronous
+     * flushes of the secondary buffered mutator.
+     */
+    public final ListenableFuture<Void> secondaryFlushFinished;
+
+    /**
+     * Future completed when both asynchronous flush operations are finished. Used in {@link
+     * ConcurrentMirroringBufferedMutator#close()} method.
+     */
+    public final ListenableFuture<Void> bothFlushesFinished;
+
+    /**
+     * Future completed when an implementation decides that the {@link BufferedMutator#flush()}
+     * operation performed by the user can unblock. If the asynchronous flush operation throws an
+     * exception, the implementation should make sure the exception will be correctly read by {@link
+     * #throwExceptionIfAvailable()} method, which is called immediately after the completion of
+     * this future.
+     */
+    public final ListenableFuture<Void> flushOperationCanContinueFuture;
+
+    public FlushFutures(
+        ListenableFuture<Void> primaryFlushFinished,
+        ListenableFuture<Void> secondaryFlushFinished,
+        ListenableFuture<Void> bothFlushesFinished,
+        ListenableFuture<Void> flushOperationCanContinueFuture) {
+      this.primaryFlushFinished = primaryFlushFinished;
+      this.secondaryFlushFinished = secondaryFlushFinished;
+      this.bothFlushesFinished = bothFlushesFinished;
+      this.flushOperationCanContinueFuture = flushOperationCanContinueFuture;
+    }
+  }
+
+  /**
    * Helper class that manager performing asynchronous flush operations and correctly ordering them.
    *
    * <p>Thread-safe.
    */
   static class FlushSerializer<BufferEntryType> {
 
+    /**
+     * Internal buffer that should keep mutations that were not yet flushed asynchronously. Type of
+     * the entry is specified by subclasses and can contain more elements than just mutations, e.g.
+     * related resource reservations.
+     *
+     * <p>{@link #storeResourcesAndFlushIfThresholdIsExceeded} relies on the fact that access to
+     * this field is synchronized.
+     */
+    private final BufferedMutations<BufferEntryType> mutationEntries;
+
+    private final ListenableReferenceCounter ongoingFlushesCounter;
+    private final MirroringTracer mirroringTracer;
+    private final MirroringBufferedMutator<BufferEntryType> bufferedMutator;
     /**
      * We have to ensure that order of asynchronously called {@link BufferedMutator#flush()} is the
      * same as order in which callbacks for these operations were created. To enforce this property
@@ -388,17 +458,6 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
      */
     private FlushFutures lastFlushFutures = createCompletedFlushFutures();
 
-    /**
-     * Internal buffer that should keep mutations that were not yet flushed asynchronously. Type of
-     * the entry is specified by subclasses and can contain more elements than just mutations, e.g.
-     * related resource reservations.
-     */
-    private final BufferedMutations<BufferEntryType> mutationEntries;
-
-    private final ListenableReferenceCounter ongoingFlushesCounter;
-    private final MirroringTracer mirroringTracer;
-    private final MirroringBufferedMutator<BufferEntryType> bufferedMutator;
-
     public FlushSerializer(
         MirroringBufferedMutator<BufferEntryType> bufferedMutator,
         long mutationsBufferFlushThresholdBytes,
@@ -413,25 +472,25 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
     private static FlushFutures createCompletedFlushFutures() {
       SettableFuture<Void> future = SettableFuture.create();
       future.set(null);
-      return new FlushFutures(future, future, future);
-    }
-
-    public final synchronized void storeResourcesAndFlushIfNeeded(
-        BufferEntryType entry, RequestResourcesDescription resourcesDescription) {
-      // This method is synchronized to make sure that order of scheduled flushes matches order of
-      // created dataToFlush lists.
-      List<BufferEntryType> dataToFlush =
-          this.mutationEntries.add(entry, resourcesDescription.sizeInBytes);
-      if (dataToFlush != null) {
-        scheduleFlush(dataToFlush);
-      }
+      return new FlushFutures(future, future, future, future);
     }
 
     public final synchronized FlushFutures scheduleFlushAll() {
       // This method is synchronized to make sure that order of scheduled flushes matches order of
       // created dataToFlush lists.
-      List<BufferEntryType> dataToFlush = this.mutationEntries.flushBuffer();
+      List<BufferEntryType> dataToFlush = this.mutationEntries.getAndReset();
       return scheduleFlush(dataToFlush);
+    }
+
+    public final synchronized void storeResourcesAndFlushIfThresholdIsExceeded(
+        BufferEntryType entry, RequestResourcesDescription resourcesDescription) {
+      // This method is synchronized to make sure that order of scheduled flushes matches order of
+      // created dataToFlush lists.
+      this.mutationEntries.add(entry, resourcesDescription.sizeInBytes);
+      List<BufferEntryType> dataToFlush = this.mutationEntries.getEntriesToFlush();
+      if (dataToFlush != null) {
+        scheduleFlush(dataToFlush);
+      }
     }
 
     private synchronized FlushFutures scheduleFlush(List<BufferEntryType> dataToFlush) {
@@ -466,10 +525,9 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
    * <p>Thread-safe.
    */
   private static class BufferedMutations<EntryType> {
-
+    protected final long mutationsBufferFlushThresholdBytes;
     private List<EntryType> mutationEntries;
     private long mutationsBufferSizeBytes;
-    protected final long mutationsBufferFlushThresholdBytes;
 
     private BufferedMutations(long mutationsBufferFlushThresholdBytes) {
       this.mutationsBufferFlushThresholdBytes = mutationsBufferFlushThresholdBytes;
@@ -477,16 +535,20 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
       this.mutationsBufferSizeBytes = 0;
     }
 
-    private synchronized List<EntryType> add(EntryType entry, long sizeInBytes) {
+    private synchronized void add(EntryType entry, long sizeInBytes) {
       this.mutationEntries.add(entry);
       this.mutationsBufferSizeBytes += sizeInBytes;
+    }
+
+    /** Returns a list of entries to be flushed if the threshold was already exceeded. */
+    private synchronized List<EntryType> getEntriesToFlush() {
       if (this.mutationsBufferSizeBytes > this.mutationsBufferFlushThresholdBytes) {
-        return flushBuffer();
+        return getAndReset();
       }
       return null;
     }
 
-    private synchronized List<EntryType> flushBuffer() {
+    private synchronized List<EntryType> getAndReset() {
       List<EntryType> returnValue = this.mutationEntries;
       this.mutationEntries = new ArrayList<>();
       this.mutationsBufferSizeBytes = 0;

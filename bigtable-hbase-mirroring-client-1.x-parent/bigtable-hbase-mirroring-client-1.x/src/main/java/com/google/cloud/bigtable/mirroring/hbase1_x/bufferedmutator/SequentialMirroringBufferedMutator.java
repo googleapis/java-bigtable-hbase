@@ -102,7 +102,7 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
  * when we perform an asynchronous {@link BufferedMutator#flush()} on primaryBufferedMutator from a
  * worker thread. In the first case the exception is rethrown to the user directly from the called
  * method. In the second case we gather the asynchronously caught exception in a {@link
- * #failedMutationsExceptions} list and rethrow them on next user interaction with out
+ * #exceptionsToBeReportedToTheUser} structure and rethrow them on next user interaction with our
  * MirroringBufferedMutator.
  *
  * <p>In such a way we ensure two things - we are notified about every failed mutation and the user
@@ -117,29 +117,16 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
    * Row} instance scheduled for insertion is in this collection, then it is omitted and
    * corresponding entry is removed from the set.
    *
-   * <p>Those maps use {@code WeakReferences<Row>} as keys and compares their content using {@code
+   * <p>This set uses {@code WeakReferences<Row>} as keys and compares their content using {@code
    * ==} instead of {@code equals}. This is faster than comparing Rows using {@code equals} and is
-   * safe, because we always check is a specific Row object have failed.
+   * safe because we always check if a specific Row object has failed.
    */
-  private final Set<Row> failedPrimaryOperations =
-      Collections.newSetFromMap((new MapMaker()).weakKeys().<Row, Boolean>makeMap());
-
-  /**
-   * Exceptions caught when performing asynchronous flush() on primary BufferedMutator that should
-   * be rethrown to inform the user about failed writes.
-   */
-  private final ExceptionBuffer failedMutationsExceptions = new ExceptionBuffer();
-
-  /**
-   * Stores exceptions thrown by asynchronous flush()es that were not {@link
-   * RetriesExhaustedWithDetailsException} (those are kept in {@link #failedMutationsExceptions} and
-   * handled separately).
-   */
-  private final ConcurrentLinkedQueue<Throwable> failedOperationsExceptions =
-      new ConcurrentLinkedQueue<>();
+  private final ConcurrentRowSetWithWeakKeys failedPrimaryOperations =
+      new ConcurrentRowSetWithWeakKeys();
+  /** Stores exceptions thrown by asynchronous operations that were not yet thrown to the user. */
+  private final UserExceptionsBuffer exceptionsToBeReportedToTheUser = new UserExceptionsBuffer();
 
   private final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
-
   private final FlowController flowController;
 
   public SequentialMirroringBufferedMutator(
@@ -227,20 +214,6 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
   }
 
   @Override
-  protected void scopedFlush() throws IOException {
-    try {
-      // Secondary flush is scheduled asynchronously after primary flush has finished.
-      scheduleFlushAll().primaryFlushFinished.get();
-    } catch (InterruptedException | ExecutionException e) {
-      setInterruptedFlagIfInterruptedException(e);
-      throw new IOException(e);
-    }
-    // If #flush() above has thrown, the it will be propagated to the user now.
-    // Otherwise we might still have a exception from an asynchronous #flush() to propagate.
-    throwExceptionIfAvailable();
-  }
-
-  @Override
   protected void handlePrimaryException(RetriesExhaustedWithDetailsException e)
       throws RetriesExhaustedWithDetailsException {
     for (int i = 0; i < e.getNumExceptions(); i++) {
@@ -268,12 +241,15 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
     final ListenableFuture<Void> primaryFlushFinished =
         schedulePrimaryFlush(previousFlushFutures.primaryFlushFinished);
 
+    final SettableFuture<Void> primaryFlushErrorsReported = SettableFuture.create();
+
     Futures.addCallback(
         primaryFlushFinished,
         this.mirroringTracer.spanFactory.wrapWithCurrentSpan(
             new FutureCallback<Void>() {
               @Override
               public void onSuccess(@NullableDecl Void aVoid) {
+                primaryFlushErrorsReported.set(null);
                 performSecondaryFlush(
                     dataToFlush,
                     secondaryFlushFinished,
@@ -288,7 +264,9 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
                   // thrown), we know that some of the writes failed. Our handler has already
                   // handled those errors. We should also rethrow this exception when user
                   // calls mutate/flush the next time.
-                  saveExceptionToBeThrown((RetriesExhaustedWithDetailsException) throwable);
+                  exceptionsToBeReportedToTheUser.addRetriesExhaustedException(
+                      (RetriesExhaustedWithDetailsException) throwable);
+                  primaryFlushErrorsReported.set(null);
 
                   performSecondaryFlush(
                       dataToFlush,
@@ -300,14 +278,23 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
                   // written and throw the exception to the user. Writing mutations to the faillog
                   // would cause confusion as the user would think that those writes were successful
                   // on primary, but they were not.
+                  exceptionsToBeReportedToTheUser.addThrowable(throwable);
+                  primaryFlushErrorsReported.set(null);
+
                   releaseReservations(dataToFlush);
                   secondaryFlushFinished.setException(throwable);
-                  saveOperationException(throwable);
                 }
               }
             }),
         MoreExecutors.directExecutor());
-    return new FlushFutures(primaryFlushFinished, secondaryFlushFinished, secondaryFlushFinished);
+    return new FlushFutures(
+        primaryFlushFinished,
+        secondaryFlushFinished,
+        // Both flushes have finished when the secondary has finished because flushes are called
+        // sequentially.
+        secondaryFlushFinished,
+        // Flush operation can be unblocked after errors (if any) are stored in buffers.
+        primaryFlushErrorsReported);
   }
 
   private void performSecondaryFlush(
@@ -393,52 +380,9 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
     return successfulMutations;
   }
 
-  protected final void saveExceptionToBeThrown(RetriesExhaustedWithDetailsException exception) {
-    this.failedMutationsExceptions.add(exception);
-  }
-
-  protected final RetriesExhaustedWithDetailsException getFailedMutationsExceptions() {
-    List<RetriesExhaustedWithDetailsException> exceptions =
-        this.failedMutationsExceptions.getAndClear();
-    if (exceptions == null) {
-      return null;
-    }
-
-    List<Row> rows = new ArrayList<>();
-    List<Throwable> causes = new ArrayList<>();
-    List<String> hostnames = new ArrayList<>();
-
-    for (RetriesExhaustedWithDetailsException e : exceptions) {
-      for (int i = 0; i < e.getNumExceptions(); i++) {
-        rows.add(e.getRow(i));
-        causes.add(e.getCause(i));
-        hostnames.add(e.getHostnamePort(i));
-      }
-    }
-    return new RetriesExhaustedWithDetailsException(causes, rows, hostnames);
-  }
-
-  private void saveOperationException(Throwable throwable) {
-    failedOperationsExceptions.add(throwable);
-  }
-
-  private void throwFailedMutationExceptionIfAvailable() throws IOException {
-    Throwable operationException = this.failedOperationsExceptions.poll();
-    if (operationException != null) {
-      if (operationException instanceof IOException) {
-        throw (IOException) operationException;
-      }
-      throw new IOException(operationException);
-    }
-  }
-
-  private void throwExceptionIfAvailable() throws IOException {
-    throwFailedMutationExceptionIfAvailable();
-
-    RetriesExhaustedWithDetailsException e = getFailedMutationsExceptions();
-    if (e != null) {
-      throw e;
-    }
+  @Override
+  protected void throwExceptionIfAvailable() throws IOException {
+    this.exceptionsToBeReportedToTheUser.throwAccumulatedExceptions();
   }
 
   private void reportWriteErrors(RetriesExhaustedWithDetailsException e) {
@@ -454,6 +398,27 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
     try (Scope scope = this.mirroringTracer.spanFactory.writeErrorScope()) {
       this.secondaryWriteErrorConsumer.consume(
           HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST, mutations, cause);
+    }
+  }
+
+  /**
+   * Set of {@link Row} objects that keeps weak references to them for faster comparision. It is
+   * threadsafe.
+   *
+   * <p>Underlying map uses {@code WeakReferences<Row>} as keys and compares their content using
+   * {@code ==} instead of {@code equals}. This is faster than comparing Rows using {@code equals}
+   * and is safe, because we always check if a specific {@link Row} object has failed.
+   */
+  static class ConcurrentRowSetWithWeakKeys {
+    private final Set<Row> set =
+        Collections.newSetFromMap((new MapMaker()).weakKeys().<Row, Boolean>makeMap());
+
+    public void add(Row entry) {
+      set.add(entry);
+    }
+
+    public boolean remove(Row entry) {
+      return set.remove(entry);
     }
   }
 
@@ -476,24 +441,87 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
   }
 
   /**
-   * Wraps a list of {@link RetriesExhaustedWithDetailsException} to be rethrown to the user.
+   * Stores exceptions thrown by asynchronous primary mutations that should be reported to the user.
+   *
+   * <p>{@link RetriesExhaustedWithDetailsException} are handled separately because multiple such
+   * exceptions can be combined into a single exception and throw to the user only once.
    *
    * <p>Thread-safe.
    */
-  private static class ExceptionBuffer {
-    private List<RetriesExhaustedWithDetailsException> list = new ArrayList<>();
+  private static class UserExceptionsBuffer {
+    private final Object retriesExhaustedWithDetailsExceptionListLock = new Object();
+    /** Thread-safe. */
+    private final ConcurrentLinkedQueue<Throwable> otherExceptionsList =
+        new ConcurrentLinkedQueue<>();
+    /** Locked by {@link #retriesExhaustedWithDetailsExceptionListLock} */
+    private List<RetriesExhaustedWithDetailsException> retriesExhaustedWithDetailsExceptionList =
+        new ArrayList<>();
 
-    public synchronized void add(RetriesExhaustedWithDetailsException e) {
-      list.add(e);
+    private static RetriesExhaustedWithDetailsException mergeRetiresExhaustedExceptions(
+        List<RetriesExhaustedWithDetailsException> exceptions) {
+      List<Row> rows = new ArrayList<>();
+      List<Throwable> causes = new ArrayList<>();
+      List<String> hostnames = new ArrayList<>();
+
+      for (RetriesExhaustedWithDetailsException e : exceptions) {
+        for (int i = 0; i < e.getNumExceptions(); i++) {
+          rows.add(e.getRow(i));
+          causes.add(e.getCause(i));
+          hostnames.add(e.getHostnamePort(i));
+        }
+      }
+      return new RetriesExhaustedWithDetailsException(causes, rows, hostnames);
     }
 
-    public synchronized List<RetriesExhaustedWithDetailsException> getAndClear() {
-      if (this.list.isEmpty()) {
+    public void addRetriesExhaustedException(RetriesExhaustedWithDetailsException e) {
+      synchronized (this.retriesExhaustedWithDetailsExceptionListLock) {
+        this.retriesExhaustedWithDetailsExceptionList.add(e);
+      }
+    }
+
+    public void addThrowable(Throwable e) {
+      this.otherExceptionsList.add(e);
+    }
+
+    /**
+     * This method first throws oldest non-{@link RetriesExhaustedWithDetailsException} exception.
+     * If there is no such exception, then all {@link RetriesExhaustedWithDetailsException} are
+     * accumulated and thrown at once. If no exceptions were accumulated then nothing is thrown.
+     */
+    public void throwAccumulatedExceptions() throws IOException {
+      IOException exception = getOldestIOException();
+      if (exception != null) {
+        throw exception;
+      }
+
+      RetriesExhaustedWithDetailsException e = getMergedRetiresExhaustedExceptions();
+      if (e != null) {
+        throw e;
+      }
+    }
+
+    private IOException getOldestIOException() {
+      Throwable operationException = this.otherExceptionsList.poll();
+      if (operationException == null) {
         return null;
       }
-      List<RetriesExhaustedWithDetailsException> returnValue = this.list;
-      this.list = new ArrayList<>();
-      return returnValue;
+      if (operationException instanceof IOException) {
+        return (IOException) operationException;
+      }
+      return new IOException(operationException);
+    }
+
+    private RetriesExhaustedWithDetailsException getMergedRetiresExhaustedExceptions() {
+      List<RetriesExhaustedWithDetailsException> exceptions;
+      synchronized (this.retriesExhaustedWithDetailsExceptionListLock) {
+        if (this.retriesExhaustedWithDetailsExceptionList.isEmpty()) {
+          return null;
+        }
+        exceptions = this.retriesExhaustedWithDetailsExceptionList;
+        this.retriesExhaustedWithDetailsExceptionList = new ArrayList<>();
+      }
+
+      return mergeRetiresExhaustedExceptions(exceptions);
     }
   }
 }
