@@ -46,18 +46,18 @@ which makes it easy for development teams to get started.
   <dependency>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>2.0.1-beta4</version>
+    <version>2.0.0-beta5</version>
   </dependency>
   ```
 
   Gradle:
   ```Groovy
-  compile 'com.google.cloud.bigtable:bigtable-hbase-1.x:2.0.1-beta4'
+  compile 'com.google.cloud.bigtable:bigtable-hbase-1.x:2.0.0-beta5'
   ```
 
   SBT:
   ```Scala
-  libraryDependencies += "com.google.cloud.bigtable" % "bigtable-hbase-1.x" % "2.0.1-beta4"
+  libraryDependencies += "com.google.cloud.bigtable" % "bigtable-hbase-1.x" % "2.0.0-beta5"
   ```
 [//]: # ({x-version-update-end})
 
@@ -84,7 +84,7 @@ If you are _not_ using the shaded Bigtable HBase Client artifact, you need to de
 <dependency>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>2.0.1-beta4</version>
+    <version>2.0.0-beta5</version>
 </dependency>
 ```
 [//]: # ({x-version-update-end})
@@ -199,7 +199,7 @@ If you are _not_ using the shaded Bigtable HBase Client artifact, you need to de
 <dependency>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>2.0.1-beta4</version>
+    <version>2.0.0-beta5</version>
 </dependency>
 ```
 [//]: # ({x-version-update-end})
