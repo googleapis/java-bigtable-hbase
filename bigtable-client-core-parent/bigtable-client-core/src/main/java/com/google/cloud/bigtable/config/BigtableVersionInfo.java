@@ -31,7 +31,7 @@ public class BigtableVersionInfo {
   private static final AtomicBoolean wasInitialized = new AtomicBoolean(false);
 
   // {x-version-update-start:bigtable-client-parent:current}
-  public static final String CLIENT_VERSION = "1.26.1";
+  public static final String CLIENT_VERSION = "1.26.2-SNAPSHOT";
   // {x-version-update-end}
   public static final String JDK_VERSION = getJavaVersion();
 
