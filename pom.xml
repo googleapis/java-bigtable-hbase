@@ -61,6 +61,7 @@ limitations under the License.
     <slf4j.version>1.7.25</slf4j.version>
     <commons-logging.version>1.2</commons-logging.version>
     <jsr305.version>3.0.2</jsr305.version>
+    <log4j2.version>2.16.0</log4j2.version>
 
     <!-- hbase dependency versions -->
     <hbase.version.1>1.4.12</hbase.version.1>
@@ -241,6 +242,28 @@ limitations under the License.
         <configuration>
           <ignoreNonCompile>true</ignoreNonCompile>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>enforce-banned-deps</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <!-- ban all log4j 2.x deps with CVEs -->
+                <bannedDependencies>
+                  <excludes>
+                    <exclude>org.apache.logging.log4j:*:[2.0-alpha1,2.15.0]</exclude>
+                  </excludes>
+                </bannedDependencies>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
