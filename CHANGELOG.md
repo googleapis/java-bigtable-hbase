@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.0-beta5](https://www.github.com/googleapis/java-bigtable-hbase/compare/v2.0.0-beta4...v2.0.0-beta5) (2021-12-15)
+
+**Note: This beta release is a work-in-progress. For the latest stable release of java-bigtable-hbase, please refer to version [1.26.1](https://github.com/googleapis/java-bigtable-hbase/releases/tag/v1.26.1).**
+
+### Dependencies
+
+* remove explicit log4j2 deps on beam artifacts as they are no longer brought in transitively ([#3394](https://www.github.com/googleapis/java-bigtable-hbase/issues/3394)) ([2dafd59](https://www.github.com/googleapis/java-bigtable-hbase/commit/2dafd599754d1c10bf03f7986da2de34fae4adf1))
+
 ## [2.0.0-beta4](https://www.github.com/googleapis/java-bigtable-hbase/compare/v2.0.0-beta3...v2.0.0-beta4) (2021-12-14)
 
 
