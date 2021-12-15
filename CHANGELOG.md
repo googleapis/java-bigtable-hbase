@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.25.2-sp.2](https://www.github.com/googleapis/java-bigtable-hbase/compare/1.25.2-sp.1...v1.25.2-sp.2) (2021-12-15)
+
+
+### Bug Fixes
+
+* use 2.16.0 log4j version and ban all 2.x versions which are < 2.16.0 ([#3383](https://www.github.com/googleapis/java-bigtable-hbase/issues/3383)) ([cb1e3d2](https://www.github.com/googleapis/java-bigtable-hbase/commit/cb1e3d20180faf88cbb15e055139179bb7c919de))
+
 ### [1.25.1-sp.1](https://www.github.com/googleapis/java-bigtable-hbase/compare/1.25.1...v1.25.1-sp.1) (2021-10-26)
 
 
