@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 import org.apache.hadoop.hbase.wal.WAL;
@@ -27,14 +28,14 @@ public abstract class IncompatibleMutationAdapter {
   private final Configuration conf;
   private final MetricsSource metricSource;
 
-  private static final String INCOMPATIBLE_MUTATION_METRIC_KEY = "bigtableIncompatibleMutations";
-  private static final String DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY = "bigtableDroppedIncompatibleMutations";
+  public static final String INCOMPATIBLE_MUTATION_METRIC_KEY = "bigtableIncompatibleMutations";
+  public static final String DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY = "bigtableDroppedIncompatibleMutations";
 
-  protected void incrementDroppedIncompatibleMutations() {
+  private void incrementDroppedIncompatibleMutations() {
     metricSource.incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
   }
 
-  protected void incrementIncompatibleMutations() {
+  private void incrementIncompatibleMutations() {
     metricSource.incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
   }
 
@@ -42,7 +43,9 @@ public abstract class IncompatibleMutationAdapter {
    * Creates an IncompatibleMutationAdapter with HBase configuration, MetricSource, and CBT Table.
    *
    * All subclasses must expose this constructor.
-   * @param conf HBase configuration. All the configurations required by subclases should come from here.
+   *
+   * @param conf HBase configuration. All the configurations required by subclases should come from
+   * here.
    * @param metricsSource Hadoop metric source exposed by HBase Replication Endpoint.
    * @param destinationTable CBT table taht is destination of the replicated edits. This reference
    * help the subclasses to query destination table for certain incompatible mutation.
@@ -52,11 +55,18 @@ public abstract class IncompatibleMutationAdapter {
     this.conf = conf;
     this.destinationTable = destinationTable;
     this.metricSource = metricsSource;
-    LOG.warn("Setting up metrics with context: " + metricSource.getMetricsContext() + " " +
-        metricsSource.getMetricsJmxContext());
     // Make sure that the counters show up.
     metricsSource.incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     metricsSource.incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+  }
+
+  private boolean isValidDelete(Cell delete) {
+    try {
+      DeleteAdapter.isValid(delete);
+      return true;
+    } catch (UnsupportedOperationException e) {
+      return false;
+    }
   }
 
   /**
@@ -66,18 +76,24 @@ public abstract class IncompatibleMutationAdapter {
    * <p>This method should never throw permanent exceptions.
    */
   public final List<Cell> adaptIncompatibleMutations(WAL.Entry walEntry) {
-    List<Cell> returnedCells = new ArrayList<>(walEntry.getEdit().size());
+    List<Cell> cellsToAdapt = walEntry.getEdit().getCells();
+    List<Cell> returnedCells = new ArrayList<>(cellsToAdapt.size());
     int index = 0;
-    for (Cell cell : walEntry.getEdit().getCells()) {
-      try {
-        // Validate the delete is compatible. All PUTs are compatible.
-        if (CellUtil.isDelete(cell)) {
-          DeleteAdapter.isValid(cell);
-        }
-        // Nothing to do, add valid cells as is.
+    for (Cell cell : cellsToAdapt) {
+      // All puts are valid.
+      if (cell.getTypeByte() == KeyValue.Type.Put.getCode()) {
         returnedCells.add(cell);
-      } catch (UnsupportedOperationException e) {
-        // TODO maybe find a better way than nested try catch.
+        continue;
+      }
+
+      // Validate the delete is compatible.
+      if (CellUtil.isDelete(cell)) {
+        if (isValidDelete(cell)) {
+          returnedCells.add(cell);
+          continue;
+        }
+
+        // Try to adapt the incompatible delete
         try {
           LOG.debug("Encountered incompatible mutation: " + cell);
           incrementIncompatibleMutations();
@@ -85,16 +101,24 @@ public abstract class IncompatibleMutationAdapter {
         } catch (UnsupportedOperationException use) {
           // Drop the mutation, not dropping it will lead to stalling of replication.
           incrementDroppedIncompatibleMutations();
-          LOG.warn("DROPPING INCOMPATIBLE MUTATION: " + cell);
+          LOG.error("DROPPING INCOMPATIBLE MUTATION: " + cell);
         }
+        continue;
       }
+
+      // Replication should only produce PUT and Delete mutation. Appends/Increments are converted
+      // to PUTs. Log the unexpected mutation and drop it as we don't know what CBT client will do.
+      LOG.error("DROPPING UNEXPECTED TYPE OF MUTATION : " + cell);
+      incrementIncompatibleMutations();
+      incrementDroppedIncompatibleMutations();
+
       index++;
     }
     return returnedCells;
   }
 
   /**
-   * Adapts an incompatible mutation into a compatible mutation. Throws {@link
+   * Adapts an incompatible mutation into a compatible mutation. Must throws {@link
    * UnsupportedOperationException} if it can't adapt the mutation.
    *
    * @param walEntry the WAL entry for the cell to Adapt. The wal entry provides context around the

@@ -19,7 +19,18 @@ import org.apache.hadoop.hbase.wal.WAL;
  */
 public class ApproximatingIncompatibleMutationAdapter extends IncompatibleMutationAdapter {
   // TODO rename
-  private static final String DELETE_FAMILY_WRITE_THRESHOLD_KEY = "google.bigtable.deletefamily.threshold";
+  /**
+   * Threshold to consider the deleteFamilyBefore as a DeleteFamily mutation. When DeleteFamily or
+   * HBase translates a DeleteFamily or DeleteRow to DeleteFamilyBeforeTimestamp(now). This is then
+   * written to WAL. For local clusters, the WALKey.writeTime() is same as "now" from the
+   * DeleteFamilyBeforeTimestamp mutation. However, if the mutation was generated from a different
+   * cluster, the WALKey.writeTime and timestamp in DeleteFamilyBeforeTimestamp will have diff of
+   * ReplicationLag. Users can set this config to Max(ReplicationLag) to make sure that all the
+   * deleteRow/DeleteColumnFamily are correctly interpreted. If you only issue DeleteFamily or
+   * DeleteRow mutations, you can set this to Integer.MAX_VALUE. This will lead to any
+   * DeleteFamilyBeforeTimestamp where (timestamp < walkey.writeTime()) as DeleteFamily.
+   */
+  public static final String DELETE_FAMILY_WRITE_THRESHOLD_KEY = "google.bigtable.deletefamily.threshold";
   private static final int DEFAULT_DELETE_FAMILY_WRITE_THRESHOLD_IN_MILLIS = 100;
 
   private final int deleteFamilyWriteTimeThreshold;
@@ -33,15 +44,19 @@ public class ApproximatingIncompatibleMutationAdapter extends IncompatibleMutati
 
   @Override
   protected List<Cell> adaptIncompatibleMutation(WAL.Entry walEntry, int index) {
+    long walWriteTime = walEntry.getKey().getWriteTime();
     Cell cell = walEntry.getEdit().getCells().get(index);
     if (CellUtil.isDeleteFamily(cell)) {
       // TODO Check if its epoch is millis or micros
-      if (walEntry.getKey().getWriteTime() >= cell.getTimestamp() &&
-          cell.getTimestamp() + deleteFamilyWriteTimeThreshold > walEntry.getKey().getWriteTime()) {
+      // deleteFamily is auto translated to DeleteFamilyBeforeTimestamp(NOW). the WAL write happens
+      // later. So walkey.writeTime() should be >= NOW.
+      if (walWriteTime >= cell.getTimestamp() &&
+          cell.getTimestamp() + deleteFamilyWriteTimeThreshold >= walWriteTime) {
         return Arrays.asList(
             new KeyValue(CellUtil.cloneRow(cell), CellUtil.cloneFamily(cell), (byte[]) null,
                 LATEST_TIMESTAMP, KeyValue.Type.DeleteFamily));
       }
+      // else can't convert the mutation, throw the exception.
     }
     // Can't convert any other type of mutation.
     throw new UnsupportedOperationException("Unsupported deletes: " + cell);
