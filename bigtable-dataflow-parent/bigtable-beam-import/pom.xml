@@ -169,6 +169,11 @@ limitations under the License.
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <version>${log4j2.version}</version>
+    </dependency>
     <!-- https://mvnrepository.com/artifact/com.google.cloud.bigdataoss/gcs-connector -->
     <dependency>
       <groupId>com.google.cloud.bigdataoss</groupId>
@@ -398,6 +403,10 @@ limitations under the License.
             <usedDependency>org.apache.beam:beam-runners-direct-java
             </usedDependency>
           </usedDependencies>
+          <ignoredUnusedDeclaredDependencies>
+            <!-- log4j-api dependency is added to enforce log4j versions with CVE fixes -->
+            <ignoredUnusedDeclaredDependency>org.apache.logging.log4j:log4j-api</ignoredUnusedDeclaredDependency>
+          </ignoredUnusedDeclaredDependencies>
         </configuration>
       </plugin>
 
