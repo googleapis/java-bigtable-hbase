@@ -7,6 +7,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 import org.apache.hadoop.hbase.wal.WAL;
@@ -23,8 +24,10 @@ import org.slf4j.LoggerFactory;
 public abstract class IncompatibleMutationAdapter {
 
   private static final Logger LOG = LoggerFactory.getLogger(IncompatibleMutationAdapter.class);
-  // Destination table for the adapted mutations.
-  private final Table destinationTable;
+  // Connection to CBT. This can be used by child classes to fetch current state of row from CBT.
+  // For example: DeleteFamilyVersion can be implemented by fetching all the cells for the version
+  // (using this connection) and then deleting them.
+  private final Connection connection;
   private final Configuration conf;
   private final MetricsSource metricSource;
 
@@ -40,20 +43,20 @@ public abstract class IncompatibleMutationAdapter {
   }
 
   /**
-   * Creates an IncompatibleMutationAdapter with HBase configuration, MetricSource, and CBT Table.
+   * Creates an IncompatibleMutationAdapter with HBase configuration, MetricSource, and CBT connection.
    *
    * All subclasses must expose this constructor.
    *
    * @param conf HBase configuration. All the configurations required by subclases should come from
    * here.
    * @param metricsSource Hadoop metric source exposed by HBase Replication Endpoint.
-   * @param destinationTable CBT table taht is destination of the replicated edits. This reference
+   * @param connection Connection to destination CBT cluster. This reference
    * help the subclasses to query destination table for certain incompatible mutation.
    */
   public IncompatibleMutationAdapter(Configuration conf, MetricsSource metricsSource,
-      Table destinationTable) {
+      Connection connection) {
     this.conf = conf;
-    this.destinationTable = destinationTable;
+    this.connection = connection;
     this.metricSource = metricsSource;
     // Make sure that the counters show up.
     metricsSource.incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
@@ -78,22 +81,23 @@ public abstract class IncompatibleMutationAdapter {
   public final List<Cell> adaptIncompatibleMutations(WAL.Entry walEntry) {
     List<Cell> cellsToAdapt = walEntry.getEdit().getCells();
     List<Cell> returnedCells = new ArrayList<>(cellsToAdapt.size());
-    int index = 0;
-    for (Cell cell : cellsToAdapt) {
+    for (int index = 0; index < cellsToAdapt.size(); index++) {
+      Cell cell = cellsToAdapt.get(index);
       // All puts are valid.
       if (cell.getTypeByte() == KeyValue.Type.Put.getCode()) {
         returnedCells.add(cell);
         continue;
       }
 
-      // Validate the delete is compatible.
       if (CellUtil.isDelete(cell)) {
+
+        // Compatible delete
         if (isValidDelete(cell)) {
           returnedCells.add(cell);
           continue;
         }
 
-        // Try to adapt the incompatible delete
+        // Incompatible delete: Adapt it.
         try {
           LOG.debug("Encountered incompatible mutation: " + cell);
           incrementIncompatibleMutations();
@@ -111,8 +115,6 @@ public abstract class IncompatibleMutationAdapter {
       LOG.error("DROPPING UNEXPECTED TYPE OF MUTATION : " + cell);
       incrementIncompatibleMutations();
       incrementDroppedIncompatibleMutations();
-
-      index++;
     }
     return returnedCells;
   }

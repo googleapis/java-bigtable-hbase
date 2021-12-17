@@ -16,7 +16,7 @@ import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 import org.apache.hadoop.hbase.wal.WAL;
@@ -53,17 +53,15 @@ public class IncompatibleMutationAdapterTest {
      * Table.
      *
      * All subclasses must expose this constructor.
-     *
-     * @param conf HBase configuration. All the configurations required by subclases should come
+     *  @param conf HBase configuration. All the configurations required by subclases should come
      * from here.
      * @param metricsSource Hadoop metric source exposed by HBase Replication Endpoint.
-     * @param destinationTable CBT table taht is destination of the replicated edits. This
-     * reference
+     * @param connection CBT table taht is destination of the replicated edits. This
      */
     public TestIncompatibleMutationAdapter(Configuration conf,
         MetricsSource metricsSource,
-        Table destinationTable) {
-      super(conf, metricsSource, destinationTable);
+        Connection connection) {
+      super(conf, metricsSource, connection);
     }
 
     @Override
@@ -95,7 +93,7 @@ public class IncompatibleMutationAdapterTest {
   Configuration conf;
 
   @Mock
-  Table table;
+  Connection connection;
 
   @Mock
   MetricsSource metricsSource;
@@ -108,23 +106,26 @@ public class IncompatibleMutationAdapterTest {
 
   @Before
   public void setUp() throws Exception {
-    incompatibleMutationAdapter = new TestIncompatibleMutationAdapter(conf, metricsSource, table);
+    incompatibleMutationAdapter = new TestIncompatibleMutationAdapter(conf, metricsSource,
+        connection);
   }
 
   @After
   public void tearDown() throws Exception {
-    verifyNoInteractions(table, conf);
-    reset(mockWalEntry, conf, table, metricsSource);
+    verifyNoInteractions(connection, conf);
+    reset(mockWalEntry, conf, connection, metricsSource);
     incompatibleMutationAdapter.reset();
   }
 
   @Test
-  public void testPutIsNotChanged() {
+  public void testCompatibleMutationsAreNotChanged() {
     WALEdit walEdit = new WALEdit();
     Cell put = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.Put, val);
     Cell put2 = new KeyValue(rowKey, cf, qual, 10, KeyValue.Type.Put, val);
+    Cell compatibleDelete = new KeyValue(rowKey, cf, qual, 10, KeyValue.Type.Delete);
     walEdit.add(put);
     walEdit.add(put2);
+    walEdit.add(compatibleDelete);
     when(mockWalEntry.getEdit()).thenReturn(walEdit);
 
     Assert.assertEquals(walEdit.getCells(),
@@ -142,13 +143,13 @@ public class IncompatibleMutationAdapterTest {
     WALEdit walEdit = new WALEdit();
     Cell delete = new KeyValue(rowKey, cf, null, 0, KeyValue.Type.DeleteFamilyVersion);
     Cell put = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.Put, val);
-    walEdit.add(delete);
     walEdit.add(put);
+    walEdit.add(delete);
     when(mockWalEntry.getEdit()).thenReturn(walEdit);
     Cell expectedDelete = new KeyValue(rowKey, cf, null, 0, KeyValue.Type.DeleteFamily);
-    incompatibleMutationAdapter.adaptedEntryMap.put(0, Arrays.asList(expectedDelete));
+    incompatibleMutationAdapter.adaptedEntryMap.put(1, Arrays.asList(expectedDelete));
 
-    Assert.assertEquals(Arrays.asList(expectedDelete, put),
+    Assert.assertEquals(Arrays.asList(put, expectedDelete),
         incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
 
     verify(mockWalEntry).getEdit();
@@ -211,12 +212,12 @@ public class IncompatibleMutationAdapterTest {
   @Test
   public void testIncompatibleDeletesAreDropped() {
     WALEdit walEdit = new WALEdit();
-    Cell incompatible = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.DeleteFamilyVersion);
     Cell put = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.Put, val);
-    walEdit.add(incompatible);
+    Cell incompatible = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.DeleteFamilyVersion);
     walEdit.add(put);
+    walEdit.add(incompatible);
     when(mockWalEntry.getEdit()).thenReturn(walEdit);
-    incompatibleMutationAdapter.incompatibleMutations.add(0);
+    incompatibleMutationAdapter.incompatibleMutations.add(1);
 
     Assert.assertEquals(Arrays.asList(put),
         incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));

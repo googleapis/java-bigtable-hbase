@@ -160,7 +160,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
   public void testMutationReplication() throws IOException, InterruptedException {
     Table table = hbaseTestingUtil.getConnection().getTable(TABLE_NAME);
     // Add 10 rows with 1 cell/family
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 10000; i++) {
       Put put = new Put(getRowKey(i));
       put.addColumn(CF1, COL_QUALIFIER, 0, getValue(i));
       put.addColumn(CF2, COL_QUALIFIER, 0, getValue(i));
@@ -308,8 +308,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     Thread.sleep(2000);
     //   Waiter.waitFor(CONF, 60000, () -> TestEndpoint.getEntries().size() >= cellNum);
 
-    TestUtils.assertTableEquals(cbtTable, hbaseTable);
-    TestUtils.assertTableEquals(cbtTable2, hbaseTable2);
+    TestUtils.assertTableEquals(hbaseTable, cbtTable);
+    TestUtils.assertTableEquals(hbaseTable2, cbtTable2);
   }
 
   @Test
@@ -338,11 +338,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     List<Cell> actualCells = cbtTable.get(new Get(ROW_KEY).setMaxVersions()).listCells();
     Assert.assertEquals(
         "Number of cells mismatched, actual cells: " + actualCells, 2, actualCells.size());
-    // Cells are received in reversed chronological order
-    TestUtils.assertEquals(
-        "Qualifiers mismatch", COL_QUALIFIER, CellUtil.cloneQualifier(actualCells.get(0)));
-    TestUtils.assertEquals("Value mismatch", getValue(1), CellUtil.cloneValue(actualCells.get(0)));
-    Assert.assertEquals(1, actualCells.get(0).getTimestamp());
 
     TestUtils.assertEquals(
         "Qualifiers mismatch", COL_QUALIFIER, CellUtil.cloneQualifier(actualCells.get(1)));

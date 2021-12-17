@@ -8,9 +8,11 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 import org.apache.hadoop.hbase.wal.WAL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Approximates the incompatible mutations to nearest compatible mutations when possible.
@@ -31,12 +33,16 @@ public class ApproximatingIncompatibleMutationAdapter extends IncompatibleMutati
    * DeleteFamilyBeforeTimestamp where (timestamp < walkey.writeTime()) as DeleteFamily.
    */
   public static final String DELETE_FAMILY_WRITE_THRESHOLD_KEY = "google.bigtable.deletefamily.threshold";
-  private static final int DEFAULT_DELETE_FAMILY_WRITE_THRESHOLD_IN_MILLIS = 100;
+  private static final int DEFAULT_DELETE_FAMILY_WRITE_THRESHOLD_IN_MILLIS = 5 * 1000;
+
+  private static final Logger LOG = LoggerFactory.getLogger(
+      ApproximatingIncompatibleMutationAdapter.class);
 
   private final int deleteFamilyWriteTimeThreshold;
 
-  public ApproximatingIncompatibleMutationAdapter(Configuration conf, MetricsSource metricsSource, Table table) {
-    super(conf, metricsSource, table);
+  public ApproximatingIncompatibleMutationAdapter(Configuration conf, MetricsSource metricsSource,
+      Connection connection) {
+    super(conf, metricsSource, connection);
 
     deleteFamilyWriteTimeThreshold = conf.getInt(DELETE_FAMILY_WRITE_THRESHOLD_KEY,
         DEFAULT_DELETE_FAMILY_WRITE_THRESHOLD_IN_MILLIS);
@@ -55,6 +61,10 @@ public class ApproximatingIncompatibleMutationAdapter extends IncompatibleMutati
         return Arrays.asList(
             new KeyValue(CellUtil.cloneRow(cell), CellUtil.cloneFamily(cell), (byte[]) null,
                 LATEST_TIMESTAMP, KeyValue.Type.DeleteFamily));
+      } else {
+        LOG.error("DROPPING ENTRY: cell time: " + cell.getTypeByte() + " walTime: " + walWriteTime +
+            " DELTA: " + (walWriteTime - cell.getTimestamp() + " With threshold "
+            + deleteFamilyWriteTimeThreshold));
       }
       // else can't convert the mutation, throw the exception.
     }

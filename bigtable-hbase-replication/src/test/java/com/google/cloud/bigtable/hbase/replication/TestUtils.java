@@ -73,7 +73,7 @@ public class TestUtils {
       // Check size mismatch
       if (!actualIterator.hasNext()) {
         Assert.fail(
-            "Expected less rows. Extra results starting at "
+            "Expected more rows. CBT missing results starting at "
                 + Bytes.toStringBinary(expectedIterator.next().getRow()));
       }
 
@@ -83,7 +83,7 @@ public class TestUtils {
     // Verify that actual has no more data left
     if (actualIterator.hasNext()) {
       Assert.fail(
-          "Expected more rows, missing rows starting from "
+          "Expected less rows, extra results in CBT starting from "
               + actualIterator.next().toString());
     }
   }

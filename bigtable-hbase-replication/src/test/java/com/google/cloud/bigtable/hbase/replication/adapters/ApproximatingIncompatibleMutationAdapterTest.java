@@ -25,6 +25,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
@@ -56,7 +57,7 @@ public class ApproximatingIncompatibleMutationAdapterTest {
   Configuration conf;
 
   @Mock
-  Table table;
+  Connection connection;
 
   @Mock
   MetricsSource metricsSource;
@@ -72,7 +73,7 @@ public class ApproximatingIncompatibleMutationAdapterTest {
     when(conf.getInt(anyString(), anyInt())).thenReturn(10);
     when(mockWalEntry.getKey()).thenReturn(walKey);
     // Expectations on Conf should be set before this point.
-    incompatibleMutationAdapter = new ApproximatingIncompatibleMutationAdapter(conf, metricsSource, table);
+    incompatibleMutationAdapter = new ApproximatingIncompatibleMutationAdapter(conf, metricsSource, connection);
   }
 
   @After
@@ -80,8 +81,8 @@ public class ApproximatingIncompatibleMutationAdapterTest {
     verify(mockWalEntry, atLeast(2)).getEdit();
     verify(mockWalEntry, atLeastOnce()).getKey();
     verify(conf, atLeastOnce()).getInt(eq(DELETE_FAMILY_WRITE_THRESHOLD_KEY), anyInt());
-    verifyNoInteractions(table);
-    reset(mockWalEntry, conf, table, metricsSource);
+    verifyNoInteractions(connection);
+    reset(mockWalEntry, conf, connection, metricsSource);
   }
 
  @Test
@@ -89,12 +90,12 @@ public class ApproximatingIncompatibleMutationAdapterTest {
     WALEdit walEdit = new WALEdit();
     Cell delete = new KeyValue(rowKey, cf, null, 1000, KeyValue.Type.DeleteFamily);
     Cell put = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.Put, val);
-    walEdit.add(delete);
     walEdit.add(put);
+    walEdit.add(delete);
     when(mockWalEntry.getEdit()).thenReturn(walEdit);
     Cell expectedDelete = new KeyValue(rowKey, cf, null, LATEST_TIMESTAMP, KeyValue.Type.DeleteFamily);
 
-    Assert.assertEquals(Arrays.asList(expectedDelete, put),
+    Assert.assertEquals(Arrays.asList(put, expectedDelete),
         incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
 
     verify(metricsSource).incCounters(
