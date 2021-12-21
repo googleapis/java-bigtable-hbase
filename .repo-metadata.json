@@ -10,5 +10,6 @@
   "repo_short": "java-bigtable-hbase",
   "distribution_name": "com.google.cloud.bigtable:bigtable-client-parent",
   "api_id": "bigtable.googleapis.com",
+  "library_type": "OTHER",
   "codeowner_team": "@googleapis/api-bigtable"
 }
