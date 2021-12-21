@@ -145,7 +145,7 @@ limitations under the License.
     <dependency>
       <groupId>net.bytebuddy</groupId>
       <artifactId>byte-buddy</artifactId>
-      <version>1.12.2</version>
+      <version>1.12.6</version>
     </dependency>
 
     <!-- Test dependencies-->
