@@ -47,8 +47,8 @@ import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A utility to create tables in Cloud Bigtable based on the tables in an HBase cluster.
@@ -101,7 +101,7 @@ public class HBaseSchemaTranslator {
   public static final String TABLE_NAME_FILTER_KEY = "google.bigtable.table.filter";
   public static final String SCHEMA_MAPPING_FILEPATH = "google.bigtable.schema.mapping.filepath";
 
-  private static final Logger LOG = LogManager.getLogger(HBaseSchemaTranslator.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseSchemaTranslator.class);
 
   private final SchemaReader schemaReader;
   private final SchemaTransformer schemaTransformer;
