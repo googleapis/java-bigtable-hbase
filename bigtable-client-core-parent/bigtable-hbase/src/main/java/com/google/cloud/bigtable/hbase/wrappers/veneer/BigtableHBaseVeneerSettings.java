@@ -44,7 +44,6 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_SE
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_BATCH;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_PLAINTEXT_NEGOTIATION;
-import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_TIMEOUTS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ENABLE_GRPC_RETRIES_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY;
@@ -769,7 +768,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
             DEFAULT_TIMEOUTS.bulkMutateTimeouts.responseTimeout,
             extractDuration(BIGTABLE_MUTATE_RPC_ATTEMPT_TIMEOUT_MS_KEY)
                 .or(DEFAULT_TIMEOUTS.bulkMutateTimeouts.attemptTimeout),
-            extractOverallTimeout(
+            extractDuration(
                     BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY,
                     BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY)
                 .or(defaultBatchMutateOverallTimeout));
@@ -778,8 +777,9 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
         new OperationTimeouts(
             extractDuration(READ_PARTIAL_ROW_TIMEOUT_MS)
                 .or(DEFAULT_TIMEOUTS.scanTimeouts.responseTimeout),
-            extractScanAttemptTimeout().or(DEFAULT_TIMEOUTS.scanTimeouts.attemptTimeout),
-            extractOverallTimeout(
+            extractDuration(BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY)
+                .or(DEFAULT_TIMEOUTS.scanTimeouts.attemptTimeout),
+            extractDuration(
                     BIGTABLE_READ_RPC_TIMEOUT_MS_KEY,
                     BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY)
                 .or(DEFAULT_TIMEOUTS.scanTimeouts.operationTimeout));
@@ -793,21 +793,6 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
                 .or(DEFAULT_TIMEOUTS.unaryTimeouts.operationTimeout));
 
     return new ClientOperationTimeouts(unaryTimeouts, scanTimeouts, bulkMutateTimeouts);
-  }
-
-  private Optional<Duration> extractScanAttemptTimeout() {
-    if (!configuration.getBoolean(BIGTABLE_USE_TIMEOUTS_KEY, false)) {
-      return Optional.absent();
-    }
-    return extractDuration(BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY);
-  }
-
-  private Optional<Duration> extractOverallTimeout(String... keys) {
-    if (configuration.getBoolean(BIGTABLE_USE_TIMEOUTS_KEY, true)) {
-      return extractDuration(keys);
-    } else {
-      return extractDuration(MAX_ELAPSED_BACKOFF_MILLIS_KEY);
-    }
   }
 
   private Optional<Duration> extractDuration(String... keys) {

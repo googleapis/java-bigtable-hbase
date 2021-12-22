@@ -1,0 +1,282 @@
+package com.google.cloud.bigtable.hbase;
+
+import static com.google.common.truth.Truth.assertThat;
+
+import com.google.api.client.util.Lists;
+import com.google.bigtable.v2.BigtableGrpc;
+import com.google.cloud.bigtable.test.helper.TestServerBuilder;
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.Iterables;
+import io.grpc.Context;
+import io.grpc.Metadata;
+import io.grpc.Server;
+import io.grpc.ServerCall;
+import io.grpc.ServerCallHandler;
+import io.grpc.ServerInterceptor;
+import io.grpc.Status;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import javax.annotation.Nullable;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.mockito.Mockito;
+
+@RunWith(Parameterized.class)
+public class TestRetryBehavior {
+
+  private static final Duration DELAY = Duration.ofMillis(5);
+  private static final Duration ATTEMPT_TIMEOUT = Duration.ofMillis(450);
+  private static final Duration OPERATION_TIMEOUT = Duration.ofSeconds(2);
+  private final TestOp testOp;
+
+  private Server fakeServer;
+
+  private final List<Duration> remainingDurations = Collections.synchronizedList(new ArrayList<>());
+  private final AtomicInteger callCount = new AtomicInteger();
+
+  private final AtomicReference<Consumer<ServerCall<?, ?>>> rpcRunnable =
+      new AtomicReference<>(
+          (ServerCall<?, ?> call) -> call.close(Status.UNIMPLEMENTED, new Metadata()));
+
+  interface TableRunnable {
+    void run(Table table) throws IOException;
+  }
+
+  static class TestOp {
+    private final String name;
+    private final TableRunnable runnable;
+
+    public TestOp(String name, TableRunnable runnable) {
+      this.name = name;
+      this.runnable = runnable;
+    }
+
+    @Override
+    public String toString() {
+      return name;
+    }
+  }
+
+  @Parameterized.Parameters(name = "{0}")
+  public static Object[] getOps() {
+    return new Object[] {
+      new TestOp("single-get", (table) -> table.get(newGet("a"))),
+      new TestOp("single-put", (table) -> table.put(newPut("some-key"))),
+      new TestOp("scan", (table) -> Lists.newArrayList(table.getScanner(new Scan()))),
+      new TestOp("multi-get", (table) -> table.get(Arrays.asList(newGet("a"), newGet("b")))),
+      new TestOp("multi-put", (table) -> table.put(Arrays.asList(newPut("a"), newPut("b"))))
+    };
+  }
+
+  public TestRetryBehavior(TestOp testOp) {
+    this.testOp = testOp;
+  }
+
+  @Before
+  public void setup() throws IOException {
+    fakeServer =
+        TestServerBuilder.newInstance()
+            .intercept(
+                new ServerInterceptor() {
+                  @Override
+                  public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
+                      ServerCall<ReqT, RespT> serverCall,
+                      Metadata metadata,
+                      ServerCallHandler<ReqT, RespT> serverCallHandler) {
+                    callCount.incrementAndGet();
+
+                    // record the deadline
+                    @Nullable
+                    Duration duration =
+                        Optional.ofNullable(Context.current().getDeadline())
+                            .map(d -> Duration.ofMillis(d.timeRemaining(TimeUnit.MILLISECONDS)))
+                            .orElse(null);
+                    remainingDurations.add(duration);
+
+                    // execute test specific callback
+                    rpcRunnable.get().accept(serverCall);
+
+                    // Don't really care about client requests, just blackhole them
+                    // this will prevent any invocations of the stub
+                    @SuppressWarnings("unchecked")
+                    ServerCall.Listener<ReqT> blackhole = Mockito.mock(ServerCall.Listener.class);
+                    return blackhole;
+                  }
+                })
+            .addService(new BigtableGrpc.BigtableImplBase() {})
+            .buildAndStart();
+  }
+
+  @After
+  public void teardown() {
+    fakeServer.shutdownNow();
+  }
+
+  private Configuration createBaseConfig() {
+    Configuration config = BigtableConfiguration.configure("fake-project", "fake-instance");
+    config.set(BigtableOptionsFactory.PROJECT_ID_KEY, "fake-project");
+    config.set(BigtableOptionsFactory.INSTANCE_ID_KEY, "fake-project");
+    config.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
+    config.set(
+        BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + fakeServer.getPort());
+    config.set(BigtableOptionsFactory.ADDITIONAL_RETRY_CODES, "ABORTED");
+
+    config.setLong(BigtableOptionsFactory.INITIAL_ELAPSED_BACKOFF_MILLIS_KEY, DELAY.toMillis());
+
+    setOperationTimeout(config, OPERATION_TIMEOUT);
+    setAttemptTimeout(config, ATTEMPT_TIMEOUT);
+
+    return config;
+  }
+
+  private static void setOperationTimeout(Configuration config, Duration timeout) {
+    config.setLong(BigtableOptionsFactory.BIGTABLE_RPC_TIMEOUT_MS_KEY, timeout.toMillis());
+    config.setLong(BigtableOptionsFactory.BIGTABLE_READ_RPC_TIMEOUT_MS_KEY, timeout.toMillis());
+    config.setLong(BigtableOptionsFactory.BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY, timeout.toMillis());
+  }
+
+  private static void setAttemptTimeout(Configuration config, Duration timeout) {
+    config.setLong(BigtableOptionsFactory.BIGTABLE_RPC_ATTEMPT_TIMEOUT_MS_KEY, timeout.toMillis());
+
+    config.setLong(
+        BigtableOptionsFactory.BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY, timeout.toMillis());
+
+    config.setLong(
+        BigtableOptionsFactory.BIGTABLE_MUTATE_RPC_ATTEMPT_TIMEOUT_MS_KEY, timeout.toMillis());
+  }
+
+  @Test
+  public void testRpcWillRetryOnAbort() throws Exception {
+    rpcRunnable.set((call) -> call.close(Status.ABORTED, new Metadata()));
+
+    try (Connection connection = ConnectionFactory.createConnection(createBaseConfig());
+        Table table = connection.getTable(TableName.valueOf("fake-table"))) {
+
+      Stopwatch stopwatch = Stopwatch.createStarted();
+      // TODO: this should be an IOException, but scanner.next isnt wrapping exceptions properly
+      Exception e = Assert.assertThrows(Exception.class, () -> testOp.runnable.run(table));
+
+      Duration elapsed = stopwatch.elapsed();
+
+      Status status = extractStatus(e);
+      assertThat(status.getCode()).isEqualTo(Status.Code.ABORTED);
+
+      // Server immediately errors out, so exponential backoff will be the bottleneck for retries
+      assertThat(callCount.get()).isAtLeast(6);
+      // Ignoring the first and last attempt, all attempts should be just under attempt timeout
+      assertThat(Collections.min(remainingDurations.subList(1, remainingDurations.size() - 1)))
+          .isAtLeast(ATTEMPT_TIMEOUT.minus(Duration.ofMillis(10)));
+
+      // but should still be limited by the operation timeout with some jitter
+      assertThat(elapsed).isAtMost(OPERATION_TIMEOUT.plus(Duration.ofMillis(100)));
+    }
+  }
+
+  @Test
+  public void testRpcWillRespectAttemptTimeout() throws IOException {
+    rpcRunnable.set(
+        (call) -> {
+          /* hang indefinitely */
+        });
+
+    try (Connection connection = ConnectionFactory.createConnection(createBaseConfig());
+        Table table = connection.getTable(TableName.valueOf("fake-table"))) {
+
+      Stopwatch stopwatch = Stopwatch.createStarted();
+      // TODO: this should be an IOException, but scan doesnt properly wrap it
+      Exception e = Assert.assertThrows(Exception.class, () -> testOp.runnable.run(table));
+
+      Duration elapsed = stopwatch.elapsed();
+
+      Status status = extractStatus(e);
+      assertThat(status.getCode()).isEqualTo(Status.Code.DEADLINE_EXCEEDED);
+
+      // Server will hang for the attempt timeout and the client should retry the attempt
+      // 5 * 450ms attempt timeouts > 2s operation timeout
+      assertThat(callCount.get()).isAtMost(5);
+      // 3 * 450ms attempt timeouts + jitter < 2s operation timeout
+      assertThat(callCount.get()).isAtLeast(3);
+      assertThat(Collections.max(remainingDurations)).isAtMost(ATTEMPT_TIMEOUT);
+
+      // Ignoring the first and last attempt, all attempts should be just under attempt timeout
+      assertThat(Collections.min(remainingDurations.subList(1, remainingDurations.size() - 1)))
+          .isAtLeast(ATTEMPT_TIMEOUT.minus(Duration.ofMillis(10)));
+
+      // Altogether should still be limited by the operation timeout with some jitter
+      assertThat(elapsed).isAtMost(OPERATION_TIMEOUT.plus(Duration.ofMillis(100)));
+    }
+  }
+
+  @Test
+  public void testRpcWillNotRetryOnHangWithoutAttemptTimeout() throws IOException {
+    rpcRunnable.set(
+        (call) -> {
+          /* hang indefinitely */
+        });
+
+    Configuration configuration = createBaseConfig();
+    setAttemptTimeout(configuration, OPERATION_TIMEOUT);
+
+    try (Connection connection = ConnectionFactory.createConnection(configuration);
+        Table table = connection.getTable(TableName.valueOf("fake-table"))) {
+
+      Stopwatch stopwatch = Stopwatch.createStarted();
+      // TODO: this should be an IOException, but scans dont wrap it properly
+      Exception e = Assert.assertThrows(Exception.class, () -> testOp.runnable.run(table));
+
+      Duration elapsed = stopwatch.elapsed();
+
+      Status status = extractStatus(e);
+      assertThat(status.getCode()).isEqualTo(Status.Code.DEADLINE_EXCEEDED);
+
+      // Server will hang for the attempt timeout and the client should retry the attempt
+      assertThat(callCount.get()).isEqualTo(1); // 5 * 450ms attempt timeouts > 2s operation timeout
+      // but should still be limited by the operation timeout with some jitter
+      assertThat(elapsed).isAtMost(OPERATION_TIMEOUT.plus(Duration.ofMillis(100)));
+      assertThat(remainingDurations.get(0)).isGreaterThan(ATTEMPT_TIMEOUT);
+      assertThat(remainingDurations.get(0)).isAtMost(OPERATION_TIMEOUT);
+    }
+  }
+
+  private static Status extractStatus(Throwable t) {
+    // RetriesExhaustedWithDetailsException hides its cause in a list
+    if (t instanceof RetriesExhaustedWithDetailsException) {
+      RetriesExhaustedWithDetailsException rewde = (RetriesExhaustedWithDetailsException) t;
+      if (!rewde.getCauses().isEmpty()) {
+        t = Objects.requireNonNull(Iterables.getLast(rewde.getCauses()));
+      }
+    }
+    return Status.fromThrowable(t);
+  }
+
+  private static Get newGet(String key) {
+    return new Get(key.getBytes());
+  }
+
+  private static Put newPut(String key) {
+    return new Put(key.getBytes()).addColumn("cf".getBytes(), "q".getBytes(), "v".getBytes());
+  }
+}
