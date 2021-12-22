@@ -1,11 +1,15 @@
 package com.google.cloud.bigtable.hbase.replication;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NavigableMap;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
@@ -13,11 +17,14 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 
-/** Utility class containing various helpers for tests. */
+/**
+ * Utility class containing various helpers for tests.
+ */
 public class TestUtils {
 
   // ONLY STATIC METHODS
-  private TestUtils() {}
+  private TestUtils() {
+  }
 
   public static void assertEquals(String message, byte[] expected, byte[] actual) {
     Assert.assertEquals(
@@ -59,7 +66,49 @@ public class TestUtils {
     }
   }
 
-  /** Scans the 2 Tables and compares the data. Fails assertion in case of a mismatch. */
+  public static void assertEquals(Mutation expected, Mutation actual) {
+    assertEquals("Result row keys mismatch", expected.getRow(), actual.getRow());
+
+    // Prevent creating a list every time.
+    NavigableMap<byte[], List<Cell>> expectedFamilyCellMap = expected.getFamilyCellMap();
+    NavigableMap<byte[], List<Cell>> actualFamilyCellMap = actual.getFamilyCellMap();
+
+    Assert.assertEquals(
+        "Mutation family count mismatch for row "
+            + new String(expected.getRow())
+            + "\n \t\texpectedFamilyCellMap: "
+            + expectedFamilyCellMap
+            + "\n \t\tactualFamilyCellMap: "
+            + actualFamilyCellMap,
+        expected.getFamilyCellMap().size(),
+        actual.getFamilyCellMap().size());
+
+    for (byte[] cf : expected.getFamilyCellMap().keySet()) {
+      List<Cell> expectedCells = expectedFamilyCellMap.get(cf);
+      List<Cell> actualCells = actualFamilyCellMap.get(cf);
+
+      assertTrue("Expected cells for family: " + Bytes.toString(cf),
+          actualCells != null && !actualCells.isEmpty());
+
+      Assert.assertEquals(
+          "Mutation cell count mismatch for row "
+              + new String(expected.getRow()) + " family: " + cf
+              + "\n \t\texpected: "
+              + expectedCells
+              + "\n \t\tactual: "
+              + actualCells,
+          expectedCells.size(),
+          actualCells.size());
+
+      for (int i = 0; i < expectedCells.size(); i++) {
+        assertEquals(expectedCells.get(i), actualCells.get(i));
+      }
+    }
+  }
+
+  /**
+   * Scans the 2 Tables and compares the data. Fails assertion in case of a mismatch.
+   */
   public static void assertTableEquals(Table expected, Table actual) throws IOException {
 
     ResultScanner expectedScanner = expected.getScanner(new Scan().setMaxVersions());
@@ -87,4 +136,6 @@ public class TestUtils {
               + actualIterator.next().toString());
     }
   }
+
+
 }
