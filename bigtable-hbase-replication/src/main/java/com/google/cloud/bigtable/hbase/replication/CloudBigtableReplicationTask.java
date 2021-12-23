@@ -1,5 +1,7 @@
 package com.google.cloud.bigtable.hbase.replication;
 
+import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
+import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,9 +24,10 @@ import org.slf4j.LoggerFactory;
 /**
  * Replicates the WAL entries to CBT. Returns true if replication was successful, false otherwise.
  */
+@InternalApi
 public class CloudBigtableReplicationTask implements Callable<Boolean> {
 
-
+  @VisibleForTesting
   interface MutationBuilder {
 
     // TODO: Add mechanism to indicate permanent failures?
@@ -35,6 +38,7 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
     void buildAndUpdateRowMutations(RowMutations rowMutations) throws IOException;
   }
 
+  @VisibleForTesting
   static class PutMutationBuilder implements MutationBuilder {
 
     // TODO make it final
@@ -68,6 +72,7 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
     }
   }
 
+  @VisibleForTesting
   static class DeleteMutationBuilder implements MutationBuilder {
 
     // TODO make it final
@@ -112,7 +117,8 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
     }
   }
 
-  private static class MutationBuilderFactory {
+  @VisibleForTesting
+  static class MutationBuilderFactory {
 
     static MutationBuilder getMutationBuilder(Cell cell) {
       if (cell.getTypeByte() == KeyValue.Type.Put.getCode()) {
@@ -165,25 +171,9 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
       // Build a row mutation per row.
       List<RowMutations> rowMutationsList = new ArrayList<>(cellsToReplicateByRow.size());
       for (Map.Entry<ByteRange, List<Cell>> cellsByRow : cellsToReplicateByRow.entrySet()) {
-        RowMutations rowMutations = new RowMutations(cellsByRow.getKey().deepCopyToNewArray());
-        List<Cell> cellsForRow = cellsByRow.getValue();
-        // TODO Make sure that there are < 100K cells per row Mutation
-
-        MutationBuilder mutationBuilder =
-            MutationBuilderFactory.getMutationBuilder(cellsForRow.get(0));
-        for (Cell cell : cellsForRow) {
-          LOG.error("Replicating cell: " + cell + " with val: " + Bytes.toStringBinary(
-              CellUtil.cloneValue(cell)));
-          if (mutationBuilder.canAcceptMutation(cell)) {
-            mutationBuilder.addMutation(cell);
-          } else {
-            mutationBuilder.buildAndUpdateRowMutations(rowMutations);
-            mutationBuilder = MutationBuilderFactory.getMutationBuilder(cell);
-            mutationBuilder.addMutation(cell);
-          }
-        } // Single row exiting.
-        // finalize the last mutation which is yet to be closed.
-        mutationBuilder.buildAndUpdateRowMutations(rowMutations);
+        // Create a rowMutations and add it to the list to be flushed to CBT.
+        RowMutations rowMutations = buildRowMutations(cellsByRow.getKey().deepCopyToNewArray(),
+             cellsByRow.getValue());
         rowMutationsList.add(rowMutations);
       }
 
@@ -207,5 +197,30 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
       succeeded = false;
     }
     return succeeded;
+  }
+
+  @VisibleForTesting
+  static RowMutations buildRowMutations(byte[] rowKey, List<Cell> cellList)
+      throws IOException {
+    RowMutations rowMutations = new RowMutations(rowKey);
+    // TODO Make sure that there are < 100K cells per row Mutation
+
+    MutationBuilder mutationBuilder =
+        MutationBuilderFactory.getMutationBuilder(cellList.get(0));
+    for (Cell cell : cellList) {
+      LOG.error("Replicating cell: " + cell + " with val: " + Bytes.toStringBinary(
+          CellUtil.cloneValue(cell)));
+      if (mutationBuilder.canAcceptMutation(cell)) {
+        mutationBuilder.addMutation(cell);
+      } else {
+        mutationBuilder.buildAndUpdateRowMutations(rowMutations);
+        mutationBuilder = MutationBuilderFactory.getMutationBuilder(cell);
+        mutationBuilder.addMutation(cell);
+      }
+    }
+
+    // finalize the last mutation which is yet to be closed.
+    mutationBuilder.buildAndUpdateRowMutations(rowMutations);
+    return rowMutations;
   }
 }

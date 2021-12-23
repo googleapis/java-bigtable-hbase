@@ -9,9 +9,11 @@ import java.util.List;
 import java.util.NavigableMap;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -22,8 +24,29 @@ import org.junit.Assert;
  */
 public class TestUtils {
 
+  public static final String ROW_KEY_PREFIX = "test-row-";
+  public static final byte[] ROW_KEY = "test-row".getBytes();
+  public static final byte[] CF1 = "cf1".getBytes();
+  public static final byte[] CF2 = "cf2".getBytes();
+  public static final TableName TABLE_NAME = TableName.valueOf("replication-test");
+  public static final TableName TABLE_NAME_2 = TableName.valueOf("replication-test-2");
+  public static final byte[] COL_QUALIFIER = "col1".getBytes();
+  public static final byte[] COL_QUALIFIER_2 = "col2".getBytes();
+  public static final String VALUE_PREFIX = "Value-";
+  public static final byte[] VALUE = "Value".getBytes();
+  public static final long TIMESTAMP = 1000l;
+
+
   // ONLY STATIC METHODS
   private TestUtils() {
+  }
+
+  public static byte[] getRowKey(int i) {
+    return (ROW_KEY_PREFIX + i).getBytes();
+  }
+
+  public static byte[] getValue(int i) {
+    return (VALUE_PREFIX + i).getBytes();
   }
 
   public static void assertEquals(String message, byte[] expected, byte[] actual) {
@@ -67,7 +90,7 @@ public class TestUtils {
   }
 
   public static void assertEquals(Mutation expected, Mutation actual) {
-    assertEquals("Result row keys mismatch", expected.getRow(), actual.getRow());
+    assertEquals("Row keys mismatch", expected.getRow(), actual.getRow());
 
     // Prevent creating a list every time.
     NavigableMap<byte[], List<Cell>> expectedFamilyCellMap = expected.getFamilyCellMap();
@@ -106,6 +129,23 @@ public class TestUtils {
     }
   }
 
+  public static void assertEquals(RowMutations expected, RowMutations actual) {
+    assertEquals("Row keys mismatch", expected.getRow(), actual.getRow());
+
+    Assert.assertEquals(
+        "RowMutations mutation count mismatch for row "
+            + new String(expected.getRow())
+            + "\n \t\texpectedMutations: "
+            + expected.getMutations()
+            + "\n \t\tactualMutations: "
+            + actual.getMutations(),
+        expected.getMutations().size(),
+        actual.getMutations().size());
+
+    for(int i= 0; i < expected.getMutations().size(); i++){
+      assertEquals(expected.getMutations().get(i), actual.getMutations().get(i));
+    }
+  }
   /**
    * Scans the 2 Tables and compares the data. Fails assertion in case of a mismatch.
    */

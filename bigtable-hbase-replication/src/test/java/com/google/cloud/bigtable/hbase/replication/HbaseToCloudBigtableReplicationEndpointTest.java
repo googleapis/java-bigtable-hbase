@@ -1,5 +1,7 @@
 package com.google.cloud.bigtable.hbase.replication;
 
+import static com.google.cloud.bigtable.hbase.replication.TestUtils.*;
+
 import com.google.cloud.bigtable.emulator.v2.BigtableEmulatorRule;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import java.io.IOException;
@@ -40,16 +42,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
   private static final Logger LOG =
       LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
-
-  public static final String ROW_KEY_PREFIX = "test-row-";
-  public static final byte[] ROW_KEY = "test-row".getBytes();
-  public static final byte[] CF1 = "cf1".getBytes();
-  public static final byte[] CF2 = "cf2".getBytes();
-  public static final TableName TABLE_NAME = TableName.valueOf("replication-test");
-  public static final TableName TABLE_NAME_2 = TableName.valueOf("replication-test-2");
-  public static final byte[] COL_QUALIFIER = "col1".getBytes();
-  public static final byte[] COL_QUALIFIER_2 = "col2".getBytes();
-  public static final String VALUE_PREFIX = "Value-";
 
   private HBaseTestingUtility hbaseTestingUtil = new HBaseTestingUtility();
   private Configuration hbaseConfig;
@@ -136,14 +128,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
   public void tearDown() throws Exception {
     replicationAdmin.close();
     hbaseTestingUtil.shutdownMiniCluster();
-  }
-
-  private byte[] getRowKey(int i) {
-    return (ROW_KEY_PREFIX + i).getBytes();
-  }
-
-  private byte[] getValue(int i) {
-    return (VALUE_PREFIX + i).getBytes();
   }
 
   @Test
