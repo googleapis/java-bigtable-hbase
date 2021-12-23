@@ -17,11 +17,11 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.api.client.util.Lists;
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.cloud.bigtable.test.helper.TestServerBuilder;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import io.grpc.Context;
 import io.grpc.Metadata;
 import io.grpc.Server;
