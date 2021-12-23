@@ -1,5 +1,5 @@
 {
-  "name": "bigtable-hbase",
+  "api_shortname": "bigtable-hbase",
   "name_pretty": "Google Cloud Bigtable Hbase Client",
   "product_documentation": "https://cloud.google.com/bigtable",
   "client_documentation": "https://googleapis.dev/java/java-bigtable-hbase/latest/",
