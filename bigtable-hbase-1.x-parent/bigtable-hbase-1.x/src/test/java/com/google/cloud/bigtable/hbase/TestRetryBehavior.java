@@ -268,8 +268,7 @@ public class TestRetryBehavior {
       assertThat(status.getCode()).isEqualTo(Status.Code.DEADLINE_EXCEEDED);
 
       // Server will hang for the attempt timeout and the client should retry the attempt
-      assertThat(callCount.get()).isEqualTo(1); // 5 * 450ms attempt timeouts > 2s operation timeout
-      // but should still be limited by the operation timeout with some jitter
+      assertThat(callCount.get()).isEqualTo(1);
       assertThat(elapsed).isAtMost(OPERATION_TIMEOUT.plus(ATTEMPT_TIMEOUT.dividedBy(2)));
       assertThat(remainingDurations.get(0)).isGreaterThan(ATTEMPT_TIMEOUT);
       assertThat(remainingDurations.get(0)).isAtMost(OPERATION_TIMEOUT);
