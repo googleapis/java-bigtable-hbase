@@ -82,7 +82,7 @@ limitations under the License.
     <beam-slf4j.version>1.7.30</beam-slf4j.version>
 
     <!-- Benchmarks related dependencies -->
-    <jmh.version>1.33</jmh.version>
+    <jmh.version>1.34</jmh.version>
   </properties>
 
   <scm>
