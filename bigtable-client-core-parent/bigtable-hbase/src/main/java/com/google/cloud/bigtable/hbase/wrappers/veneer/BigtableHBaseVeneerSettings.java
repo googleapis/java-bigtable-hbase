@@ -119,6 +119,8 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
               Optional.absent(),
               Optional.of(Duration.ofSeconds(20)),
               Optional.of(Duration.ofMinutes(5))),
+          // Note: scanTimeouts are currently also used for bulk reads as well
+          // TODO: use a separate settings for bulk reads
           /* scanTimeouts= */ new OperationTimeouts(
               Optional.of(Duration.ofMinutes(5)),
               Optional.of(Duration.ofMinutes(10)),
