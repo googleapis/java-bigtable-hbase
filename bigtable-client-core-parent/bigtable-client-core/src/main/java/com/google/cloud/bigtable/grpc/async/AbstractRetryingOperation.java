@@ -115,7 +115,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
 
   private final Metadata originalMetadata;
 
-  protected int failedCount = 0;
+  protected volatile int failedCount = 0;
 
   protected final GrpcFuture<ResultT> completionFuture;
 
@@ -208,8 +208,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
         // to the server, so all requests are retryable
         || !(isRequestRetryable() || code == Code.UNAUTHENTICATED || code == Code.UNAVAILABLE)) {
       LOG.error(
-          "Could not complete RPC. Failure #%d, got: %s on channel %s.\nTrailers: %s",
-          status.getCause(), failedCount, status, channelId, trailers);
+          "Could not complete RPC. Failure #%d, got: %s on channel %s.\nTrailers: %s.\nRequest: %s",
+          status.getCause(), failedCount, status, channelId, trailers, request);
       rpc.getRpcMetrics().markFailure();
       finalizeStats(status);
       setException(status.asRuntimeException());
@@ -223,13 +223,13 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     // Backoffs timed out.
     if (nextBackOff == null) {
       LOG.error(
-          "All retries were exhausted. Failure #%d, got: %s on channel %s.\nTrailers: %s",
-          status.getCause(), failedCount, status, channelId, trailers);
+          "All retries were exhausted. Failure #%d, got: %s on channel %s.\nTrailers: %s.\nRequest: %s",
+          status.getCause(), failedCount, status, channelId, trailers, request);
       setException(getExhaustedRetriesException(status));
     } else {
       LOG.warn(
-          "Retrying failed call. Failure #%d, got: %s on channel %s.\nTrailers: %s",
-          status.getCause(), failedCount, status, channelId, trailers);
+          "Retrying failed call. Failure #%d, got: %s on channel %s.\nTrailers: %s.\nRequest: %s",
+          status.getCause(), failedCount, status, channelId, trailers, request);
       performRetry(nextBackOff);
     }
   }
@@ -238,7 +238,8 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     operationSpan.addAnnotation("exhaustedRetries");
     rpc.getRpcMetrics().markRetriesExhasted();
     finalizeStats(status);
-    String message = String.format("Exhausted retries after %d failures.", failedCount);
+    String message =
+        String.format("Exhausted retries after %d failures.\nRequest: %s", failedCount, request);
     return new BigtableRetriesExhaustedException(message, status.asRuntimeException());
   }
 

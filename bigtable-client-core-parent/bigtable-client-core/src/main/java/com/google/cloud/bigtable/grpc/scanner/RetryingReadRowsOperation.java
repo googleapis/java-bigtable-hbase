@@ -36,6 +36,7 @@ import io.grpc.stub.ClientResponseObserver;
 import io.grpc.stub.StreamObserver;
 import io.opencensus.trace.AttributeValue;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -50,6 +51,8 @@ import javax.annotation.concurrent.NotThreadSafe;
 public class RetryingReadRowsOperation
     extends AbstractRetryingOperation<ReadRowsRequest, ReadRowsResponse, String>
     implements ScanHandler {
+
+  final AtomicLong numMessagesSeen = new AtomicLong();
 
   class IdleResumingCallController extends CallController {
     private boolean isIdle = false;
@@ -138,6 +141,7 @@ public class RetryingReadRowsOperation
   /** {@inheritDoc} */
   @Override
   public void onMessage(ReadRowsResponse message) {
+    numMessagesSeen.incrementAndGet();
     try {
       resetStatusBasedBackoff();
       // We've had at least one successful RPC, reset the backoff and retry counter
@@ -285,12 +289,15 @@ public class RetryingReadRowsOperation
     int maxRetries = retryOptions.getMaxScanTimeoutRetries();
     if (retryOptions.enableRetries() && ++timeoutRetryCount <= maxRetries) {
       LOG.warn(
-          "The client could not get a response in %d ms. Retrying the scan.", e.getWaitTimeMs());
+          "The client could not get a response in %d ms. Retrying the scan. numMsgs: %d. request: %s",
+          e.getWaitTimeMs(), numMessagesSeen.get(), nextRequest);
 
       resetStatusBasedBackoff();
       performRetry(0);
     } else {
-      LOG.warn("The client could not get a response after %d tries, giving up.", timeoutRetryCount);
+      LOG.warn(
+          "The client could not get a response after %d tries, giving up. numMsgs: %d. request: %s",
+          timeoutRetryCount, numMessagesSeen.get(), nextRequest);
       rpc.getRpcMetrics().markFailure();
       finalizeStats(status);
       setException(getExhaustedRetriesException(status));

@@ -24,10 +24,12 @@ import com.google.cloud.bigtable.metrics.Meter;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.cloud.bigtable.metrics.Timer.Context;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.EvictingQueue;
 import com.google.common.collect.ImmutableList;
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.ClientInterceptors.CheckedForwardingClientCall;
+import io.grpc.ConnectivityState;
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
 import io.grpc.Metadata.Key;
@@ -37,6 +39,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.threeten.bp.Instant;
 
 /**
  * Manages a set of ClosableChannels and uses them in a round robin.
@@ -106,6 +109,23 @@ public class ChannelPool extends ManagedChannel {
 
     private final AtomicBoolean active = new AtomicBoolean(true);
     private final int channelId;
+    private final EvictingQueue<RpcResult> rpcResults = EvictingQueue.create(10);
+    private final Object resultLock = new Object();
+
+    private class RpcResult {
+      final Instant time;
+      final Status status;
+
+      public RpcResult(Instant time, Status status) {
+        this.time = time;
+        this.status = status;
+      }
+
+      @Override
+      public String toString() {
+        return "RpcResult{" + "time=" + time + ", status=" + status + '}';
+      }
+    }
 
     public InstrumentedChannel(ManagedChannel channel) {
       this.delegate = channel;
@@ -114,6 +134,31 @@ public class ChannelPool extends ManagedChannel {
           BigtableClientMetrics.timer(
               MetricLevel.Trace, "channels.channel" + channelId + ".rpc.latency");
       getStats().ACTIVE_CHANNEL_COUNTER.inc();
+
+      ConnectivityState state = channel.getState(false);
+      channel.notifyWhenStateChanged(state, new StateLogger(state, channel, channelId));
+    }
+
+    private class StateLogger implements Runnable {
+      private final ConnectivityState state;
+      private final ManagedChannel channel;
+      private final int channelId;
+
+      public StateLogger(ConnectivityState state, ManagedChannel channel, int channelId) {
+        this.state = state;
+        this.channel = channel;
+        this.channelId = channelId;
+      }
+
+      @Override
+      public void run() {
+        String channelName = String.format("{cbt:%d,grpc:%s}", channelId, channel);
+        ConnectivityState newState = channel.getState(false);
+
+        LOG.info(
+            "Connectivity changed from %s to %s on channel %s", this.state, newState, channelName);
+        channel.notifyWhenStateChanged(newState, this);
+      }
     }
 
     private synchronized void markInactive() {
@@ -196,11 +241,12 @@ public class ChannelPool extends ManagedChannel {
 
         @Override
         public void onClose(Status status, Metadata trailers) {
+          String channelName =
+              String.format("{cbt:%d,grpc:%s}", channelId, InstrumentedChannel.this.delegate);
+          ;
           try {
             if (trailers != null) {
-              trailers.put(
-                  CHANNEL_ID_KEY,
-                  String.format("{cbt:%d,grpc:%s}", channelId, InstrumentedChannel.this.delegate));
+              trailers.put(CHANNEL_ID_KEY, channelName);
             }
             if (!decremented.getAndSet(true)) {
               getStats().ACTIVE_RPC_COUNTER.dec();
@@ -210,6 +256,13 @@ public class ChannelPool extends ManagedChannel {
                       MetricLevel.Info, "grpc.errors." + status.getCode().name())
                   .mark();
             }
+            synchronized (resultLock) {
+              rpcResults.add(new RpcResult(Instant.now(), status));
+              if (!status.isOk()) {
+                LOG.warn("Found error on channel: %s, recentRpcs: %s", channelName, rpcResults);
+              }
+            }
+
             delegate.onClose(status, trailers);
           } finally {
             timeContext.close();

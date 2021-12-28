@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.grpc.scanner;
 
 import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.ReadRowsRequest;
+import com.google.cloud.bigtable.config.Logger;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Timer;
@@ -25,6 +26,7 @@ import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ResponseQueueReader
     implements StreamObserver<FlatRow>, ClientResponseObserver<ReadRowsRequest, FlatRow> {
 
+  private static final Logger LOG = new Logger(ResponseQueueReader.class);
   private static Timer firstResponseTimer;
 
   private static synchronized Timer getFirstResponseTimer() {
@@ -57,6 +60,7 @@ public class ResponseQueueReader
   private Long startTime;
   private ClientCallStreamObserver<ReadRowsRequest> requestStream;
   private AtomicInteger markerCounter = new AtomicInteger();
+  private final long creationThread = Thread.currentThread().getId();
 
   /** Constructor for ResponseQueueReader. */
   public ResponseQueueReader() {
@@ -82,6 +86,11 @@ public class ResponseQueueReader
    * @throws java.io.IOException On errors.
    */
   public synchronized FlatRow getNextMergedRow() throws IOException {
+    if (Thread.currentThread().getId() != creationThread) {
+      LOG.error(
+          "getNextMergedRow() was called by thr wrong thread %s",
+          Arrays.asList(Thread.currentThread().getStackTrace()));
+    }
     ResultQueueEntry<FlatRow> queueEntry = getNext();
 
     switch (queueEntry.getType()) {

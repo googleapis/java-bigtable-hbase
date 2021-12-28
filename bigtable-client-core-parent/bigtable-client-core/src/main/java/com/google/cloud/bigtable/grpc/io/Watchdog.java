@@ -30,7 +30,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.concurrent.GuardedBy;
+import org.threeten.bp.Instant;
 
 /**
  * Prevents the streams from hanging indefinitely. This middleware garbage collects idle streams in
@@ -150,6 +152,8 @@ public class Watchdog implements Runnable {
     @GuardedBy("lock")
     private long lastActivityAt = clock.currentTimeMillis();
 
+    private AtomicReference<Instant> cancelledAt = new AtomicReference<>();
+
     WatchedCall(ClientCall<ReqT, RespT> delegate) {
       super(delegate);
     }
@@ -223,6 +227,9 @@ public class Watchdog implements Runnable {
           case NOT_STARTED:
           case IDLE:
             if (waitTime >= idleTimeoutMs) {
+              if (!cancelledAt.compareAndSet(null, Instant.now())) {
+                LOG.warn("cancelling(idle) an already cancelled stream: %s", delegate());
+              }
               delegate()
                   .cancel(
                       "Canceled due to idle connection",
@@ -233,6 +240,9 @@ public class Watchdog implements Runnable {
 
           case WAITING:
             if (waitTime >= waitTimeoutMs) {
+              if (!cancelledAt.compareAndSet(null, Instant.now())) {
+                LOG.warn("cancelling(waiting) an already cancelled stream: %s", delegate());
+              }
               delegate()
                   .cancel(
                       "Canceled due to timeout waiting for next response",
