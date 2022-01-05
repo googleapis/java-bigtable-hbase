@@ -216,6 +216,10 @@ limitations under the License.
           <groupId>org.apache.hbase</groupId>
           <artifactId>hbase-shaded-client</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
@@ -262,6 +266,12 @@ limitations under the License.
       <artifactId>hbase-shaded-testing-util</artifactId>
       <version>${hbase2.version}</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- Misc -->
@@ -282,6 +292,13 @@ limitations under the License.
       <groupId>commons-lang</groupId>
       <artifactId>commons-lang</artifactId>
       <version>${commons-lang.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
       <scope>test</scope>
     </dependency>
 

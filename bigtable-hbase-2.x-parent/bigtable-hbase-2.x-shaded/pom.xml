@@ -48,6 +48,16 @@ limitations under the License.
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>1.7.30</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-log4j12</artifactId>
+        <version>1.7.30</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -164,6 +174,7 @@ limitations under the License.
                   <!-- exclude hbase-shaded-client & all of its dependencies -->
                   <exclude>org.apache.hbase:hbase-shaded-client</exclude>
                   <exclude>org.slf4j:slf4j-api</exclude>
+                  <exclude>org.slf4j:slf4j-log4j12</exclude>
                   <exclude>log4j:log4j</exclude>
                   <exclude>org.apache.htrace:htrace-core4</exclude>
                   <exclude>org.apache.yetus:audience-annotations</exclude>

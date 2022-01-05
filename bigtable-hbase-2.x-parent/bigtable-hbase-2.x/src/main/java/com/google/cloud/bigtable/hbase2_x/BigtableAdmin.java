@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase2_x;
 
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.hbase.util.FutureUtil;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.base.Throwables;
@@ -34,7 +35,9 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.InvocationHandlerAdapter;
+import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.matcher.ElementMatchers;
 import org.apache.hadoop.hbase.ClusterMetrics;
 import org.apache.hadoop.hbase.ClusterMetrics.Option;
@@ -207,16 +210,6 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
     snapshot(snapshotId, tableName);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public void snapshotAsync(SnapshotDescription snapshot)
-      throws IOException, SnapshotCreationException {
-    asyncAdmin.snapshot(snapshot);
-    LOG.warn(
-        "isSnapshotFinished() is not currently supported by BigtableAdmin.\n"
-            + "You may poll for existence of the snapshot with listSnapshots(snapshotName)");
-  }
-
   @Override
   public Future<Void> addColumnFamilyAsync(
       TableName tableName, ColumnFamilyDescriptor columnFamily) {
@@ -291,7 +284,7 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
 
   @Override
   public void modifyTable(TableName tableName, TableDescriptor tableDescriptor) throws IOException {
-    super.modifyTable(tableName, new HTableDescriptor(tableDescriptor));
+    FutureUtil.unwrap(modifyTableAsync(tableName, tableDescriptor));
   }
 
   @Override
@@ -359,6 +352,30 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
         -1);
   }
 
+  /**
+   * HBase 2.x has different return type for snapshotAsync method. {@link #getSubclass} will
+   * generate the code to call the correct snapshotAsync method based on the hbase version.
+   */
+  protected void snapshotAsyncVoid(SnapshotDescription snapshot)
+      throws IOException, SnapshotCreationException {
+    asyncAdmin.snapshot(snapshot);
+    LOG.warn(
+        "isSnapshotFinished() is not currently supported by BigtableAdmin.\n"
+            + "You may poll for existence of the snapshot with listSnapshots(snapshotName)");
+  }
+
+  /**
+   * HBase 2.x has different return type for snapshotAsync method. {@link #getSubclass} will
+   * generate the code to call the correct snapshotAsync method based on the hbase version.
+   */
+  protected Future<Void> snapshotAsyncFuture(SnapshotDescription snapshot)
+      throws IOException, SnapshotCreationException {
+    LOG.warn(
+        "isSnapshotFinished() is not currently supported by BigtableAdmin.\n"
+            + "You may poll for existence of the snapshot with listSnapshots(snapshotName)");
+    return asyncAdmin.snapshot(snapshot);
+  }
+
   private static Class<? extends BigtableAdmin> adminClass = null;
 
   /**
@@ -367,7 +384,8 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
    * are called. If a method is implemented by BigtableAdmin, the generated class will invoke the
    * implementation in BigtableAdmin. Otherwise it'll throw {@link UnsupportedOperationException}.
    */
-  private static synchronized Class<? extends BigtableAdmin> getSubclass() {
+  private static synchronized Class<? extends BigtableAdmin> getSubclass()
+      throws NoSuchMethodException {
     if (adminClass == null) {
       adminClass =
           new ByteBuddy()
@@ -376,6 +394,21 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
               .intercept(
                   InvocationHandlerAdapter.of(
                       new AbstractBigtableAdmin.UnsupportedOperationsHandler()))
+              .method(
+                  ElementMatchers.named("snapshotAsync")
+                      .and(ElementMatchers.returns(TypeDescription.VOID)))
+              .intercept(
+                  MethodCall.invoke(
+                          BigtableAdmin.class.getDeclaredMethod(
+                              "snapshotAsyncVoid", SnapshotDescription.class))
+                      .withAllArguments())
+              .method(
+                  ElementMatchers.named("snapshotAsync").and(ElementMatchers.returns(Future.class)))
+              .intercept(
+                  MethodCall.invoke(
+                          BigtableAdmin.class.getDeclaredMethod(
+                              "snapshotAsyncFuture", SnapshotDescription.class))
+                      .withAllArguments())
               .make()
               .load(BigtableAdmin.class.getClassLoader())
               .getLoaded();

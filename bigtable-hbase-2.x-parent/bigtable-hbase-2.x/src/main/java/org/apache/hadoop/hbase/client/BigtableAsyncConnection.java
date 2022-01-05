@@ -78,7 +78,10 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
   }
 
   public BigtableAsyncConnection(
-      Configuration conf, AsyncRegistry ignoredRegistry, String ignoredClusterId, User ignoredUser)
+      Configuration conf,
+      ConnectionRegistry ignoredRegistry,
+      String ignoredClusterId,
+      User ignoredUser)
       throws IOException {
     LOG.debug("Creating BigtableAsyncConnection");
 

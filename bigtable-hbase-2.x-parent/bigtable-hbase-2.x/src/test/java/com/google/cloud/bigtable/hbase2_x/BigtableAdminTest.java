@@ -22,12 +22,47 @@ import static junit.framework.TestCase.assertNull;
 import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Mockito.mock;
 
+import com.google.bigtable.admin.v2.BigtableTableAdminGrpc;
+import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import io.grpc.Server;
+import io.grpc.ServerBuilder;
 import java.io.IOException;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
+import org.apache.hadoop.hbase.client.Admin;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 public class BigtableAdminTest {
+
+  private Server fakeServer;
+  private BigtableConnection connection;
+  private Admin admin;
+
+  @Before
+  public void setup() throws IOException {
+    fakeServer =
+        ServerBuilder.forPort(1234)
+            .addService(new BigtableTableAdminGrpc.BigtableTableAdminImplBase() {})
+            .build();
+    fakeServer.start();
+
+    Configuration configuration = BigtableConfiguration.configure("fake-project", "fake-instance");
+    configuration.set(
+        BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + fakeServer.getPort());
+    connection = new BigtableConnection(configuration);
+
+    admin = BigtableAdmin.createInstance(connection);
+  }
+
+  @After
+  public void tearDown() throws IOException {
+    connection.close();
+    fakeServer.shutdown();
+  }
 
   @Test
   public void testGetClusterStatus() throws IOException {
