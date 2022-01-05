@@ -1,4 +1,4 @@
 # Format:
 # module:released-version:current-version
 
-bigtable-client-parent:1.26.2:1.26.2
+bigtable-client-parent:1.26.2:1.26.3-SNAPSHOT
