@@ -1,5 +1,14 @@
 # Changelog
 
+### [1.26.2](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.26.1...v1.26.2) (2022-01-05)
+
+
+### Dependencies
+
+* log4j 2.17.0 ([#3405](https://www.github.com/googleapis/java-bigtable-hbase/issues/3405)) ([0675ffb](https://www.github.com/googleapis/java-bigtable-hbase/commit/0675ffbaf1d47346034bafe23867e27f353dc52f))
+* log4j 2.17.1 ([#3422](https://www.github.com/googleapis/java-bigtable-hbase/issues/3422)) ([d78fc91](https://www.github.com/googleapis/java-bigtable-hbase/commit/d78fc9165fa9b4dbb9c546ce8bdbdc26e4bfff07))
+* migrate to logback-classic (port of [#3425](https://www.github.com/googleapis/java-bigtable-hbase/issues/3425)) ([#3426](https://www.github.com/googleapis/java-bigtable-hbase/issues/3426)) ([8122404](https://www.github.com/googleapis/java-bigtable-hbase/commit/81224043c929c0f629e317bdb77bb80e3cf95c3b))
+
 ### [1.26.1](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.26.0...v1.26.1) (2021-12-14)
 
 
