@@ -353,8 +353,9 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   /**
-   * HBase 2.x has different return type for snapshotAsync method. {@link #getSubclass} will
-   * generate the code to call the correct snapshotAsync method based on the hbase version.
+   * HBase 2.x has different return type for snapshotAsync method in different versions. {@link
+   * #getSubclass} will generate the code to call the correct snapshotAsync method based on the
+   * hbase version.
    */
   protected void snapshotAsyncVoid(SnapshotDescription snapshot)
       throws IOException, SnapshotCreationException {
@@ -365,8 +366,9 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
   }
 
   /**
-   * HBase 2.x has different return type for snapshotAsync method. {@link #getSubclass} will
-   * generate the code to call the correct snapshotAsync method based on the hbase version.
+   * HBase 2.x has different return type for snapshotAsync method in different versions. {@link
+   * #getSubclass} will generate the code to call the correct snapshotAsync method based on the
+   * hbase version.
    */
   protected Future<Void> snapshotAsyncFuture(SnapshotDescription snapshot)
       throws IOException, SnapshotCreationException {

@@ -126,7 +126,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
   @Override
   public CheckAndMutateWithFilterBuilder checkAndMutate(byte[] bytes, Filter filter) {
-    return null;
+    throw new UnsupportedOperationException("not implemented");
   }
 
   static final class CheckAndMutateBuilderImpl implements CheckAndMutateBuilder {

@@ -18,6 +18,7 @@ package org.apache.hadoop.hbase.client;
 import com.google.api.core.InternalApi;
 import java.util.concurrent.CompletableFuture;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.RegionLocations;
 import org.apache.hadoop.hbase.ServerName;
 
@@ -27,7 +28,7 @@ import org.apache.hadoop.hbase.ServerName;
  * for Bigtable.
  *
  * <p>This class is injected via the system property: "hbase.client.registry.impl" For further
- * details See {@link ConnectionRegistryFactory#REGISTRY_IMPL_CONF_KEY}, and {@link
+ * details See {@link HConstants#CLIENT_CONNECTION_REGISTRY_IMPL_CONF_KEY}, and {@link
  * ConnectionFactory#createAsyncConnection()}
  *
  * <p>For internal use only - public for technical reasons.
