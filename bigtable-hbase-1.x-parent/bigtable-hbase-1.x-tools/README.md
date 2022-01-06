@@ -8,6 +8,7 @@ Pipelines to import and export data are under [bigtable-beam-import](bigtable-da
 To use the tools in this folder, you can download them from the maven repository, or
 you can build them using Maven.
 
+[//]: # ({x-version-update-start:bigtable-client-parent:released})
 ### Download the jars
 
 Download [the Bigtable tools jars](http://search.maven.org/remotecontent?filepath=com/google/cloud/bigtable/bigtable-hbase-1.x-tools/1.24.0/bigtable-hbase-1.x-tools-1.24.0-shaded.jar), which is an aggregation of all required jars.
@@ -89,4 +90,37 @@ export the HBase schema to a file and use that to create tables in Cloud Bigtabl
      -Dgoogle.bigtable.input.filepath=$SCHEMA_FILE_PATH \
      -jar bigtable-hbase-1.x-tools-1.24.0-jar-with-dependencies.jar \
     ```
+[//]: # ({x-version-update-end})
+
+### Table name renaming
+
+There are cases where you can not use the HBase table name in Cloud Bigtable,
+for example, if the table is in custom namespace. In such cases, you can provide
+a mapping from old-name->new-name to the schema translator tool, in form of a
+JSON file. The file should contain a flat JSON map like
+
+   ```
+   {
+      “ns:hbase-tablename”: “cloud-bigtable-tablename”
+   } 
+   ```
+
+You can then pass a path of this file to schema translator using system
+property `google.bigtable.schema.mapping.filepath`. Schema translator will
+create a table named `cloud-bigtable-tablename` for table named
+`hbase-tablename` in namespace `ns`.
+
+[//]: # ({x-version-update-start:bigtable-client-parent:released})
+   ```
+   SCHEMA_MAPPING_FILE_PATH=path/to/table-name-mapping.json
+   java \
+     -Dgoogle.bigtable.project.id=$PROJECT_ID \
+     -Dgoogle.bigtable.instance.id=$INSTANCE_ID \
+     -Dgoogle.bigtable.table.filter=$TABLE_NAME_REGEX \
+     -Dhbase.zookeeper.quorum=$ZOOKEEPER_QUORUM \
+     -Dhbase.zookeeper.property.clientPort=$ZOOKEEPER_PORT \
+     -Dgoogle.bigtable.schema.mapping.filepath=$SCHEMA_MAPPING_FILE_PATH \
+     -jar target/bigtable-hbase-1.x-tools-2.0.0-alpha1-with-dependencies.jar
+
+   ```
 [//]: # ({x-version-update-end})
