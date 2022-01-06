@@ -93,11 +93,6 @@
       // this is temporary as we currently get renovate updates when we do a release from bigtable-1.x
       "packagePatterns": ["^com.google.cloud.bigtable"],
       "enabled": false
-    },
-    {
-      // referenced in bigtable-beam-import, pin to beam deps
-      "packagePatterns": ["^com.google.auto.value"],
-      "enabled": false
     }
   ],
   "semanticCommits": true,
