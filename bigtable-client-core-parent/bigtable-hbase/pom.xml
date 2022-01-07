@@ -168,6 +168,12 @@ limitations under the License.
       </exclusions>
     </dependency>
 
+    <dependency>
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy</artifactId>
+      <version>1.12.6</version>
+    </dependency>
+
     <!-- Test -->
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>

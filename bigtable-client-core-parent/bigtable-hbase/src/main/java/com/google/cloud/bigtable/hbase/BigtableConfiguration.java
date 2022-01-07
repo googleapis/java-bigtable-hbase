@@ -20,6 +20,7 @@ import com.google.api.core.InternalExtensionOnly;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.BigtableAsyncRegistry;
 import org.apache.hadoop.hbase.client.Connection;
 
 /** This class provides a simplified mechanism of creating a programmatic Bigtable Connection. */
@@ -104,7 +105,8 @@ public class BigtableConfiguration {
       configuration.set(
           HBASE_CLIENT_ASYNC_CONNECTION_IMPL, BIGTABLE_HBASE_CLIENT_ASYNC_CONNECTION_CLASS);
       configuration.set(
-          HBASE_CLIENT_ASYNC_REGISTRY_IMPL, BIGTABLE_HBASE_CLIENT_ASYNC_REGISTRY_CLASS);
+          HBASE_CLIENT_ASYNC_REGISTRY_IMPL,
+          BigtableAsyncRegistry.getSubClass(configuration).getClass().getName());
     } catch (ClassNotFoundException ignored) {
       // Skip if any of the async connection class doesn't exist
     }
@@ -193,7 +195,9 @@ public class BigtableConfiguration {
   @Deprecated
   public static Configuration asyncConfigure(Configuration conf) {
     conf.set(HBASE_CLIENT_ASYNC_CONNECTION_IMPL, BIGTABLE_HBASE_CLIENT_ASYNC_CONNECTION_CLASS);
-    conf.set(HBASE_CLIENT_ASYNC_REGISTRY_IMPL, BIGTABLE_HBASE_CLIENT_ASYNC_REGISTRY_CLASS);
+    conf.set(
+        HBASE_CLIENT_ASYNC_REGISTRY_IMPL,
+        BigtableAsyncRegistry.getSubClass(conf).getClass().getName());
     return conf;
   }
 
