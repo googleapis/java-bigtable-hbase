@@ -23,6 +23,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -31,6 +33,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
@@ -57,6 +60,26 @@ class BigtableEnv extends SharedTestEnv {
 
     configuration = HBaseConfiguration.create();
     configuration = BigtableConfiguration.configure(configuration, projectId, instanceId);
+
+    String registryClass = System.getProperty("google.bigtable.registry.impl");
+    if (registryClass != null) {
+      if (registryClass.equals("org.apache.hadoop.hbase.client.BigtableAsyncRegistry")) {
+        try {
+          Class bigtableAsyncRegistry =
+              Class.forName("org.apache.hadoop.hbase.client.BigtableAsyncRegistry");
+          Method method =
+              bigtableAsyncRegistry.getDeclaredMethod("getSubClass", Configuration.class);
+          configuration.set("hbase.client.registry.impl", method.invoke(this).getClass().getName());
+        } catch (ClassNotFoundException
+            | NoSuchMethodException
+            | IllegalAccessException
+            | InvocationTargetException e) {
+          e.printStackTrace();
+        }
+      } else {
+        configuration.set("hbase.client.registry.impl", registryClass);
+      }
+    }
 
     for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
       if (KEYS.contains(entry.getKey())) {
