@@ -32,6 +32,12 @@ limitations under the License.
 
   <dependencyManagement>
     <dependencies>
+      <!-- override protobuf-java version -->
+      <dependency>
+        <groupId>com.google.protobuf</groupId>
+        <artifactId>protobuf-java</artifactId>
+        <version>${protobuf-java-test.version}</version>
+      </dependency>
       <dependency>
         <groupId>com.google.cloud</groupId>
         <artifactId>google-cloud-bigtable-bom</artifactId>
@@ -147,15 +153,14 @@ limitations under the License.
       <groupId>com.google.api</groupId>
       <artifactId>api-common</artifactId>
     </dependency>
-    <dependency>
+   <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
     </dependency>
-    <dependency>
+   <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java-util</artifactId>
     </dependency>
-
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-protobuf</artifactId>
