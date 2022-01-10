@@ -30,12 +30,6 @@ limitations under the License.
   </description>
 
   <dependencies>
-    <!-- override protobuf-java version -->
-    <dependency>
-      <groupId>com.google.protobuf</groupId>
-      <artifactId>protobuf-java</artifactId>
-      <version>${protobuf-java-test.version}</version>
-    </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-testing-util</artifactId>
