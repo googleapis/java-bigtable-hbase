@@ -328,6 +328,12 @@ limitations under the License.
 
   <dependencies>
     <!-- Project Modules -->
+    <!-- override protobuf-java version -->
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+      <version>${protobuf-java-test.version}</version>
+    </dependency>
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase</artifactId>
