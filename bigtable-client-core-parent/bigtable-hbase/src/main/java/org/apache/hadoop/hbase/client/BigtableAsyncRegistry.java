@@ -16,8 +16,14 @@
 package org.apache.hadoop.hbase.client;
 
 import com.google.api.core.InternalApi;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+
+import com.google.common.collect.ImmutableList;
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.InjectionClassLoader;
 import net.bytebuddy.implementation.FixedValue;
@@ -41,61 +47,56 @@ import org.apache.hadoop.conf.Configuration;
 @InternalApi("For internal usage only")
 public class BigtableAsyncRegistry {
 
-  private static BigtableAsyncRegistry subClass = null;
+    private static Class<? extends BigtableAsyncRegistry> subClass = null;
 
-  public BigtableAsyncRegistry(Configuration conf) {}
-
-  public static BigtableAsyncRegistry getSubClass(Configuration conf) {
-    if (subClass == null) {
-      try {
-        subClass =
-            new ByteBuddy()
-                .subclass(BigtableAsyncRegistry.class)
-                .implement(Class.forName("org.apache.hadoop.hbase.client.ConnectionRegistry"))
-                .method(ElementMatchers.isAbstract())
-                .intercept(
-                    InvocationHandlerAdapter.of(
-                        new AbstractBigtableAdmin.UnsupportedOperationsHandler()))
-                .method(ElementMatchers.named("close"))
-                .intercept(
-                    MethodCall.invoke(BigtableAsyncRegistry.class.getDeclaredMethod("closeNoop")))
-                .method(ElementMatchers.named("getClusterId"))
-                .intercept(FixedValue.value((CompletableFuture.completedFuture("NoopClusterId"))))
-                .make()
-                .load(
-                    InjectionClassLoader.getSystemClassLoader(),
-                    ClassLoadingStrategy.Default.INJECTION)
-                .getLoaded()
-                .getDeclaredConstructor(Configuration.class)
-                .newInstance(conf);
-      } catch (Exception e) {
-      }
-      try {
-        subClass =
-            new ByteBuddy()
-                .subclass(BigtableAsyncRegistry.class)
-                .implement(Class.forName("org.apache.hadoop.hbase.client.AsyncRegistry"))
-                .method(ElementMatchers.isAbstract())
-                .intercept(
-                    InvocationHandlerAdapter.of(
-                        new AbstractBigtableAdmin.UnsupportedOperationsHandler()))
-                .method(ElementMatchers.named("close"))
-                .intercept(
-                    MethodCall.invoke(BigtableAsyncRegistry.class.getDeclaredMethod("closeNoop")))
-                .method(ElementMatchers.named("getClusterId"))
-                .intercept(FixedValue.value((CompletableFuture.completedFuture("NoopClusterId"))))
-                .make()
-                .load(
-                    InjectionClassLoader.getSystemClassLoader(),
-                    ClassLoadingStrategy.Default.INJECTION)
-                .getLoaded()
-                .getDeclaredConstructor(Configuration.class)
-                .newInstance(conf);
-      } catch (Exception e) {
-      }
+    // TODO for connectionregistry
+    public BigtableAsyncRegistry() {
     }
-    return subClass;
-  }
 
-  public void closeNoop() {}
+    // TODO for asyncregistry impl
+    public BigtableAsyncRegistry(Configuration conf) {
+    }
+
+    public static Class<? extends BigtableAsyncRegistry> createSubClass() throws NoSuchMethodException {
+        List<String> classNames = ImmutableList.of("org.apache.hadoop.hbase.client.ConnectionRegistry", "org.apache.hadoop.hbase.client.AsyncRegistry");
+
+        DynamicType.Builder<BigtableAsyncRegistry> subclassBuilder = new ByteBuddy().subclass(BigtableAsyncRegistry.class);
+
+        for (String className : classNames) {
+            try {
+                subclassBuilder = subclassBuilder.implement(Class.forName(className));
+            } catch (ClassNotFoundException e) {
+                continue;
+            }
+        }
+
+        return subclassBuilder.method(ElementMatchers.isAbstract())
+                    .intercept(
+                            InvocationHandlerAdapter.of(
+                                    new AbstractBigtableAdmin.UnsupportedOperationsHandler()))
+                    .method(ElementMatchers.named("close"))
+                    .intercept(
+                            MethodCall.invoke(BigtableAsyncRegistry.class.getDeclaredMethod("closeNoop")))
+                    .method(ElementMatchers.named("getClusterId"))
+                    .intercept(FixedValue.value((CompletableFuture.completedFuture("NoopClusterId"))))
+                    .make()
+                    .load(
+                            InjectionClassLoader.getSystemClassLoader(),
+                            ClassLoadingStrategy.Default.INJECTION)
+                    .getLoaded();
+    }
+
+    public synchronized static Class<? extends BigtableAsyncRegistry> getSubClass() {
+        if (subClass == null) {
+            try {
+                subClass = createSubClass();
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return subClass;
+    }
+
+    public void closeNoop() {
+    }
 }
