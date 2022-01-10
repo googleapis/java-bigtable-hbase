@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.test_env;
 
+import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.Logger;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
@@ -30,7 +31,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
@@ -41,22 +41,20 @@ class BigtableEnv extends SharedTestEnv {
 
   private static final Set<String> KEYS =
       Sets.newHashSet(
-          "hbase.client.connection.impl",
-          "hbase.client.async.connection.impl",
-          "hbase.client.registry.impl",
           "google.bigtable.endpoint.port",
           "google.bigtable.endpoint.host",
           "google.bigtable.admin.endpoint.host",
           "google.bigtable.emulator.endpoint.host",
-          "google.bigtable.project.id",
-          "google.bigtable.instance.id",
           "google.bigtable.use.bulk.api",
           "google.bigtable.use.plaintext.negotiation",
           "google.bigtable.snapshot.cluster.id");
 
   @Override
   protected void setup() throws IOException {
-    configuration = HBaseConfiguration.create();
+    String projectId = System.getProperty("google.bigtable.project.id");
+    String instanceId = System.getProperty("google.bigtable.instance.id");
+
+    configuration = BigtableConfiguration.configure(projectId, instanceId);
 
     String connectionClass = System.getProperty("google.bigtable.connection.impl");
     if (connectionClass != null) {

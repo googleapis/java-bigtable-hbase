@@ -67,7 +67,7 @@ limitations under the License.
                   <!-- Fork & set system properties -->
                   <forkCount>1</forkCount>
                   <systemPropertyVariables>
-                    <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
+                    <google.bigtable.test_env>bigtable</google.bigtable.test_env>
                   </systemPropertyVariables>
                   <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
 
@@ -111,6 +111,9 @@ limitations under the License.
                   <!-- prevent multiple executions from clobering each other -->
                   <summaryFile>${project.build.directory}/failsafe-reports/minicluster-tests/failsafe-summary.xml</summaryFile>
                   <reportsDirectory>${project.build.directory}/failsafe-reports/minicluster-tests</reportsDirectory>
+                  <systemPropertyVariables>
+                    <google.bigtable.test_env>minicluster</google.bigtable.test_env>
+                  </systemPropertyVariables>
                 </configuration>
               </execution>
             </executions>
@@ -155,7 +158,7 @@ limitations under the License.
                   </includes>
                   <excludedGroups>KnownEmulatorGap,KnownGap</excludedGroups>
                   <systemPropertyVariables>
-                    <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
+                    <google.bigtable.test_env>bigtable</google.bigtable.test_env>
                     <google.bigtable.project.id>fake-project</google.bigtable.project.id>
                     <google.bigtable.instance.id>fake-instance</google.bigtable.instance.id>
                   </systemPropertyVariables>
