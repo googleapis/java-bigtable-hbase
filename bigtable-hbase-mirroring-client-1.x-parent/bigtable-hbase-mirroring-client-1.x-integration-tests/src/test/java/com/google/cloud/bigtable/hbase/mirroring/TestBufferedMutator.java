@@ -27,10 +27,10 @@ import static org.junit.Assert.fail;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConfigurationHelper;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.DatabaseHelpers;
-import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounter;
-import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounter.Mismatch;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.PropagatingThread;
+import com.google.cloud.bigtable.hbase.mirroring.utils.TestMismatchDetectorCounter;
+import com.google.cloud.bigtable.hbase.mirroring.utils.TestMismatchDetectorCounter.Mismatch;
 import com.google.cloud.bigtable.hbase.mirroring.utils.TestWriteErrorConsumer;
 import com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.FailingHBaseHRegion;
 import com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.FailingHBaseHRegionRule;
@@ -185,8 +185,8 @@ public class TestBufferedMutator {
     assertEquals(numBatchesPerThread * numMutationsInBatch, readEntries);
     assertEquals(
         numBatchesPerThread * numMutationsInBatch / 100 + 1,
-        MismatchDetectorCounter.getInstance().getVerificationsFinishedCounter());
-    assertEquals(0, MismatchDetectorCounter.getInstance().getErrorCount());
+        TestMismatchDetectorCounter.getInstance().getVerificationsFinishedCounter());
+    assertEquals(0, TestMismatchDetectorCounter.getInstance().getErrorCount());
   }
 
   private void verifyRowContents(
@@ -276,7 +276,7 @@ public class TestBufferedMutator {
       }
     }
 
-    List<Mismatch> mismatches = MismatchDetectorCounter.getInstance().getMismatches();
+    List<Mismatch> mismatches = TestMismatchDetectorCounter.getInstance().getMismatches();
     assertThat(mismatches.size()).isEqualTo(7);
     assertThat(mismatches).contains(scannerMismatch(3, 4));
     assertThat(mismatches).contains(scannerMismatch(4, 5));

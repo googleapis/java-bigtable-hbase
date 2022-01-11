@@ -22,8 +22,8 @@ import com.google.cloud.bigtable.hbase.mirroring.utils.ConfigurationHelper;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.DatabaseHelpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.Helpers;
-import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounter;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRule;
+import com.google.cloud.bigtable.hbase.mirroring.utils.TestMismatchDetectorCounter;
 import com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.FailingHBaseHRegionRule;
 import com.google.cloud.bigtable.mirroring.hbase1_x.ExecutorServiceRule;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection;
@@ -91,7 +91,7 @@ public class TestReadVerificationSampling {
     // Our ReadSampler is probabilistic. We have a 0.01 chance of verifying a request.
     // Assuming that our random number generator really is random and there are no unexpected
     // errors, probability that this counter is at least 25 is about 0.000042.
-    assertThat(MismatchDetectorCounter.getInstance().getVerificationsFinishedCounter())
+    assertThat(TestMismatchDetectorCounter.getInstance().getVerificationsFinishedCounter())
         .isLessThan(25);
   }
 
@@ -114,7 +114,7 @@ public class TestReadVerificationSampling {
       }
     }
 
-    assertEquals(10, MismatchDetectorCounter.getInstance().getVerificationsFinishedCounter());
+    assertEquals(10, TestMismatchDetectorCounter.getInstance().getVerificationsFinishedCounter());
   }
 
   @Test
@@ -136,6 +136,6 @@ public class TestReadVerificationSampling {
       }
     }
 
-    assertEquals(0, MismatchDetectorCounter.getInstance().getVerificationsFinishedCounter());
+    assertEquals(0, TestMismatchDetectorCounter.getInstance().getVerificationsFinishedCounter());
   }
 }

@@ -24,9 +24,9 @@ import com.google.cloud.bigtable.hbase.mirroring.utils.ConfigurationHelper;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.DatabaseHelpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.Helpers;
-import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounter;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.PropagatingThread;
+import com.google.cloud.bigtable.hbase.mirroring.utils.TestMismatchDetectorCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.ExecutorServiceRule;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection;
 import com.google.common.primitives.Longs;
@@ -79,7 +79,7 @@ public class TestErrorDetection {
         Result result = t2.get(Helpers.createGet(row1, columnFamily1, qualifier1));
         assertArrayEquals(result.getRow(), row1);
         assertArrayEquals(result.getValue(columnFamily1, qualifier1), value1);
-        assertEquals(MismatchDetectorCounter.getInstance().getErrorCount(), 0);
+        assertEquals(TestMismatchDetectorCounter.getInstance().getErrorCount(), 0);
       }
     }
   }
@@ -109,7 +109,7 @@ public class TestErrorDetection {
       }
     }
 
-    assertEquals(1, MismatchDetectorCounter.getInstance().getErrorCount());
+    assertEquals(1, TestMismatchDetectorCounter.getInstance().getErrorCount());
   }
 
   @Test
@@ -198,13 +198,13 @@ public class TestErrorDetection {
       }
     }
 
-    assertEquals(0, MismatchDetectorCounter.getInstance().getErrorCount());
+    assertEquals(0, TestMismatchDetectorCounter.getInstance().getErrorCount());
     // + 1 because we also verify the final `null` denoting end of results.
     assertEquals(
         numberOfWorkers * numberOfBatches * batchSize + 1,
-        MismatchDetectorCounter.getInstance().getVerificationsFinishedCounter());
+        TestMismatchDetectorCounter.getInstance().getVerificationsFinishedCounter());
     assertEquals(
         numberOfWorkers * numberOfBatches * batchSize + 1,
-        MismatchDetectorCounter.getInstance().getVerificationsStartedCounter());
+        TestMismatchDetectorCounter.getInstance().getVerificationsStartedCounter());
   }
 }

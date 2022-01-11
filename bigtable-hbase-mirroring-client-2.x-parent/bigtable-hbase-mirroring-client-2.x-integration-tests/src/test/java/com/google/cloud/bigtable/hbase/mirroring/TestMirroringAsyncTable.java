@@ -22,7 +22,7 @@ import com.google.cloud.bigtable.hbase.mirroring.utils.ConfigurationHelper;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.DatabaseHelpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.Helpers;
-import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounter;
+import com.google.cloud.bigtable.hbase.mirroring.utils.TestMismatchDetectorCounter;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.TestWriteErrorConsumer;
 import com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.FailingHBaseHRegion;
@@ -1103,7 +1103,7 @@ public class TestMirroringAsyncTable {
       }
       CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
     }
-    assertThat(MismatchDetectorCounter.getInstance().getErrorCount()).isEqualTo(0);
+    assertThat(TestMismatchDetectorCounter.getInstance().getErrorCount()).isEqualTo(0);
   }
 
   @Test
@@ -1134,7 +1134,7 @@ public class TestMirroringAsyncTable {
         checkIfShouldHaveThrown(futures.get(i), rowKeyFromId(i));
       }
     }
-    assertThat(MismatchDetectorCounter.getInstance().getErrorCount()).isEqualTo(0);
+    assertThat(TestMismatchDetectorCounter.getInstance().getErrorCount()).isEqualTo(0);
   }
 
   @Test
@@ -1158,11 +1158,11 @@ public class TestMirroringAsyncTable {
       }
       CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
     }
-    assertThat(MismatchDetectorCounter.getInstance().getErrorCount())
+    assertThat(TestMismatchDetectorCounter.getInstance().getErrorCount())
         .isEqualTo(databaseEntriesCount / 2);
-    assertThat(MismatchDetectorCounter.getInstance().getFailureCount())
+    assertThat(TestMismatchDetectorCounter.getInstance().getFailureCount())
         .isEqualTo(databaseEntriesCount / 2);
-    assertThat(MismatchDetectorCounter.getInstance().getMismatchCount()).isEqualTo(0);
+    assertThat(TestMismatchDetectorCounter.getInstance().getMismatchCount()).isEqualTo(0);
   }
 
   @Test
@@ -1181,7 +1181,7 @@ public class TestMirroringAsyncTable {
       CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
       assertThat(futures.stream().allMatch(fut -> fut.getNow(false))).isTrue();
     }
-    assertThat(MismatchDetectorCounter.getInstance().getErrorCount()).isEqualTo(0);
+    assertThat(TestMismatchDetectorCounter.getInstance().getErrorCount()).isEqualTo(0);
   }
 
   @Test
@@ -1212,7 +1212,7 @@ public class TestMirroringAsyncTable {
         checkIfShouldHaveThrown(futures.get(i), rowKeyFromId(i));
       }
     }
-    assertThat(MismatchDetectorCounter.getInstance().getErrorCount()).isEqualTo(0);
+    assertThat(TestMismatchDetectorCounter.getInstance().getErrorCount()).isEqualTo(0);
   }
 
   @Test
@@ -1237,11 +1237,11 @@ public class TestMirroringAsyncTable {
       CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
       assertThat(futures.stream().allMatch(fut -> fut.getNow(false))).isTrue();
     }
-    assertThat(MismatchDetectorCounter.getInstance().getErrorCount())
+    assertThat(TestMismatchDetectorCounter.getInstance().getErrorCount())
         .isEqualTo(databaseEntriesCount / 2);
-    assertThat(MismatchDetectorCounter.getInstance().getFailureCount())
+    assertThat(TestMismatchDetectorCounter.getInstance().getFailureCount())
         .isEqualTo(databaseEntriesCount / 2);
-    assertThat(MismatchDetectorCounter.getInstance().getMismatchCount()).isEqualTo(0);
+    assertThat(TestMismatchDetectorCounter.getInstance().getMismatchCount()).isEqualTo(0);
   }
 
   @Test

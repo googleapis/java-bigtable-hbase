@@ -26,7 +26,7 @@ import com.google.cloud.bigtable.hbase.mirroring.utils.ConfigurationHelper;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.DatabaseHelpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.Helpers;
-import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounter;
+import com.google.cloud.bigtable.hbase.mirroring.utils.TestMismatchDetectorCounter;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.PropagatingThread;
 import com.google.cloud.bigtable.mirroring.hbase1_x.ExecutorServiceRule;
@@ -103,7 +103,7 @@ public class TestErrorDetection {
               .get();
       assertArrayEquals(result.getRow(), "1".getBytes());
       assertArrayEquals(result.getValue(columnFamily1, qualifier1), "1".getBytes());
-      assertEquals(MismatchDetectorCounter.getInstance().getErrorCount(), 0);
+      assertEquals(TestMismatchDetectorCounter.getInstance().getErrorCount(), 0);
     }
   }
 
@@ -140,7 +140,7 @@ public class TestErrorDetection {
       assertArrayEquals(result.getValue(columnFamily1, qualifier1), "1".getBytes());
     }
 
-    assertEquals(1, MismatchDetectorCounter.getInstance().getErrorCount());
+    assertEquals(1, TestMismatchDetectorCounter.getInstance().getErrorCount());
   }
 
   @Ignore("Fails for unknown reasons")
@@ -215,7 +215,7 @@ public class TestErrorDetection {
       }
     }
 
-    assertEquals(0, MismatchDetectorCounter.getInstance().getErrorCount());
+    assertEquals(0, TestMismatchDetectorCounter.getInstance().getErrorCount());
   }
 
   @Test
@@ -298,10 +298,10 @@ public class TestErrorDetection {
 
     assertEquals(
         numberOfWorkers + 1, // because null returned from the scanner is also verified.
-        MismatchDetectorCounter.getInstance().getVerificationsStartedCounter());
+        TestMismatchDetectorCounter.getInstance().getVerificationsStartedCounter());
     assertEquals(
         numberOfWorkers + 1,
-        MismatchDetectorCounter.getInstance().getVerificationsFinishedCounter());
-    assertEquals(0, MismatchDetectorCounter.getInstance().getErrorCount());
+        TestMismatchDetectorCounter.getInstance().getVerificationsFinishedCounter());
+    assertEquals(0, TestMismatchDetectorCounter.getInstance().getErrorCount());
   }
 }

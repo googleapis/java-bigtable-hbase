@@ -23,8 +23,8 @@ import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.DatabaseHelpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.DatabaseHelpers.DatabaseSelector;
 import com.google.cloud.bigtable.hbase.mirroring.utils.Helpers;
-import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounter;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRule;
+import com.google.cloud.bigtable.hbase.mirroring.utils.TestMismatchDetectorCounter;
 import com.google.cloud.bigtable.hbase.mirroring.utils.TestWriteErrorConsumer;
 import com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.FailingHBaseHRegion;
 import com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.FailingHBaseHRegionRule;
@@ -1028,7 +1028,7 @@ public class TestMirroringTable {
         }
       }
     }
-    assertThat(MismatchDetectorCounter.getInstance().getErrorCount()).isEqualTo(0);
+    assertThat(TestMismatchDetectorCounter.getInstance().getErrorCount()).isEqualTo(0);
   }
 
   @Test
@@ -1057,7 +1057,7 @@ public class TestMirroringTable {
         }
       }
     }
-    assertThat(MismatchDetectorCounter.getInstance().getErrorCount()).isEqualTo(0);
+    assertThat(TestMismatchDetectorCounter.getInstance().getErrorCount()).isEqualTo(0);
   }
 
   @Test
@@ -1078,11 +1078,11 @@ public class TestMirroringTable {
         }
       }
     }
-    assertThat(MismatchDetectorCounter.getInstance().getErrorCount())
+    assertThat(TestMismatchDetectorCounter.getInstance().getErrorCount())
         .isEqualTo(databaseEntriesCount / 2);
-    assertThat(MismatchDetectorCounter.getInstance().getFailureCount())
+    assertThat(TestMismatchDetectorCounter.getInstance().getFailureCount())
         .isEqualTo(databaseEntriesCount / 2);
-    assertThat(MismatchDetectorCounter.getInstance().getMismatchCount()).isEqualTo(0);
+    assertThat(TestMismatchDetectorCounter.getInstance().getMismatchCount()).isEqualTo(0);
   }
 
   @Test
@@ -1098,7 +1098,7 @@ public class TestMirroringTable {
         }
       }
     }
-    assertThat(MismatchDetectorCounter.getInstance().getErrorCount()).isEqualTo(0);
+    assertThat(TestMismatchDetectorCounter.getInstance().getErrorCount()).isEqualTo(0);
   }
 
   @Test
@@ -1127,7 +1127,7 @@ public class TestMirroringTable {
         }
       }
     }
-    assertThat(MismatchDetectorCounter.getInstance().getErrorCount()).isEqualTo(0);
+    assertThat(TestMismatchDetectorCounter.getInstance().getErrorCount()).isEqualTo(0);
   }
 
   @Test
@@ -1148,11 +1148,11 @@ public class TestMirroringTable {
         }
       }
     }
-    assertThat(MismatchDetectorCounter.getInstance().getErrorCount())
+    assertThat(TestMismatchDetectorCounter.getInstance().getErrorCount())
         .isEqualTo(databaseEntriesCount / 2);
-    assertThat(MismatchDetectorCounter.getInstance().getFailureCount())
+    assertThat(TestMismatchDetectorCounter.getInstance().getFailureCount())
         .isEqualTo(databaseEntriesCount / 2);
-    assertThat(MismatchDetectorCounter.getInstance().getMismatchCount()).isEqualTo(0);
+    assertThat(TestMismatchDetectorCounter.getInstance().getMismatchCount()).isEqualTo(0);
   }
 
   @Test

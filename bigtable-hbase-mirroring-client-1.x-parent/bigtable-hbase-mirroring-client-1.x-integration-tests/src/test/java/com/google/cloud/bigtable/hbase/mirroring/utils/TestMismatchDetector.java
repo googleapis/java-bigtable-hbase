@@ -26,7 +26,8 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 
 public class TestMismatchDetector implements MismatchDetector {
-  private final MismatchDetectorCounter mismatchCounter = MismatchDetectorCounter.getInstance();
+  private final TestMismatchDetectorCounter mismatchCounter =
+      TestMismatchDetectorCounter.getInstance();
   private final MirroringTracer tracer;
 
   public TestMismatchDetector(MirroringTracer tracer, Integer ignored) {

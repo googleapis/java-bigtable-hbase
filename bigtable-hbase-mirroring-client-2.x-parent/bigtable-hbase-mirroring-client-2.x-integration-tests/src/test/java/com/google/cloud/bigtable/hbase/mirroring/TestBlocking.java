@@ -26,7 +26,7 @@ import com.google.cloud.bigtable.hbase.mirroring.utils.BlockingMismatchDetector;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConfigurationHelper;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.Helpers;
-import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounter;
+import com.google.cloud.bigtable.hbase.mirroring.utils.TestMismatchDetectorCounter;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRule;
 import com.google.cloud.bigtable.mirroring.hbase2_x.MirroringAsyncConnection;
 import com.google.common.util.concurrent.SettableFuture;
@@ -120,7 +120,7 @@ public class TestBlocking {
     closingThreadEnded.get(1, TimeUnit.SECONDS);
 
     // And all verification should have finished.
-    assertThat(MismatchDetectorCounter.getInstance().getVerificationsFinishedCounter())
+    assertThat(TestMismatchDetectorCounter.getInstance().getVerificationsFinishedCounter())
         .isEqualTo(10);
   }
 

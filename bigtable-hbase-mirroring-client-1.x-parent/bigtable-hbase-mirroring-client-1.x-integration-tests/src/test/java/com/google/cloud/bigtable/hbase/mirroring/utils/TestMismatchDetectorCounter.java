@@ -20,22 +20,22 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class MismatchDetectorCounter {
+public class TestMismatchDetectorCounter {
   private int verificationsStartedCounter;
   private int verificationsFinishedCounter;
   private int lengthMismatches;
   private List<Mismatch> mismatches;
   private List<Failure> failures;
 
-  private MismatchDetectorCounter() {
+  private TestMismatchDetectorCounter() {
     clearErrors();
   }
 
-  private static MismatchDetectorCounter instance;
+  private static TestMismatchDetectorCounter instance;
 
-  public static synchronized MismatchDetectorCounter getInstance() {
+  public static synchronized TestMismatchDetectorCounter getInstance() {
     if (instance == null) {
-      instance = new MismatchDetectorCounter();
+      instance = new TestMismatchDetectorCounter();
     }
     return instance;
   }
