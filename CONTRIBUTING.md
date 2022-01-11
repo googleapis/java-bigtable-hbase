@@ -40,10 +40,10 @@ again.
    
    There are also tests that perform compatibility tests against an HBase Minicluster, which can be invoked with the following commands for HBase 1 and HBase 2 respectively: 
    ```sh
-   mvn clean verify -PhbaseLocalMiniClusterTest
+   mvn clean verify -Penable-integration-tests -PhbaseLocalMiniClusterTest
    ```
    ```sh
-   mvn clean verify -PhbaseLocalMiniClusterTestH2
+   mvn clean verify -Penable-integration-tests -PhbaseLocalMiniClusterTestH2
    ```
 
    You can run those commands at the top of the project, or you can run them at the appropriate integration-tests project.  
