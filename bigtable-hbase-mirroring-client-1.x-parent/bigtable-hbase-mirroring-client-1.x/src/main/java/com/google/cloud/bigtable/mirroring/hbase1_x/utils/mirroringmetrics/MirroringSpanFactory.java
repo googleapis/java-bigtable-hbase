@@ -167,11 +167,18 @@ public class MirroringSpanFactory {
     };
   }
 
-  public <T> WriteOperationFutureCallback<T> wrapWriteOperationCallback(
+  public <T> FutureCallback<T> wrapWriteOperationCallback(
+      final HBaseOperation operation,
+      final MirroringTracer mirroringTracer,
       final WriteOperationFutureCallback<T> callback) {
     // WriteOperationFutureCallback already defines always empty `onSuccess` method, no need to wrap
     // it.
-    return new WriteOperationFutureCallback<T>() {
+    return new FutureCallback<T>() {
+      @Override
+      public void onSuccess(@NullableDecl T t) {
+        mirroringTracer.metricsRecorder.recordSecondaryWriteErrors(operation, 0);
+      }
+
       @Override
       public void onFailure(Throwable throwable) {
         try (Scope scope = MirroringSpanFactory.this.writeErrorScope()) {

@@ -673,7 +673,8 @@ public class MirroringTable implements Table {
     this.requestScheduler.scheduleRequestWithCallback(
         writeOperationInfo.requestResourcesDescription,
         secondaryOperationSupplier,
-        this.mirroringTracer.spanFactory.wrapWriteOperationCallback(writeErrorCallback),
+        this.mirroringTracer.spanFactory.wrapWriteOperationCallback(
+            writeOperationInfo.hBaseOperation, this.mirroringTracer, writeErrorCallback),
         flowControlReservationErrorConsumer);
   }
 

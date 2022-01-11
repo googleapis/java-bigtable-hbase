@@ -78,6 +78,10 @@ public class BatchHelpers {
                 successfulSecondaryReadsAndWrites.readResults);
           }
         }
+
+        if (successfulPrimaryReadsAndWrites.writeOperations.size() > 0) {
+          mirroringTracer.metricsRecorder.recordSecondaryWriteErrors(HBaseOperation.BATCH, 0);
+        }
       }
 
       @Override

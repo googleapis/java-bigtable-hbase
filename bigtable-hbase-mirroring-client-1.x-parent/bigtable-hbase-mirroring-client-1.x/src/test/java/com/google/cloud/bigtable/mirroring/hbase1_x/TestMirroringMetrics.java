@@ -68,6 +68,7 @@ import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -170,6 +171,86 @@ public class TestMirroringMetrics {
     verify(mirroringMetricsRecorder, times(1)).recordReadMismatches(HBaseOperation.GET, 1);
     verify(mirroringMetricsRecorder, never())
         .recordSecondaryWriteErrors(any(HBaseOperation.class), anyInt());
+  }
+
+  @Test
+  public void testMatchingReadReportsZeroMismatches() throws IOException {
+    Get get = createGet("test");
+    Result result1 = createResult("test", "value1");
+
+    when(primaryTable.get(get)).thenReturn(result1);
+    when(secondaryTable.get(get)).thenReturn(result1);
+
+    mirroringTable.get(get);
+    executorServiceRule.waitForExecutor();
+
+    verify(mirroringMetricsRecorder, times(1)).recordReadMismatches(HBaseOperation.GET, 0);
+    verify(mirroringMetricsRecorder, never())
+        .recordSecondaryWriteErrors(any(HBaseOperation.class), anyInt());
+  }
+
+  @Test
+  public void testSuccessfulConditionalWriteReportsZeroFailures() throws IOException {
+    byte[] row = new byte[] {1};
+    byte[] family = new byte[] {2};
+    byte[] qualifier = new byte[] {3};
+    byte[] value = new byte[] {4};
+
+    Put put = new Put(row);
+    put.addColumn(family, qualifier, value);
+
+    RowMutations rm = new RowMutations(row);
+    rm.add(put);
+
+    when(primaryTable.checkAndMutate(row, family, qualifier, CompareOp.EQUAL, value, rm))
+        .thenReturn(true);
+
+    mirroringTable.checkAndPut(row, family, qualifier, CompareOp.EQUAL, value, put);
+    executorServiceRule.waitForExecutor();
+
+    verify(mirroringMetricsRecorder, times(1))
+        .recordOperation(
+            eq(HBaseOperation.CHECK_AND_MUTATE),
+            eq(PRIMARY_LATENCY),
+            anyLong(),
+            eq(PRIMARY_ERRORS),
+            eq(false));
+    verify(mirroringMetricsRecorder, times(1))
+        .recordOperation(
+            eq(HBaseOperation.MUTATE_ROW),
+            eq(SECONDARY_LATENCY),
+            anyLong(),
+            eq(SECONDARY_ERRORS),
+            eq(false));
+    verify(mirroringMetricsRecorder, times(1))
+        .recordSecondaryWriteErrors(HBaseOperation.MUTATE_ROW, 0);
+  }
+
+  @Test
+  public void testSuccessfulWriteReportsZeroFailures() throws IOException, InterruptedException {
+    Put put = createPut("test", "f1", "q1", "v1");
+
+    mockBatch(primaryTable, put, new Result());
+    mockBatch(secondaryTable, put, new Result());
+
+    mirroringTable.put(put);
+    executorServiceRule.waitForExecutor();
+
+    verify(mirroringMetricsRecorder, times(1))
+        .recordOperation(
+            eq(HBaseOperation.BATCH),
+            eq(PRIMARY_LATENCY),
+            anyLong(),
+            eq(PRIMARY_ERRORS),
+            eq(false));
+    verify(mirroringMetricsRecorder, times(1))
+        .recordOperation(
+            eq(HBaseOperation.BATCH),
+            eq(SECONDARY_LATENCY),
+            anyLong(),
+            eq(SECONDARY_ERRORS),
+            eq(false));
+    verify(mirroringMetricsRecorder, times(1)).recordSecondaryWriteErrors(HBaseOperation.BATCH, 0);
   }
 
   @Test

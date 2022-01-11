@@ -56,8 +56,8 @@ public class MirroringMetricsRecorder {
 
     MeasureMap map = statsRecorder.newMeasureMap();
     map.put(latencyMeasure, latencyMs);
-    if (failed) {
-      map.put(errorMeasure, 1);
+    if (errorMeasure != null) {
+      map.put(errorMeasure, failed ? 1 : 0);
     }
     map.record(tagContext);
   }
