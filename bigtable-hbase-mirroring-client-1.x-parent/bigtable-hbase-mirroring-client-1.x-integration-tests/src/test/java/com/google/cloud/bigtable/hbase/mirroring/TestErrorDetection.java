@@ -19,8 +19,6 @@ import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfig
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConfigurationHelper;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
@@ -33,7 +31,6 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.ExecutorServiceRule;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection;
 import com.google.common.primitives.Longs;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
@@ -44,7 +41,6 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -210,71 +206,5 @@ public class TestErrorDetection {
     assertEquals(
         numberOfWorkers * numberOfBatches * batchSize + 1,
         MismatchDetectorCounter.getInstance().getVerificationsStartedCounter());
-  }
-
-  @Test
-  public void conditionalMutationsPreserveConsistency() throws IOException {
-    final int numberOfOperations = 50;
-    final int numberOfWorkers = 100;
-
-    final byte[] canary = "canary-value".getBytes();
-
-    TableName tableName;
-    try (MirroringConnection connection = databaseHelpers.createConnection()) {
-      tableName = connectionRule.createTable(connection, columnFamily1);
-      for (int i = 0; i < numberOfWorkers; i++) {
-        try (Table table = connection.getTable(tableName)) {
-          byte[] row = String.format("r%s", i).getBytes();
-          table.put(Helpers.createPut(row, columnFamily1, qualifier1, 0, "0".getBytes()));
-          for (int j = 0; j < numberOfOperations; j++) {
-            byte[] currentValue = String.valueOf(j).getBytes();
-            byte[] nextValue = String.valueOf(j + 1).getBytes();
-            assertFalse(
-                table.checkAndPut(
-                    row,
-                    columnFamily1,
-                    qualifier1,
-                    CompareOp.NOT_EQUAL,
-                    currentValue,
-                    Helpers.createPut(row, columnFamily1, qualifier1, j, canary)));
-            assertTrue(
-                table.checkAndPut(
-                    row,
-                    columnFamily1,
-                    qualifier1,
-                    CompareOp.EQUAL,
-                    currentValue,
-                    Helpers.createPut(row, columnFamily1, qualifier1, j, nextValue)));
-          }
-        }
-      }
-    }
-
-    Configuration configuration = ConfigurationHelper.newConfiguration();
-    configuration.set(MIRRORING_READ_VERIFICATION_RATE_PERCENT, "100");
-
-    try (MirroringConnection connection = databaseHelpers.createConnection(configuration)) {
-      try (Table t = connection.getTable(tableName)) {
-        try (ResultScanner s = t.getScanner(columnFamily1, qualifier1)) {
-          int counter = 0;
-          for (Result r : s) {
-            assertEquals(
-                String.format("Row %s mismatch in checkAndPut test", r.getRow()),
-                String.valueOf(numberOfOperations),
-                new String(r.getValue(columnFamily1, qualifier1), Charset.defaultCharset()));
-            counter++;
-          }
-          assertEquals(numberOfWorkers, counter);
-        }
-      }
-    }
-
-    assertEquals(
-        numberOfWorkers + 1, // because null returned from the scanner is also verified.
-        MismatchDetectorCounter.getInstance().getVerificationsStartedCounter());
-    assertEquals(
-        numberOfWorkers + 1,
-        MismatchDetectorCounter.getInstance().getVerificationsFinishedCounter());
-    assertEquals(0, MismatchDetectorCounter.getInstance().getErrorCount());
   }
 }

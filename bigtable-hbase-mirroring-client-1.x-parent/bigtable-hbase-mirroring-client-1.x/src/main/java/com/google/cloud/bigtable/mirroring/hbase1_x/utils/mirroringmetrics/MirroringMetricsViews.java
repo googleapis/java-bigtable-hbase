@@ -148,6 +148,10 @@ public class MirroringMetricsViews {
           AGGREGATION_WITH_MILLIS_HISTOGRAM,
           new ArrayList<TagKey>());
 
+  // TODO: Add a new view "Mirroring operation failed" that tells you if a high level mirroring
+  //  operation failed. It could fail due to a primary or secondary failure (for say concurrent
+  //  writes).
+
   private static final ImmutableSet<View> MIRRORING_CLIENT_VIEWS_SET =
       ImmutableSet.of(
           PRIMARY_OPERATION_LATENCY_VIEW,
