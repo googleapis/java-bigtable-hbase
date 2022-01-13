@@ -31,6 +31,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
@@ -54,22 +55,8 @@ class BigtableEnv extends SharedTestEnv {
     String projectId = System.getProperty("google.bigtable.project.id");
     String instanceId = System.getProperty("google.bigtable.instance.id");
 
-    configuration = BigtableConfiguration.configure(projectId, instanceId);
-
-    String connectionClass = System.getProperty("google.bigtable.connection.impl");
-    if (connectionClass != null) {
-      configuration.set("hbase.client.connection.impl", connectionClass);
-    }
-
-    String asyncConnectionClass = System.getProperty("google.bigtable.async.connection.impl");
-    if (asyncConnectionClass != null) {
-      configuration.set("hbase.client.async.connection.impl", asyncConnectionClass);
-    }
-
-    String registryClass = System.getProperty("google.bigtable.registry.impl");
-    if (registryClass != null) {
-      configuration.set("hbase.client.registry.impl", registryClass);
-    }
+    configuration = HBaseConfiguration.create();
+    configuration = BigtableConfiguration.configure(configuration, projectId, instanceId);
 
     for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
       if (KEYS.contains(entry.getKey())) {
