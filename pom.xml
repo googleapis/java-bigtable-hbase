@@ -54,7 +54,7 @@ limitations under the License.
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- core dependency versions -->
-    <bigtable.version>2.5.0</bigtable.version>
+    <bigtable.version>2.5.1</bigtable.version>
     <bigtable-client-core.version>1.23.0</bigtable-client-core.version>
     <grpc-conscrypt.version>2.5.1</grpc-conscrypt.version>
     <!--  keeping at this version to align with hbase-->
