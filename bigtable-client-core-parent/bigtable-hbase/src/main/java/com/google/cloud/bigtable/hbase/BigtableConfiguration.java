@@ -48,9 +48,18 @@ public class BigtableConfiguration {
   public static final String BIGTABLE_HBASE_CLIENT_ASYNC_REGISTRY_CLASS =
       "org.apache.hadoop.hbase.client.BigtableAsyncRegistry";
 
+  private static final String HBASE_ASYNC_CONNECTION_CLASS =
+      "org.apache.hadoop.hbase.client.AsyncConnection";
+
   private static final String[] CONNECTION_CLASS_NAMES = {
     "com.google.cloud.bigtable.hbase1_x.BigtableConnection",
     "com.google.cloud.bigtable.hbase2_x.BigtableConnection",
+  };
+
+  private static final String[] ASYNC_CONNECTION_CLASS_NAMES = {
+    BIGTABLE_HBASE_CLIENT_ASYNC_CONNECTION_CLASS,
+    BIGTABLE_HBASE_CLIENT_ASYNC_REGISTRY_CLASS,
+    HBASE_ASYNC_CONNECTION_CLASS
   };
 
   private static final Class<? extends Connection> CONNECTION_CLASS = chooseConnectionClass();
@@ -79,6 +88,27 @@ public class BigtableConfiguration {
         "Could not load a concrete implementation of BigtableTableConnection: "
             + "failed to find bigtable-hbase-1.x on the classpath.");
     return CONNECTION_CLASS;
+  }
+
+  /**
+   * Set up connection impl classes. If Bigtable and HBase async connection classes exist, set up
+   * async connection impl class as well.
+   */
+  private static Configuration injectBigtableImpls(Configuration configuration) {
+    configuration.set(HBASE_CLIENT_CONNECTION_IMPL, getConnectionClass().getCanonicalName());
+    try {
+      // Set up HBase async registry impl if async connection classes exist
+      for (String className : ASYNC_CONNECTION_CLASS_NAMES) {
+        Class.forName(className);
+      }
+      configuration.set(
+          HBASE_CLIENT_ASYNC_CONNECTION_IMPL, BIGTABLE_HBASE_CLIENT_ASYNC_CONNECTION_CLASS);
+      configuration.set(
+          HBASE_CLIENT_ASYNC_REGISTRY_IMPL, BIGTABLE_HBASE_CLIENT_ASYNC_REGISTRY_CLASS);
+    } catch (ClassNotFoundException ignored) {
+      // Skip if any of the async connection class doesn't exist
+    }
+    return configuration;
   }
 
   /**
@@ -117,8 +147,7 @@ public class BigtableConfiguration {
   public static Configuration configure(Configuration conf, String projectId, String instanceId) {
     conf.set(BigtableOptionsFactory.PROJECT_ID_KEY, projectId);
     conf.set(BigtableOptionsFactory.INSTANCE_ID_KEY, instanceId);
-    conf.set(HBASE_CLIENT_CONNECTION_IMPL, getConnectionClass().getCanonicalName());
-    return conf;
+    return injectBigtableImpls(conf);
   }
 
   /**
@@ -135,8 +164,7 @@ public class BigtableConfiguration {
     conf.set(BigtableOptionsFactory.PROJECT_ID_KEY, projectId);
     conf.set(BigtableOptionsFactory.INSTANCE_ID_KEY, instanceId);
     conf.set(BigtableOptionsFactory.APP_PROFILE_ID_KEY, appProfileId);
-    conf.set(HBASE_CLIENT_CONNECTION_IMPL, getConnectionClass().getCanonicalName());
-    return conf;
+    return injectBigtableImpls(conf);
   }
 
   /**
@@ -155,7 +183,14 @@ public class BigtableConfiguration {
    *
    * @param conf a {@link org.apache.hadoop.conf.Configuration} object to configure.
    * @return the modified {@link org.apache.hadoop.conf.Configuration} object.
+   * @deprecated For HBase 2.x async connections, please use {@link #configure(String, String)}
+   *     directly.
+   *     <pre>{@code
+   * Configure config = BigtableConfiguration.configure(projectId, instanceId);
+   * AsyncConnection asyncConnection = ConnectionFactory.createAsyncConnection(config).get();
+   * }</pre>
    */
+  @Deprecated
   public static Configuration asyncConfigure(Configuration conf) {
     conf.set(HBASE_CLIENT_ASYNC_CONNECTION_IMPL, BIGTABLE_HBASE_CLIENT_ASYNC_CONNECTION_CLASS);
     conf.set(HBASE_CLIENT_ASYNC_REGISTRY_IMPL, BIGTABLE_HBASE_CLIENT_ASYNC_REGISTRY_CLASS);

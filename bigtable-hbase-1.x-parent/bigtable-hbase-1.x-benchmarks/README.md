@@ -1,7 +1,6 @@
 Bigtable Benchmark
 
-This module contains benchmarking test scenarios, which would be idle to check the difference between **bigtable-core** client & **GCJ veneer** client.
-after running for one method.
+This module contains benchmarking test scenarios, which uses **GCJ veneer** client.
 
 It accepts following parameters:
 
@@ -11,6 +10,5 @@ $ java -jar target/benchmarks.jar \
         -p projectId=[Project ID] \
         -p instanceId=[Instance ID] \
         -p rowShape="cellsPerRow/[#]/cellSize/[#]", ... \
-        -p useBatch=false \
-        -p useGCJ=true,false 
+        -p useBatch=false
 ```

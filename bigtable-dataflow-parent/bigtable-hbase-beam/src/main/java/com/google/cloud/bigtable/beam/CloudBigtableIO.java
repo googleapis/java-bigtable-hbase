@@ -17,20 +17,10 @@ package com.google.cloud.bigtable.beam;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.BulkOptions;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableInstanceName;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSession;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.BigtableSessionSharedThreadPools;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.async.ResourceLimiterStats;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.FlatRow;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.grpc.scanner.ResultScanner;
 import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase.adapters.read.FlatRowAdapter;
-import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,7 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.beam.sdk.annotations.Experimental;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
@@ -66,11 +55,13 @@ import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.BufferedMutator.ExceptionListener;
 import org.apache.hadoop.hbase.client.BufferedMutatorParams;
 import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
@@ -129,8 +120,6 @@ import org.slf4j.LoggerFactory;
  */
 @Experimental
 public class CloudBigtableIO {
-
-  private static final FlatRowAdapter FLAT_ROW_ADAPTER = new FlatRowAdapter();
 
   /**
    * A {@link BoundedSource} for a Cloud Bigtable {@link Table}, which is potentially filtered by a
@@ -291,9 +280,10 @@ public class CloudBigtableIO {
 
     /**
      * Gets an estimated size based on data returned from {@link #getSampleRowKeys}. The estimate
-     * will be high if a {@link Scan} is set on the {@link CloudBigtableScanConfiguration}; in such
-     * cases, the estimate will not take the Scan into account, and will return a larger estimate
-     * than what the {@link CloudBigtableIO.Reader} will actually read.
+     * will be high if a {@link org.apache.hadoop.hbase.client.Scan} is set on the {@link
+     * CloudBigtableScanConfiguration}; in such cases, the estimate will not take the Scan into
+     * account, and will return a larger estimate than what the {@link CloudBigtableIO.Reader} will
+     * actually read.
      *
      * @param options The pipeline options.
      * @return The estimated size of the data, in bytes.
@@ -550,8 +540,8 @@ public class CloudBigtableIO {
 
     private CloudBigtableIO.AbstractSource source;
 
-    private transient BigtableSession session;
-    private transient ResultScanner<FlatRow> scanner;
+    private transient Connection connection;
+    private transient ResultScanner scanner;
     private transient Result current;
     protected long workStart;
     private final AtomicLong rowsRead = new AtomicLong();
@@ -578,19 +568,24 @@ public class CloudBigtableIO {
     void initializeScanner() throws IOException {
       Configuration config = source.getConfiguration().toHBaseConfig();
 
-      // This will use cached data channels under the covers.
-      session = new BigtableSession(BigtableOptionsFactory.fromConfiguration(config));
-      scanner = session.getDataClient().readFlatRows(source.getConfiguration().getRequest());
+      connection = ConnectionFactory.createConnection(config);
+      Scan scan =
+          new Scan()
+              .withStartRow(source.getConfiguration().getZeroCopyStartRow())
+              .withStopRow(source.getConfiguration().getZeroCopyStopRow())
+              .setMaxVersions(Integer.MAX_VALUE);
+      scanner =
+          connection
+              .getTable(TableName.valueOf(source.getConfiguration().getTableId()))
+              .getScanner(scan);
     }
 
     /** Calls {@link ResultScanner#next()}. */
     @Override
     public boolean advance() throws IOException {
-      FlatRow row = scanner.next();
-      if (row != null
-          && rangeTracker.tryReturnRecordAt(
-              true, ByteKey.copyFrom(ByteStringer.extract(row.getRowKey())))) {
-        current = FLAT_ROW_ADAPTER.adaptResponse(row);
+      Result row = scanner.next();
+      if (row != null && rangeTracker.tryReturnRecordAt(true, ByteKey.copyFrom(row.getRow()))) {
+        current = row;
         rowsRead.addAndGet(1l);
         return true;
       } else {
@@ -674,12 +669,12 @@ public class CloudBigtableIO {
     }
 
     @VisibleForTesting
-    protected void setSession(BigtableSession session) {
-      this.session = session;
+    protected void setConnection(Connection connection) {
+      this.connection = connection;
     }
 
     @VisibleForTesting
-    protected void setScanner(ResultScanner<FlatRow> scanner) {
+    protected void setScanner(ResultScanner scanner) {
       this.scanner = scanner;
     }
 
@@ -732,41 +727,6 @@ public class CloudBigtableIO {
 
   ///////////////////// Write Class /////////////////////////////////
 
-  private static class MutationStatsExporter {
-    protected static final Logger STATS_LOG = LoggerFactory.getLogger(AbstractSource.class);
-    private static Map<String, MutationStatsExporter> mutationStatsExporters = new HashMap<>();
-
-    static synchronized void initializeMutationStatsExporter(BigtableInstanceName instanceName) {
-      String key = instanceName.toString();
-      MutationStatsExporter mutationStatsExporter = mutationStatsExporters.get(key);
-      if (mutationStatsExporter == null) {
-        mutationStatsExporter = new MutationStatsExporter();
-        mutationStatsExporter.startExport(instanceName);
-        mutationStatsExporters.put(key, mutationStatsExporter);
-      }
-    }
-
-    protected void startExport(final BigtableInstanceName instanceName) {
-      Runnable r =
-          new Runnable() {
-            @Override
-            public void run() {
-              try {
-                BufferedMutatorDoFn.cumulativeThrottlingSeconds.set(
-                    TimeUnit.NANOSECONDS.toSeconds(
-                        ResourceLimiterStats.getInstance(instanceName)
-                            .getCumulativeThrottlingTimeNanos()));
-              } catch (Exception e) {
-                STATS_LOG.warn("Something bad happened in export stats", e);
-              }
-            }
-          };
-      BigtableSessionSharedThreadPools.getInstance()
-          .getRetryExecutor()
-          .scheduleAtFixedRate(r, 5, 5, TimeUnit.MILLISECONDS);
-    }
-  }
-
   /**
    * This is a DoFn that relies on {@link BufferedMutator} as the implementation to write data to
    * Cloud Bigtable. The main function of this class is to manage Aggregators relating to mutations.
@@ -792,8 +752,7 @@ public class CloudBigtableIO {
 
     @Setup
     public synchronized void setup() {
-      MutationStatsExporter.initializeMutationStatsExporter(
-          new BigtableInstanceName(config.getProjectId(), config.getInstanceId()));
+      // TODO set up buffered mutator stats exporter
     }
 
     protected BufferedMutator createBufferedMutator(Object context, String tableName)
@@ -801,7 +760,6 @@ public class CloudBigtableIO {
       return getConnection()
           .getBufferedMutator(
               new BufferedMutatorParams(TableName.valueOf(tableName))
-                  .writeBufferSize(BulkOptions.BIGTABLE_MAX_MEMORY_DEFAULT)
                   .listener(createExceptionListener(context)));
     }
 

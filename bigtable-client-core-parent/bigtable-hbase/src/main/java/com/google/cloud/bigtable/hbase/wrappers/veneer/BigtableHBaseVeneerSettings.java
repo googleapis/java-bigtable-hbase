@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.wrappers.veneer;
 
-import static com.google.cloud.bigtable.config.BulkOptions.BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ADDITIONAL_RETRY_CODES;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ALLOW_NO_TIMESTAMP_RETRIES_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.APP_PROFILE_ID_KEY;
@@ -26,6 +25,7 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BU
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_AUTOFLUSH_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_MAX_ROW_KEY_COUNT;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_HOST_KEY;
@@ -73,7 +73,6 @@ import com.google.auth.oauth2.ServiceAccountJwtAccessCredentials;
 import com.google.cloud.bigtable.admin.v2.BigtableInstanceAdminSettings;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.admin.v2.stub.BigtableInstanceAdminStubSettings;
-import com.google.cloud.bigtable.config.BigtableVersionInfo;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings.Builder;
 import com.google.cloud.bigtable.data.v2.models.Query;
@@ -465,17 +464,15 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   private void configureHeaderProvider(StubSettings.Builder<?, ?> stubSettings) {
     ImmutableMap.Builder<String, String> headersBuilder = ImmutableMap.<String, String>builder();
     List<String> userAgentParts = Lists.newArrayList();
-    userAgentParts.add("hbase-" + VersionInfo.getVersion());
-    userAgentParts.add("bigtable-" + BigtableVersionInfo.CLIENT_VERSION);
-    userAgentParts.add("bigtable-hbase-" + BigtableHBaseVersion.getVersion());
-    userAgentParts.add("jdk-" + System.getProperty("java.specification.version"));
+    userAgentParts.add("hbase/" + VersionInfo.getVersion());
+    userAgentParts.add("bigtable-hbase/" + BigtableHBaseVersion.getVersion());
 
     String customUserAgent = configuration.get(CUSTOM_USER_AGENT_KEY);
     if (customUserAgent != null) {
       userAgentParts.add(customUserAgent);
     }
 
-    String userAgent = Joiner.on(",").join(userAgentParts);
+    String userAgent = Joiner.on(" ").join(userAgentParts);
     headersBuilder.put(USER_AGENT_KEY.name(), userAgent);
 
     String tracingCookie = configuration.get(BigtableOptionsFactory.BIGTABLE_TRACING_COOKIE);
@@ -610,7 +607,9 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       int maxInflightRpcCount = Integer.parseInt(maxInflightRpcStr);
 
       long bulkMaxRowKeyCount =
-          Objects.requireNonNull(builder.getBatchingSettings().getElementCountThreshold());
+          Strings.isNullOrEmpty(bulkMaxRowKeyCountStr)
+              ? builder.getBatchingSettings().getElementCountThreshold()
+              : Long.parseLong(bulkMaxRowKeyCountStr);
 
       // TODO: either deprecate maxInflightRpcCount and expose the max outstanding elements
       // in user configuration or introduce maxInflightRpcCount to gax

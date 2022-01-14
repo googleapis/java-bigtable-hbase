@@ -65,7 +65,7 @@ public abstract class IncompatibleMutationAdapter {
 
   private boolean isValidDelete(Cell delete) {
     try {
-      DeleteAdapter.isValid(delete);
+      DeleteAdapter.isValidDelete(delete);
       return true;
     } catch (UnsupportedOperationException e) {
       return false;

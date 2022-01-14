@@ -18,12 +18,10 @@ package com.google.cloud.bigtable.hbase.wrappers.veneer;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.bigtable.data.v2.models.RowAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.RowCell;
-import com.google.cloud.bigtable.hbase.wrappers.veneer.RowResultAdapter.RowResult;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -63,9 +61,8 @@ public class TestRowResultAdapter {
     rowBuilder.cellValue(VALUE);
     rowBuilder.finishCell();
 
-    RowResult expected =
-        RowResult.create(
-            ROW_KEY,
+    Result expected =
+        Result.create(
             ImmutableList.<Cell>of(
                 new RowCell(
                     ROW_KEY.toByteArray(),
@@ -186,9 +183,8 @@ public class TestRowResultAdapter {
     Result actual = rowBuilder.finishRow();
     assertEquals(3, actual.size());
 
-    RowResult expected =
-        RowResult.create(
-            ROW_KEY,
+    Result expected =
+        Result.create(
             ImmutableList.<Cell>of(
                 new RowCell(
                     ROW_KEY.toByteArray(),
@@ -251,13 +247,12 @@ public class TestRowResultAdapter {
 
   @Test
   public void testWithMarkerRow() {
-    RowResult markerRow = RowResult.createMarker(ROW_KEY);
+    Result markerRow = new RowResultAdapter.RowResultBuilder().createScanMarkerRow(ROW_KEY);
     assertTrue(underTest.isScanMarkerRow(markerRow));
-    assertSame(ROW_KEY, underTest.getKey(markerRow));
+    assertEquals(ROW_KEY, underTest.getKey(markerRow));
 
-    RowResult resultWithOneCell =
-        RowResult.create(
-            ROW_KEY,
+    Result resultWithOneCell =
+        Result.create(
             ImmutableList.<Cell>of(
                 new RowCell(
                     ROW_KEY.toByteArray(),

@@ -47,7 +47,6 @@ import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
-import org.apache.log4j.BasicConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -537,9 +536,6 @@ public class HBaseSchemaTranslator {
   }
 
   public static void main(String[] args) throws IOException, DeserializationException {
-    // Configure the logger.
-    BasicConfigurator.configure();
-
     SchemaTranslationOptions options = SchemaTranslationOptions.loadOptionsFromSystemProperties();
     HBaseSchemaTranslator translator = new HBaseSchemaTranslator(options);
     translator.translate();

@@ -80,13 +80,13 @@
       // pin to hbase deps
       "packagePatterns": [
         "^hbase.-hadoop-slf4j.version",
-        "^hbase.-mapreduce-slfj.version",
+        "^hbase.-mapreduce-slfj.version"
       ],
       "enabled": false
     },
     {
       // pin to bigtable version
-      "excludePackagePatterns" : ["^grpc-conscrypt.version"],
+      "packagePatterns": ["^grpc-conscrypt.version"],
       "enabled": false
     },
     {
@@ -96,5 +96,8 @@
     }
   ],
   "semanticCommits": true,
-  "masterIssue": true
+  "dependencyDashboard": true,
+  "dependencyDashboardLabels": [
+    "type: process"
+  ]
 }

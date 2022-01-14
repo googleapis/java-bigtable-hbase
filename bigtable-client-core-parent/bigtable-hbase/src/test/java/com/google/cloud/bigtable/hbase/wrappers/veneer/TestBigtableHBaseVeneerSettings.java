@@ -57,7 +57,6 @@ import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
-import com.google.cloud.bigtable.config.BigtableVersionInfo;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableHBaseVersion;
@@ -93,7 +92,6 @@ public class TestBigtableHBaseVeneerSettings {
     configuration.set(BIGTABLE_ADMIN_HOST_KEY, TEST_HOST);
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE_ID);
-    configuration.set(BigtableOptionsFactory.BIGTABLE_USE_GCJ_CLIENT, "true");
   }
 
   @Test
@@ -131,11 +129,7 @@ public class TestBigtableHBaseVeneerSettings {
     assertTrue(
         headers
             .get(GrpcUtil.USER_AGENT_KEY.name())
-            .contains("bigtable-" + BigtableVersionInfo.CLIENT_VERSION));
-    assertTrue(
-        headers
-            .get(GrpcUtil.USER_AGENT_KEY.name())
-            .contains("bigtable-hbase-" + BigtableHBaseVersion.getVersion()));
+            .contains("bigtable-hbase/" + BigtableHBaseVersion.getVersion()));
     assertTrue(headers.get("cookie").equals(fakeTracingCookie));
     assertEquals(
         credentials, dataSettings.getStubSettings().getCredentialsProvider().getCredentials());

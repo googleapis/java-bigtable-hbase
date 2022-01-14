@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase1_x;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import com.google.bigtable.admin.v2.BigtableTableAdminGrpc;
 import com.google.bigtable.admin.v2.DropRowRangeRequest;
@@ -92,6 +93,15 @@ public class TestBigtableAdmin {
     admin.deleteRowRangeByPrefix(tableName, expectedKey.toByteArray());
 
     assertEquals(expectedRequest, requestQueue.take());
+  }
+
+  @Test
+  public void testUnimplementedMethod() throws Exception {
+    try {
+      admin.getCompactionState(TableName.valueOf(TABLE_ID));
+    } catch (UnsupportedOperationException e) {
+      assertTrue(e.getMessage().contains("getCompactionState"));
+    }
   }
 
   private class RequestInterceptor implements ServerInterceptor {

@@ -17,7 +17,6 @@
 package org.apache.hadoop.hbase.client;
 
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
@@ -27,8 +26,6 @@ import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
-import com.google.cloud.bigtable.hbase.wrappers.classic.BigtableHBaseClassicSettings;
-import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings;
 import com.google.common.base.MoreObjects;
 import java.io.Closeable;
 import java.io.IOException;
@@ -314,18 +311,6 @@ public abstract class AbstractBigtableConnection
   /** {@inheritDoc} */
   @Override
   public abstract Admin getAdmin() throws IOException;
-
-  /**
-   * Getter for the field <code>options</code>.
-   *
-   * @return a {@link com.google.cloud.bigtable.config.BigtableOptions} object.
-   */
-  public BigtableOptions getOptions() {
-    if (settings instanceof BigtableHBaseVeneerSettings) {
-      throw new UnsupportedOperationException("veneer client does not support BigtableOptions");
-    }
-    return ((BigtableHBaseClassicSettings) settings).getBigtableOptions();
-  }
 
   @Override
   public BigtableHBaseSettings getBigtableSettings() {

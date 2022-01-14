@@ -58,7 +58,12 @@ public class BigtableConnection extends AbstractBigtableConnection {
   /** {@inheritDoc} */
   @Override
   public Admin getAdmin() throws IOException {
-    return new BigtableAdmin(this);
+    return BigtableAdmin.createInstance(this);
+  }
+
+  @Override
+  public String getClusterId() throws IOException {
+    throw new UnsupportedOperationException("not implemented");
   }
 
   protected SampledRowKeysAdapter createSampledRowKeysAdapter(

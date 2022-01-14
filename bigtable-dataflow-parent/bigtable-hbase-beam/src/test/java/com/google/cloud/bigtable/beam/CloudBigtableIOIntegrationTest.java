@@ -15,9 +15,9 @@
  */
 package com.google.cloud.bigtable.beam;
 
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.config.Logger;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.cloud.bigtable.hbase.util.Logger;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,15 +66,15 @@ public class CloudBigtableIOIntegrationTest {
 
   private static final Logger LOG = new Logger(CloudBigtableIOIntegrationTest.class);
 
-  private static String projectId = System.getProperty(BIGTABLE_PROJECT_KEY);
-  private static String instanceId = System.getProperty(BIGTABLE_INSTANCE_KEY);
+  private static final String projectId = System.getProperty(BIGTABLE_PROJECT_KEY);
+  private static final String instanceId = System.getProperty(BIGTABLE_INSTANCE_KEY);
 
-  private static int LARGE_VALUE_SIZE = 201326;
+  private static final int LARGE_VALUE_SIZE = 201326;
 
   @Rule public ExpectedException expectedException = ExpectedException.none();
 
   public static TableName newTestTableName() {
-    return TableName.valueOf("test-dataflow-" + UUID.randomUUID().toString());
+    return TableName.valueOf("test-dataflow-" + UUID.randomUUID());
   }
 
   private static TableName createNewTable(Admin admin) throws IOException {
@@ -173,7 +173,7 @@ public class CloudBigtableIOIntegrationTest {
                   QUALIFIER1,
                   Bytes.toBytes(RandomStringUtils.randomAlphanumeric(8))));
     }
-    return KV.<String, Iterable<Mutation>>of(tableName.getNameAsString(), mutations);
+    return KV.of(tableName.getNameAsString(), mutations);
   }
 
   private void writeThroughDataflow(DoFn<Mutation, Void> writer, int insertCount) throws Exception {
@@ -228,7 +228,7 @@ public class CloudBigtableIOIntegrationTest {
                   QUALIFIER1,
                   Bytes.toBytes(RandomStringUtils.randomAlphanumeric(8))));
     }
-    try (Table t = connection.getTable(tableName); ) {
+    try (Table t = connection.getTable(tableName)) {
       t.put(puts);
     }
   }
@@ -329,18 +329,15 @@ public class CloudBigtableIOIntegrationTest {
         try {
           for (final BoundedSource<Result> bundle : bundles) {
             es.submit(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    try (BoundedReader<Result> reader = bundle.createReader(null)) {
-                      reader.start();
-                      while (reader.getCurrent() != null) {
-                        count.incrementAndGet();
-                        reader.advance();
-                      }
-                    } catch (IOException e) {
-                      LOG.warn("Could not read bundle: %s", e, bundle);
+                () -> {
+                  try (BoundedReader<Result> reader = bundle.createReader(null)) {
+                    reader.start();
+                    while (reader.getCurrent() != null) {
+                      count.incrementAndGet();
+                      reader.advance();
                     }
+                  } catch (IOException e) {
+                    LOG.warn("Could not read bundle: %s", e, bundle);
                   }
                 });
           }

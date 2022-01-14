@@ -21,7 +21,6 @@ import com.google.bigtable.v2.Mutation.MutationCase;
 import com.google.bigtable.v2.Mutation.SetCell;
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
-import com.google.cloud.bigtable.grpc.BigtableDataGrpcClient;
 import com.google.cloud.bigtable.hbase.DataGenerationHelper;
 import com.google.protobuf.ByteString;
 import java.util.concurrent.TimeUnit;
@@ -210,21 +209,6 @@ public class TestPutAdapter {
     byte[] row = dataHelper.randomData("rk-");
     Put emptyPut = new Put(row);
     adapt(emptyPut);
-  }
-
-  @Test
-  public void testRetry() {
-    byte[] row = dataHelper.randomData("rk-");
-    byte[] family1 = dataHelper.randomData("f1");
-    byte[] qualifier1 = dataHelper.randomData("qual1");
-    byte[] value1 = dataHelper.randomData("v1");
-
-    Put hbasePut = new Put(row, System.currentTimeMillis());
-    hbasePut.addColumn(family1, qualifier1, value1);
-    MutateRowRequest request = adapt(hbasePut);
-
-    // Is the Put retryable?
-    Assert.assertTrue(BigtableDataGrpcClient.IS_RETRYABLE_MUTATION.apply(request));
   }
 
   private MutateRowRequest adapt(Put put) {
