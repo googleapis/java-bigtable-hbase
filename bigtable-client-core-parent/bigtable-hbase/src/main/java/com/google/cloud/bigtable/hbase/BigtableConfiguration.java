@@ -105,8 +105,7 @@ public class BigtableConfiguration {
       configuration.set(
           HBASE_CLIENT_ASYNC_CONNECTION_IMPL, BIGTABLE_HBASE_CLIENT_ASYNC_CONNECTION_CLASS);
       configuration.set(
-          HBASE_CLIENT_ASYNC_REGISTRY_IMPL,
-          BigtableAsyncRegistry.getSubClass().getName());
+          HBASE_CLIENT_ASYNC_REGISTRY_IMPL, BigtableAsyncRegistry.getSubClass().getName());
     } catch (ClassNotFoundException ignored) {
       // Skip if any of the async connection class doesn't exist
     }
@@ -195,9 +194,7 @@ public class BigtableConfiguration {
   @Deprecated
   public static Configuration asyncConfigure(Configuration conf) {
     conf.set(HBASE_CLIENT_ASYNC_CONNECTION_IMPL, BIGTABLE_HBASE_CLIENT_ASYNC_CONNECTION_CLASS);
-    conf.set(
-        HBASE_CLIENT_ASYNC_REGISTRY_IMPL,
-        BigtableAsyncRegistry.getSubClass().getName());
+    conf.set(HBASE_CLIENT_ASYNC_REGISTRY_IMPL, BigtableAsyncRegistry.getSubClass().getName());
     return conf;
   }
 

@@ -16,12 +16,9 @@
 package org.apache.hadoop.hbase.client;
 
 import com.google.api.core.InternalApi;
-
-import java.util.ArrayList;
+import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-
-import com.google.common.collect.ImmutableList;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
@@ -38,65 +35,72 @@ import org.apache.hadoop.conf.Configuration;
  * 2 implementation provided by {@link ZKConnectionRegistry} assumes a ZooKeeper environment, which
  * is not the case for Bigtable.
  *
- * <p>This class is injected via the system property: "hbase.client.registry.impl" For further
- * details See {@link HConstants#CLIENT_CONNECTION_REGISTRY_IMPL_CONF_KEY}, and {@link
- * ConnectionFactory#createAsyncConnection()}
+ * <p>This class is injected via the system property: "hbase.client.registry.impl". For further
+ * details See HConstants#CLIENT_CONNECTION_REGISTRY_IMPL_CONF_KEY,
+ * AsyncRegistry#createAsyncConnection() for hbase < 2.3 and
+ * ConnectionFactory#createAsyncConnection() for hbase >= 2.3.
  *
  * <p>For internal use only - public for technical reasons.
  */
 @InternalApi("For internal usage only")
 public class BigtableAsyncRegistry {
 
-    private static Class<? extends BigtableAsyncRegistry> subClass = null;
+  private static Class<? extends BigtableAsyncRegistry> subClass = null;
 
-    // TODO for connectionregistry
-    public BigtableAsyncRegistry() {
+  /** Constructor for org.apache.hadoop.hbase.client.ZKConnectionRegistry for hbase >= 2.3. */
+  public BigtableAsyncRegistry() {}
+
+  /**
+   * Constructor for org.apache.hadoop.hbase.client.ZKAsyncRegistry for hbase < 2.3. Configuration
+   * is not used in BigtableAsyncRegistry.
+   */
+  public BigtableAsyncRegistry(Configuration conf) {}
+
+  public static Class<? extends BigtableAsyncRegistry> createSubClass()
+      throws NoSuchMethodException {
+    List<String> classNames =
+        ImmutableList.of(
+            "org.apache.hadoop.hbase.client.ConnectionRegistry",
+            "org.apache.hadoop.hbase.client.AsyncRegistry");
+
+    DynamicType.Builder<BigtableAsyncRegistry> subclassBuilder =
+        new ByteBuddy().subclass(BigtableAsyncRegistry.class);
+
+    for (String className : classNames) {
+      try {
+        subclassBuilder = subclassBuilder.implement(Class.forName(className));
+      } catch (ClassNotFoundException e) {
+        continue;
+      }
     }
 
-    // TODO for asyncregistry impl
-    public BigtableAsyncRegistry(Configuration conf) {
+    return subclassBuilder
+        .method(ElementMatchers.isAbstract())
+        .intercept(
+            InvocationHandlerAdapter.of(new AbstractBigtableAdmin.UnsupportedOperationsHandler()))
+        .method(ElementMatchers.named("close"))
+        .intercept(MethodCall.invoke(BigtableAsyncRegistry.class.getDeclaredMethod("closeNoop")))
+        .method(ElementMatchers.named("getClusterId"))
+        .intercept(FixedValue.value((CompletableFuture.completedFuture("NoopClusterId"))))
+        .make()
+        .load(InjectionClassLoader.getSystemClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+        .getLoaded();
+  }
+
+  public static synchronized Class<? extends BigtableAsyncRegistry> getSubClass() {
+    if (subClass == null) {
+      try {
+        subClass = createSubClass();
+      } catch (NoSuchMethodException e) {
+        throw new RuntimeException(e);
+      }
+      if (subClass == null) {
+        throw new RuntimeException(
+            "Couldn't find org.apache.hadoop.hbase.client.ConnectionRegistry or org.apache.hadoop.hbase.client.AsyncRegistry in the classpath");
+      }
     }
+    return subClass;
+  }
 
-    public static Class<? extends BigtableAsyncRegistry> createSubClass() throws NoSuchMethodException {
-        List<String> classNames = ImmutableList.of("org.apache.hadoop.hbase.client.ConnectionRegistry", "org.apache.hadoop.hbase.client.AsyncRegistry");
-
-        DynamicType.Builder<BigtableAsyncRegistry> subclassBuilder = new ByteBuddy().subclass(BigtableAsyncRegistry.class);
-
-        for (String className : classNames) {
-            try {
-                subclassBuilder = subclassBuilder.implement(Class.forName(className));
-            } catch (ClassNotFoundException e) {
-                continue;
-            }
-        }
-
-        return subclassBuilder.method(ElementMatchers.isAbstract())
-                    .intercept(
-                            InvocationHandlerAdapter.of(
-                                    new AbstractBigtableAdmin.UnsupportedOperationsHandler()))
-                    .method(ElementMatchers.named("close"))
-                    .intercept(
-                            MethodCall.invoke(BigtableAsyncRegistry.class.getDeclaredMethod("closeNoop")))
-                    .method(ElementMatchers.named("getClusterId"))
-                    .intercept(FixedValue.value((CompletableFuture.completedFuture("NoopClusterId"))))
-                    .make()
-                    .load(
-                            InjectionClassLoader.getSystemClassLoader(),
-                            ClassLoadingStrategy.Default.INJECTION)
-                    .getLoaded();
-    }
-
-    public synchronized static Class<? extends BigtableAsyncRegistry> getSubClass() {
-        if (subClass == null) {
-            try {
-                subClass = createSubClass();
-            } catch (NoSuchMethodException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return subClass;
-    }
-
-    public void closeNoop() {
-    }
+  public void closeNoop() {}
 }

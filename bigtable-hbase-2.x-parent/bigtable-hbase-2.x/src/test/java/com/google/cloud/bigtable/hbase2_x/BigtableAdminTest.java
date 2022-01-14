@@ -23,14 +23,7 @@ import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
-
-import com.google.cloud.bigtable.hbase.BigtableConfiguration;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
-import org.apache.hadoop.hbase.client.AsyncAdmin;
-import org.apache.hadoop.hbase.client.AsyncConnection;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -54,12 +47,5 @@ public class BigtableAdminTest {
     assertEquals(0, status.getMasterCoprocessors().length);
     assertFalse(status.getBalancerOn());
     assertEquals(-1, status.getMasterInfoPort());
-  }
-
-  @Test
-  public void test() throws Exception {
-    Configuration configuration = BigtableConfiguration.configure("fake-p", "fake-i");
-    AsyncConnection connection = ConnectionFactory.createAsyncConnection(configuration).get();
-    AsyncAdmin asyncAdmin = connection.getAdmin();
   }
 }

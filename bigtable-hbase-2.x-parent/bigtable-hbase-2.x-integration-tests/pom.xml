@@ -63,8 +63,8 @@ limitations under the License.
                   <redirectTestOutputToFile>true</redirectTestOutputToFile>
 
                   <!-- Run tests in parallel -->
-<!--                  <parallel>classes</parallel>-->
-<!--                  <threadCount>4</threadCount>-->
+                  <parallel>classes</parallel>
+                  <threadCount>4</threadCount>
 
                   <!-- Fork & set system properties -->
                   <forkCount>1</forkCount>
