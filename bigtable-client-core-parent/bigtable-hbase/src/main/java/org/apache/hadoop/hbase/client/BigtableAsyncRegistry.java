@@ -32,8 +32,8 @@ import org.apache.hadoop.conf.Configuration;
 /**
  * Bigtable implementation of org.apache.hadoop.hbase.client.ConnectionRegistry or
  * org.apache.hadoop.hbase.client.AsyncRegistry depending on the HBase 2 version. The default HBase
- * 2 implementation provided by {@link ZKConnectionRegistry} assumes a ZooKeeper environment, which
- * is not the case for Bigtable.
+ * 2 implementation provided by ZKAsyncRegistry / ZKConnectionRegistry assumes a ZooKeeper
+ * environment, which is not the case for Bigtable.
  *
  * <p>This class is injected via the system property: "hbase.client.registry.impl". For further
  * details See HConstants#CLIENT_CONNECTION_REGISTRY_IMPL_CONF_KEY,
@@ -56,7 +56,13 @@ public class BigtableAsyncRegistry {
    */
   public BigtableAsyncRegistry(Configuration conf) {}
 
-  public static Class<? extends BigtableAsyncRegistry> createSubClass()
+  /**
+   * Implements the async connection registry class depending on which class is present in the class
+   * path. #close and #getClusterId are implemented. #getClusterId is used in
+   * ConnectionFactory#getAsyncConnection, so a non null return value is required for successful
+   * creation of asyncConnection. Throws {@link UnsupportedOperationException} on all other methods.
+   */
+  private static Class<? extends BigtableAsyncRegistry> createSubClass()
       throws NoSuchMethodException {
     List<String> classNames =
         ImmutableList.of(
