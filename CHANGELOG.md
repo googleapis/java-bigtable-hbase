@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.26.3](https://github.com/googleapis/java-bigtable-hbase/compare/v1.26.2...v1.26.3) (2022-01-18)
+
+
+### Dependencies
+
+* upgrade protobuf to 3.19.2 ([#3455](https://github.com/googleapis/java-bigtable-hbase/issues/3455)) ([a9bec1f](https://github.com/googleapis/java-bigtable-hbase/commit/a9bec1ff3df997be3b2f3eb773c6070b13f2626e))
+
 ### [1.26.2](https://www.github.com/googleapis/java-bigtable-hbase/compare/v1.26.1...v1.26.2) (2022-01-05)
 
 
