@@ -121,12 +121,14 @@ public class BatchHelpers {
           // Using those indices we select Get operations that have results from both primary and
           // secondary database, and pass them to `mismatchDetector.batch()`.
           // We also gather failed gets to pass them to `batchGetFailure`.
-          MatchingSuccessfulReadsResults matchingSuccessfulReads =
-              selectMatchingSuccessfulReads(
+          SecondaryReadsResults secondaryReadsResults =
+              selectMatchingSecondaryReads(
                   secondaryOperations,
                   failedAndSuccessfulPrimaryOperations.successfulResults,
                   secondaryResults,
                   resultIsFaultyPredicate);
+          MatchingSuccessfulReadsResults matchingSuccessfulReads =
+              secondaryReadsResults.matchingSuccessfulReadsResults;
 
           try (Scope scope = mirroringTracer.spanFactory.verificationScope()) {
             if (!matchingSuccessfulReads.successfulReads.isEmpty()) {
@@ -136,8 +138,8 @@ public class BatchHelpers {
                   matchingSuccessfulReads.secondaryResults);
             }
 
-            if (!matchingSuccessfulReads.failedReads.isEmpty()) {
-              mismatchDetector.batch(matchingSuccessfulReads.failedReads, throwable);
+            if (!secondaryReadsResults.failedSecondaryReads.isEmpty()) {
+              mismatchDetector.batch(secondaryReadsResults.failedSecondaryReads, throwable);
             }
           }
         }
@@ -165,18 +167,25 @@ public class BatchHelpers {
   private static class MatchingSuccessfulReadsResults {
     final Result[] primaryResults;
     final Result[] secondaryResults;
-    final List<Get> failedReads;
     final List<Get> successfulReads;
 
     private MatchingSuccessfulReadsResults(
-        Result[] primaryResults,
-        Result[] secondaryResults,
-        List<Get> failedReads,
-        List<Get> successfulReads) {
+        Result[] primaryResults, Result[] secondaryResults, List<Get> successfulReads) {
       this.primaryResults = primaryResults;
       this.secondaryResults = secondaryResults;
-      this.failedReads = failedReads;
       this.successfulReads = successfulReads;
+    }
+  }
+
+  private static class SecondaryReadsResults {
+    public final MatchingSuccessfulReadsResults matchingSuccessfulReadsResults;
+    public final List<Get> failedSecondaryReads;
+
+    private SecondaryReadsResults(
+        MatchingSuccessfulReadsResults matchingSuccessfulReadsResults,
+        List<Get> failedSecondaryReads) {
+      this.matchingSuccessfulReadsResults = matchingSuccessfulReadsResults;
+      this.failedSecondaryReads = failedSecondaryReads;
     }
   }
 
@@ -187,12 +196,12 @@ public class BatchHelpers {
    * available, they are added to lists of matching reads and successful operations. In the other
    * case the Get operation is placed on failed operations list.
    */
-  private static MatchingSuccessfulReadsResults selectMatchingSuccessfulReads(
-      List<? extends Row> operations,
+  private static SecondaryReadsResults selectMatchingSecondaryReads(
+      List<? extends Row> secondaryOperations,
       Object[] primaryResults,
       Object[] secondaryResults,
       Predicate<Object> resultIsFaultyPredicate) {
-    Preconditions.checkArgument(operations.size() == secondaryResults.length);
+    Preconditions.checkArgument(secondaryOperations.size() == secondaryResults.length);
     Preconditions.checkArgument(primaryResults.length == secondaryResults.length);
 
     List<Result> primaryMatchingReads = new ArrayList<>();
@@ -202,25 +211,26 @@ public class BatchHelpers {
     List<Get> successfulReads = new ArrayList<>();
 
     for (int i = 0; i < secondaryResults.length; i++) {
-      if (!(operations.get(i) instanceof Get)) {
+      if (!(secondaryOperations.get(i) instanceof Get)) {
         continue;
       }
 
       // We are sure casts are correct, and non-failed results to Gets are always Results.
       if (resultIsFaultyPredicate.apply(secondaryResults[i])) {
-        failedReads.add((Get) operations.get(i));
+        failedReads.add((Get) secondaryOperations.get(i));
       } else {
         primaryMatchingReads.add((Result) primaryResults[i]);
         secondaryMatchingReads.add((Result) secondaryResults[i]);
-        successfulReads.add((Get) operations.get(i));
+        successfulReads.add((Get) secondaryOperations.get(i));
       }
     }
 
-    return new MatchingSuccessfulReadsResults(
-        primaryMatchingReads.toArray(new Result[0]),
-        secondaryMatchingReads.toArray(new Result[0]),
-        failedReads,
-        successfulReads);
+    return new SecondaryReadsResults(
+        new MatchingSuccessfulReadsResults(
+            primaryMatchingReads.toArray(new Result[0]),
+            secondaryMatchingReads.toArray(new Result[0]),
+            successfulReads),
+        failedReads);
   }
 
   /**
