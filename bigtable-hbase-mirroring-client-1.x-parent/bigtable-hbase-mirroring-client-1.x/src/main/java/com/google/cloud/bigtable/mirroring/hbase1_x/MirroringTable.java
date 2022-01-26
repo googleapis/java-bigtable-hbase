@@ -39,7 +39,6 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.Refe
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -576,15 +575,14 @@ public class MirroringTable implements Table {
    */
   @Override
   public void close() throws IOException {
-    this.asyncClose();
+    this.closePrimaryAndScheduleSecondaryClose();
   }
 
-  @VisibleForTesting
-  ListenableFuture<Void> asyncClose() throws IOException {
+  private void closePrimaryAndScheduleSecondaryClose() throws IOException {
     try (Scope scope =
         this.mirroringTracer.spanFactory.operationScope(HBaseOperation.TABLE_CLOSE)) {
       if (this.closed.getAndSet(true)) {
-        return this.closedFuture;
+        return;
       }
 
       // We are freeing the initial reference to current level reference counter.
@@ -632,7 +630,6 @@ public class MirroringTable implements Table {
       }
 
       exceptionsList.rethrowIfCaptured();
-      return this.closedFuture;
     } finally {
       this.mirroringTracer.spanFactory.asyncCloseSpanWhenCompleted(
           this.referenceCounter.current.getOnLastReferenceClosed());

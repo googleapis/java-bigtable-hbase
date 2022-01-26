@@ -160,11 +160,11 @@ public class MirroringResultScanner extends AbstractClientScanner {
 
   @Override
   public void close() {
-    asyncClose();
+    closePrimaryAndScheduleSecondaryClose();
   }
 
   @VisibleForTesting
-  ListenableFuture<Void> asyncClose() {
+  ListenableFuture<Void> closePrimaryAndScheduleSecondaryClose() {
     if (this.closed.getAndSet(true)) {
       return this.closedFuture;
     }

@@ -141,7 +141,7 @@ public class TestMirroringResultScanner {
     verify(primaryScannerMock, times(1)).close();
     verify(secondaryScannerWrapperMock, times(1)).close();
     try {
-      mirroringScanner.asyncClose().get(3, TimeUnit.SECONDS);
+      mirroringScanner.closePrimaryAndScheduleSecondaryClose().get(3, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
       assertThat(e).hasCauseThat().hasMessageThat().contains("second");
     }
@@ -175,13 +175,14 @@ public class TestMirroringResultScanner {
             new ThrowingRunnable() {
               @Override
               public void run() {
-                mirroringScanner.asyncClose();
+                mirroringScanner.closePrimaryAndScheduleSecondaryClose();
               }
             });
 
     // asyncClose returns future that will resolve to secondary error.
-    // Second call to asyncClose() should perform any other operation.
-    ListenableFuture<Void> asyncCloseResult = mirroringScanner.asyncClose();
+    // Second call to closePrimaryAndScheduleSecondaryClose() should perform any other operation.
+    ListenableFuture<Void> asyncCloseResult =
+        mirroringScanner.closePrimaryAndScheduleSecondaryClose();
 
     verify(primaryScannerMock, times(1)).close();
     assertThat(thrown).hasMessageThat().contains("first");

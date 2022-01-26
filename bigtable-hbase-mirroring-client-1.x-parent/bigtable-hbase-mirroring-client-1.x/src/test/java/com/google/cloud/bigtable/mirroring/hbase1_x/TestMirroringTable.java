@@ -150,7 +150,9 @@ public class TestMirroringTable {
 
   private void waitForMirroringScanner(ResultScanner mirroringScanner)
       throws InterruptedException, ExecutionException, TimeoutException {
-    ((MirroringResultScanner) mirroringScanner).asyncClose().get(3, TimeUnit.SECONDS);
+    ((MirroringResultScanner) mirroringScanner)
+        .closePrimaryAndScheduleSecondaryClose()
+        .get(3, TimeUnit.SECONDS);
   }
 
   @Test
