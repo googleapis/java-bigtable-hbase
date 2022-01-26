@@ -20,7 +20,6 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.compat.CellComparatorC
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.util.Bytes;
 
 @InternalApi("For internal usage only")
 public class Comparators {
@@ -85,14 +84,5 @@ public class Comparators {
       }
     }
     return true;
-  }
-
-  private static boolean compareRows(Result result1, Result result2) {
-    byte[] row1 = result1.getRow();
-    byte[] row2 = result2.getRow();
-    if (row1 == null || row2 == null) {
-      return row1 == row2;
-    }
-    return Bytes.compareTo(row1, row2) == 0;
   }
 }
