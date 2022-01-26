@@ -195,7 +195,7 @@ public class TestMirroringAsyncTableInputModification {
     verify(this.primaryTable, times(1)).delete(puts);
 
     secondaryOperationBlockedOnFuture.set(null);
-    verify(this.primaryTable, times(1)).delete(puts);
+    verify(this.secondaryTable, times(1)).delete(puts);
   }
 
   @Test
