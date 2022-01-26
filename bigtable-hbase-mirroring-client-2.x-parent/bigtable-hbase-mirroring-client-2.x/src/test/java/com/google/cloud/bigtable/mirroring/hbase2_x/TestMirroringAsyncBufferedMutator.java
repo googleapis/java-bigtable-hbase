@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.NoopTimestamper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.cloud.bigtable.mirroring.hbase2_x.utils.futures.FutureConverter;
@@ -190,8 +191,8 @@ public class TestMirroringAsyncBufferedMutator {
     // primary complete but still waiting for resources so not done
     primaryFuture.complete(null);
     assertThat(resultFuture.isDone()).isFalse();
-
-    secondaryFailure.completeExceptionally(new IOException());
+    IOException expectedException = new IOException("expected");
+    secondaryFailure.completeExceptionally(expectedException);
 
     // got resources so we got the result
     resourcesAllocated.complete(null);
@@ -203,5 +204,7 @@ public class TestMirroringAsyncBufferedMutator {
     verify(secondaryMutator, times(1)).mutate(put);
 
     assertThat(resultFuture.isCompletedExceptionally()).isFalse();
+    verify(secondaryWriteErrorConsumer)
+        .consume(HBaseOperation.BUFFERED_MUTATOR_MUTATE, put, expectedException);
   }
 }

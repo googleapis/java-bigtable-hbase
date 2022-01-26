@@ -23,6 +23,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.Mirro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.cloud.bigtable.mirroring.hbase2_x.utils.futures.FutureConverter;
+import com.google.cloud.bigtable.mirroring.hbase2_x.utils.futures.FutureUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -96,7 +97,7 @@ public class MirroringAsyncBufferedMutator implements AsyncBufferedMutator {
                                   this.secondaryWriteErrorConsumer.consume(
                                       MirroringSpanConstants.HBaseOperation.BUFFERED_MUTATOR_MUTATE,
                                       mutation,
-                                      secondaryError);
+                                      FutureUtils.unwrapCompletionException(secondaryError));
                                   referenceCounter.decrementReferenceCount();
                                   return null;
                                 });
