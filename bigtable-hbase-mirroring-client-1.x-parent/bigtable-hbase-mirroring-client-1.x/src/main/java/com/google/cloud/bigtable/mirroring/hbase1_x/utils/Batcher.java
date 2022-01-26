@@ -249,18 +249,6 @@ public class Batcher {
         results, primaryBatchData, secondaryBatchData, resultIsFaultyPredicate);
   }
 
-  private static void throwBatchDataExceptionIfPresent(BatchData primaryBatchData)
-      throws InterruptedException, IOException {
-    Throwable exception = primaryBatchData.getException();
-    if (exception != null) {
-      if (exception instanceof InterruptedException) {
-        throw (InterruptedException) exception;
-      } else {
-        throw (IOException) exception;
-      }
-    }
-  }
-
   private ListenableFuture<BatchData> scheduleSecondaryWriteBatchOperations(
       final List<? extends Row> operations, final Object[] results) {
     final SettableFuture<BatchData> result = SettableFuture.create();
