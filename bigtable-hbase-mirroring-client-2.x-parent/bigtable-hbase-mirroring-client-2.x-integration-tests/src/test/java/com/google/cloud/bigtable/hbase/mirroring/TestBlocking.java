@@ -107,7 +107,7 @@ public class TestBlocking {
 
     // And give it some time to run, to verify that is has blocked.
     try {
-      closingThreadEnded.get(5, TimeUnit.SECONDS);
+      closingThreadEnded.get(1, TimeUnit.SECONDS);
       fail("should throw");
     } catch (TimeoutException ignored) {
       // expected
@@ -160,7 +160,7 @@ public class TestBlocking {
 
       // Give it some time to run, to verify that is has blocked.
       try {
-        closingThreadEnded.get(5, TimeUnit.SECONDS);
+        closingThreadEnded.get(1, TimeUnit.SECONDS);
         fail("should throw");
       } catch (TimeoutException ignored) {
         // expected

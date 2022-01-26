@@ -110,9 +110,11 @@ public class TestBlocking {
     // Wait until closing thread starts.
     closingThreadStarted.get(1, TimeUnit.SECONDS);
 
-    // And give it some time to run, to verify that is has blocked.
+    // And give it some time to run, to verify that is has blocked. It will block until timeout is
+    // encountered or all async operations are finished. We will hit the second case here, because
+    // we will unblock the mismatch detector.
     try {
-      closingThreadEnded.get(5, TimeUnit.SECONDS);
+      closingThreadEnded.get(1, TimeUnit.SECONDS);
       fail("should throw");
     } catch (TimeoutException ignored) {
       // expected
@@ -163,9 +165,11 @@ public class TestBlocking {
         // Wait until thread starts.
         closingThreadStarted.get(1, TimeUnit.SECONDS);
 
-        // Give it some time to run, to verify that is has blocked.
+        // Give it some time to run, to verify that is has blocked. We are expecting that this
+        // operation will timeout because it is waiting for the FlowController to admit resources
+        // for the `put` operation.
         try {
-          closingThreadEnded.get(5, TimeUnit.SECONDS);
+          closingThreadEnded.get(1, TimeUnit.SECONDS);
           fail("should throw");
         } catch (TimeoutException ignored) {
           // expected
@@ -224,10 +228,11 @@ public class TestBlocking {
     MirroringConnection c = closingThreadStartedFuture.get(1, TimeUnit.SECONDS);
     // And wait for it to finish. It should time-out after 1 second.
     long closeDuration = closingThreadFinishedFuture.get(3, TimeUnit.SECONDS);
-    // Just knowing that the future did not time out is enough to know that it closing the
-    // connection lasted no longer than 3 seconds, but we also need to check that it waited at least
-    // `timeoutMillis`. `closeDuration` is strictly greater than timeout because it includes some
-    // overhead, but `timeoutMillis` >> expected overhead, thus false-positives are unlikely.
+    // The closingThreadFinishedFuture did not timeout, thus we know that closing the connection
+    // lasted no longer than 3 seconds.
+    // We also need to check that it waited at least `timeoutMillis`.
+    // `closeDuration` is strictly greater than timeout because it includes some overhead,
+    // but `timeoutMillis` >> expected overhead, thus false-positives are unlikely.
     assertThat(closeDuration).isAtLeast(timeoutMillis);
     assertThat(c.getPrimaryConnection().isClosed()).isTrue();
     assertThat(c.getSecondaryConnection().isClosed()).isFalse();
