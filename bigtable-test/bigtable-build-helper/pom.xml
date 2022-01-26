@@ -72,7 +72,7 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <!-- match version to maven -->
-      <version>1.7.30</version>
+      <version>1.7.35</version>
       <scope>provided</scope>
     </dependency>
 
