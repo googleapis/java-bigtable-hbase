@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog;
 
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import java.io.IOException;
 import org.apache.hadoop.hbase.client.Mutation;
 
@@ -27,10 +26,9 @@ import org.apache.hadoop.hbase.client.Mutation;
 public class FailedMutationLogger implements AutoCloseable {
   private final Serializer serializer;
   private final Appender appender;
-  private final MirroringTracer mirroringTracer;
 
-  FailedMutationLogger(MirroringTracer mirroringTracer) throws IOException {
-    this(mirroringTracer, "/tmp/hbase_mirroring_client_failed_mutations", 1024 * 1024, false);
+  FailedMutationLogger() throws IOException {
+    this("/tmp/hbase_mirroring_client_failed_mutations", 1024 * 1024, false);
   }
 
   /**
@@ -40,7 +38,6 @@ public class FailedMutationLogger implements AutoCloseable {
    * actual writing should be asynchronous, because the failed mutations are buffered and flushed to
    * disk by another thread.
    *
-   * @param mirroringTracer tracer for telemetry
    * @param pathPrefix the prefix of the created log files
    * @param maxBufferSize the maximum amount of log entries kept in memory before flushing to disk
    * @param dropOnOverFlow if this logger is not keeping up with flushing the incoming mutations to
@@ -49,26 +46,19 @@ public class FailedMutationLogger implements AutoCloseable {
    *     thread attempting to write until there some data is flushed to disk
    * @throws IOException on failure to write the log
    */
-  FailedMutationLogger(
-      MirroringTracer mirroringTracer, String pathPrefix, int maxBufferSize, boolean dropOnOverFlow)
+  FailedMutationLogger(String pathPrefix, int maxBufferSize, boolean dropOnOverFlow)
       throws IOException {
-    this(
-        mirroringTracer,
-        new DefaultAppender(pathPrefix, maxBufferSize, dropOnOverFlow),
-        new DefaultSerializer());
+    this(new DefaultAppender(pathPrefix, maxBufferSize, dropOnOverFlow), new DefaultSerializer());
   }
 
   /**
    * Create a logger with a user-provided implementation of how to serialize log entries and where
    * to store them.
    *
-   * @param mirroringTracer tracer for telemetry
    * @param appender an object responsible for storing log entries
    * @param serializer on object responsible for transforming failed mutations into log entries
    */
-  public FailedMutationLogger(
-      MirroringTracer mirroringTracer, Appender appender, Serializer serializer) {
-    this.mirroringTracer = mirroringTracer;
+  public FailedMutationLogger(Appender appender, Serializer serializer) {
     this.appender = appender;
     this.serializer = serializer;
   }

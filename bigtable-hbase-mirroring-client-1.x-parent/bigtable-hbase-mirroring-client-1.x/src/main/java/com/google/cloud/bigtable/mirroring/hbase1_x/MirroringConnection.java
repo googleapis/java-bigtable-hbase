@@ -139,7 +139,6 @@ public class MirroringConnection implements Connection {
 
     this.failedMutationLogger =
         new FailedMutationLogger(
-            mirroringTracer,
             this.configuration
                 .mirroringOptions
                 .faillog

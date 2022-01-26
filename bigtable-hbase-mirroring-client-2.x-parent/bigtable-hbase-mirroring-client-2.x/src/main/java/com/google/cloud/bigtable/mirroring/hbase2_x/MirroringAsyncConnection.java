@@ -119,7 +119,6 @@ public class MirroringAsyncConnection implements AsyncConnection {
 
     FailedMutationLogger failedMutationLogger =
         new FailedMutationLogger(
-            mirroringTracer,
             this.configuration
                 .mirroringOptions
                 .faillog

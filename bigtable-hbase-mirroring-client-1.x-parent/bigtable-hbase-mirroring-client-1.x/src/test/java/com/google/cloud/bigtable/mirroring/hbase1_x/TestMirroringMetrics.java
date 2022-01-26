@@ -117,8 +117,7 @@ public class TestMirroringMetrics {
                 new SecondaryWriteErrorConsumerWithMetrics(
                     tracer,
                     new DefaultSecondaryWriteErrorConsumer(
-                        new FailedMutationLogger(
-                            tracer, mock(Appender.class), mock(Serializer.class)))),
+                        new FailedMutationLogger(mock(Appender.class), mock(Serializer.class)))),
                 new ReadSampler(100),
                 this.timestamper,
                 false,
