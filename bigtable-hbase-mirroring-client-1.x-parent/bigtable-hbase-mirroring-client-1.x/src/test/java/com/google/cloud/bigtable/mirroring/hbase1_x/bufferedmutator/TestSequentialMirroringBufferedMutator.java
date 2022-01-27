@@ -95,6 +95,8 @@ public class TestSequentialMirroringBufferedMutator {
         .mutate(
             Arrays.asList(common.mutation1, common.mutation1, common.mutation1, common.mutation1));
     verify(common.secondaryBufferedMutator, never()).mutate(any(Mutation.class));
+    // Flush is called, and only called once, because we've reached the threshold exactly once.
+    // The threshold is set to 3.5 times mutation size when BufferedMutator is constructed above.
     verify(common.primaryBufferedMutator, times(1)).flush();
     verify(common.secondaryBufferedMutator, times(1)).flush();
     verify(common.resourceReservation, times(4)).release();
