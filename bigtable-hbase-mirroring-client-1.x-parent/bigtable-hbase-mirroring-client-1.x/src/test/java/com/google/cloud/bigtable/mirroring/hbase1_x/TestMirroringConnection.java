@@ -90,4 +90,9 @@ public class TestMirroringConnection {
     verify(TestConnection.connectionMocks.get(1), times(1))
         .abort(expectedString, expectedThrowable);
   }
+
+  @Test
+  public void testConstructorTakingMirroringConfiguration() throws IOException {
+    new MirroringConnection(new MirroringConfiguration(createConfiguration()), null);
+  }
 }

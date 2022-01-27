@@ -105,15 +105,39 @@ public class MirroringConnection implements Connection {
    */
   public MirroringConnection(Configuration conf, boolean managed, ExecutorService pool, User user)
       throws Throwable {
+    this(new MirroringConfiguration(conf), pool, user);
     // This is an always-false legacy hbase parameter.
     Preconditions.checkArgument(!managed, "Mirroring client doesn't support managed connections.");
-    this.configuration = new MirroringConfiguration(conf);
+  }
+
+  public MirroringConnection(MirroringConfiguration mirroringConfiguration, ExecutorService pool)
+      throws IOException {
+    this(
+        mirroringConfiguration,
+        pool,
+        ConnectionFactory.createConnection(mirroringConfiguration.primaryConfiguration, pool),
+        ConnectionFactory.createConnection(mirroringConfiguration.secondaryConfiguration, pool));
+  }
+
+  private MirroringConnection(MirroringConfiguration conf, ExecutorService pool, User user)
+      throws IOException {
+    this(
+        conf,
+        pool,
+        ConnectionFactory.createConnection(conf.primaryConfiguration, pool, user),
+        ConnectionFactory.createConnection(conf.secondaryConfiguration, pool, user));
+  }
+
+  private MirroringConnection(
+      MirroringConfiguration conf,
+      ExecutorService pool,
+      Connection primaryConnection,
+      Connection secondaryConnection) {
+    this.configuration = conf;
     this.mirroringTracer = new MirroringTracer();
 
-    this.primaryConnection =
-        ConnectionFactory.createConnection(this.configuration.primaryConfiguration, pool, user);
-    this.secondaryConnection =
-        ConnectionFactory.createConnection(this.configuration.secondaryConfiguration, pool, user);
+    this.primaryConnection = primaryConnection;
+    this.secondaryConnection = secondaryConnection;
 
     if (pool == null) {
       this.executorService = Executors.newCachedThreadPool();
@@ -122,52 +146,60 @@ public class MirroringConnection implements Connection {
     }
 
     referenceCounter = new ListenableReferenceCounter();
-    this.flowController =
-        new FlowController(
-            this.configuration
-                .mirroringOptions
-                .flowControllerStrategyFactoryClass
-                .newInstance()
-                .create(this.configuration.mirroringOptions));
-    this.mismatchDetector =
-        this.configuration
-            .mirroringOptions
-            .mismatchDetectorFactoryClass
-            .newInstance()
-            .create(
-                this.mirroringTracer, configuration.mirroringOptions.maxLoggedBinaryValueLength);
 
-    this.failedMutationLogger =
-        new FailedMutationLogger(
-            this.configuration
-                .mirroringOptions
-                .faillog
-                .writeErrorLogAppenderFactoryClass
-                .newInstance()
-                .create(this.configuration.mirroringOptions.faillog),
-            this.configuration
-                .mirroringOptions
-                .faillog
-                .writeErrorLogSerializerFactoryClass
-                .newInstance()
-                .create());
+    try {
+      this.flowController =
+          new FlowController(
+              this.configuration
+                  .mirroringOptions
+                  .flowControllerStrategyFactoryClass
+                  .newInstance()
+                  .create(this.configuration.mirroringOptions));
+      this.mismatchDetector =
+          this.configuration
+              .mirroringOptions
+              .mismatchDetectorFactoryClass
+              .newInstance()
+              .create(
+                  this.mirroringTracer, configuration.mirroringOptions.maxLoggedBinaryValueLength);
 
-    final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer =
-        this.configuration
-            .mirroringOptions
-            .writeErrorConsumerFactoryClass
-            .newInstance()
-            .create(this.failedMutationLogger);
+      this.failedMutationLogger =
+          new FailedMutationLogger(
+              this.configuration
+                  .mirroringOptions
+                  .faillog
+                  .writeErrorLogAppenderFactoryClass
+                  .newInstance()
+                  .create(this.configuration.mirroringOptions.faillog),
+              this.configuration
+                  .mirroringOptions
+                  .faillog
+                  .writeErrorLogSerializerFactoryClass
+                  .newInstance()
+                  .create());
 
-    this.secondaryWriteErrorConsumer =
-        new SecondaryWriteErrorConsumerWithMetrics(
-            this.mirroringTracer, secondaryWriteErrorConsumer);
-    this.readSampler = new ReadSampler(this.configuration.mirroringOptions.readSamplingRate);
-    this.performWritesConcurrently = this.configuration.mirroringOptions.performWritesConcurrently;
-    this.waitForSecondaryWrites = this.configuration.mirroringOptions.waitForSecondaryWrites;
-    this.timestamper =
-        TimestamperFactory.create(
-            this.configuration.mirroringOptions.enableDefaultClientSideTimestamps);
+      final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer =
+          this.configuration
+              .mirroringOptions
+              .writeErrorConsumerFactoryClass
+              .newInstance()
+              .create(this.failedMutationLogger);
+
+      this.timestamper =
+          TimestamperFactory.create(
+              this.configuration.mirroringOptions.enableDefaultClientSideTimestamps);
+
+      this.secondaryWriteErrorConsumer =
+          new SecondaryWriteErrorConsumerWithMetrics(
+              this.mirroringTracer, secondaryWriteErrorConsumer);
+      this.readSampler = new ReadSampler(this.configuration.mirroringOptions.readSamplingRate);
+      this.performWritesConcurrently =
+          this.configuration.mirroringOptions.performWritesConcurrently;
+      this.waitForSecondaryWrites = this.configuration.mirroringOptions.waitForSecondaryWrites;
+    } catch (Throwable throwable) {
+      // Throwable are thrown by `newInstance` and `create` methods.
+      throw new RuntimeException(throwable);
+    }
   }
 
   @Override
