@@ -409,6 +409,7 @@ public class MirroringAsyncConnection implements AsyncConnection {
       return new MirroringAsyncBufferedMutator(
           this.primaryMutatorBuilder.build(),
           this.secondaryMutatorBuilder.build(),
+          configuration,
           flowController,
           secondaryWriteErrorConsumer,
           timestamper);

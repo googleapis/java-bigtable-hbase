@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -45,15 +46,18 @@ public class MirroringAsyncBufferedMutator implements AsyncBufferedMutator {
   private final SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final Timestamper timestamper;
+  private final MirroringAsyncConfiguration configuration;
 
   public MirroringAsyncBufferedMutator(
       AsyncBufferedMutator primary,
       AsyncBufferedMutator secondary,
+      MirroringAsyncConfiguration configuration,
       FlowController flowController,
       SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer,
       Timestamper timestamper) {
     this.primary = primary;
     this.secondary = secondary;
+    this.configuration = configuration;
     this.flowController = flowController;
     this.secondaryWriteErrorConsumer = secondaryWriteErrorConsumer;
     this.referenceCounter = new ListenableReferenceCounter();
@@ -163,8 +167,12 @@ public class MirroringAsyncBufferedMutator implements AsyncBufferedMutator {
   private void closeMirroringBufferedMutatorAndWaitForAsyncOperations() {
     this.referenceCounter.decrementReferenceCount();
     try {
-      this.referenceCounter.getOnLastReferenceClosed().get();
-    } catch (ExecutionException | InterruptedException e) {
+      this.referenceCounter
+          .getOnLastReferenceClosed()
+          .get(
+              this.configuration.mirroringOptions.connectionTerminationTimeoutMillis,
+              TimeUnit.MILLISECONDS);
+    } catch (ExecutionException | InterruptedException | TimeoutException e) {
       throw new RuntimeException(e);
     }
   }
