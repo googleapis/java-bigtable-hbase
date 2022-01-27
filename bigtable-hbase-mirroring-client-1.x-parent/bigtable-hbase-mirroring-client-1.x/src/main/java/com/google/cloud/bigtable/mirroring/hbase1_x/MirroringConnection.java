@@ -26,6 +26,8 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowContro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ListenableReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.TimestamperFactory;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -90,6 +92,8 @@ public class MirroringConnection implements Connection {
   protected final boolean performWritesConcurrently;
 
   protected final boolean waitForSecondaryWrites;
+  // Depending on configuration, ensures that mutations have an explicitly set timestamp.
+  protected final Timestamper timestamper;
 
   /**
    * The constructor called from {@link
@@ -162,6 +166,9 @@ public class MirroringConnection implements Connection {
     this.readSampler = new ReadSampler(this.configuration.mirroringOptions.readSamplingRate);
     this.performWritesConcurrently = this.configuration.mirroringOptions.performWritesConcurrently;
     this.waitForSecondaryWrites = this.configuration.mirroringOptions.waitForSecondaryWrites;
+    this.timestamper =
+        TimestamperFactory.create(
+            this.configuration.mirroringOptions.enableDefaultClientSideTimestamps);
   }
 
   @Override
@@ -198,6 +205,7 @@ public class MirroringConnection implements Connection {
           this.flowController,
           this.secondaryWriteErrorConsumer,
           this.readSampler,
+          this.timestamper,
           this.performWritesConcurrently,
           this.waitForSecondaryWrites,
           this.mirroringTracer,
@@ -223,6 +231,7 @@ public class MirroringConnection implements Connection {
         flowController,
         executorService,
         secondaryWriteErrorConsumer,
+        timestamper,
         mirroringTracer);
   }
 

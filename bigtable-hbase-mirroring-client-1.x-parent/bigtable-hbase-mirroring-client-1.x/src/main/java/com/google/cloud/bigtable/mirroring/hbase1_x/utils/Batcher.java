@@ -29,6 +29,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.OperationUtils.Rewritt
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -70,6 +71,7 @@ public class Batcher {
   private final boolean waitForSecondaryWrites;
   private final boolean performWritesConcurrently;
   private final MirroringTracer mirroringTracer;
+  private final Timestamper timestamper;
 
   public Batcher(
       Table primaryTable,
@@ -78,6 +80,7 @@ public class Batcher {
       SecondaryWriteErrorConsumer secondaryWriteErrorConsumer,
       VerificationContinuationFactory verificationContinuationFactory,
       ReadSampler readSampler,
+      Timestamper timestamper,
       Predicate<Object> resultIsFaultyPredicate,
       boolean waitForSecondaryWrites,
       boolean performWritesConcurrently,
@@ -92,6 +95,7 @@ public class Batcher {
     this.waitForSecondaryWrites = waitForSecondaryWrites;
     this.performWritesConcurrently = performWritesConcurrently;
     this.mirroringTracer = mirroringTracer;
+    this.timestamper = timestamper;
   }
 
   public void batchSingleWriteOperation(Row operation) throws IOException {
@@ -129,8 +133,9 @@ public class Batcher {
       final Object[] results,
       @Nullable final Callback<R> callback)
       throws IOException, InterruptedException {
+    List<? extends Row> timestampedInputOperations = timestamper.fillTimestamp(inputOperations);
     final RewrittenIncrementAndAppendIndicesInfo<? extends Row> actions =
-        new RewrittenIncrementAndAppendIndicesInfo<>(inputOperations);
+        new RewrittenIncrementAndAppendIndicesInfo<>(timestampedInputOperations);
     Log.trace(
         "[%s] batch(operations=%s, results)", this.primaryTable.getName(), actions.operations);
 

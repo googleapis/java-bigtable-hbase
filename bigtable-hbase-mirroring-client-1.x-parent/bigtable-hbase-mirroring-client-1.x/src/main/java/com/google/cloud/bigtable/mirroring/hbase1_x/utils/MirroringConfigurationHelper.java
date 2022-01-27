@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.BufferedMutator;
+import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
@@ -279,6 +281,32 @@ public class MirroringConfigurationHelper {
    */
   public static final String MIRRORING_SCANNER_BUFFERED_MISMATCHED_READS =
       "google.bigtable.mirroring.result-scanner.buffered-mismatched-reads";
+
+  /**
+   * Enables timestamping {@link org.apache.hadoop.hbase.client.Put}s without timestamp set based on
+   * client's host local time. Client-side timestamps assigned by {@link Table}s and {@link
+   * BufferedMutator}`s created by one {@link Connection} are always increasing, even if system
+   * clock is moved backwards, for example by NTP or manually by the user.
+   *
+   * <p>There are three possible modes of client-side timestamping:
+   *
+   * <ul>
+   *   <li>disabled - leads to inconsistencies between mirrored databases because timestamps are
+   *       assigned separately on databases' severs.
+   *   <li>inplace - all mutations without timestamp are modified in place and have timestamps
+   *       assigned when submitted to Table or BufferedMutator. If mutation objects are reused then
+   *       COPY mode should be used.
+   *   <li>copy - timestamps are added to `Put`s after copying them, increases CPU load, but
+   *       mutations submitted to Tables and BufferedMutators can be reused. This mode, combined
+   *       with synchronous writes, gives a guarantee that after HBase API call returns submitted
+   *       mutation objects are no longer used and can be safely modified by the user and submitted
+   *       again.
+   * </ul>
+   *
+   * <p>Default value: inplace.
+   */
+  public static final String MIRRORING_ENABLE_DEFAULT_CLIENT_SIDE_TIMESTAMPS =
+      "google.bigtable.mirroring.enable-default-client-side-timestamps";
 
   public static void fillConnectionConfigWithClassImplementation(
       Configuration connectionConfig,

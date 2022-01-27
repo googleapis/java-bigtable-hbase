@@ -84,6 +84,7 @@ public class MirroringConnection
             flowController,
             secondaryWriteErrorConsumer,
             readSampler,
+            timestamper,
             performWritesConcurrently,
             waitForSecondaryWrites,
             mirroringTracer,

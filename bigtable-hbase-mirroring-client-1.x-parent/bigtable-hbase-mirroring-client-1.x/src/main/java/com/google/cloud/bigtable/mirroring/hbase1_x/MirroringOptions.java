@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_BUFFERED_MUTATOR_BYTES_TO_FLUSH;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_CONCURRENT_WRITES;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_CONNECTION_CONNECTION_TERMINATION_TIMEOUT;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_ENABLE_DEFAULT_CLIENT_SIDE_TIMESTAMPS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FAILLOG_DROP_ON_OVERFLOW_KEY;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FAILLOG_MAX_BUFFER_SIZE_KEY;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper.MIRRORING_FAILLOG_PREFIX_PATH_KEY;
@@ -42,6 +43,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.DefaultSeriali
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.Serializer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowControlStrategy;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestCountingFlowControlStrategy;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.TimestampingMode;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.DefaultMismatchDetector;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.common.base.Preconditions;
@@ -106,6 +108,7 @@ public class MirroringOptions {
   public final Faillog faillog;
 
   public final int resultScannerBufferedMismatchedResults;
+  public final TimestampingMode enableDefaultClientSideTimestamps;
 
   public MirroringOptions(Configuration configuration) {
     this.mismatchDetectorFactoryClass =
@@ -153,5 +156,9 @@ public class MirroringOptions {
         "Performing writes concurrently and not waiting for writes is forbidden. "
             + "It has no advantage over performing writes asynchronously and not waiting for them.");
     this.faillog = new Faillog(configuration);
+
+    this.enableDefaultClientSideTimestamps =
+        configuration.getEnum(
+            MIRRORING_ENABLE_DEFAULT_CLIENT_SIDE_TIMESTAMPS, TimestampingMode.inplace);
   }
 }

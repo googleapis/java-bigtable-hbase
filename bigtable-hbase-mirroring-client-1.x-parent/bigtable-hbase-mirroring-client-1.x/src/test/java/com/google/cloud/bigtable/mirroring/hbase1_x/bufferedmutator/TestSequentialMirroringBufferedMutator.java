@@ -29,6 +29,8 @@ import static org.mockito.Mockito.verify;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.ExecutorServiceRule;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.NoopTimestamper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
@@ -60,6 +62,7 @@ import org.mockito.stubbing.Answer;
 @RunWith(JUnit4.class)
 public class TestSequentialMirroringBufferedMutator {
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  Timestamper timestamper = new NoopTimestamper();
 
   @Rule
   public final ExecutorServiceRule executorServiceRule =
@@ -371,6 +374,7 @@ public class TestSequentialMirroringBufferedMutator {
         common.flowController,
         executorServiceRule.executorService,
         common.secondaryWriteErrorConsumerWithMetrics,
+        timestamper,
         new MirroringTracer());
   }
 }

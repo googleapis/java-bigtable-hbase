@@ -33,6 +33,8 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringOperationException.
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.NoopTimestamper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.Arrays;
@@ -58,6 +60,8 @@ public class TestConcurrentMirroringBufferedMutator {
 
   @Rule
   public final ExecutorServiceRule executorServiceRule = ExecutorServiceRule.cachedPoolExecutor();
+
+  Timestamper timestamper = new NoopTimestamper();
 
   public final MirroringBufferedMutatorCommon common = new MirroringBufferedMutatorCommon();
 
@@ -358,6 +362,7 @@ public class TestConcurrentMirroringBufferedMutator {
         common.bufferedMutatorParams,
         makeConfigurationWithFlushThreshold(flushThreshold),
         executorServiceRule.executorService,
+        timestamper,
         new MirroringTracer());
   }
 }

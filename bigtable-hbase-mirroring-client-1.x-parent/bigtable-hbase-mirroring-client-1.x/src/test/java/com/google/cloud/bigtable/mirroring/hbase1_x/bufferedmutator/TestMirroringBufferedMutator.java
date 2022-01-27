@@ -22,6 +22,8 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration;
 import com.google.cloud.bigtable.mirroring.hbase1_x.TestConnection;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.NoopTimestamper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Rule;
@@ -34,6 +36,7 @@ import org.mockito.junit.MockitoRule;
 @RunWith(JUnit4.class)
 public class TestMirroringBufferedMutator {
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  Timestamper timestamper = new NoopTimestamper();
 
   @Rule
   public final ExecutorServiceRule executorServiceRule = ExecutorServiceRule.cachedPoolExecutor();
@@ -60,6 +63,7 @@ public class TestMirroringBufferedMutator {
                 mutatorRule.flowController,
                 executorServiceRule.executorService,
                 mutatorRule.secondaryWriteErrorConsumerWithMetrics,
+                timestamper,
                 new MirroringTracer()))
         .isInstanceOf(SequentialMirroringBufferedMutator.class);
 
@@ -73,6 +77,7 @@ public class TestMirroringBufferedMutator {
                 mutatorRule.flowController,
                 executorServiceRule.executorService,
                 mutatorRule.secondaryWriteErrorConsumerWithMetrics,
+                timestamper,
                 new MirroringTracer()))
         .isInstanceOf(ConcurrentMirroringBufferedMutator.class);
   }

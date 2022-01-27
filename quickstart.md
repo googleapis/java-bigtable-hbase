@@ -131,6 +131,15 @@ In the concurrent mode writes are passed to both mutators at once. As in sequent
 
 Set `google.bigtable.mirroring.concurrent-writes` to `true` to enable concurrent Buffered Mutator mode (defaults to false).
 
+## Client-side timestamping
+HBase and Bigtable assign row version (timestamp) based on server-side time for mutations (unless version was explicitly assigned by the client). The Mirroring Client issues writes to underlying databases a few milliseconds apart and performing mutations without version assigned on the client side will cause inconsistencies between databases. To mitigate some of those issues a client-side timestamping is available in the Mirroring Client. When client-side timestamping is enabled the Mirroring Client will automatically add a timestamp based on client's machine's time to every `Put` object passed to the Mirroring Client. Client-side timestamps assigned by `Table`s and `BufferedMutator`s created by one `Connection` are always increasing, even if system clock is moved backwards, for example by NTP or manually by the user.
+Be aware that client-side timestamping modifies only `Put`s - `Delete`s, `Increment`s and `Append`s are not affected by this setting and will cause inconsistencies between databases.
+Client-side timestamping, if enabled, can use two modes - `inplace` and `copy`. `inplace` mode modifies provided `Put`s in-place, which is efficient but is not correct is the user reuses `Put` objects between calls. When `Put`s are reused the `copy` mode should be used - it will create a copy of each `Put` before assigning a timestamp and provided object can be safely reused in subsequent calls (please note that mutations passed to Mirroring Client are also used asynchronously and this safety guarantee is only provided if synchronous mode is enabled).
+Client-side timestamping is enabled by default in `inplace` mode.
+Use `google.bigtable.mirroring.enable-default-client-side-timestamps` property to disable it or change the mode.
+
+Place read a warning in `Caveats - Timestamps` section to decide which mode fits you use case best.
+
 
 ## Configuration options
 - `google.bigtable.mirroring.primary-client.connection.impl` - a name of Connection class that should be used to connect to primary database. It is used as hbase.client.connection.impl when creating connection to primary database. Set to `default` to use default HBase connection class. Required.
@@ -151,11 +160,13 @@ Set `google.bigtable.mirroring.concurrent-writes` to `true` to enable concurrent
 - `google.bigtable.mirroring.write-error-log.appender.drop-on-overflow` - used by DefaultAppender, whether to drop data if the thread flushing the data to disk is not keeping up or to block until it catches up. default: false.
 - `google.bigtable.mirroring.read-verification-rate-percent` - Integer value representing percentage of read operations performed on primary database that should be verified against secondary. Each call to `Table#get(Get)`, `Table#get(List)`, `Table#exists(Get)`, `Table#existsAll(List)`, `Table#batch(List, Object[])` (with overloads) and `Table#getScanner(Scan)` (with overloads) is counted as a single operation, independent of size of their arguments and results. Correct values are a integers ranging from 0 to 100 inclusive. default: 100.
 - `google.bigtable.mirroring.buffered-mutator.bytes-to-flush` - Number of bytes that `MirroringBufferedMutator` should buffer before flushing underlying primary BufferedMutator and executing a write to the secondary database. If not set the value of `hbase.client.write.buffer` is used, which by default is 2MB. When those values are kept in sync, the mirroring client should perform a flush operation on the primary BufferedMutator right after it schedules a new asynchronous write to the database.
+- `google.bigtable.mirroring.enable-default-client-side-timestamps` - Select client-side timestamping mode. `disabled`, `inplace` and `copy` are only valid values. default: `inplace`.
 
 
 ## Caveats
 ### Timestamps
-For ensuring full consistency between databases the user should always specify a timestamp for mutations issued using MirroringClient. Mutations without a timestamp will have one assigned by underlying database clients when the mutations are issued to underlying databases, what doesn't happen at the exact same instant for both databases.
+Be aware that client-side timestamping modifies only `Put`s - `Delete`s, `Increment`s and `Append`s are not affected by this setting and will cause inconsistencies between databases.
+Using client-side timestamping fixes inconsistencies caused by `Put`s, but can lead to **lost writes** if multiple machines are modifying the same cell and have clocks out of sync - writes from machine with correctly set time will be masked by puts from a machine with time in the future (clock out of sync), independent of the real order of those `Put`s. This problem wouldn't appear if client-side timestamping was disabled - timestamps would be assigned by the server and would reflect real ordering.
 ### Differences between Bigtable and HBase
 There are differences between HBase and Bigtable, please consult [this link](https://cloud.google.com/bigtable/docs/hbase-differences).
 Code using this client should be aware of them.

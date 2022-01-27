@@ -36,6 +36,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.Mirro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.HierarchicalReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
 import com.google.common.annotations.VisibleForTesting;
@@ -114,6 +115,7 @@ public class MirroringTable implements Table {
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final SettableFuture<Void> closedFuture = SettableFuture.create();
   private final int resultScannerBufferedMismatchedResults;
+  private final Timestamper timestamper;
   /**
    * @param executorService ExecutorService is used to perform operations on secondaryTable and
    *     verification tasks.
@@ -129,6 +131,7 @@ public class MirroringTable implements Table {
       FlowController flowController,
       SecondaryWriteErrorConsumer secondaryWriteErrorConsumer,
       ReadSampler readSampler,
+      Timestamper timestamper,
       boolean performWritesConcurrently,
       boolean waitForSecondaryWrites,
       MirroringTracer mirroringTracer,
@@ -148,6 +151,7 @@ public class MirroringTable implements Table {
     this.mirroringTracer = mirroringTracer;
     this.requestScheduler =
         new RequestScheduler(flowController, this.mirroringTracer, this.referenceCounter);
+    this.timestamper = timestamper;
     this.batcher =
         new Batcher(
             this.primaryTable,
@@ -156,6 +160,7 @@ public class MirroringTable implements Table {
             this.secondaryWriteErrorConsumer,
             this.verificationContinuationFactory,
             this.readSampler,
+            this.timestamper,
             resultIsFaultyPredicate,
             waitForSecondaryWrites,
             performWritesConcurrently,
@@ -545,6 +550,7 @@ public class MirroringTable implements Table {
       final byte[] value,
       final RowMutations rowMutations)
       throws IOException {
+    this.timestamper.fillTimestamp(rowMutations);
     boolean wereMutationsApplied =
         this.mirroringTracer.spanFactory.wrapPrimaryOperation(
             new CallableThrowingIOException<Boolean>() {

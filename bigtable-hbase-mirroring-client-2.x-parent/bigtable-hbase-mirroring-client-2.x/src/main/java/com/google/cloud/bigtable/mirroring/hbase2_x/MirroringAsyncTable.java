@@ -35,6 +35,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.WriteOpera
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ListenableReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.VerificationContinuationFactory;
 import com.google.cloud.bigtable.mirroring.hbase2_x.utils.AsyncRequestScheduling.OperationStages;
@@ -95,6 +96,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
   private final ExecutorService executorService;
   private final RequestScheduler requestScheduler;
   private final int resultScannerBufferedMismatchedResults;
+  private final Timestamper timestamper;
 
   public MirroringAsyncTable(
       AsyncTable<C> primaryTable,
@@ -104,6 +106,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
       SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer,
       MirroringTracer mirroringTracer,
       ReadSampler readSampler,
+      Timestamper timestamper,
       ListenableReferenceCounter referenceCounter,
       ExecutorService executorService,
       int resultScannerBufferedMismatchedResults) {
@@ -119,6 +122,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     this.requestScheduler =
         new RequestScheduler(this.flowController, this.mirroringTracer, this.referenceCounter);
     this.resultScannerBufferedMismatchedResults = resultScannerBufferedMismatchedResults;
+    this.timestamper = timestamper;
   }
 
   @Override
@@ -150,6 +154,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
 
   @Override
   public CompletableFuture<Void> put(Put put) {
+    this.timestamper.fillTimestamp(put);
     CompletableFuture<Void> primaryFuture = this.primaryTable.put(put);
     return writeWithFlowControl(
             new WriteOperationInfo(put), primaryFuture, () -> this.secondaryTable.put(put))
@@ -186,6 +191,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
 
   @Override
   public CompletableFuture<Void> mutateRow(RowMutations rowMutations) {
+    this.timestamper.fillTimestamp(rowMutations);
     CompletableFuture<Void> primaryFuture = this.primaryTable.mutateRow(rowMutations);
     return writeWithFlowControl(
             new WriteOperationInfo(rowMutations),
@@ -257,6 +263,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
           Function<FailedSuccessfulSplit<ActionType, SuccessfulResultType>, GeneralBatchBuilder>
               batchBuilderCreator,
           Class<SuccessfulResultType> successfulResultTypeClass) {
+    userActions = this.timestamper.fillTimestamp(userActions);
     OperationUtils.RewrittenIncrementAndAppendIndicesInfo<ActionType> actions =
         new OperationUtils.RewrittenIncrementAndAppendIndicesInfo<>(userActions);
     final int numActions = actions.operations.size();
@@ -565,6 +572,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
 
     @Override
     public CompletableFuture<Boolean> thenPut(Put put) {
+      timestamper.fillTimestamp(put);
       return checkAndMutate(
               new WriteOperationInfo(put),
               this.primaryBuilder.thenPut(put),
@@ -583,6 +591,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
 
     @Override
     public CompletableFuture<Boolean> thenMutate(RowMutations rowMutations) {
+      timestamper.fillTimestamp(rowMutations);
       return checkAndMutate(
               new WriteOperationInfo(rowMutations),
               this.primaryBuilder.thenMutate(rowMutations),

@@ -26,6 +26,8 @@ import static org.mockito.Mockito.when;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.NoopTimestamper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.cloud.bigtable.mirroring.hbase2_x.utils.futures.FutureConverter;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
@@ -50,6 +52,7 @@ public class TestMirroringAsyncBufferedMutator {
   @Mock AsyncBufferedMutator secondaryMutator;
   @Mock FlowController flowController;
   @Mock SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
+  Timestamper timestamper = new NoopTimestamper();
 
   CompletableFuture<Void> primaryFuture;
   CompletableFuture<Void> secondaryCalled;
@@ -63,7 +66,11 @@ public class TestMirroringAsyncBufferedMutator {
     this.mirroringMutator =
         spy(
             new MirroringAsyncBufferedMutator(
-                primaryMutator, secondaryMutator, flowController, secondaryWriteErrorConsumer));
+                primaryMutator,
+                secondaryMutator,
+                flowController,
+                secondaryWriteErrorConsumer,
+                timestamper));
 
     this.put = new Put(Bytes.toBytes("rowKey"));
     put.addColumn(Bytes.toBytes("cf1"), Bytes.toBytes("c1"), Bytes.toBytes("value"));

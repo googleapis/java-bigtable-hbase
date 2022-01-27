@@ -24,6 +24,8 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.FailedMutation
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ListenableReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.TimestamperFactory;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
@@ -67,6 +69,7 @@ public class MirroringAsyncConnection implements AsyncConnection {
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final ReadSampler readSampler;
   private final ExecutorService executorService;
+  private final Timestamper timestamper;
 
   /**
    * The constructor called from {@link
@@ -142,6 +145,9 @@ public class MirroringAsyncConnection implements AsyncConnection {
 
     this.readSampler = new ReadSampler(this.configuration.mirroringOptions.readSamplingRate);
     this.executorService = Executors.newCachedThreadPool();
+    this.timestamper =
+        TimestamperFactory.create(
+            this.configuration.mirroringOptions.enableDefaultClientSideTimestamps);
   }
 
   public AsyncConnection getPrimaryConnection() {
@@ -291,6 +297,7 @@ public class MirroringAsyncConnection implements AsyncConnection {
           secondaryWriteErrorConsumer,
           mirroringTracer,
           readSampler,
+          timestamper,
           referenceCounter,
           executorService,
           configuration.mirroringOptions.resultScannerBufferedMismatchedResults);
@@ -404,7 +411,8 @@ public class MirroringAsyncConnection implements AsyncConnection {
           this.primaryMutatorBuilder.build(),
           this.secondaryMutatorBuilder.build(),
           flowController,
-          secondaryWriteErrorConsumer);
+          secondaryWriteErrorConsumer,
+          timestamper);
     }
 
     @Override

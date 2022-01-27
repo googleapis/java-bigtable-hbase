@@ -20,6 +20,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorCon
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import java.io.IOException;
 import java.util.List;
@@ -41,6 +42,7 @@ public class MirroringTable extends com.google.cloud.bigtable.mirroring.hbase1_x
       FlowController flowController,
       SecondaryWriteErrorConsumer secondaryWriteErrorConsumer,
       ReadSampler readSampler,
+      Timestamper timestamper,
       boolean performWritesConcurrently,
       boolean waitForSecondaryWrites,
       MirroringTracer mirroringTracer,
@@ -54,6 +56,7 @@ public class MirroringTable extends com.google.cloud.bigtable.mirroring.hbase1_x
         flowController,
         secondaryWriteErrorConsumer,
         readSampler,
+        timestamper,
         performWritesConcurrently,
         waitForSecondaryWrites,
         mirroringTracer,

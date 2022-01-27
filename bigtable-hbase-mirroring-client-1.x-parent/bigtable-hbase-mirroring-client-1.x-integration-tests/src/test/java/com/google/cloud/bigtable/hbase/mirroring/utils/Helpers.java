@@ -43,7 +43,7 @@ public class Helpers {
 
   public static Put createPut(int id, byte[] family, byte[] qualifier) {
     byte[] rowAndValue = Longs.toByteArray(id);
-    return createPut(rowAndValue, family, qualifier, id, rowAndValue);
+    return createPut(rowAndValue, family, qualifier, rowAndValue);
   }
 
   public static Get createGet(byte[] row, byte[] family, byte[] qualifier) {

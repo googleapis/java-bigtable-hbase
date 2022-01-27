@@ -22,6 +22,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOExce
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.MapMaker;
 import com.google.common.util.concurrent.FutureCallback;
@@ -78,6 +79,7 @@ public class ConcurrentMirroringBufferedMutator
       BufferedMutatorParams bufferedMutatorParams,
       MirroringConfiguration configuration,
       ExecutorService executorService,
+      Timestamper timestamper,
       MirroringTracer mirroringTracer)
       throws IOException {
     super(
@@ -86,6 +88,7 @@ public class ConcurrentMirroringBufferedMutator
         bufferedMutatorParams,
         configuration,
         executorService,
+        timestamper,
         mirroringTracer);
   }
 

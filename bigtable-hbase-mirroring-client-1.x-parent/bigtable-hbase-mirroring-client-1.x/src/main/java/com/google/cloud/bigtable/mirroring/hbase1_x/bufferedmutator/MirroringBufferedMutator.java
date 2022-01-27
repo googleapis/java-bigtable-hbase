@@ -24,6 +24,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestRes
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ListenableReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -60,6 +61,9 @@ import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
  */
 @InternalApi("For internal usage only")
 public abstract class MirroringBufferedMutator<BufferEntryType> implements BufferedMutator {
+
+  private final Timestamper timestamper;
+
   public static BufferedMutator create(
       boolean concurrent,
       Connection primaryConnection,
@@ -69,6 +73,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
       FlowController flowController,
       ExecutorService executorService,
       SecondaryWriteErrorConsumer secondaryWriteErrorConsumer,
+      Timestamper timestamper,
       MirroringTracer mirroringTracer)
       throws IOException {
     if (concurrent) {
@@ -78,6 +83,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
           bufferedMutatorParams,
           configuration,
           executorService,
+          timestamper,
           mirroringTracer);
     } else {
       return new SequentialMirroringBufferedMutator(
@@ -88,6 +94,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
           flowController,
           executorService,
           secondaryWriteErrorConsumer,
+          timestamper,
           mirroringTracer);
     }
   }
@@ -121,6 +128,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
       BufferedMutatorParams bufferedMutatorParams,
       MirroringConfiguration configuration,
       ExecutorService executorService,
+      Timestamper timestamper,
       MirroringTracer mirroringTracer)
       throws IOException {
     this.userListener = bufferedMutatorParams.getListener();
@@ -167,12 +175,14 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
             this.mutationsBufferFlushThresholdBytes,
             this.ongoingFlushesCounter,
             this.mirroringTracer);
+    this.timestamper = timestamper;
   }
 
   @Override
   public void mutate(Mutation mutation) throws IOException {
     try (Scope scope =
         this.mirroringTracer.spanFactory.operationScope(HBaseOperation.BUFFERED_MUTATOR_MUTATE)) {
+      mutation = timestamper.fillTimestamp(mutation);
       mutateScoped(Collections.singletonList(mutation));
     }
   }
@@ -182,7 +192,8 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
     try (Scope scope =
         this.mirroringTracer.spanFactory.operationScope(
             HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST)) {
-      mutateScoped(list);
+      List<? extends Mutation> timestampedList = timestamper.fillTimestamp(list);
+      mutateScoped(timestampedList);
     }
   }
 

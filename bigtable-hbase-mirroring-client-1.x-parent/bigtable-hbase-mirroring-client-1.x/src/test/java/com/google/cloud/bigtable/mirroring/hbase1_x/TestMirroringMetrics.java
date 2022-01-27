@@ -54,6 +54,8 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.Mirro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanFactory;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.NoopTimestamper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.DefaultMismatchDetector;
 import io.opencensus.trace.Tracing;
 import java.io.IOException;
@@ -92,6 +94,7 @@ public class TestMirroringMetrics {
   @Mock Table primaryTable;
   @Mock Table secondaryTable;
   @Mock FlowController flowController;
+  Timestamper timestamper = new NoopTimestamper();
 
   @Mock MirroringMetricsRecorder mirroringMetricsRecorder;
 
@@ -117,6 +120,7 @@ public class TestMirroringMetrics {
                         new FailedMutationLogger(
                             tracer, mock(Appender.class), mock(Serializer.class)))),
                 new ReadSampler(100),
+                this.timestamper,
                 false,
                 false,
                 tracer,

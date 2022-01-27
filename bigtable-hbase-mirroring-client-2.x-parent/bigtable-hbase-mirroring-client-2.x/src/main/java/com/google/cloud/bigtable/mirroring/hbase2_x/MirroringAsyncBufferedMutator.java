@@ -21,6 +21,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowContro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ListenableReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.cloud.bigtable.mirroring.hbase2_x.utils.futures.FutureConverter;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,17 +43,20 @@ public class MirroringAsyncBufferedMutator implements AsyncBufferedMutator {
   private final ListenableReferenceCounter referenceCounter;
   private final SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
   private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final Timestamper timestamper;
 
   public MirroringAsyncBufferedMutator(
       AsyncBufferedMutator primary,
       AsyncBufferedMutator secondary,
       FlowController flowController,
-      SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer) {
+      SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer,
+      Timestamper timestamper) {
     this.primary = primary;
     this.secondary = secondary;
     this.flowController = flowController;
     this.secondaryWriteErrorConsumer = secondaryWriteErrorConsumer;
     this.referenceCounter = new ListenableReferenceCounter();
+    this.timestamper = timestamper;
   }
 
   @Override
@@ -67,6 +71,7 @@ public class MirroringAsyncBufferedMutator implements AsyncBufferedMutator {
 
   @Override
   public CompletableFuture<Void> mutate(Mutation mutation) {
+    this.timestamper.fillTimestamp(mutation);
     referenceCounter.incrementReferenceCount();
     CompletableFuture<Void> primaryCompleted = primary.mutate(mutation);
     CompletableFuture<Void> resultFuture = new CompletableFuture<>();
