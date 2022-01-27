@@ -38,6 +38,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -105,7 +107,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
   protected final MirroringTracer mirroringTracer;
 
   /** Configuration that was used to configure this instance. */
-  private final Configuration configuration;
+  protected final MirroringConfiguration configuration;
   /** Parameters that were used to create this instance. */
   private final BufferedMutatorParams bufferedMutatorParams;
   /**
@@ -165,7 +167,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
     this.mutationsBufferFlushThresholdBytes =
         configuration.mirroringOptions.bufferedMutatorBytesToFlush;
     this.executorService = MoreExecutors.listeningDecorator(executorService);
-    this.configuration = configuration.baseConfiguration;
+    this.configuration = configuration;
     this.bufferedMutatorParams = bufferedMutatorParams;
 
     this.mirroringTracer = mirroringTracer;
@@ -256,7 +258,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
   }
 
   protected abstract void flushBufferedMutatorBeforeClosing()
-      throws ExecutionException, InterruptedException;
+      throws ExecutionException, InterruptedException, TimeoutException;
 
   @Override
   public final void close() throws IOException {
@@ -275,8 +277,12 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
       try {
         flushBufferedMutatorBeforeClosing();
         this.ongoingFlushesCounter.decrementReferenceCount();
-        this.ongoingFlushesCounter.getOnLastReferenceClosed().get();
-      } catch (InterruptedException | ExecutionException e) {
+        this.ongoingFlushesCounter
+            .getOnLastReferenceClosed()
+            .get(
+                this.configuration.mirroringOptions.connectionTerminationTimeoutMillis,
+                TimeUnit.MILLISECONDS);
+      } catch (InterruptedException | ExecutionException | TimeoutException e) {
         setInterruptedFlagIfInterruptedException(e);
         exceptions.add(new IOException(e));
       }
@@ -322,7 +328,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
 
   @Override
   public Configuration getConfiguration() {
-    return this.configuration;
+    return this.configuration.baseConfiguration;
   }
 
   protected final ListenableFuture<Void> schedulePrimaryFlush(

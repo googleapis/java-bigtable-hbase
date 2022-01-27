@@ -38,6 +38,8 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.hbase.client.BufferedMutatorParams;
 import org.apache.hadoop.hbase.client.Connection;
@@ -165,8 +167,12 @@ public class ConcurrentMirroringBufferedMutator
 
   @Override
   protected void flushBufferedMutatorBeforeClosing()
-      throws ExecutionException, InterruptedException {
-    scheduleFlushAll().bothFlushesFinished.get();
+      throws ExecutionException, InterruptedException, TimeoutException {
+    scheduleFlushAll()
+        .bothFlushesFinished
+        .get(
+            this.configuration.mirroringOptions.connectionTerminationTimeoutMillis,
+            TimeUnit.MILLISECONDS);
   }
 
   @Override
