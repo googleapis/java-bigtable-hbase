@@ -126,8 +126,11 @@ The Mirroring Client exposes OpenCensus metrics and traces. Metrics are prefixed
 
 ## Buffered mutator
 Mirroring Client's Buffered Mutator works in two modes: sequential and concurrent.
-In the sequential mode, the Mirroring Buffered Mutator passes mutations to the underlying Primary Buffered Mutator and stores mutations in an internal buffer. When the size of the buffer exceeds `google.bigtable.mirroring.buffered-mutator.bytes-to-flush` the Primary Buffered Mutator is flushed. After the flush mutations that did not fail are passed to Secondary Buffered Mutator which is flushed immediately afterwards. The flushes happen asynchronously and do not block user code.
-In the concurrent mode writes are passed to both mutators at once. As in sequential mode, the mutations are stored in the internal buffer and a flush is performed periodically. Write errors are reported back to the user when the flush is finished as exceptions when the user interacts with the BufferedMutator for the first time after the errors were detected. Reported exceptions are annotated with MirroringOperationException.
+In the sequential mode, the Mirroring Buffered Mutator passes mutations to the underlying Primary Buffered Mutator and stores mutations in an internal buffer. When the size of the buffer exceeds `google.bigtable.mirroring.buffered-mutator.bytes-to-flush` the Primary Buffered Mutator is flushed. After the flush, mutations that did not fail are passed to Secondary Buffered Mutator, which is flushed immediately afterwards. The flushes happen asynchronously and do not block user code.
+`flush()` operations issued by the user starts Primary Buffered Mutator flush and blocks until it is finished, Secondary Buffered Mutator is flushed asynchronously.
+
+In the concurrent mode, writes are passed to both mutators at once. As in sequential mode, the mutations are stored in the internal buffer and a flush is performed periodically. Write errors encountered by the flush are reported back to the user (as exceptions) when the user interacts with the BufferedMutator for the first time after the errors were detected. Reported exceptions are annotated with MirroringOperationException.
+`flush()` operations issued by the user flushes both underlying Buffered Mutators concurrently and blocks until they are finished.
 
 Set `google.bigtable.mirroring.concurrent-writes` to `true` to enable concurrent Buffered Mutator mode (defaults to false).
 
