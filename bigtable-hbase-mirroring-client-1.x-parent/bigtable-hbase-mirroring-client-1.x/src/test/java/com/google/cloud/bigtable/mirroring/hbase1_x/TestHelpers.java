@@ -26,15 +26,18 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowContro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController.ResourceReservation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue.Type;
@@ -46,7 +49,9 @@ import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.Table;
 import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
 import org.mockito.exceptions.base.MockitoException;
+import org.mockito.invocation.Invocation;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -252,6 +257,29 @@ public class TestHelpers {
               }
             })
         .when(mock);
+  }
+
+  public static <T> void waitUntilCalled(
+      T mockitoObject, String methodName, int calls, int timeoutSeconds) throws TimeoutException {
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    while (stopwatch.elapsed(TimeUnit.SECONDS) < timeoutSeconds) {
+      Collection<Invocation> invocations = Mockito.mockingDetails(mockitoObject).getInvocations();
+      long count = 0;
+      for (Invocation invocation : invocations) {
+        if (invocation.getMethod().getName().equals(methodName)) {
+          count++;
+        }
+      }
+      if (count >= calls) {
+        return;
+      }
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    throw new TimeoutException();
   }
 
   public static void assertPutsAreEqual(

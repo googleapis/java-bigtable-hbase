@@ -16,10 +16,12 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator;
 
 import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.blockMethodCall;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.waitUntilCalled;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.MirroringBufferedMutatorCommon.flushWithErrors;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.MirroringBufferedMutatorCommon.makeConfigurationWithFlushThreshold;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.MirroringBufferedMutatorCommon.mutateWithErrors;
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doAnswer;
@@ -40,6 +42,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
@@ -142,26 +145,52 @@ public class TestConcurrentMirroringBufferedMutator {
   }
 
   @Test
-  public void testBlockedPrimaryFlushesDoNotPreventSecondaryAsyncFlushes() throws IOException {
+  public void testBlockedPrimaryFlushesDoNotPreventSecondaryAsyncFlushes()
+      throws IOException, TimeoutException {
     final SettableFuture<Void> startPrimaryFlush = SettableFuture.create();
     final SettableFuture<Void> startSecondaryFlush = SettableFuture.create();
 
+    // We will block flushes on underlying mutators - when `flush()` will be called it will wait
+    // until corresponding future is completed. Blocked calls are also accounted as calls when using
+    // `verify(...).flush()` assertion.
     blockMethodCall(common.primaryBufferedMutator, startPrimaryFlush).flush();
     blockMethodCall(common.secondaryBufferedMutator, startSecondaryFlush).flush();
 
+    // Set flush threshold to less than size of a mutation - flush should be scheduled after every
+    // `mutate` call.
     BufferedMutator bm = getBufferedMutator((long) (common.mutationSize * 0.5));
 
+    // First mutation - primary and secondary flushes should be scheduled and executed at some point
+    // in time.
     bm.mutate(common.mutation1);
+    // Second mutation - primary and secondary flushes should be scheduled but won't be called while
+    // previous flushes are still running.
     bm.mutate(common.mutation2);
+
+    // Wait for first, blocking, flush calls to be called.
+    waitUntilCalled(common.primaryBufferedMutator, "flush", /* calls */ 1, /* timeout */ 1);
+    waitUntilCalled(common.secondaryBufferedMutator, "flush", /* calls */ 1, /* timeout */ 1);
+
+    // And unlock primary flush. The secondary remains blocked.
     startPrimaryFlush.set(null);
-    executorServiceRule.waitForExecutor();
+
+    // Primary flush should be called for the second time now.
+    waitUntilCalled(common.primaryBufferedMutator, "flush", /* calls */ 2, /* timeout */ 1);
+    // But secondary flush should still be blocked.
+    try {
+      waitUntilCalled(common.secondaryBufferedMutator, "flush", /* calls */ 2, /* timeout */ 2);
+      fail("should time out");
+    } catch (TimeoutException expected) {
+      // expected
+    }
 
     verify(common.primaryBufferedMutator, times(2)).flush();
     verify(common.secondaryBufferedMutator, times(1)).flush();
   }
 
   @Test
-  public void testBlockedSecondaryFlushesDoNotPreventPrimaryAsyncFlushes() throws IOException {
+  public void testBlockedSecondaryFlushesDoNotPreventPrimaryAsyncFlushes()
+      throws IOException, TimeoutException {
     final SettableFuture<Void> startPrimaryFlush = SettableFuture.create();
     final SettableFuture<Void> startSecondaryFlush = SettableFuture.create();
 
@@ -172,8 +201,19 @@ public class TestConcurrentMirroringBufferedMutator {
 
     bm.mutate(common.mutation1);
     bm.mutate(common.mutation2);
+
+    waitUntilCalled(common.primaryBufferedMutator, "flush", /* calls */ 1, /* timeout */ 1);
+    waitUntilCalled(common.secondaryBufferedMutator, "flush", /* calls */ 1, /* timeout */ 1);
+
     startSecondaryFlush.set(null);
-    executorServiceRule.waitForExecutor();
+
+    waitUntilCalled(common.secondaryBufferedMutator, "flush", /* calls */ 2, /* timeout */ 1);
+    try {
+      waitUntilCalled(common.primaryBufferedMutator, "flush", /* calls */ 2, /* timeout */ 2);
+      fail("should time out");
+    } catch (TimeoutException expected) {
+      // expected
+    }
 
     verify(common.secondaryBufferedMutator, times(2)).flush();
     verify(common.primaryBufferedMutator, times(1)).flush();

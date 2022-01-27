@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.spy;
 
 import com.google.common.base.Preconditions;
@@ -102,7 +103,9 @@ public class ExecutorServiceRule extends ExternalResource {
   public void waitForExecutor() {
     this.executorService.shutdown();
     try {
-      this.executorService.awaitTermination(3, TimeUnit.SECONDS);
+      if (!this.executorService.awaitTermination(3, TimeUnit.SECONDS)) {
+        fail("executor did not terminate");
+      }
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
