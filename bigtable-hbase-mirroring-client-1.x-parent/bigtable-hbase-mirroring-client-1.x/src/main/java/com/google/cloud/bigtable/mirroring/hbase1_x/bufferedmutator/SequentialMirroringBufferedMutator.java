@@ -176,6 +176,8 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
       try {
         // This call might block - we have confirmed that mutate() calls on BufferedMutator from
         // HBase client library might also block.
+        // Submitting write errors to secondaryWriteErrorConsumer in case of exceptions is handled
+        // by this method.
         addSecondaryMutation(list);
       } catch (InterruptedException | ExecutionException e) {
         setInterruptedFlagIfInterruptedException(e);
@@ -194,23 +196,22 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
 
   private void addSecondaryMutation(List<? extends Mutation> mutations)
       throws ExecutionException, InterruptedException {
-    RequestResourcesDescription resourcesDescription = new RequestResourcesDescription(mutations);
-    ListenableFuture<ResourceReservation> reservationFuture =
-        flowController.asyncRequestResource(resourcesDescription);
-
-    ResourceReservation reservation;
     try {
+      RequestResourcesDescription resourcesDescription = new RequestResourcesDescription(mutations);
+      ListenableFuture<ResourceReservation> reservationFuture =
+          flowController.asyncRequestResource(resourcesDescription);
+
+      ResourceReservation reservation;
       try (Scope scope = this.mirroringTracer.spanFactory.flowControlScope()) {
         reservation = reservationFuture.get();
       }
-    } catch (InterruptedException | ExecutionException e) {
+      storeResourcesAndFlushIfNeeded(new Entry(mutations, reservation), resourcesDescription);
+    } catch (InterruptedException | ExecutionException | RuntimeException e) {
       // We won't write those mutations to secondary database, they should be reported to
       // secondaryWriteErrorConsumer.
       reportWriteErrors(mutations, e);
       throw e;
     }
-
-    storeResourcesAndFlushIfNeeded(new Entry(mutations, reservation), resourcesDescription);
   }
 
   @Override
