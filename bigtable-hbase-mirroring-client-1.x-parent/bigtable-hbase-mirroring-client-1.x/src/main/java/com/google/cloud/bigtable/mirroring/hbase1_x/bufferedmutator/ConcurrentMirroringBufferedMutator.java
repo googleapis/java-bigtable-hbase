@@ -36,10 +36,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.hbase.client.BufferedMutatorParams;
 import org.apache.hadoop.hbase.client.Connection;
@@ -163,16 +160,6 @@ public class ConcurrentMirroringBufferedMutator
       failedSecondaryOperations.put(
           e.getRow(i), new ExceptionDetails(e.getCause(i), e.getHostnamePort(i)));
     }
-  }
-
-  @Override
-  protected void flushBufferedMutatorBeforeClosing()
-      throws ExecutionException, InterruptedException, TimeoutException {
-    scheduleFlushAll()
-        .bothFlushesFinished
-        .get(
-            this.configuration.mirroringOptions.connectionTerminationTimeoutMillis,
-            TimeUnit.MILLISECONDS);
   }
 
   @Override

@@ -257,8 +257,14 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
     return this.flushSerializer.scheduleFlushAll();
   }
 
-  protected abstract void flushBufferedMutatorBeforeClosing()
-      throws ExecutionException, InterruptedException, TimeoutException;
+  protected final void flushBufferedMutatorBeforeClosing()
+      throws ExecutionException, InterruptedException, TimeoutException {
+    scheduleFlushAll()
+        .bothFlushesFinished
+        .get(
+            this.configuration.mirroringOptions.connectionTerminationTimeoutMillis,
+            TimeUnit.MILLISECONDS);
+  }
 
   @Override
   public final void close() throws IOException {

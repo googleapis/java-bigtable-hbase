@@ -42,8 +42,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.BufferedMutatorParams;
 import org.apache.hadoop.hbase.client.Connection;
@@ -226,16 +224,6 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
   @Override
   protected void handleSecondaryException(RetriesExhaustedWithDetailsException e) {
     reportWriteErrors(e);
-  }
-
-  @Override
-  protected void flushBufferedMutatorBeforeClosing()
-      throws ExecutionException, InterruptedException, TimeoutException {
-    scheduleFlushAll()
-        .secondaryFlushFinished
-        .get(
-            this.configuration.mirroringOptions.connectionTerminationTimeoutMillis,
-            TimeUnit.MILLISECONDS);
   }
 
   @Override
