@@ -518,15 +518,20 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
      * <p>We have to ensure the ordering to prevent the following scenario:
      *
      * <ol>
-     *   <li>main thread: scheduleFlush with callback using dataToFlush = [1,2,3] (flush1)
-     *   <li>main thread: scheduleFlush with callback using dataToFlush = [] (flush2).
-     *   <li>worker thread 1: call flush2, it blocks.
-     *   <li>worker thread 2: call flush1, nothing more to flush (there's no guarantee that this
-     *       flush would wait for flush2 to finish), callback with dataToFlush = [1,2,3] is called
-     *       before corresponding mutations were flushed.
+     *   <li>main thread: user calls mutate([1,2,3])
+     *   <li>main thread: scheduleFlush with dataToFlush = [1,2,3] (flush1) because threshold is
+     *       exceeded.
+     *   <li>main thread: user call flush()
+     *   <li>main thread: scheduleFlush with dataToFlush = [] (flush2).
+     *   <li>main thread: waits for flush2 to finish.
+     *   <li>worker thread 1: performs flush1 and blocks, underlying buffered mutator flushes
+     *       [1,2,3].
+     *   <li>worker thread 2: performs flush2 - there is nothing more to flush, call finishes
+     *       immediately (there is not guarantee that this call would wait for flush1 to finish).
+     *   <li>main thread: continues running, but flush1 is still in progress.
      * </ol>
      *
-     * <p>Ensuring the order of flushes forces to be run after flush1 is finished.
+     * <p>Ensuring the order of flushes forces flush2 to be run after flush1 is finished.
      */
     private FlushFutures lastFlushFutures = createCompletedFlushFutures();
 
