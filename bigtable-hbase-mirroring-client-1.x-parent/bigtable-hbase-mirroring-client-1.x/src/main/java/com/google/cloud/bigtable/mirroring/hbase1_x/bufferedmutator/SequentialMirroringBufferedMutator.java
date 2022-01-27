@@ -192,11 +192,6 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
     throwExceptionIfAvailable();
   }
 
-  /**
-   * This method is called from within {@code finally} block. Currently processed exception is
-   * passed in primaryException, if any. This method shouldn't throw any exception if
-   * primaryException != null.
-   */
   private void addSecondaryMutation(List<? extends Mutation> mutations)
       throws ExecutionException, InterruptedException {
     RequestResourcesDescription resourcesDescription = new RequestResourcesDescription(mutations);
