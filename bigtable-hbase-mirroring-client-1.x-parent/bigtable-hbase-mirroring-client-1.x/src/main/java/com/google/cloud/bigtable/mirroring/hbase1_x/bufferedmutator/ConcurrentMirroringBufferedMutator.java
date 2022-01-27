@@ -32,11 +32,12 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.hbase.client.BufferedMutatorParams;
 import org.apache.hadoop.hbase.client.Connection;
@@ -67,7 +68,7 @@ public class ConcurrentMirroringBufferedMutator
   private final Map<Row, ExceptionDetails> failedSecondaryOperations =
       (new MapMaker()).weakKeys().makeMap();
 
-  private final LinkedList<Throwable> flushExceptions = new LinkedList<>();
+  private final Deque<Throwable> flushExceptions = new LinkedBlockingDeque<>();
 
   private final RetriesExhaustedExceptionBuilder retriesExhaustedExceptionBuilder =
       new RetriesExhaustedExceptionBuilder();
@@ -298,18 +299,18 @@ public class ConcurrentMirroringBufferedMutator
    */
   @Override
   protected void throwExceptionIfAvailable() throws IOException {
-    throwPrimaryFlushExceptionIfAvailable();
+    throwFlushExceptionIfAvailable();
     RetriesExhaustedWithDetailsException e = retriesExhaustedExceptionBuilder.clearAndBuild();
     if (e != null) {
       this.userListener.onException(e, this);
     }
   }
 
-  private void throwPrimaryFlushExceptionIfAvailable() throws IOException {
-    if (this.flushExceptions.isEmpty()) {
+  private void throwFlushExceptionIfAvailable() throws IOException {
+    Throwable error = this.flushExceptions.pollFirst();
+    if (error == null) {
       return;
     }
-    Throwable error = this.flushExceptions.pollFirst();
     if (error instanceof IOException) {
       throw (IOException) error;
     } else if (error instanceof RuntimeException) {
