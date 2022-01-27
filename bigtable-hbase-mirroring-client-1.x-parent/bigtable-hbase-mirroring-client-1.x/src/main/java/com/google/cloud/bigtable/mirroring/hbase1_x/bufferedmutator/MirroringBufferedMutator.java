@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.AccumulatedExceptions;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOException;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
@@ -33,7 +34,6 @@ import io.opencensus.common.Scope;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -270,7 +270,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
         return;
       }
 
-      List<IOException> exceptions = new ArrayList<>();
+      AccumulatedExceptions exceptions = new AccumulatedExceptions();
 
       try {
         flushBufferedMutatorBeforeClosing();
@@ -306,14 +306,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
       } catch (IOException e) {
         exceptions.add(e);
       }
-      if (!exceptions.isEmpty()) {
-        Iterator<IOException> exceptionIterator = exceptions.iterator();
-        IOException firstException = exceptionIterator.next();
-        while (exceptionIterator.hasNext()) {
-          firstException.addSuppressed(exceptionIterator.next());
-        }
-        throw firstException;
-      }
+      exceptions.rethrowIfCaptured();
     }
   }
 
