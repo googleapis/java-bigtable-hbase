@@ -319,6 +319,8 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
         exceptions.add(e);
       }
       exceptions.rethrowIfCaptured();
+      // Throw exceptions from async operations, if any.
+      throwExceptionIfAvailable();
     }
   }
 

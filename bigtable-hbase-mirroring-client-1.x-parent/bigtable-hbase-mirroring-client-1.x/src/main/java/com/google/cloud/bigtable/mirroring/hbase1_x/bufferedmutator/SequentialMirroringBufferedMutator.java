@@ -78,9 +78,9 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
  * internal thread - instead BufferedMutator implementations gather encountered failed mutations and
  * reasons of their failures in an internal data structure. The exception handler is called when the
  * user code interacts with the BufferedMutator again - when {@link
- * BufferedMutator#mutate(Mutation)} or {@link BufferedMutator#flush()} is called (HBase 1.x
- * BufferedMutator's implementation calls the exception handler performing the operation requested
- * by the user).
+ * BufferedMutator#mutate(Mutation)}, {@link BufferedMutator#flush()} or {@link
+ * BufferedMutator#close()} is called (HBase 1.x BufferedMutator's implementation calls the
+ * exception handler performing the operation requested by the user).
  *
  * <p>Because the exception handlers are called synchronously in user thread they can throw
  * exceptions that will be propagated to the user (what can be seen in {@link
