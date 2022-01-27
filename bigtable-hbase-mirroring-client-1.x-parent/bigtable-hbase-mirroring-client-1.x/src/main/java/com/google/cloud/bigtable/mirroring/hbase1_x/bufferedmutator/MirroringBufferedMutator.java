@@ -463,6 +463,11 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
      * each scheduled flush will wait for previously scheduled flush to finish before performing its
      * operation. We are storing futures of last scheduled flush operation in this field.
      *
+     * <p>Because each scheduled flush has to wait for previously scheduled flush we are implicitly
+     * creating a chain of flushes to be performed. Length of this chain is limited by the
+     * FlowController - once there are not more resources to be used asynchronously scheduling of
+     * new operations will block.
+     *
      * <p>Access to this field should be synchronized by {@code synchronized(this)}
      *
      * <p>We have to ensure the ordering to prevent the following scenario:
