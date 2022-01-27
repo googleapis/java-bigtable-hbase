@@ -116,7 +116,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
    */
   protected final long mutationsBufferFlushThresholdBytes;
 
-  private final FlushSerializer<BufferEntryType> flushSerializer;
+  private final FlushSerializer flushSerializer;
 
   /** ExceptionListener supplied by the user. */
   protected final ExceptionListener userListener;
@@ -171,12 +171,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
     this.bufferedMutatorParams = bufferedMutatorParams;
 
     this.mirroringTracer = mirroringTracer;
-    this.flushSerializer =
-        new FlushSerializer<>(
-            this,
-            this.mutationsBufferFlushThresholdBytes,
-            this.ongoingFlushesCounter,
-            this.mirroringTracer);
+    this.flushSerializer = new FlushSerializer();
     this.timestamper = timestamper;
   }
 
@@ -436,9 +431,13 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
   /**
    * Helper class that manager performing asynchronous flush operations and correctly ordering them.
    *
+   * <p>This is a non-static inner class with only a single instance per MirroringBufferedMutator
+   * instance, but it is not inlined to facilitate correct synchronization of scheduling flushes and
+   * to logically separate flush scheduling from other concerns.
+   *
    * <p>Thread-safe.
    */
-  static class FlushSerializer<BufferEntryType> {
+  class FlushSerializer {
 
     /**
      * Internal buffer that should keep mutations that were not yet flushed asynchronously. Type of
@@ -453,10 +452,6 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
      */
     private final BufferedMutations<BufferEntryType> mutationEntries;
 
-    private final ListenableReferenceCounter ongoingFlushesCounter;
-    private final MirroringTracer mirroringTracer;
-    private final MirroringBufferedMutator<BufferEntryType> bufferedMutator;
-    private final long mutationsBufferFlushThresholdBytes;
     /**
      * We have to ensure that order of asynchronously called {@link BufferedMutator#flush()} is the
      * same as order in which callbacks for these operations were created. To enforce this property
@@ -486,19 +481,11 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
      */
     private FlushFutures lastFlushFutures = createCompletedFlushFutures();
 
-    public FlushSerializer(
-        MirroringBufferedMutator<BufferEntryType> bufferedMutator,
-        long mutationsBufferFlushThresholdBytes,
-        ListenableReferenceCounter ongoingFlushesCounter,
-        MirroringTracer mirroringTracer) {
-      this.mutationsBufferFlushThresholdBytes = mutationsBufferFlushThresholdBytes;
+    public FlushSerializer() {
       this.mutationEntries = new BufferedMutations<>();
-      this.ongoingFlushesCounter = ongoingFlushesCounter;
-      this.mirroringTracer = mirroringTracer;
-      this.bufferedMutator = bufferedMutator;
     }
 
-    private static FlushFutures createCompletedFlushFutures() {
+    private FlushFutures createCompletedFlushFutures() {
       SettableFuture<Void> future = SettableFuture.create();
       future.set(null);
       return new FlushFutures(future, future, future, future);
@@ -516,18 +503,16 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
       // This method is synchronized to make sure that order of scheduled flushes matches order of
       // created dataToFlush lists.
       this.mutationEntries.add(entry, resourcesDescription.sizeInBytes);
-      if (this.mutationEntries.getMutationsBufferSizeBytes()
-          > this.mutationsBufferFlushThresholdBytes) {
+      if (this.mutationEntries.getMutationsBufferSizeBytes() > mutationsBufferFlushThresholdBytes) {
         scheduleFlush(this.mutationEntries.getAndReset());
       }
     }
 
     private synchronized FlushFutures scheduleFlush(List<BufferEntryType> dataToFlush) {
-      try (Scope scope = this.mirroringTracer.spanFactory.scheduleFlushScope()) {
-        this.ongoingFlushesCounter.incrementReferenceCount();
+      try (Scope scope = mirroringTracer.spanFactory.scheduleFlushScope()) {
+        ongoingFlushesCounter.incrementReferenceCount();
 
-        FlushFutures resultFutures =
-            this.bufferedMutator.scheduleFlushScoped(dataToFlush, lastFlushFutures);
+        FlushFutures resultFutures = scheduleFlushScoped(dataToFlush, lastFlushFutures);
         this.lastFlushFutures = resultFutures;
 
         resultFutures.secondaryFlushFinished.addListener(
