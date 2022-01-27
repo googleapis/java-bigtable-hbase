@@ -230,6 +230,7 @@ public class MirroringConnection implements Connection {
         flowController,
         executorService,
         secondaryWriteErrorConsumer,
+        referenceCounter,
         timestamper,
         mirroringTracer);
   }

@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator;
 
 import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.blockMethodCall;
-import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.delayMethodCall;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.MirroringBufferedMutatorCommon.makeConfigurationWithFlushThreshold;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.MirroringBufferedMutatorCommon.mutateWithErrors;
 import static com.google.common.truth.Truth.assertThat;
@@ -29,6 +28,7 @@ import static org.mockito.Mockito.verify;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.ExecutorServiceRule;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.NoopTimestamper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.common.primitives.Longs;
@@ -71,6 +71,7 @@ public class TestSequentialMirroringBufferedMutator {
   public final MirroringBufferedMutatorCommon common = new MirroringBufferedMutatorCommon();
 
   private final List<Mutation> singletonMutation1 = Collections.singletonList(common.mutation1);
+  private ListenableReferenceCounter referenceCounter = new ListenableReferenceCounter();
 
   @Test
   public void testBufferedWritesWithoutErrors() throws IOException, InterruptedException {
@@ -120,7 +121,8 @@ public class TestSequentialMirroringBufferedMutator {
   }
 
   @Test
-  public void testCloseFlushesWrites() throws IOException {
+  public void testCloseFlushesWrites()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
     BufferedMutator bm = getBufferedMutator((long) (common.mutationSize * 3.5));
 
     bm.mutate(common.mutation1);
@@ -130,12 +132,20 @@ public class TestSequentialMirroringBufferedMutator {
     verify(common.primaryBufferedMutator, times(3)).mutate(singletonMutation1);
     verify(common.secondaryBufferedMutator, times(1))
         .mutate(Arrays.asList(common.mutation1, common.mutation1, common.mutation1));
+    // close() waits until primary's flush() finishes and schedules secondary operation
+    verify(common.primaryBufferedMutator, times(1)).flush();
+    // decrement initial reference value - now only asynchronous flush should hold a reference in
+    // reference counter.
+    referenceCounter.decrementReferenceCount();
+    // wait until secondary flush is finished
+    referenceCounter.getOnLastReferenceClosed().get(3, TimeUnit.SECONDS);
     verify(common.secondaryBufferedMutator, times(1)).flush();
     verify(common.resourceReservation, times(3)).release();
   }
 
   @Test
-  public void testCloseIsIdempotent() throws IOException {
+  public void testCloseIsIdempotent()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
     BufferedMutator bm = getBufferedMutator((long) (common.mutationSize * 3.5));
 
     bm.mutate(common.mutation1);
@@ -143,6 +153,12 @@ public class TestSequentialMirroringBufferedMutator {
     bm.mutate(common.mutation1);
     bm.close();
     bm.close();
+    verify(common.primaryBufferedMutator, times(1)).flush();
+
+    // wait until secondary flush is finished
+    referenceCounter.decrementReferenceCount();
+    referenceCounter.getOnLastReferenceClosed().get(3, TimeUnit.SECONDS);
+
     verify(common.secondaryBufferedMutator, times(1)).flush();
     verify(common.resourceReservation, times(3)).release();
   }
@@ -299,7 +315,7 @@ public class TestSequentialMirroringBufferedMutator {
   }
 
   @Test
-  public void testCloseWaitsForOngoingFlushes()
+  public void testCloseWaitsForOngoingFlushesOnPrimaryMutatorOnly()
       throws IOException, InterruptedException, ExecutionException, TimeoutException {
     final List<? extends Mutation> mutations =
         Arrays.asList(
@@ -311,20 +327,13 @@ public class TestSequentialMirroringBufferedMutator {
 
     final SettableFuture<Void> closeStarted = SettableFuture.create();
     final SettableFuture<Void> closeEnded = SettableFuture.create();
-    final SettableFuture<Void> unlockSecondaryFlush = SettableFuture.create();
-
-    int numRunningFlushes = 10;
+    final SettableFuture<Void> unlockPrimaryFlush = SettableFuture.create();
 
     final BufferedMutator bm = getBufferedMutator((long) 4 * mutationSize);
 
-    blockMethodCall(common.secondaryBufferedMutator, unlockSecondaryFlush).flush();
-    delayMethodCall(common.primaryBufferedMutator, 300).flush();
+    blockMethodCall(common.primaryBufferedMutator, unlockPrimaryFlush).flush();
 
-    for (int i = 0; i < numRunningFlushes; i++) {
-      bm.mutate(mutations);
-      // Primary flush completes normally, secondary is blocked.
-      bm.flush();
-    }
+    bm.mutate(mutations);
 
     Thread t =
         new Thread(
@@ -333,7 +342,7 @@ public class TestSequentialMirroringBufferedMutator {
               public void run() {
                 try {
                   closeStarted.set(null);
-                  bm.close();
+                  bm.close(); // calls flush
                   closeEnded.set(null);
                 } catch (IOException e) {
                   throw new RuntimeException(e);
@@ -351,20 +360,16 @@ public class TestSequentialMirroringBufferedMutator {
     }
 
     // primary flushes have completed
-    // + 1 because close() also calls flush
-    verify(common.primaryBufferedMutator, times(numRunningFlushes + 1)).flush();
-    // but only the first of secondary flushes was called (and is blocking now).
-    verify(common.secondaryBufferedMutator, times(1)).flush();
+    // only the flushed that was blocked.
+    verify(common.primaryBufferedMutator, times(1)).flush();
+    // and secondary is not yet called
+    verify(common.secondaryBufferedMutator, times(0)).flush();
+    assertThat(t.isAlive()).isTrue();
 
-    unlockSecondaryFlush.set(null);
+    unlockPrimaryFlush.set(null);
     closeEnded.get(3, TimeUnit.SECONDS);
     t.join(1000);
     assertThat(t.isAlive()).isFalse();
-
-    // close() won't call flush on secondary because there won't be any data to be flushed.
-    verify(common.secondaryBufferedMutator, times(numRunningFlushes)).flush();
-
-    executorServiceRule.waitForExecutor();
   }
 
   private BufferedMutator getBufferedMutator(long flushThreshold) throws IOException {
@@ -376,6 +381,7 @@ public class TestSequentialMirroringBufferedMutator {
         common.flowController,
         executorServiceRule.executorService,
         common.secondaryWriteErrorConsumerWithMetrics,
+        this.referenceCounter,
         timestamper,
         new MirroringTracer());
   }

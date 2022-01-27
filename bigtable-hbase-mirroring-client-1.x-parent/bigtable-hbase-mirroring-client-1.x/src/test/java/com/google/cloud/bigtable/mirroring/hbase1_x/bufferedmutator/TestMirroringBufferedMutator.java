@@ -16,12 +16,14 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.mock;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.ExecutorServiceRule;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration;
 import com.google.cloud.bigtable.mirroring.hbase1_x.TestConnection;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.MirroringConfigurationHelper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.NoopTimestamper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import java.io.IOException;
@@ -63,6 +65,7 @@ public class TestMirroringBufferedMutator {
                 mutatorRule.flowController,
                 executorServiceRule.executorService,
                 mutatorRule.secondaryWriteErrorConsumerWithMetrics,
+                mock(ReferenceCounter.class),
                 timestamper,
                 new MirroringTracer()))
         .isInstanceOf(SequentialMirroringBufferedMutator.class);
@@ -77,6 +80,7 @@ public class TestMirroringBufferedMutator {
                 mutatorRule.flowController,
                 executorServiceRule.executorService,
                 mutatorRule.secondaryWriteErrorConsumerWithMetrics,
+                mock(ReferenceCounter.class),
                 timestamper,
                 new MirroringTracer()))
         .isInstanceOf(ConcurrentMirroringBufferedMutator.class);

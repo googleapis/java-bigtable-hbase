@@ -26,6 +26,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowContro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.common.collect.MapMaker;
 import com.google.common.util.concurrent.FutureCallback;
@@ -138,6 +139,7 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
       FlowController flowController,
       ExecutorService executorService,
       SecondaryWriteErrorConsumer secondaryWriteErrorConsumer,
+      ReferenceCounter connectionReferenceCounter,
       Timestamper timestamper,
       MirroringTracer mirroringTracer)
       throws IOException {
@@ -147,6 +149,7 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
         bufferedMutatorParams,
         configuration,
         executorService,
+        connectionReferenceCounter,
         timestamper,
         mirroringTracer);
     this.secondaryWriteErrorConsumer = secondaryWriteErrorConsumer;

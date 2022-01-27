@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator;
 
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ReferenceCounterUtils.holdReferenceUntilCompletion;
+
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConfiguration;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.AccumulatedExceptions;
@@ -24,7 +26,8 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowContro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ListenableReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.HierarchicalReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -64,6 +67,7 @@ import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 @InternalApi("For internal usage only")
 public abstract class MirroringBufferedMutator<BufferEntryType> implements BufferedMutator {
 
+  private final SettableFuture<Void> closedFuture = SettableFuture.create();
   private final Timestamper timestamper;
 
   public static BufferedMutator create(
@@ -75,6 +79,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
       FlowController flowController,
       ExecutorService executorService,
       SecondaryWriteErrorConsumer secondaryWriteErrorConsumer,
+      ReferenceCounter connectionReferenceCounter,
       Timestamper timestamper,
       MirroringTracer mirroringTracer)
       throws IOException {
@@ -85,6 +90,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
           bufferedMutatorParams,
           configuration,
           executorService,
+          connectionReferenceCounter,
           timestamper,
           mirroringTracer);
     } else {
@@ -96,6 +102,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
           flowController,
           executorService,
           secondaryWriteErrorConsumer,
+          connectionReferenceCounter,
           timestamper,
           mirroringTracer);
     }
@@ -122,7 +129,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
   protected final ExceptionListener userListener;
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
-  private final ListenableReferenceCounter ongoingFlushesCounter = new ListenableReferenceCounter();
+  private final HierarchicalReferenceCounter referenceCounter;
 
   public MirroringBufferedMutator(
       Connection primaryConnection,
@@ -130,6 +137,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
       BufferedMutatorParams bufferedMutatorParams,
       MirroringConfiguration configuration,
       ExecutorService executorService,
+      ReferenceCounter connectionReferenceCounter,
       Timestamper timestamper,
       MirroringTracer mirroringTracer)
       throws IOException {
@@ -173,6 +181,8 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
     this.mirroringTracer = mirroringTracer;
     this.flushSerializer = new FlushSerializer();
     this.timestamper = timestamper;
+
+    this.referenceCounter = new HierarchicalReferenceCounter(connectionReferenceCounter);
   }
 
   @Override
@@ -252,10 +262,10 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
     return this.flushSerializer.scheduleFlush();
   }
 
-  protected final void flushBufferedMutatorBeforeClosing()
+  private void flushBufferedMutatorBeforeClosing()
       throws ExecutionException, InterruptedException, TimeoutException {
     scheduleFlush()
-        .bothFlushesFinished
+        .flushOperationCanContinueFuture
         .get(
             this.configuration.mirroringOptions.connectionTerminationTimeoutMillis,
             TimeUnit.MILLISECONDS);
@@ -273,50 +283,89 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
         return;
       }
 
-      AccumulatedExceptions exceptions = new AccumulatedExceptions();
+      final AccumulatedExceptions exceptions = new AccumulatedExceptions();
 
       try {
+        // Schedule flush of all buffered data and:
+        // sequential) wait for primary flush to finish;
+        // concurrent) wait for both flushes to finish.
         flushBufferedMutatorBeforeClosing();
-        this.ongoingFlushesCounter.decrementReferenceCount();
-        this.ongoingFlushesCounter
-            .getOnLastReferenceClosed()
-            .get(
-                this.configuration.mirroringOptions.connectionTerminationTimeoutMillis,
-                TimeUnit.MILLISECONDS);
       } catch (InterruptedException | ExecutionException | TimeoutException e) {
         setInterruptedFlagIfInterruptedException(e);
         exceptions.add(new IOException(e));
       }
+
+      // Close the primary buffered mutator, if is flushed in both cases.
       try {
-        this.mirroringTracer.spanFactory.wrapPrimaryOperation(
-            new CallableThrowingIOException<Void>() {
-              @Override
-              public Void call() throws IOException {
-                MirroringBufferedMutator.this.primaryBufferedMutator.close();
-                return null;
-              }
-            },
-            HBaseOperation.BUFFERED_MUTATOR_CLOSE);
+        closePrimaryBufferedMutator();
       } catch (IOException e) {
         exceptions.add(e);
       }
+
+      // We are freeing the initial reference to current level reference counter.
+      referenceCounter.current.decrementReferenceCount();
+      // But we are scheduling asynchronous secondary operation and we should increment our parent's
+      // ref counter until this operation is finished.
+      holdReferenceUntilCompletion(this.referenceCounter.parent, this.closedFuture);
+
       try {
-        this.mirroringTracer.spanFactory.wrapSecondaryOperation(
-            new CallableThrowingIOException<Void>() {
-              @Override
-              public Void call() throws IOException {
-                MirroringBufferedMutator.this.secondaryBufferedMutator.close();
-                return null;
-              }
-            },
-            HBaseOperation.BUFFERED_MUTATOR_CLOSE);
-      } catch (IOException e) {
+        // Schedule closing secondary buffered mutator.
+        // sequential) it will be called at some point in the future.
+        // concurrent) it will be called immediately because all asynchronous operations are already
+        // finished and directExecutor will call it in this thread.
+        referenceCounter
+            .current
+            .getOnLastReferenceClosed()
+            .addListener(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    try {
+                      closeSecondaryBufferedMutator();
+                      closedFuture.set(null);
+                    } catch (IOException e) {
+                      closedFuture.setException(e);
+                    }
+                  }
+                },
+                MoreExecutors.directExecutor());
+      } catch (RuntimeException e) {
         exceptions.add(e);
       }
+
       exceptions.rethrowIfCaptured();
       // Throw exceptions from async operations, if any.
+      // synchronous) all exceptions from primary operation were reported, because
+      // flushBufferedMutatorBeforeClosing waits for errors to be reported after primary operation
+      // finishes;
+      // concurrent) all exceptions are reported because flushBufferedMutatorBeforeClosing waits for
+      // both flushes to finish and report errors.
       throwExceptionIfAvailable();
     }
+  }
+
+  private void closePrimaryBufferedMutator() throws IOException {
+    this.mirroringTracer.spanFactory.wrapPrimaryOperation(
+        new CallableThrowingIOException<Void>() {
+          @Override
+          public Void call() throws IOException {
+            MirroringBufferedMutator.this.primaryBufferedMutator.close();
+            return null;
+          }
+        },
+        HBaseOperation.BUFFERED_MUTATOR_CLOSE);
+  }
+
+  private void closeSecondaryBufferedMutator() throws IOException {
+    mirroringTracer.spanFactory.wrapSecondaryOperation(
+        new CallableThrowingIOException<Void>() {
+          @Override
+          public Void call() throws IOException {
+            MirroringBufferedMutator.this.secondaryBufferedMutator.close();
+            return null;
+          }
+        },
+        HBaseOperation.BUFFERED_MUTATOR_CLOSE);
   }
 
   @Override
@@ -510,7 +559,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
 
     private synchronized FlushFutures scheduleFlush(List<BufferEntryType> dataToFlush) {
       try (Scope scope = mirroringTracer.spanFactory.scheduleFlushScope()) {
-        ongoingFlushesCounter.incrementReferenceCount();
+        referenceCounter.incrementReferenceCount();
 
         FlushFutures resultFutures = scheduleFlushScoped(dataToFlush, lastFlushFutures);
         this.lastFlushFutures = resultFutures;
@@ -519,7 +568,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
             new Runnable() {
               @Override
               public void run() {
-                ongoingFlushesCounter.decrementReferenceCount();
+                referenceCounter.decrementReferenceCount();
               }
             },
             MoreExecutors.directExecutor());
