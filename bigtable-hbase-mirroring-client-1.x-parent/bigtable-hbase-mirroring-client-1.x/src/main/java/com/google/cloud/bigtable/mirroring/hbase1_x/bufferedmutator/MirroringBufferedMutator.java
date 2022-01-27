@@ -207,7 +207,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
         this.mirroringTracer.spanFactory.operationScope(HBaseOperation.BUFFERED_MUTATOR_FLUSH)) {
       try {
         // Wait until flush has finished.
-        scheduleFlushAll().flushOperationCanContinueFuture.get();
+        scheduleFlush().flushOperationCanContinueFuture.get();
       } catch (InterruptedException | ExecutionException e) {
         setInterruptedFlagIfInterruptedException(e);
         throw new IOException(e);
@@ -253,13 +253,13 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
     this.flushSerializer.storeResourcesAndFlushIfThresholdIsExceeded(entry, resourcesDescription);
   }
 
-  protected final FlushFutures scheduleFlushAll() {
-    return this.flushSerializer.scheduleFlushAll();
+  protected final FlushFutures scheduleFlush() {
+    return this.flushSerializer.scheduleFlush();
   }
 
   protected final void flushBufferedMutatorBeforeClosing()
       throws ExecutionException, InterruptedException, TimeoutException {
-    scheduleFlushAll()
+    scheduleFlush()
         .bothFlushesFinished
         .get(
             this.configuration.mirroringOptions.connectionTerminationTimeoutMillis,
@@ -504,7 +504,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
       return new FlushFutures(future, future, future, future);
     }
 
-    public final synchronized FlushFutures scheduleFlushAll() {
+    public final synchronized FlushFutures scheduleFlush() {
       // This method is synchronized to make sure that order of scheduled flushes matches order of
       // created dataToFlush lists.
       List<BufferEntryType> dataToFlush = this.mutationEntries.getAndReset();
