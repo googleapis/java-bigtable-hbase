@@ -440,12 +440,16 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
      *
      * <p>{@link #storeResourcesAndFlushIfThresholdIsExceeded} relies on the fact that access to
      * this field is synchronized.
+     *
+     * <p>{@link BufferedMutations} is not thread safe and usage of this field should by
+     * synchronized by {@code synchronized(this)}.
      */
     private final BufferedMutations<BufferEntryType> mutationEntries;
 
     private final ListenableReferenceCounter ongoingFlushesCounter;
     private final MirroringTracer mirroringTracer;
     private final MirroringBufferedMutator<BufferEntryType> bufferedMutator;
+    private final long mutationsBufferFlushThresholdBytes;
     /**
      * We have to ensure that order of asynchronously called {@link BufferedMutator#flush()} is the
      * same as order in which callbacks for these operations were created. To enforce this property
@@ -474,7 +478,8 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
         long mutationsBufferFlushThresholdBytes,
         ListenableReferenceCounter ongoingFlushesCounter,
         MirroringTracer mirroringTracer) {
-      this.mutationEntries = new BufferedMutations<>(mutationsBufferFlushThresholdBytes);
+      this.mutationsBufferFlushThresholdBytes = mutationsBufferFlushThresholdBytes;
+      this.mutationEntries = new BufferedMutations<>();
       this.ongoingFlushesCounter = ongoingFlushesCounter;
       this.mirroringTracer = mirroringTracer;
       this.bufferedMutator = bufferedMutator;
@@ -498,9 +503,9 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
       // This method is synchronized to make sure that order of scheduled flushes matches order of
       // created dataToFlush lists.
       this.mutationEntries.add(entry, resourcesDescription.sizeInBytes);
-      List<BufferEntryType> dataToFlush = this.mutationEntries.getEntriesToFlush();
-      if (dataToFlush != null) {
-        scheduleFlush(dataToFlush);
+      if (this.mutationEntries.getMutationsBufferSizeBytes()
+          > this.mutationsBufferFlushThresholdBytes) {
+        scheduleFlush(this.mutationEntries.getAndReset());
       }
     }
 
@@ -533,33 +538,27 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
    * <p>Keeps track of total size of buffered mutations and detects if there are enough entries to
    * perform a flush.
    *
-   * <p>Thread-safe.
+   * <p>not thread-safe, should be synchronized externally.
    */
   private static class BufferedMutations<EntryType> {
-    protected final long mutationsBufferFlushThresholdBytes;
     private List<EntryType> mutationEntries;
     private long mutationsBufferSizeBytes;
 
-    private BufferedMutations(long mutationsBufferFlushThresholdBytes) {
-      this.mutationsBufferFlushThresholdBytes = mutationsBufferFlushThresholdBytes;
+    private BufferedMutations() {
       this.mutationEntries = new ArrayList<>();
       this.mutationsBufferSizeBytes = 0;
     }
 
-    private synchronized void add(EntryType entry, long sizeInBytes) {
+    public void add(EntryType entry, long sizeInBytes) {
       this.mutationEntries.add(entry);
       this.mutationsBufferSizeBytes += sizeInBytes;
     }
 
-    /** Returns a list of entries to be flushed if the threshold was already exceeded. */
-    private synchronized List<EntryType> getEntriesToFlush() {
-      if (this.mutationsBufferSizeBytes > this.mutationsBufferFlushThresholdBytes) {
-        return getAndReset();
-      }
-      return null;
+    public long getMutationsBufferSizeBytes() {
+      return this.mutationsBufferSizeBytes;
     }
 
-    private synchronized List<EntryType> getAndReset() {
+    public List<EntryType> getAndReset() {
       List<EntryType> returnValue = this.mutationEntries;
       this.mutationEntries = new ArrayList<>();
       this.mutationsBufferSizeBytes = 0;
