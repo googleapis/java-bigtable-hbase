@@ -184,6 +184,7 @@ limitations under the License.
                   <!-- See notes in bigtable-client-core/bigtable-hbase/pom.xml#verify-conscrypt-version -->
                   <exclude>org.conscrypt:conscrypt-openjdk-uber</exclude>
                   <exclude>org.apache.htrace:htrace-core4</exclude>
+                  <exclude>org.bouncycastle:*</exclude>
                 </excludes>
               </artifactSet>
               <relocations>

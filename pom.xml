@@ -32,7 +32,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud</groupId>
     <artifactId>google-cloud-shared-config</artifactId>
-    <version>1.2.2</version>
+    <version>1.2.6</version>
   </parent>
 
   <licenses>
@@ -54,7 +54,7 @@ limitations under the License.
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- core dependency versions -->
-    <bigtable.version>2.2.0</bigtable.version>
+    <bigtable.version>2.5.1</bigtable.version>
     <bigtable-client-core.version>1.23.0</bigtable-client-core.version>
     <grpc-conscrypt.version>2.5.1</grpc-conscrypt.version>
     <!--  keeping at this version to align with hbase-->
@@ -239,11 +239,6 @@ limitations under the License.
                 </requireSameVersions>
                 <requireSameVersions>
                   <dependencies>
-                    <dependency>io.opencensus:*</dependency>
-                  </dependencies>
-                </requireSameVersions>
-                <requireSameVersions>
-                  <dependencies>
                     <dependency>com.google.cloud:google-cloud-bigtable</dependency>
                     <dependency>com.google.api.grpc:proto-google-cloud-bigtable-v2</dependency>
                     <dependency>com.google.api.grpc:grpc-google-cloud-bigtable-v2</dependency>
@@ -306,6 +301,15 @@ limitations under the License.
                     <dependency>com.google.http-client:*</dependency>
                   </dependencies>
                 </requireSameVersions>
+                <bannedDependencies>
+                  <includes>
+                    <!-- gax-grpc transitvely brings in opencensus-proto, which the latest version is 0.2.0-->
+                    <!-- Only allow 0.2.0 for opencensus-proto and then the latest version (currently 0.28.0) for all other modules-->
+                    <!-- this will need to be updated whenever the opencensus version gets updated -->
+                    <dependency>io.opencensus:*:[0.28.0]</dependency>
+                    <dependency>io.opencensus:opencensus-proto:[0.2.0]</dependency>
+                  </includes>
+                </bannedDependencies>
               </rules>
             </configuration>
           </execution>
