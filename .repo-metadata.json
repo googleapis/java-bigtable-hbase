@@ -1,14 +1,15 @@
 {
-  "name": "bigtable-hbase",
+  "api_shortname": "bigtable-hbase",
   "name_pretty": "Google Cloud Bigtable Hbase Client",
   "product_documentation": "https://cloud.google.com/bigtable",
   "client_documentation": "https://googleapis.dev/java/java-bigtable-hbase/latest/",
   "issue_tracker": "https://issuetracker.google.com/savedsearches/559782",
-  "release_level": "ga",
+  "release_level": "stable",
   "language": "java",
   "repo": "googleapis/java-bigtable-hbase",
   "repo_short": "java-bigtable-hbase",
   "distribution_name": "com.google.cloud.bigtable:bigtable-client-parent",
   "api_id": "bigtable.googleapis.com",
+  "library_type": "OTHER",
   "codeowner_team": "@googleapis/api-bigtable"
 }

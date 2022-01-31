@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x-parent</artifactId>
-    <version>2.0.0-beta3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.0.0-beta7-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-1.x-integration-tests</artifactId>
@@ -67,7 +67,7 @@ limitations under the License.
                   <!-- Fork & set system properties -->
                   <forkCount>1</forkCount>
                   <systemPropertyVariables>
-                    <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
+                    <google.bigtable.test_env>bigtable</google.bigtable.test_env>
                   </systemPropertyVariables>
                   <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
 
@@ -111,6 +111,9 @@ limitations under the License.
                   <!-- prevent multiple executions from clobering each other -->
                   <summaryFile>${project.build.directory}/failsafe-reports/minicluster-tests/failsafe-summary.xml</summaryFile>
                   <reportsDirectory>${project.build.directory}/failsafe-reports/minicluster-tests</reportsDirectory>
+                  <systemPropertyVariables>
+                    <google.bigtable.test_env>minicluster</google.bigtable.test_env>
+                  </systemPropertyVariables>
                 </configuration>
               </execution>
             </executions>
@@ -126,7 +129,7 @@ limitations under the License.
           <plugin>
             <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-emulator-maven-plugin</artifactId>
-            <version>2.0.0-beta3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+            <version>2.0.0-beta7-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
             <executions>
               <execution>
                 <goals>
@@ -155,7 +158,7 @@ limitations under the License.
                   </includes>
                   <excludedGroups>KnownEmulatorGap,KnownGap</excludedGroups>
                   <systemPropertyVariables>
-                    <google.bigtable.connection.impl>${google.bigtable.connection.impl}</google.bigtable.connection.impl>
+                    <google.bigtable.test_env>bigtable</google.bigtable.test_env>
                     <google.bigtable.project.id>fake-project</google.bigtable.project.id>
                     <google.bigtable.instance.id>fake-instance</google.bigtable.instance.id>
                   </systemPropertyVariables>
@@ -210,7 +213,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase</artifactId>
-      <version>2.0.0-beta3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.0.0-beta7-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <scope>test</scope>
       <exclusions>
         <!-- included in hbase-shaded-testing-util -->
@@ -224,7 +227,7 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-1.x</artifactId>
-      <version>2.0.0-beta3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.0.0-beta7-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <scope>test</scope>
       <exclusions>
         <!-- included in hbase-shaded-testing-util -->
@@ -238,7 +241,7 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-integration-tests-common</artifactId>
-      <version>2.0.0-beta3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.0.0-beta7-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <type>test-jar</type>
       <scope>test</scope>
       <exclusions>
@@ -384,7 +387,7 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-deploy-plugin</artifactId>
-          <version>3.0.0-M1</version>
+          <version>3.0.0-M2</version>
           <configuration>
             <skip>true</skip>
           </configuration>

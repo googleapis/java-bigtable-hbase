@@ -5,13 +5,13 @@
   <parent>
     <artifactId>bigtable-test</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>2.0.0-beta3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.0.0-beta7-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.google.cloud.bigtable.test</groupId>
   <artifactId>bigtable-build-helper</artifactId>
-  <version>2.0.0-beta3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+  <version>2.0.0-beta7-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   <packaging>maven-plugin</packaging>
   <description>
     java-bigtable-hbase internal maven extensions.
@@ -22,7 +22,7 @@
   <properties>
     <java.version>8</java.version>
     <maven.version>3.6.3</maven.version>
-    <maven-resolver-api.version>1.7.2</maven-resolver-api.version>
+    <maven-resolver-api.version>1.7.3</maven-resolver-api.version>
 
     <!-- treat maven-invoker-plugin tests like integration tests, allowing
     them to be disabled via skipTests & skipITs -->
@@ -103,7 +103,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-deploy-plugin</artifactId>
-          <version>3.0.0-M1</version>
+          <version>3.0.0-M2</version>
           <configuration>
             <skip>true</skip>
           </configuration>
