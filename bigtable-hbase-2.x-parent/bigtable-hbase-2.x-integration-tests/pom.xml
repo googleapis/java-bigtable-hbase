@@ -35,7 +35,6 @@ limitations under the License.
     <hbase.version>${hbase2.version}</hbase.version>
     <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase2_x.BigtableConnection</google.bigtable.connection.impl>
     <google.bigtable.async.connection.impl>org.apache.hadoop.hbase.client.BigtableAsyncConnection</google.bigtable.async.connection.impl>
-    <google.bigtable.registry.impl>org.apache.hadoop.hbase.client.BigtableAsyncRegistry</google.bigtable.registry.impl>
     <test.timeout>1800</test.timeout>
   </properties>
 

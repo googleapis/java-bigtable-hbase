@@ -68,6 +68,9 @@ limitations under the License.
     <hbase2.version>2.3.6</hbase2.version>
     <hbase2-metrics.version>3.2.6</hbase2-metrics.version>
 
+    <!-- bytebuddy dependency version for resolving hbase backward incompatible changes -->
+    <byte.buddy.version>1.12.6</byte.buddy.version>
+
     <!-- testing dependency versions -->
     <commons-lang.version>2.6</commons-lang.version>
     <junit.version>4.13.2</junit.version>

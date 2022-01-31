@@ -171,7 +171,7 @@ limitations under the License.
     <dependency>
       <groupId>net.bytebuddy</groupId>
       <artifactId>byte-buddy</artifactId>
-      <version>1.12.6</version>
+      <version>${byte.buddy.version}</version>
     </dependency>
 
     <!-- Test -->
