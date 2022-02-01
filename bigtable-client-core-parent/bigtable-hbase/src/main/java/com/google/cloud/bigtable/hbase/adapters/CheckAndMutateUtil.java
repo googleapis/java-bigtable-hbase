@@ -217,7 +217,7 @@ public class CheckAndMutateUtil {
       scan.setMaxVersions(1);
       scan.addColumn(family, qualifier);
 
-      if (value == null || checkNonExistence) {
+      if (value == null || value.length == 0 || checkNonExistence) {
         // See ifMatches javadoc for more information on this
         if (CompareOp.NOT_EQUAL.equals(compareOp)) {
           // check for existence
