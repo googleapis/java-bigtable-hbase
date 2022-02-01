@@ -72,7 +72,7 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
 
   @Override
   public boolean replicate(ReplicateContext replicateContext) {
-  final Map<String, List<BigtableWALEntry>> bigtableWALEntries =
+    final Map<String, List<BigtableWALEntry>> bigtableWALEntries =
         replicateContext.getEntries().stream()
         .map(entry -> new BigtableWALEntryImpl(entry).getBigtableWALEntry())
         .collect(groupingBy(e -> e.getTableName()));
