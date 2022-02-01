@@ -35,7 +35,6 @@ limitations under the License.
     <hbase.version>${hbase2.version}</hbase.version>
     <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase2_x.BigtableConnection</google.bigtable.connection.impl>
     <google.bigtable.async.connection.impl>org.apache.hadoop.hbase.client.BigtableAsyncConnection</google.bigtable.async.connection.impl>
-    <google.bigtable.registry.impl>org.apache.hadoop.hbase.client.BigtableAsyncRegistry</google.bigtable.registry.impl>
     <test.timeout>1800</test.timeout>
   </properties>
 
@@ -160,9 +159,9 @@ limitations under the License.
                   </includes>
                   <excludedGroups>KnownEmulatorGap,KnownGap</excludedGroups>
                   <systemPropertyVariables>
-                    <google.bigtable.test_env>bigtable</google.bigtable.test_env>
                     <google.bigtable.project.id>fake-project</google.bigtable.project.id>
                     <google.bigtable.instance.id>fake-instance</google.bigtable.instance.id>
+                    <google.bigtable.test_env>bigtable</google.bigtable.test_env>
                   </systemPropertyVariables>
                   <environmentVariables>
                     <BIGTABLE_EMULATOR_HOST>${bigtable.emulator.endpoint}</BIGTABLE_EMULATOR_HOST>
@@ -216,6 +215,10 @@ limitations under the License.
           <groupId>org.apache.hbase</groupId>
           <artifactId>hbase-shaded-client</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
@@ -262,6 +265,12 @@ limitations under the License.
       <artifactId>hbase-shaded-testing-util</artifactId>
       <version>${hbase2.version}</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- Misc -->
@@ -282,6 +291,13 @@ limitations under the License.
       <groupId>commons-lang</groupId>
       <artifactId>commons-lang</artifactId>
       <version>${commons-lang.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
       <scope>test</scope>
     </dependency>
 

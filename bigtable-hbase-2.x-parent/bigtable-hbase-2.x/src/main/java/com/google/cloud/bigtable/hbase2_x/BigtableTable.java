@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.TableDescriptor;
@@ -112,6 +113,11 @@ public class BigtableTable extends AbstractBigtableTable {
   @Override
   public TableDescriptor getDescriptor() throws IOException {
     return super.getTableDescriptor();
+  }
+
+  @Override
+  public RegionLocator getRegionLocator() throws IOException {
+    throw new UnsupportedOperationException("not implemented");
   }
 
   @Override
