@@ -24,6 +24,7 @@ again.
 
    ```sh
    mvn clean verify \
+       -Penable-integration-tests \
        -PbigtableIntegrationTest \
        -Dgoogle.bigtable.project.id=[your cloud project id] \
        -Dgoogle.bigtable.instance.id=[your cloud bigtable instance id]
@@ -33,6 +34,7 @@ again.
 
    ```sh
    mvn clean verify \
+       -Penable-integration-tests \
        -PbigtableIntegrationTestH2 \
        -Dgoogle.bigtable.project.id=[your cloud project id] \
        -Dgoogle.bigtable.instance.id=[your cloud bigtable instance id]
