@@ -203,7 +203,7 @@ public class TestRetryBehavior {
       assertThat(callCount.get()).isAtLeast(6);
       // Ignoring the first and last attempt, all attempts should be just under attempt timeout
       assertThat(Collections.min(remainingDurations.subList(1, remainingDurations.size() - 1)))
-          .isAtLeast(ATTEMPT_TIMEOUT.minus(Duration.ofMillis(10)));
+          .isLessThan(ATTEMPT_TIMEOUT);
 
       // but should still be limited by the operation timeout with some jitter
       assertThat(elapsed).isAtMost(OPERATION_TIMEOUT.plus(ATTEMPT_TIMEOUT.dividedBy(2)));
