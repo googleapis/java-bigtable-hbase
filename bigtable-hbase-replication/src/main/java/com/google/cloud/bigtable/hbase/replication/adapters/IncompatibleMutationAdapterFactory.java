@@ -2,7 +2,6 @@ package com.google.cloud.bigtable.hbase.replication.adapters;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 
 public class IncompatibleMutationAdapterFactory {

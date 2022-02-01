@@ -13,12 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.hbase.replication;
+package com.google.cloud.bigtable.hbase1_x.replication;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+
+import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicator;
+import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
 import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.util.stream.Collectors.groupingBy;
 
 public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndpoint {
 
@@ -65,7 +72,12 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
 
   @Override
   public boolean replicate(ReplicateContext replicateContext) {
-    return cloudBigtableReplicator.replicate(replicateContext.getEntries());
+  final Map<String, List<BigtableWALEntry>> bigtableWALEntries =
+        replicateContext.getEntries().stream()
+        .map(entry -> new BigtableWALEntryImpl(entry).getBigtableWALEntry())
+        .collect(groupingBy(e -> e.getTableName()));
+
+    return cloudBigtableReplicator.replicate(bigtableWALEntries);
   }
 
 }

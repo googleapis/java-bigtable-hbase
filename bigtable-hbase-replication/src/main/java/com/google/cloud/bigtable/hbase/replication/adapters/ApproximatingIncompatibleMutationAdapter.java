@@ -10,7 +10,6 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
-import org.apache.hadoop.hbase.wal.WAL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,9 +48,9 @@ public class ApproximatingIncompatibleMutationAdapter extends IncompatibleMutati
   }
 
   @Override
-  protected List<Cell> adaptIncompatibleMutation(WAL.Entry walEntry, int index) {
-    long walWriteTime = walEntry.getKey().getWriteTime();
-    Cell cell = walEntry.getEdit().getCells().get(index);
+  protected List<Cell> adaptIncompatibleMutation(BigtableWALEntry walEntry, int index) {
+    long walWriteTime = walEntry.getWalWriteTime();
+    Cell cell = walEntry.getWalEdit().get(index);
     if (CellUtil.isDeleteFamily(cell)) {
       // TODO Check if its epoch is millis or micros
       // deleteFamily is auto translated to DeleteFamilyBeforeTimestamp(NOW). the WAL write happens

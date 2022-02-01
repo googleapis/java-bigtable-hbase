@@ -1,4 +1,4 @@
-package com.google.cloud.bigtable.hbase.replication;
+package com.google.cloud.bigtable.hbase.replication.utils;
 
 import static org.junit.Assert.assertTrue;
 
