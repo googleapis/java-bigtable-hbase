@@ -90,14 +90,6 @@ limitations under the License.
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>${compileSource.1.8}</source>
-          <target>${compileSource.1.8}</target>
-        </configuration>
-      </plugin>
-      <plugin>
         <!-- disable google-cloud-shared-config enforcement checks because
         hbase-client's dependency subtree doesn't follow the same rules and is
         unable to be fixed here -->
