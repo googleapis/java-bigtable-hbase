@@ -1,4 +1,4 @@
-//package com.google.cloud.bigtable.hbase2_x.replication;
+//package com.google.cloud.bigtable.hbase.replication;
 //
 //import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
 //import com.google.cloud.bigtable.emulator.v2.BigtableEmulatorRule;
