@@ -12,7 +12,7 @@
 //import org.apache.hadoop.hbase.replication.ReplicationException;
 //import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 //import org.apache.hadoop.hbase.util.Bytes;
-//import org.apache.hadoop.hbase.util.ServerRegionReplicaUtil;
+//import org.apache.hadoop.hbase.util.ServerRegionReplicaU  til;
 //import org.junit.After;
 //import org.junit.Assert;
 //import org.junit.Before;

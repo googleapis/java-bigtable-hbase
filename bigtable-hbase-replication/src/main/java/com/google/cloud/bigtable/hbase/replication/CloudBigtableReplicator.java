@@ -155,7 +155,7 @@ public class CloudBigtableReplicator {
 
     numConnectionReference++;
   }
-
+  // TODO(remove metricssource from the core lib).
   public synchronized void start(Configuration configuration, MetricsSource metricsSource) {
     LOG.error(
         "Starting replication to CBT. ", new RuntimeException("Dummy exception for stacktrace."));
