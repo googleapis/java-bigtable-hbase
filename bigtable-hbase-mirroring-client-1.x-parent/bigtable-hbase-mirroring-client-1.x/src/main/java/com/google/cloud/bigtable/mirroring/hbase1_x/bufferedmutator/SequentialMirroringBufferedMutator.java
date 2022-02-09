@@ -179,12 +179,17 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
         // HBase client library might also block.
         // Submitting write errors to secondaryWriteErrorConsumer in case of exceptions is handled
         // by this method.
+        // InterruptedException is thrown when we receive and interrupt while waiting for flow
+        // controller resources - we are rethrowing it to the user because the interruption might be
+        // killing a stuck container.
+        // ExecutionException is thrown when we have a problem with scheduling secondary operation -
+        // let's ignore it, the errors were already written to the faillog.
         addSecondaryMutation(list);
-      } catch (InterruptedException | ExecutionException e) {
+      } catch (InterruptedException e) {
         setInterruptedFlagIfInterruptedException(e);
         primaryExceptions.add(new IOException(e));
-      } catch (RuntimeException e) {
-        primaryExceptions.add(e);
+      } catch (ExecutionException e) {
+        // ignore
       }
       primaryExceptions.rethrowIfCaptured();
     }
