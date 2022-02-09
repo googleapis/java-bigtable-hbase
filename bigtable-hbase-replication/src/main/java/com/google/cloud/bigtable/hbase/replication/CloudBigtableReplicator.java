@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.replication;
 import static java.util.stream.Collectors.groupingBy;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
 import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapter;
 import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapterFactory;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
@@ -37,6 +38,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -45,7 +47,6 @@ import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 import org.apache.hadoop.hbase.util.ByteRange;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.SimpleByteRange;
-import org.apache.hadoop.hbase.wal.WAL;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.slf4j.Logger;
@@ -107,7 +108,6 @@ public class CloudBigtableReplicator {
         "Creating replication endpoint to CBT.",
         new RuntimeException("Dummy exception for stacktrace"));
     LogManager.getLogger(BigtableClientMetrics.class).setLevel(Level.DEBUG);
-    LogManager.getLogger(HbaseToCloudBigtableReplicationEndpoint.class).setLevel(Level.DEBUG);
     LogManager.getLogger("com.google.cloud.bigtable.hbase.replication").setLevel(Level.DEBUG);
     LogManager.getLogger(CloudBigtableReplicationTask.class).setLevel(Level.DEBUG);
   }
@@ -155,7 +155,7 @@ public class CloudBigtableReplicator {
 
     numConnectionReference++;
   }
-
+  // TODO(remove metricssource from the core lib).
   public synchronized void start(Configuration configuration, MetricsSource metricsSource) {
     LOG.error(
         "Starting replication to CBT. ", new RuntimeException("Dummy exception for stacktrace."));
@@ -169,7 +169,7 @@ public class CloudBigtableReplicator {
         configuration, metricsSource, connection).createIncompatibleMutationAdapter();
   }
 
-  protected void stop() {
+  public void stop() {
 
     LOG.error("Stopping replication to CBT for this EndPoint. ",
         new RuntimeException("Dummy exception for stacktrace"));
@@ -177,7 +177,7 @@ public class CloudBigtableReplicator {
     // Connection is shared by all the instances of this class, close it only if no one is using it.
     // Closing the connection is required as it owns the underlying gRpc connections and gRpc does
     // not like JVM shutting without closing the gRpc connections.
-    synchronized (HbaseToCloudBigtableReplicationEndpoint.class) {
+    synchronized (CloudBigtableReplicator.class) {
       if (--numConnectionReference == 0) {
         try {
           LOG.warn("Closing the Bigtable connection.");
@@ -195,34 +195,21 @@ public class CloudBigtableReplicator {
     return UUID.nameUUIDFromBytes("Cloud-bigtable".getBytes(StandardCharsets.UTF_8));
   }
 
-  public boolean replicate(List<WAL.Entry> walsToReplicate) {
+  public boolean replicate(Map<String, List<BigtableWALEntry>> walEntriesByTable) {
     long concurrent = concurrentReplications.incrementAndGet();
-    LOG.error(
-        " #######  In CBT replicate {" + replicateMethodCount.get() + "} -- Concurrency: "
-            + concurrent
-            + " wal entry count: "
-            + walsToReplicate.size()
-            + " in thread ["
-            + Thread.currentThread().getName()
-            + "]");
 
     long startTime = System.currentTimeMillis();
     replicateMethodCount.incrementAndGet();
 
     boolean succeeded = true;
 
-    // Create the batches to replicate
-    final Map<String, List<WAL.Entry>> walEntriesByTable =
-        walsToReplicate.stream()
-            .collect(groupingBy(entry -> entry.getKey().getTablename().getNameAsString()));
-
     List<Future<Boolean>> futures = new ArrayList<>();
-    for (Map.Entry<String, List<WAL.Entry>> walEntriesForTable : walEntriesByTable.entrySet()) {
+    for (Map.Entry<String, List<BigtableWALEntry>> walEntriesForTable : walEntriesByTable.entrySet()) {
       List<Cell> cellsToReplicateForTable = new ArrayList<>();
       final String tableName = walEntriesForTable.getKey();
       int batchSizeInBytes = 0;
 
-      for (WAL.Entry walEntry : walEntriesForTable.getValue()) {
+      for (BigtableWALEntry walEntry : walEntriesForTable.getValue()) {
         //
         // LOG.warn(
         //     "Processing WALKey: "

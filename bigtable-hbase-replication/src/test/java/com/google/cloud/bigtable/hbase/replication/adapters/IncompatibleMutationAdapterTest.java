@@ -7,19 +7,13 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
-import org.apache.hadoop.hbase.wal.WAL;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -65,7 +59,7 @@ public class IncompatibleMutationAdapterTest {
     }
 
     @Override
-    protected List<Cell> adaptIncompatibleMutation(WAL.Entry walEntry, int index) {
+    protected List<Cell> adaptIncompatibleMutation(BigtableWALEntry walEntry, int index) {
       if (incompatibleMutations.contains(index)) {
         throw new UnsupportedOperationException();
       }
@@ -99,7 +93,7 @@ public class IncompatibleMutationAdapterTest {
   MetricsSource metricsSource;
 
   @Mock
-  WAL.Entry mockWalEntry;
+  BigtableWALEntry mockWalEntry;
 
 
   TestIncompatibleMutationAdapter incompatibleMutationAdapter;
@@ -119,19 +113,19 @@ public class IncompatibleMutationAdapterTest {
 
   @Test
   public void testCompatibleMutationsAreNotChanged() {
-    WALEdit walEdit = new WALEdit();
     Cell put = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.Put, val);
     Cell put2 = new KeyValue(rowKey, cf, qual, 10, KeyValue.Type.Put, val);
     Cell compatibleDelete = new KeyValue(rowKey, cf, qual, 10, KeyValue.Type.Delete);
-    walEdit.add(put);
-    walEdit.add(put2);
-    walEdit.add(compatibleDelete);
-    when(mockWalEntry.getEdit()).thenReturn(walEdit);
+    ArrayList<Cell> walEntryCells = new ArrayList<>();
+    walEntryCells.add(put);
+    walEntryCells.add(put2);
+    walEntryCells.add(compatibleDelete);
+    when(mockWalEntry.getCells()).thenReturn(walEntryCells);
 
-    Assert.assertEquals(walEdit.getCells(),
+    Assert.assertEquals(walEntryCells,
         incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
 
-    verify(mockWalEntry).getEdit();
+    verify(mockWalEntry).getCells();
     verify(metricsSource).incCounters(
         IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     verify(metricsSource).incCounters(
@@ -140,19 +134,19 @@ public class IncompatibleMutationAdapterTest {
 
   @Test
   public void testDeletesAreAdapted() {
-    WALEdit walEdit = new WALEdit();
+    ArrayList<Cell> walEdit = new ArrayList<>();
     Cell delete = new KeyValue(rowKey, cf, null, 0, KeyValue.Type.DeleteFamilyVersion);
     Cell put = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.Put, val);
     walEdit.add(put);
     walEdit.add(delete);
-    when(mockWalEntry.getEdit()).thenReturn(walEdit);
+    when(mockWalEntry.getCells()).thenReturn(walEdit);
     Cell expectedDelete = new KeyValue(rowKey, cf, null, 0, KeyValue.Type.DeleteFamily);
     incompatibleMutationAdapter.adaptedEntryMap.put(1, Arrays.asList(expectedDelete));
 
     Assert.assertEquals(Arrays.asList(put, expectedDelete),
         incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
 
-    verify(mockWalEntry).getEdit();
+    verify(mockWalEntry).getCells();
     verify(metricsSource).incCounters(
         IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     verify(metricsSource, times(1)).incCounters(
@@ -163,10 +157,10 @@ public class IncompatibleMutationAdapterTest {
 
   @Test
   public void testDeleteCanCreateManyDeletes() {
-    WALEdit walEdit = new WALEdit();
+    ArrayList<Cell> walEntryCells = new ArrayList<>();
     Cell delete = new KeyValue(rowKey, cf, null, 1000, KeyValue.Type.DeleteFamily);
-    walEdit.add(delete);
-    when(mockWalEntry.getEdit()).thenReturn(walEdit);
+    walEntryCells.add(delete);
+    when(mockWalEntry.getCells()).thenReturn(walEntryCells);
 
     // A single deleteFamily becomes 2 delete cells. This can happen when we call CBT and find out
     // there were 2 cells in the family before timestamp 100
@@ -179,7 +173,7 @@ public class IncompatibleMutationAdapterTest {
     Assert.assertEquals(expectedDeletes,
         incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
 
-    verify(mockWalEntry).getEdit();
+    verify(mockWalEntry).getCells();
     verify(metricsSource).incCounters(
         IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     verify(metricsSource, times(1)).incCounters(
@@ -190,17 +184,17 @@ public class IncompatibleMutationAdapterTest {
 
   @Test
   public void testUnknownMutationTypesAreDropped() {
-    WALEdit walEdit = new WALEdit();
+    ArrayList<Cell> walEntryCells = new ArrayList<>();
     Cell incompatible = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.Maximum);
     Cell put = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.Put, val);
-    walEdit.add(incompatible);
-    walEdit.add(put);
-    when(mockWalEntry.getEdit()).thenReturn(walEdit);
+    walEntryCells.add(incompatible);
+    walEntryCells.add(put);
+    when(mockWalEntry.getCells()).thenReturn(walEntryCells);
 
     Assert.assertEquals(Arrays.asList(put),
         incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
 
-    verify(mockWalEntry).getEdit();
+    verify(mockWalEntry).getCells();
     verify(metricsSource).incCounters(
         IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     verify(metricsSource, times(1)).incCounters(
@@ -211,18 +205,18 @@ public class IncompatibleMutationAdapterTest {
 
   @Test
   public void testIncompatibleDeletesAreDropped() {
-    WALEdit walEdit = new WALEdit();
+    ArrayList<Cell> walEntryCells = new ArrayList<>();
     Cell put = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.Put, val);
     Cell incompatible = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.DeleteFamilyVersion);
-    walEdit.add(put);
-    walEdit.add(incompatible);
-    when(mockWalEntry.getEdit()).thenReturn(walEdit);
+    walEntryCells.add(put);
+    walEntryCells.add(incompatible);
+    when(mockWalEntry.getCells()).thenReturn(walEntryCells);
     incompatibleMutationAdapter.incompatibleMutations.add(1);
 
     Assert.assertEquals(Arrays.asList(put),
         incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
 
-    verify(mockWalEntry).getEdit();
+    verify(mockWalEntry).getCells();
     verify(metricsSource).incCounters(
         IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     verify(metricsSource, times(1)).incCounters(

@@ -1,12 +1,11 @@
 package com.google.cloud.bigtable.hbase.replication;
 
-import static com.google.cloud.bigtable.hbase.replication.TestUtils.CF1;
-import static com.google.cloud.bigtable.hbase.replication.TestUtils.CF2;
-import static com.google.cloud.bigtable.hbase.replication.TestUtils.COL_QUALIFIER;
-import static com.google.cloud.bigtable.hbase.replication.TestUtils.ROW_KEY;
-import static com.google.cloud.bigtable.hbase.replication.TestUtils.TIMESTAMP;
-import static com.google.cloud.bigtable.hbase.replication.TestUtils.VALUE;
-import static org.junit.Assert.assertEquals;
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.CF1;
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.CF2;
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.COL_QUALIFIER;
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.ROW_KEY;
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.TIMESTAMP;
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.VALUE;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -15,6 +14,8 @@ import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicationTask.
 import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicationTask.MutationBuilderFactory;
 import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicationTask.PutMutationBuilder;
 import java.io.IOException;
+
+import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Delete;
@@ -28,7 +29,7 @@ import org.junit.runners.JUnit4;
 public class MutationBuilderTest {
 
   @Test
-  public void testPutBuiderAcceptsOnlyPuts() {
+  public void testPutBuilderAcceptsOnlyPuts() {
     PutMutationBuilder putMutationBuilder = new PutMutationBuilder(ROW_KEY);
     assertTrue(putMutationBuilder.canAcceptMutation(
         new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Put, VALUE)));

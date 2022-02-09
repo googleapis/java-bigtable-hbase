@@ -15,10 +15,14 @@
  */
 package com.google.cloud.bigtable.hbase.replication;
 
-import java.util.UUID;
+import java.util.*;
+
+import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
 import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
+import org.apache.hadoop.hbase.wal.WAL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndpoint {
 
@@ -65,7 +69,16 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
 
   @Override
   public boolean replicate(ReplicateContext replicateContext) {
-    return cloudBigtableReplicator.replicate(replicateContext.getEntries());
+    Map<String, List<BigtableWALEntry>> walEntriesByTable = new HashMap<>();
+    for (WAL.Entry wal: replicateContext.getEntries()) {
+      String tableName = wal.getKey().getTablename().getNameAsString();
+      BigtableWALEntry bigtableWALEntry = new BigtableWALEntry(wal.getKey().getWriteTime(), wal.getEdit().getCells());
+      if (!walEntriesByTable.containsKey(tableName)) {
+        walEntriesByTable.put(tableName, new ArrayList<>());
+      }
+      walEntriesByTable.get(tableName).add(bigtableWALEntry);
+    }
+    return cloudBigtableReplicator.replicate(walEntriesByTable);
   }
 
 }

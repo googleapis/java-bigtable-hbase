@@ -1,15 +1,15 @@
 package com.google.cloud.bigtable.hbase.replication;
 
-import static com.google.cloud.bigtable.hbase.replication.TestUtils.CF1;
-import static com.google.cloud.bigtable.hbase.replication.TestUtils.CF2;
-import static com.google.cloud.bigtable.hbase.replication.TestUtils.COL_QUALIFIER;
-import static com.google.cloud.bigtable.hbase.replication.TestUtils.COL_QUALIFIER_2;
-import static com.google.cloud.bigtable.hbase.replication.TestUtils.ROW_KEY;
-import static com.google.cloud.bigtable.hbase.replication.TestUtils.TABLE_NAME;
-import static com.google.cloud.bigtable.hbase.replication.TestUtils.TIMESTAMP;
-import static com.google.cloud.bigtable.hbase.replication.TestUtils.VALUE;
-import static com.google.cloud.bigtable.hbase.replication.TestUtils.assertEquals;
-import static com.google.cloud.bigtable.hbase.replication.TestUtils.getRowKey;
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.CF1;
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.CF2;
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.COL_QUALIFIER;
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.COL_QUALIFIER_2;
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.ROW_KEY;
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.TABLE_NAME;
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.TIMESTAMP;
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.VALUE;
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.assertEquals;
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.getRowKey;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyList;

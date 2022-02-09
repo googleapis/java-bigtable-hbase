@@ -49,6 +49,9 @@ limitations under the License.
     <module>bigtable-dataflow-parent</module>
     <module>bigtable-test</module>
     <module>bigtable-hbase-replication</module>
+    <module>bigtable-hbase-1.x-replication</module>
+    <module>bigtable-hbase-2.x-replication</module>
+
   </modules>
 
   <properties>

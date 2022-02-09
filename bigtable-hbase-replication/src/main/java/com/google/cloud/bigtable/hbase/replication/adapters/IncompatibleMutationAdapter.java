@@ -8,9 +8,7 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
-import org.apache.hadoop.hbase.wal.WAL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,8 +76,8 @@ public abstract class IncompatibleMutationAdapter {
    *
    * <p>This method should never throw permanent exceptions.
    */
-  public final List<Cell> adaptIncompatibleMutations(WAL.Entry walEntry) {
-    List<Cell> cellsToAdapt = walEntry.getEdit().getCells();
+  public final List<Cell> adaptIncompatibleMutations(BigtableWALEntry walEntry) {
+    List<Cell> cellsToAdapt = walEntry.getCells();
     List<Cell> returnedCells = new ArrayList<>(cellsToAdapt.size());
     for (int index = 0; index < cellsToAdapt.size(); index++) {
       Cell cell = cellsToAdapt.get(index);
@@ -127,5 +125,5 @@ public abstract class IncompatibleMutationAdapter {
    * cell to be adapted, things like commit timestamp and other deletes in the entry.
    * @param index The index of the cell to adapt.
    */
-  protected abstract List<Cell> adaptIncompatibleMutation(WAL.Entry walEntry, int index);
+  protected abstract List<Cell> adaptIncompatibleMutation(BigtableWALEntry walEntry, int index);
 }

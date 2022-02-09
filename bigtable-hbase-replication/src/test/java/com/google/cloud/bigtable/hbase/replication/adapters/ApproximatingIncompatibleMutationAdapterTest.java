@@ -2,7 +2,6 @@ package com.google.cloud.bigtable.hbase.replication.adapters;
 
 import static com.google.cloud.bigtable.hbase.replication.adapters.ApproximatingIncompatibleMutationAdapter.DELETE_FAMILY_WRITE_THRESHOLD_KEY;
 import static org.apache.hadoop.hbase.HConstants.LATEST_TIMESTAMP;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -15,22 +14,13 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
-import org.apache.hadoop.hbase.wal.WAL;
-import org.apache.hadoop.hbase.wal.WALKey;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -63,23 +53,22 @@ public class ApproximatingIncompatibleMutationAdapterTest {
   MetricsSource metricsSource;
 
   @Mock
-  WAL.Entry mockWalEntry;
+  BigtableWALEntry mockWalEntry;
 
-  WALKey walKey=  new WALKey(new byte[0], TableName.valueOf("test-table"), 1005);
   ApproximatingIncompatibleMutationAdapter incompatibleMutationAdapter;
 
   @Before
   public void setUp() throws Exception {
     when(conf.getInt(anyString(), anyInt())).thenReturn(10);
-    when(mockWalEntry.getKey()).thenReturn(walKey);
+    when(mockWalEntry.getWalWriteTime()).thenReturn(1005L);
     // Expectations on Conf should be set before this point.
     incompatibleMutationAdapter = new ApproximatingIncompatibleMutationAdapter(conf, metricsSource, connection);
   }
 
   @After
   public void tearDown() throws Exception {
-    verify(mockWalEntry, atLeast(2)).getEdit();
-    verify(mockWalEntry, atLeastOnce()).getKey();
+    verify(mockWalEntry, atLeast(2)).getCells();
+    verify(mockWalEntry, atLeastOnce()).getWalWriteTime();
     verify(conf, atLeastOnce()).getInt(eq(DELETE_FAMILY_WRITE_THRESHOLD_KEY), anyInt());
     verifyNoInteractions(connection);
     reset(mockWalEntry, conf, connection, metricsSource);
@@ -87,12 +76,12 @@ public class ApproximatingIncompatibleMutationAdapterTest {
 
  @Test
   public void testDeletesAreAdapted() {
-    WALEdit walEdit = new WALEdit();
     Cell delete = new KeyValue(rowKey, cf, null, 1000, KeyValue.Type.DeleteFamily);
     Cell put = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.Put, val);
-    walEdit.add(put);
-    walEdit.add(delete);
-    when(mockWalEntry.getEdit()).thenReturn(walEdit);
+    ArrayList<Cell> walEntryCells = new ArrayList<>();
+    walEntryCells.add(put);
+    walEntryCells.add(delete);
+    when(mockWalEntry.getCells()).thenReturn(walEntryCells);
     Cell expectedDelete = new KeyValue(rowKey, cf, null, LATEST_TIMESTAMP, KeyValue.Type.DeleteFamily);
 
     Assert.assertEquals(Arrays.asList(put, expectedDelete),
@@ -108,7 +97,6 @@ public class ApproximatingIncompatibleMutationAdapterTest {
 
   @Test
   public void testIncompatibleDeletesAreDropped() {
-    WALEdit walEdit = new WALEdit();
     Cell deleteFamilyVersion = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.DeleteFamilyVersion);
     // Cell timestamp > WAL time, should be rejected.
     Cell deleteFamilyAfterWAL = new KeyValue(rowKey, cf, qual, 2000, KeyValue.Type.DeleteFamilyVersion);
@@ -116,12 +104,13 @@ public class ApproximatingIncompatibleMutationAdapterTest {
     Cell deleteFamilyBeforeThreshold =
         new KeyValue(rowKey, cf, qual, 500, KeyValue.Type.DeleteFamily);
     Cell put = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.Put, val);
-    walEdit.add(deleteFamilyVersion);
-    walEdit.add(deleteFamilyAfterWAL);
-    walEdit.add(deleteFamilyBeforeThreshold);
-    walEdit.add(put);
-    when(mockWalEntry.getKey()).thenReturn(walKey);
-    when(mockWalEntry.getEdit()).thenReturn(walEdit);
+    ArrayList<Cell> walEntryCells = new ArrayList<>();
+    walEntryCells.add(deleteFamilyVersion);
+    walEntryCells.add(deleteFamilyAfterWAL);
+    walEntryCells.add(deleteFamilyBeforeThreshold);
+    walEntryCells.add(put);
+    when(mockWalEntry.getWalWriteTime()).thenReturn(1000L);
+    when(mockWalEntry.getCells()).thenReturn(walEntryCells);
 
     Assert.assertEquals(Arrays.asList(put),
         incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
