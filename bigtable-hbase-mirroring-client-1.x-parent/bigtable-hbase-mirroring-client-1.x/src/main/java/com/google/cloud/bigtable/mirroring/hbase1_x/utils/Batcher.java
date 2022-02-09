@@ -57,6 +57,19 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
  * operation. Handles performing both sequential and concurrent operations.
  *
  * <p>Uses static helper methods from {@link BatchHelpers}.
+ *
+ * <p>Batch is complicated - it handles writes and reads, both of them are handled differently
+ * depending on whether they succeed or fail and whether that happens on the primary or on the
+ * secondary database. HBase API returns batch results as an array with a result at index i
+ * corresponding to operation at index i in input operation list. For these reasons we have to
+ * perform matching of operations and their results after primary and secondary operation and select
+ * operations that were successful to be performed at the secondary database. Moreover, in case of
+ * concurrent mode we have to reconcile errors that were reported from either of the databases back
+ * into result for the user. All those reasons together make this code quite complicated and we
+ * currently cannot find simpler way of implementing it without splitting it into multiple batch
+ * calls.
+ *
+ * <p>TODO: Simplify this code.
  */
 public class Batcher {
   private static final Logger Log = new Logger(Batcher.class);
@@ -259,7 +272,7 @@ public class Batcher {
             operations, results, resultIsFaultyPredicate, Result.class, skipReads);
 
     if (failedSuccessfulSplit.successfulOperations.size() == 0) {
-      result.set(new BatchData(Collections.<Row>emptyList(), new Object[0]));
+      result.set(new BatchData(Collections.emptyList(), new Object[0]));
       return result;
     }
 
