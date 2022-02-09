@@ -27,11 +27,11 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
         Map<String, List<BigtableWALEntry>> walEntriesByTable = new HashMap<>();
         for (WAL.Entry wal: replicateContext.getEntries()) {
             String tableName = wal.getKey().getTableName().getNameAsString();
-            BigtableWALEntryImpl bigtableWALEntryImpl = new BigtableWALEntryImpl(wal);
+            BigtableWALEntry bigtableWALEntry = new BigtableWALEntry(wal.getKey().getWriteTime(), wal.getEdit().getCells());
             if (!walEntriesByTable.containsKey(tableName)) {
                 walEntriesByTable.put(tableName, new ArrayList<>());
             }
-            walEntriesByTable.get(tableName).add(bigtableWALEntryImpl.getBigtableWALEntry());
+            walEntriesByTable.get(tableName).add(bigtableWALEntry);
         }
         return cloudBigtableReplicator.replicate(walEntriesByTable);
     }
