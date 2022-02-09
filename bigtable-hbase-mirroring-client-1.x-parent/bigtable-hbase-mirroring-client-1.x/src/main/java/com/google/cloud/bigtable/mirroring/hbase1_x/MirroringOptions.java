@@ -43,7 +43,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.DefaultSeriali
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.Serializer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowControlStrategy;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestCountingFlowControlStrategy;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.TimestampingMode;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper.TimestampingMode;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.DefaultMismatchDetector;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.common.base.Preconditions;

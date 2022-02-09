@@ -36,4 +36,21 @@ public interface Timestamper {
   Put fillTimestamp(Put put);
 
   Mutation fillTimestamp(Mutation mutation);
+
+  enum TimestampingMode {
+    disabled,
+    inplace,
+    copy,
+  }
+
+  static Timestamper create(TimestampingMode mode) {
+    switch (mode) {
+      case inplace:
+        return new InPlaceTimestamper();
+      case copy:
+        return new CopyingTimestamper();
+      default:
+        return new NoopTimestamper();
+    }
+  }
 }

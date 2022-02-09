@@ -27,7 +27,6 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.Mirro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.TimestamperFactory;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -186,8 +185,7 @@ public class MirroringConnection implements Connection {
               .create(this.failedMutationLogger);
 
       this.timestamper =
-          TimestamperFactory.create(
-              this.configuration.mirroringOptions.enableDefaultClientSideTimestamps);
+          Timestamper.create(this.configuration.mirroringOptions.enableDefaultClientSideTimestamps);
 
       this.secondaryWriteErrorConsumer =
           new SecondaryWriteErrorConsumerWithMetrics(

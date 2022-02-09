@@ -25,7 +25,6 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowContro
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.TimestamperFactory;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
@@ -145,8 +144,7 @@ public class MirroringAsyncConnection implements AsyncConnection {
     this.readSampler = new ReadSampler(this.configuration.mirroringOptions.readSamplingRate);
     this.executorService = Executors.newCachedThreadPool();
     this.timestamper =
-        TimestamperFactory.create(
-            this.configuration.mirroringOptions.enableDefaultClientSideTimestamps);
+        Timestamper.create(this.configuration.mirroringOptions.enableDefaultClientSideTimestamps);
   }
 
   public AsyncConnection getPrimaryConnection() {
