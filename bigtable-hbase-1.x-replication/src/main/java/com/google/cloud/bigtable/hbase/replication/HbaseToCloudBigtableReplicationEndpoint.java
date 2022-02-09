@@ -23,7 +23,6 @@ import org.apache.hadoop.hbase.wal.WAL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static java.util.stream.Collectors.groupingBy;
 
 public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndpoint {
 
