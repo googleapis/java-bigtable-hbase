@@ -50,7 +50,7 @@ public class ApproximatingIncompatibleMutationAdapter extends IncompatibleMutati
   @Override
   protected List<Cell> adaptIncompatibleMutation(BigtableWALEntry walEntry, int index) {
     long walWriteTime = walEntry.getWalWriteTime();
-    Cell cell = walEntry.getWalEdit().get(index);
+    Cell cell = walEntry.getCells().get(index);
     if (CellUtil.isDeleteFamily(cell)) {
       // TODO Check if its epoch is millis or micros
       // deleteFamily is auto translated to DeleteFamilyBeforeTimestamp(NOW). the WAL write happens

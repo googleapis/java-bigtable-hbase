@@ -145,8 +145,12 @@
         </plugins>
     </build>
     <dependencies>
-
         <!-- bigtable libs for org.apache.hadoop.hbase -->
+        <dependency>
+            <groupId>com.google.cloud.bigtable</groupId>
+            <artifactId>bigtable-hbase-replication</artifactId>
+            <version>2.0.0-beta6</version>
+        </dependency>
         <dependency>
             <groupId>com.google.cloud.bigtable</groupId>
             <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
@@ -182,7 +186,7 @@
             <artifactId>protobuf-java</artifactId>
             <version>2.5.0</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.apache.hbase/hbase-testing-util -->
+        <!-- test dependencies -->
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-testing-util</artifactId>
@@ -201,11 +205,5 @@
             <version>3.8.0</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.google.cloud.bigtable</groupId>
-            <artifactId>bigtable-hbase-replication</artifactId>
-            <version>2.0.0-beta6</version>
-        </dependency>
     </dependencies>
-
 </project>

@@ -1,7 +1,6 @@
 package com.google.cloud.bigtable.hbase1_x.replication;
 
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
-import com.google.cloud.bigtable.hbase.replication.adapters.HbaseBigtableWALEntryAdaptor;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.wal.WAL;
 
@@ -9,7 +8,7 @@ import java.util.ArrayList;
 /*
 BigtableWALEntryImpl provides BigWALEntry class from hbase1x. WAL.Entry
  */
-public class BigtableWALEntryImpl implements HbaseBigtableWALEntryAdaptor {
+public class BigtableWALEntryImpl  {
     private long timeStamp;
     private ArrayList<Cell> cells;
     private String tableName;
@@ -19,7 +18,6 @@ public class BigtableWALEntryImpl implements HbaseBigtableWALEntryAdaptor {
         this.cells = entry.getEdit().getCells();
         this.tableName = entry.getKey().getTablename().getNameAsString();
     }
-    @Override
     public BigtableWALEntry getBigtableWALEntry() {
         return new BigtableWALEntry(this.timeStamp, this.cells, this.tableName);
     }

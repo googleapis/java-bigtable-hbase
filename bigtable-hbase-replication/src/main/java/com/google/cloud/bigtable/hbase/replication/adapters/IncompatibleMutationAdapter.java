@@ -77,7 +77,7 @@ public abstract class IncompatibleMutationAdapter {
    * <p>This method should never throw permanent exceptions.
    */
   public final List<Cell> adaptIncompatibleMutations(BigtableWALEntry walEntry) {
-    List<Cell> cellsToAdapt = walEntry.getWalEdit();
+    List<Cell> cellsToAdapt = walEntry.getCells();
     List<Cell> returnedCells = new ArrayList<>(cellsToAdapt.size());
     for (int index = 0; index < cellsToAdapt.size(); index++) {
       Cell cell = cellsToAdapt.get(index);

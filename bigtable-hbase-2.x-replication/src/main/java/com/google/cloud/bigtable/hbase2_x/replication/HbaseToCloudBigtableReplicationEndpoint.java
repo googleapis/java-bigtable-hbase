@@ -3,17 +3,16 @@ package com.google.cloud.bigtable.hbase2_x.replication;
 import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicator;
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
 import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
+import org.apache.hadoop.hbase.wal.WAL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static java.util.stream.Collectors.groupingBy;
 
 
-public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndpoint {
+public class    HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndpoint {
     private static final Logger LOG =
         LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
 
@@ -29,10 +28,15 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
 
     @Override
     public boolean replicate(ReplicateContext replicateContext) {
-        Map<String, List<BigtableWALEntry>> walEntriesByTable =
-            replicateContext.getEntries().stream()
-            .map(entry -> new BigtableWALEntryImpl(entry).getBigtableWALEntry())
-            .collect(groupingBy(e -> e.getTableName()));
+        Map<String, List<BigtableWALEntry>> walEntriesByTable = new HashMap<>();
+        for (WAL.Entry wal: replicateContext.getEntries()) {
+            String tableName = wal.getKey().getTableName().getNameAsString();
+            BigtableWALEntryImpl bigtableWALEntryImpl = new BigtableWALEntryImpl(wal);
+            if (!walEntriesByTable.containsKey(tableName)) {
+                walEntriesByTable.put(tableName, new ArrayList<>());
+            }
+            walEntriesByTable.get(tableName).add(bigtableWALEntryImpl.getBigtableWALEntry());
+        }
         return cloudBigtableReplicator.replicate(walEntriesByTable);
     }
 

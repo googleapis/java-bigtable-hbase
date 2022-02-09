@@ -48,7 +48,6 @@ import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 import org.apache.hadoop.hbase.util.ByteRange;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.SimpleByteRange;
-import org.apache.hadoop.hbase.wal.WAL;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.slf4j.Logger;
@@ -179,7 +178,7 @@ public class CloudBigtableReplicator {
     // Connection is shared by all the instances of this class, close it only if no one is using it.
     // Closing the connection is required as it owns the underlying gRpc connections and gRpc does
     // not like JVM shutting without closing the gRpc connections.
-    synchronized (this) {
+    synchronized (CloudBigtableReplicator.class) {
       if (--numConnectionReference == 0) {
         try {
           LOG.warn("Closing the Bigtable connection.");
