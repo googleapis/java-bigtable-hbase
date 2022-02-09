@@ -123,7 +123,7 @@ public class CopyingTimestamper implements Timestamper {
           result.add((Delete) mutation);
         } else {
           // Only and `Delete`s and `Put`s are supported.
-          throw new RuntimeException();
+          throw new UnsupportedOperationException();
         }
       }
       return result;
