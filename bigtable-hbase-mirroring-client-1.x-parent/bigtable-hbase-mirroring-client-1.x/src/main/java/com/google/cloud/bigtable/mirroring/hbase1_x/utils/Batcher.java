@@ -111,6 +111,10 @@ public class Batcher {
     this.timestamper = timestamper;
   }
 
+  // TODO: Point writes shouldn't be implemented using batch.
+  // It was noticed awhile back that there was a performance penalty in BigTable when performing
+  // point writes as a batch writes (not sure if its still the case). It is also misleading in
+  // metrics.
   public void batchSingleWriteOperation(Row operation) throws IOException {
     Object[] results = new Object[1];
     try {
