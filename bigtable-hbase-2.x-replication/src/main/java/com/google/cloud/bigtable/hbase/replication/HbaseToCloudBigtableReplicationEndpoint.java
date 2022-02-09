@@ -1,6 +1,5 @@
-package com.google.cloud.bigtable.hbase2_x.replication;
+package com.google.cloud.bigtable.hbase.replication;
 
-import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicator;
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
 import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
 import org.apache.hadoop.hbase.wal.WAL;
