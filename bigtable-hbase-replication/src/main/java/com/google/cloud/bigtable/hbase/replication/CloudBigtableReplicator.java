@@ -243,13 +243,15 @@ public class CloudBigtableReplicator {
       Map<ByteRange, List<Cell>> batchToReplicate = new HashMap<>();
       int numCellsInBatch = 0;
       for (Map.Entry<ByteRange, List<Cell>> rowCells : cellsToReplicateByRow.entrySet()) {
+
+        // TODO handle the case where a single row has >100K mutations (very rare, but should not fail)
         LOG.error(
             "Replicating row: " + Bytes.toStringBinary(rowCells.getKey().deepCopyToNewArray()));
         numCellsInBatch += rowCells.getValue().size();
         batchSizeInBytes += getRowSize(rowCells);
         batchToReplicate.put(rowCells.getKey(), rowCells.getValue());
 
-        if (batchSizeInBytes >= batchSizeThresholdInBytes) {
+        if (batchSizeInBytes >= batchSizeThresholdInBytes || numCellsInBatch >= 100_000-1) {
           LOG.debug("Replicating a batch of " + batchToReplicate.size() + " rows and "
               + numCellsInBatch + " cells with heap size " + batchSizeInBytes + " for table: "
               + tableName);
