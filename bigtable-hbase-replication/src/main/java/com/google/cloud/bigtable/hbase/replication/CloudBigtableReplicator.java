@@ -156,7 +156,7 @@ public class CloudBigtableReplicator {
     numConnectionReference++;
   }
   // TODO(remove metricssource from the core lib).
-  public synchronized void start(Configuration configuration, MetricsExporter metricsSource) {
+  public synchronized void start(Configuration configuration, MetricsExporter metricsExporter) {
     LOG.error(
         "Starting replication to CBT. ", new RuntimeException("Dummy exception for stacktrace."));
 
@@ -166,7 +166,7 @@ public class CloudBigtableReplicator {
     batchSizeThresholdInBytes = configuration.getLong(BATCH_SIZE_KEY, DEFAULT_BATCH_SIZE_IN_BYTES);
 
     this.incompatibleMutationAdapter = new IncompatibleMutationAdapterFactory(
-        configuration, metricsSource, connection).createIncompatibleMutationAdapter();
+        configuration, metricsExporter, connection).createIncompatibleMutationAdapter();
   }
 
   public void stop() {

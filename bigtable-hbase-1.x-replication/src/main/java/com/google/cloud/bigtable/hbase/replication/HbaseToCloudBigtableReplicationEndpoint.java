@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.replication;
 import java.util.*;
 
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
+import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporterImpl;
 import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
 import org.apache.hadoop.hbase.wal.WAL;
 import org.slf4j.Logger;
@@ -49,14 +50,8 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
   protected synchronized void doStart() {
     LOG.error(
         "Starting replication to CBT. ", new RuntimeException("Dummy exception for stacktrace."));
-    LOG.error("33722455324 me");
-
     metricsExporter.setMetricsSource(ctx.getMetrics());
-    LOG.error("242 me");
-
     cloudBigtableReplicator.start(ctx.getConfiguration(), metricsExporter);
-    LOG.error("2425335 me");
-
     notifyStarted();
   }
 

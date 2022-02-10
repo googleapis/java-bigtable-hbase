@@ -1,13 +1,14 @@
-package com.google.cloud.bigtable.hbase.replication;
+package com.google.cloud.bigtable.hbase.replication.metrics;
 
-import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 
 /**
  * MetricsExporterImpl implements MetricExporter which bridges with MetricsSource.
  */
 public class MetricsExporterImpl implements MetricsExporter {
-    private MetricsSource metricsSource;
+    // set this as static
+    private static MetricsSource metricsSource;
+
     public void setMetricsSource(MetricsSource metricsSource) {
         this.metricsSource = metricsSource;
     }
