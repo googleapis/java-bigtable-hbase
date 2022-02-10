@@ -22,6 +22,7 @@ import com.google.cloud.bigtable.test.helper.TestServerBuilder;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.truth.Correspondence;
 import io.grpc.Context;
 import io.grpc.Metadata;
 import io.grpc.Server;
@@ -75,6 +76,11 @@ public class TestRetryBehavior {
   private final AtomicReference<Consumer<ServerCall<?, ?>>> rpcRunnable =
       new AtomicReference<>(
           (ServerCall<?, ?> call) -> call.close(Status.UNIMPLEMENTED, new Metadata()));
+
+  private static final Correspondence<Duration, Duration> MIN_DURATION_CORRESPONDENCE =
+      Correspondence.from((actual, expected) -> actual.compareTo(expected) >= 0, ">=");
+  private static final Correspondence<Duration, Duration> MAX_DURATION_CORRESPONDENCE =
+      Correspondence.from((actual, expected) -> actual.compareTo(expected) <= 0, "<=");
 
   interface TableRunnable {
     void run(Table table) throws IOException;
@@ -200,10 +206,19 @@ public class TestRetryBehavior {
       assertThat(status.getCode()).isEqualTo(Status.Code.ABORTED);
 
       // Server immediately errors out, so exponential backoff will be the bottleneck for retries
-      assertThat(callCount.get()).isAtLeast(6);
-      // Ignoring the first and last attempt, all attempts should be just under attempt timeout
-      assertThat(Collections.min(remainingDurations.subList(1, remainingDurations.size() - 1)))
-          .isLessThan(ATTEMPT_TIMEOUT);
+      // Maximum delays will be: 5, 10, 20, 40, 80, 160, 320, 640, 1m, 1m, ...
+      // With 2s operation deadline, minimum number of attempts will be 9
+      // Since exponential delay uses full jitter (which will decrease delay by 50% on average),
+      // there will most likely be more attempts. However to avoid flakiness, we can only make
+      // assertions about attempts that are guaranteed to happen. For example with 400ms remaining
+      // in the operation timeout, the 10th delay can be 100ms, causing the attempt timeout to be
+      // 300ms and the 11th delay could be 50ms causing the next attempt to have an attempt timeout
+      // of 250ms.
+      assertThat(callCount.get()).isAtLeast(9);
+      // Ignoring the first attempt, because it will be unstable due to connection setup
+      assertThat(remainingDurations.subList(1, 9))
+          .comparingElementsUsing(MIN_DURATION_CORRESPONDENCE)
+          .contains(ATTEMPT_TIMEOUT.minus(Duration.ofMillis(5)));
 
       // but should still be limited by the operation timeout with some jitter
       assertThat(elapsed).isAtMost(OPERATION_TIMEOUT.plus(ATTEMPT_TIMEOUT.dividedBy(2)));
@@ -231,14 +246,18 @@ public class TestRetryBehavior {
 
       // Server will hang for the attempt timeout and the client should retry the attempt
       // 5 * 450ms attempt timeouts > 2s operation timeout
+      // 450 + 5 + 450 + 10 + 450 + 20 + 450 + 40 + 125
       assertThat(callCount.get()).isAtMost(5);
       // 3 * 450ms attempt timeouts + jitter < 2s operation timeout
       assertThat(callCount.get()).isAtLeast(3);
-      assertThat(Collections.max(remainingDurations)).isAtMost(ATTEMPT_TIMEOUT);
+      assertThat(remainingDurations)
+          .comparingElementsUsing(MAX_DURATION_CORRESPONDENCE)
+          .contains(ATTEMPT_TIMEOUT);
 
       // Ignoring the first and last attempt, all attempts should be just under attempt timeout
-      assertThat(Collections.min(remainingDurations.subList(1, remainingDurations.size() - 1)))
-          .isAtLeast(ATTEMPT_TIMEOUT.minus(Duration.ofMillis(10)));
+      assertThat(remainingDurations.subList(1, remainingDurations.size() - 1))
+          .comparingElementsUsing(MIN_DURATION_CORRESPONDENCE)
+          .contains(ATTEMPT_TIMEOUT.minus(Duration.ofMillis(10)));
 
       // Altogether should still be limited by the operation timeout with some jitter
       assertThat(elapsed).isAtMost(OPERATION_TIMEOUT.plus(ATTEMPT_TIMEOUT.dividedBy(2)));
