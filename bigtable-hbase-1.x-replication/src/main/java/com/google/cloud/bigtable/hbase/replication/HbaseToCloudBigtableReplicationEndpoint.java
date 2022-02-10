@@ -18,7 +18,7 @@ package com.google.cloud.bigtable.hbase.replication;
 import java.util.*;
 
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
-import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporterImpl;
+import com.google.cloud.bigtable.hbase.replication.metrics.HBaseMetricsExporter;
 import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
 import org.apache.hadoop.hbase.wal.WAL;
 import org.slf4j.Logger;
@@ -31,7 +31,7 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
       LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
 
   private final CloudBigtableReplicator cloudBigtableReplicator;
-  private MetricsExporterImpl metricsExporter;
+  private HBaseMetricsExporter metricsExporter;
 
   // Config keys to access project id and instance id from.
 
@@ -42,7 +42,7 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
   public HbaseToCloudBigtableReplicationEndpoint() {
     super();
     cloudBigtableReplicator = new CloudBigtableReplicator();
-    metricsExporter = new MetricsExporterImpl();
+    metricsExporter = new HBaseMetricsExporter();
   }
 
 
@@ -61,7 +61,6 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
     LOG.error("Stopping replication to CBT for this EndPoint. ",
         new RuntimeException("Dummy exception for stacktrace"));
     cloudBigtableReplicator.stop();
-
     notifyStopped();
   }
 

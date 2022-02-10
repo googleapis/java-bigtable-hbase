@@ -13,11 +13,12 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
         LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
 
     private final CloudBigtableReplicator cloudBigtableReplicator;
-    private MetricsExporterImpl metricsExporter;
+    private HBaseMetricsExporter metricsExporter;
+
     public HbaseToCloudBigtableReplicationEndpoint() {
         super();
         cloudBigtableReplicator = new CloudBigtableReplicator();
-        metricsExporter = new MetricsExporterImpl();
+        metricsExporter = new HBaseMetricsExporter();
     }
 
     @Override

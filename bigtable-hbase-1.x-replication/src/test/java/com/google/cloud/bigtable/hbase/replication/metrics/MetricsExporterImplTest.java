@@ -18,7 +18,7 @@ public class MetricsExporterImplTest {
     @Mock
     MetricsSource metricsSource;
 
-    MetricsExporterImpl metricsExporterImpl;
+    HBaseMetricsExporter metricsExporterImpl;
 
     public static final String METRIC_EXAMPLE_A = "exampleA";
     public static final String METRIC_EXAMPLE_B = "exampleB";
@@ -26,7 +26,7 @@ public class MetricsExporterImplTest {
 
     @Before
     public void setUp() {
-         metricsExporterImpl = new MetricsExporterImpl();
+         metricsExporterImpl = new HBaseMetricsExporter();
          metricsExporterImpl.setMetricsSource(metricsSource);
     }
 
