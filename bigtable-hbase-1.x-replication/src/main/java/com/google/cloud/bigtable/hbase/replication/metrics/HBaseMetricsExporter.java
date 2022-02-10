@@ -6,8 +6,8 @@ import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
  * HBaseMetricsExporter implements MetricExporter which bridges with MetricsSource.
  */
 public class HBaseMetricsExporter implements MetricsExporter {
-    // set this as static
-    private static MetricsSource metricsSource;
+    // same pattern as used by HbaseInterClusterRepl
+    private MetricsSource metricsSource;
 
     public void setMetricsSource(MetricsSource metricsSource) {
         this.metricsSource = metricsSource;
