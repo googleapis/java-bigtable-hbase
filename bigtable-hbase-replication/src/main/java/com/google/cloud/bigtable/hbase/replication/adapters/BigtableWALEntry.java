@@ -4,15 +4,16 @@ import org.apache.hadoop.hbase.Cell;
 
 import java.util.ArrayList;
 /**
- * BigtableWALEntry abstracts minimal functionality from WAL.Entry required for this replication library.
+ * BigtableWALEntry abstracts minimal functionality from WAL.Entry required for this replication
+ * library.
  */
 public class BigtableWALEntry {
-    private long timeStamp;
+    private long walWriteTimestamp;
     private ArrayList<Cell> cells;
     private String tableName;
 
     public BigtableWALEntry(long timeStamp, ArrayList<Cell> cells, String tableName) {
-        this.timeStamp = timeStamp;
+        this.walWriteTimestamp = timeStamp;
         this.cells = cells;
         this.tableName = tableName;
     }
@@ -22,7 +23,7 @@ public class BigtableWALEntry {
     }
 
     public long getWalWriteTime() {
-        return this.timeStamp;
+        return this.walWriteTimestamp;
     }
 
     public String getTableName() {
