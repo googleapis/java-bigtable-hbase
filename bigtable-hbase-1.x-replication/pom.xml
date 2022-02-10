@@ -181,11 +181,6 @@
             <!--       use the HBase server from the HBase environment-->
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <version>2.5.0</version>
-        </dependency>
         <!-- test dependencies -->
         <dependency>
             <groupId>org.apache.hbase</groupId>
