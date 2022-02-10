@@ -153,11 +153,6 @@
       <version>${project.version}</version>
       <scope>${scope}</scope>
     </dependency>
-    <dependency>
-      <groupId>com.google.protobuf</groupId>
-      <artifactId>protobuf-java</artifactId>
-      <version>2.5.0</version>
-    </dependency>
     <!-- https://mvnrepository.com/artifact/org.apache.hbase/hbase-testing-util -->
     <dependency>
       <groupId>org.apache.hbase</groupId>
