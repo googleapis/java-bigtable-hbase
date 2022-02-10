@@ -3,9 +3,9 @@ package com.google.cloud.bigtable.hbase.replication.metrics;
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 
 /**
- * MetricsExporterImpl implements MetricExporter which bridges with MetricsSource.
+ * HBaseMetricsExporter implements MetricExporter which bridges with MetricsSource.
  */
-public class MetricsExporterImpl implements MetricsExporter {
+public class HBaseMetricsExporter implements MetricsExporter {
     // set this as static
     private static MetricsSource metricsSource;
 
