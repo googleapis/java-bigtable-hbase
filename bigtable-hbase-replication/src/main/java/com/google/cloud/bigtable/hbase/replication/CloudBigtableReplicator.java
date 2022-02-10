@@ -21,6 +21,7 @@ import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
 import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapter;
 import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapterFactory;
+import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -43,7 +44,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 import org.apache.hadoop.hbase.util.ByteRange;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.SimpleByteRange;
@@ -156,7 +156,7 @@ public class CloudBigtableReplicator {
     numConnectionReference++;
   }
   // TODO(remove metricssource from the core lib).
-  public synchronized void start(Configuration configuration, MetricsSource metricsSource) {
+  public synchronized void start(Configuration configuration, MetricsExporter metricsSource) {
     LOG.error(
         "Starting replication to CBT. ", new RuntimeException("Dummy exception for stacktrace."));
 

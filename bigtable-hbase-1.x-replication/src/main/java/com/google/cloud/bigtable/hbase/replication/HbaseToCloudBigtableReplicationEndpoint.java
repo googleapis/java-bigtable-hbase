@@ -30,6 +30,7 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
       LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
 
   private final CloudBigtableReplicator cloudBigtableReplicator;
+  private MetricsExporterImpl metricsExporter;
 
   // Config keys to access project id and instance id from.
 
@@ -40,6 +41,7 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
   public HbaseToCloudBigtableReplicationEndpoint() {
     super();
     cloudBigtableReplicator = new CloudBigtableReplicator();
+    metricsExporter = new MetricsExporterImpl();
   }
 
 
@@ -47,8 +49,14 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
   protected synchronized void doStart() {
     LOG.error(
         "Starting replication to CBT. ", new RuntimeException("Dummy exception for stacktrace."));
+    LOG.error("33722455324 me");
 
-    cloudBigtableReplicator.start(ctx.getConfiguration(), ctx.getMetrics());
+    metricsExporter.setMetricsSource(ctx.getMetrics());
+    LOG.error("242 me");
+
+    cloudBigtableReplicator.start(ctx.getConfiguration(), metricsExporter);
+    LOG.error("2425335 me");
+
     notifyStarted();
   }
 

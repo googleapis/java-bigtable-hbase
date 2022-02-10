@@ -1,7 +1,6 @@
 package com.google.cloud.bigtable.hbase.replication.adapters;
 
 import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.wal.WAL;
 
 import java.util.ArrayList;
 /**

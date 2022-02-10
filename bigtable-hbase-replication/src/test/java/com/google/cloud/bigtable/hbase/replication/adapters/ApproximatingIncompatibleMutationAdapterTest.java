@@ -16,11 +16,12 @@ import static org.mockito.Mockito.when;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -50,7 +51,7 @@ public class ApproximatingIncompatibleMutationAdapterTest {
   Connection connection;
 
   @Mock
-  MetricsSource metricsSource;
+  MetricsExporter metricsExporter;
 
   @Mock
   BigtableWALEntry mockWalEntry;
@@ -62,7 +63,7 @@ public class ApproximatingIncompatibleMutationAdapterTest {
     when(conf.getInt(anyString(), anyInt())).thenReturn(10);
     when(mockWalEntry.getWalWriteTime()).thenReturn(1005L);
     // Expectations on Conf should be set before this point.
-    incompatibleMutationAdapter = new ApproximatingIncompatibleMutationAdapter(conf, metricsSource, connection);
+    incompatibleMutationAdapter = new ApproximatingIncompatibleMutationAdapter(conf, metricsExporter, connection);
   }
 
   @After
@@ -71,7 +72,7 @@ public class ApproximatingIncompatibleMutationAdapterTest {
     verify(mockWalEntry, atLeastOnce()).getWalWriteTime();
     verify(conf, atLeastOnce()).getInt(eq(DELETE_FAMILY_WRITE_THRESHOLD_KEY), anyInt());
     verifyNoInteractions(connection);
-    reset(mockWalEntry, conf, connection, metricsSource);
+    reset(mockWalEntry, conf, connection, metricsExporter);
   }
 
  @Test
@@ -87,11 +88,11 @@ public class ApproximatingIncompatibleMutationAdapterTest {
     Assert.assertEquals(Arrays.asList(put, expectedDelete),
         incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
 
-    verify(metricsSource).incCounters(
+    verify(metricsExporter).incCounters(
         IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
-    verify(metricsSource, times(1)).incCounters(
+    verify(metricsExporter, times(1)).incCounters(
         IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
-    verify(metricsSource, times(1)).incCounters(
+    verify(metricsExporter, times(1)).incCounters(
         IncompatibleMutationAdapter.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
   }
 
@@ -115,11 +116,11 @@ public class ApproximatingIncompatibleMutationAdapterTest {
     Assert.assertEquals(Arrays.asList(put),
         incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
 
-    verify(metricsSource).incCounters(
+    verify(metricsExporter).incCounters(
         IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
-    verify(metricsSource, times(3)).incCounters(
+    verify(metricsExporter, times(3)).incCounters(
         IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
-    verify(metricsSource, times(3)).incCounters(
+    verify(metricsExporter, times(3)).incCounters(
         IncompatibleMutationAdapter.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
   }
 }

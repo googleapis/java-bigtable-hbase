@@ -13,9 +13,11 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
         LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
 
     private final CloudBigtableReplicator cloudBigtableReplicator;
+    private MetricsExporterImpl metricsExporter;
     public HbaseToCloudBigtableReplicationEndpoint() {
         super();
         cloudBigtableReplicator = new CloudBigtableReplicator();
+        metricsExporter = new MetricsExporterImpl();
     }
 
     @Override
@@ -52,7 +54,8 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
     protected void doStart() {
         LOG.error(
             "Starting replication to CBT. ", new RuntimeException("Dummy exception for stacktrace."));
-        cloudBigtableReplicator.start(ctx.getConfiguration(), ctx.getMetrics());
+        metricsExporter.setMetricsSource(ctx.getMetrics());
+        cloudBigtableReplicator.start(ctx.getConfiguration(), metricsExporter);
         notifyStarted();
 
     }
