@@ -13,9 +13,12 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
         LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
 
     private final CloudBigtableReplicator cloudBigtableReplicator;
+    private HBaseMetricsExporter metricsExporter;
+
     public HbaseToCloudBigtableReplicationEndpoint() {
         super();
         cloudBigtableReplicator = new CloudBigtableReplicator();
+        metricsExporter = new HBaseMetricsExporter();
     }
 
     @Override
@@ -27,7 +30,8 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
         Map<String, List<BigtableWALEntry>> walEntriesByTable = new HashMap<>();
         for (WAL.Entry wal: replicateContext.getEntries()) {
             String tableName = wal.getKey().getTableName().getNameAsString();
-            BigtableWALEntry bigtableWALEntry = new BigtableWALEntry(wal.getKey().getWriteTime(), wal.getEdit().getCells());
+            BigtableWALEntry bigtableWALEntry =
+                new BigtableWALEntry(wal.getKey().getWriteTime(), wal.getEdit().getCells(), tableName);
             if (!walEntriesByTable.containsKey(tableName)) {
                 walEntriesByTable.put(tableName, new ArrayList<>());
             }
@@ -52,7 +56,8 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
     protected void doStart() {
         LOG.error(
             "Starting replication to CBT. ", new RuntimeException("Dummy exception for stacktrace."));
-        cloudBigtableReplicator.start(ctx.getConfiguration(), ctx.getMetrics());
+        metricsExporter.setMetricsSource(ctx.getMetrics());
+        cloudBigtableReplicator.start(ctx.getConfiguration(), metricsExporter);
         notifyStarted();
 
     }
