@@ -15,12 +15,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Approximates the incompatible mutations to nearest compatible mutations when possible.
- * Practically, converts DeleteFamiliBeforeTimestamp to DeleteFamily when delete is requested before
+ * Approximates the incompatible mutations to the nearest compatible mutations when possible.
+ * Practically, converts DeleteFamilyBeforeTimestamp to DeleteFamily when delete is requested before
  * "now".
  */
 public class ApproximatingIncompatibleMutationAdapter extends IncompatibleMutationAdapter {
-  // TODO rename
   /**
    * Threshold to consider the deleteFamilyBefore as a DeleteFamily mutation. When DeleteFamily or
    * HBase translates a DeleteFamily or DeleteRow to DeleteFamilyBeforeTimestamp(now). This is then
@@ -33,7 +32,7 @@ public class ApproximatingIncompatibleMutationAdapter extends IncompatibleMutati
    * DeleteFamilyBeforeTimestamp where (timestamp < walkey.writeTime()) as DeleteFamily.
    */
   public static final String DELETE_FAMILY_WRITE_THRESHOLD_KEY = "google.bigtable.deletefamily.threshold";
-  private static final int DEFAULT_DELETE_FAMILY_WRITE_THRESHOLD_IN_MILLIS = 5 * 1000;
+  private static final int DEFAULT_DELETE_FAMILY_WRITE_THRESHOLD_IN_MILLIS = 5 * 60 * 1000;
 
   private static final Logger LOG = LoggerFactory.getLogger(
       ApproximatingIncompatibleMutationAdapter.class);
