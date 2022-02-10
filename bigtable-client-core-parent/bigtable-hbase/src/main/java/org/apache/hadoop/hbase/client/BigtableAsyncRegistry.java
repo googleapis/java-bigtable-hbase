@@ -22,7 +22,6 @@ import java.util.concurrent.CompletableFuture;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.dynamic.loading.InjectionClassLoader;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.InvocationHandlerAdapter;
 import net.bytebuddy.implementation.MethodCall;
@@ -89,7 +88,7 @@ public class BigtableAsyncRegistry {
         .method(ElementMatchers.named("getClusterId"))
         .intercept(FixedValue.value((CompletableFuture.completedFuture("NoopClusterId"))))
         .make()
-        .load(InjectionClassLoader.getSystemClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+        .load(BigtableAsyncRegistry.class.getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
         .getLoaded();
   }
 
