@@ -89,7 +89,7 @@ public class BigtableAsyncRegistry {
         .method(ElementMatchers.named("getClusterId"))
         .intercept(FixedValue.value((CompletableFuture.completedFuture("NoopClusterId"))))
         .make()
-        .load(InjectionClassLoader.getSystemClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+        .load(BigtableAsyncRegistry.class.getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
         .getLoaded();
   }
 
