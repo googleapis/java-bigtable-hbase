@@ -4,12 +4,13 @@ import static org.apache.hadoop.hbase.HConstants.LATEST_TIMESTAMP;
 
 import java.util.Arrays;
 import java.util.List;
+
+import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,9 +40,9 @@ public class ApproximatingIncompatibleMutationAdapter extends IncompatibleMutati
 
   private final int deleteFamilyWriteTimeThreshold;
 
-  public ApproximatingIncompatibleMutationAdapter(Configuration conf, MetricsSource metricsSource,
+  public ApproximatingIncompatibleMutationAdapter(Configuration conf, MetricsExporter metricsExporter,
       Connection connection) {
-    super(conf, metricsSource, connection);
+    super(conf, metricsExporter, connection);
 
     deleteFamilyWriteTimeThreshold = conf.getInt(DELETE_FAMILY_WRITE_THRESHOLD_KEY,
         DEFAULT_DELETE_FAMILY_WRITE_THRESHOLD_IN_MILLIS);

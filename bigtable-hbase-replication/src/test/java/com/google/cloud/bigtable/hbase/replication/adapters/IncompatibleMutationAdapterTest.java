@@ -9,11 +9,11 @@ import static org.mockito.Mockito.when;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -49,13 +49,13 @@ public class IncompatibleMutationAdapterTest {
      * All subclasses must expose this constructor.
      *  @param conf HBase configuration. All the configurations required by subclases should come
      * from here.
-     * @param metricsSource Hadoop metric source exposed by HBase Replication Endpoint.
+     * @param metricsExporter Interface for exposing Hadoop metric source.
      * @param connection CBT table taht is destination of the replicated edits. This
      */
     public TestIncompatibleMutationAdapter(Configuration conf,
-        MetricsSource metricsSource,
+        MetricsExporter metricsExporter,
         Connection connection) {
-      super(conf, metricsSource, connection);
+      super(conf, metricsExporter, connection);
     }
 
     @Override
@@ -90,7 +90,7 @@ public class IncompatibleMutationAdapterTest {
   Connection connection;
 
   @Mock
-  MetricsSource metricsSource;
+  MetricsExporter metricsExporter;
 
   @Mock
   BigtableWALEntry mockWalEntry;
@@ -100,14 +100,14 @@ public class IncompatibleMutationAdapterTest {
 
   @Before
   public void setUp() throws Exception {
-    incompatibleMutationAdapter = new TestIncompatibleMutationAdapter(conf, metricsSource,
+    incompatibleMutationAdapter = new TestIncompatibleMutationAdapter(conf, metricsExporter,
         connection);
   }
 
   @After
   public void tearDown() throws Exception {
     verifyNoInteractions(connection, conf);
-    reset(mockWalEntry, conf, connection, metricsSource);
+    reset(mockWalEntry, conf, connection, metricsExporter);
     incompatibleMutationAdapter.reset();
   }
 
@@ -126,9 +126,9 @@ public class IncompatibleMutationAdapterTest {
         incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
 
     verify(mockWalEntry).getCells();
-    verify(metricsSource).incCounters(
+    verify(metricsExporter).incCounters(
         IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
-    verify(metricsSource).incCounters(
+    verify(metricsExporter).incCounters(
         IncompatibleMutationAdapter.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
   }
 
@@ -147,11 +147,11 @@ public class IncompatibleMutationAdapterTest {
         incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
 
     verify(mockWalEntry).getCells();
-    verify(metricsSource).incCounters(
+    verify(metricsExporter).incCounters(
         IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
-    verify(metricsSource, times(1)).incCounters(
+    verify(metricsExporter, times(1)).incCounters(
         IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
-    verify(metricsSource, times(1)).incCounters(
+    verify(metricsExporter, times(1)).incCounters(
         IncompatibleMutationAdapter.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
   }
 
@@ -174,11 +174,11 @@ public class IncompatibleMutationAdapterTest {
         incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
 
     verify(mockWalEntry).getCells();
-    verify(metricsSource).incCounters(
+    verify(metricsExporter).incCounters(
         IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
-    verify(metricsSource, times(1)).incCounters(
+    verify(metricsExporter, times(1)).incCounters(
         IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
-    verify(metricsSource, times(1)).incCounters(
+    verify(metricsExporter, times(1)).incCounters(
         IncompatibleMutationAdapter.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
   }
 
@@ -195,11 +195,11 @@ public class IncompatibleMutationAdapterTest {
         incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
 
     verify(mockWalEntry).getCells();
-    verify(metricsSource).incCounters(
+    verify(metricsExporter).incCounters(
         IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
-    verify(metricsSource, times(1)).incCounters(
+    verify(metricsExporter, times(1)).incCounters(
         IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
-    verify(metricsSource, times(1)).incCounters(
+    verify(metricsExporter, times(1)).incCounters(
         IncompatibleMutationAdapter.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
   }
 
@@ -217,11 +217,11 @@ public class IncompatibleMutationAdapterTest {
         incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
 
     verify(mockWalEntry).getCells();
-    verify(metricsSource).incCounters(
+    verify(metricsExporter).incCounters(
         IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
-    verify(metricsSource, times(1)).incCounters(
+    verify(metricsExporter, times(1)).incCounters(
         IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
-    verify(metricsSource, times(1)).incCounters(
+    verify(metricsExporter, times(1)).incCounters(
         IncompatibleMutationAdapter.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
   }
 

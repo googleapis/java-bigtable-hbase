@@ -152,30 +152,6 @@
       <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
       <version>${project.version}</version>
       <scope>${scope}</scope>
-      <exclusions>
-        <!-- exclude libraries if providing as separate dependency-->
-        <exclusion>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.apache.hbase</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <!--  <dependency>-->
-    <!--    <groupId>com.google.cloud.bigtable</groupId>-->
-    <!--    <artifactId>bigtable-hbase-1.x-hadoop</artifactId>-->
-    <!--    <version>${project.version}</version>-->
-    <!--  </dependency>-->
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-server</artifactId>
-      <version>1.5.0</version>
-<!--       The library is running on the HBase region server,-->
-<!--       use the HBase server from the HBase environment-->
-      <scope>provided</scope>
     </dependency>
     <!-- https://mvnrepository.com/artifact/org.apache.hbase/hbase-testing-util -->
     <dependency>

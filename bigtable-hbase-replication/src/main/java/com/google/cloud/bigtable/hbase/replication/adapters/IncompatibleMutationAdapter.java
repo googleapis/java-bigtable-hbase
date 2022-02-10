@@ -3,12 +3,13 @@ package com.google.cloud.bigtable.hbase.replication.adapters;
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,17 +28,17 @@ public abstract class IncompatibleMutationAdapter {
   // (using this connection) and then deleting them.
   private final Connection connection;
   private final Configuration conf;
-  private final MetricsSource metricSource;
+  private final MetricsExporter metricsExporter;
 
   public static final String INCOMPATIBLE_MUTATION_METRIC_KEY = "bigtableIncompatibleMutations";
   public static final String DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY = "bigtableDroppedIncompatibleMutations";
 
   private void incrementDroppedIncompatibleMutations() {
-    metricSource.incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    metricsExporter.incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
   }
 
   private void incrementIncompatibleMutations() {
-    metricSource.incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    metricsExporter.incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
   }
 
   /**
@@ -47,18 +48,18 @@ public abstract class IncompatibleMutationAdapter {
    *
    * @param conf HBase configuration. All the configurations required by subclases should come from
    * here.
-   * @param metricsSource Hadoop metric source exposed by HBase Replication Endpoint.
+   * @param metricsExporter Interface to expose Hadoop metric source present in HBase Replication Endpoint.
    * @param connection Connection to destination CBT cluster. This reference
    * help the subclasses to query destination table for certain incompatible mutation.
    */
-  public IncompatibleMutationAdapter(Configuration conf, MetricsSource metricsSource,
+  public IncompatibleMutationAdapter(Configuration conf, MetricsExporter metricsExporter,
       Connection connection) {
     this.conf = conf;
     this.connection = connection;
-    this.metricSource = metricsSource;
+    this.metricsExporter = metricsExporter;
     // Make sure that the counters show up.
-    metricsSource.incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
-    metricsSource.incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    metricsExporter.incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    metricsExporter.incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
   }
 
   private boolean isValidDelete(Cell delete) {
