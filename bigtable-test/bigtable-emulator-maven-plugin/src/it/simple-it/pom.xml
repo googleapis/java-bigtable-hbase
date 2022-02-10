@@ -33,7 +33,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-client-core</artifactId>
-      <version>1.23.0</version>
+      <version>1.26.3</version>
     </dependency>
 
     <dependency>
