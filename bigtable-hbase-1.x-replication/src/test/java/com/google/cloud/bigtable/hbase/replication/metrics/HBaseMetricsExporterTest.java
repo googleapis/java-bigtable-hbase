@@ -11,14 +11,14 @@ import org.mockito.junit.MockitoRule;
 import static org.mockito.Mockito.*;
 
 @RunWith(JUnit4.class)
-public class MetricsExporterImplTest {
+public class HBaseMetricsExporterTest {
     @Rule
     public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
     @Mock
     MetricsSource metricsSource;
 
-    HBaseMetricsExporter metricsExporterImpl;
+    HBaseMetricsExporter hbaseMetricsExporter;
 
     public static final String METRIC_EXAMPLE_A = "exampleA";
     public static final String METRIC_EXAMPLE_B = "exampleB";
@@ -26,18 +26,18 @@ public class MetricsExporterImplTest {
 
     @Before
     public void setUp() {
-         metricsExporterImpl = new HBaseMetricsExporter();
-         metricsExporterImpl.setMetricsSource(metricsSource);
+        hbaseMetricsExporter = new HBaseMetricsExporter();
+        hbaseMetricsExporter.setMetricsSource(metricsSource);
     }
 
     @Test
     public void testMetricsPropagation() {
-        metricsExporterImpl.incCounters(METRIC_EXAMPLE_A, 10);
-        metricsExporterImpl.incCounters(METRIC_EXAMPLE_B, 10);
+        hbaseMetricsExporter.incCounters(METRIC_EXAMPLE_A, 10);
+        hbaseMetricsExporter.incCounters(METRIC_EXAMPLE_B, 10);
         verify(metricsSource, times(1)).incCounters(METRIC_EXAMPLE_A, 10);
         verify(metricsSource, times(1)).incCounters(METRIC_EXAMPLE_B, 10);
         // increment metric B again
-        metricsExporterImpl.incCounters(METRIC_EXAMPLE_B, 10);
+        hbaseMetricsExporter.incCounters(METRIC_EXAMPLE_B, 10);
         verify(metricsSource, times(2)).incCounters(METRIC_EXAMPLE_B, 10);
     }
 }
