@@ -12,19 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 package com.google.cloud.bigtable.hbase.replication;
 
-import java.util.*;
-
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
 import com.google.cloud.bigtable.hbase.replication.metrics.HBaseMetricsExporter;
+import java.util.*;
 import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
 import org.apache.hadoop.hbase.wal.WAL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndpoint {
 
@@ -46,7 +43,6 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
     metricsExporter = new HBaseMetricsExporter();
   }
 
-
   @Override
   protected synchronized void doStart() {
     LOG.error(
@@ -59,7 +55,8 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
   @Override
   protected void doStop() {
 
-    LOG.error("Stopping replication to CBT for this EndPoint. ",
+    LOG.error(
+        "Stopping replication to CBT for this EndPoint. ",
         new RuntimeException("Dummy exception for stacktrace"));
     cloudBigtableReplicator.stop();
     notifyStopped();
@@ -74,7 +71,7 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
   public boolean replicate(ReplicateContext replicateContext) {
     Map<String, List<BigtableWALEntry>> walEntriesByTable = new HashMap<>();
 
-    for (WAL.Entry wal: replicateContext.getEntries()) {
+    for (WAL.Entry wal : replicateContext.getEntries()) {
 
       String tableName = wal.getKey().getTablename().getNameAsString();
       BigtableWALEntry bigtableWALEntry =

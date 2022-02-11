@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.google.cloud.bigtable.hbase.replication;
@@ -38,9 +37,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Replicates the WAL entries to CBT. Never throws any exceptions to the caller.
- */
+/** Replicates the WAL entries to CBT. Never throws any exceptions to the caller. */
 @InternalApi
 public class CloudBigtableReplicationTask implements Callable<Boolean> {
 
@@ -57,7 +54,7 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
   @VisibleForTesting
   static class PutMutationBuilder implements MutationBuilder {
 
-    final private Put put;
+    private final Put put;
     boolean closed = false;
 
     PutMutationBuilder(byte[] rowKey) {
@@ -89,7 +86,7 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
 
   @VisibleForTesting
   static class DeleteMutationBuilder implements MutationBuilder {
-    final private Delete delete;
+    private final Delete delete;
 
     boolean closed = false;
     private int numDeletes = 0;
@@ -150,8 +147,9 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
   private final String tableName;
   private final Map<ByteRange, List<Cell>> cellsToReplicateByRow;
 
-  public CloudBigtableReplicationTask(String tableName, Connection connection,
-      Map<ByteRange, List<Cell>> entriesToReplicate) throws IOException {
+  public CloudBigtableReplicationTask(
+      String tableName, Connection connection, Map<ByteRange, List<Cell>> entriesToReplicate)
+      throws IOException {
     this.cellsToReplicateByRow = entriesToReplicate;
     this.connection = connection;
     this.tableName = tableName;
@@ -182,15 +180,16 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
       //  And then to a final batch update with all the RowMutations. The rowMutation will guarantee
       //  an atomic in-order application of mutations. The flush will be more efficient.
       //
-      // The HBase region server is pushing all the WALs in memory, so this is presumably not creating
+      // The HBase region server is pushing all the WALs in memory, so this is presumably not
+      // creating
       // too much RAM overhead.
 
       // Build a row mutation per row.
       List<RowMutations> rowMutationsList = new ArrayList<>(cellsToReplicateByRow.size());
       for (Map.Entry<ByteRange, List<Cell>> cellsByRow : cellsToReplicateByRow.entrySet()) {
         // Create a rowMutations and add it to the list to be flushed to CBT.
-        RowMutations rowMutations = buildRowMutations(cellsByRow.getKey().deepCopyToNewArray(),
-             cellsByRow.getValue());
+        RowMutations rowMutations =
+            buildRowMutations(cellsByRow.getKey().deepCopyToNewArray(), cellsByRow.getValue());
         rowMutationsList.add(rowMutations);
       }
 
@@ -213,12 +212,10 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
   }
 
   @VisibleForTesting
-  static RowMutations buildRowMutations(byte[] rowKey, List<Cell> cellList)
-      throws IOException {
+  static RowMutations buildRowMutations(byte[] rowKey, List<Cell> cellList) throws IOException {
     RowMutations rowMutations = new RowMutations(rowKey);
     // TODO Make sure that there are < 100K cells per row Mutation
-    MutationBuilder mutationBuilder =
-        MutationBuilderFactory.getMutationBuilder(cellList.get(0));
+    MutationBuilder mutationBuilder = MutationBuilderFactory.getMutationBuilder(cellList.get(0));
     for (Cell cell : cellList) {
       if (!mutationBuilder.canAcceptMutation(cell)) {
         mutationBuilder.buildAndUpdateRowMutations(rowMutations);

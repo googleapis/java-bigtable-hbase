@@ -12,14 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.google.cloud.bigtable.hbase.replication;
 
-import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
 import com.google.cloud.bigtable.emulator.v2.BigtableEmulatorRule;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
 import java.io.IOException;
 import java.util.List;
 import org.apache.hadoop.conf.Configuration;
@@ -205,7 +204,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
     delete = new Delete(TestUtils.getRowKey(1));
     // Delete columns. Deletes all cells from a column
-    delete.addColumns(TestUtils.CF1, TestUtils.COL_QUALIFIER, 20); // Delete first 2 cells and leave the last
+    delete.addColumns(
+        TestUtils.CF1, TestUtils.COL_QUALIFIER, 20); // Delete first 2 cells and leave the last
     delete.addColumns(TestUtils.CF1, TestUtils.COL_QUALIFIER_2); // Delete all cells from col2
     hbaseTable.delete(delete);
 
@@ -340,8 +340,11 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
         "Number of cells mismatched, actual cells: " + actualCells, 2, actualCells.size());
 
     TestUtils.assertEquals(
-        "Qualifiers mismatch", TestUtils.COL_QUALIFIER, CellUtil.cloneQualifier(actualCells.get(1)));
-    TestUtils.assertEquals("Value mismatch", TestUtils.getValue(0), CellUtil.cloneValue(actualCells.get(1)));
+        "Qualifiers mismatch",
+        TestUtils.COL_QUALIFIER,
+        CellUtil.cloneQualifier(actualCells.get(1)));
+    TestUtils.assertEquals(
+        "Value mismatch", TestUtils.getValue(0), CellUtil.cloneValue(actualCells.get(1)));
     Assert.assertEquals(0, actualCells.get(1).getTimestamp());
   }
 }

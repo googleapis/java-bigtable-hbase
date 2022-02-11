@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 package com.google.cloud.bigtable.hbase.replication;
 
@@ -39,7 +38,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -53,15 +51,14 @@ import org.slf4j.LoggerFactory;
 
 public class CloudBigtableReplicator {
 
-  private static final Logger LOG =
-      LoggerFactory.getLogger(CloudBigtableReplicator.class);
-
+  private static final Logger LOG = LoggerFactory.getLogger(CloudBigtableReplicator.class);
 
   // Config keys to access project id and instance id from.
   public static final String PROJECT_KEY = "google.bigtable.project.id";
   public static final String INSTANCE_KEY = "google.bigtable.instance.id";
 
-  public static final String NUM_REPLICATION_SINK_THREADS_KEY = "google.bigtable.replication.thread_count";
+  public static final String NUM_REPLICATION_SINK_THREADS_KEY =
+      "google.bigtable.replication.thread_count";
   // TODO maybe it should depend on the number of processors on the VM.
   public static final int DEFAULT_THREAD_COUNT = 10;
 
@@ -86,14 +83,10 @@ public class CloudBigtableReplicator {
    * properly close the connection.
    */
   private static Connection connection;
-  /**
-   * Reference count for this connection.
-   */
+  /** Reference count for this connection. */
   private static int numConnectionReference = 0;
 
-  /**
-   * Common endpoint that listens to CDC from HBase and replicates to Cloud Bigtable.
-   */
+  /** Common endpoint that listens to CDC from HBase and replicates to Cloud Bigtable. */
   public CloudBigtableReplicator() {
     LogManager.getLogger(BigtableClientMetrics.class).setLevel(Level.DEBUG);
     LogManager.getLogger("com.google.cloud.bigtable.hbase.replication").setLevel(Level.INFO);
@@ -116,18 +109,24 @@ public class CloudBigtableReplicator {
      * library.
      */
     int numThreads = conf.getInt(NUM_REPLICATION_SINK_THREADS_KEY, DEFAULT_THREAD_COUNT);
-    executorService = new ThreadPoolExecutor(numThreads, numThreads, 60,
-        TimeUnit.SECONDS, new LinkedBlockingDeque<>(), new ThreadFactory() {
-      private final AtomicInteger threadCount = new AtomicInteger();
+    executorService =
+        new ThreadPoolExecutor(
+            numThreads,
+            numThreads,
+            60,
+            TimeUnit.SECONDS,
+            new LinkedBlockingDeque<>(),
+            new ThreadFactory() {
+              private final AtomicInteger threadCount = new AtomicInteger();
 
-      @Override
-      public Thread newThread(Runnable r) {
-        Thread thread = new Thread(r);
-        thread.setDaemon(true);
-        thread.setName("cloud-bigtable-replication-sink-" + threadCount.incrementAndGet());
-        return thread;
-      }
-    });
+              @Override
+              public Thread newThread(Runnable r) {
+                Thread thread = new Thread(r);
+                thread.setDaemon(true);
+                thread.setName("cloud-bigtable-replication-sink-" + threadCount.incrementAndGet());
+                return thread;
+              }
+            });
   }
 
   private static synchronized void getOrCreateBigtableConnection(Configuration configuration) {
@@ -152,8 +151,9 @@ public class CloudBigtableReplicator {
     initExecutorService(configuration);
     batchSizeThresholdInBytes = configuration.getLong(BATCH_SIZE_KEY, DEFAULT_BATCH_SIZE_IN_BYTES);
 
-    this.incompatibleMutationAdapter = new IncompatibleMutationAdapterFactory(
-        configuration, metricsExporter, connection).createIncompatibleMutationAdapter();
+    this.incompatibleMutationAdapter =
+        new IncompatibleMutationAdapterFactory(configuration, metricsExporter, connection)
+            .createIncompatibleMutationAdapter();
   }
 
   public void stop() {
@@ -186,7 +186,8 @@ public class CloudBigtableReplicator {
    * successfully replicated; returns false if anything fails. On failure, HBase should retry the
    * whole batch again.
    *
-   * Does not throw any exceptions to the caller. In case of any errors, should return false.
+   * <p>Does not throw any exceptions to the caller. In case of any errors, should return false.
+   *
    * @param walEntriesByTable Map of WALEntries keyed by table name.
    */
   public boolean replicate(Map<String, List<BigtableWALEntry>> walEntriesByTable) {
@@ -195,7 +196,8 @@ public class CloudBigtableReplicator {
     boolean succeeded = true;
 
     List<Future<Boolean>> futures = new ArrayList<>();
-    for (Map.Entry<String, List<BigtableWALEntry>> walEntriesForTable : walEntriesByTable.entrySet()) {
+    for (Map.Entry<String, List<BigtableWALEntry>> walEntriesForTable :
+        walEntriesByTable.entrySet()) {
       List<Cell> cellsToReplicateForTable = new ArrayList<>();
       final String tableName = walEntriesForTable.getKey();
       int batchSizeInBytes = 0;
@@ -203,8 +205,8 @@ public class CloudBigtableReplicator {
       for (BigtableWALEntry walEntry : walEntriesForTable.getValue()) {
 
         // Translate the incompatible mutations.
-        List<Cell> compatibleCells = incompatibleMutationAdapter.adaptIncompatibleMutations(
-            walEntry);
+        List<Cell> compatibleCells =
+            incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry);
         cellsToReplicateForTable.addAll(compatibleCells);
       }
 
@@ -218,8 +220,9 @@ public class CloudBigtableReplicator {
           cellsToReplicateForTable.stream()
               .collect(
                   groupingBy(
-                      k -> new SimpleByteRange(k.getRowArray(), k.getRowOffset(),
-                          k.getRowLength())));
+                      k ->
+                          new SimpleByteRange(
+                              k.getRowArray(), k.getRowOffset(), k.getRowLength())));
 
       // Now we have cells to replicate by rows, this list can be big and processing it on a single
       // thread is not efficient. As this thread will have to do proto translation and may need to
@@ -229,16 +232,23 @@ public class CloudBigtableReplicator {
       int numCellsInBatch = 0;
       for (Map.Entry<ByteRange, List<Cell>> rowCells : cellsToReplicateByRow.entrySet()) {
 
-        // TODO handle the case where a single row has >100K mutations (very rare, but should not fail)
+        // TODO handle the case where a single row has >100K mutations (very rare, but should not
+        // fail)
         numCellsInBatch += rowCells.getValue().size();
         batchSizeInBytes += getRowSize(rowCells);
         batchToReplicate.put(rowCells.getKey(), rowCells.getValue());
 
         // TODO add tests for batch split on size and cell counts
-        if (batchSizeInBytes >= batchSizeThresholdInBytes || numCellsInBatch >= 100_000-1) {
-          LOG.trace("Replicating a batch of " + batchToReplicate.size() + " rows and "
-              + numCellsInBatch + " cells with heap size " + batchSizeInBytes + " for table: "
-              + tableName);
+        if (batchSizeInBytes >= batchSizeThresholdInBytes || numCellsInBatch >= 100_000 - 1) {
+          LOG.trace(
+              "Replicating a batch of "
+                  + batchToReplicate.size()
+                  + " rows and "
+                  + numCellsInBatch
+                  + " cells with heap size "
+                  + batchSizeInBytes
+                  + " for table: "
+                  + tableName);
 
           futures.add(replicateBatch(tableName, batchToReplicate));
           batchToReplicate = new HashMap<>();
@@ -266,7 +276,8 @@ public class CloudBigtableReplicator {
     } finally {
       LOG.trace(
           "Exiting CBT replicate method after {} ms, Succeeded: {} ",
-          (System.currentTimeMillis() - startTime), succeeded);
+          (System.currentTimeMillis() - startTime),
+          succeeded);
     }
 
     return succeeded;
@@ -280,17 +291,15 @@ public class CloudBigtableReplicator {
     return rowSizeInBytes;
   }
 
-
-  private Future<Boolean> replicateBatch(String tableName,
-      Map<ByteRange, List<Cell>> batchToReplicate) {
+  private Future<Boolean> replicateBatch(
+      String tableName, Map<ByteRange, List<Cell>> batchToReplicate) {
     try {
-      CloudBigtableReplicationTask replicationTask = new CloudBigtableReplicationTask(tableName,
-          connection, batchToReplicate);
+      CloudBigtableReplicationTask replicationTask =
+          new CloudBigtableReplicationTask(tableName, connection, batchToReplicate);
       return executorService.submit(replicationTask);
     } catch (IOException ex) {
       LOG.error("Failed to submit a batch for table: " + tableName, ex);
       return CompletableFuture.completedFuture(false);
     }
-
   }
 }

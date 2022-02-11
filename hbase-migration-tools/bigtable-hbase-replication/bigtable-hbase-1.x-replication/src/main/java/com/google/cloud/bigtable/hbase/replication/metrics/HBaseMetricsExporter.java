@@ -12,26 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.google.cloud.bigtable.hbase.replication.metrics;
 
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 
-/**
- * HBaseMetricsExporter implements MetricExporter which bridges with MetricsSource.
- */
+/** HBaseMetricsExporter implements MetricExporter which bridges with MetricsSource. */
 public class HBaseMetricsExporter implements MetricsExporter {
-    // same pattern as used by HbaseInterClusterRepl
-    private MetricsSource metricsSource;
+  // same pattern as used by HbaseInterClusterRepl
+  private MetricsSource metricsSource;
 
-    public void setMetricsSource(MetricsSource metricsSource) {
-        this.metricsSource = metricsSource;
-    }
+  public void setMetricsSource(MetricsSource metricsSource) {
+    this.metricsSource = metricsSource;
+  }
 
-    @Override
-    public void incCounters(String var1, long var2) {
-        metricsSource.incCounters(var1, var2);
-    }
+  @Override
+  public void incCounters(String var1, long var2) {
+    metricsSource.incCounters(var1, var2);
+  }
 }

@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.google.cloud.bigtable.hbase.replication.adapters;
@@ -30,8 +29,8 @@ public class IncompatibleMutationAdapterFactory {
   private final MetricsExporter metricsExporter;
   private final Connection connection;
 
-  public IncompatibleMutationAdapterFactory(Configuration conf, MetricsExporter metricsExporter,
-      Connection connection) {
+  public IncompatibleMutationAdapterFactory(
+      Configuration conf, MetricsExporter metricsExporter, Connection connection) {
     this.conf = conf;
     this.metricsExporter = metricsExporter;
     this.connection = connection;

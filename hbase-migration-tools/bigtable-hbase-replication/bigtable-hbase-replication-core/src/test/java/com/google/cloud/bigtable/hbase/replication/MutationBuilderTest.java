@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.google.cloud.bigtable.hbase.replication;
@@ -30,9 +29,8 @@ import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicationTask.
 import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicationTask.MutationBuilder;
 import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicationTask.MutationBuilderFactory;
 import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicationTask.PutMutationBuilder;
-import java.io.IOException;
-
 import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
+import java.io.IOException;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Delete;
@@ -48,20 +46,28 @@ public class MutationBuilderTest {
   @Test
   public void testPutBuilderAcceptsOnlyPuts() {
     PutMutationBuilder putMutationBuilder = new PutMutationBuilder(ROW_KEY);
-    assertTrue(putMutationBuilder.canAcceptMutation(
-        new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Put, VALUE)));
-    assertFalse(putMutationBuilder.canAcceptMutation(
-        new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Delete)));
-    assertFalse(putMutationBuilder.canAcceptMutation(
-        new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.DeleteFamily)));
-    assertFalse(putMutationBuilder.canAcceptMutation(
-        new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.DeleteFamilyVersion)));
-    assertFalse(putMutationBuilder.canAcceptMutation(
-        new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.DeleteColumn)));
-    assertFalse(putMutationBuilder.canAcceptMutation(
-        new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Maximum)));
-    assertFalse(putMutationBuilder.canAcceptMutation(
-        new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Minimum)));
+    assertTrue(
+        putMutationBuilder.canAcceptMutation(
+            new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Put, VALUE)));
+    assertFalse(
+        putMutationBuilder.canAcceptMutation(
+            new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Delete)));
+    assertFalse(
+        putMutationBuilder.canAcceptMutation(
+            new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.DeleteFamily)));
+    assertFalse(
+        putMutationBuilder.canAcceptMutation(
+            new KeyValue(
+                ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.DeleteFamilyVersion)));
+    assertFalse(
+        putMutationBuilder.canAcceptMutation(
+            new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.DeleteColumn)));
+    assertFalse(
+        putMutationBuilder.canAcceptMutation(
+            new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Maximum)));
+    assertFalse(
+        putMutationBuilder.canAcceptMutation(
+            new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Minimum)));
   }
 
   @Test
@@ -73,8 +79,7 @@ public class MutationBuilderTest {
         new KeyValue(ROW_KEY, CF2, COL_QUALIFIER, TIMESTAMP + 1, KeyValue.Type.Put, VALUE));
 
     Put expectedPut = new Put(ROW_KEY);
-    expectedPut.add(
-        new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Put, VALUE));
+    expectedPut.add(new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Put, VALUE));
     expectedPut.add(
         new KeyValue(ROW_KEY, CF2, COL_QUALIFIER, TIMESTAMP + 1, KeyValue.Type.Put, VALUE));
 
@@ -105,27 +110,35 @@ public class MutationBuilderTest {
         new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Put, VALUE));
   }
 
-
   // =================== DELETE ====================================
   @Test
   public void testDeleteAcceptsDelete() {
     DeleteMutationBuilder deleteMutationBuilder = new DeleteMutationBuilder(ROW_KEY);
-    assertTrue(deleteMutationBuilder.canAcceptMutation(
-        new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Delete, VALUE)));
-    assertTrue(deleteMutationBuilder.canAcceptMutation(
-        new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.DeleteFamily, VALUE)));
-    assertTrue(deleteMutationBuilder.canAcceptMutation(
-        new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.DeleteFamilyVersion,
-            VALUE)));
-    assertTrue(deleteMutationBuilder.canAcceptMutation(
-        new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.DeleteColumn, VALUE)));
+    assertTrue(
+        deleteMutationBuilder.canAcceptMutation(
+            new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Delete, VALUE)));
+    assertTrue(
+        deleteMutationBuilder.canAcceptMutation(
+            new KeyValue(
+                ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.DeleteFamily, VALUE)));
+    assertTrue(
+        deleteMutationBuilder.canAcceptMutation(
+            new KeyValue(
+                ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.DeleteFamilyVersion, VALUE)));
+    assertTrue(
+        deleteMutationBuilder.canAcceptMutation(
+            new KeyValue(
+                ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.DeleteColumn, VALUE)));
 
-    assertFalse(deleteMutationBuilder.canAcceptMutation(
-        new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Put)));
-    assertFalse(deleteMutationBuilder.canAcceptMutation(
-        new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Maximum)));
-    assertFalse(deleteMutationBuilder.canAcceptMutation(
-        new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Minimum)));
+    assertFalse(
+        deleteMutationBuilder.canAcceptMutation(
+            new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Put)));
+    assertFalse(
+        deleteMutationBuilder.canAcceptMutation(
+            new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Maximum)));
+    assertFalse(
+        deleteMutationBuilder.canAcceptMutation(
+            new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Minimum)));
   }
 
   @Test
@@ -134,15 +147,15 @@ public class MutationBuilderTest {
     mutationBuilder.addMutation(
         new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Delete, VALUE));
     mutationBuilder.addMutation(
-        new KeyValue(ROW_KEY, CF2, COL_QUALIFIER, TIMESTAMP + 1, KeyValue.Type.DeleteFamily,
-            VALUE));
+        new KeyValue(
+            ROW_KEY, CF2, COL_QUALIFIER, TIMESTAMP + 1, KeyValue.Type.DeleteFamily, VALUE));
 
     Delete expectedPut = new Delete(ROW_KEY);
     expectedPut.addDeleteMarker(
         new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Delete, VALUE));
     expectedPut.addDeleteMarker(
-        new KeyValue(ROW_KEY, CF2, COL_QUALIFIER, TIMESTAMP + 1, KeyValue.Type.DeleteFamily,
-            VALUE));
+        new KeyValue(
+            ROW_KEY, CF2, COL_QUALIFIER, TIMESTAMP + 1, KeyValue.Type.DeleteFamily, VALUE));
 
     RowMutations rowMutations = new RowMutations(ROW_KEY);
 
@@ -199,5 +212,4 @@ public class MutationBuilderTest {
     Cell unknownType = new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Minimum);
     MutationBuilder builder = MutationBuilderFactory.getMutationBuilder(unknownType);
   }
-
 }

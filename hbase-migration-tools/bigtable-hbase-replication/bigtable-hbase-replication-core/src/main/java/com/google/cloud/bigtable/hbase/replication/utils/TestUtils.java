@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.google.cloud.bigtable.hbase.replication.utils;
@@ -36,9 +35,7 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 
-/**
- * Utility class containing various helpers for tests.
- */
+/** Utility class containing various helpers for tests. */
 public class TestUtils {
 
   public static final String ROW_KEY_PREFIX = "test-row-";
@@ -53,10 +50,8 @@ public class TestUtils {
   public static final byte[] VALUE = "Value".getBytes();
   public static final long TIMESTAMP = 1000l;
 
-
   // ONLY STATIC METHODS
-  private TestUtils() {
-  }
+  private TestUtils() {}
 
   public static byte[] getRowKey(int i) {
     return (ROW_KEY_PREFIX + i).getBytes();
@@ -127,12 +122,15 @@ public class TestUtils {
       List<Cell> expectedCells = expectedFamilyCellMap.get(cf);
       List<Cell> actualCells = actualFamilyCellMap.get(cf);
 
-      assertTrue("Expected cells for family: " + Bytes.toString(cf),
+      assertTrue(
+          "Expected cells for family: " + Bytes.toString(cf),
           actualCells != null && !actualCells.isEmpty());
 
       Assert.assertEquals(
           "Mutation cell count mismatch for row "
-              + new String(expected.getRow()) + " family: " + cf
+              + new String(expected.getRow())
+              + " family: "
+              + cf
               + "\n \t\texpected: "
               + expectedCells
               + "\n \t\tactual: "
@@ -159,13 +157,11 @@ public class TestUtils {
         expected.getMutations().size(),
         actual.getMutations().size());
 
-    for(int i= 0; i < expected.getMutations().size(); i++){
+    for (int i = 0; i < expected.getMutations().size(); i++) {
       assertEquals(expected.getMutations().get(i), actual.getMutations().get(i));
     }
   }
-  /**
-   * Scans the 2 Tables and compares the data. Fails assertion in case of a mismatch.
-   */
+  /** Scans the 2 Tables and compares the data. Fails assertion in case of a mismatch. */
   public static void assertTableEquals(Table expected, Table actual) throws IOException {
 
     ResultScanner expectedScanner = expected.getScanner(new Scan().setMaxVersions());
@@ -193,6 +189,4 @@ public class TestUtils {
               + actualIterator.next().toString());
     }
   }
-
-
 }

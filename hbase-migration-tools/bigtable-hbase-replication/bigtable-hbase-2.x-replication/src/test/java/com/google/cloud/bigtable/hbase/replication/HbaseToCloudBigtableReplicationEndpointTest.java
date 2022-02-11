@@ -1,31 +1,46 @@
-//package com.google.cloud.bigtable.hbase.replication;
+/*
+ * Copyright 2022 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+// package com.google.cloud.bigtable.hbase.replication;
 //
-//import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
-//import com.google.cloud.bigtable.emulator.v2.BigtableEmulatorRule;
-//import com.google.cloud.bigtable.hbase.BigtableConfiguration;
-//import java.io.IOException;
-//import java.util.List;
-//import org.apache.hadoop.conf.Configuration;
-//import org.apache.hadoop.hbase.*;
-//import org.apache.hadoop.hbase.client.*;
-//import org.apache.hadoop.hbase.ipc.RpcServer;
-//import org.apache.hadoop.hbase.replication.ReplicationException;
-//import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
-//import org.apache.hadoop.hbase.util.Bytes;
-//import org.apache.hadoop.hbase.util.ServerRegionReplicaUtil;
-//import org.junit.After;
-//import org.junit.Assert;
-//import org.junit.Before;
-//import org.junit.Rule;
-//import org.junit.Test;
-//import org.junit.runner.RunWith;
-//import org.junit.runners.JUnit4;
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
+// import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
+// import com.google.cloud.bigtable.emulator.v2.BigtableEmulatorRule;
+// import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+// import java.io.IOException;
+// import java.util.List;
+// import org.apache.hadoop.conf.Configuration;
+// import org.apache.hadoop.hbase.*;
+// import org.apache.hadoop.hbase.client.*;
+// import org.apache.hadoop.hbase.ipc.RpcServer;
+// import org.apache.hadoop.hbase.replication.ReplicationException;
+// import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
+// import org.apache.hadoop.hbase.util.Bytes;
+// import org.apache.hadoop.hbase.util.ServerRegionReplicaUtil;
+// import org.junit.After;
+// import org.junit.Assert;
+// import org.junit.Before;
+// import org.junit.Rule;
+// import org.junit.Test;
+// import org.junit.runner.RunWith;
+// import org.junit.runners.JUnit4;
+// import org.slf4j.Logger;
+// import org.slf4j.LoggerFactory;
 //
 //// TODO(add serial replication tests)
-//@RunWith(JUnit4.class)
-//public class HbaseToCloudBigtableReplicationEndpointTest {
+// @RunWith(JUnit4.class)
+// public class HbaseToCloudBigtableReplicationEndpointTest {
 //
 //    private static final Logger LOG =
 //        LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
@@ -56,14 +71,16 @@
 //        conf.setLong(HConstants.THREAD_WAKE_FREQUENCY, 100);
 //        conf.setInt("replication.stats.thread.period.seconds", 5);
 //        conf.setBoolean("hbase.tests.use.shortcircuit.reads", false);
-//        conf.setInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER, 5); // less number of retries is needed
+//        conf.setInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER, 5); // less number of retries is
+// needed
 //        conf.setInt("hbase.client.serverside.retries.multiplier", 1);
 //
 //        // Set CBT related configs.
 //        conf.set("google.bigtable.instance.id", "test-instance");
 //        conf.set("google.bigtable.project.id", "test-project");
 //        // This config will connect Replication endpoint to the emulator and not the prod CBT.
-//        conf.set("google.bigtable.emulator.endpoint.host", "localhost:" + bigtableEmulator.getPort());
+//        conf.set("google.bigtable.emulator.endpoint.host", "localhost:" +
+// bigtableEmulator.getPort());
 //        LOG.info("heta ahahah 81448945585492");
 //
 //        hbaseTestingUtil.startMiniCluster(2);
@@ -77,7 +94,8 @@
 //            ReplicationPeerConfig.newBuilder()
 //                .setClusterKey(hbaseTestingUtil.getClusterKey())
 //                    .setReplicateAllUserTables(true)
-//                        .setReplicationEndpointImpl(HbaseToCloudBigtableReplicationEndpoint.class.getTypeName())
+//
+// .setReplicationEndpointImpl(HbaseToCloudBigtableReplicationEndpoint.class.getTypeName())
 //                            .build();
 //
 //        hbaseTestingUtil.getAdmin().addReplicationPeer("cbt", peerConfig, true);
@@ -124,7 +142,8 @@
 //    @Test
 //    public void testPeerCreated() throws IOException, ReplicationException {
 //        // assert peer configuration is correct
-//        ReplicationPeerConfig peerConfig =  hbaseTestingUtil.getAdmin().getReplicationPeerConfig("cbt");
+//        ReplicationPeerConfig peerConfig =
+// hbaseTestingUtil.getAdmin().getReplicationPeerConfig("cbt");
 //        Assert.assertNotNull(peerConfig);
 //        Assert.assertEquals(
 //            peerConfig.getReplicationEndpointImpl(),
@@ -161,13 +180,16 @@
 //            put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.getValue(10 + i));
 //            put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 1, TestUtils.getValue(20 + i));
 //            put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 2, TestUtils.getValue(30 + i));
-//            put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER_2, 3, TestUtils.getValue(40 + i));
-//            put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER_2, 4, TestUtils.getValue(50 + i));
+//            put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER_2, 3, TestUtils.getValue(40 +
+// i));
+//            put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER_2, 4, TestUtils.getValue(50 +
+// i));
 //            put.addColumn(TestUtils.CF2, TestUtils.COL_QUALIFIER, 5, TestUtils.getValue(60 + i));
 //            hbaseTable.put(put);
 //        }
 //
-//        // Now delete some cells with all supported delete types from CF1. CF2 should exist to validate
+//        // Now delete some cells with all supported delete types from CF1. CF2 should exist to
+// validate
 //        // we don't delete anything else
 //        Delete delete = new Delete(TestUtils.getRowKey(0));
 //        // Delete individual cell
@@ -180,7 +202,8 @@
 //
 //        delete = new Delete(TestUtils.getRowKey(1));
 //        // Delete columns. Deletes all cells from a column
-//        delete.addColumns(TestUtils.CF1, TestUtils.COL_QUALIFIER, 20); // Delete first 2 cells and leave the last
+//        delete.addColumns(TestUtils.CF1, TestUtils.COL_QUALIFIER, 20); // Delete first 2 cells and
+// leave the last
 //        delete.addColumns(TestUtils.CF1, TestUtils.COL_QUALIFIER_2); // Delete all cells from col2
 //        hbaseTable.delete(delete);
 //
@@ -310,13 +333,16 @@
 //        Thread.sleep(2000);
 //        //   Waiter.waitFor(CONF, 60000, () -> TestEndpoint.getEntries().size() >= cellNum);
 //
-//        List<Cell> actualCells = cbtTable.get(new Get(TestUtils.ROW_KEY).readAllVersions()).listCells();
+//        List<Cell> actualCells = cbtTable.get(new
+// Get(TestUtils.ROW_KEY).readAllVersions()).listCells();
 //        Assert.assertEquals(
 //            "Number of cells mismatched, actual cells: " + actualCells, 2, actualCells.size());
 //
 //        TestUtils.assertEquals(
-//            "Qualifiers mismatch", TestUtils.COL_QUALIFIER, CellUtil.cloneQualifier(actualCells.get(1)));
-//        TestUtils.assertEquals("Value mismatch", TestUtils.getValue(0), CellUtil.cloneValue(actualCells.get(1)));
+//            "Qualifiers mismatch", TestUtils.COL_QUALIFIER,
+// CellUtil.cloneQualifier(actualCells.get(1)));
+//        TestUtils.assertEquals("Value mismatch", TestUtils.getValue(0),
+// CellUtil.cloneValue(actualCells.get(1)));
 //        Assert.assertEquals(0, actualCells.get(1).getTimestamp());
 //    }
-//}
+// }

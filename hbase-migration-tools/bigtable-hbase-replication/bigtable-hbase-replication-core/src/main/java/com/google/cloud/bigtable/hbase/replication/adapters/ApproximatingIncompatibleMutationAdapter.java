@@ -12,17 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.google.cloud.bigtable.hbase.replication.adapters;
 
 import static org.apache.hadoop.hbase.HConstants.LATEST_TIMESTAMP;
 
+import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import java.util.Arrays;
 import java.util.List;
-
-import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -48,20 +46,23 @@ public class ApproximatingIncompatibleMutationAdapter extends IncompatibleMutati
    * DeleteRow mutations, you can set this to Integer.MAX_VALUE. This will lead to any
    * DeleteFamilyBeforeTimestamp where (timestamp < walkey.writeTime()) as DeleteFamily.
    */
-  public static final String DELETE_FAMILY_WRITE_THRESHOLD_KEY = "google.bigtable.deletefamily.threshold";
+  public static final String DELETE_FAMILY_WRITE_THRESHOLD_KEY =
+      "google.bigtable.deletefamily.threshold";
+
   private static final int DEFAULT_DELETE_FAMILY_WRITE_THRESHOLD_IN_MILLIS = 5 * 60 * 1000;
 
-  private static final Logger LOG = LoggerFactory.getLogger(
-      ApproximatingIncompatibleMutationAdapter.class);
+  private static final Logger LOG =
+      LoggerFactory.getLogger(ApproximatingIncompatibleMutationAdapter.class);
 
   private final int deleteFamilyWriteTimeThreshold;
 
-  public ApproximatingIncompatibleMutationAdapter(Configuration conf, MetricsExporter metricsExporter,
-      Connection connection) {
+  public ApproximatingIncompatibleMutationAdapter(
+      Configuration conf, MetricsExporter metricsExporter, Connection connection) {
     super(conf, metricsExporter, connection);
 
-    deleteFamilyWriteTimeThreshold = conf.getInt(DELETE_FAMILY_WRITE_THRESHOLD_KEY,
-        DEFAULT_DELETE_FAMILY_WRITE_THRESHOLD_IN_MILLIS);
+    deleteFamilyWriteTimeThreshold =
+        conf.getInt(
+            DELETE_FAMILY_WRITE_THRESHOLD_KEY, DEFAULT_DELETE_FAMILY_WRITE_THRESHOLD_IN_MILLIS);
   }
 
   @Override
@@ -72,15 +73,26 @@ public class ApproximatingIncompatibleMutationAdapter extends IncompatibleMutati
       // TODO Check if its epoch is millis or micros
       // deleteFamily is auto translated to DeleteFamilyBeforeTimestamp(NOW). the WAL write happens
       // later. So walkey.writeTime() should be >= NOW.
-      if (walWriteTime >= cell.getTimestamp() &&
-          cell.getTimestamp() + deleteFamilyWriteTimeThreshold >= walWriteTime) {
+      if (walWriteTime >= cell.getTimestamp()
+          && cell.getTimestamp() + deleteFamilyWriteTimeThreshold >= walWriteTime) {
         return Arrays.asList(
-            new KeyValue(CellUtil.cloneRow(cell), CellUtil.cloneFamily(cell), (byte[]) null,
-                LATEST_TIMESTAMP, KeyValue.Type.DeleteFamily));
+            new KeyValue(
+                CellUtil.cloneRow(cell),
+                CellUtil.cloneFamily(cell),
+                (byte[]) null,
+                LATEST_TIMESTAMP,
+                KeyValue.Type.DeleteFamily));
       } else {
-        LOG.error("DROPPING ENTRY: cell time: " + cell.getTypeByte() + " walTime: " + walWriteTime +
-            " DELTA: " + (walWriteTime - cell.getTimestamp() + " With threshold "
-            + deleteFamilyWriteTimeThreshold));
+        LOG.error(
+            "DROPPING ENTRY: cell time: "
+                + cell.getTypeByte()
+                + " walTime: "
+                + walWriteTime
+                + " DELTA: "
+                + (walWriteTime
+                    - cell.getTimestamp()
+                    + " With threshold "
+                    + deleteFamilyWriteTimeThreshold));
       }
       // else can't convert the mutation, throw the exception.
     }

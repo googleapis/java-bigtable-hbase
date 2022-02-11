@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.google.cloud.bigtable.hbase.replication;
@@ -69,18 +68,13 @@ import org.mockito.junit.MockitoRule;
 @RunWith(JUnit4.class)
 public class CloudBigtableReplicationTaskTest {
 
-  @Rule
-  public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
-  @Mock
-  private Connection mockConnection;
+  @Mock private Connection mockConnection;
 
-  @Mock
-  private Table mockTable;
+  @Mock private Table mockTable;
 
-  @Captor
-  private ArgumentCaptor<List<RowMutations>> captor;
-
+  @Captor private ArgumentCaptor<List<RowMutations>> captor;
 
   @Before
   public void setUp() throws Exception {
@@ -94,13 +88,15 @@ public class CloudBigtableReplicationTaskTest {
 
   @Test
   public void batchCallFailsPartially() throws IOException, InterruptedException {
-    doThrow(new RetriesExhaustedWithDetailsException("Dummy error")).when(mockTable)
+    doThrow(new RetriesExhaustedWithDetailsException("Dummy error"))
+        .when(mockTable)
         .batch(anyList(), any(Object[].class));
     Cell cell = new KeyValue(ROW_KEY, TIMESTAMP, KeyValue.Type.Delete);
     Map<ByteRange, List<Cell>> cellsToReplicate = new HashMap<>();
     cellsToReplicate.put(new SimpleByteRange(ROW_KEY), Arrays.asList(cell));
-    CloudBigtableReplicationTask replicationTaskUnderTest = new CloudBigtableReplicationTask(
-        TABLE_NAME.getNameAsString(), mockConnection, cellsToReplicate);
+    CloudBigtableReplicationTask replicationTaskUnderTest =
+        new CloudBigtableReplicationTask(
+            TABLE_NAME.getNameAsString(), mockConnection, cellsToReplicate);
 
     assertFalse(replicationTaskUnderTest.call());
 
@@ -110,19 +106,23 @@ public class CloudBigtableReplicationTaskTest {
 
   @Test
   public void batchCallFails() throws IOException, InterruptedException {
-    doAnswer(invocation -> {
-      Object[] args = invocation.getArguments();
-      Object[] futures = (Object[]) args[1];
-      futures[1] = new RetriesExhaustedWithDetailsException("Dummy error");
-      return null; // void method in a block-style lambda, so return null
-    }).when(mockTable).batch(anyList(), any(Object[].class));
+    doAnswer(
+            invocation -> {
+              Object[] args = invocation.getArguments();
+              Object[] futures = (Object[]) args[1];
+              futures[1] = new RetriesExhaustedWithDetailsException("Dummy error");
+              return null; // void method in a block-style lambda, so return null
+            })
+        .when(mockTable)
+        .batch(anyList(), any(Object[].class));
     Cell cell = new KeyValue(getRowKey(0), TIMESTAMP, KeyValue.Type.Delete);
     Cell cell2 = new KeyValue(getRowKey(1), TIMESTAMP, KeyValue.Type.Delete);
     Map<ByteRange, List<Cell>> cellsToReplicate = new HashMap<>();
     cellsToReplicate.put(new SimpleByteRange(getRowKey(0)), Arrays.asList(cell));
     cellsToReplicate.put(new SimpleByteRange(getRowKey(1)), Arrays.asList(cell2));
-    CloudBigtableReplicationTask replicationTaskUnderTest = new CloudBigtableReplicationTask(
-        TABLE_NAME.getNameAsString(), mockConnection, cellsToReplicate);
+    CloudBigtableReplicationTask replicationTaskUnderTest =
+        new CloudBigtableReplicationTask(
+            TABLE_NAME.getNameAsString(), mockConnection, cellsToReplicate);
 
     assertFalse(replicationTaskUnderTest.call());
 
@@ -141,14 +141,15 @@ public class CloudBigtableReplicationTaskTest {
     put.add(cell);
     expectedRowMutations.add(put);
 
-    CloudBigtableReplicationTask replicationTaskUnderTest = new CloudBigtableReplicationTask(
-        TABLE_NAME.getNameAsString(), mockConnection, cellsToReplicate);
+    CloudBigtableReplicationTask replicationTaskUnderTest =
+        new CloudBigtableReplicationTask(
+            TABLE_NAME.getNameAsString(), mockConnection, cellsToReplicate);
 
     assertTrue(replicationTaskUnderTest.call());
 
     verify(mockConnection).getTable(eq(TABLE_NAME));
     verify(mockTable).batch(captor.capture(), any(Object[].class));
-    Assert.assertEquals(1 , captor.getValue().size());
+    Assert.assertEquals(1, captor.getValue().size());
     assertEquals(expectedRowMutations, captor.getValue().get(0));
   }
 
@@ -165,8 +166,9 @@ public class CloudBigtableReplicationTaskTest {
     put.add(put3);
     expectedRowMutations.add(put);
 
-    assertEquals(expectedRowMutations, CloudBigtableReplicationTask.buildRowMutations(ROW_KEY,
-        Arrays.asList(put1, put2, put3)));
+    assertEquals(
+        expectedRowMutations,
+        CloudBigtableReplicationTask.buildRowMutations(ROW_KEY, Arrays.asList(put1, put2, put3)));
   }
 
   @Test
@@ -182,25 +184,26 @@ public class CloudBigtableReplicationTaskTest {
     delete.addDeleteMarker(delete2);
     expectedRowMutations.add(delete);
 
-    assertEquals(expectedRowMutations, CloudBigtableReplicationTask.buildRowMutations(ROW_KEY,
-        Arrays.asList(delete1, delete3, delete2)));
-
+    assertEquals(
+        expectedRowMutations,
+        CloudBigtableReplicationTask.buildRowMutations(
+            ROW_KEY, Arrays.asList(delete1, delete3, delete2)));
   }
 
   @Test
   public void testCreateRowMutationsPutAndDeleteAlternate() throws IOException {
     Cell putCell1 = new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Put, VALUE);
-    Cell putCell2 = new KeyValue(ROW_KEY, CF1, COL_QUALIFIER_2, TIMESTAMP, KeyValue.Type.Put,
-        VALUE);
+    Cell putCell2 =
+        new KeyValue(ROW_KEY, CF1, COL_QUALIFIER_2, TIMESTAMP, KeyValue.Type.Put, VALUE);
     Cell putCell3 = new KeyValue(ROW_KEY, CF2, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Put, VALUE);
     Cell deleteCell1 = new KeyValue(ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.Delete);
     Cell deleteCell2 = new KeyValue(ROW_KEY, CF1, COL_QUALIFIER_2, TIMESTAMP, KeyValue.Type.Delete);
-    Cell deleteCell3 = new KeyValue(ROW_KEY, CF2, COL_QUALIFIER, TIMESTAMP,
-        KeyValue.Type.DeleteColumn);
+    Cell deleteCell3 =
+        new KeyValue(ROW_KEY, CF2, COL_QUALIFIER, TIMESTAMP, KeyValue.Type.DeleteColumn);
 
     // Alternate puts and deletes
-    List<Cell> cellsToReplicate = Arrays.asList(putCell1, deleteCell1, putCell2, deleteCell2,
-        putCell3, deleteCell3);
+    List<Cell> cellsToReplicate =
+        Arrays.asList(putCell1, deleteCell1, putCell2, deleteCell2, putCell3, deleteCell3);
 
     // Created Expected RowMutations, Order doesn't change, each cell becomes a mutation(Put/Delete)
     RowMutations expectedRowMutations = new RowMutations(ROW_KEY);
@@ -225,9 +228,8 @@ public class CloudBigtableReplicationTaskTest {
     delete.addDeleteMarker(deleteCell3);
     expectedRowMutations.add(delete);
 
-    assertEquals(expectedRowMutations,
+    assertEquals(
+        expectedRowMutations,
         CloudBigtableReplicationTask.buildRowMutations(ROW_KEY, cellsToReplicate));
   }
-
-
 }

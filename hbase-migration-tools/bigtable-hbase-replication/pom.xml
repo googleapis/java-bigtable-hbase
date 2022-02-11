@@ -13,11 +13,11 @@
   ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
-  ~
   -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.google.cloud.bigtable</groupId>
+  <artifactId>bigtable-hbase-replication</artifactId>
   <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
 
   <parent>
@@ -26,7 +26,6 @@
     <version>2.0.0-beta6</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
-  <artifactId>bigtable-hbase-replication</artifactId>
   <packaging>pom</packaging>
   <name>${project.groupId}:${project.artifactId}</name>
   <description>

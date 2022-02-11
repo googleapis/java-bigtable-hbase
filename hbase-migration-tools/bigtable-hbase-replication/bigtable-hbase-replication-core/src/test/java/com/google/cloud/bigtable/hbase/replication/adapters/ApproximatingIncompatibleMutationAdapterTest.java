@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.google.cloud.bigtable.hbase.replication.adapters;
@@ -30,11 +29,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
@@ -58,20 +56,15 @@ public class ApproximatingIncompatibleMutationAdapterTest {
   private static final byte[] qual = "qual".getBytes(StandardCharsets.UTF_8);
   private static final byte[] val = "value".getBytes(StandardCharsets.UTF_8);
 
-  @Rule
-  public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
-  @Mock
-  Configuration conf;
+  @Mock Configuration conf;
 
-  @Mock
-  Connection connection;
+  @Mock Connection connection;
 
-  @Mock
-  MetricsExporter metricsExporter;
+  @Mock MetricsExporter metricsExporter;
 
-  @Mock
-  BigtableWALEntry mockWalEntry;
+  @Mock BigtableWALEntry mockWalEntry;
 
   ApproximatingIncompatibleMutationAdapter incompatibleMutationAdapter;
 
@@ -80,7 +73,8 @@ public class ApproximatingIncompatibleMutationAdapterTest {
     when(conf.getInt(anyString(), anyInt())).thenReturn(10);
     when(mockWalEntry.getWalWriteTime()).thenReturn(1005L);
     // Expectations on Conf should be set before this point.
-    incompatibleMutationAdapter = new ApproximatingIncompatibleMutationAdapter(conf, metricsExporter, connection);
+    incompatibleMutationAdapter =
+        new ApproximatingIncompatibleMutationAdapter(conf, metricsExporter, connection);
   }
 
   @After
@@ -92,7 +86,7 @@ public class ApproximatingIncompatibleMutationAdapterTest {
     reset(mockWalEntry, conf, connection, metricsExporter);
   }
 
- @Test
+  @Test
   public void testDeletesAreAdapted() {
     Cell delete = new KeyValue(rowKey, cf, null, 1000, KeyValue.Type.DeleteFamily);
     Cell put = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.Put, val);
@@ -100,24 +94,27 @@ public class ApproximatingIncompatibleMutationAdapterTest {
     walEntryCells.add(put);
     walEntryCells.add(delete);
     when(mockWalEntry.getCells()).thenReturn(walEntryCells);
-    Cell expectedDelete = new KeyValue(rowKey, cf, null, LATEST_TIMESTAMP, KeyValue.Type.DeleteFamily);
+    Cell expectedDelete =
+        new KeyValue(rowKey, cf, null, LATEST_TIMESTAMP, KeyValue.Type.DeleteFamily);
 
-    Assert.assertEquals(Arrays.asList(put, expectedDelete),
+    Assert.assertEquals(
+        Arrays.asList(put, expectedDelete),
         incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
 
-    verify(metricsExporter).incCounters(
-        IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
-    verify(metricsExporter, times(1)).incCounters(
-        IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
-    verify(metricsExporter, times(1)).incCounters(
-        IncompatibleMutationAdapter.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter)
+        .incCounters(IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter, times(1))
+        .incCounters(IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter, times(1))
+        .incCounters(IncompatibleMutationAdapter.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
   }
 
   @Test
   public void testIncompatibleDeletesAreDropped() {
     Cell deleteFamilyVersion = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.DeleteFamilyVersion);
     // Cell timestamp > WAL time, should be rejected.
-    Cell deleteFamilyAfterWAL = new KeyValue(rowKey, cf, qual, 2000, KeyValue.Type.DeleteFamilyVersion);
+    Cell deleteFamilyAfterWAL =
+        new KeyValue(rowKey, cf, qual, 2000, KeyValue.Type.DeleteFamilyVersion);
     // The WAL entry is written at 1000 with write threshold of 10, anything before 990 is rejected
     Cell deleteFamilyBeforeThreshold =
         new KeyValue(rowKey, cf, qual, 500, KeyValue.Type.DeleteFamily);
@@ -130,14 +127,14 @@ public class ApproximatingIncompatibleMutationAdapterTest {
     when(mockWalEntry.getWalWriteTime()).thenReturn(1000L);
     when(mockWalEntry.getCells()).thenReturn(walEntryCells);
 
-    Assert.assertEquals(Arrays.asList(put),
-        incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
+    Assert.assertEquals(
+        Arrays.asList(put), incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
 
-    verify(metricsExporter).incCounters(
-        IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
-    verify(metricsExporter, times(3)).incCounters(
-        IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
-    verify(metricsExporter, times(3)).incCounters(
-        IncompatibleMutationAdapter.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter)
+        .incCounters(IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter, times(3))
+        .incCounters(IncompatibleMutationAdapter.INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter, times(3))
+        .incCounters(IncompatibleMutationAdapter.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
   }
 }

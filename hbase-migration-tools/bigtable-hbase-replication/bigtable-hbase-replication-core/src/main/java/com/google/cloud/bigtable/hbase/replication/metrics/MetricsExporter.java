@@ -12,14 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.google.cloud.bigtable.hbase.replication.metrics;
 
 /**
- * MetricsExporter is exposed as an interface to remove dependency on MetricsSource which is in hbase-server.
+ * MetricsExporter is exposed as an interface to remove dependency on MetricsSource which is in
+ * hbase-server.
  */
 public interface MetricsExporter {
-    void incCounters(String var1, long var2);
+  void incCounters(String var1, long var2);
 }

@@ -12,16 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.google.cloud.bigtable.hbase.replication.adapters;
 
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
+import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -35,7 +33,7 @@ import org.slf4j.LoggerFactory;
  * <a href="https://cloud.google.com/bigtable/docs/hbase-differences#mutations_and_deletions">cbt
  * docs</a> for detailed list of incompatible mutations.
  *
- * Subclasses must expose the constructor ChildClass(Configuration, MetricSource, Table).
+ * <p>Subclasses must expose the constructor ChildClass(Configuration, MetricSource, Table).
  */
 public abstract class IncompatibleMutationAdapter {
 
@@ -48,7 +46,8 @@ public abstract class IncompatibleMutationAdapter {
   private final MetricsExporter metricsExporter;
 
   public static final String INCOMPATIBLE_MUTATION_METRIC_KEY = "bigtableIncompatibleMutations";
-  public static final String DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY = "bigtableDroppedIncompatibleMutations";
+  public static final String DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY =
+      "bigtableDroppedIncompatibleMutations";
 
   private void incrementDroppedIncompatibleMutations() {
     metricsExporter.incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
@@ -59,18 +58,20 @@ public abstract class IncompatibleMutationAdapter {
   }
 
   /**
-   * Creates an IncompatibleMutationAdapter with HBase configuration, MetricSource, and CBT connection.
+   * Creates an IncompatibleMutationAdapter with HBase configuration, MetricSource, and CBT
+   * connection.
    *
-   * All subclasses must expose this constructor.
+   * <p>All subclasses must expose this constructor.
    *
    * @param conf HBase configuration. All the configurations required by subclases should come from
-   * here.
-   * @param metricsExporter Interface to expose Hadoop metric source present in HBase Replication Endpoint.
-   * @param connection Connection to destination CBT cluster. This reference
-   * help the subclasses to query destination table for certain incompatible mutation.
+   *     here.
+   * @param metricsExporter Interface to expose Hadoop metric source present in HBase Replication
+   *     Endpoint.
+   * @param connection Connection to destination CBT cluster. This reference help the subclasses to
+   *     query destination table for certain incompatible mutation.
    */
-  public IncompatibleMutationAdapter(Configuration conf, MetricsExporter metricsExporter,
-      Connection connection) {
+  public IncompatibleMutationAdapter(
+      Configuration conf, MetricsExporter metricsExporter, Connection connection) {
     this.conf = conf;
     this.connection = connection;
     this.metricsExporter = metricsExporter;
@@ -140,7 +141,7 @@ public abstract class IncompatibleMutationAdapter {
    * UnsupportedOperationException} if it can't adapt the mutation.
    *
    * @param walEntry the WAL entry for the cell to Adapt. The wal entry provides context around the
-   * cell to be adapted, things like commit timestamp and other deletes in the entry.
+   *     cell to be adapted, things like commit timestamp and other deletes in the entry.
    * @param index The index of the cell to adapt.
    */
   protected abstract List<Cell> adaptIncompatibleMutation(BigtableWALEntry walEntry, int index);

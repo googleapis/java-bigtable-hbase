@@ -12,10 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.google.cloud.bigtable.hbase.replication.metrics;
+
+import static org.mockito.Mockito.*;
 
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 import org.junit.*;
@@ -25,36 +26,31 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import static org.mockito.Mockito.*;
-
 @RunWith(JUnit4.class)
 public class HBaseMetricsExporterTest {
-    @Rule
-    public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
-    @Mock
-    MetricsSource metricsSource;
+  @Mock MetricsSource metricsSource;
 
-    HBaseMetricsExporter hbaseMetricsExporter;
+  HBaseMetricsExporter hbaseMetricsExporter;
 
-    public static final String METRIC_EXAMPLE_A = "exampleA";
-    public static final String METRIC_EXAMPLE_B = "exampleB";
+  public static final String METRIC_EXAMPLE_A = "exampleA";
+  public static final String METRIC_EXAMPLE_B = "exampleB";
 
+  @Before
+  public void setUp() {
+    hbaseMetricsExporter = new HBaseMetricsExporter();
+    hbaseMetricsExporter.setMetricsSource(metricsSource);
+  }
 
-    @Before
-    public void setUp() {
-        hbaseMetricsExporter = new HBaseMetricsExporter();
-        hbaseMetricsExporter.setMetricsSource(metricsSource);
-    }
-
-    @Test
-    public void testMetricsPropagation() {
-        hbaseMetricsExporter.incCounters(METRIC_EXAMPLE_A, 10);
-        hbaseMetricsExporter.incCounters(METRIC_EXAMPLE_B, 10);
-        verify(metricsSource, times(1)).incCounters(METRIC_EXAMPLE_A, 10);
-        verify(metricsSource, times(1)).incCounters(METRIC_EXAMPLE_B, 10);
-        // increment metric B again
-        hbaseMetricsExporter.incCounters(METRIC_EXAMPLE_B, 10);
-        verify(metricsSource, times(2)).incCounters(METRIC_EXAMPLE_B, 10);
-    }
+  @Test
+  public void testMetricsPropagation() {
+    hbaseMetricsExporter.incCounters(METRIC_EXAMPLE_A, 10);
+    hbaseMetricsExporter.incCounters(METRIC_EXAMPLE_B, 10);
+    verify(metricsSource, times(1)).incCounters(METRIC_EXAMPLE_A, 10);
+    verify(metricsSource, times(1)).incCounters(METRIC_EXAMPLE_B, 10);
+    // increment metric B again
+    hbaseMetricsExporter.incCounters(METRIC_EXAMPLE_B, 10);
+    verify(metricsSource, times(2)).incCounters(METRIC_EXAMPLE_B, 10);
+  }
 }
