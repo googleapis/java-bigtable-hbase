@@ -103,7 +103,6 @@ public abstract class AbstractBigtableConnection
    */
   protected AbstractBigtableConnection(
       Configuration conf, boolean managed, ExecutorService pool, User user) throws IOException {
-    LOG.error("### Creating a new bigtable connection ");
     if (managed) {
       throw new IllegalArgumentException("Bigtable does not support managed connections.");
     }
@@ -129,17 +128,12 @@ public abstract class AbstractBigtableConnection
   /** {@inheritDoc} */
   @Override
   public Table getTable(TableName tableName) throws IOException {
-    LOG.error("### getting table " + tableName.getNameAsString() + " from bigtable connection ");
     return getTable(tableName, batchPool);
   }
 
   /** {@inheritDoc} */
   @Override
   public BufferedMutator getBufferedMutator(BufferedMutatorParams params) throws IOException {
-    LOG.error(
-        "### getting bufferedMutator for "
-            + params.getTableName().getNameAsString()
-            + " from bigtable connection ");
 
     TableName tableName = params.getTableName();
     if (tableName == null) {
@@ -181,8 +175,6 @@ public abstract class AbstractBigtableConnection
    */
   @Deprecated
   public Table getTable(String tableName) throws IOException {
-    LOG.error("### getting table " + tableName + " from bigtable connection ");
-
     return getTable(TableName.valueOf(tableName));
   }
 
@@ -231,7 +223,6 @@ public abstract class AbstractBigtableConnection
   /** {@inheritDoc} */
   @Override
   public void abort(final String msg, Throwable t) {
-    LOG.error("### Aborting bigtable connection; " + msg);
 
     if (t != null) {
       LOG.fatal(msg, t);
@@ -262,9 +253,6 @@ public abstract class AbstractBigtableConnection
   @Override
   public void close() throws IOException {
 
-    LOG.error(
-        "### Connection  closed called here. ",
-        new RuntimeException("Dummy exception for stacktrace."));
     if (!this.closed) {
 
       this.bigtableApi.close();
@@ -294,7 +282,6 @@ public abstract class AbstractBigtableConnection
 
   // Copied from org.apache.hadoop.hbase.client.HConnectionManager#shutdownBatchPool()
   private void shutdownBatchPool() {
-    LOG.error("### Shutting down batch pool for bigtable connection");
     if (this.cleanupPool && this.batchPool != null && !this.batchPool.isShutdown()) {
       this.batchPool.shutdown();
       try {

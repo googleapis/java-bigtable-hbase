@@ -46,7 +46,7 @@ which makes it easy for development teams to get started.
   <dependency>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>2.0.0-beta6</version>
+    <version>2.0.0-beta7-SNAPSHOT</version>
   </dependency>
   ```
 
@@ -84,7 +84,7 @@ If you are _not_ using the shaded Bigtable HBase Client artifact, you need to de
 <dependency>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>2.0.0-beta6</version>
+    <version>2.0.0-beta7-SNAPSHOT</version>
 </dependency>
 ```
 [//]: # ({x-version-update-end})
@@ -199,7 +199,7 @@ If you are _not_ using the shaded Bigtable HBase Client artifact, you need to de
 <dependency>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>2.0.0-beta6</version>
+    <version>2.0.0-beta7-SNAPSHOT</version>
 </dependency>
 ```
 [//]: # ({x-version-update-end})
