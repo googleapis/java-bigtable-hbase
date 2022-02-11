@@ -117,7 +117,7 @@ public class IncompatibleMutationAdapterTest {
   @After
   public void tearDown() throws Exception {
     verifyNoInteractions(connection);
-    reset(mockWalEntry,  connection, metricsExporter);
+    reset(mockWalEntry, connection, metricsExporter);
     incompatibleMutationAdapter.reset();
   }
 

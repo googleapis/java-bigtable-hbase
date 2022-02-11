@@ -18,9 +18,6 @@ package com.google.cloud.bigtable.hbase.replication.adapters;
 
 import static com.google.cloud.bigtable.hbase.replication.adapters.ApproximatingIncompatibleMutationAdapter.DELETE_FAMILY_WRITE_THRESHOLD_KEY;
 import static org.apache.hadoop.hbase.HConstants.LATEST_TIMESTAMP;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.reset;
