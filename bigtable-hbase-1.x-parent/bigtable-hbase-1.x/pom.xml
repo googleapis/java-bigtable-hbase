@@ -16,23 +16,11 @@ limitations under the License.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-<!--  <build>-->
-<!--    <plugins>-->
-<!--      <plugin>-->
-<!--        <groupId>org.apache.maven.plugins</groupId>-->
-<!--        <artifactId>maven-compiler-plugin</artifactId>-->
-<!--        <configuration>-->
-<!--          <source>8</source>-->
-<!--          <target>8</target>-->
-<!--        </configuration>-->
-<!--      </plugin>-->
-<!--    </plugins>-->
-<!--  </build>-->
 
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x-parent</artifactId>
-    <version>2.0.0-beta6</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.0.0-beta7-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-1.x</artifactId>
@@ -65,20 +53,21 @@ limitations under the License.
   </dependencyManagement>
 
   <dependencies>
-<!--    <dependency>-->
-<!--      <groupId>org.apache.hbase</groupId>-->
-<!--      <artifactId>hbase-server</artifactId>-->
-<!--      <version>${hbase.version}</version>-->
-<!--    </dependency>-->
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase</artifactId>
-      <version>2.0.0-beta6</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.0.0-beta7-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-metrics-api</artifactId>
       <version>${bigtable-client-core.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.api</groupId>
+          <artifactId>api-common</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -125,6 +114,11 @@ limitations under the License.
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
+      <artifactId>grpc-context</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
       <artifactId>grpc-core</artifactId>
       <scope>compile</scope>
     </dependency>
@@ -166,7 +160,7 @@ limitations under the License.
     <dependency>
       <groupId>net.bytebuddy</groupId>
       <artifactId>byte-buddy</artifactId>
-      <version>1.12.6</version>
+      <version>${byte.buddy.version}</version>
     </dependency>
 
 
@@ -174,7 +168,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-internal-test-helper</artifactId>
-      <version>2.0.0-beta6</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.0.0-beta7-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -199,6 +193,12 @@ limitations under the License.
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

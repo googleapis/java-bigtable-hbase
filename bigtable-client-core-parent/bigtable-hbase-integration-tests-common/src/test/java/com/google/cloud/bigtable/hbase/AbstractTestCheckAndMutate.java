@@ -55,10 +55,10 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
       Assert.assertFalse(
           "Column doesn't exist. Should fail.",
           checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, value2, put1));
-      Assert.assertFalse(
-          "Column still doesn't exist. Should fail.",
+      Assert.assertTrue(
+          "Column should be created on zero bytes.",
           checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, ZERO_BYTES, put1));
-      Assert.assertTrue(checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, null, put1));
+      Assert.assertFalse(checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, null, put1));
 
       // Fail on null check, now there's a value there
       Put put2 = new Put(rowKey).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, value2);
@@ -153,8 +153,8 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
     Assert.assertFalse(
         "Column doesn't exist. Should fail.",
         checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual2, value2, put1));
-    Assert.assertFalse(
-        "Column still doesn't exist. Should fail.",
+    Assert.assertTrue(
+        "Column should be created on zero bytes.",
         checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual2, ZERO_BYTES, put1));
     Assert.assertTrue(checkAndPut(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual2, null, put1));
 
@@ -172,7 +172,7 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
     Get get = new Get(rowKey);
     get.setMaxVersions(5);
     Result result = table.get(get);
-    Assert.assertEquals("Should be two results", 2, result.size());
+    Assert.assertEquals(3, result.size());
     Assert.assertArrayEquals(
         value1,
         CellUtil.cloneValue(result.getColumnLatestCell(SharedTestEnvRule.COLUMN_FAMILY, qual1)));
@@ -199,8 +199,8 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
     Assert.assertFalse(
         "Column doesn't exist. Should fail.",
         checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual2, value2, delete));
-    Assert.assertFalse(
-        "Column still doesn't exist. Should fail.",
+    Assert.assertTrue(
+        "Column should be created on zero bytes.",
         checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual2, ZERO_BYTES, delete));
     Assert.assertTrue(checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual2, null, delete));
 
@@ -296,8 +296,8 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
         "Column doesn't exist. Should fail.",
         checkAndMutate(
             rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, valueCheck, rm));
-    Assert.assertFalse(
-        "Column still doesn't exist. Should fail.",
+    Assert.assertTrue(
+        "Column should be created on zero bytes",
         checkAndMutate(
             rowKey, SharedTestEnvRule.COLUMN_FAMILY, qualCheck, CompareOp.EQUAL, ZERO_BYTES, rm));
     Assert.assertTrue(

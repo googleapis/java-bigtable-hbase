@@ -44,7 +44,6 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_SE
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_BATCH;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_PLAINTEXT_NEGOTIATION;
-import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_TIMEOUTS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ENABLE_GRPC_RETRIES_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ENABLE_GRPC_RETRY_DEADLINEEXCEEDED_KEY;
@@ -91,14 +90,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import io.grpc.CallOptions;
-import io.grpc.CallOptions.Key;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.ClientInterceptor;
-import io.grpc.Deadline;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.MethodDescriptor;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -111,7 +103,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.VersionInfo;
 import org.threeten.bp.Duration;
@@ -119,7 +110,26 @@ import org.threeten.bp.Duration;
 /** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
 public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
+
   private static final String BIGTABLE_BATCH_DATA_HOST_DEFAULT = "batch-bigtable.googleapis.com";
+
+  private static final ClientOperationTimeouts DEFAULT_TIMEOUTS =
+      new ClientOperationTimeouts(
+          /* unaryTimeouts= */ new OperationTimeouts(
+              Optional.absent(),
+              Optional.of(Duration.ofSeconds(20)),
+              Optional.of(Duration.ofMinutes(5))),
+          // Note: scanTimeouts are currently also used for bulk reads as well
+          // TODO: use a separate settings for bulk reads
+          /* scanTimeouts= */ new OperationTimeouts(
+              Optional.of(Duration.ofMinutes(5)),
+              Optional.of(Duration.ofMinutes(10)),
+              Optional.absent()),
+          /* bulkMutateTimeouts = */ new OperationTimeouts(
+              Optional.absent(),
+              Optional.of(Duration.ofMinutes(1)),
+              Optional.of(Duration.ofMinutes(10))));
+  private static final int MAX_CONSECUTIVE_SCAN_ATTEMPTS = 10;
 
   private final Configuration configuration;
   private final BigtableDataSettings dataSettings;
@@ -278,16 +288,10 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     // Configure metrics
     configureMetricsBridge(dataBuilder);
 
-    // Configure RPCs - this happens in multiple parts:
-    // - retry settings are configured here only here
-    // - timeouts are split into multiple places:
-    //   - timeouts for retries are configured here
-    //   - if USE_TIMEOUTS is explicitly disabled, then an interceptor is added to force all
-    // deadlines to 6 minutes
-    //   - DataClientVeneerApi can set a flag to affect behavior of the interceptor
-
-    configureConnectionCallTimeouts(dataBuilder.stubSettings(), clientTimeouts);
-
+    // Configure RPCs - this happens in two parts:
+    // - most of the timeouts are defined here
+    // - attempt timeouts for readRows is set in DataClientVeneerApi to workaround lack of attempt
+    //   timeouts for streaming RPCs
     // Complex RPC method settings
     configureBulkMutationSettings(
         dataBuilder.stubSettings().bulkMutateRowsSettings(),
@@ -542,31 +546,6 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     }
   }
 
-  private void configureConnectionCallTimeouts(
-      StubSettings.Builder<?, ?> stubSettings, ClientOperationTimeouts clientTimeouts) {
-    // Only patch settings when timeouts are disabled
-    if (clientTimeouts.getUseTimeouts()) {
-      return;
-    }
-    InstantiatingGrpcChannelProvider.Builder channelProvider =
-        ((InstantiatingGrpcChannelProvider) stubSettings.getTransportChannelProvider()).toBuilder();
-
-    final ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> prevConfigurator =
-        channelProvider.getChannelConfigurator();
-
-    channelProvider.setChannelConfigurator(
-        new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-          @Override
-          public ManagedChannelBuilder apply(ManagedChannelBuilder managedChannelBuilder) {
-            if (prevConfigurator != null) {
-              managedChannelBuilder = prevConfigurator.apply(managedChannelBuilder);
-            }
-            return managedChannelBuilder.intercept(new NoTimeoutsInterceptor());
-          }
-        });
-    stubSettings.setTransportChannelProvider(channelProvider.build());
-  }
-
   private void configureBulkMutationSettings(
       BigtableBatchingCallSettings.Builder builder, OperationTimeouts operationTimeouts) {
     BatchingSettings.Builder batchingSettingsBuilder = builder.getBatchingSettings().toBuilder();
@@ -666,7 +645,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     // exist, instead we use READ_PARTIAL_ROW_TIMEOUT_MS as the intra-row timeout
     if (!configuration.getBoolean(ENABLE_GRPC_RETRIES_KEY, true)) {
       // user explicitly disabled retries, treat it as a non-idempotent method
-      readRowsSettings.setRetryableCodes(Collections.<StatusCode.Code>emptySet());
+      readRowsSettings.setRetryableCodes(Collections.emptySet());
     } else {
       // apply user user retry settings
       readRowsSettings.setRetryableCodes(
@@ -688,10 +667,10 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
         }
       }
 
-      String maxAttemptsStr = configuration.get(MAX_SCAN_TIMEOUT_RETRIES);
-      if (!Strings.isNullOrEmpty(maxAttemptsStr)) {
-        readRowsSettings.retrySettings().setMaxAttempts(Integer.parseInt(maxAttemptsStr));
-      }
+      readRowsSettings
+          .retrySettings()
+          .setMaxAttempts(
+              configuration.getInt(MAX_SCAN_TIMEOUT_RETRIES, MAX_CONSECUTIVE_SCAN_ATTEMPTS));
     }
 
     // Per response timeouts (note: gax maps rpcTimeouts to response timeouts for streaming rpcs)
@@ -759,9 +738,8 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
   private void configureNonRetryableCallSettings(
       UnaryCallSettings.Builder<?, ?> unaryCallSettings, OperationTimeouts operationTimeouts) {
-    unaryCallSettings.setRetryableCodes(Collections.<StatusCode.Code>emptySet());
+    unaryCallSettings.setRetryableCodes(Collections.emptySet());
 
-    // NOTE: attempt timeouts are not configured for non-retriable rpcs
     if (operationTimeouts.getOperationTimeout().isPresent()) {
       unaryCallSettings
           .retrySettings()
@@ -769,64 +747,54 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     }
   }
 
+  /**
+   * Build a source of truth for timeout related settings.
+   *
+   * <p>This will combine defaults with end user provided overrides to configure response, attempt
+   * and operation timeouts. There 3 types of operations that are configured here:
+   *
+   * <ul>
+   *   <li>Unary - ReadRow, MutateRow, CheckAndMutate, ReadModifyWrite
+   *   <li>Scans - ReadRows (and BulkReadRow)
+   *   <li>Bulk Mutations
+   * </ul>
+   */
   private ClientOperationTimeouts buildCallSettings() {
-    boolean useTimeouts = configuration.getBoolean(BIGTABLE_USE_TIMEOUTS_KEY, true);
-
-    Optional<Duration> DEFAULT_BATCH_BULK_MUTATE_OVERALL_TIMEOUT =
-        Optional.of(Duration.ofMinutes(20));
-    // Set 20 minutes default timeout for batch jobs.
-    // The default override the deprecated BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY.
-    Optional<Duration> bulkMutateOverallTimeout =
-        configuration.getBoolean(BIGTABLE_USE_BATCH, false)
-            ? extractOverallTimeout(BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY)
-                .or(DEFAULT_BATCH_BULK_MUTATE_OVERALL_TIMEOUT)
-            : extractOverallTimeout(
-                BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY,
-                BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY);
+    Optional<Duration> defaultBatchMutateOverallTimeout =
+        DEFAULT_TIMEOUTS.bulkMutateTimeouts.operationTimeout;
+    if (configuration.getBoolean(BIGTABLE_USE_BATCH, false)) {
+      defaultBatchMutateOverallTimeout = Optional.of(Duration.ofMinutes(20));
+    }
     OperationTimeouts bulkMutateTimeouts =
         new OperationTimeouts(
-            Optional.<Duration>absent(),
-            extractUnaryAttemptTimeout(BIGTABLE_MUTATE_RPC_ATTEMPT_TIMEOUT_MS_KEY),
-            bulkMutateOverallTimeout);
+            DEFAULT_TIMEOUTS.bulkMutateTimeouts.responseTimeout,
+            extractDuration(BIGTABLE_MUTATE_RPC_ATTEMPT_TIMEOUT_MS_KEY)
+                .or(DEFAULT_TIMEOUTS.bulkMutateTimeouts.attemptTimeout),
+            extractDuration(
+                    BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY,
+                    BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY)
+                .or(defaultBatchMutateOverallTimeout));
 
     OperationTimeouts scanTimeouts =
         new OperationTimeouts(
-            extractDuration(READ_PARTIAL_ROW_TIMEOUT_MS),
-            extractScanAttemptTimeout(),
-            extractOverallTimeout(
-                BIGTABLE_READ_RPC_TIMEOUT_MS_KEY,
-                BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY));
+            extractDuration(READ_PARTIAL_ROW_TIMEOUT_MS)
+                .or(DEFAULT_TIMEOUTS.scanTimeouts.responseTimeout),
+            extractDuration(BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY)
+                .or(DEFAULT_TIMEOUTS.scanTimeouts.attemptTimeout),
+            extractDuration(
+                    BIGTABLE_READ_RPC_TIMEOUT_MS_KEY,
+                    BigtableOptionsFactory.BIGTABLE_LONG_RPC_TIMEOUT_MS_KEY)
+                .or(DEFAULT_TIMEOUTS.scanTimeouts.operationTimeout));
 
     OperationTimeouts unaryTimeouts =
         new OperationTimeouts(
-            Optional.<Duration>absent(),
-            extractDuration(BIGTABLE_RPC_ATTEMPT_TIMEOUT_MS_KEY),
-            extractDuration(BIGTABLE_RPC_TIMEOUT_MS_KEY, MAX_ELAPSED_BACKOFF_MILLIS_KEY));
+            DEFAULT_TIMEOUTS.unaryTimeouts.responseTimeout,
+            extractDuration(BIGTABLE_RPC_ATTEMPT_TIMEOUT_MS_KEY)
+                .or(DEFAULT_TIMEOUTS.unaryTimeouts.attemptTimeout),
+            extractDuration(BIGTABLE_RPC_TIMEOUT_MS_KEY, MAX_ELAPSED_BACKOFF_MILLIS_KEY)
+                .or(DEFAULT_TIMEOUTS.unaryTimeouts.operationTimeout));
 
-    return new ClientOperationTimeouts(
-        useTimeouts, unaryTimeouts, scanTimeouts, bulkMutateTimeouts);
-  }
-
-  private Optional<Duration> extractUnaryAttemptTimeout(String... keys) {
-    if (!configuration.getBoolean(BIGTABLE_USE_TIMEOUTS_KEY, false)) {
-      return Optional.of(Duration.ofMinutes(6));
-    }
-    return extractDuration(keys);
-  }
-
-  private Optional<Duration> extractScanAttemptTimeout() {
-    if (!configuration.getBoolean(BIGTABLE_USE_TIMEOUTS_KEY, false)) {
-      return Optional.absent();
-    }
-    return extractDuration(BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY);
-  }
-
-  private Optional<Duration> extractOverallTimeout(String... keys) {
-    if (configuration.getBoolean(BIGTABLE_USE_TIMEOUTS_KEY, true)) {
-      return extractDuration(keys);
-    } else {
-      return extractDuration(MAX_ELAPSED_BACKOFF_MILLIS_KEY);
-    }
+    return new ClientOperationTimeouts(unaryTimeouts, scanTimeouts, bulkMutateTimeouts);
   }
 
   private Optional<Duration> extractDuration(String... keys) {
@@ -867,47 +835,22 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     return codes;
   }
 
-  public static class NoTimeoutsInterceptor implements ClientInterceptor {
-    public static final CallOptions.Key<Boolean> SKIP_DEFAULT_ATTEMPT_TIMEOUT =
-        Key.createWithDefault("SKIP_DEFAULT_ATTEMPT_TIMEOUT", false);
-
-    @Override
-    public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
-        MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions, Channel channel) {
-
-      if (!callOptions.getOption(SKIP_DEFAULT_ATTEMPT_TIMEOUT)) {
-        callOptions = callOptions.withDeadline(Deadline.after(6, TimeUnit.MINUTES));
-      } else {
-        callOptions = callOptions.withDeadline(null);
-      }
-
-      return channel.newCall(methodDescriptor, callOptions);
-    }
-  }
-
   static class ClientOperationTimeouts {
     static final ClientOperationTimeouts EMPTY =
         new ClientOperationTimeouts(
-            true, OperationTimeouts.EMPTY, OperationTimeouts.EMPTY, OperationTimeouts.EMPTY);
+            OperationTimeouts.EMPTY, OperationTimeouts.EMPTY, OperationTimeouts.EMPTY);
 
-    private final boolean useTimeouts;
     private final OperationTimeouts unaryTimeouts;
     private final OperationTimeouts scanTimeouts;
     private final OperationTimeouts bulkMutateTimeouts;
 
     public ClientOperationTimeouts(
-        boolean useTimeouts,
         OperationTimeouts unaryTimeouts,
         OperationTimeouts scanTimeouts,
         OperationTimeouts bulkMutateTimeouts) {
-      this.useTimeouts = useTimeouts;
       this.unaryTimeouts = unaryTimeouts;
       this.scanTimeouts = scanTimeouts;
       this.bulkMutateTimeouts = bulkMutateTimeouts;
-    }
-
-    public boolean getUseTimeouts() {
-      return useTimeouts;
     }
 
     public OperationTimeouts getUnaryTimeouts() {

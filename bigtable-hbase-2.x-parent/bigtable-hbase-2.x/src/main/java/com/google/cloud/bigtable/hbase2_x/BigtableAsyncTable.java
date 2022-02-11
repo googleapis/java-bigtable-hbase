@@ -48,6 +48,7 @@ import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.AsyncTable;
+import org.apache.hadoop.hbase.client.AsyncTableRegionLocator;
 import org.apache.hadoop.hbase.client.CommonConnection;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -60,7 +61,9 @@ import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.ScanResultConsumer;
 import org.apache.hadoop.hbase.client.ServiceCaller;
+import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
+import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.io.TimeRange;
 
 /**
@@ -119,6 +122,11 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @Override
   public CheckAndMutateBuilder checkAndMutate(byte[] row, byte[] family) {
     return new CheckAndMutateBuilderImpl(clientWrapper, hbaseAdapter, row, family);
+  }
+
+  @Override
+  public CheckAndMutateWithFilterBuilder checkAndMutate(byte[] bytes, Filter filter) {
+    throw new UnsupportedOperationException("not implemented");
   }
 
   static final class CheckAndMutateBuilderImpl implements CheckAndMutateBuilder {
@@ -258,6 +266,16 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @Override
   public Configuration getConfiguration() {
     return this.connection.getConfiguration(); // TODO
+  }
+
+  @Override
+  public CompletableFuture<TableDescriptor> getDescriptor() {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
+  public AsyncTableRegionLocator getRegionLocator() {
+    throw new UnsupportedOperationException("not implemented");
   }
 
   /** {@inheritDoc} */

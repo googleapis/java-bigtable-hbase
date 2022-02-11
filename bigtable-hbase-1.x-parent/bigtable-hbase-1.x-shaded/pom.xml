@@ -18,7 +18,7 @@ limitations under the License.
   <parent>
     <artifactId>bigtable-hbase-1.x-parent</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>2.0.0-beta6</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.0.0-beta7-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -68,12 +68,18 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-1.x</artifactId>
-      <version>2.0.0-beta6</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.0.0-beta7-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-metrics-api</artifactId>
       <version>${bigtable-client-core.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.api</groupId>
+          <artifactId>api-common</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <!-- Since opencensus-api is a transitive dep, we have to shade its impl as well.
     Otherwise the -api will be permanently severed from the impl and exporters -->
@@ -184,6 +190,7 @@ limitations under the License.
                   <!-- See notes in bigtable-client-core/bigtable-hbase/pom.xml#verify-conscrypt-version -->
                   <exclude>org.conscrypt:conscrypt-openjdk-uber</exclude>
                   <exclude>org.apache.htrace:htrace-core4</exclude>
+                  <exclude>org.bouncycastle:*</exclude>
                 </excludes>
               </artifactSet>
               <relocations>
@@ -344,7 +351,7 @@ limitations under the License.
       <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>
         <artifactId>bigtable-build-helper</artifactId>
-        <version>2.0.0-beta6</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+        <version>2.0.0-beta7-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
 
         <executions>
           <execution>
@@ -360,6 +367,7 @@ limitations under the License.
                 <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableAdmin</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableConnection</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/CommonConnection</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/BigtableAsyncRegistry</classEntry>
               </allowedJarClassEntries>
             </configuration>
           </execution>
