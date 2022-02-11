@@ -6,13 +6,13 @@
   <parent>
     <artifactId>bigtable-hbase-replication</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>2.0.0-beta6</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.google.cloud.bigtable</groupId>
-  <version>2.0.0-beta6</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   <artifactId>bigtable-hbase-replication-core</artifactId>
+  <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
   <packaging>jar</packaging>
   <name>bigtable-hbase-replication-core</name>
   <!--  Library to enable one way replication from HBase to Cloud Bigtable.-->
@@ -55,7 +55,27 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
         <version>1.4</version>
+        <!-- disable google-cloud-shared-config enforcement checks because
+      hbase-client's dependency subtree doesn't follow the same rules and is
+      unable to be fixed here -->
         <executions>
+          <execution>
+            <id>enforce</id>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
+          <!-- This must be a drop in replacement for hbase-client, so can't
+            manage hbase's deps -->
+          <execution>
+            <id>enforce-banned-deps</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
           <execution>
             <id>enforce-java</id>
             <goals>
@@ -150,19 +170,17 @@
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
-      <version>${project.version}</version>
-      <scope>${scope}</scope>
+      <version>2.0.0-beta6</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>
-    <dependency>
+    <!--<dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
       <version>2.5.0</version>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/org.apache.hbase/hbase-testing-util -->
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-testing-util</artifactId>
-      <version>1.4.12</version>
+      <version>${hbase1.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -170,7 +188,7 @@
       <artifactId>google-cloud-bigtable-emulator</artifactId>
       <version>0.125.1</version>
       <scope>test</scope>
-    </dependency>
+    </dependency> -->
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>

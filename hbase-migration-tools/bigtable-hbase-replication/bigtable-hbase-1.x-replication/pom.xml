@@ -5,14 +5,15 @@
       <parent>
         <artifactId>bigtable-hbase-replication</artifactId>
         <groupId>com.google.cloud.bigtable</groupId>
-        <version>2.0.0-beta6</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+        <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
       </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>2.0.0-beta6</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     <artifactId>bigtable-hbase-1.x-replication</artifactId>
-    <packaging>jar</packaging>
+    <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+
+  <packaging>jar</packaging>
     <name>bigtable-hbase-1.x-replication</name>
     <!--  Library to enable one way replication from HBase to Cloud Bigtable.-->
 
@@ -55,6 +56,26 @@
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <version>1.4</version>
                 <executions>
+                <!-- disable google-cloud-shared-config enforcement checks because
+ hbase-client's dependency subtree doesn't follow the same rules and is
+ unable to be fixed here -->
+                    <execution>
+                        <id>enforce</id>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
+                    <!-- This must be a drop in replacement for hbase-client, so can't
+                      manage hbase's deps -->
+                    <execution>
+                        <id>enforce-banned-deps</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
                     <execution>
                         <id>enforce-java</id>
                         <goals>
@@ -146,28 +167,29 @@
     <dependencies>
         <!-- bigtable libs for org.apache.hadoop.hbase -->
         <dependency>
+            <groupId>com.google.cloud.bigtable</groupId>
+            <artifactId>bigtable-hbase-replication-core</artifactId>
+          <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+          <exclusions>
+                <exclusion>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>hbase-client</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-server</artifactId>
-            <version>1.5.0</version>
+            <version>${hbase1.version}</version>
             <!--       The library is running on the HBase region server,-->
             <!--       use the HBase server from the HBase environment-->
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.cloud.bigtable</groupId>
-            <artifactId>bigtable-hbase-replication</artifactId>
-            <version>2.0.0-beta6</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <version>2.5.0</version>
         </dependency>
         <!-- test dependencies -->
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-testing-util</artifactId>
-            <version>1.4.12</version>
+            <version>${hbase1.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -175,6 +197,14 @@
             <artifactId>google-cloud-bigtable-emulator</artifactId>
             <version>0.125.1</version>
             <scope>test</scope>
+            <exclusions>
+                <!-- We do not use channel creating helpers, so don't need any
+                 dependencies from the emulator-->
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
