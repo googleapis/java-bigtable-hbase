@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Connection;
 import org.junit.After;
@@ -58,7 +59,7 @@ public class ApproximatingIncompatibleMutationAdapterTest {
 
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
-  @Mock Configuration conf;
+  Configuration conf;
 
   @Mock Connection connection;
 
@@ -70,7 +71,9 @@ public class ApproximatingIncompatibleMutationAdapterTest {
 
   @Before
   public void setUp() throws Exception {
-    when(conf.getInt(anyString(), anyInt())).thenReturn(10);
+    conf = HBaseConfiguration.create();
+    conf.setInt(DELETE_FAMILY_WRITE_THRESHOLD_KEY, 10);
+    // when(conf.getInt(anyString(), anyInt())).thenReturn(10);
     when(mockWalEntry.getWalWriteTime()).thenReturn(1005L);
     // Expectations on Conf should be set before this point.
     incompatibleMutationAdapter =
@@ -81,9 +84,8 @@ public class ApproximatingIncompatibleMutationAdapterTest {
   public void tearDown() throws Exception {
     verify(mockWalEntry, atLeast(2)).getCells();
     verify(mockWalEntry, atLeastOnce()).getWalWriteTime();
-    verify(conf, atLeastOnce()).getInt(eq(DELETE_FAMILY_WRITE_THRESHOLD_KEY), anyInt());
     verifyNoInteractions(connection);
-    reset(mockWalEntry, conf, connection, metricsExporter);
+    reset(mockWalEntry, connection, metricsExporter);
   }
 
   @Test

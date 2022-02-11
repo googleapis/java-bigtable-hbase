@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Connection;
 import org.junit.After;
@@ -96,7 +97,7 @@ public class IncompatibleMutationAdapterTest {
 
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
-  @Mock Configuration conf;
+  Configuration conf;
 
   @Mock Connection connection;
 
@@ -108,14 +109,15 @@ public class IncompatibleMutationAdapterTest {
 
   @Before
   public void setUp() throws Exception {
+    conf = HBaseConfiguration.create();
     incompatibleMutationAdapter =
         new TestIncompatibleMutationAdapter(conf, metricsExporter, connection);
   }
 
   @After
   public void tearDown() throws Exception {
-    verifyNoInteractions(connection, conf);
-    reset(mockWalEntry, conf, connection, metricsExporter);
+    verifyNoInteractions(connection);
+    reset(mockWalEntry,  connection, metricsExporter);
     incompatibleMutationAdapter.reset();
   }
 

@@ -72,6 +72,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
   @Before
   public void setUp() throws Exception {
+    // TODO: Disable all logging for HDFS and HBase micro cluser
     // Prepare HBase mini cluster configuration
     Configuration conf = hbaseTestingUtil.getConfiguration();
     conf.setFloat("hbase.regionserver.logroll.multiplier", 0.0003f);
