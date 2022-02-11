@@ -2,19 +2,19 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <!--  <parent>-->
-  <!--    <artifactId>bigtable-client-parent</artifactId>-->
-  <!--    <groupId>com.google.cloud.bigtable</groupId>-->
-  <!--    <version>1.14.1-SNAPSHOT</version>-->
-  <!--  </parent>-->
+
+  <parent>
+    <artifactId>bigtable-hbase-replication</artifactId>
+    <groupId>com.google.cloud.bigtable</groupId>
+    <version>2.0.0-beta6</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+  </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.google.cloud.bigtable</groupId>
-  <version>2.0.0-beta6
-  </version> <!-- {x-version-update:bigtable-client-parent:current} -->
-  <artifactId>bigtable-hbase-replication</artifactId>
+  <version>2.0.0-beta6</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+  <artifactId>bigtable-hbase-replication-core</artifactId>
   <packaging>jar</packaging>
-  <name>bigtable-hbase-replication</name>
+  <name>bigtable-hbase-replication-core</name>
   <!--  Library to enable one way replication from HBase to Cloud Bigtable.-->
 
   <repositories>
@@ -144,8 +144,8 @@
       </plugin>
     </plugins>
   </build>
-  <dependencies>
 
+  <dependencies>
     <!-- bigtable libs for org.apache.hadoop.hbase -->
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
