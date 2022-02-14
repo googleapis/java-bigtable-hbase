@@ -2,6 +2,34 @@
 
 ## [2.0.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.0.0-beta6...v2.0.0) (2022-02-11)
 
+This is the first release of Bigtable HBase 2.0.0. The main focus of Bigtable HBase 2.0.0 is to migrate the internal logic 
+from bigtable-client-core to [java-bigtable](https://github.com/googleapis/java-bigtable). The primary difference from 1.x.x versions is that bigtable-client-core has 
+been completely removed and CloudBigtableIO has been migrated as well to the java-bigtable client library.
+
+Other notable changes between 1.x.x and 2.0.0 include:
+* Deadlines are enabled by default (google.bigtable.rpc.use.timeouts)
+* Retry settings have been adjusted as follows:
+  * Unary:
+    * attempt: 20s
+    * operation: 5m
+  * Scan / bulkReads:
+    * response: 5m
+    * attempt 10m
+    * operation: forever
+  * BulkMutate:
+    * attempt: 1m
+    * operation (default): 10m
+    * operation (BIGTABLE_USE_BATCH=false): 20m
+* Error handling has been improved to always be a subclass of IOException and to include the caller’s stack trace for asynchronous calls
+* Dependencies have been improved (mapreduce byo-hadoop, etc)
+* Minimum supported Java version is Java 8
+* Sending metrics to stackdriver is now supported
+* Upgraded HBase 1.x to 1.7.1 and HBase 2.x to 2.3.6
+
+You can see all of the changes in our alpha -> beta releases by reading the [CHANGELOG.md](https://github.com/googleapis/java-bigtable-hbase/blob/main/CHANGELOG.md).
+
+The changes between 2.0.0-beta6 and 2.0.0 are below.
+
 
 ### Bug Fixes
 
