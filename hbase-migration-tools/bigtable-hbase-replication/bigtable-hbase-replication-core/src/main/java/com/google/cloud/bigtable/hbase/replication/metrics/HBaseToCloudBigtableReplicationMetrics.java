@@ -19,10 +19,9 @@ package com.google.cloud.bigtable.hbase.replication.metrics;
 public class HBaseToCloudBigtableReplicationMetrics {
 
   // Static class for listing all the metrics
-  private HBaseToCloudBigtableReplicationMetrics(){}
+  private HBaseToCloudBigtableReplicationMetrics() {}
 
   public static final String INCOMPATIBLE_MUTATION_METRIC_KEY = "bigtableIncompatibleMutations";
   public static final String DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY =
       "bigtableDroppedIncompatibleMutations";
-
 }

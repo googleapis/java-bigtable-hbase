@@ -16,7 +16,6 @@
 
 package com.google.cloud.bigtable.hbase.replication.metrics;
 
-
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -32,8 +31,7 @@ import org.mockito.junit.MockitoRule;
 
 @RunWith(JUnit4.class)
 public class HBaseMetricsExporterTest {
-  @Rule
-  public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Mock MetricsSource metricsSource;
 

@@ -65,13 +65,12 @@ public class IncompatibleMutationAdapterTest {
     Set<Integer> incompatibleMutations = new HashSet<>();
 
     /**
-     * Creates an IncompatibleMutationAdapter with HBase configuration, MetricSource, and CBT
-     * Table.
+     * Creates an IncompatibleMutationAdapter with HBase configuration, MetricSource, and CBT Table.
      *
      * <p>All subclasses must expose this constructor.
      *
      * @param conf HBase configuration. All the configurations required by subclases should come
-     * from here.
+     *     from here.
      * @param metricsExporter Interface for exposing Hadoop metric source.
      * @param connection CBT table taht is destination of the replicated edits. This
      */
@@ -103,16 +102,13 @@ public class IncompatibleMutationAdapterTest {
   private static final byte[] val = "value".getBytes(StandardCharsets.UTF_8);
   private static final String tableName = "test-table";
 
-  @Rule
-  public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   private final Configuration conf = new Configuration(false);
 
-  @Mock
-  Connection connection;
+  @Mock Connection connection;
 
-  @Mock
-  MetricsExporter metricsExporter;
+  @Mock MetricsExporter metricsExporter;
 
   TestIncompatibleMutationAdapter incompatibleMutationAdapter;
 
@@ -139,16 +135,14 @@ public class IncompatibleMutationAdapterTest {
     walEntryCells.add(put2);
     walEntryCells.add(compatibleDelete);
 
-    BigtableWALEntry walEntry = new BigtableWALEntry(System.currentTimeMillis(), walEntryCells,
-        tableName);
+    BigtableWALEntry walEntry =
+        new BigtableWALEntry(System.currentTimeMillis(), walEntryCells, tableName);
 
     Assert.assertEquals(
         walEntryCells, incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
-    verify(metricsExporter)
-        .incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
-    verify(metricsExporter)
-        .incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
   }
 
   @Test
@@ -158,8 +152,8 @@ public class IncompatibleMutationAdapterTest {
     Cell put = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.Put, val);
     walEdit.add(put);
     walEdit.add(delete);
-    BigtableWALEntry walEntry = new BigtableWALEntry(System.currentTimeMillis(), walEdit,
-        tableName);
+    BigtableWALEntry walEntry =
+        new BigtableWALEntry(System.currentTimeMillis(), walEdit, tableName);
     Cell expectedDelete = new KeyValue(rowKey, cf, null, 0, KeyValue.Type.DeleteFamily);
     incompatibleMutationAdapter.adaptedEntryMap.put(1, Arrays.asList(expectedDelete));
 
@@ -167,12 +161,9 @@ public class IncompatibleMutationAdapterTest {
         Arrays.asList(put, expectedDelete),
         incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
-    verify(metricsExporter)
-        .incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
-    verify(metricsExporter, times(1))
-        .incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
-    verify(metricsExporter, times(1))
-        .incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
   }
 
   @Test
@@ -180,8 +171,8 @@ public class IncompatibleMutationAdapterTest {
     ArrayList<Cell> walEntryCells = new ArrayList<>();
     Cell delete = new KeyValue(rowKey, cf, null, 1000, KeyValue.Type.DeleteFamily);
     walEntryCells.add(delete);
-    BigtableWALEntry walEntry = new BigtableWALEntry(System.currentTimeMillis(), walEntryCells,
-        tableName);
+    BigtableWALEntry walEntry =
+        new BigtableWALEntry(System.currentTimeMillis(), walEntryCells, tableName);
 
     // A single deleteFamily becomes 2 delete cells. This can happen when we call CBT and find out
     // there were 2 cells in the family before timestamp 100
@@ -194,12 +185,9 @@ public class IncompatibleMutationAdapterTest {
     Assert.assertEquals(
         expectedDeletes, incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
-    verify(metricsExporter)
-        .incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
-    verify(metricsExporter, times(1))
-        .incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
-    verify(metricsExporter, times(1))
-        .incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
   }
 
   @Test
@@ -209,18 +197,15 @@ public class IncompatibleMutationAdapterTest {
     Cell put = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.Put, val);
     walEntryCells.add(incompatible);
     walEntryCells.add(put);
-    BigtableWALEntry walEntry = new BigtableWALEntry(System.currentTimeMillis(), walEntryCells,
-        tableName);
+    BigtableWALEntry walEntry =
+        new BigtableWALEntry(System.currentTimeMillis(), walEntryCells, tableName);
 
     Assert.assertEquals(
         Arrays.asList(put), incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
-    verify(metricsExporter)
-        .incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
-    verify(metricsExporter, times(1))
-        .incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
-    verify(metricsExporter, times(1))
-        .incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
   }
 
   @Test
@@ -230,18 +215,15 @@ public class IncompatibleMutationAdapterTest {
     Cell incompatible = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.DeleteFamilyVersion);
     walEntryCells.add(put);
     walEntryCells.add(incompatible);
-    BigtableWALEntry walEntry = new BigtableWALEntry(System.currentTimeMillis(), walEntryCells,
-        tableName);
+    BigtableWALEntry walEntry =
+        new BigtableWALEntry(System.currentTimeMillis(), walEntryCells, tableName);
     incompatibleMutationAdapter.incompatibleMutations.add(1);
 
     Assert.assertEquals(
         Arrays.asList(put), incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
-    verify(metricsExporter)
-        .incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
-    verify(metricsExporter, times(1))
-        .incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
-    verify(metricsExporter, times(1))
-        .incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
   }
 }

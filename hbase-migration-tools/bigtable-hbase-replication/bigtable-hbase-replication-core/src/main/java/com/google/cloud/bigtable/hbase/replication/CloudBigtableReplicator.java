@@ -102,8 +102,10 @@ public class CloudBigtableReplicator {
     executorService =
         Executors.newFixedThreadPool(
             numThreads,
-            new ThreadFactoryBuilder().setDaemon(true)
-                .setNameFormat("cloud-bigtable-replication-sink-").build());
+            new ThreadFactoryBuilder()
+                .setDaemon(true)
+                .setNameFormat("cloud-bigtable-replication-sink-")
+                .build());
   }
 
   private static synchronized void getOrCreateBigtableConnection(Configuration configuration) {
@@ -177,8 +179,7 @@ public class CloudBigtableReplicator {
 
     for (Map.Entry<String, List<BigtableWALEntry>> walEntriesForTable :
         walEntriesByTable.entrySet()) {
-      futures.addAll(
-          replicateTable(walEntriesForTable.getKey(), walEntriesForTable.getValue()));
+      futures.addAll(replicateTable(walEntriesForTable.getKey(), walEntriesForTable.getValue()));
     }
 
     // Check on the result  for all the batches.
@@ -201,8 +202,8 @@ public class CloudBigtableReplicator {
     return succeeded;
   }
 
-  private List<Future<Boolean>> replicateTable(String tableName,
-      List<BigtableWALEntry> walEntries) {
+  private List<Future<Boolean>> replicateTable(
+      String tableName, List<BigtableWALEntry> walEntries) {
     List<Future<Boolean>> futures = new ArrayList<>();
     List<Cell> cellsToReplicateForTable = new ArrayList<>();
     int batchSizeInBytes = 0;
@@ -210,8 +211,7 @@ public class CloudBigtableReplicator {
     for (BigtableWALEntry walEntry : walEntries) {
 
       // Translate the incompatible mutations.
-      List<Cell> compatibleCells =
-          incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry);
+      List<Cell> compatibleCells = incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry);
       cellsToReplicateForTable.addAll(compatibleCells);
     }
 
@@ -225,9 +225,7 @@ public class CloudBigtableReplicator {
         cellsToReplicateForTable.stream()
             .collect(
                 groupingBy(
-                    k ->
-                        new SimpleByteRange(
-                            k.getRowArray(), k.getRowOffset(), k.getRowLength())));
+                    k -> new SimpleByteRange(k.getRowArray(), k.getRowOffset(), k.getRowLength())));
 
     // Now we have cells to replicate by rows, this list can be big and processing it on a single
     // thread is not efficient. As this thread will have to do proto translation and may need to

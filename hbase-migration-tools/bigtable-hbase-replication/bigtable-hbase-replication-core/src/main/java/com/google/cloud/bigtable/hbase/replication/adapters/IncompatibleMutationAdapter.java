@@ -48,7 +48,6 @@ public abstract class IncompatibleMutationAdapter {
   private final Configuration conf;
   private final MetricsExporter metricsExporter;
 
-
   private void incrementDroppedIncompatibleMutations() {
     metricsExporter.incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
   }

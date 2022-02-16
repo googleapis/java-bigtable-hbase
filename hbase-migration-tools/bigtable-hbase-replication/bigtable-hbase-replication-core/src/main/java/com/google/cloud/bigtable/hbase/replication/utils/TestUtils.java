@@ -35,9 +35,7 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 
-/**
- * Utility class containing various helpers for tests.
- */
+/** Utility class containing various helpers for tests. */
 public class TestUtils {
 
   public static final String ROW_KEY_PREFIX = "test-row-";
@@ -53,8 +51,7 @@ public class TestUtils {
   public static final long TIMESTAMP = 1000l;
 
   // ONLY STATIC METHODS
-  private TestUtils() {
-  }
+  private TestUtils() {}
 
   public static byte[] getRowKey(int i) {
     return (ROW_KEY_PREFIX + i).getBytes();
@@ -168,6 +165,7 @@ public class TestUtils {
   /**
    * Waits for replication to complete and matches the contents of the tables. If match fails,
    * retires 5 times after sleeping 1 sec between attempts.
+   *
    * @param expected
    * @param actual
    * @throws InterruptedException
@@ -177,7 +175,8 @@ public class TestUtils {
     for (int i = 0; i < 5; i++) {
       // Wait for replication to catch up
       // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini
-      // cluster. Or Inject a custom HBaseToCloudBigtableReplicationMetrics Exporter and listen into the number of mutations.
+      // cluster. Or Inject a custom HBaseToCloudBigtableReplicationMetrics Exporter and listen into
+      // the number of mutations.
       Thread.sleep(1000);
       try {
         assertTableEquals(expected, actual);
@@ -187,9 +186,7 @@ public class TestUtils {
     }
   }
 
-  /**
-   * Scans the 2 Tables and compares the data. Fails assertion in case of a mismatch.
-   */
+  /** Scans the 2 Tables and compares the data. Fails assertion in case of a mismatch. */
   public static void assertTableEquals(Table expected, Table actual) throws IOException {
 
     ResultScanner expectedScanner = expected.getScanner(new Scan().setMaxVersions());

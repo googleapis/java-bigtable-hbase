@@ -73,7 +73,9 @@ public class ApproximatingIncompatibleMutationAdapter extends IncompatibleMutati
                 KeyValue.Type.DeleteFamily));
       } else {
         LOG.error(
-            "Dropping entry: " + cell + " cell time: "
+            "Dropping entry: "
+                + cell
+                + " cell time: "
                 + cell.getTimestamp()
                 + " walTime: "
                 + walWriteTime

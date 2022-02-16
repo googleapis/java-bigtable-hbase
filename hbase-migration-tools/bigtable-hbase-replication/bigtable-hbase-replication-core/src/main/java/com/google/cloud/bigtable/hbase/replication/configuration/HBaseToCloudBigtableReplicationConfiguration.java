@@ -16,13 +16,11 @@
 
 package com.google.cloud.bigtable.hbase.replication.configuration;
 
-/**
- * Static class containing all the configuration keys and their descriptions.
- */
+/** Static class containing all the configuration keys and their descriptions. */
 public class HBaseToCloudBigtableReplicationConfiguration {
 
   // Only used for defining static config keys
-  private HBaseToCloudBigtableReplicationConfiguration(){}
+  private HBaseToCloudBigtableReplicationConfiguration() {}
 
   /**
    * Threshold to consider the deleteFamilyBefore as a DeleteFamily mutation. When DeleteFamily or
@@ -48,7 +46,6 @@ public class HBaseToCloudBigtableReplicationConfiguration {
   public static final String INSTANCE_KEY = "google.bigtable.instance.id";
   public static final String APP_PROFILE_ID = "google.bigtable.app_profile.id";
 
-
   public static final String NUM_REPLICATION_SINK_THREADS_KEY =
       "google.bigtable.replication.thread_count";
   // TODO maybe it should depend on the number of processors on the VM.
@@ -59,5 +56,4 @@ public class HBaseToCloudBigtableReplicationConfiguration {
   // batch capacity by counts and bytes. These capacity are set by `replication.source.nb.capacity`
   // and `replication.source.size.capacity` config keys.
   public static final long DEFAULT_BATCH_SIZE_IN_BYTES = 500_000;
-
 }

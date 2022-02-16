@@ -100,12 +100,9 @@ public class ApproximatingIncompatibleMutationAdapterTest {
         Arrays.asList(put, expectedDelete),
         incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
 
-    verify(metricsExporter)
-        .incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
-    verify(metricsExporter, times(1))
-        .incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
-    verify(metricsExporter, times(1))
-        .incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
   }
 
   @Test
@@ -129,11 +126,8 @@ public class ApproximatingIncompatibleMutationAdapterTest {
     Assert.assertEquals(
         Arrays.asList(put), incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
 
-    verify(metricsExporter)
-        .incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
-    verify(metricsExporter, times(3))
-        .incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
-    verify(metricsExporter, times(3))
-        .incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter, times(3)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter, times(3)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
   }
 }

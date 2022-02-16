@@ -27,9 +27,7 @@ import org.apache.hadoop.hbase.wal.WAL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-  /**
-   * Basic endpoint that listens to CDC from HBase 1.x and replicates to Cloud Bigtable.
-   */
+/** Basic endpoint that listens to CDC from HBase 1.x and replicates to Cloud Bigtable. */
 public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndpoint {
 
   private static final Logger LOG =
