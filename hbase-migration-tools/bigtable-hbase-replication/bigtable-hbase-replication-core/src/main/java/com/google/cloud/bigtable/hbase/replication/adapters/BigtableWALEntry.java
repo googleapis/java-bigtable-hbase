@@ -16,6 +16,7 @@
 
 package com.google.cloud.bigtable.hbase.replication.adapters;
 
+import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import java.util.ArrayList;
 import org.apache.hadoop.hbase.Cell;
 
@@ -23,10 +24,11 @@ import org.apache.hadoop.hbase.Cell;
  * BigtableWALEntry abstracts minimal functionality from WAL.Entry required for this replication
  * library.
  */
+@InternalApi
 public class BigtableWALEntry {
-  private long walWriteTimestamp;
-  private ArrayList<Cell> cells;
-  private String tableName;
+  private final long walWriteTimestamp;
+  private final ArrayList<Cell> cells;
+  private final String tableName;
 
   public BigtableWALEntry(long timeStamp, ArrayList<Cell> cells, String tableName) {
     this.walWriteTimestamp = timeStamp;

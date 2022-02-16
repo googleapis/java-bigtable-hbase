@@ -16,19 +16,13 @@
 
 package com.google.cloud.bigtable.hbase.replication.metrics;
 
-import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
+public class HBaseToCloudBigtableReplicationMetrics {
 
-/** HBaseMetricsExporter implements MetricExporter which bridges with MetricsSource. */
-public class HBaseMetricsExporter implements MetricsExporter {
-  // same pattern as used by HbaseInterClusterRepl
-  private MetricsSource metricsSource;
+  // Static class for listing all the metrics
+  private HBaseToCloudBigtableReplicationMetrics(){}
 
-  public void setMetricsSource(MetricsSource metricsSource) {
-    this.metricsSource = metricsSource;
-  }
+  public static final String INCOMPATIBLE_MUTATION_METRIC_KEY = "bigtableIncompatibleMutations";
+  public static final String DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY =
+      "bigtableDroppedIncompatibleMutations";
 
-  @Override
-  public void incCounters(String counterName, long delta) {
-    metricsSource.incCounters(counterName, delta);
-  }
 }

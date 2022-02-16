@@ -17,7 +17,11 @@
 package com.google.cloud.bigtable.hbase.replication;
 
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
 import org.apache.hadoop.hbase.wal.WAL;
 import org.slf4j.Logger;
@@ -25,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 // TODO(remove BaseReplicationEndpoint extension).
 public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndpoint {
+
   private static final Logger LOG =
       LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
 
@@ -69,8 +74,6 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
 
   @Override
   protected void doStart() {
-    LOG.error(
-        "Starting replication to CBT. ", new RuntimeException("Dummy exception for stacktrace."));
     metricsExporter.setMetricsSource(ctx.getMetrics());
     cloudBigtableReplicator.start(ctx.getConfiguration(), metricsExporter);
     notifyStarted();
@@ -78,9 +81,6 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
 
   @Override
   protected void doStop() {
-    LOG.error(
-        "Stopping replication to CBT for this EndPoint. ",
-        new RuntimeException("Dummy exception for stacktrace"));
     cloudBigtableReplicator.stop();
     notifyStopped();
   }

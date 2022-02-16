@@ -16,6 +16,7 @@
 
 package com.google.cloud.bigtable.hbase.replication;
 
+import com.google.bigtable.repackaged.com.google.api.client.util.Preconditions;
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
@@ -63,17 +64,13 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
 
     @Override
     public boolean canAcceptMutation(Cell cell) {
-      if (closed) {
-        throw new IllegalStateException("Can't add mutations to a closed builder");
-      }
+      Preconditions.checkState(!closed, "Can't add mutations to a closed builder");
       return cell.getTypeByte() == KeyValue.Type.Put.getCode();
     }
 
     @Override
     public void addMutation(Cell cell) throws IOException {
-      if (closed) {
-        throw new IllegalStateException("Can't add mutations to a closed builder");
-      }
+      Preconditions.checkState(!closed, "Can't add mutations to a closed builder");
       put.add(cell);
     }
 
@@ -97,18 +94,13 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
 
     @Override
     public boolean canAcceptMutation(Cell cell) {
-      if (closed) {
-        throw new IllegalStateException("Can't add mutations to a closed builder");
-      }
-
+      Preconditions.checkState(!closed, "Can't add mutations to a closed builder");
       return CellUtil.isDelete(cell);
     }
 
     @Override
     public void addMutation(Cell cell) throws IOException {
-      if (closed) {
-        throw new IllegalStateException("Can't add mutations to a closed builder");
-      }
+      Preconditions.checkState(!closed, "Can't add mutations to a closed builder");
       numDeletes++;
       delete.addDeleteMarker(cell);
     }
@@ -193,13 +185,13 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
         rowMutationsList.add(rowMutations);
       }
 
-      Object[] futures = new Object[rowMutationsList.size()];
-      table.batch(rowMutationsList, futures);
+      Object[] results = new Object[rowMutationsList.size()];
+      table.batch(rowMutationsList, results);
 
-      // Make sure that there were no errors returned via futures.
-      for (Object future : futures) {
-        if (future != null && future instanceof Throwable) {
-          LOG.error("Encountered error while replicating wal entry.", (Throwable) future);
+      // Make sure that there were no errors returned via results.
+      for (Object result : results) {
+        if (result != null && result instanceof Throwable) {
+          LOG.error("Encountered error while replicating wal entry.", (Throwable) result);
           succeeded = false;
           break;
         }

@@ -16,8 +16,11 @@
 
 package com.google.cloud.bigtable.hbase.replication.adapters;
 
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_DELETE_FAMILY_WRITE_THRESHOLD_IN_MILLIS;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DELETE_FAMILY_WRITE_THRESHOLD_KEY;
 import static org.apache.hadoop.hbase.HConstants.LATEST_TIMESTAMP;
 
+import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import java.util.Arrays;
 import java.util.List;
@@ -34,22 +37,8 @@ import org.slf4j.LoggerFactory;
  * Practically, converts DeleteFamilyBeforeTimestamp to DeleteFamily when delete is requested before
  * "now".
  */
+@InternalApi
 public class ApproximatingIncompatibleMutationAdapter extends IncompatibleMutationAdapter {
-  /**
-   * Threshold to consider the deleteFamilyBefore as a DeleteFamily mutation. When DeleteFamily or
-   * HBase translates a DeleteFamily or DeleteRow to DeleteFamilyBeforeTimestamp(now). This is then
-   * written to WAL. For local clusters, the WALKey.writeTime() is same as "now" from the
-   * DeleteFamilyBeforeTimestamp mutation. However, if the mutation was generated from a different
-   * cluster, the WALKey.writeTime and timestamp in DeleteFamilyBeforeTimestamp will have diff of
-   * ReplicationLag. Users can set this config to Max(ReplicationLag) to make sure that all the
-   * deleteRow/DeleteColumnFamily are correctly interpreted. If you only issue DeleteFamily or
-   * DeleteRow mutations, you can set this to Integer.MAX_VALUE. This will lead to any
-   * DeleteFamilyBeforeTimestamp where (timestamp < walkey.writeTime()) as DeleteFamily.
-   */
-  public static final String DELETE_FAMILY_WRITE_THRESHOLD_KEY =
-      "google.bigtable.deletefamily.threshold";
-
-  private static final int DEFAULT_DELETE_FAMILY_WRITE_THRESHOLD_IN_MILLIS = 5 * 60 * 1000;
 
   private static final Logger LOG =
       LoggerFactory.getLogger(ApproximatingIncompatibleMutationAdapter.class);
@@ -84,8 +73,8 @@ public class ApproximatingIncompatibleMutationAdapter extends IncompatibleMutati
                 KeyValue.Type.DeleteFamily));
       } else {
         LOG.error(
-            "DROPPING ENTRY: cell time: "
-                + cell.getTypeByte()
+            "Dropping entry: " + cell + " cell time: "
+                + cell.getTimestamp()
                 + " walTime: "
                 + walWriteTime
                 + " DELTA: "
@@ -94,7 +83,6 @@ public class ApproximatingIncompatibleMutationAdapter extends IncompatibleMutati
                     + " With threshold "
                     + deleteFamilyWriteTimeThreshold));
       }
-      // else can't convert the mutation, throw the exception.
     }
     // Can't convert any other type of mutation.
     throw new UnsupportedOperationException("Unsupported deletes: " + cell);

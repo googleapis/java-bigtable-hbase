@@ -64,6 +64,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
   @Rule public final BigtableEmulatorRule bigtableEmulator = BigtableEmulatorRule.create();
   private Connection cbtConnection;
+  private Connection hbaseConnection;
 
   private Table hbaseTable;
   private Table hbaseTable2;
@@ -72,23 +73,11 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
   @Before
   public void setUp() throws Exception {
-    // TODO: Disable all logging for HDFS and HBase micro cluser
     // Prepare HBase mini cluster configuration
     Configuration conf = hbaseTestingUtil.getConfiguration();
-    conf.setFloat("hbase.regionserver.logroll.multiplier", 0.0003f);
-    conf.setInt("replication.source.size.capacity", 10240);
-    conf.setLong("replication.source.sleepforretries", 100);
-    conf.setInt("hbase.regionserver.maxlogs", 10);
-    conf.setLong("hbase.master.logcleaner.ttl", 10);
-    conf.setInt("zookeeper.recovery.retry", 1);
-    conf.setInt("zookeeper.recovery.retry.intervalmill", 10);
     conf.setBoolean(HConstants.REPLICATION_ENABLE_KEY, true);
     conf.setBoolean(ServerRegionReplicaUtil.REGION_REPLICA_REPLICATION_CONF_KEY, true);
-    conf.setLong(HConstants.THREAD_WAKE_FREQUENCY, 100);
-    conf.setInt("replication.stats.thread.period.seconds", 5);
-    conf.setBoolean("hbase.tests.use.shortcircuit.reads", false);
     conf.setInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER, 5); // less number of retries is needed
-    conf.setInt("hbase.client.serverside.retries.multiplier", 1);
 
     // Set CBT related configs.
     conf.set("google.bigtable.instance.id", "test-instance");
@@ -102,6 +91,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     replicationAdmin = new ReplicationAdmin(hbaseTestingUtil.getConfiguration());
 
     cbtConnection = BigtableConfiguration.connect(conf);
+    hbaseConnection = hbaseTestingUtil.getConnection();
 
     // Setup Replication in HBase mini cluster
     ReplicationPeerConfig peerConfig = new ReplicationPeerConfig();
@@ -111,18 +101,18 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     peerConfig.setClusterKey(hbaseTestingUtil.getClusterKey());
     replicationAdmin.addPeer("cbt", peerConfig);
 
-    setupTables(TestUtils.TABLE_NAME);
-    setupTables(TestUtils.TABLE_NAME_2);
+    createTables(TestUtils.TABLE_NAME);
+    createTables(TestUtils.TABLE_NAME_2);
 
     cbtTable = cbtConnection.getTable(TestUtils.TABLE_NAME);
     cbtTable2 = cbtConnection.getTable(TestUtils.TABLE_NAME_2);
-    hbaseTable = hbaseTestingUtil.getConnection().getTable(TestUtils.TABLE_NAME);
-    hbaseTable2 = hbaseTestingUtil.getConnection().getTable(TestUtils.TABLE_NAME_2);
+    hbaseTable = hbaseConnection.getTable(TestUtils.TABLE_NAME);
+    hbaseTable2 = hbaseConnection.getTable(TestUtils.TABLE_NAME_2);
 
     LOG.error("#################### SETUP COMPLETE ##############################");
   }
 
-  private void setupTables(TableName tableName) throws IOException {
+  private void createTables(TableName tableName) throws IOException {
     // Create table in HBase
     HTableDescriptor htd = hbaseTestingUtil.createTableDescriptor(tableName.getNameAsString());
     HColumnDescriptor cf1 = new HColumnDescriptor(TestUtils.CF1);
@@ -142,6 +132,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
   @After
   public void tearDown() throws Exception {
+    cbtConnection.close();
+    hbaseConnection.close();
     replicationAdmin.close();
     hbaseTestingUtil.shutdownMiniCluster();
   }
@@ -158,8 +150,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
   @Test
   public void testMutationReplication() throws IOException, InterruptedException {
-    Table table = hbaseTestingUtil.getConnection().getTable(TestUtils.TABLE_NAME);
-    // Add 10 rows with 1 cell/family
+    Table table = hbaseConnection.getTable(TestUtils.TABLE_NAME);
+    // Add 10K rows with 1 cell/family
     for (int i = 0; i < 10000; i++) {
       Put put = new Put(TestUtils.getRowKey(i));
       put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.getValue(i));
@@ -167,14 +159,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
       table.put(put);
     }
 
-    // Wait for replication to catch up
-    // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini
-    // cluster
-    Thread.sleep(2000);
-    //   Waiter.waitFor(CONF, 60000, () -> TestEndpoint.getEntries().size() >= cellNum);
-
     // Validate that both the databases have same data
-    TestUtils.assertTableEquals(hbaseTable, cbtTable);
+    TestUtils.assertTableEventuallyEquals(hbaseTable, cbtTable);
   }
 
   @Test
@@ -219,20 +205,14 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     delete = new Delete(TestUtils.getRowKey(3));
     hbaseTable.delete(delete);
 
-    // Wait for replication to catch up
-    // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini
-    // cluster
-    //   Waiter.waitFor(CONF, 60000, () -> TestEndpoint.getEntries().size() >= cellNum);
-    Thread.sleep(2000);
-
     // Validate that both the databases have same data
-    TestUtils.assertTableEquals(hbaseTable, cbtTable);
+    TestUtils.assertTableEventuallyEquals(hbaseTable, cbtTable);
   }
 
   @Test
   public void testIncrements() throws IOException, InterruptedException {
     long startTime = System.currentTimeMillis();
-    Table table = hbaseTestingUtil.getConnection().getTable(TestUtils.TABLE_NAME);
+    Table table = hbaseConnection.getTable(TestUtils.TABLE_NAME);
     Put put = new Put(TestUtils.ROW_KEY);
     byte[] val = Bytes.toBytes(4l);
     put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, val);
@@ -243,20 +223,14 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     increment.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 10l);
     table.increment(increment);
 
-    // Wait for replication to catch up
-    // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini
-    // cluster
-    Thread.sleep(2000);
-    //   Waiter.waitFor(CONF, 60000, () -> TestEndpoint.getEntries().size() >= cellNum);
-
     // Validate that both the databases have same data
-    TestUtils.assertTableEquals(hbaseTable, cbtTable);
+    TestUtils.assertTableEventuallyEquals(hbaseTable, cbtTable);
   }
 
   @Test
   public void testAppends() throws IOException, InterruptedException {
     long startTime = System.currentTimeMillis();
-    Table table = hbaseTestingUtil.getConnection().getTable(TestUtils.TABLE_NAME);
+    Table table = hbaseConnection.getTable(TestUtils.TABLE_NAME);
     Put put = new Put(TestUtils.ROW_KEY);
     byte[] val = "aaaa".getBytes();
     put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, val);
@@ -267,14 +241,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     append.add(TestUtils.CF1, TestUtils.COL_QUALIFIER, "bbbb".getBytes());
     table.append(append);
 
-    // Wait for replication to catch up
-    // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini
-    // cluster
-    Thread.sleep(2000);
-    //   Waiter.waitFor(CONF, 60000, () -> TestEndpoint.getEntries().size() >= cellNum);
-
     // Validate that both the databases have same data
-    TestUtils.assertTableEquals(hbaseTable, cbtTable);
+    TestUtils.assertTableEventuallyEquals(hbaseTable, cbtTable);
   }
 
   @Test
@@ -303,14 +271,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
       hbaseTable2.put(put2);
     }
 
-    // Wait for replication to catch up
-    // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini
-    // cluster
-    Thread.sleep(2000);
-    //   Waiter.waitFor(CONF, 60000, () -> TestEndpoint.getEntries().size() >= cellNum);
-
-    TestUtils.assertTableEquals(hbaseTable, cbtTable);
-    TestUtils.assertTableEquals(hbaseTable2, cbtTable2);
+    TestUtils.assertTableEventuallyEquals(hbaseTable, cbtTable);
+    TestUtils.assertTableEventuallyEquals(hbaseTable2, cbtTable2);
   }
 
   @Test
@@ -334,7 +296,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini
     // cluster
     Thread.sleep(2000);
-    //   Waiter.waitFor(CONF, 60000, () -> TestEndpoint.getEntries().size() >= cellNum);
 
     List<Cell> actualCells = cbtTable.get(new Get(TestUtils.ROW_KEY).setMaxVersions()).listCells();
     Assert.assertEquals(

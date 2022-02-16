@@ -15,6 +15,12 @@
  */
 package com.google.cloud.bigtable.hbase.replication;
 
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.BATCH_SIZE_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_BATCH_SIZE_IN_BYTES;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_THREAD_COUNT;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.INSTANCE_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.NUM_REPLICATION_SINK_THREADS_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.PROJECT_KEY;
 import static java.util.stream.Collectors.groupingBy;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
@@ -23,6 +29,7 @@ import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutation
 import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapterFactory;
 import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -32,12 +39,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -53,21 +56,7 @@ public class CloudBigtableReplicator {
 
   private static final Logger LOG = LoggerFactory.getLogger(CloudBigtableReplicator.class);
 
-  // Config keys to access project id and instance id from.
-  public static final String PROJECT_KEY = "google.bigtable.project.id";
-  public static final String INSTANCE_KEY = "google.bigtable.instance.id";
-
-  public static final String NUM_REPLICATION_SINK_THREADS_KEY =
-      "google.bigtable.replication.thread_count";
-  // TODO maybe it should depend on the number of processors on the VM.
-  public static final int DEFAULT_THREAD_COUNT = 10;
-
-  public static final String BATCH_SIZE_KEY = "google.bigtable.replication.batch_size_bytes";
-  // TODO: Tune this parameter. Usually, this should be smaller than the HBase replication source
-  // batch capacity by counts and bytes. These capacity are set by `replication.source.nb.capacity`
-  // and `replication.source.size.capacity` config keys.
-  public static final long DEFAULT_BATCH_SIZE_IN_BYTES = 500_000;
-  private static long batchSizeThresholdInBytes;
+  private long batchSizeThresholdInBytes;
 
   private static ExecutorService executorService;
 
@@ -88,6 +77,7 @@ public class CloudBigtableReplicator {
 
   /** Common endpoint that listens to CDC from HBase and replicates to Cloud Bigtable. */
   public CloudBigtableReplicator() {
+    // TODO: move it to a central logging config file.
     LogManager.getLogger(BigtableClientMetrics.class).setLevel(Level.DEBUG);
     LogManager.getLogger("com.google.cloud.bigtable.hbase.replication").setLevel(Level.INFO);
     LogManager.getLogger(CloudBigtableReplicationTask.class).setLevel(Level.INFO);
@@ -110,33 +100,21 @@ public class CloudBigtableReplicator {
      */
     int numThreads = conf.getInt(NUM_REPLICATION_SINK_THREADS_KEY, DEFAULT_THREAD_COUNT);
     executorService =
-        new ThreadPoolExecutor(
+        Executors.newFixedThreadPool(
             numThreads,
-            numThreads,
-            60,
-            TimeUnit.SECONDS,
-            new LinkedBlockingDeque<>(),
-            new ThreadFactory() {
-              private final AtomicInteger threadCount = new AtomicInteger();
-
-              @Override
-              public Thread newThread(Runnable r) {
-                Thread thread = new Thread(r);
-                thread.setDaemon(true);
-                thread.setName("cloud-bigtable-replication-sink-" + threadCount.incrementAndGet());
-                return thread;
-              }
-            });
+            new ThreadFactoryBuilder().setDaemon(true)
+                .setNameFormat("cloud-bigtable-replication-sink-").build());
   }
 
   private static synchronized void getOrCreateBigtableConnection(Configuration configuration) {
 
+    Configuration configurationCopy = new Configuration(configuration);
     if (numConnectionReference == 0) {
 
-      String projectId = configuration.get(PROJECT_KEY);
-      String instanceId = configuration.get(INSTANCE_KEY);
+      String projectId = configurationCopy.get(PROJECT_KEY);
+      String instanceId = configurationCopy.get(INSTANCE_KEY);
       // If an App profile is provided, it will be picked automatically by the connection.
-      connection = BigtableConfiguration.connect(configuration);
+      connection = BigtableConfiguration.connect(configurationCopy);
       LOG.info("Created a connection to CBT. " + projectId + "--" + instanceId);
     }
 
@@ -196,72 +174,12 @@ public class CloudBigtableReplicator {
     boolean succeeded = true;
 
     List<Future<Boolean>> futures = new ArrayList<>();
+
     for (Map.Entry<String, List<BigtableWALEntry>> walEntriesForTable :
         walEntriesByTable.entrySet()) {
-      List<Cell> cellsToReplicateForTable = new ArrayList<>();
-      final String tableName = walEntriesForTable.getKey();
-      int batchSizeInBytes = 0;
-
-      for (BigtableWALEntry walEntry : walEntriesForTable.getValue()) {
-
-        // Translate the incompatible mutations.
-        List<Cell> compatibleCells =
-            incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry);
-        cellsToReplicateForTable.addAll(compatibleCells);
-      }
-
-      // group the data by the row key before sending it on multiple threads. It is very important
-      // to group by rowKey here. This grouping guarantees that mutations from same row are not sent
-      // concurrently in different batches. If same row  mutations are sent concurrently, they may
-      // be applied out of order. Out of order applies cause divergence between 2 databases and
-      // must be avoided as much as possible.
-      // ByteRange is required to generate proper hashcode for byte[]
-      Map<ByteRange, List<Cell>> cellsToReplicateByRow =
-          cellsToReplicateForTable.stream()
-              .collect(
-                  groupingBy(
-                      k ->
-                          new SimpleByteRange(
-                              k.getRowArray(), k.getRowOffset(), k.getRowLength())));
-
-      // Now we have cells to replicate by rows, this list can be big and processing it on a single
-      // thread is not efficient. As this thread will have to do proto translation and may need to
-      // serialize the proto. So create micro batches at row boundaries (never split a row between
-      // threads) and send them on separate threads.
-      Map<ByteRange, List<Cell>> batchToReplicate = new HashMap<>();
-      int numCellsInBatch = 0;
-      for (Map.Entry<ByteRange, List<Cell>> rowCells : cellsToReplicateByRow.entrySet()) {
-
-        // TODO handle the case where a single row has >100K mutations (very rare, but should not
-        // fail)
-        numCellsInBatch += rowCells.getValue().size();
-        batchSizeInBytes += getRowSize(rowCells);
-        batchToReplicate.put(rowCells.getKey(), rowCells.getValue());
-
-        // TODO add tests for batch split on size and cell counts
-        if (batchSizeInBytes >= batchSizeThresholdInBytes || numCellsInBatch >= 100_000 - 1) {
-          LOG.trace(
-              "Replicating a batch of "
-                  + batchToReplicate.size()
-                  + " rows and "
-                  + numCellsInBatch
-                  + " cells with heap size "
-                  + batchSizeInBytes
-                  + " for table: "
-                  + tableName);
-
-          futures.add(replicateBatch(tableName, batchToReplicate));
-          batchToReplicate = new HashMap<>();
-          numCellsInBatch = 0;
-          batchSizeInBytes = 0;
-        }
-      } // Rows per table ends here
-
-      // Flush last batch
-      if (!batchToReplicate.isEmpty()) {
-        futures.add(replicateBatch(tableName, batchToReplicate));
-      }
-    } // WAL entries by table finishes here.
+      futures.addAll(
+          replicateTable(walEntriesForTable.getKey(), walEntriesForTable.getValue()));
+    }
 
     // Check on the result  for all the batches.
     try {
@@ -281,6 +199,74 @@ public class CloudBigtableReplicator {
     }
 
     return succeeded;
+  }
+
+  private List<Future<Boolean>> replicateTable(String tableName,
+      List<BigtableWALEntry> walEntries) {
+    List<Future<Boolean>> futures = new ArrayList<>();
+    List<Cell> cellsToReplicateForTable = new ArrayList<>();
+    int batchSizeInBytes = 0;
+
+    for (BigtableWALEntry walEntry : walEntries) {
+
+      // Translate the incompatible mutations.
+      List<Cell> compatibleCells =
+          incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry);
+      cellsToReplicateForTable.addAll(compatibleCells);
+    }
+
+    // group the data by the row key before sending it on multiple threads. It is very important
+    // to group by rowKey here. This grouping guarantees that mutations from same row are not sent
+    // concurrently in different batches. If same row  mutations are sent concurrently, they may
+    // be applied out of order. Out of order applies cause divergence between 2 databases and
+    // must be avoided as much as possible.
+    // ByteRange is required to generate proper hashcode for byte[]
+    Map<ByteRange, List<Cell>> cellsToReplicateByRow =
+        cellsToReplicateForTable.stream()
+            .collect(
+                groupingBy(
+                    k ->
+                        new SimpleByteRange(
+                            k.getRowArray(), k.getRowOffset(), k.getRowLength())));
+
+    // Now we have cells to replicate by rows, this list can be big and processing it on a single
+    // thread is not efficient. As this thread will have to do proto translation and may need to
+    // serialize the proto. So create micro batches at row boundaries (never split a row between
+    // threads) and send them on separate threads.
+    Map<ByteRange, List<Cell>> batchToReplicate = new HashMap<>();
+    int numCellsInBatch = 0;
+    for (Map.Entry<ByteRange, List<Cell>> rowCells : cellsToReplicateByRow.entrySet()) {
+
+      // TODO handle the case where a single row has >100K mutations (very rare, but should not
+      // fail)
+      numCellsInBatch += rowCells.getValue().size();
+      batchSizeInBytes += getRowSize(rowCells);
+      batchToReplicate.put(rowCells.getKey(), rowCells.getValue());
+
+      // TODO add tests for batch split on size and cell counts
+      if (batchSizeInBytes >= batchSizeThresholdInBytes || numCellsInBatch >= 100_000 - 1) {
+        LOG.trace(
+            "Replicating a batch of "
+                + batchToReplicate.size()
+                + " rows and "
+                + numCellsInBatch
+                + " cells with heap size "
+                + batchSizeInBytes
+                + " for table: "
+                + tableName);
+
+        futures.add(replicateBatch(tableName, batchToReplicate));
+        batchToReplicate = new HashMap<>();
+        numCellsInBatch = 0;
+        batchSizeInBytes = 0;
+      }
+    }
+
+    // Flush last batch
+    if (!batchToReplicate.isEmpty()) {
+      futures.add(replicateBatch(tableName, batchToReplicate));
+    }
+    return futures;
   }
 
   private int getRowSize(Map.Entry<ByteRange, List<Cell>> rowCells) {

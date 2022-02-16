@@ -134,7 +134,6 @@ public abstract class AbstractBigtableConnection
   /** {@inheritDoc} */
   @Override
   public BufferedMutator getBufferedMutator(BufferedMutatorParams params) throws IOException {
-
     TableName tableName = params.getTableName();
     if (tableName == null) {
       throw new IllegalArgumentException("TableName cannot be null.");
@@ -223,7 +222,6 @@ public abstract class AbstractBigtableConnection
   /** {@inheritDoc} */
   @Override
   public void abort(final String msg, Throwable t) {
-
     if (t != null) {
       LOG.fatal(msg, t);
     } else {
@@ -252,9 +250,7 @@ public abstract class AbstractBigtableConnection
   /** {@inheritDoc} */
   @Override
   public void close() throws IOException {
-
     if (!this.closed) {
-
       this.bigtableApi.close();
       // If the clients are shutdown, there shouldn't be any more activity on the
       // batch pool (assuming we created it ourselves). If exceptions were raised

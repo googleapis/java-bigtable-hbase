@@ -16,10 +16,14 @@
 
 package com.google.cloud.bigtable.hbase.replication.metrics;
 
-import static org.mockito.Mockito.*;
+
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
@@ -28,7 +32,8 @@ import org.mockito.junit.MockitoRule;
 
 @RunWith(JUnit4.class)
 public class HBaseMetricsExporterTest {
-  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  @Rule
+  public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Mock MetricsSource metricsSource;
 

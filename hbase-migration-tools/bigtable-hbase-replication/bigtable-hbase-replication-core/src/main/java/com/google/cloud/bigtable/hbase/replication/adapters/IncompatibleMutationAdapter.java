@@ -16,6 +16,9 @@
 
 package com.google.cloud.bigtable.hbase.replication.adapters;
 
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_METRIC_KEY;
+
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
 import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import java.util.ArrayList;
@@ -45,9 +48,6 @@ public abstract class IncompatibleMutationAdapter {
   private final Configuration conf;
   private final MetricsExporter metricsExporter;
 
-  public static final String INCOMPATIBLE_MUTATION_METRIC_KEY = "bigtableIncompatibleMutations";
-  public static final String DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY =
-      "bigtableDroppedIncompatibleMutations";
 
   private void incrementDroppedIncompatibleMutations() {
     metricsExporter.incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
@@ -122,14 +122,14 @@ public abstract class IncompatibleMutationAdapter {
         } catch (UnsupportedOperationException use) {
           // Drop the mutation, not dropping it will lead to stalling of replication.
           incrementDroppedIncompatibleMutations();
-          LOG.error("DROPPING INCOMPATIBLE MUTATION: " + cell);
+          LOG.error("Dropping incompatible mutation: " + cell);
         }
         continue;
       }
 
       // Replication should only produce PUT and Delete mutation. Appends/Increments are converted
       // to PUTs. Log the unexpected mutation and drop it as we don't know what CBT client will do.
-      LOG.error("DROPPING UNEXPECTED TYPE OF MUTATION : " + cell);
+      LOG.error("Dropping unexpected type of mutation: " + cell);
       incrementIncompatibleMutations();
       incrementDroppedIncompatibleMutations();
     }
