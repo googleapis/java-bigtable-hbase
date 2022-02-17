@@ -28,7 +28,6 @@ import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
 import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapter;
 import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapterFactory;
 import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
-import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -47,8 +46,6 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.util.ByteRange;
 import org.apache.hadoop.hbase.util.SimpleByteRange;
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,10 +74,7 @@ public class CloudBigtableReplicator {
 
   /** Common endpoint that listens to CDC from HBase and replicates to Cloud Bigtable. */
   public CloudBigtableReplicator() {
-    // TODO: move it to a central logging config file.
-    LogManager.getLogger(BigtableClientMetrics.class).setLevel(Level.DEBUG);
-    LogManager.getLogger("com.google.cloud.bigtable.hbase.replication").setLevel(Level.INFO);
-    LogManager.getLogger(CloudBigtableReplicationTask.class).setLevel(Level.INFO);
+    // TODO: Validate that loggers are correctly configured.
   }
 
   /**
@@ -104,7 +98,7 @@ public class CloudBigtableReplicator {
             numThreads,
             new ThreadFactoryBuilder()
                 .setDaemon(true)
-                .setNameFormat("cloud-bigtable-replication-sink-")
+                .setNameFormat("cloud-bigtable-replication-sink-%d")
                 .build());
   }
 

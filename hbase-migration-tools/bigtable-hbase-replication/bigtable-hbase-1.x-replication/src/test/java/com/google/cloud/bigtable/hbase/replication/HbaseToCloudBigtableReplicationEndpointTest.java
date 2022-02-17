@@ -21,6 +21,7 @@ import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -42,10 +43,11 @@ import org.apache.hadoop.hbase.replication.ReplicationException;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.ServerRegionReplicaUtil;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -58,21 +60,22 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
   private static final Logger LOG =
       LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
 
-  private HBaseTestingUtility hbaseTestingUtil = new HBaseTestingUtility();
-  private Configuration hbaseConfig;
-  private ReplicationAdmin replicationAdmin;
+  private static HBaseTestingUtility hbaseTestingUtil = new HBaseTestingUtility();
+  private static Configuration hbaseConfig;
+  private static ReplicationAdmin replicationAdmin;
 
-  @Rule public final BigtableEmulatorRule bigtableEmulator = BigtableEmulatorRule.create();
-  private Connection cbtConnection;
-  private Connection hbaseConnection;
+  @ClassRule
+  public static final BigtableEmulatorRule bigtableEmulator = BigtableEmulatorRule.create();
+  private static Connection cbtConnection;
+  private static Connection hbaseConnection;
 
   private Table hbaseTable;
   private Table hbaseTable2;
   private Table cbtTable;
   private Table cbtTable2;
 
-  @Before
-  public void setUp() throws Exception {
+  @BeforeClass
+  public static void setUpCluster() throws Exception {
     // Prepare HBase mini cluster configuration
     Configuration conf = hbaseTestingUtil.getConfiguration();
     conf.setBoolean(HConstants.REPLICATION_ENABLE_KEY, true);
@@ -101,15 +104,22 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     peerConfig.setClusterKey(hbaseTestingUtil.getClusterKey());
     replicationAdmin.addPeer("cbt", peerConfig);
 
-    createTables(TestUtils.TABLE_NAME);
-    createTables(TestUtils.TABLE_NAME_2);
-
-    cbtTable = cbtConnection.getTable(TestUtils.TABLE_NAME);
-    cbtTable2 = cbtConnection.getTable(TestUtils.TABLE_NAME_2);
-    hbaseTable = hbaseConnection.getTable(TestUtils.TABLE_NAME);
-    hbaseTable2 = hbaseConnection.getTable(TestUtils.TABLE_NAME_2);
-
     LOG.error("#################### SETUP COMPLETE ##############################");
+  }
+
+  @Before
+  public void createEmptyTables() throws IOException {
+
+    // Create and set the empty tables
+    TableName table1 = TableName.valueOf(UUID.randomUUID().toString());
+    TableName table2 = TableName.valueOf(UUID.randomUUID().toString());
+    createTables(table1);
+    createTables(table2);
+
+    cbtTable = cbtConnection.getTable(table1);
+    cbtTable2 = cbtConnection.getTable(table2);
+    hbaseTable = hbaseConnection.getTable(table1);
+    hbaseTable2 = hbaseConnection.getTable(table2);
   }
 
   private void createTables(TableName tableName) throws IOException {
@@ -130,13 +140,14 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     cbtConnection.getAdmin().createTable(htd);
   }
 
-  @After
-  public void tearDown() throws Exception {
+  @AfterClass
+  public static void tearDown() throws Exception {
     cbtConnection.close();
     hbaseConnection.close();
     replicationAdmin.close();
     hbaseTestingUtil.shutdownMiniCluster();
   }
+
 
   @Test
   public void testPeerCreated() throws IOException, ReplicationException {
@@ -150,13 +161,12 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
   @Test
   public void testMutationReplication() throws IOException, InterruptedException {
-    Table table = hbaseConnection.getTable(TestUtils.TABLE_NAME);
     // Add 10K rows with 1 cell/family
     for (int i = 0; i < 10000; i++) {
       Put put = new Put(TestUtils.getRowKey(i));
       put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.getValue(i));
       put.addColumn(TestUtils.CF2, TestUtils.COL_QUALIFIER, 0, TestUtils.getValue(i));
-      table.put(put);
+      hbaseTable.put(put);
     }
 
     // Validate that both the databases have same data
@@ -212,16 +222,15 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
   @Test
   public void testIncrements() throws IOException, InterruptedException {
     long startTime = System.currentTimeMillis();
-    Table table = hbaseConnection.getTable(TestUtils.TABLE_NAME);
     Put put = new Put(TestUtils.ROW_KEY);
     byte[] val = Bytes.toBytes(4l);
     put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, val);
-    table.put(put);
+    hbaseTable.put(put);
 
     // Now Increment the value
     Increment increment = new Increment("test-row-0".getBytes());
     increment.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 10l);
-    table.increment(increment);
+    hbaseTable.increment(increment);
 
     // Validate that both the databases have same data
     TestUtils.assertTableEventuallyEquals(hbaseTable, cbtTable);
@@ -230,16 +239,15 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
   @Test
   public void testAppends() throws IOException, InterruptedException {
     long startTime = System.currentTimeMillis();
-    Table table = hbaseConnection.getTable(TestUtils.TABLE_NAME);
     Put put = new Put(TestUtils.ROW_KEY);
     byte[] val = "aaaa".getBytes();
     put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, val);
-    table.put(put);
+    hbaseTable.put(put);
 
     // Now append the value
     Append append = new Append(TestUtils.ROW_KEY);
     append.add(TestUtils.CF1, TestUtils.COL_QUALIFIER, "bbbb".getBytes());
-    table.append(append);
+    hbaseTable.append(append);
 
     // Validate that both the databases have same data
     TestUtils.assertTableEventuallyEquals(hbaseTable, cbtTable);

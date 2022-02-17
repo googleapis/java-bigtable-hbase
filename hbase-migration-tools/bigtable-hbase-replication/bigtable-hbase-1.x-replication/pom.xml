@@ -21,15 +21,13 @@
   <parent>
     <artifactId>bigtable-hbase-replication</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>0.0.1-SNAPSHOT
-    </version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+    <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.google.cloud.bigtable</groupId>
   <artifactId>bigtable-hbase-1.x-replication</artifactId>
-  <version>0.0.1-SNAPSHOT
-  </version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+  <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
 
   <packaging>jar</packaging>
   <name>bigtable-hbase-1.x-replication</name>
@@ -37,12 +35,16 @@
     Bigtable.
   </description>
 
+  <properties>
+    <!-- define a property that can be ignored by renovate -->
+    <hbase1-hadoop-slf4j.version>1.6.1</hbase1-hadoop-slf4j.version>
+  </properties>
+
   <build>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>1.4</version>
         <executions>
           <!-- disable google-cloud-shared-config enforcement checks because
           hbase-client's dependency subtree doesn't follow the same rules and is
@@ -104,6 +106,21 @@
       <!--       use the HBase server from the HBase environment-->
       <scope>provided</scope>
     </dependency>
+    <!-- Versions conflict within HBase, enforce same versions but let
+     them come from hbase-server to avoid version conflicts-->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${hbase1-hadoop-slf4j.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>${hbase1-hadoop-slf4j.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- test dependencies -->
     <dependency>
       <groupId>org.apache.hbase</groupId>
@@ -128,7 +145,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>3.8.0</version>
+      <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

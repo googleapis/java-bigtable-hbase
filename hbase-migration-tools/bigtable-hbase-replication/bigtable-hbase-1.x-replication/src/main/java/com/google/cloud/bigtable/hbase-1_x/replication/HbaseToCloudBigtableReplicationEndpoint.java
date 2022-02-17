@@ -63,8 +63,8 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
   public boolean replicate(ReplicateContext replicateContext) {
     Map<String, List<BigtableWALEntry>> walEntriesByTable = new HashMap<>();
 
+    // TODO evaluate streams vs iterative loops by running micro benchmarks
     for (WAL.Entry wal : replicateContext.getEntries()) {
-
       String tableName = wal.getKey().getTablename().getNameAsString();
       BigtableWALEntry bigtableWALEntry =
           new BigtableWALEntry(wal.getKey().getWriteTime(), wal.getEdit().getCells(), tableName);

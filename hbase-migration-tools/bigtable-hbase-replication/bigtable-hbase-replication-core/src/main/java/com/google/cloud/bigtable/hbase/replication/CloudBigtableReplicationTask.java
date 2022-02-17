@@ -38,7 +38,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Replicates the WAL entries to CBT. Never throws any exceptions to the caller. */
+/**
+ * Replicates the WAL entries to CBT. Never throws any exceptions to the caller.
+ */
 @InternalApi
 public class CloudBigtableReplicationTask implements Callable<Boolean> {
 
@@ -83,6 +85,7 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
 
   @VisibleForTesting
   static class DeleteMutationBuilder implements MutationBuilder {
+
     private final Delete delete;
 
     boolean closed = false;
@@ -155,10 +158,9 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
   @Override
   public Boolean call() {
     boolean succeeded = true;
-    Table table;
 
     try {
-      table = connection.getTable(TableName.valueOf(tableName));
+      Table table = connection.getTable(TableName.valueOf(tableName));
 
       // Collect all the cells to replicate in this call.
       // All mutations in a WALEdit are atomic, this atomicity must be preserved. The order of WAL
@@ -205,19 +207,19 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
 
   @VisibleForTesting
   static RowMutations buildRowMutations(byte[] rowKey, List<Cell> cellList) throws IOException {
-    RowMutations rowMutations = new RowMutations(rowKey);
+    RowMutations rowMutationBuffer = new RowMutations(rowKey);
     // TODO Make sure that there are < 100K cells per row Mutation
     MutationBuilder mutationBuilder = MutationBuilderFactory.getMutationBuilder(cellList.get(0));
     for (Cell cell : cellList) {
       if (!mutationBuilder.canAcceptMutation(cell)) {
-        mutationBuilder.buildAndUpdateRowMutations(rowMutations);
+        mutationBuilder.buildAndUpdateRowMutations(rowMutationBuffer);
         mutationBuilder = MutationBuilderFactory.getMutationBuilder(cell);
       }
       mutationBuilder.addMutation(cell);
     }
 
     // finalize the last mutation which is yet to be closed.
-    mutationBuilder.buildAndUpdateRowMutations(rowMutations);
-    return rowMutations;
+    mutationBuilder.buildAndUpdateRowMutations(rowMutationBuffer);
+    return rowMutationBuffer;
   }
 }
