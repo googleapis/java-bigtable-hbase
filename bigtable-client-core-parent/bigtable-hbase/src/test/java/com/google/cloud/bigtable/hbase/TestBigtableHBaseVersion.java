@@ -43,12 +43,13 @@ public class TestBigtableHBaseVersion {
             .compare(0, Integer.parseInt(versionMatcher.group(3)))
             .result();
 
-    assertTrue(
-        "Expected BigtableHBaseVersion.getVersion() to be at least 2.0.0-alpha1", result <= 0);
+    assertTrue("Expected BigtableHBaseVersion.getVersion() to be at least 2.0.0", result <= 0);
 
-    // Ensure that the suffix is either empty, starts with alpha/beta and/or ends with SNAPSHOT
     String suffix = versionMatcher.group(4);
-    Pattern suffixPattern = Pattern.compile("^(?:-(?:alpha|beta)\\d+)?(?:-SNAPSHOT)?$");
-    assertTrue("unexpected suffix format", suffixPattern.matcher(suffix).matches());
+    // Ensure that the suffix is either empty or ends with SNAPSHOT
+    if (suffix != null) {
+      Pattern suffixPattern = Pattern.compile("^(?:-SNAPSHOT)?$");
+      assertTrue("unexpected suffix format", suffixPattern.matcher(suffix).matches());
+    }
   }
 }
