@@ -87,7 +87,8 @@
 //     conf.set("google.bigtable.instance.id", "test-instance");
 //     conf.set("google.bigtable.project.id", "test-project");
 //     // This config will connect Replication endpoint to the emulator and not the prod CBT.
-//     conf.set("google.bigtable.emulator.endpoint.host", "localhost:" + bigtableEmulator.getPort());
+//     conf.set("google.bigtable.emulator.endpoint.host", "localhost:" +
+// bigtableEmulator.getPort());
 //
 //     hbaseTestingUtil.startMiniCluster(2);
 //     hbaseConfig = conf;
@@ -189,7 +190,8 @@
 //       hbaseTable.put(put);
 //     }
 //
-//     // Now delete some cells with all supported delete types from CF1. CF2 should exist to validate
+//     // Now delete some cells with all supported delete types from CF1. CF2 should exist to
+// validate
 //     // we don't delete anything else
 //     Delete delete = new Delete(TestUtils.getRowKey(0));
 //     // Delete individual cell
@@ -306,7 +308,8 @@
 //     // cluster
 //     Thread.sleep(2000);
 //
-//     List<Cell> actualCells = cbtTable.get(new Get(TestUtils.ROW_KEY).setMaxVersions()).listCells();
+//     List<Cell> actualCells = cbtTable.get(new
+// Get(TestUtils.ROW_KEY).setMaxVersions()).listCells();
 //     Assert.assertEquals(
 //         "Number of cells mismatched, actual cells: " + actualCells, 2, actualCells.size());
 //
