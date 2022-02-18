@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.google.cloud.bigtable.hbase.replication.metrics;
+package com.google.cloud.bigtable.hbase1_x.replication.metrics;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 
 /** HBaseMetricsExporter implements MetricExporter which bridges with MetricsSource. */

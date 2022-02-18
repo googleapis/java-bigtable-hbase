@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.hbase1_x.replication;
 
 import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicator;
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
-import com.google.cloud.bigtable.hbase.replication.metrics.HBaseMetricsExporter;
+import com.google.cloud.bigtable.hbase1_x.replication.metrics.HBaseMetricsExporter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

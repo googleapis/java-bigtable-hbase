@@ -23,15 +23,14 @@ import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 /** HBaseMetricsExporter implements MetricExporter which bridges with MetricsSource. */
 @InternalApi
 public class HBaseMetricsExporter implements MetricsExporter {
-  // set this as static
-  private static MetricsSource metricsSource;
+  private MetricsSource metricsSource;
 
   public void setMetricsSource(MetricsSource metricsSource) {
     this.metricsSource = metricsSource;
   }
 
   @Override
-  public void incCounters(String var1, long var2) {
-    metricsSource.incCounters(var1, var2);
+  public void incCounters(String counterName, long delta) {
+    metricsSource.incCounters(counterName, delta);
   }
 }
