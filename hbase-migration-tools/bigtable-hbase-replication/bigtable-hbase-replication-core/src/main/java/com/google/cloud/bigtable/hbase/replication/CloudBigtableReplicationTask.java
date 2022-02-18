@@ -38,9 +38,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Replicates the WAL entries to CBT. Never throws any exceptions to the caller.
- */
+/** Replicates the WAL entries to CBT. Never throws any exceptions to the caller. */
 @InternalApi
 public class CloudBigtableReplicationTask implements Callable<Boolean> {
 

@@ -66,6 +66,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
   @ClassRule
   public static final BigtableEmulatorRule bigtableEmulator = BigtableEmulatorRule.create();
+
   private static Connection cbtConnection;
   private static Connection hbaseConnection;
 
@@ -147,7 +148,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     replicationAdmin.close();
     hbaseTestingUtil.shutdownMiniCluster();
   }
-
 
   @Test
   public void testPeerCreated() throws IOException, ReplicationException {
