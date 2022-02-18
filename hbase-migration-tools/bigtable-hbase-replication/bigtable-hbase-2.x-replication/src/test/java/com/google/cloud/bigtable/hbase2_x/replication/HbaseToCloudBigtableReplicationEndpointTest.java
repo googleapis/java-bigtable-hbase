@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase2_x.replication;
 
-
 import static com.google.cloud.bigtable.emulator.v2.BigtableEmulatorRule.create;
 
 import com.google.cloud.bigtable.emulator.v2.BigtableEmulatorRule;
@@ -66,8 +65,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
   private static Configuration hbaseConfig;
   private static ReplicationAdmin replicationAdmin;
 
-  @ClassRule
-  public static final BigtableEmulatorRule bigtableEmulator = create();
+  @ClassRule public static final BigtableEmulatorRule bigtableEmulator = create();
   private static Connection cbtConnection;
   private static Connection hbaseConnection;
 
@@ -88,7 +86,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     conf.set("google.bigtable.project.id", "test-project");
     // This config will connect Replication endpoint to the emulator and not the prod CBT.
     conf.set("google.bigtable.emulator.endpoint.host", "localhost:" + bigtableEmulator.getPort());
-    conf.set("google.bigtable.connection.impl","com.google.cloud.bigtable.hbase2_x.BigtableConnection");
+    conf.set(
+        "google.bigtable.connection.impl", "com.google.cloud.bigtable.hbase2_x.BigtableConnection");
 
     hbaseTestingUtil.startMiniCluster(2);
     hbaseConfig = conf;
@@ -149,7 +148,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     replicationAdmin.close();
     hbaseTestingUtil.shutdownMiniCluster();
   }
-
 
   @Test
   public void testPeerCreated() throws IOException, ReplicationException {
