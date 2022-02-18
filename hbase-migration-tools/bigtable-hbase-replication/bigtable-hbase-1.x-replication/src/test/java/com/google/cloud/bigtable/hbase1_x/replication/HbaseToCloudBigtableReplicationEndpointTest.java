@@ -19,7 +19,6 @@ package com.google.cloud.bigtable.hbase1_x.replication;
 import com.google.cloud.bigtable.emulator.v2.BigtableEmulatorRule;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
-import com.google.cloud.bigtable.hbase1_x.HbaseToCloudBigtableReplicationEndpoint;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
