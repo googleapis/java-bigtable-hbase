@@ -46,7 +46,7 @@ which makes it easy for development teams to get started.
   <dependency>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>2.0.1-SNAPSHOT</version>
+    <version>2.0.0-beta6</version>
   </dependency>
   ```
 

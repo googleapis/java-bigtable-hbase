@@ -88,7 +88,7 @@ public class CloudBigtableReplicationTaskTest {
 
   @Test
   public void batchCallFailsPartially() throws IOException, InterruptedException {
-    doThrow(new RetriesExhaustedWithDetailsException("Dummy error"))
+    doThrow(new RetriesExhaustedWithDetailsException("Placeholder error"))
         .when(mockTable)
         .batch(anyList(), any(Object[].class));
     Cell cell = new KeyValue(ROW_KEY, TIMESTAMP, KeyValue.Type.Delete);
@@ -110,7 +110,7 @@ public class CloudBigtableReplicationTaskTest {
             invocation -> {
               Object[] args = invocation.getArguments();
               Object[] futures = (Object[]) args[1];
-              futures[1] = new RetriesExhaustedWithDetailsException("Dummy error");
+              futures[1] = new RetriesExhaustedWithDetailsException("Placeholder error");
               return null; // void method in a block-style lambda, so return null
             })
         .when(mockTable)

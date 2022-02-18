@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package com.google.cloud.bigtable.hbase.replication;
+package com.google.cloud.bigtable.hbase1_x.replication;
 
 import com.google.cloud.bigtable.emulator.v2.BigtableEmulatorRule;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
+import com.google.cloud.bigtable.hbase1_x.HbaseToCloudBigtableReplicationEndpoint;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
@@ -58,7 +59,7 @@ import org.slf4j.LoggerFactory;
 public class HbaseToCloudBigtableReplicationEndpointTest {
 
   private static final Logger LOG =
-      LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
+      LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpointTest.class);
 
   private static HBaseTestingUtility hbaseTestingUtil = new HBaseTestingUtility();
   private static Configuration hbaseConfig;
@@ -105,7 +106,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     peerConfig.setClusterKey(hbaseTestingUtil.getClusterKey());
     replicationAdmin.addPeer("cbt", peerConfig);
 
-    LOG.error("#################### SETUP COMPLETE ##############################");
+    LOG.info("#################### SETUP COMPLETE ##############################");
   }
 
   @Before

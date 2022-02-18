@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.cloud.bigtable.hbase.replication;
+package com.google.cloud.bigtable.hbase2_x.replication.metrics;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;

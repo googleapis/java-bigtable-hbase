@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package com.google.cloud.bigtable.hbase.replication.metrics;
+package com.google.cloud.bigtable.hbase1_x.replication.metrics;
 
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.google.cloud.bigtable.hbase.replication.metrics.HBaseMetricsExporter;
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 import org.junit.Before;
 import org.junit.Rule;

@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.google.cloud.bigtable.hbase1_x;
 
-package com.google.cloud.bigtable.hbase.replication;
-
+import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicator;
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
+import com.google.cloud.bigtable.hbase.replication.metrics.HBaseMetricsExporter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +28,7 @@ import org.apache.hadoop.hbase.wal.WAL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO(remove BaseReplicationEndpoint extension).
+/** Basic endpoint that listens to CDC from HBase 1.x and replicates to Cloud Bigtable. */
 public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndpoint {
 
   private static final Logger LOG =
@@ -42,37 +43,7 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
   }
 
   @Override
-  public UUID getPeerUUID() {
-    return cloudBigtableReplicator.getPeerUUID();
-  }
-
-  @Override
-  public boolean replicate(ReplicateContext replicateContext) {
-    Map<String, List<BigtableWALEntry>> walEntriesByTable = new HashMap<>();
-    for (WAL.Entry wal : replicateContext.getEntries()) {
-      String tableName = wal.getKey().getTableName().getNameAsString();
-      BigtableWALEntry bigtableWALEntry =
-          new BigtableWALEntry(wal.getKey().getWriteTime(), wal.getEdit().getCells(), tableName);
-      if (!walEntriesByTable.containsKey(tableName)) {
-        walEntriesByTable.put(tableName, new ArrayList<>());
-      }
-      walEntriesByTable.get(tableName).add(bigtableWALEntry);
-    }
-    return cloudBigtableReplicator.replicate(walEntriesByTable);
-  }
-
-  @Override
-  public void start() {
-    startAsync();
-  }
-
-  @Override
-  public void stop() {
-    stopAsync();
-  }
-
-  @Override
-  protected void doStart() {
+  protected synchronized void doStart() {
     metricsExporter.setMetricsSource(ctx.getMetrics());
     cloudBigtableReplicator.start(ctx.getConfiguration(), metricsExporter);
     notifyStarted();
@@ -82,5 +53,29 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
   protected void doStop() {
     cloudBigtableReplicator.stop();
     notifyStopped();
+  }
+
+  @Override
+  public UUID getPeerUUID() {
+    return cloudBigtableReplicator.getPeerUUID();
+  }
+
+  @Override
+  public boolean replicate(ReplicateContext replicateContext) {
+    Map<String, List<BigtableWALEntry>> walEntriesByTable = new HashMap<>();
+
+    // TODO evaluate streams vs iterative loops by running micro benchmarks
+    for (WAL.Entry wal : replicateContext.getEntries()) {
+      String tableName = wal.getKey().getTablename().getNameAsString();
+      BigtableWALEntry bigtableWALEntry =
+          new BigtableWALEntry(wal.getKey().getWriteTime(), wal.getEdit().getCells(), tableName);
+
+      if (!walEntriesByTable.containsKey(tableName)) {
+        walEntriesByTable.put(tableName, new ArrayList<>());
+      }
+
+      walEntriesByTable.get(tableName).add(bigtableWALEntry);
+    }
+    return cloudBigtableReplicator.replicate(walEntriesByTable);
   }
 }
