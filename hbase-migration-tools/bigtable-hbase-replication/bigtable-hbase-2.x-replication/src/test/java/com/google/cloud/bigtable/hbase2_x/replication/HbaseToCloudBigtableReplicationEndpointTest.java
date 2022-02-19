@@ -221,7 +221,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
   @Test
   public void testIncrements() throws IOException, InterruptedException {
-    long startTime = System.currentTimeMillis();
     Put put = new Put(TestUtils.ROW_KEY);
     byte[] val = Bytes.toBytes(4l);
     put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, val);
@@ -238,7 +237,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
   @Test
   public void testAppends() throws IOException, InterruptedException {
-    long startTime = System.currentTimeMillis();
     Put put = new Put(TestUtils.ROW_KEY);
     byte[] val = "aaaa".getBytes();
     put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, val);
