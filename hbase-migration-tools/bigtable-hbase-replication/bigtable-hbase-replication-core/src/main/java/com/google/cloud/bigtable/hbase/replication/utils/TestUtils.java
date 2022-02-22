@@ -172,7 +172,7 @@ public class TestUtils {
    */
   public static void assertTableEventuallyEquals(Table expected, Table actual)
       throws InterruptedException {
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 10; i++) {
       // Wait for replication to catch up
       // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini
       // cluster. Or Inject a custom HBaseToCloudBigtableReplicationMetrics Exporter and listen into
