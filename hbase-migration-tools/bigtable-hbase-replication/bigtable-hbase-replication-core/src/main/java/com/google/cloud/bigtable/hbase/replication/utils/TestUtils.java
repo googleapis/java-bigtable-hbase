@@ -171,18 +171,16 @@ public class TestUtils {
    * @throws InterruptedException
    */
   public static void assertTableEventuallyEquals(Table expected, Table actual)
-      throws InterruptedException {
+      throws InterruptedException, IOException {
     for (int i = 0; i < 10; i++) {
       // Wait for replication to catch up
       // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini
       // cluster. Or Inject a custom HBaseToCloudBigtableReplicationMetrics Exporter and listen into
       // the number of mutations.
-      Thread.sleep(1000);
-      try {
-        assertTableEquals(expected, actual);
-        break;
-      } catch (Exception ignored) {
-      }
+      Thread.sleep(5000);
+      // TODO assert in a loop with exponential backoffs. First Assert.fail() will fail the test
+      // need to remove asserts or check on replication status before comparing tables
+      assertTableEquals(expected, actual);
     }
   }
 
