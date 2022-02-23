@@ -345,27 +345,7 @@ limitations under the License.
                   <excludes>
                     <exclude>commons-codec:commons-codec:[,1.15)</exclude>
                     <exclude>org.apache.commons:commons-compress:[,1.20)</exclude>
-                  </excludes>
-                </bannedDependencies>
-              </rules>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>enforce-banned-deps</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <configuration>
-              <rules>
-                <!-- ban all log4j 2.x deps with CVEs -->
-                <bannedDependencies>
-                  <excludes>
+                    <!-- ban all log4j 2.x deps with CVEs -->
                     <exclude>org.apache.logging.log4j:*:[2.0-alpha1,2.16.0]</exclude>
                   </excludes>
                 </bannedDependencies>
