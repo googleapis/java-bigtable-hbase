@@ -40,7 +40,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Utility class containing various helpers for tests. */
-//TODO: move it to test folder and mark replication-core as test dependency for replication 1.x and 2.x
+// TODO: move it to test folder and mark replication-core as test dependency for replication 1.x and
+// 2.x
 @InternalApi
 public class TestUtils {
 
