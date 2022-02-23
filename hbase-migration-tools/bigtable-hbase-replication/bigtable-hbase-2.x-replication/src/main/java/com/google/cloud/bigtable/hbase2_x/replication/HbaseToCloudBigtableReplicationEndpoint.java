@@ -15,7 +15,9 @@
  */
 
 package com.google.cloud.bigtable.hbase2_x.replication;
+// TODO reverse the package names for 1.x and 2.x to com.google.cloud.bigtable.replication.hbase1_x
 
+import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicator;
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
 import com.google.cloud.bigtable.hbase2_x.replication.metrics.HBaseMetricsExporter;
@@ -30,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // TODO(remove BaseReplicationEndpoint extension).
+@InternalExtensionOnly
 public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndpoint {
 
   private static final Logger LOG =

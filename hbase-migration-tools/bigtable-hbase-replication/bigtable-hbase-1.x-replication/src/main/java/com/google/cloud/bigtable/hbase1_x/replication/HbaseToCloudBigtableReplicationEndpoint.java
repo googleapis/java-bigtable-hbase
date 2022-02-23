@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// TODO reverse the package names for 1.x and 2.x to com.google.cloud.bigtable.replication.hbase1_x
 package com.google.cloud.bigtable.hbase1_x.replication;
 
+import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicator;
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
 import com.google.cloud.bigtable.hbase1_x.replication.metrics.HBaseMetricsExporter;
@@ -29,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Basic endpoint that listens to CDC from HBase 1.x and replicates to Cloud Bigtable. */
+@InternalExtensionOnly
 public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndpoint {
 
   private static final Logger LOG =
