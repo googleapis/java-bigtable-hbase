@@ -196,10 +196,9 @@ public class TestUtils {
     }
   }
 
-  /**
-   * Waits for replication to replicate numReplicatedEntries
-   */
-  public static void waitForReplication(BooleanSupplier isReplicationCurrent) throws InterruptedException {
+  /** Waits for replication to replicate numReplicatedEntries */
+  public static void waitForReplication(BooleanSupplier isReplicationCurrent)
+      throws InterruptedException {
     int sleepTimeInMillis = 500;
     for (int i = 0; i < 5; i++) {
 
@@ -223,7 +222,8 @@ public class TestUtils {
    * Waits for numReplicatedEntries to be replicated to the TestReplicationEndpoint and then compare
    * the 2 tables to be equal.
    */
-  public static void assertTableEventuallyEquals(Table expected, Table actual, BooleanSupplier isReplicationCurrent)
+  public static void assertTableEventuallyEquals(
+      Table expected, Table actual, BooleanSupplier isReplicationCurrent)
       throws InterruptedException, IOException {
     waitForReplication(isReplicationCurrent);
     TestUtils.assertTableEquals(expected, actual);
