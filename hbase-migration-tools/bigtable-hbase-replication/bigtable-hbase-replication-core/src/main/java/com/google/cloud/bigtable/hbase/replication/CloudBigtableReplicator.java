@@ -17,12 +17,15 @@ package com.google.cloud.bigtable.hbase.replication;
 
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.BATCH_SIZE_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_BATCH_SIZE_IN_BYTES;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_DRY_RUN_MODE;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_THREAD_COUNT;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.ENABLE_DRY_RUN_MODE_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.INSTANCE_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.NUM_REPLICATION_SINK_THREADS_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.PROJECT_KEY;
 import static java.util.stream.Collectors.groupingBy;
 
+import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
 import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapter;
@@ -32,6 +35,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +44,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -53,100 +58,152 @@ public class CloudBigtableReplicator {
 
   private static final Logger LOG = LoggerFactory.getLogger(CloudBigtableReplicator.class);
 
-  private long batchSizeThresholdInBytes;
+  /**
+   * Shared state for CloudBigtableReplicator objects. This state is shared with all the objects of
+   * CloudBigtableReplicator and should be managed by this class (using refrence counting).
+   */
+  @VisibleForTesting
+  static class ReplicatorState {
 
-  private static ExecutorService executorService;
+    // The singleton Object for this class. This object is lazily created when first
+    // CloudBigtableReplicator is created and deleted when there is no CloudBigtableReplicator
+    // object referencing it.
+    private static ReplicatorState INSTANCE;
+
+    private final ExecutorService executorService;
+    /**
+     * Bigtable connection owned by this class and shared by all the instances of {@link
+     * CloudBigtableReplicator} class. DO NOT CLOSE THIS CONNECTION from any instance. The state of
+     * this connection is maintained by this class via reference counting.
+     *
+     * <p>Creating a Bigtable connection is expensive as it creates num_cpu * 4 gRpc connections.
+     * Hence, it is efficient and recommended re-using the connection. Ref counting is required to
+     * properly close the connection.
+     */
+    private final Connection connection;
+
+    /**
+     * Reference count for this instance.
+     */
+    private static int numReferences = 0;
+
+    @VisibleForTesting
+    ReplicatorState(Connection connection, ExecutorService executorService) {
+      this.connection = connection;
+      this.executorService = executorService;
+    }
+
+    public static synchronized ReplicatorState getInstance(Configuration conf) {
+
+      numReferences++;
+      if (INSTANCE == null) {
+        /* Create a bounded cached thread pool with unbounded queue. At any point, we will only have 1
+         * replicate() method active per replicationEndpoint object, so we will never have too many
+         * tasks in the queue. Having static thread pool bounds the parallelism of CBT replication
+         * library.
+         */
+        int numThreads = conf.getInt(NUM_REPLICATION_SINK_THREADS_KEY, DEFAULT_THREAD_COUNT);
+        ExecutorService executorService =
+            Executors.newFixedThreadPool(
+                numThreads,
+                new ThreadFactoryBuilder()
+                    .setDaemon(true)
+                    .setNameFormat("cloud-bigtable-replication-sink-%d")
+                    .build());
+
+        // Create a connection to Cloud Bigtable.
+        Configuration configurationCopy = new Configuration(conf);
+
+        String projectId = configurationCopy.get(PROJECT_KEY);
+        String instanceId = configurationCopy.get(INSTANCE_KEY);
+        // If an App profile is provided, it will be picked automatically by the connection.
+        Connection connection = BigtableConfiguration.connect(configurationCopy);
+        LOG.info("Created a connection to CBT. " + projectId + "--" + instanceId);
+
+        INSTANCE = new ReplicatorState(connection, executorService);
+      }
+      return INSTANCE;
+    }
+
+    private static synchronized void decrementReferenceCount() {
+      numReferences--;
+      if (numReferences == 0) {
+        try {
+          try {
+            // Connection is shared by all the instances of CloudBigtableReplicator, close it only
+            // if no one is using it. Closing the connection is required as it owns the underlying
+            // gRpc connections and gRpc does not like JVM shutting without closing the gRpc
+            // connections.
+            INSTANCE.connection.close();
+          } catch (Exception e) {
+            LOG.warn("Failed to close connection to Cloud Bigtable", e);
+          }
+          INSTANCE.executorService.shutdown();
+          try {
+            // Best effort wait for termination. When shutdown is called, there should be no
+            // tasks waiting on the service, since all the tasks must finish for replicator to exit
+            // replicate method.
+            INSTANCE.executorService.awaitTermination(5000l, TimeUnit.MILLISECONDS);
+          } catch (Exception e) {
+            LOG.warn("Failed to shut down the Cloud Bigtable replication thread pool.", e);
+          }
+        } finally {
+          INSTANCE = null;
+        }
+      }
+    }
+  }
+
+  private long batchSizeThresholdInBytes;
 
   private IncompatibleMutationAdapter incompatibleMutationAdapter;
 
-  /**
-   * Bigtable connection owned by this class and shared by all the instances of this class. DO NOT
-   * CLOSE THIS CONNECTION from an instance of the class. The state of this connection is maintained
-   * by this class via reference counting.
-   *
-   * <p>Creating a Bigtable connection is expensive as it creates num_cpu * 4 gRpc connections.
-   * Hence, it is efficient and recommended to re-use the connection. Ref counting is required to
-   * properly close the connection.
-   */
-  private static Connection connection;
-  /** Reference count for this connection. */
-  private static int numConnectionReference = 0;
+  private boolean isDryRun;
 
-  /** Common endpoint that listens to CDC from HBase and replicates to Cloud Bigtable. */
+  /**
+   * Replication state that is not tied to an object of this class. Lifecycle of this state is
+   * usually tied to the lifecycle of JVM.
+   */
+  private ReplicatorState replicatorState;
+
+  /**
+   * Common endpoint that listens to CDC from HBase and replicates to Cloud Bigtable.
+   */
   public CloudBigtableReplicator() {
     // TODO: Validate that loggers are correctly configured.
   }
 
-  /**
-   * Creates a bounded cachedThreadPool with unbounded work queue. This method should be called from
-   * doStart() as it needs configuration to be initialized.
-   */
-  private static synchronized void initExecutorService(Configuration conf) {
-    if (executorService != null) {
-      // Already initialized. Nothing to do.
-      return;
-    }
-
-    /* Create a bounded cached thread pool with unbounded queue. At any point, we will only have 1
-     * replicate() method active per replicationEndpoint object, so we will never have too many
-     * tasks in the queue. Having static thread pool bounds the parallelism of CBT replication
-     * library.
-     */
-    int numThreads = conf.getInt(NUM_REPLICATION_SINK_THREADS_KEY, DEFAULT_THREAD_COUNT);
-    executorService =
-        Executors.newFixedThreadPool(
-            numThreads,
-            new ThreadFactoryBuilder()
-                .setDaemon(true)
-                .setNameFormat("cloud-bigtable-replication-sink-%d")
-                .build());
+  @VisibleForTesting
+  CloudBigtableReplicator(
+      ReplicatorState state,
+      IncompatibleMutationAdapter incompatibleMutationAdapter,
+      long batchSizeThresholdInBytes,
+      boolean isDryRun) {
+    this.replicatorState = state;
+    this.incompatibleMutationAdapter = incompatibleMutationAdapter;
+    this.batchSizeThresholdInBytes = batchSizeThresholdInBytes;
+    this.isDryRun = isDryRun;
   }
 
-  private static synchronized void getOrCreateBigtableConnection(Configuration configuration) {
-
-    Configuration configurationCopy = new Configuration(configuration);
-    if (numConnectionReference == 0) {
-
-      String projectId = configurationCopy.get(PROJECT_KEY);
-      String instanceId = configurationCopy.get(INSTANCE_KEY);
-      // If an App profile is provided, it will be picked automatically by the connection.
-      connection = BigtableConfiguration.connect(configurationCopy);
-      LOG.info("Created a connection to CBT. " + projectId + "--" + instanceId);
-    }
-
-    numConnectionReference++;
-  }
 
   public synchronized void start(Configuration configuration, MetricsExporter metricsExporter) {
     LOG.info("Starting replication to CBT.");
 
-    getOrCreateBigtableConnection(configuration);
-    // Create the executor service for the first time.
-    initExecutorService(configuration);
-    batchSizeThresholdInBytes = configuration.getLong(BATCH_SIZE_KEY, DEFAULT_BATCH_SIZE_IN_BYTES);
+    this.replicatorState = ReplicatorState.getInstance(configuration);
+    batchSizeThresholdInBytes = configuration.getLong(BATCH_SIZE_KEY,
+        DEFAULT_BATCH_SIZE_IN_BYTES);
 
     this.incompatibleMutationAdapter =
-        new IncompatibleMutationAdapterFactory(configuration, metricsExporter, connection)
+        new IncompatibleMutationAdapterFactory(configuration, metricsExporter,
+            this.replicatorState.connection)
             .createIncompatibleMutationAdapter();
+
+    this.isDryRun = configuration.getBoolean(ENABLE_DRY_RUN_MODE_KEY, DEFAULT_DRY_RUN_MODE);
   }
 
   public void stop() {
-
     LOG.info("Stopping replication to CBT.");
-
-    // Connection is shared by all the instances of this class, close it only if no one is using it.
-    // Closing the connection is required as it owns the underlying gRpc connections and gRpc does
-    // not like JVM shutting without closing the gRpc connections.
-    synchronized (CloudBigtableReplicator.class) {
-      if (--numConnectionReference == 0) {
-        try {
-          LOG.warn("Closing the Bigtable connection.");
-          connection.close();
-        } catch (IOException e) {
-          LOG.error("Failed to close Bigtable connection: ", e);
-        }
-      }
-    }
+    ReplicatorState.decrementReferenceCount();
   }
 
   public UUID getPeerUUID() {
@@ -180,6 +237,8 @@ public class CloudBigtableReplicator {
     try {
       for (Future<Boolean> future : futures) {
         // replicate method should succeed only when all the entries are successfully replicated.
+        // TODO Add to readme about setting some timeouts on CBT writes. MutateRow should not
+        // wait forever, as long as rpc completes, this future will make progress.
         succeeded = future.get() && succeeded;
       }
     } catch (Exception e) {
@@ -205,8 +264,15 @@ public class CloudBigtableReplicator {
     for (BigtableWALEntry walEntry : walEntries) {
 
       // Translate the incompatible mutations.
-      List<Cell> compatibleCells = incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry);
+      List<Cell> compatibleCells = incompatibleMutationAdapter.adaptIncompatibleMutations(
+          walEntry);
       cellsToReplicateForTable.addAll(compatibleCells);
+    }
+
+    if (isDryRun) {
+      // Always return true in dry-run mode. The incompatibleMutationAdapter has updated all the
+      // metrics needed to find the incompatibilities.
+      return Arrays.asList(CompletableFuture.completedFuture(true));
     }
 
     // group the data by the row key before sending it on multiple threads. It is very important
@@ -219,7 +285,8 @@ public class CloudBigtableReplicator {
         cellsToReplicateForTable.stream()
             .collect(
                 groupingBy(
-                    k -> new SimpleByteRange(k.getRowArray(), k.getRowOffset(), k.getRowLength())));
+                    k -> new SimpleByteRange(k.getRowArray(), k.getRowOffset(),
+                        k.getRowLength())));
 
     // Now we have cells to replicate by rows, this list can be big and processing it on a single
     // thread is not efficient. As this thread will have to do proto translation and may need to
@@ -273,9 +340,9 @@ public class CloudBigtableReplicator {
       String tableName, Map<ByteRange, List<Cell>> batchToReplicate) {
     try {
       CloudBigtableReplicationTask replicationTask =
-          new CloudBigtableReplicationTask(tableName, connection, batchToReplicate);
-      return executorService.submit(replicationTask);
-    } catch (IOException ex) {
+          new CloudBigtableReplicationTask(tableName, replicatorState.connection, batchToReplicate);
+      return replicatorState.executorService.submit(replicationTask);
+    } catch (Exception ex) {
       LOG.error("Failed to submit a batch for table: " + tableName, ex);
       return CompletableFuture.completedFuture(false);
     }

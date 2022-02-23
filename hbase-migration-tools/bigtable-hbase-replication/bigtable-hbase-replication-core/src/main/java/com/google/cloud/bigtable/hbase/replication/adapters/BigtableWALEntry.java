@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.replication.adapters;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import java.util.ArrayList;
+import java.util.List;
 import org.apache.hadoop.hbase.Cell;
 
 /**
@@ -27,16 +28,16 @@ import org.apache.hadoop.hbase.Cell;
 @InternalApi
 public class BigtableWALEntry {
   private final long walWriteTimestamp;
-  private final ArrayList<Cell> cells;
+  private final List<Cell> cells;
   private final String tableName;
 
-  public BigtableWALEntry(long timeStamp, ArrayList<Cell> cells, String tableName) {
+  public BigtableWALEntry(long timeStamp, List<Cell> cells, String tableName) {
     this.walWriteTimestamp = timeStamp;
     this.cells = cells;
     this.tableName = tableName;
   }
 
-  public ArrayList<Cell> getCells() {
+  public List<Cell> getCells() {
     return this.cells;
   }
 
