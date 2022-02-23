@@ -19,6 +19,7 @@ package com.google.cloud.bigtable.hbase.replication;
 import com.google.bigtable.repackaged.com.google.api.client.util.Preconditions;
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
+import com.google.bigtable.repackaged.com.google.common.base.Objects;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -219,5 +220,31 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
     // finalize the last mutation which is yet to be closed.
     mutationBuilder.buildAndUpdateRowMutations(rowMutationBuffer);
     return rowMutationBuffer;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof CloudBigtableReplicationTask)) {
+      return false;
+    }
+    CloudBigtableReplicationTask that = (CloudBigtableReplicationTask) o;
+    return Objects.equal(tableName, that.tableName)
+        && Objects.equal(cellsToReplicateByRow, that.cellsToReplicateByRow);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(tableName, cellsToReplicateByRow);
+  }
+
+  @Override
+  public String toString() {
+    return "CloudBigtableReplicationTask{" +
+        "tableName='" + tableName + '\'' +
+        ", cellsToReplicateByRow=" + cellsToReplicateByRow +
+        '}';
   }
 }

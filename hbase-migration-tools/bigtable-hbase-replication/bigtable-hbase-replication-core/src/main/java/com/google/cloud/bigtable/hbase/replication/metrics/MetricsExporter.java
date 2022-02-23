@@ -24,5 +24,5 @@ import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
  */
 @InternalApi
 public interface MetricsExporter {
-  void incCounters(String var1, long var2);
+  void incCounters(String counterName, long delta);
 }
