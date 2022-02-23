@@ -22,6 +22,7 @@ import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -39,6 +40,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.replication.ReplicationAdmin;
 import org.apache.hadoop.hbase.ipc.RpcServer;
+import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
 import org.apache.hadoop.hbase.replication.ReplicationException;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -56,6 +58,54 @@ import org.slf4j.LoggerFactory;
 
 @RunWith(JUnit4.class)
 public class HbaseToCloudBigtableReplicationEndpointTest {
+
+  public static class TestReplicationEndpoint extends BaseReplicationEndpoint {
+
+    static AtomicInteger replicatedEntries = new AtomicInteger();
+    static HbaseToCloudBigtableReplicationEndpoint delegate;
+
+    public TestReplicationEndpoint() {
+      delegate = new HbaseToCloudBigtableReplicationEndpoint();
+    }
+
+    @Override
+    protected void doStart() {
+      try {
+        delegate.start().get();
+      } catch (Exception e) {
+        new RuntimeException("Failed to start Replication Endpoint.", e);
+      }
+      notifyStarted();
+    }
+
+    @Override
+    protected void doStop() {
+      try {
+        delegate.stop().get();
+      } catch (Exception e) {
+        new RuntimeException("Failed to stop Replication Endpoint.", e);
+      }
+      notifyStopped();
+    }
+
+    @Override
+    public UUID getPeerUUID() {
+      return delegate.getPeerUUID();
+    }
+
+    @Override
+    public void init(Context ctx) throws IOException {
+      super.init(ctx);
+      delegate.init(ctx);
+    }
+
+    @Override
+    public boolean replicate(ReplicateContext replicateContext) {
+      boolean result = delegate.replicate(replicateContext);
+      replicatedEntries.getAndAdd(replicateContext.getEntries().size());
+      return result;
+    }
+  }
 
   private static final Logger LOG =
       LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpointTest.class);
@@ -100,7 +150,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     // Setup Replication in HBase mini cluster
     ReplicationPeerConfig peerConfig = new ReplicationPeerConfig();
     peerConfig.setReplicationEndpointImpl(
-        HbaseToCloudBigtableReplicationEndpoint.class.getTypeName());
+        TestReplicationEndpoint.class.getTypeName());
     // Cluster key is required, we don't really have a clusterKey for CBT.
     peerConfig.setClusterKey(hbaseTestingUtil.getClusterKey());
     replicationAdmin.addPeer("cbt", peerConfig);
@@ -109,7 +159,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
   }
 
   @Before
-  public void createEmptyTables() throws IOException {
+  public void setupTestCase() throws IOException {
 
     // Create and set the empty tables
     TableName table1 = TableName.valueOf(UUID.randomUUID().toString());
@@ -121,6 +171,9 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     cbtTable2 = cbtConnection.getTable(table2);
     hbaseTable = hbaseConnection.getTable(table1);
     hbaseTable2 = hbaseConnection.getTable(table2);
+
+    // Reset the entry counts for TestReplicationEndpoint
+    TestReplicationEndpoint.replicatedEntries.set(0);
   }
 
   private void createTables(TableName tableName) throws IOException {
@@ -156,7 +209,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     Assert.assertNotNull(peerConfig);
     Assert.assertEquals(
         peerConfig.getReplicationEndpointImpl(),
-        HbaseToCloudBigtableReplicationEndpoint.class.getName());
+        TestReplicationEndpoint.class.getName());
   }
 
   @Test
@@ -170,7 +223,10 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     }
 
     // Validate that both the databases have same data
-    TestUtils.assertTableEventuallyEquals(hbaseTable, cbtTable);
+    TestUtils.assertTableEventuallyEquals(hbaseTable, cbtTable, () -> {
+      // 10K Puts.
+      return TestReplicationEndpoint.replicatedEntries.get() >= 10000;
+    });
   }
 
   @Test
@@ -216,29 +272,33 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     hbaseTable.delete(delete);
 
     // Validate that both the databases have same data
-    TestUtils.assertTableEventuallyEquals(hbaseTable, cbtTable);
+    TestUtils.assertTableEventuallyEquals(hbaseTable, cbtTable, () -> {
+      /* 4 put and 4 delete*/
+      return TestReplicationEndpoint.replicatedEntries.get() >= 8;
+    });
   }
 
   @Test
   public void testIncrements() throws IOException, InterruptedException {
-    long startTime = System.currentTimeMillis();
     Put put = new Put(TestUtils.ROW_KEY);
     byte[] val = Bytes.toBytes(4l);
     put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, val);
     hbaseTable.put(put);
 
     // Now Increment the value
-    Increment increment = new Increment("test-row-0".getBytes());
+    Increment increment = new Increment(TestUtils.ROW_KEY);
     increment.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 10l);
     hbaseTable.increment(increment);
 
     // Validate that both the databases have same data
-    TestUtils.assertTableEventuallyEquals(hbaseTable, cbtTable);
+    TestUtils.assertTableEventuallyEquals(hbaseTable, cbtTable, () -> {
+      /* 1 put and 1 increment*/
+      return TestReplicationEndpoint.replicatedEntries.get() >= 2;
+    });
   }
 
   @Test
   public void testAppends() throws IOException, InterruptedException {
-    long startTime = System.currentTimeMillis();
     Put put = new Put(TestUtils.ROW_KEY);
     byte[] val = "aaaa".getBytes();
     put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, val);
@@ -250,7 +310,10 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     hbaseTable.append(append);
 
     // Validate that both the databases have same data
-    TestUtils.assertTableEventuallyEquals(hbaseTable, cbtTable);
+    TestUtils.assertTableEventuallyEquals(hbaseTable, cbtTable, () -> {
+      /* 1 put and 1 append*/
+      return TestReplicationEndpoint.replicatedEntries.get() >= 2;
+    });
   }
 
   @Test
@@ -279,8 +342,14 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
       hbaseTable2.put(put2);
     }
 
-    TestUtils.assertTableEventuallyEquals(hbaseTable, cbtTable);
-    TestUtils.assertTableEventuallyEquals(hbaseTable2, cbtTable2);
+    // Validate that both the databases have same data
+    TestUtils.assertTableEventuallyEquals(hbaseTable, cbtTable, () -> {
+      /* 16 puts total*/
+      return TestReplicationEndpoint.replicatedEntries.get() >= 16;
+    });
+    TestUtils.assertTableEventuallyEquals(hbaseTable, cbtTable, () -> {
+      return TestReplicationEndpoint.replicatedEntries.get() >= 16;
+    });
   }
 
   @Test
@@ -290,20 +359,31 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.getValue(0));
     hbaseTable.put(put);
 
-    // Trigger a delete that will never succeed.
+    // Trigger delete that will never succeed.
     Delete delete = new Delete(TestUtils.ROW_KEY);
     delete.addFamily(TestUtils.CF1, 20);
     hbaseTable.delete(delete);
 
-    // Add another put to validate that an incompatible delete does not stall replication
+    // Let replication process 2 mutations, 1 of them will never succeed. TestReplicationEndpoint
+    // counts the incompatible mutations
+    TestUtils.waitForReplication(() -> {
+      return TestReplicationEndpoint.replicatedEntries.get() >= 2;
+    });
+
+    // Add another put to validate that an incompatible delete does not stall replication.
+    // This put will only succeed on CBT if incompatible mutation is dropped. If this put is
+    // bundled with earlier put/delete, 3 of them will be part of same RowMutations and will fail.
+    // If this put and  earlier put/delete are part of separate replicate calls, the new put
+    // will never be passed to ReplicationEndpoint unless incompatible delete is dropped.
     put = new Put(TestUtils.ROW_KEY);
     put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 1, TestUtils.getValue(1));
     hbaseTable.put(put);
 
-    // Wait for replication to catch up
-    // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini
-    // cluster
-    Thread.sleep(2000);
+    TestUtils.waitForReplication(() -> {
+      // 1put + 1 delete from previous call and 1 new put
+      return TestReplicationEndpoint.replicatedEntries.get() >= 3;
+    });
+
 
     List<Cell> actualCells = cbtTable.get(new Get(TestUtils.ROW_KEY).setMaxVersions()).listCells();
     Assert.assertEquals(

@@ -23,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NavigableMap;
+import java.util.function.BooleanSupplier;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.TableName;
@@ -34,9 +35,13 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Utility class containing various helpers for tests. */
 public class TestUtils {
+
+  private static final Logger LOG = LoggerFactory.getLogger(TestUtils.class);
 
   public static final String ROW_KEY_PREFIX = "test-row-";
   public static final byte[] ROW_KEY = "test-row".getBytes();
@@ -162,28 +167,6 @@ public class TestUtils {
     }
   }
 
-  /**
-   * Waits for replication to complete and matches the contents of the tables. If match fails,
-   * retires 5 times after sleeping 1 sec between attempts.
-   *
-   * @param expected
-   * @param actual
-   * @throws InterruptedException
-   */
-  public static void assertTableEventuallyEquals(Table expected, Table actual)
-      throws InterruptedException, IOException {
-    for (int i = 0; i < 10; i++) {
-      // Wait for replication to catch up
-      // TODO Find a better alternative than sleeping? Maybe disable replication or turnoff mini
-      // cluster. Or Inject a custom HBaseToCloudBigtableReplicationMetrics Exporter and listen into
-      // the number of mutations.
-      Thread.sleep(5000);
-      // TODO assert in a loop with exponential backoffs. First Assert.fail() will fail the test
-      // need to remove asserts or check on replication status before comparing tables
-      assertTableEquals(expected, actual);
-    }
-  }
-
   /** Scans the 2 Tables and compares the data. Fails assertion in case of a mismatch. */
   public static void assertTableEquals(Table expected, Table actual) throws IOException {
 
@@ -211,5 +194,38 @@ public class TestUtils {
           "Expected less rows, extra results in CBT starting from "
               + actualIterator.next().toString());
     }
+  }
+
+  /**
+   * Waits for replication to replicate numReplicatedEntries
+   */
+  public static void waitForReplication(BooleanSupplier isReplicationCurrent) throws InterruptedException {
+    int sleepTimeInMillis = 500;
+    for (int i = 0; i < 5; i++) {
+
+      // First check if replication has already happened
+      if (isReplicationCurrent.getAsBoolean()) {
+        LOG.info("Replication is caught up after " + i + " sleep attempts");
+        return;
+      }
+
+      // Give time for replication to catch up
+      LOG.info("sleeping for " + sleepTimeInMillis);
+      Thread.sleep(sleepTimeInMillis);
+      // Exponential backoff
+      sleepTimeInMillis = sleepTimeInMillis * 2;
+    }
+
+    Assert.fail("Timed out waiting for replication to catch up.");
+  }
+
+  /**
+   * Waits for numReplicatedEntries to be replicated to the TestReplicationEndpoint and then compare
+   * the 2 tables to be equal.
+   */
+  public static void assertTableEventuallyEquals(Table expected, Table actual, BooleanSupplier isReplicationCurrent)
+      throws InterruptedException, IOException {
+    waitForReplication(isReplicationCurrent);
+    TestUtils.assertTableEquals(expected, actual);
   }
 }
