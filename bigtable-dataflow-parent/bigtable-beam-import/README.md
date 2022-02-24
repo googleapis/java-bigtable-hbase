@@ -174,7 +174,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
         --bigtableTableId=$TABLE_NAME \
-        --sourcePattern='$BUCKET_NAME/hbase-export/part-*' \
+        --sourcePattern=$BUCKET_NAME/hbase-export/part-* \
         --tempLocation=$BUCKET_NAME/hbase_temp \
         --maxNumWorkers=$(expr 3 \* $CLUSTER_NUM_NODES)  \
         --zone=$CLUSTER_ZONE \
