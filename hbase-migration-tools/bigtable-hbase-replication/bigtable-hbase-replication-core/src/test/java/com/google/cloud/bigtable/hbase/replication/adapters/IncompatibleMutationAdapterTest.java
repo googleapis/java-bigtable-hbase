@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.replication.adapters;
 
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -225,5 +226,24 @@ public class IncompatibleMutationAdapterTest {
     verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+  }
+
+  @Test
+  public void testTimestampsOverflowMutations() {
+    ArrayList<Cell> walEntryCells = new ArrayList<>();
+    Cell put1 = new KeyValue(rowKey, cf, qual, Long.MAX_VALUE, KeyValue.Type.Put, val);
+    Cell put2 = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.Put, val);
+
+    walEntryCells.add(put1);
+    walEntryCells.add(put2);
+    BigtableWALEntry walEntry =
+        new BigtableWALEntry(System.currentTimeMillis(), walEntryCells, tableName);
+
+    Assert.assertEquals(
+        Arrays.asList(put1, put2), incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
+
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 1);
   }
 }
