@@ -51,9 +51,11 @@ Perform these steps from Unix shell on an HBase edge node.
     ```
 
 1. Export the snapshot   
-    ```
+    1. Install [hadoop connectors](https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/master/gcs/INSTALL.md)
+    1. Copy to a GCS bucket
+   ```
     hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot $SNAPSHOT_NAME \
-        -copy-to $BUCKET_NAME$SNAPSHOT_EXPORT_PATH/data -mappers NUM_MAPPERS
+        -copy-to $BUCKET_NAME$SNAPSHOT_EXPORT_PATH/data -mappers $NUM_MAPPERS
     ```
 1. Create hashes for the table to be used during the data validation step.
 [Visit the HBase documentation for more information on each parameter](http://hbase.apache.org/book.html#_step_1_hashtable).
@@ -154,6 +156,35 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
         --region=$REGION
     ```
 
+### Snappy compressed Snapshots
+
+1. Set the environment variables.
+    ```
+    PROJECT_ID=your-project-id
+    INSTANCE_ID=your-instance-id
+    TABLE_NAME=your-table-name
+    REGION=us-central1
+
+    SNAPSHOT_GCS_PATH="$BUCKET_NAME/hbase-migration-snap"
+    SNAPSHOT_NAME=your-snapshot-name
+    ```
+
+1. Run the import.
+    ```
+    java -jar bigtable-beam-import-2.0.0.jar importsnapshot \
+        --runner=DataflowRunner \
+        --project=$PROJECT_ID \
+        --bigtableInstanceId=$INSTANCE_ID \
+        --bigtableTableId=$TABLE_NAME \
+        --hbaseSnapshotSourceDir=$SNAPSHOT_GCS_PATH/data \
+        --snapshotName=$SNAPSHOT_NAME \
+        --stagingLocation=$SNAPSHOT_GCS_PATH/staging \
+        --tempLocation=$SNAPSHOT_GCS_PATH/temp \
+        --maxWorkerNodes=$(expr 3 \* $CLUSTER_NUM_NODES) \
+        --region=$REGION \
+        --experiments=use_runner_v2 \
+        --sdkContainerImage=gcr.io/cloud-bigtable-ecosystem/unified-harness:latest
+    ```
 
 ### Sequence Files
 
@@ -180,14 +211,6 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
         --zone=$CLUSTER_ZONE \
         --region=$REGION
     ```
-
----
-**NOTE**
-
-Snappy compressed files are not supported with Import pipelines, we are working to add support for Snappy compressed files.
-
----
-
 
 ## Validating data
 
