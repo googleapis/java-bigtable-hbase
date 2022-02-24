@@ -36,6 +36,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.util.EnvironmentEdge;
+import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -43,6 +45,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
@@ -55,15 +58,25 @@ public class ApproximatingIncompatibleMutationAdapterTest {
   private static final byte[] qual = "qual".getBytes(StandardCharsets.UTF_8);
   private static final byte[] val = "value".getBytes(StandardCharsets.UTF_8);
 
-  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  @Rule
+  public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   private Configuration conf;
 
-  @Mock Connection connection;
+  @Mock
+  Connection connection;
 
-  @Mock MetricsExporter metricsExporter;
+  @Mock
+  MetricsExporter metricsExporter;
 
-  @Mock BigtableWALEntry mockWalEntry;
+  @Mock
+  BigtableWALEntry mockWalEntry;
+
+  @InjectMocks
+  EnvironmentEdgeManager environmentEdgeManager;
+
+  @Mock
+  EnvironmentEdge mockEnvironmentEdge;
 
   ApproximatingIncompatibleMutationAdapter incompatibleMutationAdapter;
 
@@ -129,5 +142,29 @@ public class ApproximatingIncompatibleMutationAdapterTest {
     verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     verify(metricsExporter, times(3)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verify(metricsExporter, times(3)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+  }
+
+  @Test
+  public void testFutureDeletesAreDropped() {
+    final long now = EnvironmentEdgeManager.currentTime();
+    when(mockEnvironmentEdge.currentTime()).thenReturn(now);
+    Cell put = new KeyValue(rowKey, cf, qual, now * 2, KeyValue.Type.Put, val);
+    Cell delete1 = new KeyValue(rowKey, cf, null, now * 2, KeyValue.Type.DeleteFamily);
+    Cell delete2 = new KeyValue(rowKey, cf, null, now - 1, KeyValue.Type.DeleteFamily);
+
+    ArrayList<Cell> walEntryCells = new ArrayList<>();
+    walEntryCells.add(put);
+    walEntryCells.add(delete1);
+    walEntryCells.add(delete2);
+    when(mockWalEntry.getCells()).thenReturn(walEntryCells);
+    when(mockWalEntry.getWalWriteTime()).thenReturn(now - 1);
+    Cell expectedDelete =
+        new KeyValue(rowKey, cf, null, LATEST_TIMESTAMP, KeyValue.Type.DeleteFamily);
+    Assert.assertEquals(
+        Arrays.asList(put, expectedDelete),
+        incompatibleMutationAdapter.adaptIncompatibleMutations(mockWalEntry));
+
+    verify(metricsExporter, times(2)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
   }
 }

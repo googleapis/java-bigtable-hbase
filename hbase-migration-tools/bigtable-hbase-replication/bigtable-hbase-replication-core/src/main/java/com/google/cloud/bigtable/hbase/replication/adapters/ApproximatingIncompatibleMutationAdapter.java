@@ -29,6 +29,7 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +59,20 @@ public class ApproximatingIncompatibleMutationAdapter extends IncompatibleMutati
   protected List<Cell> adaptIncompatibleMutation(BigtableWALEntry walEntry, int index) {
     long walWriteTime = walEntry.getWalWriteTime();
     Cell cell = walEntry.getCells().get(index);
+    long currTime = EnvironmentEdgeManager.currentTime();
+
+    // test if delete is in future timestamp
+    if (CellUtil.isDelete(cell) && cell.getTimestamp() > currTime) {
+      LOG.error(
+          "Dropping future cell entry: "
+              + cell
+              + " cell time: "
+              + cell.getTimestamp()
+              + "current time: "
+              + currTime);
+      throw new UnsupportedOperationException("Unsupported future delete: " + cell);
+    }
+
     if (CellUtil.isDeleteFamily(cell)) {
       // TODO Check if its epoch is millis or micros
       // deleteFamily is auto translated to DeleteFamilyBeforeTimestamp(NOW). the WAL write happens
