@@ -101,14 +101,15 @@ Exporting HBase snapshots from Bigtable is not supported.
     ```
 1. Run the export.
    ```
-   java -jar bigtable-beam-import-2.0.0-alpha1.jar export \
+   java -jar bigtable-beam-import-2.0.0.jar export \
         --runner=dataflow \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
         --bigtableTableId=$TABLE_NAME \
         --destinationPath=$BUCKET_NAME/hbase_export/ \
         --tempLocation=$BUCKET_NAME/hbase_temp/ \
-        --maxNumWorkers=$(expr 3 \* $CLUSTER_NUM_NODES)
+        --maxNumWorkers=$(expr 3 \* $CLUSTER_NUM_NODES) \
+        --region=$REGION
    ```
 
 
@@ -140,7 +141,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
     
 1. Run the import.
     ```
-    java -jar bigtable-beam-import-2.0.0-alpha1.jar importsnapshot \
+    java -jar bigtable-beam-import-2.0.0.jar importsnapshot \
         --runner=DataflowRunner \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
@@ -168,15 +169,16 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
     ```
 1. Run the import.
     ```
-    java -jar bigtable-beam-import-2.0.0-alpha1.jar import \
+    java -jar bigtable-beam-import-2.0.0.jar import \
         --runner=dataflow \
         --project=$PROJECT_ID \
-        --bigtableInstanceId=$INSTANCE_D \
+        --bigtableInstanceId=$INSTANCE_ID \
         --bigtableTableId=$TABLE_NAME \
         --sourcePattern='$BUCKET_NAME/hbase-export/part-*' \
         --tempLocation=$BUCKET_NAME/hbase_temp \
         --maxNumWorkers=$(expr 3 \* $CLUSTER_NUM_NODES)  \
-        --zone=$CLUSTER_ZONE
+        --zone=$CLUSTER_ZONE \
+        --region=$REGION
     ```
 
 ---
@@ -203,10 +205,10 @@ check if there are any rows with mismatched data.
     ```
 1. Run the sync job. It will put the results into `$SNAPSHOT_GCS_PATH/data-verification/output-TIMESTAMP`. 
     ```
-    java -jar bigtable-beam-import-2.0.0-alpha1.jar sync-table  \
+    java -jar bigtable-beam-import-2.0.0.jar sync-table  \
         --runner=dataflow \
         --project=$PROJECT_ID \
-        --bigtableInstanceId=$INSTANCE_D \
+        --bigtableInstanceId=$INSTANCE_ID \
         --bigtableTableId=$TABLE_NAME \
         --outputPrefix=$SNAPSHOT_GCS_PATH/sync-table/output-${date +"%s"} \
         --stagingLocation=$SNAPSHOT_GCS_PATH/sync-table/staging \
