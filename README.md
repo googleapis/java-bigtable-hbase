@@ -46,18 +46,18 @@ which makes it easy for development teams to get started.
   <dependency>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>2.0.0-beta6</version>
+    <version>2.0.0</version>
   </dependency>
   ```
 
   Gradle:
   ```Groovy
-  compile 'com.google.cloud.bigtable:bigtable-hbase-1.x:2.0.0-beta6'
+  compile 'com.google.cloud.bigtable:bigtable-hbase-1.x:2.0.0'
   ```
 
   SBT:
   ```Scala
-  libraryDependencies += "com.google.cloud.bigtable" % "bigtable-hbase-1.x" % "2.0.0-beta6"
+  libraryDependencies += "com.google.cloud.bigtable" % "bigtable-hbase-1.x" % "2.0.0"
   ```
 [//]: # ({x-version-update-end})
 
@@ -84,7 +84,7 @@ If you are _not_ using the shaded Bigtable HBase Client artifact, you need to de
 <dependency>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>2.0.1-SNAPSHOT</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 [//]: # ({x-version-update-end})
@@ -199,7 +199,7 @@ If you are _not_ using the shaded Bigtable HBase Client artifact, you need to de
 <dependency>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>2.0.1-SNAPSHOT</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 [//]: # ({x-version-update-end})
@@ -230,12 +230,13 @@ If you are _not_ using the shaded Bigtable HBase Client artifact, you need to de
 If you _are_ using the shaded Bigtable HBase Client artifact, then the OpenCensus dependencies are embedded in the
 shaded artifact; i.e. nothing additional for you to do.
 
+[//]: # ({x-version-update-start:bigtable-client-parent:released})
 ```xml
 <!-- OpenCensus dependencies -->
 <dependency>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x-shaded</artifactId>
-    <version>2.0.0-alpha1</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 [//]: # ({x-version-update-end})
