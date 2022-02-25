@@ -88,11 +88,6 @@
       // pin to bigtable version
       "packagePatterns": ["^grpc-conscrypt.version"],
       "enabled": false
-    },
-    {
-      // this is temporary as we currently get renovate updates when we do a release from bigtable-1.x
-      "packagePatterns": ["^com.google.cloud.bigtable"],
-      "enabled": false
     }
   ],
   "semanticCommits": true,

@@ -37,7 +37,6 @@ import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.BulkReadWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings.ClientOperationTimeouts;
-import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings.NoTimeoutsInterceptor;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings.OperationTimeouts;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.Meter;
@@ -156,31 +155,24 @@ public class DataClientVeneerApi implements DataClientWrapper {
     GrpcCallContext ctx = GrpcCallContext.createDefault();
     OperationTimeouts callSettings = clientOperationTimeouts.getUnaryTimeouts();
 
-    if (clientOperationTimeouts.getUseTimeouts()) {
-      // By default veneer doesnt have timeouts per attempt for streaming rpcs
-      if (callSettings.getAttemptTimeout().isPresent()) {
-        ctx = ctx.withTimeout(callSettings.getAttemptTimeout().get());
-      }
-      // TODO: remove this after fixing it in veneer/gax
-      // If the attempt timeout was overridden, it disables overall timeout limiting
-      // Fix it by settings the underlying grpc deadline
-      if (callSettings.getOperationTimeout().isPresent()) {
-        ctx =
-            ctx.withCallOptions(
-                CallOptions.DEFAULT.withDeadline(
-                    Deadline.after(
-                        callSettings.getOperationTimeout().get().toMillis(),
-                        TimeUnit.MILLISECONDS)));
-      }
+    if (callSettings.getAttemptTimeout().isPresent()) {
+      ctx = ctx.withTimeout(callSettings.getAttemptTimeout().get());
+    }
+    // TODO: remove this after fixing it in veneer/gax
+    // If the attempt timeout was overridden, it disables overall timeout limiting
+    // Fix it by settings the underlying grpc deadline
+    if (callSettings.getOperationTimeout().isPresent()) {
+      ctx =
+          ctx.withCallOptions(
+              CallOptions.DEFAULT.withDeadline(
+                  Deadline.after(
+                      callSettings.getOperationTimeout().get().toMillis(), TimeUnit.MILLISECONDS)));
     }
 
     return ctx;
   }
 
   // Support 2 bigtable-hbase features not directly available in veneer:
-  // - disabling timeouts - when timeouts are disabled, bigtable-hbase ignores user configured
-  //   timeouts and forces 6 minute deadlines per attempt for all RPCs except scans. This is
-  //   implemented by an interceptor. However the interceptor must be informed that this is a scan
   // - per attempt deadlines - vener doesn't implement deadlines for attempts. To workaround this,
   //   the timeouts are set per call in the ApiCallContext. However this creates a separate issue of
   //   over running the operation deadline, so gRPC deadline is also set.
@@ -188,24 +180,17 @@ public class DataClientVeneerApi implements DataClientWrapper {
     GrpcCallContext ctx = GrpcCallContext.createDefault();
     OperationTimeouts callSettings = clientOperationTimeouts.getScanTimeouts();
 
-    if (!clientOperationTimeouts.getUseTimeouts()) {
+    if (callSettings.getOperationTimeout().isPresent()) {
       ctx =
           ctx.withCallOptions(
-              CallOptions.DEFAULT.withOption(
-                  NoTimeoutsInterceptor.SKIP_DEFAULT_ATTEMPT_TIMEOUT, true));
-    } else {
-      if (callSettings.getOperationTimeout().isPresent()) {
-        ctx =
-            ctx.withCallOptions(
-                CallOptions.DEFAULT.withDeadline(
-                    Deadline.after(
-                        callSettings.getOperationTimeout().get().toMillis(),
-                        TimeUnit.MILLISECONDS)));
-      }
-      if (callSettings.getAttemptTimeout().isPresent()) {
-        ctx = ctx.withTimeout(callSettings.getAttemptTimeout().get());
-      }
+              CallOptions.DEFAULT.withDeadline(
+                  Deadline.after(
+                      callSettings.getOperationTimeout().get().toMillis(), TimeUnit.MILLISECONDS)));
     }
+    if (callSettings.getAttemptTimeout().isPresent()) {
+      ctx = ctx.withTimeout(callSettings.getAttemptTimeout().get());
+    }
+
     return ctx;
   }
 

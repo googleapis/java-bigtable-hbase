@@ -22,6 +22,7 @@ java.common_templates(excludes=[
   '.github/ISSUE_TEMPLATE/bug_report.md',
   '.github/snippet-bot.yml',
   '.github/release-please.yml',
+  '.github/CODEOWNERS',
   '.github/workflows/*',
   '.kokoro/linkage-monitor.sh',
   '.kokoro/presubmit/linkage-monitor.cfg',

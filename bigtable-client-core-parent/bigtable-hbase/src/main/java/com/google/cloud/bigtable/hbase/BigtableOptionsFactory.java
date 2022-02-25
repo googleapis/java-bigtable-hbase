@@ -160,8 +160,8 @@ public class BigtableOptionsFactory {
   /** The number of grpc channels to open for asynchronous processing such as puts. */
   public static final String BIGTABLE_DATA_CHANNEL_COUNT_KEY = "google.bigtable.grpc.channel.count";
 
-  /** Constant <code>BIGTABLE_USE_BULK_API="google.bigtable.use.bulk.api"</code> */
-  public static final String BIGTABLE_USE_BULK_API = "google.bigtable.use.bulk.api";
+  /** @deprecated This option is now ignored. Please configure explicit timeouts instead */
+  @Deprecated public static final String BIGTABLE_USE_BULK_API = "google.bigtable.use.bulk.api";
 
   /** Constant <code>BIGTABLE_USE_BATCH="google.bigtable.use.batch"</code> */
   public static final String BIGTABLE_USE_BATCH = "google.bigtable.use.batch";
