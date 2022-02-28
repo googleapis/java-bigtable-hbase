@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.google.cloud.bigtable.hbase1_x.replication;
+package com.google.cloud.bigtable.hbase2_x.replication;
 
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.ENABLE_DRY_RUN_MODE_KEY;
 import static org.junit.Assert.assertFalse;
 
 import com.google.cloud.bigtable.emulator.v2.BigtableEmulatorRule;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
-import com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration;
 import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
 import java.io.IOException;
 import java.util.UUID;
@@ -73,7 +73,6 @@ public class HbaseToCloudBigtableReplicationEndpointDryRunTest {
   public static void setUpCluster() throws Exception {
     // Prepare HBase mini cluster configuration
     Configuration conf = hbaseTestingUtil.getConfiguration();
-    conf.setBoolean(HConstants.REPLICATION_ENABLE_KEY, true);
     conf.setBoolean(ServerRegionReplicaUtil.REGION_REPLICA_REPLICATION_CONF_KEY, true);
     conf.setInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER, 5); // less number of retries is needed
 
@@ -82,7 +81,7 @@ public class HbaseToCloudBigtableReplicationEndpointDryRunTest {
     conf.set("google.bigtable.project.id", "test-project");
     // This config will connect Replication endpoint to the emulator and not the prod CBT.
     conf.set("google.bigtable.emulator.endpoint.host", "localhost:" + bigtableEmulator.getPort());
-    conf.setBoolean(HBaseToCloudBigtableReplicationConfiguration.ENABLE_DRY_RUN_MODE_KEY, true);
+    conf.setBoolean(ENABLE_DRY_RUN_MODE_KEY, true);
 
     hbaseTestingUtil.startMiniCluster(2);
     hbaseConfig = conf;
@@ -94,7 +93,8 @@ public class HbaseToCloudBigtableReplicationEndpointDryRunTest {
 
     // Setup Replication in HBase mini cluster
     ReplicationPeerConfig peerConfig = new ReplicationPeerConfig();
-    peerConfig.setReplicationEndpointImpl(HbaseToCloudBigtableReplicationEndpoint.class.getTypeName());
+    peerConfig.setReplicationEndpointImpl(
+        HbaseToCloudBigtableReplicationEndpoint.class.getTypeName());
     // Cluster key is required, we don't really have a clusterKey for CBT.
     peerConfig.setClusterKey(hbaseTestingUtil.getClusterKey());
     replicationAdmin.addPeer("cbt", peerConfig);
@@ -104,6 +104,7 @@ public class HbaseToCloudBigtableReplicationEndpointDryRunTest {
 
   @Before
   public void setupTestCase() throws IOException {
+
     // Create and set the empty tables
     TableName table1 = TableName.valueOf(UUID.randomUUID().toString());
     TableName table2 = TableName.valueOf(UUID.randomUUID().toString());
@@ -152,7 +153,7 @@ public class HbaseToCloudBigtableReplicationEndpointDryRunTest {
     }
 
     // Give enough time for replication to catch up. Nothing should be replicated as its dry-run
-    Thread.sleep(3000);
+    Thread.sleep(5000);
 
     ResultScanner cbtScanner = cbtTable.getScanner(new Scan());
     assertFalse(cbtScanner.iterator().hasNext());
