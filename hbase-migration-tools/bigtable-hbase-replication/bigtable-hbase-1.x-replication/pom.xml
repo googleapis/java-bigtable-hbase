@@ -111,8 +111,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-replication-core</artifactId>
-      <version>0.0.1-SNAPSHOT
-      </version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+      <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
       <exclusions>
         <!-- HBase dependencies come from hbase-server below. Skip them here.-->
         <exclusion>
