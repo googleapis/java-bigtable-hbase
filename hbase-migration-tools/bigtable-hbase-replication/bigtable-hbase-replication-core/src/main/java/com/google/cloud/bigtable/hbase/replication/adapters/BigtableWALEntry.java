@@ -17,7 +17,6 @@
 package com.google.cloud.bigtable.hbase.replication.adapters;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
-import java.util.ArrayList;
 import java.util.List;
 import org.apache.hadoop.hbase.Cell;
 

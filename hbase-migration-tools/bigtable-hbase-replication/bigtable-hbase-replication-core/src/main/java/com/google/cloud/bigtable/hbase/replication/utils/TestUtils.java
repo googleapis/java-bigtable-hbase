@@ -238,8 +238,9 @@ public class TestUtils {
   }
 
   /**
-   * Creates a {@link CompletableFuture} that has already completed
-   * exceptionally with the given {@code error}.
+   * Creates a {@link CompletableFuture} that has already completed exceptionally with the given
+   * {@code error}.
+   *
    * @return
    */
   public static Future<Object> failedFuture(Throwable error) {

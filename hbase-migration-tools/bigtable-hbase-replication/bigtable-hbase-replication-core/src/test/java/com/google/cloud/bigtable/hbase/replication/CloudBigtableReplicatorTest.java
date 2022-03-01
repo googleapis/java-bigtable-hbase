@@ -57,8 +57,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
@@ -79,8 +77,8 @@ public class CloudBigtableReplicatorTest {
   @Before
   public void setUp() {
     state = new ReplicatorState(mockConnection, mockExecutorService);
-    incompatibleMutationAdapter = new ApproximatingIncompatibleMutationAdapter(conf,
-        mockMetricExporter, mockConnection);
+    incompatibleMutationAdapter =
+        new ApproximatingIncompatibleMutationAdapter(conf, mockMetricExporter, mockConnection);
   }
 
   @After
@@ -91,8 +89,8 @@ public class CloudBigtableReplicatorTest {
   @Test
   public void testReplicateDryRun() {
     // Create object to test
-    CloudBigtableReplicator replicator = new CloudBigtableReplicator(state,
-        incompatibleMutationAdapter, 100, true);
+    CloudBigtableReplicator replicator =
+        new CloudBigtableReplicator(state, incompatibleMutationAdapter, 100, true);
 
     // Create WALs to replicate
     Cell cell = new KeyValue(ROW_KEY, CF1, null, TIMESTAMP, DeleteFamilyVersion);
@@ -120,21 +118,21 @@ public class CloudBigtableReplicatorTest {
   @Test
   public void testReplicateDoesNotSplitInBatches() throws IOException {
     // Create object to test
-    CloudBigtableReplicator replicator = new CloudBigtableReplicator(state,
-        incompatibleMutationAdapter, 2000, false);
+    CloudBigtableReplicator replicator =
+        new CloudBigtableReplicator(state, incompatibleMutationAdapter, 2000, false);
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
     Cell cell12 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(2));
     Cell cell13 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(3));
-    BigtableWALEntry walEntry1 = new BigtableWALEntry(0, Arrays.asList(cell11, cell12, cell13),
-        TABLE_NAME_STRING);
+    BigtableWALEntry walEntry1 =
+        new BigtableWALEntry(0, Arrays.asList(cell11, cell12, cell13), TABLE_NAME_STRING);
 
     Cell cell21 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(1));
     Cell cell22 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(2));
     Cell cell23 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(3));
-    BigtableWALEntry walEntry2 = new BigtableWALEntry(0, Arrays.asList(cell21, cell22, cell23),
-        TABLE_NAME_STRING);
+    BigtableWALEntry walEntry2 =
+        new BigtableWALEntry(0, Arrays.asList(cell21, cell22, cell23), TABLE_NAME_STRING);
     Map<ByteRange, List<Cell>> expectedBatchOfWal = new HashMap<>();
     expectedBatchOfWal.put(new SimpleByteRange(getRowKey(1)), walEntry1.getCells());
     expectedBatchOfWal.put(new SimpleByteRange(getRowKey(2)), walEntry2.getCells());
@@ -143,8 +141,8 @@ public class CloudBigtableReplicatorTest {
     walsToReplicate.put(TABLE_NAME_STRING, Arrays.asList(walEntry1, walEntry2));
 
     // Everything succeeds.
-    when(mockExecutorService.submit((Callable<Object>) any())).thenReturn(
-        CompletableFuture.completedFuture(true));
+    when(mockExecutorService.submit((Callable<Object>) any()))
+        .thenReturn(CompletableFuture.completedFuture(true));
 
     // Trigger replication
     assertTrue(replicator.replicate(walsToReplicate));
@@ -153,9 +151,10 @@ public class CloudBigtableReplicatorTest {
     verify(mockMetricExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     verify(mockMetricExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     // Replicator should submit just 1 CloudBigtableReplicationTask for both WALEntries
-    verify(mockExecutorService).submit(
-        new CloudBigtableReplicationTask(TABLE_NAME_STRING, mockConnection,
-            expectedBatchOfWal));
+    verify(mockExecutorService)
+        .submit(
+            new CloudBigtableReplicationTask(
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal));
     Mockito.verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
     Mockito.verifyNoInteractions(mockConnection);
   }
@@ -163,21 +162,22 @@ public class CloudBigtableReplicatorTest {
   @Test
   public void testReplicateSplitsBatchesOnRowBoundary() throws IOException {
     // Create object to test
-    CloudBigtableReplicator replicator = new CloudBigtableReplicator(state,
-        incompatibleMutationAdapter, 1 /*split into 1 byte batches*/, false);
+    CloudBigtableReplicator replicator =
+        new CloudBigtableReplicator(
+            state, incompatibleMutationAdapter, 1 /*split into 1 byte batches*/, false);
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
     Cell cell12 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(2));
     Cell cell13 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(3));
-    BigtableWALEntry walEntry1 = new BigtableWALEntry(0, Arrays.asList(cell11, cell12, cell13),
-        TABLE_NAME_STRING);
+    BigtableWALEntry walEntry1 =
+        new BigtableWALEntry(0, Arrays.asList(cell11, cell12, cell13), TABLE_NAME_STRING);
 
     Cell cell21 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(1));
     Cell cell22 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(2));
     Cell cell23 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(3));
-    BigtableWALEntry walEntry2 = new BigtableWALEntry(0, Arrays.asList(cell21, cell22, cell23),
-        TABLE_NAME_STRING);
+    BigtableWALEntry walEntry2 =
+        new BigtableWALEntry(0, Arrays.asList(cell21, cell22, cell23), TABLE_NAME_STRING);
 
     Map<ByteRange, List<Cell>> expectedBatchOfWal1 = new HashMap<>();
     expectedBatchOfWal1.put(new SimpleByteRange(getRowKey(1)), walEntry1.getCells());
@@ -188,8 +188,8 @@ public class CloudBigtableReplicatorTest {
     walsToReplicate.put(TABLE_NAME_STRING, Arrays.asList(walEntry1, walEntry2));
 
     // Everything succeeds.
-    when(mockExecutorService.submit((Callable<Object>) any())).thenReturn(
-        CompletableFuture.completedFuture(true));
+    when(mockExecutorService.submit((Callable<Object>) any()))
+        .thenReturn(CompletableFuture.completedFuture(true));
 
     // Trigger replication
     assertTrue(replicator.replicate(walsToReplicate));
@@ -199,12 +199,14 @@ public class CloudBigtableReplicatorTest {
     verify(mockMetricExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
 
     // Replicator should split WALs into 2 CloudBigtableReplicationTask at row keys
-    verify(mockExecutorService).submit(
-        new CloudBigtableReplicationTask(TABLE_NAME_STRING, mockConnection,
-            expectedBatchOfWal1));
-    verify(mockExecutorService).submit(
-        new CloudBigtableReplicationTask(TABLE_NAME_STRING, mockConnection,
-            expectedBatchOfWal2));
+    verify(mockExecutorService)
+        .submit(
+            new CloudBigtableReplicationTask(
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal1));
+    verify(mockExecutorService)
+        .submit(
+            new CloudBigtableReplicationTask(
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal2));
     Mockito.verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
     Mockito.verifyNoInteractions(mockConnection);
   }
@@ -212,21 +214,22 @@ public class CloudBigtableReplicatorTest {
   @Test
   public void testReplicateSplitsBatchesOnTableBoundary() throws IOException {
     // Create object to test
-    CloudBigtableReplicator replicator = new CloudBigtableReplicator(state,
-        incompatibleMutationAdapter, 1 /*split into 1 byte batches*/, false);
+    CloudBigtableReplicator replicator =
+        new CloudBigtableReplicator(
+            state, incompatibleMutationAdapter, 1 /*split into 1 byte batches*/, false);
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
     Cell cell12 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(2));
     Cell cell13 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(3));
-    BigtableWALEntry walEntry1 = new BigtableWALEntry(0, Arrays.asList(cell11, cell12, cell13),
-        TABLE_NAME_STRING);
+    BigtableWALEntry walEntry1 =
+        new BigtableWALEntry(0, Arrays.asList(cell11, cell12, cell13), TABLE_NAME_STRING);
 
     Cell cell21 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(1));
     Cell cell22 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(2));
     Cell cell23 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(3));
-    BigtableWALEntry walEntry2 = new BigtableWALEntry(0, Arrays.asList(cell21, cell22, cell23),
-        TABLE_NAME_STRING_2);
+    BigtableWALEntry walEntry2 =
+        new BigtableWALEntry(0, Arrays.asList(cell21, cell22, cell23), TABLE_NAME_STRING_2);
 
     Map<ByteRange, List<Cell>> expectedBatchOfWal1 = new HashMap<>();
     expectedBatchOfWal1.put(new SimpleByteRange(getRowKey(1)), walEntry1.getCells());
@@ -238,8 +241,8 @@ public class CloudBigtableReplicatorTest {
     walsToReplicate.put(TABLE_NAME_STRING_2, Arrays.asList(walEntry2));
 
     // Everything succeeds.
-    when(mockExecutorService.submit((Callable<Object>) any())).thenReturn(
-        CompletableFuture.completedFuture(true));
+    when(mockExecutorService.submit((Callable<Object>) any()))
+        .thenReturn(CompletableFuture.completedFuture(true));
 
     // Trigger replication
     assertTrue(replicator.replicate(walsToReplicate));
@@ -249,12 +252,14 @@ public class CloudBigtableReplicatorTest {
     verify(mockMetricExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
 
     // Replicator should split WALs into 2 CloudBigtableReplicationTask at table boundary
-    verify(mockExecutorService).submit(
-        new CloudBigtableReplicationTask(TABLE_NAME_STRING, mockConnection,
-            expectedBatchOfWal1));
-    verify(mockExecutorService).submit(
-        new CloudBigtableReplicationTask(TABLE_NAME_STRING_2, mockConnection,
-            expectedBatchOfWal2));
+    verify(mockExecutorService)
+        .submit(
+            new CloudBigtableReplicationTask(
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal1));
+    verify(mockExecutorService)
+        .submit(
+            new CloudBigtableReplicationTask(
+                TABLE_NAME_STRING_2, mockConnection, expectedBatchOfWal2));
     Mockito.verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
     Mockito.verifyNoInteractions(mockConnection);
   }
@@ -262,17 +267,16 @@ public class CloudBigtableReplicatorTest {
   @Test
   public void testReplicateFailsOnAnyFailure() throws IOException {
     // Create object to test
-    CloudBigtableReplicator replicator = new CloudBigtableReplicator(state,
-        incompatibleMutationAdapter, 01 /*split into 1 byte batches*/, false);
+    CloudBigtableReplicator replicator =
+        new CloudBigtableReplicator(
+            state, incompatibleMutationAdapter, 01 /*split into 1 byte batches*/, false);
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
-    BigtableWALEntry walEntry1 = new BigtableWALEntry(0, Arrays.asList(cell11),
-        TABLE_NAME_STRING);
+    BigtableWALEntry walEntry1 = new BigtableWALEntry(0, Arrays.asList(cell11), TABLE_NAME_STRING);
 
     Cell cell21 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(1));
-    BigtableWALEntry walEntry2 = new BigtableWALEntry(0, Arrays.asList(cell21),
-        TABLE_NAME_STRING);
+    BigtableWALEntry walEntry2 = new BigtableWALEntry(0, Arrays.asList(cell21), TABLE_NAME_STRING);
 
     Map<ByteRange, List<Cell>> expectedBatchOfWal1 = new HashMap<>();
     expectedBatchOfWal1.put(new SimpleByteRange(getRowKey(1)), walEntry1.getCells());
@@ -284,8 +288,8 @@ public class CloudBigtableReplicatorTest {
 
     // One task succeeds and other fails.
     when(mockExecutorService.submit((Callable<Object>) any()))
-        .thenReturn(CompletableFuture.completedFuture(false)).
-        thenReturn(CompletableFuture.completedFuture(true));
+        .thenReturn(CompletableFuture.completedFuture(false))
+        .thenReturn(CompletableFuture.completedFuture(true));
 
     // Trigger replication, this should fail as 1 of the tasks failed
     assertFalse(replicator.replicate(walsToReplicate));
@@ -295,12 +299,14 @@ public class CloudBigtableReplicatorTest {
     verify(mockMetricExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
 
     // Replicator should split WALs into 2 CloudBigtableReplicationTask at row keys
-    verify(mockExecutorService).submit(
-        new CloudBigtableReplicationTask(TABLE_NAME_STRING, mockConnection,
-            expectedBatchOfWal1));
-    verify(mockExecutorService).submit(
-        new CloudBigtableReplicationTask(TABLE_NAME_STRING, mockConnection,
-            expectedBatchOfWal2));
+    verify(mockExecutorService)
+        .submit(
+            new CloudBigtableReplicationTask(
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal1));
+    verify(mockExecutorService)
+        .submit(
+            new CloudBigtableReplicationTask(
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal2));
     Mockito.verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
     Mockito.verifyNoInteractions(mockConnection);
   }
@@ -308,17 +314,16 @@ public class CloudBigtableReplicatorTest {
   @Test
   public void testReplicateFailsOnAnyFutureFailure() throws IOException {
     // Create object to test
-    CloudBigtableReplicator replicator = new CloudBigtableReplicator(state,
-        incompatibleMutationAdapter, 01 /*split into 1 byte batches*/, false);
+    CloudBigtableReplicator replicator =
+        new CloudBigtableReplicator(
+            state, incompatibleMutationAdapter, 01 /*split into 1 byte batches*/, false);
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
-    BigtableWALEntry walEntry1 = new BigtableWALEntry(0, Arrays.asList(cell11),
-        TABLE_NAME_STRING);
+    BigtableWALEntry walEntry1 = new BigtableWALEntry(0, Arrays.asList(cell11), TABLE_NAME_STRING);
 
     Cell cell21 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(1));
-    BigtableWALEntry walEntry2 = new BigtableWALEntry(0, Arrays.asList(cell21),
-        TABLE_NAME_STRING);
+    BigtableWALEntry walEntry2 = new BigtableWALEntry(0, Arrays.asList(cell21), TABLE_NAME_STRING);
 
     Map<ByteRange, List<Cell>> expectedBatchOfWal1 = new HashMap<>();
     expectedBatchOfWal1.put(new SimpleByteRange(getRowKey(1)), walEntry1.getCells());
@@ -330,8 +335,8 @@ public class CloudBigtableReplicatorTest {
 
     // 1 task succeeds other fails with an exception.
     when(mockExecutorService.submit((Callable<Object>) any()))
-        .thenReturn(failedFuture(new RuntimeException("Failed Future."))).
-        thenReturn(CompletableFuture.completedFuture(true));
+        .thenReturn(failedFuture(new RuntimeException("Failed Future.")))
+        .thenReturn(CompletableFuture.completedFuture(true));
 
     // Trigger replication, this should fail as 1 of the tasks failed
     assertFalse(replicator.replicate(walsToReplicate));
@@ -341,12 +346,14 @@ public class CloudBigtableReplicatorTest {
     verify(mockMetricExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
 
     // Replicator should split WALs into 2 CloudBigtableReplicationTask at row keys
-    verify(mockExecutorService).submit(
-        new CloudBigtableReplicationTask(TABLE_NAME_STRING, mockConnection,
-            expectedBatchOfWal1));
-    verify(mockExecutorService).submit(
-        new CloudBigtableReplicationTask(TABLE_NAME_STRING, mockConnection,
-            expectedBatchOfWal2));
+    verify(mockExecutorService)
+        .submit(
+            new CloudBigtableReplicationTask(
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal1));
+    verify(mockExecutorService)
+        .submit(
+            new CloudBigtableReplicationTask(
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal2));
     Mockito.verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
     Mockito.verifyNoInteractions(mockConnection);
   }
@@ -354,17 +361,15 @@ public class CloudBigtableReplicatorTest {
   @Test
   public void testReplicateFailsToSubmitTask() throws IOException {
     // Create object to test
-    CloudBigtableReplicator replicator = new CloudBigtableReplicator(state,
-        incompatibleMutationAdapter, 2, false);
+    CloudBigtableReplicator replicator =
+        new CloudBigtableReplicator(state, incompatibleMutationAdapter, 2, false);
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
-    BigtableWALEntry walEntry1 = new BigtableWALEntry(0, Arrays.asList(cell11),
-        TABLE_NAME_STRING);
+    BigtableWALEntry walEntry1 = new BigtableWALEntry(0, Arrays.asList(cell11), TABLE_NAME_STRING);
 
     Cell cell21 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(1));
-    BigtableWALEntry walEntry2 = new BigtableWALEntry(0, Arrays.asList(cell21),
-        TABLE_NAME_STRING);
+    BigtableWALEntry walEntry2 = new BigtableWALEntry(0, Arrays.asList(cell21), TABLE_NAME_STRING);
 
     Map<ByteRange, List<Cell>> expectedBatchOfWal1 = new HashMap<>();
     expectedBatchOfWal1.put(new SimpleByteRange(getRowKey(1)), walEntry1.getCells());
@@ -375,10 +380,10 @@ public class CloudBigtableReplicatorTest {
     walsToReplicate.put(TABLE_NAME_STRING, Arrays.asList(walEntry1, walEntry2));
 
     // 1 submit fails and throws exceptions other succeeds.
-    when(mockExecutorService.submit((Callable<Object>) any())).thenReturn(
-        CompletableFuture.completedFuture(true));
-    when(mockExecutorService.submit((Callable<Object>) any())).thenThrow(
-        new RuntimeException("failed to submit"));
+    when(mockExecutorService.submit((Callable<Object>) any()))
+        .thenReturn(CompletableFuture.completedFuture(true));
+    when(mockExecutorService.submit((Callable<Object>) any()))
+        .thenThrow(new RuntimeException("failed to submit"));
 
     // Replication failed as 1 task failed to submit
     assertFalse(replicator.replicate(walsToReplicate));
@@ -387,12 +392,14 @@ public class CloudBigtableReplicatorTest {
     verify(mockMetricExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     verify(mockMetricExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     // Replicator should split WALs into 2 CloudBigtableReplicationTask at row keys
-    verify(mockExecutorService).submit(
-        new CloudBigtableReplicationTask(TABLE_NAME_STRING, mockConnection,
-            expectedBatchOfWal1));
-    verify(mockExecutorService).submit(
-        new CloudBigtableReplicationTask(TABLE_NAME_STRING, mockConnection,
-            expectedBatchOfWal2));
+    verify(mockExecutorService)
+        .submit(
+            new CloudBigtableReplicationTask(
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal1));
+    verify(mockExecutorService)
+        .submit(
+            new CloudBigtableReplicationTask(
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal2));
     Mockito.verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
     Mockito.verifyNoInteractions(mockConnection);
   }

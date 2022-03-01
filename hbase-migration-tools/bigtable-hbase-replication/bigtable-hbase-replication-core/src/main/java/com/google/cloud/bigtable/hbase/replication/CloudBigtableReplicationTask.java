@@ -242,9 +242,12 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
 
   @Override
   public String toString() {
-    return "CloudBigtableReplicationTask{" +
-        "tableName='" + tableName + '\'' +
-        ", cellsToReplicateByRow=" + cellsToReplicateByRow +
-        '}';
+    return "CloudBigtableReplicationTask{"
+        + "tableName='"
+        + tableName
+        + '\''
+        + ", cellsToReplicateByRow="
+        + cellsToReplicateByRow
+        + '}';
   }
 }

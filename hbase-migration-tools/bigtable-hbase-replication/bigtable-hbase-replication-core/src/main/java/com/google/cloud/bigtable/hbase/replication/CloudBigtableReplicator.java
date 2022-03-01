@@ -32,7 +32,6 @@ import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutation
 import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapterFactory;
 import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -82,9 +81,7 @@ public class CloudBigtableReplicator {
      */
     private final Connection connection;
 
-    /**
-     * Reference count for this instance.
-     */
+    /** Reference count for this instance. */
     private static int numReferences = 0;
 
     @VisibleForTesting
@@ -166,9 +163,7 @@ public class CloudBigtableReplicator {
    */
   private ReplicatorState replicatorState;
 
-  /**
-   * Common endpoint that listens to CDC from HBase and replicates to Cloud Bigtable.
-   */
+  /** Common endpoint that listens to CDC from HBase and replicates to Cloud Bigtable. */
   public CloudBigtableReplicator() {
     // TODO: Validate that loggers are correctly configured.
   }
@@ -185,17 +180,15 @@ public class CloudBigtableReplicator {
     this.isDryRun = isDryRun;
   }
 
-
   public synchronized void start(Configuration configuration, MetricsExporter metricsExporter) {
     LOG.info("Starting replication to CBT.");
 
     this.replicatorState = ReplicatorState.getInstance(configuration);
-    batchSizeThresholdInBytes = configuration.getLong(BATCH_SIZE_KEY,
-        DEFAULT_BATCH_SIZE_IN_BYTES);
+    batchSizeThresholdInBytes = configuration.getLong(BATCH_SIZE_KEY, DEFAULT_BATCH_SIZE_IN_BYTES);
 
     this.incompatibleMutationAdapter =
-        new IncompatibleMutationAdapterFactory(configuration, metricsExporter,
-            this.replicatorState.connection)
+        new IncompatibleMutationAdapterFactory(
+                configuration, metricsExporter, this.replicatorState.connection)
             .createIncompatibleMutationAdapter();
 
     this.isDryRun = configuration.getBoolean(ENABLE_DRY_RUN_MODE_KEY, DEFAULT_DRY_RUN_MODE);
@@ -264,8 +257,7 @@ public class CloudBigtableReplicator {
     for (BigtableWALEntry walEntry : walEntries) {
 
       // Translate the incompatible mutations.
-      List<Cell> compatibleCells = incompatibleMutationAdapter.adaptIncompatibleMutations(
-          walEntry);
+      List<Cell> compatibleCells = incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry);
       cellsToReplicateForTable.addAll(compatibleCells);
     }
 
@@ -285,8 +277,7 @@ public class CloudBigtableReplicator {
         cellsToReplicateForTable.stream()
             .collect(
                 groupingBy(
-                    k -> new SimpleByteRange(k.getRowArray(), k.getRowOffset(),
-                        k.getRowLength())));
+                    k -> new SimpleByteRange(k.getRowArray(), k.getRowOffset(), k.getRowLength())));
 
     // Now we have cells to replicate by rows, this list can be big and processing it on a single
     // thread is not efficient. As this thread will have to do proto translation and may need to
