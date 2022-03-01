@@ -218,12 +218,12 @@ Since CBT will not support these mutations after the users migrate to CBT, they
 are recommended to come up with alternative ways to handle these incompatible
 APIs and not issue them while replication is on.
 
-Another special case is mutations with custom cell timestamps.
-HBase uses a `long`
+Another special case is mutations with custom cell timestamps. HBase uses
+a `long`
 to store milliseconds while Cloud Bigtable uses `long` to store microseconds.
 This [difference in granularity](https://cloud.google.com/bigtable/docs/hbase-differences#timestamps)
-means, HBase can store 1000 times higher cell timestamps than Cloud Bigtable. The
-impacted use case is the custom cell timestamp, where customers
+means, HBase can store 1000 times higher cell timestamps than Cloud Bigtable.
+The impacted use case is the custom cell timestamp, where customers
 use `Long.MAX_VALUE - now` as the cell timestamp. Such timestamps may get
 truncated in Cloud Bigtable.
 
@@ -235,7 +235,7 @@ javadocs for more details.
 ## Monitoring
 
 The replication library will emit the metrics into HBase metric ecosystem. There
-are 4 kinds of metrics that the replication library will publish:
+are 3 kinds of metrics that the replication library will publish:
 
 1. HBase will
    track [replication metrics](https://hbase.apache.org/book.html#_replication_metrics)
@@ -247,6 +247,8 @@ are 4 kinds of metrics that the replication library will publish:
 3. Custom metrics from the replication library. For example,
    NumberOfIncompatibleMutations.
 
+Please refer to javadocs for class HBaseToCloudBigtableReplicationMetrics for
+list of available metrics.
 ## Troubleshooting
 
 ### Replication stalling
