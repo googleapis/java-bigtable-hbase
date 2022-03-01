@@ -17,6 +17,7 @@
 package com.google.cloud.bigtable.hbase.replication.adapters;
 
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.FUTURE_DELETE_MUTATION_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_METRIC_KEY;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -225,5 +226,23 @@ public class IncompatibleMutationAdapterTest {
     verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+  }
+
+  @Test
+  public void testFutureDeletesAreFlagged() {
+    ArrayList<Cell> walEntryCells = new ArrayList<>();
+    Cell pastDelete = new KeyValue(rowKey, cf, qual, 900, KeyValue.Type.Delete);
+    Cell futureDelete = new KeyValue(rowKey, cf, qual, 1005L, KeyValue.Type.Delete);
+    walEntryCells.add(pastDelete);
+    walEntryCells.add(futureDelete);
+    BigtableWALEntry walEntry =
+        new BigtableWALEntry(1000L, walEntryCells, tableName);
+
+    Assert.assertEquals(
+        Arrays.asList(pastDelete, futureDelete), incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
+
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(FUTURE_DELETE_MUTATION_METRIC_KEY, 1);
   }
 }
