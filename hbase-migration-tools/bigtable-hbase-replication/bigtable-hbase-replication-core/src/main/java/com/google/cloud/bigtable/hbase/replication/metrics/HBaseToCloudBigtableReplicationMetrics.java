@@ -24,4 +24,6 @@ public class HBaseToCloudBigtableReplicationMetrics {
   public static final String INCOMPATIBLE_MUTATION_METRIC_KEY = "bigtableIncompatibleMutations";
   public static final String DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY =
       "bigtableDroppedIncompatibleMutations";
+  public static final String FUTURE_DELETE_MUTATION_METRIC_KEY =
+      "bigtableFutureDeleteMutations";
 }

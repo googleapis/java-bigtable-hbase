@@ -17,6 +17,7 @@
 package com.google.cloud.bigtable.hbase.replication.adapters;
 
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.FUTURE_DELETE_MUTATION_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_METRIC_KEY;
 
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
@@ -54,6 +55,10 @@ public abstract class IncompatibleMutationAdapter {
 
   private void incrementIncompatibleMutations() {
     metricsExporter.incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+  }
+
+  private void incrementFutureDeleteMutations() {
+    metricsExporter.incCounters(FUTURE_DELETE_MUTATION_METRIC_KEY, 1);
   }
 
   /**
@@ -109,6 +114,10 @@ public abstract class IncompatibleMutationAdapter {
 
         // Compatible delete
         if (isValidDelete(cell)) {
+          // flag if delete was issued in future
+          if (cell.getTimestamp() > walEntry.getWalWriteTime()) {
+            incrementFutureDeleteMutations();
+          }
           returnedCells.add(cell);
           continue;
         }
