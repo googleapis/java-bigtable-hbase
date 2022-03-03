@@ -177,25 +177,7 @@ to configure HBase to Cloud Bigtable replication:
    in HBase shell. The metrics for CBT replication will be under the “peer_id”
    used in the previous step.
 
-## Error handling
-
-HBase has push based replication. Each region server reads the WAL entries and
-passes them to each replication endpoint. If the replication endpoint fails to
-apply WAL logs, the WAL will accumulate on HBase regions servers.
-
-If a Bigtable cluster is temporarily unavailable, the WAL logs will accumulate
-on region servers. Once the cluster becomes available again, replication can
-continue.
-
-For any non-retryable error, like non-existent column-family, replication will
-pause and WAL logs will build-up. Users should monitor & alert on replication
-progress
-via [HBase replication monitoring](https://hbase.apache.org/book.html#_monitoring_replication_status)
-. The replication library can not skip a replication entry as a single WAL entry
-represents an atomic transaction. Skipping a message will result in divergence
-between source and target tables.
-
-### Incompatible Mutations
+## Incompatible Mutations
 
 Certain HBase delete APIs
 are [not supported on CBT](https://cloud.google.com/bigtable/docs/hbase-differences#mutations_and_deletions)
@@ -232,6 +214,55 @@ refer
 to [IncompatibleMutationAdapter](bigtable-hbase-replication-core/src/main/java/com/google/cloud/bigtable/hbase/replication/adapters/IncompatibleMutationAdapter.java)
 javadocs for more details.
 
+### Dry run mode
+
+It may be hard to determine if an application issues incompatible mutations.
+Specially, if the HBase cluster and application are owned by different teams.
+The replication library provides a dry-run mode to detect incompatible
+mutations. In dry run mode, no mutations are sent over to Cloud Bigtable and
+replication never stalls. If you are not sure about incompatible mutations,
+enable replication in the dry run mode and observe the incompatible mutation
+metrics (discussed below).
+
+You should make sure that all the [prerequisites](#prerequisites) are fulfilled 
+before enabling the dry run mode. Dry run mode can be enabled by setting the 
+property `google.bigtable.replication.enable_dry_run` property to true. It can 
+be set in `hbase-site.xml` but we recommend setting it during peer creation. 
+Enabling/disabling dry run mode during peer creation can avoid restarting HBase
+cluster to pickup changes to `hbase-site.xml` file. Enable dry run mode by 
+running the following command on to add Cloud Bigtable replication peer (please change the endpoint class for HBase 1.x):
+```
+add_peer 'peer_id',
+ ENDPOINT_CLASSNAME=>'com.google.cloud.bigtable.hbase2_x.replication.HbaseToCloudBigtableReplicationEndpoint',
+  CONFIG=>{'google.bigtable.replication.enable_dry_run' => 'true' }
+```
+
+When you are ready to enable replication to Cloud Bigtable, delete this peer and
+create a new peer in normal mode (do not try to update the "dry-run" peer):
+
+```
+remove_peer 'peer_id'
+add_peer 'new_peer_id', ENDPOINT_CLASSNAME=>'com.google.cloud.bigtable.hbase2_x.replication.HbaseToCloudBigtableReplicationEndpoint'
+```
+
+## Error handling
+
+HBase has push based replication. Each region server reads the WAL entries and
+passes them to each replication endpoint. If the replication endpoint fails to
+apply WAL logs, the WAL will accumulate on HBase regions servers.
+
+If a Bigtable cluster is temporarily unavailable, the WAL logs will accumulate
+on region servers. Once the cluster becomes available again, replication can
+continue.
+
+For any non-retryable error, like non-existent column-family, replication will
+pause and WAL logs will build-up. Users should monitor & alert on replication
+progress
+via [HBase replication monitoring](https://hbase.apache.org/book.html#_monitoring_replication_status)
+. The replication library can not skip a replication entry as a single WAL entry
+represents an atomic transaction. Skipping a message will result in divergence
+between source and target tables.
+
 ## Monitoring
 
 The replication library will emit the metrics into HBase metric ecosystem. There
@@ -249,6 +280,7 @@ are 3 kinds of metrics that the replication library will publish:
 
 Please refer to javadocs for class HBaseToCloudBigtableReplicationMetrics for
 list of available metrics.
+
 ## Troubleshooting
 
 ### Replication stalling
