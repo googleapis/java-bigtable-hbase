@@ -185,7 +185,7 @@ public class CloudBigtableReplicator {
   }
 
   public synchronized void start(Configuration configuration, MetricsExporter metricsExporter) {
-    LOG.info("###Starting replication to CBT.");
+    LOG.info("Starting replication to CBT.");
 
     this.replicatorState = ReplicatorState.getInstance(configuration);
     batchSizeThresholdInBytes = configuration.getLong(BATCH_SIZE_KEY, DEFAULT_BATCH_SIZE_IN_BYTES);

@@ -125,20 +125,20 @@ public abstract class IncompatibleMutationAdapter {
 
         // Incompatible delete: Adapt it.
         try {
-          LOG.debug("Encountered incompatible mutation: " + cell);
+          LOG.info("Encountered incompatible mutation: " + cell);
           incrementIncompatibleMutations();
           returnedCells.addAll(adaptIncompatibleMutation(walEntry, index));
         } catch (UnsupportedOperationException use) {
           // Drop the mutation, not dropping it will lead to stalling of replication.
           incrementDroppedIncompatibleMutations();
-          LOG.error("Dropping incompatible mutation: " + cell);
+          LOG.warn("Dropping incompatible mutation: " + cell);
         }
         continue;
       }
 
       // Replication should only produce PUT and Delete mutation. Appends/Increments are converted
       // to PUTs. Log the unexpected mutation and drop it as we don't know what CBT client will do.
-      LOG.error("Dropping unexpected type of mutation: " + cell);
+      LOG.warn("Dropping unexpected type of mutation: " + cell);
       incrementIncompatibleMutations();
       incrementDroppedIncompatibleMutations();
     }

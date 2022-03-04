@@ -28,15 +28,10 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
 import org.apache.hadoop.hbase.wal.WAL;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 // TODO(remove BaseReplicationEndpoint extension).
 @InternalExtensionOnly
 public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndpoint {
-
-  private static final Logger LOG =
-      LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
 
   private final CloudBigtableReplicator cloudBigtableReplicator;
   private final HBaseMetricsExporter metricsExporter;
