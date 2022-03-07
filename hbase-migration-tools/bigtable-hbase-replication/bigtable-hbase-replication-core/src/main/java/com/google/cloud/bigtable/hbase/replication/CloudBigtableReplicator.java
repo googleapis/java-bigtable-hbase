@@ -81,9 +81,7 @@ public class CloudBigtableReplicator {
      */
     private final Connection connection;
 
-    /**
-     * Reference count for this instance.
-     */
+    /** Reference count for this instance. */
     private static int numReferences = 0;
 
     @VisibleForTesting
@@ -165,9 +163,7 @@ public class CloudBigtableReplicator {
    */
   private ReplicatorState replicatorState;
 
-  /**
-   * Common endpoint that listens to CDC from HBase and replicates to Cloud Bigtable.
-   */
+  /** Common endpoint that listens to CDC from HBase and replicates to Cloud Bigtable. */
   public CloudBigtableReplicator() {
     // TODO: Validate that loggers are correctly configured.
   }
@@ -192,7 +188,7 @@ public class CloudBigtableReplicator {
 
     this.incompatibleMutationAdapter =
         new IncompatibleMutationAdapterFactory(
-            configuration, metricsExporter, this.replicatorState.connection)
+                configuration, metricsExporter, this.replicatorState.connection)
             .createIncompatibleMutationAdapter();
 
     this.isDryRun = configuration.getBoolean(ENABLE_DRY_RUN_MODE_KEY, DEFAULT_DRY_RUN_MODE);
