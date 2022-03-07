@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.replication.adapters;
 
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY;
 
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
 import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
@@ -47,6 +48,8 @@ public abstract class IncompatibleMutationAdapter {
   private final Connection connection;
   private final Configuration conf;
   private final MetricsExporter metricsExporter;
+  // Maximum timestamp that hbase can send to bigtable in ms.
+  static final long HBASE_EFFECTIVE_MAX_TIMESTAMP = Long.MAX_VALUE / 1000L;
 
   private void incrementDroppedIncompatibleMutations() {
     metricsExporter.incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
@@ -56,18 +59,24 @@ public abstract class IncompatibleMutationAdapter {
     metricsExporter.incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
   }
 
+
+  private void incrementTimestampOverflowMutations() {
+    metricsExporter.incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 1);
+  }
+
   /**
    * Creates an IncompatibleMutationAdapter with HBase configuration, MetricSource, and CBT
    * connection.
    *
    * <p>All subclasses must expose this constructor.
    *
-   * @param conf HBase configuration. All the configurations required by subclases should come from
-   *     here.
+   * @param conf            HBase configuration. All the configurations required by subclases should
+   *                        come from here.
    * @param metricsExporter Interface to expose Hadoop metric source present in HBase Replication
-   *     Endpoint.
-   * @param connection Connection to destination CBT cluster. This reference help the subclasses to
-   *     query destination table for certain incompatible mutation.
+   *                        Endpoint.
+   * @param connection      Connection to destination CBT cluster. This reference help the
+   *                        subclasses to query destination table for certain incompatible
+   *                        mutation.
    */
   public IncompatibleMutationAdapter(
       Configuration conf, MetricsExporter metricsExporter, Connection connection) {
@@ -99,6 +108,11 @@ public abstract class IncompatibleMutationAdapter {
     List<Cell> returnedCells = new ArrayList<>(cellsToAdapt.size());
     for (int index = 0; index < cellsToAdapt.size(); index++) {
       Cell cell = cellsToAdapt.get(index);
+      // check whether there is timestamp overflow from HBase -> CBT
+      if (cell.getTimestamp() >= HBASE_EFFECTIVE_MAX_TIMESTAMP) {
+        incrementTimestampOverflowMutations();
+      }
+      
       // All puts are valid.
       if (cell.getTypeByte() == KeyValue.Type.Put.getCode()) {
         returnedCells.add(cell);
@@ -140,8 +154,9 @@ public abstract class IncompatibleMutationAdapter {
    * UnsupportedOperationException} if it can't adapt the mutation.
    *
    * @param walEntry the WAL entry for the cell to Adapt. The wal entry provides context around the
-   *     cell to be adapted, things like commit timestamp and other deletes in the entry.
-   * @param index The index of the cell to adapt.
+   *                 cell to be adapted, things like commit timestamp and other deletes in the
+   *                 entry.
+   * @param index    The index of the cell to adapt.
    */
   protected abstract List<Cell> adaptIncompatibleMutation(BigtableWALEntry walEntry, int index);
 }
