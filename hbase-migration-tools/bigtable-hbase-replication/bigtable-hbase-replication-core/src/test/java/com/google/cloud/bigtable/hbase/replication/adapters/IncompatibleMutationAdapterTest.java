@@ -240,7 +240,8 @@ public class IncompatibleMutationAdapterTest {
         new BigtableWALEntry(System.currentTimeMillis(), walEntryCells, tableName);
 
     Assert.assertEquals(
-        Arrays.asList(put1, put2), incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
+        Arrays.asList(put1, put2),
+        incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
     verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
