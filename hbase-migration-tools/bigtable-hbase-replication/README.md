@@ -216,13 +216,14 @@ javadocs for more details.
 
 ### Dry run mode
 
-It may be hard to determine if an application issues incompatible mutations.
-Especially, if the HBase cluster and application are owned by different teams.
+It may be hard to determine if an application issues incompatible mutations,
+especially if the HBase cluster and application are owned by different teams.
 The replication library provides a dry-run mode to detect incompatible
-mutations. In dry run mode, no mutations are sent over to Cloud Bigtable and
-replication never stalls. If you are not sure about incompatible mutations,
-enable replication in the dry run mode and observe the incompatible mutation
-metrics (discussed below).
+mutations. In dry run mode, replication library checks the mutations for
+incompatibility and never sends them to Cloud Bigtable. All the incompatible
+mutations are logged. If you are not sure about incompatible mutations, enable
+replication in the dry run mode and observe the incompatible mutation metrics (
+discussed below).
 
 You should make sure that all the [prerequisites](#prerequisites) are fulfilled
 before enabling the dry run mode. Dry run mode can be enabled by setting the
@@ -230,7 +231,7 @@ property `google.bigtable.replication.enable_dry_run` to true. It can be set
 in `hbase-site.xml` but we recommend setting it during peer creation.
 Enabling/disabling dry run mode during peer creation can avoid restarting the
 HBase cluster to pickup changes to `hbase-site.xml` file. Enable dry run mode by
-running the following command on to add Cloud Bigtable replication peer (please
+running the following command to add Cloud Bigtable replication peer (please
 change the endpoint class for HBase 1.x):
 
 ```
@@ -240,7 +241,7 @@ add_peer 'peer_id',
 ```
 
 When you are ready to enable replication to Cloud Bigtable, delete this peer and
-create a new peer in normal mode (do not try to update the "dry-run" peer):
+create a new peer in normal mode (**do not** try to update the "dry-run" peer):
 
 ```
 remove_peer 'peer_id'
