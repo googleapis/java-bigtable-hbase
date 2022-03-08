@@ -173,7 +173,6 @@ public class CloudBigtableReplicator {
   }
 
   @VisibleForTesting
-  // Rename to start and call it from the start
   synchronized void start(
       SharedResources sharedResources,
       IncompatibleMutationAdapter incompatibleMutationAdapter,
