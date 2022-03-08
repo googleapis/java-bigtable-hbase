@@ -59,16 +59,17 @@ public class CloudBigtableReplicator {
   private static final Logger LOG = LoggerFactory.getLogger(CloudBigtableReplicator.class);
 
   /**
-   * Shared state for CloudBigtableReplicator objects. This state is shared with all the objects of
-   * CloudBigtableReplicator and should be managed by this class (using refrence counting).
+   * Shared resources for all CloudBigtableReplicator objects. Everything here is shared with all
+   * the objects of CloudBigtableReplicator and should be managed by this class (using reference
+   * counting).
    */
   @VisibleForTesting
-  static class ReplicatorState {
+  static class SharedResources {
 
     // The singleton Object for this class. This object is lazily created when first
     // CloudBigtableReplicator is created and deleted when there is no CloudBigtableReplicator
     // object referencing it.
-    private static ReplicatorState INSTANCE;
+    private static SharedResources INSTANCE;
 
     private final ExecutorService executorService;
     /**
@@ -86,12 +87,12 @@ public class CloudBigtableReplicator {
     private static int numReferences = 0;
 
     @VisibleForTesting
-    ReplicatorState(Connection connection, ExecutorService executorService) {
+    SharedResources(Connection connection, ExecutorService executorService) {
       this.connection = connection;
       this.executorService = executorService;
     }
 
-    public static synchronized ReplicatorState getInstance(Configuration conf) {
+    public static synchronized SharedResources getInstance(Configuration conf) {
 
       numReferences++;
       if (INSTANCE == null) {
@@ -120,7 +121,7 @@ public class CloudBigtableReplicator {
         Connection connection = BigtableConfiguration.connect(configurationCopy);
         LOG.info("Created a connection to CBT. " + projectId + "--" + instanceId);
 
-        INSTANCE = new ReplicatorState(connection, executorService);
+        INSTANCE = new SharedResources(connection, executorService);
       }
       return INSTANCE;
     }
@@ -161,10 +162,10 @@ public class CloudBigtableReplicator {
   private boolean isDryRun;
 
   /**
-   * Replication state that is not tied to an object of this class. Lifecycle of this state is
-   * usually tied to the lifecycle of JVM.
+   * Shared resources that are not tied to an object of this class. Lifecycle of resources in this
+   * object is usually tied to the lifecycle of JVM.
    */
-  private ReplicatorState replicatorState;
+  private SharedResources sharedResources;
 
   /** Common endpoint that listens to CDC from HBase and replicates to Cloud Bigtable. */
   public CloudBigtableReplicator() {
@@ -172,38 +173,42 @@ public class CloudBigtableReplicator {
   }
 
   @VisibleForTesting
-  CloudBigtableReplicator(
-      ReplicatorState state,
+  // Rename to start and call it from the start
+  synchronized void start(
+      SharedResources sharedResources,
       IncompatibleMutationAdapter incompatibleMutationAdapter,
       long batchSizeThresholdInBytes,
       boolean isDryRun) {
-    this.replicatorState = state;
+    this.sharedResources = sharedResources;
     this.incompatibleMutationAdapter = incompatibleMutationAdapter;
     this.batchSizeThresholdInBytes = batchSizeThresholdInBytes;
     this.isDryRun = isDryRun;
-  }
 
-  public synchronized void start(Configuration configuration, MetricsExporter metricsExporter) {
-    LOG.info("Starting replication to CBT.");
-
-    this.replicatorState = ReplicatorState.getInstance(configuration);
-    batchSizeThresholdInBytes = configuration.getLong(BATCH_SIZE_KEY, DEFAULT_BATCH_SIZE_IN_BYTES);
-
-    this.incompatibleMutationAdapter =
-        new IncompatibleMutationAdapterFactory(
-                configuration, metricsExporter, this.replicatorState.connection)
-            .createIncompatibleMutationAdapter();
-
-    this.isDryRun = configuration.getBoolean(ENABLE_DRY_RUN_MODE_KEY, DEFAULT_DRY_RUN_MODE);
     if (isDryRun) {
       LOG.info(
           "Replicating to Cloud Bigtable in dry-run mode. No mutations will be applied to Cloud Bigtable.");
     }
   }
 
+  public synchronized void start(Configuration configuration, MetricsExporter metricsExporter) {
+    LOG.info("Starting replication to CBT.");
+
+    SharedResources sharedResources = SharedResources.getInstance(configuration);
+    IncompatibleMutationAdapter incompatibleMutationAdapter =
+        new IncompatibleMutationAdapterFactory(
+                configuration, metricsExporter, sharedResources.connection)
+            .createIncompatibleMutationAdapter();
+
+    start(
+        sharedResources,
+        incompatibleMutationAdapter,
+        configuration.getLong(BATCH_SIZE_KEY, DEFAULT_BATCH_SIZE_IN_BYTES),
+        configuration.getBoolean(ENABLE_DRY_RUN_MODE_KEY, DEFAULT_DRY_RUN_MODE));
+  }
+
   public void stop() {
     LOG.info("Stopping replication to CBT.");
-    ReplicatorState.decrementReferenceCount();
+    SharedResources.decrementReferenceCount();
   }
 
   public UUID getPeerUUID() {
@@ -338,8 +343,8 @@ public class CloudBigtableReplicator {
       String tableName, Map<ByteRange, List<Cell>> batchToReplicate) {
     try {
       CloudBigtableReplicationTask replicationTask =
-          new CloudBigtableReplicationTask(tableName, replicatorState.connection, batchToReplicate);
-      return replicatorState.executorService.submit(replicationTask);
+          new CloudBigtableReplicationTask(tableName, sharedResources.connection, batchToReplicate);
+      return sharedResources.executorService.submit(replicationTask);
     } catch (Exception ex) {
       LOG.error("Failed to submit a batch for table: " + tableName, ex);
       return CompletableFuture.completedFuture(false);

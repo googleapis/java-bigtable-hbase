@@ -32,7 +32,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicator.ReplicatorState;
+import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicator.SharedResources;
 import com.google.cloud.bigtable.hbase.replication.adapters.ApproximatingIncompatibleMutationAdapter;
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
 import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapter;
@@ -71,12 +71,12 @@ public class CloudBigtableReplicatorTest {
   @Mock private MetricsExporter mockMetricExporter;
 
   private Configuration conf = new Configuration(false);
-  private ReplicatorState state;
+  private SharedResources sharedResources;
   private IncompatibleMutationAdapter incompatibleMutationAdapter;
 
   @Before
   public void setUp() {
-    state = new ReplicatorState(mockConnection, mockExecutorService);
+    sharedResources = new SharedResources(mockConnection, mockExecutorService);
     incompatibleMutationAdapter =
         new ApproximatingIncompatibleMutationAdapter(conf, mockMetricExporter, mockConnection);
   }
@@ -89,8 +89,8 @@ public class CloudBigtableReplicatorTest {
   @Test
   public void testReplicateDryRun() {
     // Create object to test
-    CloudBigtableReplicator replicator =
-        new CloudBigtableReplicator(state, incompatibleMutationAdapter, 100, true);
+    CloudBigtableReplicator replicator = new CloudBigtableReplicator();
+    replicator.start(sharedResources, incompatibleMutationAdapter, 100, true);
 
     // Create WALs to replicate
     Cell cell = new KeyValue(ROW_KEY, CF1, null, TIMESTAMP, DeleteFamilyVersion);
@@ -118,8 +118,8 @@ public class CloudBigtableReplicatorTest {
   @Test
   public void testReplicateDoesNotSplitInBatches() throws IOException {
     // Create object to test
-    CloudBigtableReplicator replicator =
-        new CloudBigtableReplicator(state, incompatibleMutationAdapter, 2000, false);
+    CloudBigtableReplicator replicator = new CloudBigtableReplicator();
+    replicator.start(sharedResources, incompatibleMutationAdapter, 2000, false);
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
@@ -162,9 +162,9 @@ public class CloudBigtableReplicatorTest {
   @Test
   public void testReplicateSplitsBatchesOnRowBoundary() throws IOException {
     // Create object to test
-    CloudBigtableReplicator replicator =
-        new CloudBigtableReplicator(
-            state, incompatibleMutationAdapter, 1 /*split into 1 byte batches*/, false);
+    CloudBigtableReplicator replicator = new CloudBigtableReplicator();
+    replicator.start(
+        sharedResources, incompatibleMutationAdapter, 1 /*split into 1 byte batches*/, false);
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
@@ -214,9 +214,9 @@ public class CloudBigtableReplicatorTest {
   @Test
   public void testReplicateSplitsBatchesOnTableBoundary() throws IOException {
     // Create object to test
-    CloudBigtableReplicator replicator =
-        new CloudBigtableReplicator(
-            state, incompatibleMutationAdapter, 1 /*split into 1 byte batches*/, false);
+    CloudBigtableReplicator replicator = new CloudBigtableReplicator();
+    replicator.start(
+        sharedResources, incompatibleMutationAdapter, 1 /*split into 1 byte batches*/, false);
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
@@ -267,9 +267,9 @@ public class CloudBigtableReplicatorTest {
   @Test
   public void testReplicateFailsOnAnyFailure() throws IOException {
     // Create object to test
-    CloudBigtableReplicator replicator =
-        new CloudBigtableReplicator(
-            state, incompatibleMutationAdapter, 01 /*split into 1 byte batches*/, false);
+    CloudBigtableReplicator replicator = new CloudBigtableReplicator();
+    replicator.start(
+        sharedResources, incompatibleMutationAdapter, 01 /*split into 1 byte batches*/, false);
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
@@ -314,9 +314,9 @@ public class CloudBigtableReplicatorTest {
   @Test
   public void testReplicateFailsOnAnyFutureFailure() throws IOException {
     // Create object to test
-    CloudBigtableReplicator replicator =
-        new CloudBigtableReplicator(
-            state, incompatibleMutationAdapter, 01 /*split into 1 byte batches*/, false);
+    CloudBigtableReplicator replicator = new CloudBigtableReplicator();
+    replicator.start(
+        sharedResources, incompatibleMutationAdapter, 01 /*split into 1 byte batches*/, false);
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
@@ -361,8 +361,8 @@ public class CloudBigtableReplicatorTest {
   @Test
   public void testReplicateFailsToSubmitTask() throws IOException {
     // Create object to test
-    CloudBigtableReplicator replicator =
-        new CloudBigtableReplicator(state, incompatibleMutationAdapter, 2, false);
+    CloudBigtableReplicator replicator = new CloudBigtableReplicator();
+    replicator.start(sharedResources, incompatibleMutationAdapter, 2, false);
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
