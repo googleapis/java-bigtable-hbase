@@ -27,6 +27,7 @@ import static java.util.stream.Collectors.groupingBy;
 
 import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
 import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapter;
 import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapterFactory;
@@ -113,6 +114,8 @@ public class CloudBigtableReplicator {
 
         String projectId = configurationCopy.get(PROJECT_KEY);
         String instanceId = configurationCopy.get(INSTANCE_KEY);
+        // Set user agent.
+        configurationCopy.set(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "HBaseReplication");
         // If an App profile is provided, it will be picked automatically by the connection.
         Connection connection = BigtableConfiguration.connect(configurationCopy);
         LOG.info("Created a connection to CBT. " + projectId + "--" + instanceId);
@@ -140,7 +143,7 @@ public class CloudBigtableReplicator {
             // Best effort wait for termination. When shutdown is called, there should be no
             // tasks waiting on the service, since all the tasks must finish for replicator to exit
             // replicate method.
-            INSTANCE.executorService.awaitTermination(5000l, TimeUnit.MILLISECONDS);
+            INSTANCE.executorService.awaitTermination(5000L, TimeUnit.MILLISECONDS);
           } catch (Exception e) {
             LOG.warn("Failed to shut down the Cloud Bigtable replication thread pool.", e);
           }
