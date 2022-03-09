@@ -242,8 +242,8 @@ public class IncompatibleMutationAdapterTest {
         Arrays.asList(put1, put2),
         incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
-    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
-    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
-    verify(metricsExporter).incCounters(FUTURE_DELETE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter, times(0)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter, times(1)).incCounters(FUTURE_DELETE_MUTATION_METRIC_KEY, 1);
   }
 }
