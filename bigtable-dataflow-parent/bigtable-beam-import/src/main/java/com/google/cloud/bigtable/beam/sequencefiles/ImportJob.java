@@ -15,7 +15,7 @@
  */
 package com.google.cloud.bigtable.beam.sequencefiles;
 
-import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
+
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.beam.TemplateUtils;
@@ -81,7 +81,6 @@ import org.apache.hadoop.io.serializer.WritableSerialization;
  *   --parameters bigtableProject=$PROJECT,bigtableInstanceId=$INSTANCE,bigtableTableId=$TABLE,sourcePattern=gs://$SOURCE_PATTERN
  * </pre>
  */
-@InternalExtensionOnly
 public class ImportJob {
   static final long BUNDLE_SIZE = 100 * 1024 * 1024;
 
@@ -105,6 +104,18 @@ public class ImportJob {
     @SuppressWarnings("unused")
     void setBigtableInstanceId(ValueProvider<String> instanceId);
 
+    @Description("The tenant id for an import.")
+    ValueProvider<String> getTenantId();
+
+    @SuppressWarnings("unused")
+    void setTenantId(ValueProvider<String> tenantId);
+
+    @Description("The tenant id for an import.")
+    ValueProvider<String> getIndexTableId();
+
+    @SuppressWarnings("unused")
+    void setIndexTableId(ValueProvider<String> indexTableId);
+
     @Description("The Bigtable table id to export.")
     ValueProvider<String> getBigtableTableId();
 
@@ -112,14 +123,14 @@ public class ImportJob {
     void setBigtableTableId(ValueProvider<String> tableId);
 
     @Description(
-        "The fully qualified file pattern to import. Should of the form '[destinationPath]/part-*'")
+            "The fully qualified file pattern to import. Should of the form '[destinationPath]/part-*'")
     ValueProvider<String> getSourcePattern();
 
     @SuppressWarnings("unused")
     void setSourcePattern(ValueProvider<String> sourcePath);
 
     @Description(
-        "Optional Set mutation latency throttling (enables the feature). Value in milliseconds.")
+            "Optional Set mutation latency throttling (enables the feature). Value in milliseconds.")
     @Default.Integer(0)
     ValueProvider<Integer> getMutationThrottleLatencyMs();
 
@@ -139,7 +150,7 @@ public class ImportJob {
     PipelineOptionsFactory.register(ImportOptions.class);
 
     ImportOptions opts =
-        PipelineOptionsFactory.fromArgs(args).withValidation().as(ImportOptions.class);
+            PipelineOptionsFactory.fromArgs(args).withValidation().as(ImportOptions.class);
 
     Pipeline pipeline = buildPipeline(opts);
 
@@ -155,29 +166,29 @@ public class ImportJob {
     Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
 
     pipeline
-        .apply(
-            "Read Sequence File",
-            Read.from(new ShuffledSource<>(createSource(opts.getSourcePattern()))))
-        .apply("Create Mutations", ParDo.of(new HBaseResultToMutationFn()))
-        .apply("Write to Bigtable", createSink(opts));
+            .apply(
+                    "Read Sequence File",
+                    Read.from(new ShuffledSource<>(createSource(opts.getSourcePattern()))))
+            .apply("Create Mutations", ParDo.of(new HBaseResultToMutationFn()))
+            .apply("Write to Bigtable", createSink(opts));
 
     return pipeline;
   }
 
   static SequenceFileSource<ImmutableBytesWritable, Result> createSource(
-      ValueProvider<String> sourcePattern) {
+          ValueProvider<String> sourcePattern) {
     return new SequenceFileSource<>(
-        sourcePattern,
-        ImmutableBytesWritable.class,
-        WritableSerialization.class,
-        Result.class,
-        ResultSerialization.class,
-        BUNDLE_SIZE);
+            sourcePattern,
+            ImmutableBytesWritable.class,
+            WritableSerialization.class,
+            Result.class,
+            ResultSerialization.class,
+            BUNDLE_SIZE);
   }
 
   static PTransform<PCollection<Mutation>, PDone> createSink(ImportOptions opts) {
     CloudBigtableTableConfiguration config =
-        TemplateUtils.buildImportConfig(opts, "SequenceFileImportJob");
+            TemplateUtils.buildImportConfig(opts, "SequenceFileImportJob");
     return CloudBigtableIO.writeToTable(config);
   }
 }

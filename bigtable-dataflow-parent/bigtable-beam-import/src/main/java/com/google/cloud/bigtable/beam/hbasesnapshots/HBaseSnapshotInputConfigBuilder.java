@@ -52,6 +52,7 @@ class HBaseSnapshotInputConfigBuilder {
   private String hbaseSnapshotSourceDir;
   private String snapshotName;
   private String restoreDirSuffix;
+  private String tenantId;
 
   public HBaseSnapshotInputConfigBuilder() {}
 
@@ -68,6 +69,14 @@ class HBaseSnapshotInputConfigBuilder {
    */
   public HBaseSnapshotInputConfigBuilder setHbaseSnapshotSourceDir(String hbaseSnapshotSourceDir) {
     this.hbaseSnapshotSourceDir = hbaseSnapshotSourceDir;
+    return this;
+  }
+
+  /*
+   * Set the GCS path where the HBase snapshot data is located
+   */
+  public HBaseSnapshotInputConfigBuilder setTenantId(String tenantId) {
+    this.tenantId = tenantId;
     return this;
   }
 
@@ -96,15 +105,15 @@ class HBaseSnapshotInputConfigBuilder {
 
   public Configuration build() throws Exception {
     Preconditions.checkState(
-        projectId != null && !projectId.isEmpty(), "Required value projectId must be set");
+            projectId != null && !projectId.isEmpty(), "Required value projectId must be set");
     Preconditions.checkState(
-        hbaseSnapshotSourceDir != null && !hbaseSnapshotSourceDir.isEmpty(),
-        "Required value hbaseSnapshotSourceDir must be set");
+            hbaseSnapshotSourceDir != null && !hbaseSnapshotSourceDir.isEmpty(),
+            "Required value hbaseSnapshotSourceDir must be set");
     Preconditions.checkState(
-        snapshotName != null && !snapshotName.isEmpty(), "Required value snapshotName must be set");
+            snapshotName != null && !snapshotName.isEmpty(), "Required value snapshotName must be set");
     Preconditions.checkState(
-        hbaseSnapshotSourceDir.startsWith(GcsPath.SCHEME),
-        "Snapshot folder must be hosted in a GCS bucket");
+            hbaseSnapshotSourceDir.startsWith(GcsPath.SCHEME),
+            "Snapshot folder must be hosted in a GCS bucket");
 
     Configuration conf = createHBaseConfiguration();
 
@@ -135,7 +144,7 @@ class HBaseSnapshotInputConfigBuilder {
 
     // Setup MapReduce config for TableSnapshotInputFormat
     conf.setClass(
-        "mapreduce.job.inputformat.class", TableSnapshotInputFormat.class, InputFormat.class);
+            "mapreduce.job.inputformat.class", TableSnapshotInputFormat.class, InputFormat.class);
     conf.setClass("key.class", ImmutableBytesWritable.class, Writable.class);
     conf.setClass("value.class", Result.class, Object.class);
     return conf;

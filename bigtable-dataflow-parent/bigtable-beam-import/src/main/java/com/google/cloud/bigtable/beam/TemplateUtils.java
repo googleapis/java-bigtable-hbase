@@ -53,27 +53,53 @@ public class TemplateUtils {
    * custom user agent.
    */
   public static CloudBigtableTableConfiguration buildImportConfig(
-      ImportOptions opts, String customUserAgent) {
+          ImportOptions opts, String customUserAgent) {
     CloudBigtableTableConfiguration.Builder builder =
-        new CloudBigtableTableConfiguration.Builder()
-            .withProjectId(opts.getBigtableProject())
-            .withInstanceId(opts.getBigtableInstanceId())
-            .withTableId(opts.getBigtableTableId())
-            .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, customUserAgent);
+            new CloudBigtableTableConfiguration.Builder()
+                    .withProjectId(opts.getBigtableProject())
+                    .withInstanceId(opts.getBigtableInstanceId())
+                    .withTableId(opts.getBigtableTableId())
+                    .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, customUserAgent);
     if (opts.getBigtableAppProfileId() != null) {
       builder.withAppProfileId(opts.getBigtableAppProfileId());
     }
 
     ValueProvider enableThrottling =
-        ValueProvider.NestedValueProvider.of(
-            opts.getMutationThrottleLatencyMs(),
-            (Integer throttleMs) -> String.valueOf(throttleMs > 0));
+            ValueProvider.NestedValueProvider.of(
+                    opts.getMutationThrottleLatencyMs(),
+                    (Integer throttleMs) -> String.valueOf(throttleMs > 0));
 
     builder.withConfiguration(
-        BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING, enableThrottling);
+            BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING, enableThrottling);
     builder.withConfiguration(
-        BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS,
-        ValueProvider.NestedValueProvider.of(opts.getMutationThrottleLatencyMs(), String::valueOf));
+            BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS,
+            ValueProvider.NestedValueProvider.of(opts.getMutationThrottleLatencyMs(), String::valueOf));
+
+    return builder.build();
+  }
+
+  public static CloudBigtableTableConfiguration buildIndexImportConfig(
+          ImportOptions opts, String customUserAgent) {
+    CloudBigtableTableConfiguration.Builder builder =
+            new CloudBigtableTableConfiguration.Builder()
+                    .withProjectId(opts.getBigtableProject())
+                    .withInstanceId(opts.getBigtableInstanceId())
+                    .withTableId(opts.getIndexTableId())
+                    .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, customUserAgent);
+    if (opts.getBigtableAppProfileId() != null) {
+      builder.withAppProfileId(opts.getBigtableAppProfileId());
+    }
+
+    ValueProvider enableThrottling =
+            ValueProvider.NestedValueProvider.of(
+                    opts.getMutationThrottleLatencyMs(),
+                    (Integer throttleMs) -> String.valueOf(throttleMs > 0));
+
+    builder.withConfiguration(
+            BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING, enableThrottling);
+    builder.withConfiguration(
+            BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS,
+            ValueProvider.NestedValueProvider.of(opts.getMutationThrottleLatencyMs(), String::valueOf));
 
     return builder.build();
   }
@@ -81,11 +107,11 @@ public class TemplateUtils {
   /** Builds CloudBigtableTableConfiguration from input runtime parameters for import job. */
   public static CloudBigtableTableConfiguration buildSyncTableConfig(SyncTableOptions opts) {
     CloudBigtableTableConfiguration.Builder builder =
-        new CloudBigtableTableConfiguration.Builder()
-            .withProjectId(opts.getBigtableProject())
-            .withInstanceId(opts.getBigtableInstanceId())
-            .withTableId(opts.getBigtableTableId())
-            .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "SyncTableJob");
+            new CloudBigtableTableConfiguration.Builder()
+                    .withProjectId(opts.getBigtableProject())
+                    .withInstanceId(opts.getBigtableInstanceId())
+                    .withTableId(opts.getBigtableTableId())
+                    .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "SyncTableJob");
     if (opts.getBigtableAppProfileId() != null) {
       builder.withAppProfileId(opts.getBigtableAppProfileId());
     }
@@ -94,7 +120,7 @@ public class TemplateUtils {
 
   /** Provides a request that is constructed with some attributes. */
   private static class RequestValueProvider
-      implements ValueProvider<ReadRowsRequest>, Serializable {
+          implements ValueProvider<ReadRowsRequest>, Serializable {
     private final ValueProvider<String> start;
     private final ValueProvider<String> stop;
     private final ValueProvider<Integer> maxVersion;
@@ -134,11 +160,11 @@ public class TemplateUtils {
         Adapters.SCAN_ADAPTER.adapt(scan, readHooks, query);
         readHooks.applyPreSendHook(query);
         RequestContext requestContext =
-            RequestContext.create(
-                PLACEHOLDER_PROJECT_ID, PLACEHOLDER_INSTANCE_ID, PLACEHOLDER_APP_PROFILE_ID);
+                RequestContext.create(
+                        PLACEHOLDER_PROJECT_ID, PLACEHOLDER_INSTANCE_ID, PLACEHOLDER_APP_PROFILE_ID);
 
         cachedRequest =
-            query.toProto(requestContext).toBuilder().setTableName("").setAppProfileId("").build();
+                query.toProto(requestContext).toBuilder().setTableName("").setAppProfileId("").build();
       }
       return cachedRequest;
     }
@@ -146,9 +172,9 @@ public class TemplateUtils {
     @Override
     public boolean isAccessible() {
       return start.isAccessible()
-          && stop.isAccessible()
-          && maxVersion.isAccessible()
-          && filter.isAccessible();
+              && stop.isAccessible()
+              && maxVersion.isAccessible()
+              && filter.isAccessible();
     }
 
     @Override
@@ -164,14 +190,14 @@ public class TemplateUtils {
   public static CloudBigtableScanConfiguration buildExportConfig(ExportOptions options) {
     ValueProvider<ReadRowsRequest> request = new RequestValueProvider(options);
     CloudBigtableScanConfiguration.Builder configBuilder =
-        new CloudBigtableScanConfiguration.Builder()
-            .withProjectId(options.getBigtableProject())
-            .withInstanceId(options.getBigtableInstanceId())
-            .withTableId(options.getBigtableTableId())
-            .withAppProfileId(options.getBigtableAppProfileId())
-            .withConfiguration(
-                BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "SequenceFileExportJob")
-            .withRequest(request);
+            new CloudBigtableScanConfiguration.Builder()
+                    .withProjectId(options.getBigtableProject())
+                    .withInstanceId(options.getBigtableInstanceId())
+                    .withTableId(options.getBigtableTableId())
+                    .withAppProfileId(options.getBigtableAppProfileId())
+                    .withConfiguration(
+                            BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "SequenceFileExportJob")
+                    .withRequest(request);
 
     return configBuilder.build();
   }
