@@ -51,7 +51,7 @@ public abstract class IncompatibleMutationAdapter {
   private final Configuration conf;
   private final MetricsExporter metricsExporter;
   // Maximum timestamp that hbase can send to bigtable in ms.
-  static final long HBASE_EFFECTIVE_MAX_TIMESTAMP = Long.MAX_VALUE / 1000L;
+  static final long BIGTABLE_EFFECTIVE_MAX = Long.MAX_VALUE / 1000L;
 
   private void incrementDroppedIncompatibleMutations() {
     metricsExporter.incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
@@ -92,6 +92,9 @@ public abstract class IncompatibleMutationAdapter {
     // Make sure that the counters show up.
     metricsExporter.incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     metricsExporter.incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    metricsExporter.incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
+    metricsExporter.incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+
   }
 
   private boolean isValidDelete(Cell delete) {
@@ -115,18 +118,19 @@ public abstract class IncompatibleMutationAdapter {
     for (int index = 0; index < cellsToAdapt.size(); index++) {
       Cell cell = cellsToAdapt.get(index);
       // check whether there is timestamp overflow from HBase -> CBT and make sure
-      // it does clash with valid delete which require the timestmap to be
+      // it does clash with valid delete which require the timestamp to be
       // HConstants.LATEST_TIMESTAMP,
-      if (cell.getTimestamp() >= HBASE_EFFECTIVE_MAX_TIMESTAMP
+      // this will be true for reverse timestamps. do not enable trace logging
+      if (cell.getTimestamp() >= BIGTABLE_EFFECTIVE_MAX
           && cell.getTimestamp() != HConstants.LATEST_TIMESTAMP) {
         incrementTimestampOverflowMutations();
-        LOG.error(
+        LOG.trace(
             "Incompatible entry: "
                 + cell
                 + " cell time: "
                 + cell.getTimestamp()
                 + " max timestamp from hbase to bigtable: "
-                + HBASE_EFFECTIVE_MAX_TIMESTAMP);
+                + BIGTABLE_EFFECTIVE_MAX);
       }
 
       // All puts are valid.

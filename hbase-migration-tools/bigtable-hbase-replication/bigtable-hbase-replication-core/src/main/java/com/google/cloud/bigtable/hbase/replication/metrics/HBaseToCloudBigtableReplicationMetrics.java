@@ -28,5 +28,5 @@ public class HBaseToCloudBigtableReplicationMetrics {
   public static final String INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY =
       "bigtableIncompatibleDeleteMutations";
   public static final String INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY =
-      "bigtableIncompatibleMutationsTimestampOverflow";
+      "bigtableIncompatibleTimestampOverflowMutation";
 }
