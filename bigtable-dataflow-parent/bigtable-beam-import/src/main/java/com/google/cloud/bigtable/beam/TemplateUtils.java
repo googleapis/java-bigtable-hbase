@@ -78,6 +78,32 @@ public class TemplateUtils {
     return builder.build();
   }
 
+  public static CloudBigtableTableConfiguration buildIndexImportConfig(
+          ImportOptions opts, String customUserAgent) {
+    CloudBigtableTableConfiguration.Builder builder =
+            new CloudBigtableTableConfiguration.Builder()
+                    .withProjectId(opts.getBigtableProject())
+                    .withInstanceId(opts.getBigtableInstanceId())
+                    .withTableId(opts.getIndexTableId())
+                    .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, customUserAgent);
+    if (opts.getBigtableAppProfileId() != null) {
+      builder.withAppProfileId(opts.getBigtableAppProfileId());
+    }
+
+    ValueProvider enableThrottling =
+            ValueProvider.NestedValueProvider.of(
+                    opts.getMutationThrottleLatencyMs(),
+                    (Integer throttleMs) -> String.valueOf(throttleMs > 0));
+
+    builder.withConfiguration(
+            BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING, enableThrottling);
+    builder.withConfiguration(
+            BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS,
+            ValueProvider.NestedValueProvider.of(opts.getMutationThrottleLatencyMs(), String::valueOf));
+
+    return builder.build();
+  }
+
   /** Builds CloudBigtableTableConfiguration from input runtime parameters for import job. */
   public static CloudBigtableTableConfiguration buildSyncTableConfig(SyncTableOptions opts) {
     CloudBigtableTableConfiguration.Builder builder =

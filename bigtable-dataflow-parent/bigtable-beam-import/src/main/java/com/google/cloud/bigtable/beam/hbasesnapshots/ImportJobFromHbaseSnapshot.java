@@ -15,9 +15,9 @@
  */
 package com.google.cloud.bigtable.beam.hbasesnapshots;
 
-import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.TemplateUtils;
+import com.google.cloud.bigtable.beam.sequencefiles.CustomIndexTableTransform;
 import com.google.cloud.bigtable.beam.sequencefiles.HBaseResultToMutationFn;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob;
 import com.google.cloud.bigtable.beam.sequencefiles.Utils;
@@ -27,15 +27,16 @@ import java.util.List;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO;
-import org.apache.beam.sdk.options.Description;
-import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.apache.beam.sdk.options.*;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.Wait;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.PCollectionList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 
@@ -63,7 +64,6 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
  * directory under the snapshot export bucket will not get deleted. Hence one need to either launch
  * a replacement job with the same jobName to re-run the job or manually delete this directory.
  */
-@InternalExtensionOnly
 public class ImportJobFromHbaseSnapshot {
   private static final Log LOG = LogFactory.getLog(ImportJobFromHbaseSnapshot.class);
 
@@ -79,13 +79,24 @@ public class ImportJobFromHbaseSnapshot {
 
     @SuppressWarnings("unused")
     void setSnapshotName(String snapshotName);
+
+    public interface CustomPipelineOptions extends PipelineOptions {
+      @Description("Org Id")
+      ValueProvider<String> getTenantId();
+      void setTenantId(ValueProvider<String> tenantId);
+
+      ValueProvider<String> getDelimiter();
+      void setDelimiter(ValueProvider<String> delimiter);
+    }
   }
 
   public static void main(String[] args) throws Exception {
     PipelineOptionsFactory.register(ImportOptions.class);
 
     ImportOptions opts =
-        PipelineOptionsFactory.fromArgs(args).withValidation().as(ImportOptions.class);
+            PipelineOptionsFactory.fromArgs(args).withValidation().as(ImportOptions.class);
+
+    opts.getTenantId();
 
     LOG.info("Building Pipeline");
     Pipeline pipeline = buildPipeline(opts);
@@ -101,32 +112,46 @@ public class ImportJobFromHbaseSnapshot {
   static Pipeline buildPipeline(ImportOptions opts) throws Exception {
 
     Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
-    HBaseSnapshotInputConfigBuilder configurationBuilder =
-        new HBaseSnapshotInputConfigBuilder()
-            .setProjectId(opts.getProject())
-            .setHbaseSnapshotSourceDir(opts.getHbaseSnapshotSourceDir())
-            .setSnapshotName(opts.getSnapshotName())
-            .setRestoreDirSuffix(opts.getJobName());
-    PCollection<KV<ImmutableBytesWritable, Result>> readResult =
-        pipeline.apply(
-            "Read from HBase Snapshot",
-            HadoopFormatIO.<ImmutableBytesWritable, Result>read()
-                .withConfiguration(configurationBuilder.build()));
 
-    readResult
-        .apply("Create Mutations", ParDo.of(new HBaseResultToMutationFn()))
-        .apply(
-            "Write to Bigtable",
-            CloudBigtableIO.writeToTable(
-                TemplateUtils.buildImportConfig(opts, "HBaseSnapshotImportJob")));
+    HBaseSnapshotInputConfigBuilder configurationBuilder =
+            new HBaseSnapshotInputConfigBuilder()
+                    .setProjectId(opts.getProject())
+                    .setHbaseSnapshotSourceDir(opts.getHbaseSnapshotSourceDir())
+                    .setSnapshotName(opts.getSnapshotName())
+                    .setRestoreDirSuffix(opts.getJobName());
+
+    PCollection<KV<ImmutableBytesWritable, Result>> originalResult =
+            pipeline.apply(
+                    "Read from HBase Snapshot",
+                    HadoopFormatIO.<ImmutableBytesWritable, Result>read()
+                            .withConfiguration(configurationBuilder.build()));
+
+    PCollection<Mutation> indexResult = originalResult
+            .apply("Create Mutations - Index", ParDo.of(new CustomIndexTableTransform()));
+
+    originalResult
+            .apply("Create Mutations - Original", ParDo.of(new HBaseResultToMutationFn()))
+            .apply(
+                    "Write Original to Bigtable",
+                    CloudBigtableIO.writeToTable(
+                            TemplateUtils.buildImportConfig(opts, "HBaseSnapshotImportJob")));
+
+    indexResult
+            .apply("Write Index Table to BigTable",
+                    CloudBigtableIO.writeToTable(
+                            TemplateUtils.buildIndexImportConfig(opts, "HBaseSnapshotImportJob")));
+
+    // opts with one extra param for reversed table id
+    // one set of opts for primary table, another for secondary table
+    // one source, two outputs - create two partitions, one for reverse one for primary - shashank meeting
 
     final List<KV<String, String>> sourceAndRestoreFolders =
-        Arrays.asList(
-            KV.of(opts.getHbaseSnapshotSourceDir(), configurationBuilder.getRestoreDir()));
+            Arrays.asList(
+                    KV.of(opts.getHbaseSnapshotSourceDir(), configurationBuilder.getRestoreDir()));
     pipeline
-        .apply(Create.of(sourceAndRestoreFolders))
-        .apply(Wait.on(readResult))
-        .apply(ParDo.of(new CleanupHBaseSnapshotRestoreFilesFn()));
+            .apply(Create.of(sourceAndRestoreFolders))
+            .apply(Wait.on(originalResult))
+            .apply(ParDo.of(new CleanupHBaseSnapshotRestoreFilesFn()));
 
     return pipeline;
   }
