@@ -17,12 +17,13 @@
 package com.google.cloud.bigtable.hbase.replication.adapters;
 
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY;
-import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.FUTURE_DELETE_MUTATION_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.PUTS_IN_FUTURE_METRIC_KEY;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import java.nio.charset.StandardCharsets;
@@ -230,7 +231,7 @@ public class IncompatibleMutationAdapterTest {
   }
 
   @Test
-  public void testFutureDeletesAreFlagged() {
+  public void testFuturePutAreFlagged() {
     ArrayList<Cell> walEntryCells = new ArrayList<>();
     Cell put1 = new KeyValue(rowKey, cf, qual, 900, Type.Put);
     Cell put2 = new KeyValue(rowKey, cf, qual, 1005L, Type.Put);
@@ -242,8 +243,9 @@ public class IncompatibleMutationAdapterTest {
         Arrays.asList(put1, put2),
         incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
-    verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
-    verify(metricsExporter, times(0)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
-    verify(metricsExporter, times(1)).incCounters(FUTURE_DELETE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter, times(1)).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 1);
+    verifyNoMoreInteractions(metricsExporter);
   }
 }
