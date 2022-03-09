@@ -35,7 +35,9 @@ import java.util.Map;
 import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.KeyValue.Type;
 import org.apache.hadoop.hbase.client.Connection;
 import org.junit.After;
 import org.junit.Assert;
@@ -231,19 +233,21 @@ public class IncompatibleMutationAdapterTest {
   @Test
   public void testTimestampsOverflowMutations() {
     ArrayList<Cell> walEntryCells = new ArrayList<>();
-    Cell put1 = new KeyValue(rowKey, cf, qual, Long.MAX_VALUE, KeyValue.Type.Put, val);
+    Cell put1 = new KeyValue(rowKey, cf, qual, Long.MAX_VALUE - 1, KeyValue.Type.Put, val);
     Cell put2 = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.Put, val);
-
+    // make sure this is not flagged as overflow.
+    Cell delete =
+        new KeyValue(rowKey, cf, qual, HConstants.LATEST_TIMESTAMP, Type.DeleteFamily, val);
     walEntryCells.add(put1);
     walEntryCells.add(put2);
-    BigtableWALEntry walEntry =
-        new BigtableWALEntry(System.currentTimeMillis(), walEntryCells, tableName);
+    walEntryCells.add(delete);
+    BigtableWALEntry walEntry = new BigtableWALEntry(100L, walEntryCells, tableName);
 
     Assert.assertEquals(
-        Arrays.asList(put1, put2),
+        Arrays.asList(put1, put2, delete),
         incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
-    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 1);
   }

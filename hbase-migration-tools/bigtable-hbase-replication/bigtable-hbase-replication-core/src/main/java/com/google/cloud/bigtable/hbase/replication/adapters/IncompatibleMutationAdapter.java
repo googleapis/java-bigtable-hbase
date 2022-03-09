@@ -115,17 +115,18 @@ public abstract class IncompatibleMutationAdapter {
     for (int index = 0; index < cellsToAdapt.size(); index++) {
       Cell cell = cellsToAdapt.get(index);
       // check whether there is timestamp overflow from HBase -> CBT and make sure
-      // it does clash with valid delete which require the timestmap to be HConstants.LATEST_TIMESTAMP,
-      if (cell.getTimestamp() >= HBASE_EFFECTIVE_MAX_TIMESTAMP && cell.getTimestamp() != HConstants.LATEST_TIMESTAMP) {
+      // it does clash with valid delete which require the timestmap to be
+      // HConstants.LATEST_TIMESTAMP,
+      if (cell.getTimestamp() >= HBASE_EFFECTIVE_MAX_TIMESTAMP
+          && cell.getTimestamp() != HConstants.LATEST_TIMESTAMP) {
         incrementTimestampOverflowMutations();
         LOG.error(
             "Incompatible entry: "
                 + cell
                 + " cell time: "
                 + cell.getTimestamp()
-                + " max timestamp from hbase to bigtable  : "
-                + HBASE_EFFECTIVE_MAX_TIMESTAMP
-        );
+                + " max timestamp from hbase to bigtable: "
+                + HBASE_EFFECTIVE_MAX_TIMESTAMP);
       }
 
       // All puts are valid.
