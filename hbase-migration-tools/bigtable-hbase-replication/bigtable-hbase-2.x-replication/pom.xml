@@ -164,7 +164,7 @@ limitations under the License.
         <dependency>
             <groupId>com.google.cloud</groupId>
             <artifactId>google-cloud-bigtable-emulator</artifactId>
-            <version>0.125.1</version>
+            <version>0.142.3</version>
             <scope>test</scope>
             <exclusions>
                 <!-- We do not use channel creating helpers, so don't need any
@@ -179,7 +179,7 @@ limitations under the License.
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>3.8.0</version>
+            <version>4.4.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
