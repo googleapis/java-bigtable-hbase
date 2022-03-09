@@ -36,6 +36,7 @@ import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.KeyValue.Type;
 import org.apache.hadoop.hbase.client.Connection;
 import org.junit.After;
 import org.junit.Assert;
@@ -231,17 +232,17 @@ public class IncompatibleMutationAdapterTest {
   @Test
   public void testFutureDeletesAreFlagged() {
     ArrayList<Cell> walEntryCells = new ArrayList<>();
-    Cell pastDelete = new KeyValue(rowKey, cf, qual, 900, KeyValue.Type.Delete);
-    Cell futureDelete = new KeyValue(rowKey, cf, qual, 1005L, KeyValue.Type.Delete);
-    walEntryCells.add(pastDelete);
-    walEntryCells.add(futureDelete);
+    Cell put1 = new KeyValue(rowKey, cf, qual, 900, Type.Put);
+    Cell put2 = new KeyValue(rowKey, cf, qual, 1005L, Type.Put);
+    walEntryCells.add(put1);
+    walEntryCells.add(put2);
     BigtableWALEntry walEntry =
         new BigtableWALEntry(1000L, walEntryCells, tableName);
 
     Assert.assertEquals(
-        Arrays.asList(pastDelete, futureDelete), incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
+        Arrays.asList(put1, put2), incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
-    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     verify(metricsExporter).incCounters(FUTURE_DELETE_MUTATION_METRIC_KEY, 1);
   }

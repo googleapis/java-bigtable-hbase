@@ -59,6 +59,7 @@ public abstract class IncompatibleMutationAdapter {
 
   private void incrementFutureDeleteMutations() {
     metricsExporter.incCounters(FUTURE_DELETE_MUTATION_METRIC_KEY, 1);
+    incrementIncompatibleMutations();
   }
 
   /**
@@ -106,6 +107,11 @@ public abstract class IncompatibleMutationAdapter {
       Cell cell = cellsToAdapt.get(index);
       // All puts are valid.
       if (cell.getTypeByte() == KeyValue.Type.Put.getCode()) {
+        // flag if put is issued for future timestamp
+        // do not log as we might fill up disk space due condition being true from clock skew
+        if (cell.getTimestamp() > walEntry.getWalWriteTime()) {
+          incrementFutureDeleteMutations();
+        }
         returnedCells.add(cell);
         continue;
       }
@@ -114,10 +120,6 @@ public abstract class IncompatibleMutationAdapter {
 
         // Compatible delete
         if (isValidDelete(cell)) {
-          // flag if delete was issued in future
-          if (cell.getTimestamp() > walEntry.getWalWriteTime()) {
-            incrementFutureDeleteMutations();
-          }
           returnedCells.add(cell);
           continue;
         }
