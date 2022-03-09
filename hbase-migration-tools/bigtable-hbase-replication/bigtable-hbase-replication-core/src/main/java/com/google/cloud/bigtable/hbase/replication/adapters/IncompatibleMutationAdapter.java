@@ -17,6 +17,7 @@
 package com.google.cloud.bigtable.hbase.replication.adapters;
 
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY;
 
@@ -27,6 +28,7 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Connection;
 import org.slf4j.Logger;
@@ -61,6 +63,12 @@ public abstract class IncompatibleMutationAdapter {
 
   private void incrementTimestampOverflowMutations() {
     metricsExporter.incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 1);
+    incrementIncompatibleMutations();
+  }
+
+  private void incrementIncompatibleDeletesMutations() {
+    metricsExporter.incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 1);
+    incrementIncompatibleMutations();
   }
 
   /**
@@ -106,9 +114,18 @@ public abstract class IncompatibleMutationAdapter {
     List<Cell> returnedCells = new ArrayList<>(cellsToAdapt.size());
     for (int index = 0; index < cellsToAdapt.size(); index++) {
       Cell cell = cellsToAdapt.get(index);
-      // check whether there is timestamp overflow from HBase -> CBT
-      if (cell.getTimestamp() >= HBASE_EFFECTIVE_MAX_TIMESTAMP) {
+      // check whether there is timestamp overflow from HBase -> CBT and make sure
+      // it does clash with valid delete which require the timestmap to be HConstants.LATEST_TIMESTAMP,
+      if (cell.getTimestamp() >= HBASE_EFFECTIVE_MAX_TIMESTAMP && cell.getTimestamp() != HConstants.LATEST_TIMESTAMP) {
         incrementTimestampOverflowMutations();
+        LOG.error(
+            "Incompatible entry: "
+                + cell
+                + " cell time: "
+                + cell.getTimestamp()
+                + " max timestamp from hbase to bigtable  : "
+                + HBASE_EFFECTIVE_MAX_TIMESTAMP
+        );
       }
 
       // All puts are valid.
@@ -128,7 +145,7 @@ public abstract class IncompatibleMutationAdapter {
         // Incompatible delete: Adapt it.
         try {
           LOG.debug("Encountered incompatible mutation: " + cell);
-          incrementIncompatibleMutations();
+          incrementIncompatibleDeletesMutations();
           returnedCells.addAll(adaptIncompatibleMutation(walEntry, index));
         } catch (UnsupportedOperationException use) {
           // Drop the mutation, not dropping it will lead to stalling of replication.
