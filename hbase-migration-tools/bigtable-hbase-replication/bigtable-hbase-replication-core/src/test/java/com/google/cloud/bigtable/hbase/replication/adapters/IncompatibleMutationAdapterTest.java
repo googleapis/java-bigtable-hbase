@@ -236,11 +236,11 @@ public class IncompatibleMutationAdapterTest {
     Cell put2 = new KeyValue(rowKey, cf, qual, 1005L, Type.Put);
     walEntryCells.add(put1);
     walEntryCells.add(put2);
-    BigtableWALEntry walEntry =
-        new BigtableWALEntry(1000L, walEntryCells, tableName);
+    BigtableWALEntry walEntry = new BigtableWALEntry(1000L, walEntryCells, tableName);
 
     Assert.assertEquals(
-        Arrays.asList(put1, put2), incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
+        Arrays.asList(put1, put2),
+        incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
     verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
