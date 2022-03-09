@@ -171,7 +171,6 @@ public class IncompatibleMutationAdapterTest {
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     verifyNoMoreInteractions(metricsExporter);
-
   }
 
   @Test
@@ -217,7 +216,6 @@ public class IncompatibleMutationAdapterTest {
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verifyNoMoreInteractions(metricsExporter);
-
   }
 
   @Test
@@ -239,7 +237,6 @@ public class IncompatibleMutationAdapterTest {
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verifyNoMoreInteractions(metricsExporter);
-
   }
 
   @Test
@@ -264,7 +261,6 @@ public class IncompatibleMutationAdapterTest {
         .incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verifyNoMoreInteractions(metricsExporter);
-
   }
 
   private void testInitialsMetrics() {
