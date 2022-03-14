@@ -52,7 +52,7 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService imp
 
   private final CloudBigtableReplicator cloudBigtableReplicator;
   private final HBaseMetricsExporter metricsExporter;
-  protected Context ctx;
+  protected Context context;
 
   public HbaseToCloudBigtableReplicationEndpoint() {
     cloudBigtableReplicator = new CloudBigtableReplicator();
@@ -61,14 +61,14 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService imp
 
   @Override
   public void init(Context context) throws IOException {
-    this.ctx = context;
+    this.context = context;
 
-    if (this.ctx != null){
-      ReplicationPeer peer = this.ctx.getReplicationPeer();
+    if (this.context != null){
+      ReplicationPeer peer = this.context.getReplicationPeer();
       if (peer != null){
         peer.registerPeerConfigListener(this);
       } else {
-        LOG.warn("Not tracking replication peer config changes for Peer Id " + this.ctx.getPeerId() +
+        LOG.warn("Not tracking replication peer config changes for Peer Id " + this.context.getPeerId() +
             " because there's no such peer");
       }
     }
@@ -95,8 +95,8 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService imp
     if (tableCfFilter != null) {
       filters.add(tableCfFilter);
     }
-    if (ctx != null && ctx.getPeerConfig() != null) {
-      String filterNameCSV = ctx.getPeerConfig().getConfiguration().get(REPLICATION_WALENTRYFILTER_CONFIG_KEY);
+    if (context != null && context.getPeerConfig() != null) {
+      String filterNameCSV = context.getPeerConfig().getConfiguration().get(REPLICATION_WALENTRYFILTER_CONFIG_KEY);
       if (filterNameCSV != null && !filterNameCSV.isEmpty()) {
         String[] filterNames = filterNameCSV.split(",");
         for (String filterName : filterNames) {
@@ -121,7 +121,7 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService imp
   /** Returns a WALEntryFilter for checking replication per table and CF. Subclasses can
    * return null if they don't want this filter */
   protected WALEntryFilter getNamespaceTableCfWALEntryFilter() {
-    return new NamespaceTableCfWALEntryFilter(ctx.getReplicationPeer());
+    return new NamespaceTableCfWALEntryFilter(context.getReplicationPeer());
   }
 
   @Override
@@ -156,8 +156,8 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService imp
 
   @Override
   protected void doStart() {
-    metricsExporter.setMetricsSource(ctx.getMetrics());
-    cloudBigtableReplicator.start(ctx.getConfiguration(), metricsExporter);
+    metricsExporter.setMetricsSource(context.getMetrics());
+    cloudBigtableReplicator.start(context.getConfiguration(), metricsExporter);
     notifyStarted();
   }
 
