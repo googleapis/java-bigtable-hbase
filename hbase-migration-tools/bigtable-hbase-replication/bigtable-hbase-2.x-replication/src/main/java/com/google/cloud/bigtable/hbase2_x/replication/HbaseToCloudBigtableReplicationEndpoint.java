@@ -42,7 +42,6 @@ import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO(remove BaseReplicationEndpoint extension).
 @InternalExtensionOnly
 public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService
     implements ReplicationEndpoint {
