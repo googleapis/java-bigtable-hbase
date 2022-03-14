@@ -72,8 +72,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
     @Override
     public boolean replicate(ReplicateContext replicateContext) {
-      System.out.print("sbhattarai testi haha");
-      System.out.print(replicateContext.getEntries().toString());
       boolean result = super.replicate(replicateContext);
       replicatedEntries.getAndAdd(replicateContext.getEntries().size());
       return result;
@@ -430,7 +428,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     TestUtils.waitForReplication(
         () -> {
           //  replicate Entries will be zero
-          return TestReplicationEndpoint.replicatedEntries.get() >= 2;
+          return TestReplicationEndpoint.replicatedEntries.get() >= 1;
         });
 
     Result cbtResult = cbtTable.get(new Get(FILTERED_ROW_KEY).setMaxVersions());
