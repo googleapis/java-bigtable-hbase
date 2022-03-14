@@ -44,8 +44,8 @@ import org.slf4j.LoggerFactory;
 
 // TODO(remove BaseReplicationEndpoint extension).
 @InternalExtensionOnly
-public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService implements
-    ReplicationEndpoint {
+public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService
+    implements ReplicationEndpoint {
 
   private static final Logger LOG =
       LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
@@ -63,13 +63,15 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService imp
   public void init(Context context) throws IOException {
     this.context = context;
 
-    if (this.context != null){
+    if (this.context != null) {
       ReplicationPeer peer = this.context.getReplicationPeer();
-      if (peer != null){
+      if (peer != null) {
         peer.registerPeerConfigListener(this);
       } else {
-        LOG.warn("Not tracking replication peer config changes for Peer Id " + this.context.getPeerId() +
-            " because there's no such peer");
+        LOG.warn(
+            "Not tracking replication peer config changes for Peer Id "
+                + this.context.getPeerId()
+                + " because there's no such peer");
       }
     }
   }
@@ -96,7 +98,8 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService imp
       filters.add(tableCfFilter);
     }
     if (context != null && context.getPeerConfig() != null) {
-      String filterNameCSV = context.getPeerConfig().getConfiguration().get(REPLICATION_WALENTRYFILTER_CONFIG_KEY);
+      String filterNameCSV =
+          context.getPeerConfig().getConfiguration().get(REPLICATION_WALENTRYFILTER_CONFIG_KEY);
       if (filterNameCSV != null && !filterNameCSV.isEmpty()) {
         String[] filterNames = filterNameCSV.split(",");
         for (String filterName : filterNames) {
@@ -112,14 +115,18 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService imp
     return filters.isEmpty() ? null : new ChainWALEntryFilter(filters);
   }
 
-  /** Returns a WALEntryFilter for checking the scope. Subclasses can
-   * return null if they don't want this filter */
+  /**
+   * Returns a WALEntryFilter for checking the scope. Subclasses can return null if they don't want
+   * this filter
+   */
   protected WALEntryFilter getScopeWALEntryFilter() {
     return new ScopeWALEntryFilter();
   }
 
-  /** Returns a WALEntryFilter for checking replication per table and CF. Subclasses can
-   * return null if they don't want this filter */
+  /**
+   * Returns a WALEntryFilter for checking replication per table and CF. Subclasses can return null
+   * if they don't want this filter
+   */
   protected WALEntryFilter getNamespaceTableCfWALEntryFilter() {
     return new NamespaceTableCfWALEntryFilter(context.getReplicationPeer());
   }
@@ -168,7 +175,5 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService imp
   }
 
   @Override
-  public void peerConfigUpdated(ReplicationPeerConfig replicationPeerConfig) {
-
-  }
+  public void peerConfigUpdated(ReplicationPeerConfig replicationPeerConfig) {}
 }
