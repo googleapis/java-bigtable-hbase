@@ -415,10 +415,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
   @Test
   public void testMutationReplicationWithWALEntryFilter() throws IOException, InterruptedException {
-    Put put = new Put(FILTERED_ROW_KEY);
-    put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, FILTERED_ROW_KEY);
-    put.addColumn(TestUtils.CF2, TestUtils.COL_QUALIFIER, 0, FILTERED_ROW_KEY);
-    hbaseTable.put(put);
     Put put1 = new Put(FILTERED_ROW_KEY);
     put1.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, FILTERED_ROW_KEY);
     put1.addColumn(TestUtils.CF2, TestUtils.COL_QUALIFIER, 0, FILTERED_ROW_KEY);
@@ -442,8 +438,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
     Assert.assertEquals(
         "Number of cells , actual cells: " + hbaseResult.listCells(),
-        4,
-        4,
+        2,
+        2,
         hbaseResult.listCells().size());
 
     Assert.assertEquals(
