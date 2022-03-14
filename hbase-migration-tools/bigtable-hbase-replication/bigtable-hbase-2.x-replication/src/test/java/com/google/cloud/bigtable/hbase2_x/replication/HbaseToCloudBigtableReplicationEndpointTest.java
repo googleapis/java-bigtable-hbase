@@ -72,6 +72,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
     @Override
     public boolean replicate(ReplicateContext replicateContext) {
+      System.out.print("sbhattarai testi haha");
+      System.out.print(replicateContext.getEntries().toString());
       boolean result = super.replicate(replicateContext);
       replicatedEntries.getAndAdd(replicateContext.getEntries().size());
       return result;
