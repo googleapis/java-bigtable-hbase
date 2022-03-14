@@ -16,10 +16,14 @@
 
 package com.google.cloud.bigtable.hbase2_x.replication;
 
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.FILTERED_ROW_KEY;
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.ROW_KEY;
+
 import com.google.cloud.bigtable.emulator.v2.BigtableEmulatorRule;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,13 +41,17 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.replication.ReplicationAdmin;
 import org.apache.hadoop.hbase.ipc.RpcServer;
+import org.apache.hadoop.hbase.replication.ChainWALEntryFilter;
 import org.apache.hadoop.hbase.replication.ReplicationException;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
+import org.apache.hadoop.hbase.replication.WALEntryFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.ServerRegionReplicaUtil;
+import org.apache.hadoop.hbase.wal.WAL.Entry;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -68,7 +76,35 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
       replicatedEntries.getAndAdd(replicateContext.getEntries().size());
       return result;
     }
-  }
+
+    // return a WALEntry filter which accepts all rows except FILTERED_ROW_ENTRY
+    @Override
+    public WALEntryFilter getWALEntryfilter() {
+      return new ChainWALEntryFilter(
+          super.getWALEntryfilter(),
+          new WALEntryFilter() {
+            @Override
+            public Entry filter(Entry entry) {
+              ArrayList<Cell> cells = entry.getEdit().getCells();
+              int size = cells.size();
+              for (int i = size - 1; i >= 0; i--) {
+                Cell cell = cells.get(i);
+                if (Bytes.equals(
+                    cell.getRowArray(),
+                    cell.getRowOffset(),
+                    cell.getRowLength(),
+                    FILTERED_ROW_KEY,
+                    0,
+                    FILTERED_ROW_KEY.length)) {
+                  cells.remove(i);
+                }
+              }
+              return entry;
+            }
+          });
+    }
+  };
+
 
   private static final Logger LOG =
       LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpointTest.class);
@@ -246,13 +282,13 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
   @Test
   public void testIncrements() throws IOException, InterruptedException {
-    Put put = new Put(TestUtils.ROW_KEY);
+    Put put = new Put(ROW_KEY);
     byte[] val = Bytes.toBytes(4l);
     put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, val);
     hbaseTable.put(put);
 
     // Now Increment the value
-    Increment increment = new Increment(TestUtils.ROW_KEY);
+    Increment increment = new Increment(ROW_KEY);
     increment.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 10l);
     hbaseTable.increment(increment);
 
@@ -268,13 +304,13 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
   @Test
   public void testAppends() throws IOException, InterruptedException {
-    Put put = new Put(TestUtils.ROW_KEY);
+    Put put = new Put(ROW_KEY);
     byte[] val = "aaaa".getBytes();
     put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, val);
     hbaseTable.put(put);
 
     // Now append the value
-    Append append = new Append(TestUtils.ROW_KEY);
+    Append append = new Append(ROW_KEY);
     append.add(TestUtils.CF1, TestUtils.COL_QUALIFIER, "bbbb".getBytes());
     hbaseTable.append(append);
 
@@ -333,12 +369,12 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
   @Test
   public void testWriteFailureToBigtableDoesNotStallReplication()
       throws IOException, InterruptedException {
-    Put put = new Put(TestUtils.ROW_KEY);
+    Put put = new Put(ROW_KEY);
     put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.getValue(0));
     hbaseTable.put(put);
 
     // Trigger delete that will never succeed.
-    Delete delete = new Delete(TestUtils.ROW_KEY);
+    Delete delete = new Delete(ROW_KEY);
     delete.addFamily(TestUtils.CF1, 20);
     hbaseTable.delete(delete);
 
@@ -354,7 +390,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     // bundled with earlier put/delete, 3 of them will be part of same RowMutations and will fail.
     // If this put and  earlier put/delete are part of separate replicate calls, the new put
     // will never be passed to ReplicationEndpoint unless incompatible delete is dropped.
-    put = new Put(TestUtils.ROW_KEY);
+    put = new Put(ROW_KEY);
     put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 1, TestUtils.getValue(1));
     hbaseTable.put(put);
 
@@ -364,7 +400,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
           return TestReplicationEndpoint.replicatedEntries.get() >= 3;
         });
 
-    List<Cell> actualCells = cbtTable.get(new Get(TestUtils.ROW_KEY).setMaxVersions()).listCells();
+    List<Cell> actualCells = cbtTable.get(new Get(ROW_KEY).setMaxVersions()).listCells();
     Assert.assertEquals(
         "Number of cells mismatched, actual cells: " + actualCells, 2, actualCells.size());
 
@@ -376,4 +412,44 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
         "Value mismatch", TestUtils.getValue(0), CellUtil.cloneValue(actualCells.get(1)));
     Assert.assertEquals(0, actualCells.get(1).getTimestamp());
   }
+
+  @Test
+  public void testMutationReplicationWithWALEntryFilter() throws IOException, InterruptedException {
+    Put put = new Put(FILTERED_ROW_KEY);
+    put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, FILTERED_ROW_KEY);
+    put.addColumn(TestUtils.CF2, TestUtils.COL_QUALIFIER, 0, FILTERED_ROW_KEY);
+    hbaseTable.put(put);
+    Put put1 = new Put(FILTERED_ROW_KEY);
+    put1.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, FILTERED_ROW_KEY);
+    put1.addColumn(TestUtils.CF2, TestUtils.COL_QUALIFIER, 0, FILTERED_ROW_KEY);
+    hbaseTable.put(put1);
+
+    Put put2 = new Put(ROW_KEY);
+    put2.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, ROW_KEY);
+    put2.addColumn(TestUtils.CF2, TestUtils.COL_QUALIFIER, 0, ROW_KEY);
+    hbaseTable.put(put2);
+
+    TestUtils.waitForReplication(
+        () -> {
+          //  replicate Entries will be zero
+          return TestReplicationEndpoint.replicatedEntries.get() >= 2;
+        });
+
+    Result cbtResult = cbtTable.get(new Get(FILTERED_ROW_KEY).setMaxVersions());
+    Result hbaseResult = hbaseTable.get(new Get(FILTERED_ROW_KEY).setMaxVersions());
+    Assert.assertTrue(cbtResult.isEmpty());
+    Assert.assertFalse(hbaseResult.isEmpty());
+
+    Assert.assertEquals(
+        "Number of cells , actual cells: " + hbaseResult.listCells(),
+        4,
+        4,
+        hbaseResult.listCells().size());
+
+    Assert.assertEquals(
+        "Number of cells , actual cells: " + cbtResult.listCells(),
+        0,
+        cbtResult.listCells().size());
+  }
+}
 }
