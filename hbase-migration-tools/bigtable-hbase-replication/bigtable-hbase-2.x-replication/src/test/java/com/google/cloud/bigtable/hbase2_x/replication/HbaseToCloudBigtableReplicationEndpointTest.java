@@ -452,4 +452,3 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
         cbtResult.listCells().size());
   }
 }
-}
