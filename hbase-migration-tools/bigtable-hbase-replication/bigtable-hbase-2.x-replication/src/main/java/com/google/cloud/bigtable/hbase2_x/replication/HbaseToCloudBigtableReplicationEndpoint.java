@@ -17,29 +17,42 @@
 package com.google.cloud.bigtable.hbase2_x.replication;
 // TODO reverse the package names for 1.x and 2.x to com.google.cloud.bigtable.replication.hbase1_x
 
+import static org.apache.hadoop.hbase.replication.BaseReplicationEndpoint.REPLICATION_WALENTRYFILTER_CONFIG_KEY;
+
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicator;
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
 import com.google.cloud.bigtable.hbase2_x.replication.metrics.HBaseMetricsExporter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
+import org.apache.hadoop.hbase.replication.ChainWALEntryFilter;
+import org.apache.hadoop.hbase.replication.NamespaceTableCfWALEntryFilter;
+import org.apache.hadoop.hbase.replication.ReplicationEndpoint;
+import org.apache.hadoop.hbase.replication.ReplicationPeer;
+import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
+import org.apache.hadoop.hbase.replication.ScopeWALEntryFilter;
+import org.apache.hadoop.hbase.replication.WALEntryFilter;
 import org.apache.hadoop.hbase.wal.WAL;
+import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
+import org.apache.hbase.thirdparty.com.google.common.util.concurrent.AbstractService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // TODO(remove BaseReplicationEndpoint extension).
 @InternalExtensionOnly
-public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndpoint {
+public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService implements
+    ReplicationEndpoint {
 
   private static final Logger LOG =
       LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
 
   private final CloudBigtableReplicator cloudBigtableReplicator;
   private final HBaseMetricsExporter metricsExporter;
+  protected Context ctx;
 
   public HbaseToCloudBigtableReplicationEndpoint() {
     cloudBigtableReplicator = new CloudBigtableReplicator();
@@ -47,8 +60,68 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
   }
 
   @Override
+  public void init(Context context) throws IOException {
+    this.ctx = context;
+
+    if (this.ctx != null){
+      ReplicationPeer peer = this.ctx.getReplicationPeer();
+      if (peer != null){
+        peer.registerPeerConfigListener(this);
+      } else {
+        LOG.warn("Not tracking replication peer config changes for Peer Id " + this.ctx.getPeerId() +
+            " because there's no such peer");
+      }
+    }
+  }
+
+  @Override
+  public boolean canReplicateToSameCluster() {
+    return false;
+  }
+
+  @Override
   public UUID getPeerUUID() {
     return cloudBigtableReplicator.getPeerUUID();
+  }
+
+  @Override
+  public WALEntryFilter getWALEntryfilter() {
+    ArrayList<WALEntryFilter> filters = Lists.newArrayList();
+    WALEntryFilter scopeFilter = getScopeWALEntryFilter();
+    if (scopeFilter != null) {
+      filters.add(scopeFilter);
+    }
+    WALEntryFilter tableCfFilter = getNamespaceTableCfWALEntryFilter();
+    if (tableCfFilter != null) {
+      filters.add(tableCfFilter);
+    }
+    if (ctx != null && ctx.getPeerConfig() != null) {
+      String filterNameCSV = ctx.getPeerConfig().getConfiguration().get(REPLICATION_WALENTRYFILTER_CONFIG_KEY);
+      if (filterNameCSV != null && !filterNameCSV.isEmpty()) {
+        String[] filterNames = filterNameCSV.split(",");
+        for (String filterName : filterNames) {
+          try {
+            Class<?> clazz = Class.forName(filterName);
+            filters.add((WALEntryFilter) clazz.getDeclaredConstructor().newInstance());
+          } catch (Exception e) {
+            LOG.error("Unable to create WALEntryFilter " + filterName, e);
+          }
+        }
+      }
+    }
+    return filters.isEmpty() ? null : new ChainWALEntryFilter(filters);
+  }
+
+  /** Returns a WALEntryFilter for checking the scope. Subclasses can
+   * return null if they don't want this filter */
+  protected WALEntryFilter getScopeWALEntryFilter() {
+    return new ScopeWALEntryFilter();
+  }
+
+  /** Returns a WALEntryFilter for checking replication per table and CF. Subclasses can
+   * return null if they don't want this filter */
+  protected WALEntryFilter getNamespaceTableCfWALEntryFilter() {
+    return new NamespaceTableCfWALEntryFilter(ctx.getReplicationPeer());
   }
 
   @Override
@@ -64,6 +137,11 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
       walEntriesByTable.get(tableName).add(bigtableWALEntry);
     }
     return cloudBigtableReplicator.replicate(walEntriesByTable);
+  }
+
+  @Override
+  public boolean isStarting() {
+    return state() == State.STARTING;
   }
 
   @Override
@@ -87,5 +165,10 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
   protected void doStop() {
     cloudBigtableReplicator.stop();
     notifyStopped();
+  }
+
+  @Override
+  public void peerConfigUpdated(ReplicationPeerConfig replicationPeerConfig) {
+
   }
 }
