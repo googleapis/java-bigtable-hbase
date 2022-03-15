@@ -261,6 +261,8 @@ public class IncompatibleMutationAdapterTest {
     verify(metricsExporter, times(1))
         .incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter, times(1)).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 1);
+
     verifyNoMoreInteractions(metricsExporter);
   }
 
