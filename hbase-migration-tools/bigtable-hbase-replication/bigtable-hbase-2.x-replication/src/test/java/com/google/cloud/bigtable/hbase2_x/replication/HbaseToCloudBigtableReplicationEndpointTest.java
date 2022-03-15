@@ -425,4 +425,29 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
         "Value mismatch", TestUtils.getValue(0), CellUtil.cloneValue(actualCells.get(1)));
     Assert.assertEquals(0, actualCells.get(1).getTimestamp());
   }
+
+  @Test
+  public void testTimestampOverflow() throws IOException, InterruptedException {
+    Put put = new Put(TestUtils.ROW_KEY);
+    byte[] val = Bytes.toBytes(1);
+    put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, Long.MAX_VALUE - 1, val);
+    hbaseTable.put(put);
+
+    TestUtils.waitForReplication(
+        () -> {
+          // 1put
+          return TestReplicationEndpoint.replicatedEntries.get() >= 1;
+        });
+
+    List<Cell> expectedCells =
+        cbtTable.get(new Get(TestUtils.ROW_KEY).setMaxVersions()).listCells();
+    List<Cell> actualCells = cbtTable.get(new Get(TestUtils.ROW_KEY).setMaxVersions()).listCells();
+
+    for (int i = 0; i < expectedCells.size(); i++) {
+      Assert.assertNotEquals(
+          "Timestamp mismatch for row " + TestUtils.ROW_KEY,
+          expectedCells.get(i).getTimestamp(),
+          actualCells.get(i).getTimestamp());
+    }
+  }
 }
