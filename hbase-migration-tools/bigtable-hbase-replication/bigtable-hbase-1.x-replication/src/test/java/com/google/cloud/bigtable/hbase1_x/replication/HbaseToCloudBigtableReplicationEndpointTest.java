@@ -67,49 +67,13 @@ import org.slf4j.LoggerFactory;
 @RunWith(JUnit4.class)
 public class HbaseToCloudBigtableReplicationEndpointTest {
 
-  public static class TestReplicationEndpoint extends BaseReplicationEndpoint {
+  public static class TestReplicationEndpoint extends HbaseToCloudBigtableReplicationEndpoint {
 
     static AtomicInteger replicatedEntries = new AtomicInteger();
-    static HbaseToCloudBigtableReplicationEndpoint delegate;
-
-    public TestReplicationEndpoint() {
-      delegate = new HbaseToCloudBigtableReplicationEndpoint();
-    }
-
-    @Override
-    protected void doStart() {
-      try {
-        delegate.start().get();
-      } catch (Exception e) {
-        new RuntimeException("Failed to start Replication Endpoint.", e);
-      }
-      notifyStarted();
-    }
-
-    @Override
-    protected void doStop() {
-      try {
-        delegate.stop().get();
-      } catch (Exception e) {
-        new RuntimeException("Failed to stop Replication Endpoint.", e);
-      }
-      notifyStopped();
-    }
-
-    @Override
-    public UUID getPeerUUID() {
-      return delegate.getPeerUUID();
-    }
-
-    @Override
-    public void init(Context ctx) throws IOException {
-      super.init(ctx);
-      delegate.init(ctx);
-    }
 
     @Override
     public boolean replicate(ReplicateContext replicateContext) {
-      boolean result = delegate.replicate(replicateContext);
+      boolean result = super.replicate(replicateContext);
       replicatedEntries.getAndAdd(replicateContext.getEntries().size());
       return result;
     }
