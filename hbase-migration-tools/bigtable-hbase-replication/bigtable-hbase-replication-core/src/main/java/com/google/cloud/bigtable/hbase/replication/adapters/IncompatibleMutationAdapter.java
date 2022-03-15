@@ -99,6 +99,8 @@ public abstract class IncompatibleMutationAdapter {
     metricsExporter.incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     metricsExporter.incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
     metricsExporter.incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+    metricsExporter.incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
+
   }
 
   private boolean isValidDelete(Cell delete) {
