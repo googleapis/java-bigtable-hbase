@@ -174,7 +174,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     TestReplicationEndpoint.replicatedEntries.set(0);
   }
 
-  private void createTables(TableName tableName, int scope1, int scope2) throws IOException {
+  private void createTables(TableName tableName, int cf1Scope, int cf2Scope) throws IOException {
     // Create table in HBase
     HTableDescriptor htd = hbaseTestingUtil.createTableDescriptor(tableName.getNameAsString());
     HColumnDescriptor cf1 = new HColumnDescriptor(TestUtils.CF1);
@@ -185,8 +185,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     htd.addFamily(cf2);
 
     // Enables replication to all peers, including CBT
-    cf1.setScope(scope1);
-    cf2.setScope(scope2);
+    cf1.setScope(cf1Scope);
+    cf2.setScope(cf2Scope);
     hbaseTestingUtil.getHBaseAdmin().createTable(htd);
 
     cbtConnection.getAdmin().createTable(htd);
@@ -449,9 +449,10 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
   @Test
   public void testReplicationWithScope() throws IOException, InterruptedException {
-    createTables(TableName.valueOf("test-table-3"), HConstants.REPLICATION_SCOPE_GLOBAL, HConstants.REPLICATION_SCOPE_LOCAL);
-    hbaseTable = hbaseConnection.getTable(TableName.valueOf("test-table-3"));
-    cbtTable = cbtConnection.getTable(TableName.valueOf("test-table-3"));
+    TableName tableName = TableName.valueOf(UUID.randomUUID().toString());
+    createTables(tableName, HConstants.REPLICATION_SCOPE_GLOBAL, HConstants.REPLICATION_SCOPE_LOCAL);
+    hbaseTable = hbaseConnection.getTable(tableName);
+    cbtTable = cbtConnection.getTable(tableName);
 
     Put put1 = new Put(ROW_KEY);
     put1.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, ROW_KEY);
@@ -468,6 +469,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     Result hbaseResult = hbaseTable.get(new Get(ROW_KEY).setMaxVersions());
     Assert.assertFalse(cbtResult.isEmpty());
     Assert.assertFalse(hbaseResult.isEmpty());
+    System.out.print(cbtResult.listCells());
+    System.out.print(hbaseResult.listCells());
     Assert.assertEquals(
         "Number of cells , actual cells: " + hbaseResult.listCells(),
         2,

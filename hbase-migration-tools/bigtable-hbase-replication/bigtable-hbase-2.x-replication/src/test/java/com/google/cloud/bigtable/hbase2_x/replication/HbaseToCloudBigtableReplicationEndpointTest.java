@@ -160,8 +160,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     // Create and set the empty tables
     TableName table1 = TableName.valueOf(UUID.randomUUID().toString());
     TableName table2 = TableName.valueOf(UUID.randomUUID().toString());
-    createTables(table1);
-    createTables(table2);
+    createTables(table1, HConstants.REPLICATION_SCOPE_GLOBAL, HConstants.REPLICATION_SCOPE_GLOBAL);
+    createTables(table2, HConstants.REPLICATION_SCOPE_GLOBAL, HConstants.REPLICATION_SCOPE_GLOBAL);
 
     cbtTable = cbtConnection.getTable(table1);
     cbtTable2 = cbtConnection.getTable(table2);
@@ -172,7 +172,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     TestReplicationEndpoint.replicatedEntries.set(0);
   }
 
-  private void createTables(TableName tableName) throws IOException {
+  private void createTables(TableName tableName, int cf1Scope, int cf2Scope) throws IOException {
     // Create table in HBase
     HTableDescriptor htd = hbaseTestingUtil.createTableDescriptor(tableName.getNameAsString());
     HColumnDescriptor cf1 = new HColumnDescriptor(TestUtils.CF1);
@@ -183,8 +183,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     htd.addFamily(cf2);
 
     // Enables replication to all peers, including CBT
-    cf1.setScope(HConstants.REPLICATION_SCOPE_GLOBAL);
-    cf2.setScope(HConstants.REPLICATION_SCOPE_GLOBAL);
+    cf1.setScope(cf1Scope);
+    cf2.setScope(cf2Scope);
     hbaseTestingUtil.getHBaseAdmin().createTable(htd);
 
     cbtConnection.getAdmin().createTable(htd);
@@ -443,5 +443,43 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     Result cbtResult2 = cbtTable.get(new Get(ROW_KEY).setMaxVersions());
     Result hbaseResult2 = hbaseTable.get(new Get(ROW_KEY).setMaxVersions());
     TestUtils.assertEquals(cbtResult2, hbaseResult2);
+  }
+
+  @Test
+  public void testReplicationWithScope() throws IOException, InterruptedException {
+    TableName tableName = TableName.valueOf(UUID.randomUUID().toString());
+    createTables(tableName, HConstants.REPLICATION_SCOPE_GLOBAL, HConstants.REPLICATION_SCOPE_LOCAL);
+    hbaseTable = hbaseConnection.getTable(tableName);
+    cbtTable = cbtConnection.getTable(tableName);
+
+    Put put1 = new Put(ROW_KEY);
+    put1.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, ROW_KEY);
+    put1.addColumn(TestUtils.CF2, TestUtils.COL_QUALIFIER, 0, ROW_KEY);
+    hbaseTable.put(put1);
+
+    TestUtils.waitForReplication(
+        () -> {
+          //  replicate Entries will be zero
+          return TestReplicationEndpoint.replicatedEntries.get() >= 1;
+        });
+
+    Result cbtResult = cbtTable.get(new Get(ROW_KEY).setMaxVersions());
+    Result hbaseResult = hbaseTable.get(new Get(ROW_KEY).setMaxVersions());
+    Assert.assertFalse(cbtResult.isEmpty());
+    Assert.assertFalse(hbaseResult.isEmpty());
+    System.out.print(cbtResult.listCells());
+    System.out.print(hbaseResult.listCells());
+    Assert.assertEquals(
+        "Number of cells , actual cells: " + hbaseResult.listCells(),
+        2,
+        2,
+        hbaseResult.listCells().size());
+
+    Assert.assertEquals(
+        "Number of cells , actual cells: " + hbaseResult.listCells(),
+        1,
+        1,
+        cbtResult.listCells().size());
+
   }
 }
