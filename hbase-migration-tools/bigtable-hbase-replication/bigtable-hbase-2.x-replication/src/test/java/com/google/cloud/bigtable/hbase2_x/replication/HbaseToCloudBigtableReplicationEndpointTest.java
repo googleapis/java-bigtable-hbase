@@ -39,12 +39,10 @@ import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.replication.ReplicationAdmin;
-import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
 import org.apache.hadoop.hbase.replication.ReplicationException;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.ServerRegionReplicaUtil;
 import org.apache.hbase.thirdparty.com.google.common.util.concurrent.Service;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -123,7 +121,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
       LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpointTest.class);
 
   private static HBaseTestingUtility hbaseTestingUtil = new HBaseTestingUtility();
-  private static Configuration hbaseConfig;
   private static ReplicationAdmin replicationAdmin;
 
   @ClassRule
@@ -141,8 +138,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
   public static void setUpCluster() throws Exception {
     // Prepare HBase mini cluster configuration
     Configuration conf = hbaseTestingUtil.getConfiguration();
-    conf.setBoolean(ServerRegionReplicaUtil.REGION_REPLICA_REPLICATION_CONF_KEY, true);
-    conf.setInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER, 5); // less number of retries is needed
 
     // Set CBT related configs.
     conf.set("google.bigtable.instance.id", "test-instance");
@@ -151,8 +146,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     conf.set("google.bigtable.emulator.endpoint.host", "localhost:" + bigtableEmulator.getPort());
 
     hbaseTestingUtil.startMiniCluster(2);
-    hbaseConfig = conf;
-    hbaseConfig.setLong(RpcServer.MAX_REQUEST_SIZE, 102400);
     replicationAdmin = new ReplicationAdmin(hbaseTestingUtil.getConfiguration());
 
     cbtConnection = BigtableConfiguration.connect(conf);
@@ -166,6 +159,14 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     replicationAdmin.addPeer("cbt", peerConfig);
 
     LOG.info("#################### SETUP COMPLETE ##############################");
+  }
+
+  @AfterClass
+  public static void tearDown() throws Exception {
+    cbtConnection.close();
+    hbaseConnection.close();
+    replicationAdmin.close();
+    hbaseTestingUtil.shutdownMiniCluster();
   }
 
   @Before
@@ -202,14 +203,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     hbaseTestingUtil.getHBaseAdmin().createTable(htd);
 
     cbtConnection.getAdmin().createTable(htd);
-  }
-
-  @AfterClass
-  public static void tearDown() throws Exception {
-    cbtConnection.close();
-    hbaseConnection.close();
-    replicationAdmin.close();
-    hbaseTestingUtil.shutdownMiniCluster();
   }
 
   @Test
@@ -372,8 +365,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
           return TestReplicationEndpoint.replicatedEntries.get() >= 16;
         });
     TestUtils.assertTableEventuallyEquals(
-        hbaseTable,
-        cbtTable,
+        hbaseTable2,
+        cbtTable2,
         () -> {
           return TestReplicationEndpoint.replicatedEntries.get() >= 16;
         });

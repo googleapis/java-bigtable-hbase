@@ -36,10 +36,8 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.replication.ReplicationAdmin;
-import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.replication.ReplicationException;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
-import org.apache.hadoop.hbase.util.ServerRegionReplicaUtil;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -57,7 +55,6 @@ public class HbaseToCloudBigtableReplicationEndpointDryRunTest {
       LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpointDryRunTest.class);
 
   private static HBaseTestingUtility hbaseTestingUtil = new HBaseTestingUtility();
-  private static Configuration hbaseConfig;
   private static ReplicationAdmin replicationAdmin;
 
   @ClassRule
@@ -73,8 +70,6 @@ public class HbaseToCloudBigtableReplicationEndpointDryRunTest {
   public static void setUpCluster() throws Exception {
     // Prepare HBase mini cluster configuration
     Configuration conf = hbaseTestingUtil.getConfiguration();
-    conf.setBoolean(ServerRegionReplicaUtil.REGION_REPLICA_REPLICATION_CONF_KEY, true);
-    conf.setInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER, 5); // less number of retries is needed
 
     // Set CBT related configs.
     conf.set("google.bigtable.instance.id", "test-instance");
@@ -84,8 +79,6 @@ public class HbaseToCloudBigtableReplicationEndpointDryRunTest {
     conf.setBoolean(ENABLE_DRY_RUN_MODE_KEY, true);
 
     hbaseTestingUtil.startMiniCluster(2);
-    hbaseConfig = conf;
-    hbaseConfig.setLong(RpcServer.MAX_REQUEST_SIZE, 102400);
     replicationAdmin = new ReplicationAdmin(hbaseTestingUtil.getConfiguration());
 
     cbtConnection = BigtableConfiguration.connect(conf);
@@ -102,14 +95,20 @@ public class HbaseToCloudBigtableReplicationEndpointDryRunTest {
     LOG.info("#################### SETUP COMPLETE ##############################");
   }
 
+  @AfterClass
+  public static void tearDown() throws Exception {
+    cbtConnection.close();
+    hbaseConnection.close();
+    replicationAdmin.close();
+    hbaseTestingUtil.shutdownMiniCluster();
+  }
+
   @Before
   public void setupTestCase() throws IOException {
 
     // Create and set the empty tables
     TableName table1 = TableName.valueOf(UUID.randomUUID().toString());
-    TableName table2 = TableName.valueOf(UUID.randomUUID().toString());
     createTables(table1);
-    createTables(table2);
 
     cbtTable = cbtConnection.getTable(table1);
     hbaseTable = hbaseConnection.getTable(table1);
@@ -119,38 +118,21 @@ public class HbaseToCloudBigtableReplicationEndpointDryRunTest {
     // Create table in HBase
     HTableDescriptor htd = hbaseTestingUtil.createTableDescriptor(tableName.getNameAsString());
     HColumnDescriptor cf1 = new HColumnDescriptor(TestUtils.CF1);
-    cf1.setMaxVersions(100);
     htd.addFamily(cf1);
-    HColumnDescriptor cf2 = new HColumnDescriptor(TestUtils.CF2);
-    cf2.setMaxVersions(100);
-    htd.addFamily(cf2);
 
     // Enables replication to all peers, including CBT
     cf1.setScope(HConstants.REPLICATION_SCOPE_GLOBAL);
-    cf2.setScope(HConstants.REPLICATION_SCOPE_GLOBAL);
     hbaseTestingUtil.getHBaseAdmin().createTable(htd);
 
     cbtConnection.getAdmin().createTable(htd);
   }
 
-  @AfterClass
-  public static void tearDown() throws Exception {
-    cbtConnection.close();
-    hbaseConnection.close();
-    replicationAdmin.close();
-    hbaseTestingUtil.shutdownMiniCluster();
-  }
-
   @Test
   public void testDryRunDoesNotReplicateToCloudBigtable()
       throws IOException, InterruptedException, ReplicationException {
-    // Add 10 rows with 1 cell/family
-    for (int i = 0; i < 10; i++) {
-      Put put = new Put(TestUtils.getRowKey(i));
-      put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.getValue(i));
-      put.addColumn(TestUtils.CF2, TestUtils.COL_QUALIFIER, 0, TestUtils.getValue(i));
+      Put put = new Put(TestUtils.ROW_KEY);
+      put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.VALUE);
       hbaseTable.put(put);
-    }
 
     // Give enough time for replication to catch up. Nothing should be replicated as its dry-run
     Thread.sleep(5000);

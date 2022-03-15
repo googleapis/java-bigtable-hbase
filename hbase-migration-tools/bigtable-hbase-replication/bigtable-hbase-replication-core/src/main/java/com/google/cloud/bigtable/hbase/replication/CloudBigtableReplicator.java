@@ -83,7 +83,9 @@ public class CloudBigtableReplicator {
      */
     private final Connection connection;
 
-    /** Reference count for this instance. */
+    /**
+     * Reference count for this instance.
+     */
     private static int numReferences = 0;
 
     @VisibleForTesting
@@ -92,7 +94,7 @@ public class CloudBigtableReplicator {
       this.executorService = executorService;
     }
 
-    public static synchronized SharedResources getInstance(Configuration conf) {
+    static synchronized SharedResources getInstance(Configuration conf) {
 
       numReferences++;
       if (INSTANCE == null) {
@@ -127,30 +129,32 @@ public class CloudBigtableReplicator {
     }
 
     private static synchronized void decrementReferenceCount() {
-      numReferences--;
-      if (numReferences == 0) {
+      if (--numReferences > 0) {
+        return;
+      }
+
+      // Clean up resources as no object is referencing the SharedResources instance
+      try {
         try {
-          try {
-            // Connection is shared by all the instances of CloudBigtableReplicator, close it only
-            // if no one is using it. Closing the connection is required as it owns the underlying
-            // gRpc connections and gRpc does not like JVM shutting without closing the gRpc
-            // connections.
-            INSTANCE.connection.close();
-          } catch (Exception e) {
-            LOG.warn("Failed to close connection to Cloud Bigtable", e);
-          }
-          INSTANCE.executorService.shutdown();
-          try {
-            // Best effort wait for termination. When shutdown is called, there should be no
-            // tasks waiting on the service, since all the tasks must finish for replicator to exit
-            // replicate method.
-            INSTANCE.executorService.awaitTermination(5000L, TimeUnit.MILLISECONDS);
-          } catch (Exception e) {
-            LOG.warn("Failed to shut down the Cloud Bigtable replication thread pool.", e);
-          }
-        } finally {
-          INSTANCE = null;
+          // Connection is shared by all the instances of CloudBigtableReplicator, close it only
+          // if no one is using it. Closing the connection is required as it owns the underlying
+          // gRpc connections and gRpc does not like JVM shutting without closing the gRpc
+          // connections.
+          INSTANCE.connection.close();
+        } catch (Exception e) {
+          LOG.warn("Failed to close connection to Cloud Bigtable", e);
         }
+        INSTANCE.executorService.shutdown();
+        try {
+          // Best effort wait for termination. When shutdown is called, there should be no
+          // tasks waiting on the service, since all the tasks must finish for replicator to exit
+          // replicate method.
+          INSTANCE.executorService.awaitTermination(5000L, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+          LOG.warn("Failed to shut down the Cloud Bigtable replication thread pool.", e);
+        }
+      } finally {
+        INSTANCE = null;
       }
     }
   }
@@ -195,7 +199,7 @@ public class CloudBigtableReplicator {
     SharedResources sharedResources = SharedResources.getInstance(configuration);
     IncompatibleMutationAdapter incompatibleMutationAdapter =
         new IncompatibleMutationAdapterFactory(
-                configuration, metricsExporter, sharedResources.connection)
+            configuration, metricsExporter, sharedResources.connection)
             .createIncompatibleMutationAdapter();
 
     start(
@@ -345,6 +349,9 @@ public class CloudBigtableReplicator {
           new CloudBigtableReplicationTask(tableName, sharedResources.connection, batchToReplicate);
       return sharedResources.executorService.submit(replicationTask);
     } catch (Exception ex) {
+      if(ex instanceof InterruptedException){
+        Thread.currentThread().interrupt();
+      }
       LOG.error("Failed to submit a batch for table: " + tableName, ex);
       return CompletableFuture.completedFuture(false);
     }
