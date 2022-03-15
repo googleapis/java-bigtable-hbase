@@ -91,6 +91,7 @@ public class TestUtils {
         "Value mismatch for row " + rowKey, CellUtil.cloneRow(expected), CellUtil.cloneRow(actual));
   }
 
+
   public static void assertEquals(Result expected, Result actual) {
     assertEquals("Result row keys mismatch", expected.getRow(), actual.getRow());
 
@@ -107,6 +108,17 @@ public class TestUtils {
         expected.size(),
         actual.size());
     for (int i = 0; i < expected.size(); i++) {
+      assertEquals(expectedCells.get(i), actualCells.get(i));
+    }
+  }
+
+  public static void assertEquals(Result expected, Result actual, int cf1Scope, int cf2Scope) {
+    // Prevent creating a list every time.
+    List<Cell> expectedCells = expected.listCells();
+    List<Cell> actualCells = actual.listCells();
+    for (int i = 0; i < expected.size(); i++) {
+      System.out.print(expectedCells.get(i).getFamilyArray());
+      System.out.print(expectedCells.get(i).getFamily());
       assertEquals(expectedCells.get(i), actualCells.get(i));
     }
   }
