@@ -124,7 +124,9 @@ public abstract class IncompatibleMutationAdapter {
       // check whether there is timestamp overflow from HBase -> CBT and make sure
       // it does clash with valid delete which require the timestamp to be
       // HConstants.LATEST_TIMESTAMP,
-      // this will be true for reverse timestamps. do not enable trace logging
+      // this will be true for reverse timestamps.
+      // Do not enable trace logging as there can be many writes of this type.
+      // The following log message will spam the logs and degrade the replication performance.
       if (cell.getTimestamp() >= BIGTABLE_EFFECTIVE_MAX
           && cell.getTimestamp() != HConstants.LATEST_TIMESTAMP) {
         incrementTimestampOverflowMutations();
