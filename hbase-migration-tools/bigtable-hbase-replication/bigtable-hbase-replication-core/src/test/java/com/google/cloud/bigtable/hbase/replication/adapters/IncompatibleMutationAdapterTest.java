@@ -147,7 +147,11 @@ public class IncompatibleMutationAdapterTest {
     Assert.assertEquals(
         walEntryCells, incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
-    testInitialsMetrics();
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
     verifyNoMoreInteractions(metricsExporter);
   }
 
@@ -167,7 +171,11 @@ public class IncompatibleMutationAdapterTest {
         Arrays.asList(put, expectedDelete),
         incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
-    testInitialsMetrics();
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
@@ -193,7 +201,11 @@ public class IncompatibleMutationAdapterTest {
     Assert.assertEquals(
         expectedDeletes, incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
-    testInitialsMetrics();
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
@@ -213,7 +225,11 @@ public class IncompatibleMutationAdapterTest {
     Assert.assertEquals(
         Arrays.asList(put), incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
-    testInitialsMetrics();
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verifyNoMoreInteractions(metricsExporter);
@@ -233,7 +249,11 @@ public class IncompatibleMutationAdapterTest {
     Assert.assertEquals(
         Arrays.asList(put), incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
-    testInitialsMetrics();
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
@@ -257,21 +277,17 @@ public class IncompatibleMutationAdapterTest {
         Arrays.asList(put1, put2, delete),
         incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
-    testInitialsMetrics();
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
     verify(metricsExporter, times(1))
         .incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 1);
 
     verifyNoMoreInteractions(metricsExporter);
-  }
-
-  private void testInitialsMetrics() {
-    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
-    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
-    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
-    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
-    verify(metricsExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
   }
 
   @Test
@@ -287,7 +303,11 @@ public class IncompatibleMutationAdapterTest {
         Arrays.asList(put1, put2),
         incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
-    testInitialsMetrics();
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
     verify(metricsExporter, times(1)).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 1);
     verifyNoMoreInteractions(metricsExporter);
   }
