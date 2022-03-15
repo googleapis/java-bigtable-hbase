@@ -482,7 +482,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
         1,
         1,
         cbtResult.listCells().size());
-    TestUtils.assertEquals(hbaseResult, cbtResult,HConstants.REPLICATION_SCOPE_GLOBAL, HConstants.REPLICATION_SCOPE_LOCA );
+    TestUtils.assertEquals(hbaseResult, cbtResult,HConstants.REPLICATION_SCOPE_GLOBAL, HConstants.REPLICATION_SCOPE_LOCAL );
 
   }
 }
