@@ -58,6 +58,8 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService
     metricsExporter = new HBaseMetricsExporter();
   }
 
+  // User of the class should use this class after calling init.
+  // https://github.com/apache/hbase/blob/master/hbase-server/src/main/java/org/apache/hadoop/hbase/replication/regionserver/ReplicationSource.java#L321
   @Override
   public void init(Context context) throws IOException {
     this.context = context;
@@ -85,6 +87,9 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService
     return cloudBigtableReplicator.getPeerUUID();
   }
 
+  // the default filter excludes the system tables and already replicated table
+  // https://github.com/apache/hbase/blob/master/hbase-server/src/main/java/org/apache/hadoop/hbase/replication/regionserver/ReplicationSource.java#L330
+  // Keeping the implementation same as HBaseReplicationEndpoint
   @Override
   public WALEntryFilter getWALEntryfilter() {
     ArrayList<WALEntryFilter> filters = Lists.newArrayList();
@@ -118,7 +123,7 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService
    * Returns a WALEntryFilter for checking the scope. Subclasses can return null if they don't want
    * this filter
    */
-  protected WALEntryFilter getScopeWALEntryFilter() {
+  private WALEntryFilter getScopeWALEntryFilter() {
     return new ScopeWALEntryFilter();
   }
 
@@ -126,7 +131,7 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService
    * Returns a WALEntryFilter for checking replication per table and CF. Subclasses can return null
    * if they don't want this filter
    */
-  protected WALEntryFilter getNamespaceTableCfWALEntryFilter() {
+  private WALEntryFilter getNamespaceTableCfWALEntryFilter() {
     return new NamespaceTableCfWALEntryFilter(context.getReplicationPeer());
   }
 
@@ -172,7 +177,9 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService
     cloudBigtableReplicator.stop();
     notifyStopped();
   }
-
+  // It is a no op for HBaseReplicationEndpoint. Keeping as same.
   @Override
   public void peerConfigUpdated(ReplicationPeerConfig replicationPeerConfig) {}
+  // TODO(we can implement this to enable/disable dry-run mode without deleting the peer)
+
 }
