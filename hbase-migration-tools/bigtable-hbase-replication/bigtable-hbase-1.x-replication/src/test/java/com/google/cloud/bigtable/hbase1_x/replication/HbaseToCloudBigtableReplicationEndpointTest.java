@@ -461,7 +461,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
     TestUtils.waitForReplication(
         () -> {
-          //  replicate Entries will be zero
+          //  replicate Entries will be 1
           return TestReplicationEndpoint.replicatedEntries.get() >= 1;
         });
 
