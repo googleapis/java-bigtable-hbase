@@ -440,7 +440,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
         });
 
     List<Cell> expectedCells =
-        cbtTable.get(new Get(TestUtils.ROW_KEY).setMaxVersions()).listCells();
+        hbaseTable.get(new Get(TestUtils.ROW_KEY).setMaxVersions()).listCells();
     List<Cell> actualCells = cbtTable.get(new Get(TestUtils.ROW_KEY).setMaxVersions()).listCells();
 
     for (int i = 0; i < expectedCells.size(); i++) {
