@@ -20,6 +20,7 @@ import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBi
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.PUTS_IN_FUTURE_METRIC_KEY;
 
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
 import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
@@ -69,6 +70,10 @@ public abstract class IncompatibleMutationAdapter {
   private void incrementIncompatibleDeletesMutations() {
     metricsExporter.incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 1);
     incrementIncompatibleMutations();
+  }
+  
+  private void incrementPutsInFutureMutations() {
+    metricsExporter.incCounters(PUTS_IN_FUTURE_METRIC_KEY, 1);
   }
 
   /**
@@ -134,6 +139,11 @@ public abstract class IncompatibleMutationAdapter {
 
       // All puts are valid.
       if (cell.getTypeByte() == KeyValue.Type.Put.getCode()) {
+        // flag if put is issued for future timestamp
+        // do not log as we might fill up disk space due condition being true from clock skew
+        if (cell.getTimestamp() > walEntry.getWalWriteTime()) {
+          incrementPutsInFutureMutations();
+        }
         returnedCells.add(cell);
         continue;
       }
