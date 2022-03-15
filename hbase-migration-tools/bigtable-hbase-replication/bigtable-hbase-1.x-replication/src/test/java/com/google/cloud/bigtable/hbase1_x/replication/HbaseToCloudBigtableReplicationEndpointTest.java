@@ -45,7 +45,6 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.replication.ReplicationAdmin;
 import org.apache.hadoop.hbase.ipc.RpcServer;
-import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
 import org.apache.hadoop.hbase.replication.ChainWALEntryFilter;
 import org.apache.hadoop.hbase.replication.ReplicationException;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
@@ -450,7 +449,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
   @Test
   public void testReplicationWithScope() throws IOException, InterruptedException {
     TableName tableName = TableName.valueOf(UUID.randomUUID().toString());
-    createTables(tableName, HConstants.REPLICATION_SCOPE_GLOBAL, HConstants.REPLICATION_SCOPE_LOCAL);
+    createTables(
+        tableName, HConstants.REPLICATION_SCOPE_GLOBAL, HConstants.REPLICATION_SCOPE_LOCAL);
     hbaseTable = hbaseConnection.getTable(tableName);
     cbtTable = cbtConnection.getTable(tableName);
 
@@ -469,8 +469,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     Result hbaseResult = hbaseTable.get(new Get(ROW_KEY).setMaxVersions());
     Assert.assertFalse(cbtResult.isEmpty());
     Assert.assertFalse(hbaseResult.isEmpty());
-    System.out.print(cbtResult.listCells());
-    System.out.print(hbaseResult.listCells());
     Assert.assertEquals(
         "Number of cells , actual cells: " + hbaseResult.listCells(),
         2,
@@ -482,7 +480,10 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
         1,
         1,
         cbtResult.listCells().size());
-    TestUtils.assertEquals(hbaseResult, cbtResult,HConstants.REPLICATION_SCOPE_GLOBAL, HConstants.REPLICATION_SCOPE_LOCAL );
-
+    TestUtils.assertEquals(
+        hbaseResult,
+        cbtResult,
+        HConstants.REPLICATION_SCOPE_GLOBAL,
+        HConstants.REPLICATION_SCOPE_LOCAL);
   }
 }

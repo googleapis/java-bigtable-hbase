@@ -27,6 +27,7 @@ import java.util.NavigableMap;
 import java.util.function.BooleanSupplier;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Result;
@@ -91,7 +92,6 @@ public class TestUtils {
         "Value mismatch for row " + rowKey, CellUtil.cloneRow(expected), CellUtil.cloneRow(actual));
   }
 
-
   public static void assertEquals(Result expected, Result actual) {
     assertEquals("Result row keys mismatch", expected.getRow(), actual.getRow());
 
@@ -116,10 +116,19 @@ public class TestUtils {
     // Prevent creating a list every time.
     List<Cell> expectedCells = expected.listCells();
     List<Cell> actualCells = actual.listCells();
-    for (int i = 0; i < expected.size(); i++) {
-      System.out.print(expectedCells.get(i).getFamilyArray());
-      System.out.print(expectedCells.get(i).getFamily());
-      assertEquals(expectedCells.get(i), actualCells.get(i));
+    int i = 0;
+    int j = 0;
+    while (i < expected.size() && j < actual.size()) {
+      if ((expectedCells.get(i).getFamily() == CF1
+              && cf1Scope == HConstants.REPLICATION_SCOPE_LOCAL)
+          || (expectedCells.get(i).getFamily() == CF2
+              && cf2Scope == HConstants.REPLICATION_SCOPE_LOCAL)) {
+        i++;
+      } else {
+        assertEquals(expectedCells.get(i), actualCells.get(i));
+        i++;
+        j++;
+      }
     }
   }
 
