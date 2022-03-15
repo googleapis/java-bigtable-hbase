@@ -416,7 +416,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
   }
 
   @Test
-  public void testTimestampOverflow() throws IOException, InterruptedException {
+  public void testHBaseCBTTimestampTruncation() throws IOException, InterruptedException {
     Put put = new Put(TestUtils.ROW_KEY);
     byte[] val = Bytes.toBytes(1);
     put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, Long.MAX_VALUE - 1, val);
