@@ -446,7 +446,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
   }
 
   @Test
-  public void testReplicationWithScope() throws IOException, InterruptedException {
+  public void testReplicationWithScopeFilter() throws IOException, InterruptedException {
     TableName tableName = TableName.valueOf(UUID.randomUUID().toString());
     createTables(
         tableName, HConstants.REPLICATION_SCOPE_GLOBAL, HConstants.REPLICATION_SCOPE_LOCAL);
@@ -479,5 +479,10 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
         1,
         1,
         cbtResult.listCells().size());
+    TestUtils.assertEquals(
+        hbaseResult,
+        cbtResult,
+        HConstants.REPLICATION_SCOPE_GLOBAL,
+        HConstants.REPLICATION_SCOPE_LOCAL);
   }
 }
