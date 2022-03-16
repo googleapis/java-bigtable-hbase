@@ -438,7 +438,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
         cbtTable.get(new Get(TestUtils.ROW_KEY).setMaxVersions()).listCells();
     Assert.assertEquals("bigtable cells", 1, bigtableCells.size());
     Assert.assertNotEquals(
-        "Timestamp mismatch for row " + TestUtils.ROW_KEY,
+        "Timestamp match for row " + TestUtils.ROW_KEY,
         hbaseCells.get(0).getTimestamp(),
         bigtableCells.get(0).getTimestamp());
   }
