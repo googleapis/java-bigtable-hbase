@@ -442,5 +442,4 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
         expectedCells.get(0).getTimestamp(),
         actualCells.get(0).getTimestamp());
   }
-  }
 }
