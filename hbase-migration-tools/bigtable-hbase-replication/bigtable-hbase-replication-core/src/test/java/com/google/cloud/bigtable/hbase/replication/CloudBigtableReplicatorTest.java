@@ -94,7 +94,8 @@ public class CloudBigtableReplicatorTest {
 
     // Create WALs to replicate
     Cell cell = new KeyValue(ROW_KEY, CF1, null, TIMESTAMP, DeleteFamilyVersion);
-    BigtableWALEntry walEntry = new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell), TABLE_NAME_STRING);
+    BigtableWALEntry walEntry =
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell), TABLE_NAME_STRING);
 
     Map<String, List<BigtableWALEntry>> walToReplicate = new HashMap<>();
     walToReplicate.put(TABLE_NAME_STRING, Arrays.asList(walEntry));
@@ -273,10 +274,12 @@ public class CloudBigtableReplicatorTest {
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
-    BigtableWALEntry walEntry1 = new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell11), TABLE_NAME_STRING);
+    BigtableWALEntry walEntry1 =
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell11), TABLE_NAME_STRING);
 
     Cell cell21 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(1));
-    BigtableWALEntry walEntry2 = new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell21), TABLE_NAME_STRING);
+    BigtableWALEntry walEntry2 =
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell21), TABLE_NAME_STRING);
 
     Map<ByteRange, List<Cell>> expectedBatchOfWal1 = new HashMap<>();
     expectedBatchOfWal1.put(new SimpleByteRange(getRowKey(1)), walEntry1.getCells());
@@ -320,10 +323,12 @@ public class CloudBigtableReplicatorTest {
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
-    BigtableWALEntry walEntry1 = new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell11), TABLE_NAME_STRING);
+    BigtableWALEntry walEntry1 =
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell11), TABLE_NAME_STRING);
 
     Cell cell21 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(1));
-    BigtableWALEntry walEntry2 = new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell21), TABLE_NAME_STRING);
+    BigtableWALEntry walEntry2 =
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell21), TABLE_NAME_STRING);
 
     Map<ByteRange, List<Cell>> expectedBatchOfWal1 = new HashMap<>();
     expectedBatchOfWal1.put(new SimpleByteRange(getRowKey(1)), walEntry1.getCells());
@@ -366,10 +371,12 @@ public class CloudBigtableReplicatorTest {
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
-    BigtableWALEntry walEntry1 = new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell11), TABLE_NAME_STRING);
+    BigtableWALEntry walEntry1 =
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell11), TABLE_NAME_STRING);
 
     Cell cell21 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(1));
-    BigtableWALEntry walEntry2 = new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell21), TABLE_NAME_STRING);
+    BigtableWALEntry walEntry2 =
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell21), TABLE_NAME_STRING);
 
     Map<ByteRange, List<Cell>> expectedBatchOfWal1 = new HashMap<>();
     expectedBatchOfWal1.put(new SimpleByteRange(getRowKey(1)), walEntry1.getCells());

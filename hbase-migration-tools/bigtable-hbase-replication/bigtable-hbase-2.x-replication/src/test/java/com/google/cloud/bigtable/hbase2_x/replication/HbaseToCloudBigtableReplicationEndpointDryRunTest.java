@@ -130,9 +130,9 @@ public class HbaseToCloudBigtableReplicationEndpointDryRunTest {
   @Test
   public void testDryRunDoesNotReplicateToCloudBigtable()
       throws IOException, InterruptedException, ReplicationException {
-      Put put = new Put(TestUtils.ROW_KEY);
-      put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.VALUE);
-      hbaseTable.put(put);
+    Put put = new Put(TestUtils.ROW_KEY);
+    put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.VALUE);
+    hbaseTable.put(put);
 
     // Give enough time for replication to catch up. Nothing should be replicated as its dry-run
     Thread.sleep(5000);

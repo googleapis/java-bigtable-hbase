@@ -83,9 +83,7 @@ public class CloudBigtableReplicator {
      */
     private final Connection connection;
 
-    /**
-     * Reference count for this instance.
-     */
+    /** Reference count for this instance. */
     private static int numReferences = 0;
 
     @VisibleForTesting
@@ -199,7 +197,7 @@ public class CloudBigtableReplicator {
     SharedResources sharedResources = SharedResources.getInstance(configuration);
     IncompatibleMutationAdapter incompatibleMutationAdapter =
         new IncompatibleMutationAdapterFactory(
-            configuration, metricsExporter, sharedResources.connection)
+                configuration, metricsExporter, sharedResources.connection)
             .createIncompatibleMutationAdapter();
 
     start(
@@ -349,7 +347,7 @@ public class CloudBigtableReplicator {
           new CloudBigtableReplicationTask(tableName, sharedResources.connection, batchToReplicate);
       return sharedResources.executorService.submit(replicationTask);
     } catch (Exception ex) {
-      if(ex instanceof InterruptedException){
+      if (ex instanceof InterruptedException) {
         Thread.currentThread().interrupt();
       }
       LOG.error("Failed to submit a batch for table: " + tableName, ex);
