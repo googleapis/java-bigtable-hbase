@@ -433,10 +433,10 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
           return TestReplicationEndpoint.replicatedEntries.get() >= 1;
         });
 
-    List<Cell> hbaseCells =
-        hbaseTable.get(new Get(TestUtils.ROW_KEY).setMaxVersions()).listCells();
-    List<Cell> bigtableCells = cbtTable.get(new Get(TestUtils.ROW_KEY).setMaxVersions()).listCells();
-    Assert.assertEquals("bigtable cells" ,1, bigtableCells.size());
+    List<Cell> hbaseCells = hbaseTable.get(new Get(TestUtils.ROW_KEY).setMaxVersions()).listCells();
+    List<Cell> bigtableCells =
+        cbtTable.get(new Get(TestUtils.ROW_KEY).setMaxVersions()).listCells();
+    Assert.assertEquals("bigtable cells", 1, bigtableCells.size());
     Assert.assertNotEquals(
         "Timestamp mismatch for row " + TestUtils.ROW_KEY,
         hbaseCells.get(0).getTimestamp(),
