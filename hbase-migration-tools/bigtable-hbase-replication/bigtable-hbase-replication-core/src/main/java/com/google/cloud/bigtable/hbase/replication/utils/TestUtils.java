@@ -24,6 +24,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NavigableMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.function.BooleanSupplier;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -51,8 +53,10 @@ public class TestUtils {
   public static final byte[] ROW_KEY = "test-row".getBytes();
   public static final byte[] CF1 = "cf1".getBytes();
   public static final byte[] CF2 = "cf2".getBytes();
-  public static final TableName TABLE_NAME = TableName.valueOf("replication-test");
-  public static final TableName TABLE_NAME_2 = TableName.valueOf("replication-test-2");
+  public static final String TABLE_NAME_STRING = "replication-test";
+  public static final TableName TABLE_NAME = TableName.valueOf(TABLE_NAME_STRING);
+  public static final String TABLE_NAME_STRING_2 = "replication-test-2";
+  public static final TableName TABLE_NAME_2 = TableName.valueOf(TABLE_NAME_STRING_2);
   public static final byte[] COL_QUALIFIER = "col1".getBytes();
   public static final byte[] COL_QUALIFIER_2 = "col2".getBytes();
   public static final String VALUE_PREFIX = "Value-";
@@ -231,5 +235,17 @@ public class TestUtils {
       throws InterruptedException, IOException {
     waitForReplication(isReplicationCurrent);
     TestUtils.assertTableEquals(expected, actual);
+  }
+
+  /**
+   * Creates a {@link CompletableFuture} that has already completed exceptionally with the given
+   * {@code error}.
+   *
+   * @return
+   */
+  public static Future<Object> failedFuture(Throwable error) {
+    CompletableFuture<Object> future = new CompletableFuture<>();
+    future.completeExceptionally(error);
+    return future;
   }
 }
