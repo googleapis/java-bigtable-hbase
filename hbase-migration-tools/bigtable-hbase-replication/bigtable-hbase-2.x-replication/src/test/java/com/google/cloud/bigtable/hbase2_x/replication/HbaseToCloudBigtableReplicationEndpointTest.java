@@ -437,7 +437,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     Assert.assertEquals(
         "Number of cells , actual cells: " + hbaseResult.listCells(),
         2,
-        2,
         hbaseResult.listCells().size());
 
     Result cbtResult2 = cbtTable.get(new Get(ROW_KEY).setMaxVersions());
@@ -471,12 +470,10 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     Assert.assertEquals(
         "Number of cells , actual cells: " + hbaseResult.listCells(),
         2,
-        2,
         hbaseResult.listCells().size());
 
     Assert.assertEquals(
         "Number of cells , actual cells: " + hbaseResult.listCells(),
-        1,
         1,
         cbtResult.listCells().size());
     TestUtils.assertEquals(
