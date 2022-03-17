@@ -39,7 +39,8 @@ import org.apache.hadoop.hbase.replication.ScopeWALEntryFilter;
 import org.apache.hadoop.hbase.replication.WALEntryFilter;
 import org.apache.hadoop.hbase.wal.WAL;
 import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @InternalExtensionOnly
 public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService
@@ -48,6 +49,9 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService
   private final CloudBigtableReplicator cloudBigtableReplicator;
   private final HBaseMetricsExporter metricsExporter;
   protected Context context;
+
+  private static final Logger LOG =
+      LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
 
   public HbaseToCloudBigtableReplicationEndpoint() {
     cloudBigtableReplicator = new CloudBigtableReplicator();
@@ -99,7 +103,10 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService
     }
     if (context != null && context.getPeerConfig() != null) {
       String filterNameCSV =
-          context.getPeerConfig().getConfiguration().get(BIGTABLE_REPLICATION_WALENTRYFILTER_CONFIG_KEY);
+          context
+              .getPeerConfig()
+              .getConfiguration()
+              .get(BIGTABLE_REPLICATION_WALENTRYFILTER_CONFIG_KEY);
       if (filterNameCSV != null && !filterNameCSV.isEmpty()) {
         String[] filterNames = filterNameCSV.split(",");
         for (String filterName : filterNames) {

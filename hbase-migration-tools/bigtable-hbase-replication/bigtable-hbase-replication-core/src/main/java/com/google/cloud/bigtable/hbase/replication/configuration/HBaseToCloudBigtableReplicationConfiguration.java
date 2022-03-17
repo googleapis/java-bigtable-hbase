@@ -60,6 +60,6 @@ public class HBaseToCloudBigtableReplicationConfiguration {
   // and `replication.source.size.capacity` config keys.
   public static final long DEFAULT_BATCH_SIZE_IN_BYTES = 500_000;
   // TODO: Plumb this config key to HBase1.x
-  public static final String BIGTABLE_REPLICATION_WALENTRYFILTER_CONFIG_KEY = "google.bigtable.replication..source.custom.walentryfilters";
-
+  public static final String BIGTABLE_REPLICATION_WALENTRYFILTER_CONFIG_KEY =
+      "google.bigtable.replication..source.custom.walentryfilters";
 }

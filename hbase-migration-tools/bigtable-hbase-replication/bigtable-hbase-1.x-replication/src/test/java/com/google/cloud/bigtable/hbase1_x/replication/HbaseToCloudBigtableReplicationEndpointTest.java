@@ -44,16 +44,12 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.replication.ReplicationAdmin;
-import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.replication.ChainWALEntryFilter;
-import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
 import org.apache.hadoop.hbase.replication.ReplicationException;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.apache.hadoop.hbase.replication.WALEntryFilter;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.ServerRegionReplicaUtil;
 import org.apache.hadoop.hbase.wal.WAL.Entry;
-
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -469,15 +465,15 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
         1,
         cbtResult.listCells().size());
 
-
     TestUtils.assertEquals(
         hbaseResult,
         cbtResult,
         HConstants.REPLICATION_SCOPE_GLOBAL,
         HConstants.REPLICATION_SCOPE_LOCAL);
   }
-    @Test
-    public void testHBaseCBTTimestampTruncation() throws IOException, InterruptedException {
+
+  @Test
+  public void testHBaseCBTTimestampTruncation() throws IOException, InterruptedException {
     Put put = new Put(TestUtils.ROW_KEY);
     byte[] val = Bytes.toBytes(1);
     put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, Long.MAX_VALUE - 1, val);

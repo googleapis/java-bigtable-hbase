@@ -44,17 +44,12 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.replication.ReplicationAdmin;
-import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.replication.ChainWALEntryFilter;
-import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
 import org.apache.hadoop.hbase.replication.ReplicationException;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.apache.hadoop.hbase.replication.WALEntryFilter;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.ServerRegionReplicaUtil;
 import org.apache.hadoop.hbase.wal.WAL.Entry;
-import org.apache.hbase.thirdparty.com.google.common.util.concurrent.Service;
-
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -473,11 +468,12 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     List<Cell> actualCells = cbtResult.listCells();
 
     // make sure that CF2 is not replicated
-    for (int i= 0; i < expectedCells.size(); i++) {
+    for (int i = 0; i < expectedCells.size(); i++) {
       System.out.print("Tet190");
       System.out.print(expectedCells.get(i).getFamilyArray());
     }
   }
+
   @Test
   public void testHBaseCBTTimestampTruncation() throws IOException, InterruptedException {
     Put put = new Put(TestUtils.ROW_KEY);
