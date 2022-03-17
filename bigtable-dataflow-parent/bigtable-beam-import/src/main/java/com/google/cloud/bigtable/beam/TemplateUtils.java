@@ -84,7 +84,7 @@ public class TemplateUtils {
             new CloudBigtableTableConfiguration.Builder()
                     .withProjectId(opts.getBigtableProject())
                     .withInstanceId(opts.getBigtableInstanceId())
-                    .withTableId(opts.getIndexTableId())
+                    .withTableId(opts.getReverseIndexTableId())
                     .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, customUserAgent);
     if (opts.getBigtableAppProfileId() != null) {
       builder.withAppProfileId(opts.getBigtableAppProfileId());

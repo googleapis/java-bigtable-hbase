@@ -38,7 +38,6 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,8 +54,6 @@ public class HBaseResultToMutationFn extends DoFn<KV<ImmutableBytesWritable, Res
   private static final int MAX_CELLS = 100_000 - 1;
 
   private static final int MAX_VALUE = 999999999; //999,999,999
-
-  private static final String DELIMITER = "#";
 
   private static final Predicate<Cell> IS_DELETE_MARKER_FILTER =
           new Predicate<Cell>() {
@@ -86,12 +83,19 @@ public class HBaseResultToMutationFn extends DoFn<KV<ImmutableBytesWritable, Res
 
   @ProcessElement
   public void processElement(ProcessContext context) throws Exception {
-    //originalProcess(context);
-    stringPrefixProcess(context);
-    //integerPrefixProcess(context);
-    //singleTableReverseProcess(context);
-    //logger.warn("Starting Original Table Mutation Process");
-    //indexTableProcess(context); #not needed because this creation exists in CustomIndexTableTransform
+
+    CustomPipelineOptions customOpts = context.getPipelineOptions().as(CustomPipelineOptions.class);
+
+    if (customOpts.getTenantId() != null) {
+      stringPrefixProcess(context, customOpts);
+      //integerPrefixProcess(context, customOpts);
+    }
+    else {
+      originalProcess(context);
+    }
+
+    //runningTotalSizeProcess(context, customOpts);
+    //singleTableReverseProcess(context, customOpts);
   }
 
   /**
@@ -115,8 +119,41 @@ public class HBaseResultToMutationFn extends DoFn<KV<ImmutableBytesWritable, Res
 
     while (cellIt.hasNext()) {
       Put originalPut = new Put(kv.getKey().get());
-      for (int i = 0; i < MAX_CELLS && cellIt.hasNext(); i++) { // divide max cells by two when performing reverse scans
+      for (int i = 0; i < MAX_CELLS && cellIt.hasNext(); i++) {
         Cell originalCell = cellIt.next();
+        originalPut.add(originalCell);
+      }
+      context.output(originalPut);
+    }
+  }
+
+  /**
+   Original, vanilla HBaseResultToMutationFn - doesn't perform any transformations on import data.
+   **/
+  private void runningTotalSizeProcess(ProcessContext context) throws IOException {
+
+    KV<ImmutableBytesWritable, Result> kv = context.element();
+    List<Cell> cells = checkEmptyRow(kv);
+    if (cells.isEmpty()) {
+      return;
+    }
+
+    // Preprocess delete markers
+    if (hasDeleteMarkers(cells)) {
+      cells = preprocessDeleteMarkers(cells);
+    }
+    // Split the row into multiple puts if it exceeds the maximum mutation limit
+    Iterator<Cell> cellIt = cells.iterator();
+
+    int totalByteSize = 0;
+
+    while (cellIt.hasNext()) {
+      Put originalPut = new Put(kv.getKey().get());
+      for (int i = 0; i < MAX_CELLS && cellIt.hasNext(); i++) {
+        Cell originalCell = cellIt.next();
+
+        totalByteSize = totalByteSize + originalCell.getRowArray().length;
+
         originalPut.add(originalCell);
       }
       context.output(originalPut);
@@ -126,12 +163,11 @@ public class HBaseResultToMutationFn extends DoFn<KV<ImmutableBytesWritable, Res
   /**
    Modified HBaseResultToMutationFn - adds a reader legible string prefix to each incoming row key.
    **/
-  private void stringPrefixProcess(ProcessContext context) throws IOException {
+  private void stringPrefixProcess(ProcessContext context, CustomPipelineOptions customOpts) throws IOException {
     logger.info("Starting HBaseResultToMutationFn in string_prefix mode.");
 
     KV<ImmutableBytesWritable, Result> kv = context.element();
-    CustomPipelineOptions customOpts = context.getPipelineOptions().as(CustomPipelineOptions.class);
-    byte[] stringPrefixedRowKey = stringPrefixRowKeyTransform(kv.getKey(), customOpts.getTenantId().toString());
+    byte[] stringPrefixedRowKey = stringPrefixRowKeyTransform(kv.getKey(), customOpts);
 
     List<Cell> cells = checkEmptyRow(kv);
     if (cells.isEmpty()) {
@@ -167,14 +203,13 @@ public class HBaseResultToMutationFn extends DoFn<KV<ImmutableBytesWritable, Res
    Modified HBaseResultToMutationFn - adds a reversed byte array integer prefix to each incoming row key. may not be
    human legible in Bigtable (i.e. shows up as symbols)
    **/
-  private void integerPrefixProcess(ProcessContext context) throws IOException {
+  private void integerPrefixProcess(ProcessContext context, CustomPipelineOptions customOpts) throws IOException {
     logger.info("Starting HBaseResultToMutationFn in integer_prefix mode.");
 
     KV<ImmutableBytesWritable, Result> kv = context.element();
-    CustomPipelineOptions customOpts = context.getPipelineOptions().as(CustomPipelineOptions.class);
 
     Integer tenantId = Integer.parseInt(customOpts.getTenantId().toString());
-    byte[] integerPrefixedRowKey = integerPrefixRowKeyTransform(kv.getKey(), tenantId);
+    byte[] integerPrefixedRowKey = integerPrefixRowKeyTransform(kv.getKey(), customOpts);
 
     List<Cell> cells = checkEmptyRow(kv);
     if (cells.isEmpty()) {
@@ -209,13 +244,12 @@ public class HBaseResultToMutationFn extends DoFn<KV<ImmutableBytesWritable, Res
   /**
    Modified HBaseResultToMutationFn - takes a row key with a timestamp, duplicates and reverses the timestamp
    **/
-  private void singleTableReverseProcess(ProcessContext context) throws IOException {
+  private void singleTableReverseProcess(ProcessContext context, CustomPipelineOptions customOpts) throws IOException {
     logger.info("Starting HBaseResultToMutationFn in single_table_reverse mode.");
 
     KV<ImmutableBytesWritable, Result> kv = context.element();
-    CustomPipelineOptions customOpts = context.getPipelineOptions().as(CustomPipelineOptions.class);
-    byte[] stringPrefixedRowKey = stringPrefixRowKeyTransform(kv.getKey(), customOpts.getTenantId().toString());
-    byte[] reversedRowKey = reverseRowKey(stringPrefixedRowKey);
+    byte[] stringPrefixedRowKey = stringPrefixRowKeyTransform(kv.getKey(), customOpts);
+    byte[] reversedRowKey = reverseRowKey(stringPrefixedRowKey, customOpts);
 
     List<Cell> cells = checkEmptyRow(kv);
     if (cells.isEmpty()) {
@@ -259,57 +293,6 @@ public class HBaseResultToMutationFn extends DoFn<KV<ImmutableBytesWritable, Res
       context.output(stringPrefixedPut);
       context.output(reversedPut);
     }
-  }
-
-  /**
-   Modified HBaseResultToMutationFn - takes a row key with a timestamp, duplicates and reverses the timestamp
-   **/
-  private void indexTableProcess(ProcessContext context) throws IOException {
-    logger.info("Starting HBaseResultToMutationFn in single_table_reverse mode.");
-
-    KV<ImmutableBytesWritable, Result> kv = context.element();
-    CustomPipelineOptions customOpts = context.getPipelineOptions().as(CustomPipelineOptions.class);
-    byte[] stringPrefixedRowKey = stringPrefixRowKeyTransform(kv.getKey(), customOpts.getTenantId().toString());
-    byte[] reversedRowKey = reverseRowKey(stringPrefixedRowKey);
-
-
-
-    List<Cell> cells = checkEmptyRow(kv);
-    if (cells.isEmpty()) {
-      return;
-    }
-
-    // Preprocess delete markers
-    if (hasDeleteMarkers(cells)) {
-      cells = preprocessDeleteMarkers(cells);
-    }
-    // Split the row into multiple puts if it exceeds the maximum mutation limit
-    Iterator<Cell> cellIt = cells.iterator();
-
-    int totalByteSize = 0;
-
-    while (cellIt.hasNext()) {
-      Put reversedPut = new Put(reversedRowKey);
-      for (int i = 0; i < MAX_CELLS / 2 && cellIt.hasNext(); i++) { // divide max cells by two when performing reverse scans
-        Cell originalCell = cellIt.next();
-
-        totalByteSize = totalByteSize + originalCell.getRowArray().length;
-        logger.warn("Running Total: " + totalByteSize);
-
-        // reversed
-        Cell reversedCell = CellUtil.createCell(
-                reversedRowKey,
-                CellUtil.cloneFamily(originalCell),
-                CellUtil.cloneQualifier(originalCell),
-                originalCell.getTimestamp(),
-                originalCell.getTypeByte(),
-                kv.getKey().get()); // reversed key : originalKey
-        reversedPut.add(reversedCell);
-      }
-      context.output(reversedPut);
-    }
-
-    logger.warn("Final Total: " + totalByteSize);
   }
 
   private boolean hasDeleteMarkers(List<Cell> cells) {
@@ -377,13 +360,15 @@ public class HBaseResultToMutationFn extends DoFn<KV<ImmutableBytesWritable, Res
   /**
    * Transform row key with tenant id expected as string
    * @param currentKey
-   * @param tenantId
+   * @param customOpts
    * @return
    */
   protected byte[] stringPrefixRowKeyTransform(ImmutableBytesWritable currentKey,
-                                               String tenantId) {
+                                               CustomPipelineOptions customOpts) {
 
-    tenantId = tenantId.concat(DELIMITER);
+    String tenantId = customOpts.getTenantId().toString();
+    String delimiter = customOpts.getDelimiter().toString();
+    tenantId = tenantId.concat(delimiter);
 
     return ByteBuffer.allocate(currentKey.get().length + tenantId.getBytes().length)
             .put(ByteBuffer.allocate(tenantId.getBytes().length).put(tenantId.getBytes()).array())
@@ -394,13 +379,16 @@ public class HBaseResultToMutationFn extends DoFn<KV<ImmutableBytesWritable, Res
   /**
    * Transform row key with tenant id expected as integer
    * @param currentKey
-   * @param tenantId
+   * @param customOpts
    * @return
    */
   protected byte[] integerPrefixRowKeyTransform(ImmutableBytesWritable currentKey,
-                                                Integer tenantId) {
+                                                CustomPipelineOptions customOpts) {
     // TODO - check rowKeyNamespace.length required
     // TODO: this is returning indecipherable symbols for integer prefix in BigTable results
+
+    Integer tenantId = Integer.valueOf(customOpts.getTenantId().toString());
+
     return ByteBuffer.allocate(currentKey.get().length + Integer.BYTES)
             .put(ByteBuffer.allocate(Integer.BYTES).putInt(Integer.reverseBytes(tenantId)).array())
             .put(currentKey.get())
@@ -411,19 +399,22 @@ public class HBaseResultToMutationFn extends DoFn<KV<ImmutableBytesWritable, Res
   /**
    * Reverse the last value within a row key
    * @param key
+   * @param customOpts
    * @return
    */
-  protected byte[] reverseRowKey(byte[] key) {
-    String[] originalKeyParts = new String(key, StandardCharsets.UTF_8).split(DELIMITER);
+  protected byte[] reverseRowKey(byte[] key, CustomPipelineOptions customOpts) {
+
+    String delimiter = customOpts.getDelimiter().toString();
+    String[] originalKeyParts = new String(key, StandardCharsets.UTF_8).split(delimiter);
     Integer reversedVal = MAX_VALUE - Integer.parseInt(originalKeyParts[originalKeyParts.length-1]);
 
     // compile new key
     String newKey = "";
     for (int i = 0; i < originalKeyParts.length - 1; i++) {
       if (i == 1) {
-        newKey = newKey.concat("rev" + DELIMITER);
+        newKey = newKey.concat("rev" + delimiter);
       }
-      newKey = newKey.concat(originalKeyParts[i] + DELIMITER);
+      newKey = newKey.concat(originalKeyParts[i] + delimiter);
     }                                                             // tenantId#msg11#fromNardos#toAdbul#982736578
     newKey = newKey.concat(reversedVal.toString());               // tenantId#rev#msg11#fromNardos#toAbdul#17263421
 

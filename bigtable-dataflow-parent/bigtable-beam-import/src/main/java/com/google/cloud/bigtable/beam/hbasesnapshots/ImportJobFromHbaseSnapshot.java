@@ -17,23 +17,19 @@ package com.google.cloud.bigtable.beam.hbasesnapshots;
 
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.TemplateUtils;
-import com.google.cloud.bigtable.beam.sequencefiles.CustomIndexTableTransform;
-import com.google.cloud.bigtable.beam.sequencefiles.HBaseResultToMutationFn;
-import com.google.cloud.bigtable.beam.sequencefiles.ImportJob;
-import com.google.cloud.bigtable.beam.sequencefiles.Utils;
+import com.google.cloud.bigtable.beam.sequencefiles.*;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Arrays;
 import java.util.List;
+
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
+import org.apache.beam.sdk.io.TextIO;
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO;
 import org.apache.beam.sdk.options.*;
-import org.apache.beam.sdk.transforms.Create;
-import org.apache.beam.sdk.transforms.ParDo;
-import org.apache.beam.sdk.transforms.Wait;
+import org.apache.beam.sdk.transforms.*;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
-import org.apache.beam.sdk.values.PCollectionList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.Mutation;
@@ -80,6 +76,14 @@ public class ImportJobFromHbaseSnapshot {
     @SuppressWarnings("unused")
     void setSnapshotName(String snapshotName);
 
+
+    // gs file location
+    String getCountsMappingOutputLocation();
+    void setCountsMappingOutputLocation(String countsMappingOutputLocation);
+
+    String getImportSizeOutputLocation();
+    void setImportSizeOutputLocation(String importSizeOutputLocation);
+
     public interface CustomPipelineOptions extends PipelineOptions {
       @Description("Org Id")
       ValueProvider<String> getTenantId();
@@ -95,8 +99,6 @@ public class ImportJobFromHbaseSnapshot {
 
     ImportOptions opts =
             PipelineOptionsFactory.fromArgs(args).withValidation().as(ImportOptions.class);
-
-    opts.getTenantId();
 
     LOG.info("Building Pipeline");
     Pipeline pipeline = buildPipeline(opts);
@@ -126,24 +128,44 @@ public class ImportJobFromHbaseSnapshot {
                     HadoopFormatIO.<ImmutableBytesWritable, Result>read()
                             .withConfiguration(configurationBuilder.build()));
 
-    PCollection<Mutation> indexResult = originalResult
-            .apply("Create Mutations - Index", ParDo.of(new CustomIndexTableTransform()));
-
     originalResult
-            .apply("Create Mutations - Original", ParDo.of(new HBaseResultToMutationFn()))
-            .apply(
-                    "Write Original to Bigtable",
-                    CloudBigtableIO.writeToTable(
-                            TemplateUtils.buildImportConfig(opts, "HBaseSnapshotImportJob")));
+        .apply("Create Table", ParDo.of(new HBaseResultToMutationFn()))
+        .apply(
+                "Write to Bigtable",
+                CloudBigtableIO.writeToTable(
+                        TemplateUtils.buildImportConfig(opts, "HBaseSnapshotImportJob")));
 
-    indexResult
-            .apply("Write Index Table to BigTable",
-                    CloudBigtableIO.writeToTable(
-                            TemplateUtils.buildIndexImportConfig(opts, "HBaseSnapshotImportJob")));
+    if (opts.getImportSizeOutputLocation() != null) {
+      LOG.warn("Calculating import size...");
 
-    // opts with one extra param for reversed table id
-    // one set of opts for primary table, another for secondary table
-    // one source, two outputs - create two partitions, one for reverse one for primary - shashank meeting
+      PCollection<Integer> input = originalResult.apply("Calculate Import Size", ParDo.of(new ImportByteSizeSum()));
+      PCollection<Integer> sum = input.apply(Sum.integersGlobally());
+      sum.apply(MapElements.via(new ImportByteSizeSum.FormatAsTextFn()))
+              .apply("Write Import Size", TextIO.write().to(opts.getImportSizeOutputLocation()));
+
+    }
+
+    if (opts.getCountsMappingOutputLocation() != null) {
+      LOG.warn("Counts mapping output location: " + opts.getCountsMappingOutputLocation().toString());
+      // testing tenant id extraction
+
+      originalResult.apply("Extract TenantIds", ParDo.of(new TenantIdCountFn.ExtractTenantIdsFn()))
+              .apply(Count.perElement())
+              .apply(MapElements.via(new TenantIdCountFn.FormatAsTextFn()))
+              .apply("Write TenantId Counts", TextIO.write().to(opts.getCountsMappingOutputLocation()));
+    }
+
+    if (opts.getReverseIndexTableId() != null) {
+      LOG.warn("Reverse Index table id: " + opts.getReverseIndexTableId().toString());
+      PCollection<Mutation> reverseIndexResult = originalResult
+        .apply("Create Reverse Index Table", ParDo.of(new CustomIndexTableTransform()));
+
+      reverseIndexResult
+              .apply("Write Reverse Index Table to BigTable",
+                      CloudBigtableIO.writeToTable(
+                              TemplateUtils.buildIndexImportConfig(opts, "HBaseSnapshotImportJob")));
+    }
+
 
     final List<KV<String, String>> sourceAndRestoreFolders =
             Arrays.asList(

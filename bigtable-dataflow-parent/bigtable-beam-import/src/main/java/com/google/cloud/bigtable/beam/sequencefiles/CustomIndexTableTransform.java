@@ -30,21 +30,15 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.transforms.DoFn;
-import org.apache.beam.sdk.transforms.windowing.PaneInfo;
 import org.apache.beam.sdk.values.KV;
-import org.apache.beam.sdk.values.PCollectionView;
-import org.apache.beam.sdk.values.TupleTag;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,8 +116,12 @@ public class CustomIndexTableTransform extends DoFn<KV<ImmutableBytesWritable, R
 
         KV<ImmutableBytesWritable, Result> kv = context.element();
         ImportJobFromHbaseSnapshot.ImportOptions.CustomPipelineOptions customOpts = context.getPipelineOptions().as(ImportJobFromHbaseSnapshot.ImportOptions.CustomPipelineOptions.class);
-        byte[] stringPrefixedRowKey = stringPrefixRowKeyTransform(kv.getKey(), customOpts.getTenantId().toString());
-        byte[] reversedRowKey = reverseRowKey(stringPrefixedRowKey);
+
+        byte[] rowKey = kv.getKey().get();
+        if (customOpts.getTenantId() != null) {
+            rowKey = stringPrefixRowKeyTransform(kv.getKey(), customOpts.getTenantId().toString());
+        }
+        byte[] reversedRowKey = reverseRowKey(rowKey);
 
         List<Cell> newCells = new ArrayList<>();
 
@@ -151,7 +149,7 @@ public class CustomIndexTableTransform extends DoFn<KV<ImmutableBytesWritable, R
                         CellUtil.cloneQualifier(originalCell),
                         originalCell.getTimestamp(),
                         originalCell.getTypeByte(),
-                        stringPrefixedRowKey); // reversed key : originalKey
+                        rowKey); // reversed key : originalKey
                 newCells.add(reversedCell);
                 reversedPut.add(reversedCell);
             }
@@ -179,7 +177,7 @@ public class CustomIndexTableTransform extends DoFn<KV<ImmutableBytesWritable, R
         }                                                             // tenantId#msg11#fromNardos#toAdbul#982736578
         newKey = newKey.concat(reversedVal.toString());               // tenantId#rev#msg11#fromNardos#toAbdul#17263421
 
-        // for single table, have reversed as prefix rev_
+        // for single table, have reversed as prefix rev
         // for double table, reversed as suffix _rev
 
 //    logger.warn("reversedVal:" + reversedVal);
