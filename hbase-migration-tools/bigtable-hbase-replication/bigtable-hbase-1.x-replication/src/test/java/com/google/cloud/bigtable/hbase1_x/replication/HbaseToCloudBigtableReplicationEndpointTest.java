@@ -16,8 +16,10 @@
 
 package com.google.cloud.bigtable.hbase1_x.replication;
 
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.CF1;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.FILTERED_ROW_KEY;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.ROW_KEY;
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.assertEquals;
 
 import com.google.cloud.bigtable.emulator.v2.BigtableEmulatorRule;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
@@ -448,7 +450,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
     Put put1 = new Put(ROW_KEY);
     put1.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, ROW_KEY);
-    put1.addColumn(TestUtils.CF2, TestUtils.COL_QUALIFIER, 0, ROW_KEY);
+    put1.addColumn(TestUtils.CF2, TestUtils.COL_QUALIFIER_2, 0, ROW_KEY);
     hbaseTable.put(put1);
 
     TestUtils.waitForReplication(
@@ -458,18 +460,20 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
     Result cbtResult = cbtTable.get(new Get(ROW_KEY).setMaxVersions());
     Result hbaseResult = hbaseTable.get(new Get(ROW_KEY).setMaxVersions());
-    Assert.assertFalse(cbtResult.isEmpty());
 
-    Assert.assertEquals(
-        "Number of cells , actual cells: " + hbaseResult.listCells(),
-        1,
-        cbtResult.listCells().size());
-//
-//    TestUtils.assertEquals(
-//        hbaseResult,
-//        cbtResult,
-//        HConstants.REPLICATION_SCOPE_GLOBAL,
-//        HConstants.REPLICATION_SCOPE_LOCAL);
+    // make sure we have replicated cells
+    Assert.assertFalse(cbtResult.isEmpty());
+    List<Cell> hbaseCells = hbaseResult.listCells();
+    List<Cell> cbtCells = cbtResult.listCells();
+
+    Assert.assertEquals("bigtable cells", 1, cbtCells.size());
+    // make sure that only CF1 is replicated
+    for (int i = 0; i < hbaseCells.size(); i++) {
+      // make sure CF1 is only replicated
+      if (CellUtil.cloneFamily(hbaseCells.get(i)) == CF1) {
+        assertEquals(hbaseCells.get(i), cbtCells.get(0));
+      }
+    }
   }
 
   @Test

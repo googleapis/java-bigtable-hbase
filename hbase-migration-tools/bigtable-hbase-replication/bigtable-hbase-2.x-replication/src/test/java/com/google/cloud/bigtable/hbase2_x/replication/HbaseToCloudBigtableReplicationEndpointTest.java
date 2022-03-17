@@ -16,6 +16,8 @@
 
 package com.google.cloud.bigtable.hbase2_x.replication;
 
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.CF1;
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.CF2;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.FILTERED_ROW_KEY;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.ROW_KEY;
 
@@ -179,7 +181,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     HColumnDescriptor cf1 = new HColumnDescriptor(TestUtils.CF1);
     cf1.setMaxVersions(100);
     htd.addFamily(cf1);
-    HColumnDescriptor cf2 = new HColumnDescriptor(TestUtils.CF2);
+    HColumnDescriptor cf2 = new HColumnDescriptor(CF2);
     cf2.setMaxVersions(100);
     htd.addFamily(cf2);
 
@@ -206,7 +208,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     for (int i = 0; i < 10000; i++) {
       Put put = new Put(TestUtils.getRowKey(i));
       put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.getValue(i));
-      put.addColumn(TestUtils.CF2, TestUtils.COL_QUALIFIER, 0, TestUtils.getValue(i));
+      put.addColumn(CF2, TestUtils.COL_QUALIFIER, 0, TestUtils.getValue(i));
       hbaseTable.put(put);
     }
 
@@ -231,7 +233,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
       put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 2, TestUtils.getValue(30 + i));
       put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER_2, 3, TestUtils.getValue(40 + i));
       put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER_2, 4, TestUtils.getValue(50 + i));
-      put.addColumn(TestUtils.CF2, TestUtils.COL_QUALIFIER, 5, TestUtils.getValue(60 + i));
+      put.addColumn(CF2, TestUtils.COL_QUALIFIER, 5, TestUtils.getValue(60 + i));
       hbaseTable.put(put);
     }
 
@@ -329,7 +331,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
       byte[] val11 = TestUtils.getValue(100 + 10 + i);
       put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, val11);
       byte[] val12 = TestUtils.getValue(100 + 20 + i);
-      put.addColumn(TestUtils.CF2, TestUtils.COL_QUALIFIER, 0, val12);
+      put.addColumn(CF2, TestUtils.COL_QUALIFIER, 0, val12);
       hbaseTable.put(put);
 
       // Add a put to table 2
@@ -338,7 +340,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
       byte[] val21 = TestUtils.getValue(200 + 10 + i);
       put2.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, val21);
       byte[] val22 = TestUtils.getValue(200 + 20 + i);
-      put.addColumn(TestUtils.CF2, TestUtils.COL_QUALIFIER, 0, val22);
+      put.addColumn(CF2, TestUtils.COL_QUALIFIER, 0, val22);
       hbaseTable2.put(put2);
     }
 
@@ -409,12 +411,12 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
   public void testMutationReplicationWithWALEntryFilter() throws IOException, InterruptedException {
     Put put1 = new Put(FILTERED_ROW_KEY);
     put1.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, FILTERED_ROW_KEY);
-    put1.addColumn(TestUtils.CF2, TestUtils.COL_QUALIFIER, 0, FILTERED_ROW_KEY);
+    put1.addColumn(CF2, TestUtils.COL_QUALIFIER, 0, FILTERED_ROW_KEY);
     hbaseTable.put(put1);
 
     Put put2 = new Put(ROW_KEY);
     put2.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, ROW_KEY);
-    put2.addColumn(TestUtils.CF2, TestUtils.COL_QUALIFIER, 0, ROW_KEY);
+    put2.addColumn(CF2, TestUtils.COL_QUALIFIER, 0, ROW_KEY);
     hbaseTable.put(put2);
 
     TestUtils.waitForReplication(
@@ -442,7 +444,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
     Put put1 = new Put(ROW_KEY);
     put1.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, ROW_KEY);
-    put1.addColumn(TestUtils.CF2, TestUtils.COL_QUALIFIER, 0, ROW_KEY);
+    put1.addColumn(CF2, TestUtils.COL_QUALIFIER_2, 0, ROW_KEY);
     hbaseTable.put(put1);
 
     TestUtils.waitForReplication(
@@ -453,25 +455,19 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
     Result cbtResult = cbtTable.get(new Get(ROW_KEY).setMaxVersions());
     Result hbaseResult = hbaseTable.get(new Get(ROW_KEY).setMaxVersions());
+
+    // make sure we have replicated cells
     Assert.assertFalse(cbtResult.isEmpty());
-    Assert.assertFalse(hbaseResult.isEmpty());
-    Assert.assertEquals(
-        "Number of cells , actual cells: " + hbaseResult.listCells(),
-        2,
-        hbaseResult.listCells().size());
+    List<Cell> hbaseCells = hbaseResult.listCells();
+    List<Cell> cbtCells = cbtResult.listCells();
 
-    Assert.assertEquals(
-        "Number of cells , actual cells: " + hbaseResult.listCells(),
-        1,
-        cbtResult.listCells().size());
-
-    List<Cell> expectedCells = hbaseResult.listCells();
-    List<Cell> actualCells = cbtResult.listCells();
-
-    // make sure that CF2 is not replicated
-    for (int i = 0; i < expectedCells.size(); i++) {
-      System.out.print("Tet190");
-      System.out.print(expectedCells.get(i).getFamilyArray());
+    Assert.assertEquals("bigtable cells", 1, cbtCells.size());
+    // make sure that only CF1 is replicated
+    for (int i = 0; i < hbaseCells.size(); i++) {
+      // make sure CF1 is only replicated
+      if (CellUtil.cloneFamily(hbaseCells.get(i)) == CF1) {
+        TestUtils.assertEquals(hbaseCells.get(i), cbtCells.get(0));
+      }
     }
   }
 

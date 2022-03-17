@@ -29,7 +29,6 @@ import java.util.concurrent.Future;
 import java.util.function.BooleanSupplier;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Result;
@@ -113,26 +112,6 @@ public class TestUtils {
         actual.size());
     for (int i = 0; i < expected.size(); i++) {
       assertEquals(expectedCells.get(i), actualCells.get(i));
-    }
-  }
-
-  public static void assertEquals(Result expected, Result actual, int cf1Scope, int cf2Scope) {
-    // Prevent creating a list every time.
-    List<Cell> expectedCells = expected.listCells();
-    List<Cell> actualCells = actual.listCells();
-    int i = 0;
-    int j = 0;
-    while (i < expected.size() && j < actual.size()) {
-      if ((expectedCells.get(i).getFamily() == CF1
-              && cf1Scope == HConstants.REPLICATION_SCOPE_LOCAL)
-          || (expectedCells.get(i).getFamily() == CF2
-              && cf2Scope == HConstants.REPLICATION_SCOPE_LOCAL)) {
-        i++;
-      } else {
-        assertEquals(expectedCells.get(i), actualCells.get(i));
-        i++;
-        j++;
-      }
     }
   }
 
