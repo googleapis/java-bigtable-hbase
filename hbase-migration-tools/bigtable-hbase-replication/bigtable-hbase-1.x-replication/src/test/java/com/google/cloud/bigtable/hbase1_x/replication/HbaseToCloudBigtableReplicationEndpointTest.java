@@ -419,8 +419,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
     TestUtils.waitForReplication(
         () -> {
-          //  replicate Entries will be two
-          return TestReplicationEndpoint.replicatedEntries.get() >= 2;
+          //  replicate Entries will be one
+          return TestReplicationEndpoint.replicatedEntries.get() >= 1;
         });
 
     Result cbtResult = cbtTable.get(new Get(FILTERED_ROW_KEY).setMaxVersions());
