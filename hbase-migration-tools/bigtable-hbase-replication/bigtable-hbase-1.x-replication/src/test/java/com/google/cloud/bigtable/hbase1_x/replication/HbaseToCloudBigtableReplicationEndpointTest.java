@@ -423,8 +423,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
     TestUtils.waitForReplication(
         () -> {
-          //  replicate Entries will be zero
-          return TestReplicationEndpoint.replicatedEntries.get() >= 1;
+          //  replicate Entries will be two
+          return TestReplicationEndpoint.replicatedEntries.get() >= 2;
         });
 
     Result cbtResult = cbtTable.get(new Get(FILTERED_ROW_KEY).setMaxVersions());
@@ -457,23 +457,19 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
     TestUtils.waitForReplication(
         () -> {
-          //  replicate Entries will be 1
           return TestReplicationEndpoint.replicatedEntries.get() >= 1;
         });
 
     Result cbtResult = cbtTable.get(new Get(ROW_KEY).setMaxVersions());
     Result hbaseResult = hbaseTable.get(new Get(ROW_KEY).setMaxVersions());
     Assert.assertFalse(cbtResult.isEmpty());
-    Assert.assertFalse(hbaseResult.isEmpty());
-    Assert.assertEquals(
-        "Number of cells , actual cells: " + hbaseResult.listCells(),
-        2,
-        hbaseResult.listCells().size());
 
     Assert.assertEquals(
         "Number of cells , actual cells: " + hbaseResult.listCells(),
         1,
         cbtResult.listCells().size());
+
+
     TestUtils.assertEquals(
         hbaseResult,
         cbtResult,
