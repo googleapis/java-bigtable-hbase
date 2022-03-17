@@ -479,8 +479,9 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
         cbtResult,
         HConstants.REPLICATION_SCOPE_GLOBAL,
         HConstants.REPLICATION_SCOPE_LOCAL);
-
-    public void testHBaseCBTTimestampTruncation() throws IOException, InterruptedException {
+  }
+  @Test
+  public void testHBaseCBTTimestampTruncation() throws IOException, InterruptedException {
     Put put = new Put(TestUtils.ROW_KEY);
     byte[] val = Bytes.toBytes(1);
     put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, Long.MAX_VALUE - 1, val);
