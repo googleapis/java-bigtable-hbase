@@ -46,6 +46,9 @@ public class HBaseToCloudBigtableReplicationConfiguration {
   public static final String INSTANCE_KEY = "google.bigtable.instance.id";
   public static final String APP_PROFILE_ID = "google.bigtable.app_profile.id";
 
+  public static final String ENABLE_DRY_RUN_MODE_KEY = "google.bigtable.replication.enable_dry_run";
+  public static final boolean DEFAULT_DRY_RUN_MODE = false;
+
   public static final String NUM_REPLICATION_SINK_THREADS_KEY =
       "google.bigtable.replication.thread_count";
   // TODO maybe it should depend on the number of processors on the VM.

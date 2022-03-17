@@ -46,12 +46,14 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.replication.ReplicationAdmin;
 import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.replication.ChainWALEntryFilter;
+import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
 import org.apache.hadoop.hbase.replication.ReplicationException;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.apache.hadoop.hbase.replication.WALEntryFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.ServerRegionReplicaUtil;
 import org.apache.hadoop.hbase.wal.WAL.Entry;
+
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -109,7 +111,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
       LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpointTest.class);
 
   private static HBaseTestingUtility hbaseTestingUtil = new HBaseTestingUtility();
-  private static Configuration hbaseConfig;
   private static ReplicationAdmin replicationAdmin;
 
   @ClassRule
@@ -127,9 +128,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
   public static void setUpCluster() throws Exception {
     // Prepare HBase mini cluster configuration
     Configuration conf = hbaseTestingUtil.getConfiguration();
-    conf.setBoolean(HConstants.REPLICATION_ENABLE_KEY, true);
-    conf.setBoolean(ServerRegionReplicaUtil.REGION_REPLICA_REPLICATION_CONF_KEY, true);
-    conf.setInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER, 5); // less number of retries is needed
 
     // Set CBT related configs.
     conf.set("google.bigtable.instance.id", "test-instance");
@@ -138,8 +136,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     conf.set("google.bigtable.emulator.endpoint.host", "localhost:" + bigtableEmulator.getPort());
 
     hbaseTestingUtil.startMiniCluster(2);
-    hbaseConfig = conf;
-    hbaseConfig.setLong(RpcServer.MAX_REQUEST_SIZE, 102400);
     replicationAdmin = new ReplicationAdmin(hbaseTestingUtil.getConfiguration());
 
     cbtConnection = BigtableConfiguration.connect(conf);
@@ -359,8 +355,8 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
           return TestReplicationEndpoint.replicatedEntries.get() >= 16;
         });
     TestUtils.assertTableEventuallyEquals(
-        hbaseTable,
-        cbtTable,
+        hbaseTable2,
+        cbtTable2,
         () -> {
           return TestReplicationEndpoint.replicatedEntries.get() >= 16;
         });
@@ -483,5 +479,27 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
         cbtResult,
         HConstants.REPLICATION_SCOPE_GLOBAL,
         HConstants.REPLICATION_SCOPE_LOCAL);
+
+    public void testHBaseCBTTimestampTruncation() throws IOException, InterruptedException {
+    Put put = new Put(TestUtils.ROW_KEY);
+    byte[] val = Bytes.toBytes(1);
+    put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, Long.MAX_VALUE - 1, val);
+    put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, Long.MAX_VALUE - 1000, val);
+    hbaseTable.put(put);
+
+    TestUtils.waitForReplication(
+        () -> {
+          // 1put
+          return TestReplicationEndpoint.replicatedEntries.get() >= 1;
+        });
+
+    List<Cell> hbaseCells = hbaseTable.get(new Get(TestUtils.ROW_KEY).setMaxVersions()).listCells();
+    List<Cell> bigtableCells =
+        cbtTable.get(new Get(TestUtils.ROW_KEY).setMaxVersions()).listCells();
+    Assert.assertEquals("bigtable cells", 1, bigtableCells.size());
+    Assert.assertNotEquals(
+        "Timestamp match for row " + TestUtils.ROW_KEY,
+        hbaseCells.get(0).getTimestamp(),
+        bigtableCells.get(0).getTimestamp());
   }
 }

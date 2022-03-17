@@ -42,12 +42,10 @@ import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 @InternalExtensionOnly
 public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService
     implements ReplicationEndpoint {
-
-  private static final Logger LOG =
-      LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
 
   private final CloudBigtableReplicator cloudBigtableReplicator;
   private final HBaseMetricsExporter metricsExporter;

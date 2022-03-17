@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.replication.adapters;
 
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DELETE_FAMILY_WRITE_THRESHOLD_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_METRIC_KEY;
 import static org.apache.hadoop.hbase.HConstants.LATEST_TIMESTAMP;
 import static org.mockito.Mockito.atLeast;
@@ -102,6 +103,7 @@ public class ApproximatingIncompatibleMutationAdapterTest {
 
     verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
   }
 
@@ -128,6 +130,7 @@ public class ApproximatingIncompatibleMutationAdapterTest {
 
     verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     verify(metricsExporter, times(3)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter, times(3)).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 1);
     verify(metricsExporter, times(3)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
   }
 }
