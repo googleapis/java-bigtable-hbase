@@ -18,7 +18,7 @@ limitations under the License.
   <parent>
     <artifactId>bigtable-hbase-2.x-parent</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>2.0.0-beta2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -48,6 +48,16 @@ limitations under the License.
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${beam-slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-log4j12</artifactId>
+        <version>${beam-slf4j.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -58,7 +68,7 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-2.x</artifactId>
-      <version>2.0.0-beta2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
@@ -152,6 +162,7 @@ limitations under the License.
                     <exclude>META-INF/NOTICE</exclude>
                     <exclude>META-INF/DEPENDENCIES</exclude>
                     <exclude>META-INF/NOTICE.txt</exclude>
+                    <exclude>META-INF/versions/9/module-info.class</exclude>
                   </excludes>
                 </filter>
               </filters>
@@ -163,6 +174,7 @@ limitations under the License.
                   <!-- exclude hbase-shaded-client & all of its dependencies -->
                   <exclude>org.apache.hbase:hbase-shaded-client</exclude>
                   <exclude>org.slf4j:slf4j-api</exclude>
+                  <exclude>org.slf4j:slf4j-log4j12</exclude>
                   <exclude>log4j:log4j</exclude>
                   <exclude>org.apache.htrace:htrace-core4</exclude>
                   <exclude>org.apache.yetus:audience-annotations</exclude>
@@ -172,6 +184,7 @@ limitations under the License.
                   <exclude>log4j:log4j</exclude>
                   <!-- See notes in bigtable-client-core/bigtable-hbase/pom.xml#verify-conscrypt-version -->
                   <exclude>org.conscrypt:conscrypt-openjdk-uber</exclude>
+                  <exclude>org.bouncycastle:*</exclude>
                 </excludes>
               </artifactSet>
               <relocations>
@@ -321,6 +334,10 @@ limitations under the License.
                   <pattern>javax.annotation</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.javax.annotation</shadedPattern>
                 </relocation>
+                <relocation>
+                  <pattern>net.bytebuddy</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.net.bytebuddy</shadedPattern>
+                </relocation>
               </relocations>
             </configuration>
           </execution>
@@ -329,7 +346,7 @@ limitations under the License.
       <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>
         <artifactId>bigtable-build-helper</artifactId>
-        <version>2.0.0-beta2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+        <version>2.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
 
         <executions>
           <execution>

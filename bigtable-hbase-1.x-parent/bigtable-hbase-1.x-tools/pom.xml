@@ -5,7 +5,7 @@
   <parent>
     <artifactId>bigtable-hbase-1.x-parent</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>2.0.0-beta2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -23,7 +23,7 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-1.x-shaded</artifactId>
-      <version>2.0.0-beta2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <exclusions>
         <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
        pom.xml files when invoking the build from a parent project. So we have to manually exclude
@@ -51,16 +51,21 @@
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
       <version>${hbase1.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>30.1.1-jre</version>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${slf4j.version}</version>
+      <version>${guava.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
@@ -68,9 +73,21 @@
       <version>3.0.2</version>
     </dependency>
     <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.17</version>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.32</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>log4j-over-slf4j</artifactId>
+      <version>1.7.32</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.2.11</version>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
@@ -123,6 +140,28 @@
             </manifest>
           </archive>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>enforce-banned-deps</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <bannedDependencies>
+                  <excludes>
+                    <exclude>org.apache.logging.log4j:*:*</exclude>
+                    <exclude>log4j:log4j:*</exclude>
+                  </excludes>
+                </bannedDependencies>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

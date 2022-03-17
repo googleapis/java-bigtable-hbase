@@ -110,6 +110,7 @@ public class ImportJob {
     @SuppressWarnings("unused")
     void setTenantId(ValueProvider<String> tenantId);
 
+<<<<<<< HEAD
     @Description("The delimiter for an import.")
     ValueProvider<String> getDelimiter();
 
@@ -121,6 +122,13 @@ public class ImportJob {
 
     @SuppressWarnings("unused")
     void setReverseIndexTableId(String reverseIndexTableId);
+=======
+    @Description("The tenant id for an import.")
+    ValueProvider<String> getIndexTableId();
+
+    @SuppressWarnings("unused")
+    void setIndexTableId(ValueProvider<String> indexTableId);
+>>>>>>> origin/main
 
     @Description("The Bigtable table id to export.")
     ValueProvider<String> getBigtableTableId();

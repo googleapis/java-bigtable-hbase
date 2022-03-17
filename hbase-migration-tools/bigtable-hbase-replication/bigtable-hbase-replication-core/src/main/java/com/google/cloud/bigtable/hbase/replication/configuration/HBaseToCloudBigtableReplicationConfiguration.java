@@ -1,0 +1,59 @@
+/*
+ * Copyright 2022 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.google.cloud.bigtable.hbase.replication.configuration;
+
+/** Static class containing all the configuration keys and their descriptions. */
+public class HBaseToCloudBigtableReplicationConfiguration {
+
+  // Only used for defining static config keys
+  private HBaseToCloudBigtableReplicationConfiguration() {}
+
+  /**
+   * Threshold to consider the deleteFamilyBefore as a DeleteFamily mutation. When DeleteFamily or
+   * HBase translates a DeleteFamily or DeleteRow to DeleteFamilyBeforeTimestamp(now). This is then
+   * written to WAL. For local clusters, the WALKey.writeTime() is same as "now" from the
+   * DeleteFamilyBeforeTimestamp mutation. However, if the mutation was generated from a different
+   * cluster, the WALKey.writeTime and timestamp in DeleteFamilyBeforeTimestamp will have diff of
+   * ReplicationLag. Users can set this config to Max(ReplicationLag) to make sure that all the
+   * deleteRow/DeleteColumnFamily are correctly interpreted. If you only issue DeleteFamily or
+   * DeleteRow mutations, you can set this to Integer.MAX_VALUE. This will lead to any
+   * DeleteFamilyBeforeTimestamp where (timestamp < walkey.writeTime()) as DeleteFamily.
+   */
+  public static final String DELETE_FAMILY_WRITE_THRESHOLD_KEY =
+      "google.bigtable.deletefamily.threshold";
+
+  public static final int DEFAULT_DELETE_FAMILY_WRITE_THRESHOLD_IN_MILLIS = 5 * 60 * 1000;
+
+  private static final String INCOMPATIBLE_MUTATION_ADAPTER_CLASS_KEY =
+      "google.bigtable.incompatible_mutation.adapter.class";
+
+  // Config keys to access project id and instance id from.
+  public static final String PROJECT_KEY = "google.bigtable.project.id";
+  public static final String INSTANCE_KEY = "google.bigtable.instance.id";
+  public static final String APP_PROFILE_ID = "google.bigtable.app_profile.id";
+
+  public static final String NUM_REPLICATION_SINK_THREADS_KEY =
+      "google.bigtable.replication.thread_count";
+  // TODO maybe it should depend on the number of processors on the VM.
+  public static final int DEFAULT_THREAD_COUNT = 10;
+
+  public static final String BATCH_SIZE_KEY = "google.bigtable.replication.batch_size_bytes";
+  // TODO: Tune this parameter. Usually, this should be smaller than the HBase replication source
+  // batch capacity by counts and bytes. These capacity are set by `replication.source.nb.capacity`
+  // and `replication.source.size.capacity` config keys.
+  public static final long DEFAULT_BATCH_SIZE_IN_BYTES = 500_000;
+}

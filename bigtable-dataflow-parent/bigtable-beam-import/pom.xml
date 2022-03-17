@@ -18,7 +18,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-dataflow-parent</artifactId>
-    <version>2.0.0-beta2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -55,6 +55,12 @@ limitations under the License.
       <artifactId>beam-sdks-java-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.google.cloud.bigdataoss</groupId>
+      <artifactId>gcs-connector</artifactId>
+      <version>hadoop2-2.2.2</version>
+      <classifier>shaded</classifier>
+    </dependency>
+    <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>
         beam-sdks-java-extensions-google-cloud-platform-core
@@ -78,6 +84,10 @@ limitations under the License.
         <exclusion>
           <groupId>com.google.api.grpc</groupId>
           <artifactId>grpc-google-cloud-bigtable-v2</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.hamcrest</groupId>
+          <artifactId>hamcrest</artifactId>
         </exclusion>
           <exclusion>
             <groupId>org.hamcrest</groupId>
@@ -131,7 +141,7 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-beam</artifactId>
-      <version>2.0.0-beta2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <exclusions>
         <exclusion>
           <groupId>org.apache.hbase</groupId>
@@ -143,7 +153,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-1.x-shaded</artifactId>
-      <version>2.0.0-beta2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <exclusions>
         <!-- exclude hbase-shaded-client since we are using hbase-shaded-server -->
         <exclusion>
@@ -181,12 +191,6 @@ limitations under the License.
       <artifactId>hbase-shaded-server</artifactId>
       <version>${hbase1.version}</version>
     </dependency>
-    <dependency>
-      <groupId>com.google.cloud.bigdataoss</groupId>
-      <artifactId>gcs-connector</artifactId>
-      <version>hadoop2-2.1.4</version>
-      <classifier>shaded</classifier>
-    </dependency>
 
 
     <!-- Misc Group -->
@@ -196,12 +200,6 @@ limitations under the License.
       <version>v1-rev20210127-1.31.0</version>
     </dependency>
     <dependency>
-      <groupId>com.google.auto.value</groupId>
-      <artifactId>auto-value</artifactId>
-      <version>1.8.2</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
       <version>${jsr305.version}</version>
@@ -209,7 +207,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>30.1-jre</version>
+      <version>31.0-jre</version>
     </dependency>
     <dependency>
       <groupId>commons-logging</groupId>
@@ -242,7 +240,6 @@ limitations under the License.
       <version>1.21</version>
       <scope>runtime</scope>
     </dependency>
-
 
     <!-- Test Group -->
     <dependency>
@@ -428,7 +425,7 @@ limitations under the License.
       <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>
         <artifactId>bigtable-build-helper</artifactId>
-        <version>2.0.0-beta2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+        <version>2.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
         <executions>
           <execution>
             <id>verify-mirror-deps</id>

@@ -24,7 +24,7 @@ cd bigtable-hbase-1.x-parent/bigtable-hbase-1.x-tools
 
 ## Schema Translation tool 
 This tool will create tables in Cloud Bigtable based on the tables in an HBase cluster.
-You specifiy a [name regex](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html?is-external=true)
+You specify a [name regex](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html?is-external=true)
 and it will copy column families, garbage collection rules,
 and table splits.
 
@@ -45,7 +45,7 @@ and table splits.
      -Dgoogle.bigtable.table.filter=$TABLE_NAME_REGEX \
      -Dhbase.zookeeper.quorum=$ZOOKEEPER_QUORUM \
      -Dhbase.zookeeper.property.clientPort=$ZOOKEEPER_PORT \
-     -jar bigtable-hbase-1.x-tools-2.0.0-alpha1-with-dependencies.jar
+     -jar target/bigtable-hbase-1.x-tools-2.0.0-alpha1-with-dependencies.jar
     ```
 
 ### Alternative: Exporting Schema
@@ -67,7 +67,7 @@ export the HBase schema to a file and use that to create tables in Cloud Bigtabl
      -Dgoogle.bigtable.output.filepath=$HBASE_EXPORT_PATH \
      -Dhbase.zookeeper.quorum=$ZOOKEEPER_QUORUM \
      -Dhbase.zookeeper.property.clientPort=$ZOOKEEPER_PORT \
-     -jar bigtable-hbase-1.x-tools-2.0.0-alpha1-with-dependencies.jar
+     -jar target/bigtable-hbase-1.x-tools-2.0.0-alpha1-with-dependencies.jar
     ```
 
 #### Import schema
@@ -83,5 +83,36 @@ export the HBase schema to a file and use that to create tables in Cloud Bigtabl
      -Dgoogle.bigtable.project.id=$PROJECT_ID \
      -Dgoogle.bigtable.instance.id=$INSTANCE_ID \
      -Dgoogle.bigtable.input.filepath=$SCHEMA_FILE_PATH \
-     -jar bigtable-hbase-1.x-tools-2.0.0-alpha1-with-dependencies.jar \
+     -jar target/bigtable-hbase-1.x-tools-2.0.0-alpha1-with-dependencies.jar \
     ```
+
+### Table name renaming
+
+There are cases where you can not use the HBase table name in Cloud Bigtable,
+for example, if the table is in custom namespace. In such cases, you can provide
+a mapping from old-name->new-name to the schema traslator tool, in form of a
+JSON file. The file should contain a flat JSON map like
+
+   ```
+   {
+      “ns:hbase-tablename”: “cloud-bigtable-tablename”
+   } 
+   ```
+
+You can then pass a path of this file to schema translator using system
+property `google.bigtable.schema.mapping.filepath`. Schema translator will
+create a table named `cloud-bigtable-tablename` for table named
+`hbase-tablename` in namespace `ns`.
+
+   ```
+   SCHEMA_MAPPING_FILE_PATH=path/to/table-name-mapping.json
+   java \
+     -Dgoogle.bigtable.project.id=$PROJECT_ID \
+     -Dgoogle.bigtable.instance.id=$INSTANCE_ID \
+     -Dgoogle.bigtable.table.filter=$TABLE_NAME_REGEX \
+     -Dhbase.zookeeper.quorum=$ZOOKEEPER_QUORUM \
+     -Dhbase.zookeeper.property.clientPort=$ZOOKEEPER_PORT \
+     -Dgoogle.bigtable.schema.mapping.filepath=$SCHEMA_MAPPING_FILE_PATH \
+     -jar target/bigtable-hbase-1.x-tools-2.0.0-alpha1-with-dependencies.jar
+
+   ```

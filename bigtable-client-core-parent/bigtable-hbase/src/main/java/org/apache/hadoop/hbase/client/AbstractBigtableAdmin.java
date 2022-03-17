@@ -45,6 +45,8 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import io.grpc.Status;
 import java.io.IOException;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -1336,5 +1338,13 @@ public abstract class AbstractBigtableAdmin implements Admin {
   @Override
   public void rollWALWriter(ServerName serverName) throws IOException, FailedLogCloseException {
     throw new UnsupportedOperationException("rollWALWriter"); // TODO
+  }
+
+  /** Handler for unsupported operations for generating Admin class at runtime. */
+  public static class UnsupportedOperationsHandler implements InvocationHandler {
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+      throw new UnsupportedOperationException(method.getName());
+    }
   }
 }

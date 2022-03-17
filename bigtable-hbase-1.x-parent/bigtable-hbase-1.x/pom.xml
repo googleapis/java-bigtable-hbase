@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x-parent</artifactId>
-    <version>2.0.0-beta2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-1.x</artifactId>
@@ -56,12 +56,18 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase</artifactId>
-      <version>2.0.0-beta2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-metrics-api</artifactId>
       <version>${bigtable-client-core.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.api</groupId>
+          <artifactId>api-common</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -108,6 +114,11 @@ limitations under the License.
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
+      <artifactId>grpc-context</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
       <artifactId>grpc-core</artifactId>
       <scope>compile</scope>
     </dependency>
@@ -146,12 +157,18 @@ limitations under the License.
       <artifactId>grpc-google-cloud-bigtable-v2</artifactId>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy</artifactId>
+      <version>${byte.buddy.version}</version>
+    </dependency>
+
 
     <!-- Test dependencies-->
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-internal-test-helper</artifactId>
-      <version>2.0.0-beta2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -176,6 +193,12 @@ limitations under the License.
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

@@ -100,9 +100,10 @@ public class QualifierFilterAdapter extends TypedFilterAdapterBase<QualifierFilt
             .rangeWithinFamily(FilterAdapterHelper.getSingleFamilyName(context))
             .startOpen(value);
       case NO_OP:
-        // No-op always passes. Instead of attempting to return null or default instance,
-        // include an always-match filter.
-        return FILTERS.pass();
+        // No-ops are always filtered out.
+        // See:
+        // https://github.com/apache/hbase/blob/master/hbase-client/src/main/java/org/apache/hadoop/hbase/filter/ColumnValueFilter.java#L127-L138
+        return FILTERS.block();
       default:
         throw new IllegalStateException(
             String.format("Cannot handle unknown compare op %s", compareOp));

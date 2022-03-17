@@ -98,9 +98,10 @@ public class ValueFilterAdapter extends TypedFilterAdapterBase<ValueFilter> {
       case GREATER:
         return range().startOpen(value);
       case NO_OP:
-        // No-op always passes. Instead of attempting to return null or default instance,
-        // include an always-match filter.
-        return FILTERS.pass();
+        // No-ops are always filtered out.
+        // See:
+        // https://github.com/apache/hbase/blob/master/hbase-client/src/main/java/org/apache/hadoop/hbase/filter/ColumnValueFilter.java#L127-L138
+        return FILTERS.block();
       default:
         throw new IllegalStateException(
             String.format("Cannot handle unknown compare op %s", compareOp));
@@ -116,8 +117,11 @@ public class ValueFilterAdapter extends TypedFilterAdapterBase<ValueFilter> {
     switch (compareOp) {
       case EQUAL:
         return FILTERS.value().regex(pattern);
+        // No-ops are always filtered out.
+        // See:
+        // https://github.com/apache/hbase/blob/master/hbase-client/src/main/java/org/apache/hadoop/hbase/filter/ColumnValueFilter.java#L127-L138
       case NO_OP:
-        return FILTERS.pass();
+        return FILTERS.block();
       case LESS:
       case LESS_OR_EQUAL:
       case NOT_EQUAL:

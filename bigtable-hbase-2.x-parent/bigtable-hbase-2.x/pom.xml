@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-2.x-parent</artifactId>
-    <version>2.0.0-beta2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <properties>
@@ -60,7 +60,7 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase</artifactId>
-      <version>2.0.0-beta2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>
 
     <dependency>
@@ -73,6 +73,12 @@ limitations under the License.
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-metrics-api</artifactId>
       <version>${bigtable-client-core.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.api</groupId>
+          <artifactId>api-common</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -83,6 +89,10 @@ limitations under the License.
         <exclusion>
           <groupId>org.slf4j</groupId>
           <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -141,6 +151,11 @@ limitations under the License.
     <dependency>
       <groupId>org.threeten</groupId>
       <artifactId>threetenbp</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy</artifactId>
+      <version>${byte.buddy.version}</version>
     </dependency>
 
     <!-- Test dependencies-->
