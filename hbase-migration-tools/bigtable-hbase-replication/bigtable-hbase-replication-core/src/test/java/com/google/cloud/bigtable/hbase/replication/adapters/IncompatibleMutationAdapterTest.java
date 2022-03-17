@@ -17,7 +17,9 @@
 package com.google.cloud.bigtable.hbase.replication.adapters;
 
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.PUTS_IN_FUTURE_METRIC_KEY;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -36,6 +38,7 @@ import java.util.Map;
 import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.Type;
 import org.apache.hadoop.hbase.client.Connection;
@@ -146,6 +149,10 @@ public class IncompatibleMutationAdapterTest {
 
     verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
+    verifyNoMoreInteractions(metricsExporter);
   }
 
   @Test
@@ -165,8 +172,14 @@ public class IncompatibleMutationAdapterTest {
         incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
     verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verifyNoMoreInteractions(metricsExporter);
   }
 
   @Test
@@ -189,8 +202,14 @@ public class IncompatibleMutationAdapterTest {
         expectedDeletes, incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
     verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verifyNoMoreInteractions(metricsExporter);
   }
 
   @Test
@@ -207,8 +226,13 @@ public class IncompatibleMutationAdapterTest {
         Arrays.asList(put), incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
     verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verifyNoMoreInteractions(metricsExporter);
   }
 
   @Test
@@ -226,8 +250,44 @@ public class IncompatibleMutationAdapterTest {
         Arrays.asList(put), incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
 
     verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verifyNoMoreInteractions(metricsExporter);
+  }
+
+  @Test
+  public void testTimestampsOverflowMutations() {
+    ArrayList<Cell> walEntryCells = new ArrayList<>();
+    Cell put1 = new KeyValue(rowKey, cf, qual, Long.MAX_VALUE - 1, KeyValue.Type.Put, val);
+    Cell put2 = new KeyValue(rowKey, cf, qual, 0, KeyValue.Type.Put, val);
+    // make sure this is not flagged as overflow.
+    Cell delete =
+        new KeyValue(rowKey, cf, qual, HConstants.LATEST_TIMESTAMP, Type.DeleteFamily, val);
+    walEntryCells.add(put1);
+    walEntryCells.add(put2);
+    walEntryCells.add(delete);
+    BigtableWALEntry walEntry = new BigtableWALEntry(100L, walEntryCells, tableName);
+
+    Assert.assertEquals(
+        Arrays.asList(put1, put2, delete),
+        incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
+
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
+    verify(metricsExporter, times(1))
+        .incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 1);
+    verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter, times(1)).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 1);
+
+    verifyNoMoreInteractions(metricsExporter);
   }
 
   @Test
@@ -245,6 +305,9 @@ public class IncompatibleMutationAdapterTest {
 
     verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
     verify(metricsExporter, times(1)).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 1);
     verifyNoMoreInteractions(metricsExporter);
   }
