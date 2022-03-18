@@ -426,7 +426,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
         });
 
     Result cbtResult = cbtTable.get(new Get(FILTERED_ROW_KEY).setMaxVersions());
-    Result hbaseResult = hbaseTable.get(new Get(FILTERED_ROW_KEY).setMaxVersions());
     Assert.assertTrue(cbtResult.isEmpty());
 
     Result cbtResult2 = cbtTable.get(new Get(ROW_KEY).setMaxVersions());
