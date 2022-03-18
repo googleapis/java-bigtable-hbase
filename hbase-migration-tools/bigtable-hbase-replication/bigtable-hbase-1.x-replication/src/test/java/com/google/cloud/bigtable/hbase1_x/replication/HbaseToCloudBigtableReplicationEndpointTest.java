@@ -421,7 +421,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
 
     TestUtils.waitForReplication(
         () -> {
-          //  replicate Entries will be one
+          //  replicate Entries will be one as FILTERED KEY will not be passed.
           return TestReplicationEndpoint.replicatedEntries.get() >= 1;
         });
 
@@ -493,7 +493,9 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     List<Cell> hbaseCells = hbaseTable.get(new Get(TestUtils.ROW_KEY).setMaxVersions()).listCells();
     List<Cell> bigtableCells =
         cbtTable.get(new Get(TestUtils.ROW_KEY).setMaxVersions()).listCells();
-    Assert.assertEquals("bigtable cells", 1, bigtableCells.size());
+    //   timestamp will get truncated and value will be overwritten at BIGTABLE_MAX_TIMESTAMP.
+    Assert.assertEquals(
+        "bigtable cells truncated at BIGTABLE_MAX_TIMESTAMP.", 1, bigtableCells.size());
     Assert.assertNotEquals(
         "Timestamp match for row " + TestUtils.ROW_KEY,
         hbaseCells.get(0).getTimestamp(),
