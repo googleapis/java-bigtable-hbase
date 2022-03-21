@@ -48,7 +48,7 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService
 
   private final CloudBigtableReplicator cloudBigtableReplicator;
   private final HBaseMetricsExporter metricsExporter;
-  protected Context context;
+  private Context context;
 
   private static final Logger LOG =
       LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
