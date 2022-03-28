@@ -59,7 +59,7 @@ public class HBaseToCloudBigtableReplicationConfiguration {
   // batch capacity by counts and bytes. These capacity are set by `replication.source.nb.capacity`
   // and `replication.source.size.capacity` config keys.
   public static final long DEFAULT_BATCH_SIZE_IN_BYTES = 500_000;
-  // TODO: Use this config key for bigtable peer rather than HBASE one.
+  // TODO: Use this config key for bigtable peer rather than REPLICATION_WALENTRYFILTER_CONFIG_KEY.
   // Allow for config-driven WALEntryFilters for any bigtable replication peer
   public static final String BIGTABLE_REPLICATION_WALENTRYFILTER_CONFIG_KEY =
       "google.bigtable.replication..source.custom.walentryfilters";
