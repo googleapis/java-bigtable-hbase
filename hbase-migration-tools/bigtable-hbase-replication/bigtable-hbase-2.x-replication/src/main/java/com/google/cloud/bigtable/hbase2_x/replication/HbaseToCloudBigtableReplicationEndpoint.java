@@ -17,6 +17,7 @@
 package com.google.cloud.bigtable.hbase2_x.replication;
 // TODO reverse the package names for 1.x and 2.x to com.google.cloud.bigtable.replication.hbase1_x
 
+import static org.apache.hadoop.hbase.replication.BaseReplicationEndpoint.REPLICATION_WALENTRYFILTER_CONFIG_KEY;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.repackaged.com.google.common.util.concurrent.AbstractService;
@@ -29,7 +30,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
 import org.apache.hadoop.hbase.replication.ChainWALEntryFilter;
 import org.apache.hadoop.hbase.replication.NamespaceTableCfWALEntryFilter;
 import org.apache.hadoop.hbase.replication.ReplicationEndpoint;
@@ -103,10 +103,7 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService
     }
     if (context != null && context.getPeerConfig() != null) {
       String filterNameCSV =
-          context
-              .getPeerConfig()
-              .getConfiguration()
-              .get(BaseReplicationEndpoint.REPLICATION_WALENTRYFILTER_CONFIG_KEY);
+          context.getPeerConfig().getConfiguration().get(REPLICATION_WALENTRYFILTER_CONFIG_KEY);
       if (filterNameCSV != null && !filterNameCSV.isEmpty()) {
         String[] filterNames = filterNameCSV.split(",");
         for (String filterName : filterNames) {
