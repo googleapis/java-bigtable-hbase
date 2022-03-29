@@ -69,6 +69,16 @@ limitations under the License.
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-1.x</artifactId>
       <version>2.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <exclusions>
+<!--        <exclusion>-->
+<!--          <groupId>org.checkerframework</groupId>-->
+<!--          <artifactId>*</artifactId>-->
+<!--        </exclusion>-->
+        <exclusion>
+          <groupId>javax.annotation</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
@@ -98,6 +108,12 @@ limitations under the License.
     <dependency>
       <groupId>io.opencensus</groupId>
       <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>javax.annotation</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <!-- grpc-census needed alongside opencensus-exporter-stats-stackdriver for GRPC stats exports to work -->
     <dependency>
@@ -160,16 +176,16 @@ limitations under the License.
                     <exclude>META-INF/*.DSA</exclude>
                     <exclude>META-INF/*.RSA</exclude>
                     <exclude>META-INF/MANIFEST.MF</exclude>
-                    <exclude>META-INF/LICENSE</exclude>
-                    <exclude>META-INF/LICENSE.txt</exclude>
-                    <exclude>META-INF/NOTICE</exclude>
                     <exclude>META-INF/DEPENDENCIES</exclude>
-                    <exclude>META-INF/NOTICE.txt</exclude>
                     <exclude>META-INF/versions/9/module-info.class</exclude>
                   </excludes>
                 </filter>
               </filters>
               <transformers>
+                <transformer
+                    implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
+                <transformer
+                    implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer"/>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
               </transformers>
               <artifactSet>
@@ -191,6 +207,8 @@ limitations under the License.
                   <exclude>org.conscrypt:conscrypt-openjdk-uber</exclude>
                   <exclude>org.apache.htrace:htrace-core4</exclude>
                   <exclude>org.bouncycastle:*</exclude>
+                  <exclude>javax.annotation:*</exclude>
+                  <exclude>org.checkerframework:*</exclude>
                 </excludes>
               </artifactSet>
               <relocations>
@@ -327,18 +345,18 @@ limitations under the License.
                   </shadedPattern>
                 </relocation>
 
-                <relocation>
-                  <pattern>org.checkerframework</pattern>
-                  <shadedPattern>com.google.bigtable.repackaged.org.checkerframework</shadedPattern>
-                </relocation>
+<!--                <relocation>-->
+<!--                  <pattern>org.checkerframework</pattern>-->
+<!--                  <shadedPattern>com.google.bigtable.repackaged.org.checkerframework</shadedPattern>-->
+<!--                </relocation>-->
                 <relocation>
                   <pattern>android.annotation</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.android.annotation</shadedPattern>
                 </relocation>
-                <relocation>
-                  <pattern>javax.annotation</pattern>
-                  <shadedPattern>com.google.bigtable.repackaged.javax.annotation</shadedPattern>
-                </relocation>
+<!--                <relocation>-->
+<!--                  <pattern>javax.annotation</pattern>-->
+<!--                  <shadedPattern>com.google.bigtable.repackaged.javax.annotation</shadedPattern>-->
+<!--                </relocation>-->
                 <relocation>
                   <pattern>net.bytebuddy</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.net.bytebuddy</shadedPattern>

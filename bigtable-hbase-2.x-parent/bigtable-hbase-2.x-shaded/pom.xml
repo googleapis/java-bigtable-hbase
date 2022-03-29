@@ -147,6 +147,10 @@ limitations under the License.
                 false
               </promoteTransitiveDependencies>
               <transformers>
+                <transformer
+                    implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
+                <transformer
+                    implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer"/>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
               </transformers>
               <filters>
@@ -157,11 +161,7 @@ limitations under the License.
                     <exclude>META-INF/*.DSA</exclude>
                     <exclude>META-INF/*.RSA</exclude>
                     <exclude>META-INF/MANIFEST.MF</exclude>
-                    <exclude>META-INF/LICENSE</exclude>
-                    <exclude>META-INF/LICENSE.txt</exclude>
-                    <exclude>META-INF/NOTICE</exclude>
                     <exclude>META-INF/DEPENDENCIES</exclude>
-                    <exclude>META-INF/NOTICE.txt</exclude>
                     <exclude>META-INF/versions/9/module-info.class</exclude>
                   </excludes>
                 </filter>
@@ -322,10 +322,10 @@ limitations under the License.
                   </shadedPattern>
                 </relocation>
 
-                <relocation>
-                  <pattern>org.checkerframework</pattern>
-                  <shadedPattern>com.google.bigtable.repackaged.org.checkerframework</shadedPattern>
-                </relocation>
+<!--                <relocation>-->
+<!--                  <pattern>org.checkerframework</pattern>-->
+<!--                  <shadedPattern>com.google.bigtable.repackaged.org.checkerframework</shadedPattern>-->
+<!--                </relocation>-->
                 <relocation>
                   <pattern>android.annotation</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.android.annotation</shadedPattern>
