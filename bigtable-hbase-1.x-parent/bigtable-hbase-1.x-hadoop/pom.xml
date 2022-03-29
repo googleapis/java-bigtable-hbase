@@ -46,6 +46,10 @@ limitations under the License.
           <groupId>org.apache.hbase</groupId>
           <artifactId>hbase-shaded-client</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>com.google.code.findbugs</groupId>
+          <artifactId>jsr305</artifactId>
+        </exclusion>
 
         <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
         pom.xml files when invoking the build from a parent project. So we have to manually exclude

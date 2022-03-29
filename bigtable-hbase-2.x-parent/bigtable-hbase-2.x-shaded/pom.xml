@@ -124,6 +124,12 @@ limitations under the License.
       <version>${grpc-conscrypt.version}</version>
       <scope>runtime</scope>
     </dependency>
+    <!--    needs to be declared as a dependency to be excluded from shading-->
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+      <version>${jsr305.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -185,6 +191,9 @@ limitations under the License.
                   <!-- See notes in bigtable-client-core/bigtable-hbase/pom.xml#verify-conscrypt-version -->
                   <exclude>org.conscrypt:conscrypt-openjdk-uber</exclude>
                   <exclude>org.bouncycastle:*</exclude>
+                  <exclude>javax.annotation:*</exclude>
+                  <exclude>org.checkerframework:*</exclude>
+                  <exclude>com.google.code.findbugs:jsr305</exclude>
                 </excludes>
               </artifactSet>
               <relocations>
@@ -284,7 +293,6 @@ limitations under the License.
                     META-INF/native/com_google_bigtable_repackaged_io_grpc_netty_shaded_netty
                   </shadedPattern>
                 </relocation>
-
                 <relocation>
                   <pattern>org.joda</pattern>
                   <shadedPattern>
@@ -321,18 +329,9 @@ limitations under the License.
                     com.google.bigtable.repackaged.org.codehaus
                   </shadedPattern>
                 </relocation>
-
-<!--                <relocation>-->
-<!--                  <pattern>org.checkerframework</pattern>-->
-<!--                  <shadedPattern>com.google.bigtable.repackaged.org.checkerframework</shadedPattern>-->
-<!--                </relocation>-->
                 <relocation>
                   <pattern>android.annotation</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.android.annotation</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>javax.annotation</pattern>
-                  <shadedPattern>com.google.bigtable.repackaged.javax.annotation</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>net.bytebuddy</pattern>
