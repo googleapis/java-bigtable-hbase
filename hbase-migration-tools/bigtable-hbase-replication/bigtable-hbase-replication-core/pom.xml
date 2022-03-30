@@ -86,16 +86,6 @@ limitations under the License.
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
         <version>3.2.4</version>
-        <executions>
-          <execution>
-            <configuration>
-              <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ComponentsXmlResourceTransformer"/>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
-              </transformers>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>

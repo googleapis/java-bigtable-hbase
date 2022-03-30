@@ -131,12 +131,6 @@ unable to be fixed here -->
               <goal>shade</goal>
             </goals>
             <configuration>
-              <transformers>
-                <transformer
-                    implementation="org.apache.maven.plugins.shade.resource.ComponentsXmlResourceTransformer"/>
-                <transformer
-                    implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
-              </transformers>
               <shadedArtifactAttached>false</shadedArtifactAttached>
             </configuration>
           </execution>

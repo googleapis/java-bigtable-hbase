@@ -161,12 +161,10 @@ limitations under the License.
             <phase>generate-resources</phase>
             <goals>
               <goal>add-third-party</goal>
-              <goal>download-licenses</goal>
             </goals>
             <configuration>
               <excludedScopes>test,provided,system</excludedScopes>
-              <thirdPartyFilename>LICENCE-DETAILS.txt</thirdPartyFilename>
-              <excludedArtifacts>jsr305|metrics-core|commons-logging|hbase-shaded-client|slf4j-api|slf4j-log4j12|log4j|htrace-core|findbugs-annotations|conscrypt-openjdk-uber</excludedArtifacts>
+              <excludedArtifacts>jsr305|metrics-core|commons-logging|hbase-shaded-client|slf4j-api|slf4j-log4j12|log4j|htrace-core|findbugs-annotations|conscrypt-openjdk-uber|jaxb-api</excludedArtifacts>
               <excludedGroups>org.bouncycastle|org.checkerframework|javax.annotation</excludedGroups>
               <excludeTransitiveDependencies>true</excludeTransitiveDependencies>
               <generateBundle>true</generateBundle>
