@@ -152,6 +152,29 @@ limitations under the License.
         </executions>
       </plugin>
       <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>2.0.0</version>
+        <executions>
+          <execution>
+            <id>default-cli</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>add-third-party</goal>
+              <goal>download-licenses</goal>
+            </goals>
+            <configuration>
+              <excludedScopes>test,provided,system</excludedScopes>
+              <thirdPartyFilename>LICENCE-DETAILS.txt</thirdPartyFilename>
+              <excludedArtifacts>jsr305|metrics-core|commons-logging|hbase-shaded-client|slf4j-api|slf4j-log4j12|log4j|htrace-core|findbugs-annotations|conscrypt-openjdk-uber</excludedArtifacts>
+              <excludedGroups>org.bouncycastle|org.checkerframework|javax.annotation</excludedGroups>
+              <excludeTransitiveDependencies>true</excludeTransitiveDependencies>
+              <generateBundle>true</generateBundle>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
         <executions>
