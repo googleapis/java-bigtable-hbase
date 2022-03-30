@@ -171,9 +171,8 @@ limitations under the License.
             </goals>
             <configuration>
               <excludedScopes>test,provided,system</excludedScopes>
-              <excludedArtifacts>metrics-core|commons-logging|hbase-shaded-client|slf4j-api|slf4j-log4j12|log4j|htrace-core4|audience-annotations|findbugs-annotations|conscrypt-openjdk-uber|jsr305|javax.activation-api</excludedArtifacts>
-              <excludedGroups>org.bouncycastle|org.checkerframework|javax.annotation</excludedGroups>
-              <excludeTransitiveDependencies>true</excludeTransitiveDependencies>
+              <!--Should match the artifactset for shade plugin-->
+              <includedArtifacts>com.google.cloud.bigtable:bigtable-hbase-2.x-shaded</includedArtifacts>
               <generateBundle>true</generateBundle>
             </configuration>
           </execution>

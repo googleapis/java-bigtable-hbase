@@ -153,9 +153,9 @@ limitations under the License.
             </goals>
             <configuration>
               <excludedScopes>test,provided,system</excludedScopes>
-              <excludedArtifacts>jsr305|metrics-core|commons-logging|hbase-shaded-client|slf4j-api|slf4j-log4j12|log4j|htrace-core|findbugs-annotations|conscrypt-openjdk-uber</excludedArtifacts>
-              <excludedGroups>org.bouncycastle|org.checkerframework|javax.annotation</excludedGroups>
-              <excludeTransitiveDependencies>true</excludeTransitiveDependencies>
+              <!-- Should mirror the shade plugin exclusions-->
+              <excludedArtifacts>metrics-core|commons-logging|hbase-shaded-client|slf4j-api|slf4j-log4j12|log4j|htrace-core|findbugs-annotations|conscrypt-openjdk-uber|htrace-core4|jsr305</excludedArtifacts>
+              <excludedGroups>org.bouncycastle|javax.annotation|org.checkerframework</excludedGroups>
               <generateBundle>true</generateBundle>
             </configuration>
           </execution>
@@ -211,7 +211,6 @@ limitations under the License.
                   <exclude>log4j:log4j</exclude>
                   <exclude>org.apache.htrace:htrace-core</exclude>
                   <exclude>com.github.stephenc.findbugs:findbugs-annotations</exclude>
-                  <exclude>log4j:log4j</exclude>
                   <!-- See notes in bigtable-client-core/bigtable-hbase/pom.xml#verify-conscrypt-version -->
                   <exclude>org.conscrypt:conscrypt-openjdk-uber</exclude>
                   <exclude>org.apache.htrace:htrace-core4</exclude>

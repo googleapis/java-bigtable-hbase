@@ -147,9 +147,9 @@ limitations under the License.
             </goals>
             <configuration>
               <excludedScopes>test,provided,system</excludedScopes>
+              <!--Should match the exclusions of shade plugin-->
               <excludedArtifacts>metrics-core|commons-logging|hbase-shaded-client|slf4j-api|slf4j-log4j12|log4j|htrace-core4|audience-annotations|findbugs-annotations|conscrypt-openjdk-uber|jsr305</excludedArtifacts>
-              <excludedGroups>org.bouncycastle|org.checkerframework|javax.annotation</excludedGroups>
-              <excludeTransitiveDependencies>true</excludeTransitiveDependencies>
+              <excludedGroups>org.bouncycastle|javax.annotation|org.checkerframework</excludedGroups>
               <generateBundle>true</generateBundle>
             </configuration>
           </execution>
@@ -208,7 +208,6 @@ limitations under the License.
                   <exclude>
                     com.github.stephenc.findbugs:findbugs-annotations
                   </exclude>
-                  <exclude>log4j:log4j</exclude>
                   <!-- See notes in bigtable-client-core/bigtable-hbase/pom.xml#verify-conscrypt-version -->
                   <exclude>org.conscrypt:conscrypt-openjdk-uber</exclude>
                   <exclude>org.bouncycastle:*</exclude>
