@@ -60,8 +60,8 @@ data. Near zero downtime migrations include the following steps:
 3. Update hbase-site.xml with destination cloud bigtable project id, instance id
    and service account json file.
 4. Add a CBT replication peer in HBase. On HBase shell
-   execute `add_peer '2', ENDPOINT_CLASSNAME => 'com.google.cloud.bigtable.hbase.replication.HbaseToCloudBigtableReplicationEndpoint'`
-   . Use add_peer options to enable replication for select tables.
+   execute `add_peer '2', ENDPOINT_CLASSNAME => 'com.google.cloud.bigtable.hbase2_x.replication.HbaseToCloudBigtableReplicationEndpoint'`
+   . Please use endpoint class `com.google.cloud.bigtable.hbase1_x.replication.HbaseToCloudBigtableReplicationEndpoint` for HBase 1.x clusters. Use add_peer options to enable replication for select tables.
 5. Immediately disable the CBT replication peer, this allows WAL logs to
    accumulate on HDFS. On HBase shell execute:  `disable_peer '2'`
 6. Check the replicated tables by executing `list_replicated_tables` and enable
@@ -236,7 +236,7 @@ in `hbase-site.xml` but we recommend setting it during peer creation.
 Enabling/disabling dry run mode during peer creation can avoid restarting the
 HBase cluster to pickup changes to `hbase-site.xml` file. Enable dry run mode by
 running the following command to add Cloud Bigtable replication peer (please
-change the endpoint class for HBase 1.x):
+change the endpoint class to `com.google.cloud.bigtable.hbase1_x.replication.HbaseToCloudBigtableReplicationEndpoint` for HBase 1.x):
 
 ```
 add_peer 'peer_id',
