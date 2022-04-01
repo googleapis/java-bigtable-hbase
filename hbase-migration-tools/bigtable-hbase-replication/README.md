@@ -111,6 +111,10 @@ classpath.
 </property>
 ```
 
+We recommend specifying an application profile by setting config key 
+`google.bigtable.app_profile.id`. A single-cluster routing application profile
+preserves order of mutations between HBase and Cloud Bigtable. 
+
 Next, you should configure Cloud Bigtable authentication. Create a service
 account and download a json file as shown
 [here](https://cloud.google.com/docs/authentication/production#create_service_account)
@@ -189,7 +193,7 @@ that can be modified during WAL write.
 
 |Type of mutation |HBase WAL Write behavior |CBT replication library action|
 |-----------------|-------------------------|------------------------------|
-|DeleteLatestVersion|Resolves the latest version and writes a deletecell with timestamp|Supported, as its normal deletecell
+|DeleteLatestVersion|Resolves the latest version and writes a deletecell with timestamp|Supported, as its normal deletecell|
 |DeleteFamilyAtVersion|Not modified|Logged and skipped|
 |DeleteFamilyBeforeTimestamp|Not modified|Converts it to DeleteFamily if timestamp within a configurable threshold.|
 |DeleteFamily|Converts to DeleteFamilyBeforeTimestamp with timestamp=now|See DeleteFamilyBeforeTimestamp|
