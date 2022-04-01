@@ -434,9 +434,9 @@ public abstract class BigtableAsyncTable implements AsyncTable<ScanResultConsume
 
   /**
    * This is a workaround for incompatible changes in hbase minor versions. Dynamically generates a
-   * class that extends BigtableAdmin so incompatible methods won't be accessed unless the methods
-   * are called. If a method is implemented by BigtableAdmin, the generated class will invoke the
-   * implementation in BigtableAdmin. Otherwise it'll throw {@link UnsupportedOperationException}.
+   * class that extends BigtableAsyncTable so incompatible methods won't be accessed unless the methods
+   * are called. If a method is implemented by BigtableAsyncTable, the generated class will invoke the
+   * implementation in BigtableAsyncTable. Otherwise it'll throw {@link UnsupportedOperationException}.
    */
   private static synchronized Class<? extends BigtableAsyncTable> getSubclass()
       throws NoSuchMethodException {
