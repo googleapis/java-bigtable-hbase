@@ -111,7 +111,7 @@ classpath.
 </property>
 ```
 
-We recommend specifying an application profile by setting config key 
+We recommend specifying a single-cluster routing [application profile](https://cloud.google.com/bigtable/docs/app-profiles#routing) by setting config key 
 `google.bigtable.app_profile.id`. A single-cluster routing application profile
 preserves order of mutations between HBase and Cloud Bigtable. 
 
