@@ -300,7 +300,13 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
       @Override
       public AsyncTable build() {
-        return new BigtableAsyncTable(BigtableAsyncConnection.this, createAdapter(tableName));
+        try {
+          return BigtableAsyncTable.createInstance(
+              BigtableAsyncConnection.this, createAdapter(tableName));
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+        return null;
       }
     };
   }
@@ -321,7 +327,13 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
     return new AsyncTableBuilder<ScanResultConsumer>() {
       @Override
       public AsyncTable build() {
-        return new BigtableAsyncTable(BigtableAsyncConnection.this, createAdapter(tableName));
+        try {
+          return BigtableAsyncTable.createInstance(
+              BigtableAsyncConnection.this, createAdapter(tableName));
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+        return null;
       }
 
       @Override

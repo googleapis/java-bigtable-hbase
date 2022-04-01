@@ -35,6 +35,7 @@ import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import io.opencensus.common.Scope;
 import io.opencensus.trace.AttributeValue;
@@ -43,43 +44,31 @@ import io.opencensus.trace.Status;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
 import java.io.IOException;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.InvocationHandlerAdapter;
+import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.matcher.ElementMatchers;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
-import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.Append;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Durability;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.Increment;
-import org.apache.hadoop.hbase.client.Mutation;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
-import org.apache.hadoop.hbase.client.Row;
-import org.apache.hadoop.hbase.client.RowMutations;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
-import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
-import org.apache.hadoop.hbase.shaded.com.google.protobuf.Descriptors;
-import org.apache.hadoop.hbase.shaded.com.google.protobuf.Message;
-import org.apache.hadoop.hbase.shaded.com.google.protobuf.Service;
-import org.apache.hadoop.hbase.shaded.com.google.protobuf.ServiceException;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
@@ -501,8 +490,7 @@ public abstract class AbstractBigtableTable implements Table {
   }
 
   /** {@inheritDoc} */
-  @Override
-  public void mutateRow(RowMutations rowMutations) throws IOException {
+  public void mutateRowRowMutations(RowMutations rowMutations) throws IOException {
     LOG.trace("mutateRow(RowMutation)");
     if (rowMutations.getMutations().isEmpty()) {
       return;
@@ -602,37 +590,6 @@ public abstract class AbstractBigtableTable implements Table {
   }
 
   /** {@inheritDoc} */
-  @Override
-  public CoprocessorRpcChannel coprocessorService(byte[] row) {
-    LOG.error("Unsupported coprocessorService(byte[]) called.");
-    throw new UnsupportedOperationException(); // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public <T extends Service, R> Map<byte[], R> coprocessorService(
-      Class<T> service, byte[] startKey, byte[] endKey, Batch.Call<T, R> callable)
-      throws ServiceException, Throwable {
-    LOG.error("Unsupported coprocessorService(Class, byte[], byte[], Batch.Call) called.");
-    throw new UnsupportedOperationException(); // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public <T extends Service, R> void coprocessorService(
-      Class<T> service,
-      byte[] startKey,
-      byte[] endKey,
-      Batch.Call<T, R> callable,
-      Batch.Callback<R> callback)
-      throws ServiceException, Throwable {
-    LOG.error(
-        "Unsupported coprocessorService("
-            + "Class, byte[], byte[], Batch.Call, Batch.Callback) called.");
-    throw new UnsupportedOperationException(); // TODO
-  }
-
-  /** {@inheritDoc} */
   @Deprecated
   @Override
   public long getWriteBufferSize() {
@@ -645,37 +602,6 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public void setWriteBufferSize(long writeBufferSize) throws IOException {
     LOG.error("Unsupported getWriteBufferSize() called");
-    throw new UnsupportedOperationException(); // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public <R extends Message> Map<byte[], R> batchCoprocessorService(
-      Descriptors.MethodDescriptor methodDescriptor,
-      Message message,
-      byte[] bytes,
-      byte[] bytes2,
-      R r)
-      throws ServiceException, Throwable {
-    LOG.error(
-        "Unsupported batchCoprocessorService("
-            + "MethodDescriptor, Message, byte[], byte[], R) called.");
-    throw new UnsupportedOperationException(); // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public <R extends Message> void batchCoprocessorService(
-      Descriptors.MethodDescriptor methodDescriptor,
-      Message message,
-      byte[] bytes,
-      byte[] bytes2,
-      R r,
-      Batch.Callback<R> rCallback)
-      throws ServiceException, Throwable {
-    LOG.error(
-        "Unsupported batchCoprocessorService("
-            + "MethodDescriptor, Message, byte[], byte[], R, Batch.Callback<R>) called.");
     throw new UnsupportedOperationException(); // TODO
   }
 
@@ -751,5 +677,64 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public int getRpcTimeout() {
     throw new UnsupportedOperationException("getRpcTimeout");
+  }
+
+  private static Class<? extends AbstractBigtableTable> tableClass = null;
+
+  /**
+   * This is a workaround for incompatible changes in hbase minor versions. Dynamically generates a
+   * class that extends AbstractBigtableTable so incompatible methods won't be accessed unless the
+   * methods are called. If a method is implemented by AbstractBigtableTable, the generated class
+   * will invoke the implementation in AbstractBigtableTable.
+   */
+  private static synchronized Class<? extends AbstractBigtableTable> getSubclass()
+      throws NoSuchMethodException {
+    if (tableClass == null) {
+      tableClass =
+          new ByteBuddy()
+              .subclass(AbstractBigtableTable.class)
+              .method(ElementMatchers.named("coprocessorService"))
+              .intercept(
+                  InvocationHandlerAdapter.of(
+                      new AbstractBigtableAdmin.UnsupportedOperationsHandler()))
+              .method(ElementMatchers.named("batchCoprocessorService"))
+              .intercept(
+                  InvocationHandlerAdapter.of(
+                      new AbstractBigtableAdmin.UnsupportedOperationsHandler()))
+              .method(
+                  ElementMatchers.named("mutateRow")
+                      .and(ElementMatchers.returns(TypeDescription.VOID)))
+              .intercept(
+                  MethodCall.invoke(
+                          AbstractBigtableTable.class.getDeclaredMethod(
+                              "mutateRowRowMutations", RowMutations.class))
+                      .withAllArguments())
+              .make()
+              .load(
+                  AbstractBigtableTable.class.getClassLoader(),
+                  ClassLoadingStrategy.Default.INJECTION)
+              .getLoaded();
+    }
+    return tableClass;
+  }
+
+  public static AbstractBigtableTable createInstance(
+      AbstractBigtableConnection bigtableConnection, HBaseRequestAdapter hbaseAdapter)
+      throws IOException {
+    try {
+      return getSubclass()
+          .getDeclaredConstructor(AbstractBigtableConnection.class, HBaseRequestAdapter.class)
+          .newInstance(bigtableConnection, hbaseAdapter);
+    } catch (InvocationTargetException e) {
+      // Unwrap and throw IOException or RuntimeException as is, and convert all other exceptions to
+      // IOException because
+      // org.apache.hadoop.hbase.client.Connection#getAdmin() only throws
+      // IOException
+      Throwables.throwIfInstanceOf(e.getTargetException(), IOException.class);
+      Throwables.throwIfInstanceOf(e.getTargetException(), RuntimeException.class);
+      throw new IOException(e);
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
   }
 }

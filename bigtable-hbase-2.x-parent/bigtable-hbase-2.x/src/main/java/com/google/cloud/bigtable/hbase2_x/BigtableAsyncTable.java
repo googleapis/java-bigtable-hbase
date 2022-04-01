@@ -32,6 +32,7 @@ import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import io.grpc.stub.StreamObserver;
 import io.opencensus.common.Scope;
 import io.opencensus.trace.Span;
@@ -39,29 +40,22 @@ import io.opencensus.trace.Status;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
 import java.io.IOException;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.InvocationHandlerAdapter;
+import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.matcher.ElementMatchers;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Append;
-import org.apache.hadoop.hbase.client.AsyncTable;
-import org.apache.hadoop.hbase.client.AsyncTableRegionLocator;
-import org.apache.hadoop.hbase.client.CommonConnection;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.Increment;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Row;
-import org.apache.hadoop.hbase.client.RowMutations;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.client.ScanResultConsumer;
-import org.apache.hadoop.hbase.client.ServiceCaller;
-import org.apache.hadoop.hbase.client.TableDescriptor;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.io.TimeRange;
@@ -72,7 +66,7 @@ import org.apache.hadoop.hbase.io.TimeRange;
  * <p>For internal use only - public for technical reasons.
  */
 @InternalApi("For internal usage only")
-public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
+public abstract class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
   private static final Logger LOG = new Logger(AbstractBigtableTable.class);
   private static final Tracer TRACER = Tracing.getTracer();
@@ -317,8 +311,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   }
 
   /** {@inheritDoc} */
-  @Override
-  public CompletableFuture<Void> mutateRow(RowMutations rowMutations) {
+  public CompletableFuture<Void> mutateRowVoid(RowMutations rowMutations) {
     return toCompletableFuture(clientWrapper.mutateRowAsync(hbaseAdapter.adapt(rowMutations)));
   }
 
@@ -421,5 +414,58 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   public CoprocessorServiceBuilder coprocessorService(
       Function arg0, ServiceCaller arg1, CoprocessorCallback arg2) {
     throw new UnsupportedOperationException("coprocessorService");
+  }
+
+  private static Class<? extends BigtableAsyncTable> tableClass = null;
+
+  /**
+   * This is a workaround for incompatible changes in hbase minor versions. Dynamically generates a
+   * class that extends BigtableAdmin so incompatible methods won't be accessed unless the methods
+   * are called. If a method is implemented by BigtableAdmin, the generated class will invoke the
+   * implementation in BigtableAdmin. Otherwise it'll throw {@link UnsupportedOperationException}.
+   */
+  private static synchronized Class<? extends BigtableAsyncTable> getSubclass()
+      throws NoSuchMethodException {
+    if (tableClass == null) {
+      tableClass =
+          new ByteBuddy()
+              .subclass(BigtableAsyncTable.class)
+              .method(ElementMatchers.isAbstract())
+              .intercept(
+                  InvocationHandlerAdapter.of(
+                      new AbstractBigtableAdmin.UnsupportedOperationsHandler()))
+              .method(
+                  ElementMatchers.named("mutateRow")
+                      .and(ElementMatchers.returns(CompletableFuture.class)))
+              .intercept(
+                  MethodCall.invoke(
+                          BigtableTable.class.getDeclaredMethod(
+                              "mutateRowVoid", RowMutations.class))
+                      .withAllArguments())
+              .make()
+              .load(
+                  BigtableAsyncTable.class.getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+              .getLoaded();
+    }
+    return tableClass;
+  }
+
+  public static BigtableAsyncTable createInstance(
+      CommonConnection connection, HBaseRequestAdapter hbaseAdapter) throws IOException {
+    try {
+      return getSubclass()
+          .getDeclaredConstructor(CommonConnection.class, HBaseRequestAdapter.class)
+          .newInstance(connection, hbaseAdapter);
+    } catch (InvocationTargetException e) {
+      // Unwrap and throw IOException or RuntimeException as is, and convert all other exceptions to
+      // IOException because
+      // org.apache.hadoop.hbase.client.Connection#getAdmin() only throws
+      // IOException
+      Throwables.throwIfInstanceOf(e.getTargetException(), IOException.class);
+      Throwables.throwIfInstanceOf(e.getTargetException(), RuntimeException.class);
+      throw new IOException(e);
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
   }
 }

@@ -79,7 +79,7 @@ public class BigtableConnection extends AbstractBigtableConnection {
 
   @Override
   public Table getTable(TableName tableName, ExecutorService ignored) throws IOException {
-    return new AbstractBigtableTable(this, createAdapter(tableName)) {};
+    return AbstractBigtableTable.createInstance(this, createAdapter(tableName));
   }
 
   @Override

@@ -236,7 +236,12 @@ public class TestAbstractBigtableConnection {
 
     @Override
     public Table getTable(TableName tableName, ExecutorService executorService) {
-      return new AbstractBigtableTable(this, createAdapter(tableName)) {};
+      try {
+        return AbstractBigtableTable.createInstance(this, createAdapter(tableName));
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      return null;
     }
 
     @Override
