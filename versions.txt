@@ -2,4 +2,4 @@
 # module:released-version:current-version
 
 bigtable-client-parent:2.1.0:2.1.0
-bigtable-hbase-replication:0.1.0:0.1.0
+bigtable-hbase-replication:1.0.0:1.0.0
