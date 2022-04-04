@@ -121,7 +121,7 @@ public class CloudBigtableReplicator {
         Connection connection = BigtableConfiguration.connect(configurationCopy);
         LOG.info(
             String.format(
-                "Created a connection to CBT. /projects/%s/instances/%s", projectId, instanceId));
+                "Created a connection to CBT. projects/%s/instances/%s", projectId, instanceId));
 
         INSTANCE = new SharedResources(connection, executorService);
       }
