@@ -91,7 +91,6 @@ limitations under the License.
          while still respecting global skipTests override. -->
     <skipTests>false</skipTests>
     <skipUnitTests>${skipTests}</skipUnitTests>
-    <skipITs>${skipTests}</skipITs>
   </properties>
 
   <scm>
