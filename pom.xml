@@ -86,6 +86,11 @@ limitations under the License.
 
     <!-- Benchmarks related dependencies -->
     <jmh.version>1.35</jmh.version>
+
+    <!-- Enable the ability to skip unit tests and only run integration tests,
+         while still respecting global skipTests override. -->
+    <skipTests>false</skipTests>
+    <skipUnitTests>${skipTests}</skipUnitTests>
   </properties>
 
   <scm>
@@ -142,6 +147,8 @@ limitations under the License.
           <version>2.22.2</version>
           <configuration>
             <trimStackTrace>false</trimStackTrace>
+            <!-- enable the ability to skip unit tests, while running integration tests -->
+            <skipTests>${skipUnitTests}</skipTests>
           </configuration>
         </plugin>
         <plugin>
