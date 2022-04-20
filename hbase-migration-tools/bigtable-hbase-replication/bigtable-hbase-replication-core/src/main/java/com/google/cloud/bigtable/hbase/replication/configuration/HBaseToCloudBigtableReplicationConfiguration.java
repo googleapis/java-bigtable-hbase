@@ -54,13 +54,21 @@ public class HBaseToCloudBigtableReplicationConfiguration {
   // TODO maybe it should depend on the number of processors on the VM.
   public static final int DEFAULT_THREAD_COUNT = 10;
 
+  /**
+   * Determines the size of request to CBT. This parameter controls the number of concurrent RPCs to
+   * Cloud Bigtable.
+   *
+   * <p>Set it to higher value to reduce concurrency, setting it to a value >
+   * replication.source.size.capacity will result in a single batch of writes to Cloud Bigtable per
+   * CBTEndpoint replicate call.
+   *
+   * <p>Set it to a smaller value to send small batches with max concurrency of
+   * "google.bigtable.replication.thread_count". This will result in lower replication lag for Cloud
+   * Bigtable at the expense of more RPCs.
+   */
   public static final String BATCH_SIZE_KEY = "google.bigtable.replication.batch_size_bytes";
   // TODO: Tune this parameter. Usually, this should be smaller than the HBase replication source
   // batch capacity by counts and bytes. These capacity are set by `replication.source.nb.capacity`
   // and `replication.source.size.capacity` config keys.
   public static final long DEFAULT_BATCH_SIZE_IN_BYTES = 500_000;
-  // TODO: Plumb this config key to HBase1.x
-  // Allow for config-driven WALEntryFilters for any bigtable replication peer
-  public static final String BIGTABLE_REPLICATION_WALENTRYFILTER_CONFIG_KEY =
-      "google.bigtable.replication..source.custom.walentryfilters";
 }

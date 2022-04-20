@@ -60,8 +60,8 @@ data. Near zero downtime migrations include the following steps:
 3. Update hbase-site.xml with destination cloud bigtable project id, instance id
    and service account json file.
 4. Add a CBT replication peer in HBase. On HBase shell
-   execute `add_peer '2', ENDPOINT_CLASSNAME => 'com.google.cloud.bigtable.hbase.replication.HbaseToCloudBigtableReplicationEndpoint'`
-   . Use add_peer options to enable replication for select tables.
+   execute `add_peer '2', ENDPOINT_CLASSNAME => 'com.google.cloud.bigtable.hbase2_x.replication.HbaseToCloudBigtableReplicationEndpoint'`
+   . Please use endpoint class `com.google.cloud.bigtable.hbase1_x.replication.HbaseToCloudBigtableReplicationEndpoint` for HBase 1.x clusters. Use add_peer options to enable replication for select tables.
 5. Immediately disable the CBT replication peer, this allows WAL logs to
    accumulate on HDFS. On HBase shell execute:  `disable_peer '2'`
 6. Check the replicated tables by executing `list_replicated_tables` and enable
@@ -110,6 +110,10 @@ classpath.
     </description>
 </property>
 ```
+
+We recommend specifying a single-cluster routing [application profile](https://cloud.google.com/bigtable/docs/app-profiles#routing) by setting config key 
+`google.bigtable.app_profile.id`. A single-cluster routing application profile
+preserves order of mutations between HBase and Cloud Bigtable. 
 
 Next, you should configure Cloud Bigtable authentication. Create a service
 account and download a json file as shown
@@ -189,7 +193,7 @@ that can be modified during WAL write.
 
 |Type of mutation |HBase WAL Write behavior |CBT replication library action|
 |-----------------|-------------------------|------------------------------|
-|DeleteLatestVersion|Resolves the latest version and writes a deletecell with timestamp|Supported, as its normal deletecell
+|DeleteLatestVersion|Resolves the latest version and writes a deletecell with timestamp|Supported, as its normal deletecell|
 |DeleteFamilyAtVersion|Not modified|Logged and skipped|
 |DeleteFamilyBeforeTimestamp|Not modified|Converts it to DeleteFamily if timestamp within a configurable threshold.|
 |DeleteFamily|Converts to DeleteFamilyBeforeTimestamp with timestamp=now|See DeleteFamilyBeforeTimestamp|
@@ -232,7 +236,7 @@ in `hbase-site.xml` but we recommend setting it during peer creation.
 Enabling/disabling dry run mode during peer creation can avoid restarting the
 HBase cluster to pickup changes to `hbase-site.xml` file. Enable dry run mode by
 running the following command to add Cloud Bigtable replication peer (please
-change the endpoint class for HBase 1.x):
+change the endpoint class to `com.google.cloud.bigtable.hbase1_x.replication.HbaseToCloudBigtableReplicationEndpoint` for HBase 1.x):
 
 ```
 add_peer 'peer_id',
