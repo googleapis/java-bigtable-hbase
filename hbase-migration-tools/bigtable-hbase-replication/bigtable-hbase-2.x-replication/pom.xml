@@ -49,9 +49,9 @@ limitations under the License.
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <executions>
-                    <!-- disable google-cloud-shared-config enforcement checks because
-     hbase-client's dependency subtree doesn't follow the same rules and is
-     unable to be fixed here -->
+                <!-- disable google-cloud-shared-config enforcement checks because
+ hbase-client's dependency subtree doesn't follow the same rules and is
+ unable to be fixed here -->
                     <execution>
                         <id>enforce</id>
                         <configuration>
@@ -128,22 +128,22 @@ limitations under the License.
                     </descriptorRefs>
                 </configuration>
             </plugin>
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-shade-plugin</artifactId>
-            <version>3.3.0</version>
-            <executions>
-                <execution>
-                    <phase>package</phase>
-                    <goals>
-                        <goal>shade</goal>
-                    </goals>
-                    <configuration>
-                        <shadedArtifactAttached>false</shadedArtifactAttached>
-                    </configuration>
-                </execution>
-            </executions>
-        </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.3.0</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <shadedArtifactAttached>false</shadedArtifactAttached>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
             <!-- TODO: temporary workaround until we resolve clirr errors-->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
