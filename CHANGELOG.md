@@ -1,5 +1,21 @@
 # Changelog
 
+### [2.1.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.1.0...v2.1.1) (2022-04-20)
+
+
+### Bug Fixes
+
+* [hbase-cbt-replication] use instance/project URI in log ([#3575](https://github.com/googleapis/java-bigtable-hbase/issues/3575)) ([87d36b3](https://github.com/googleapis/java-bigtable-hbase/commit/87d36b3d04c2adc65a835779a91fba2b7814e6c3))
+
+
+### Dependencies
+
+* update dependency com.google.cloud:google-cloud-bigtable-emulator to v0.143.2 ([#3564](https://github.com/googleapis/java-bigtable-hbase/issues/3564)) ([10e2128](https://github.com/googleapis/java-bigtable-hbase/commit/10e21285800f9d3ee7078a8bfa89f644b250d3b1))
+* update dependency com.google.errorprone:error_prone_annotations to v2.12.1 ([#3576](https://github.com/googleapis/java-bigtable-hbase/issues/3576)) ([705741d](https://github.com/googleapis/java-bigtable-hbase/commit/705741d1f9b6b06e341dade14c72ba42fe0adf89))
+* update dependency com.google.errorprone:error_prone_annotations to v2.13.1 ([#3580](https://github.com/googleapis/java-bigtable-hbase/issues/3580)) ([a34a82a](https://github.com/googleapis/java-bigtable-hbase/commit/a34a82a99301d27e221fe472358e6efcccd24bb5))
+* update dependency net.bytebuddy:byte-buddy to v1.12.9 ([#3578](https://github.com/googleapis/java-bigtable-hbase/issues/3578)) ([31c2268](https://github.com/googleapis/java-bigtable-hbase/commit/31c226814af840edb2974eeec40c3e7203330981))
+* upgrade guava to 31.1-jre and Bigtable to 2.6.2 ([#3582](https://github.com/googleapis/java-bigtable-hbase/issues/3582)) ([f9e988d](https://github.com/googleapis/java-bigtable-hbase/commit/f9e988d40925559ac40bdc09f5a0f468e24d7748))
+
 ## [2.1.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.0.0...v2.1.0) (2022-04-01)
 
 
