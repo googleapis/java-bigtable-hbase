@@ -22,7 +22,6 @@ import com.google.cloud.bigtable.beam.sequencefiles.HBaseResultToMutationFn;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob;
 import com.google.cloud.bigtable.beam.sequencefiles.Utils;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
@@ -69,8 +68,9 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 @InternalExtensionOnly
 public class ImportJobFromHbaseSnapshot {
   private static final Log LOG = LogFactory.getLog(ImportJobFromHbaseSnapshot.class);
-  private static final String CONTAINER_IMAGE_PATH_PREFIX = "gcr.io/cloud-bigtable-ecosystem/unified-harness:";
-  
+  private static final String CONTAINER_IMAGE_PATH_PREFIX =
+      "gcr.io/cloud-bigtable-ecosystem/unified-harness:";
+
   public interface ImportOptions extends ImportJob.ImportOptions {
     @Description("The HBase root dir where HBase snapshot files resides.")
     String getHbaseSnapshotSourceDir();
@@ -97,16 +97,17 @@ public class ImportJobFromHbaseSnapshot {
     ImportOptions opts =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(ImportOptions.class);
 
-    if(opts.getEnableSnappy() != null && opts.getEnableSnappy()) {
-        DataflowPipelineOptions dataFlowOpts = opts.as(DataflowPipelineOptions.class);
-        dataFlowOpts.setSdkContainerImage(CONTAINER_IMAGE_PATH_PREFIX + ReleaseInfo.getReleaseInfo().getVersion());
-        List<String> expOpts = dataFlowOpts.getExperiments();
-        if (expOpts != null) {
-          expOpts.add("use_runner_v2");
-          dataFlowOpts.setExperiments(expOpts);
-        } else {
-          dataFlowOpts.setExperiments(Arrays.asList("use_runner_v2"));
-        }
+    if (opts.getEnableSnappy() != null && opts.getEnableSnappy()) {
+      DataflowPipelineOptions dataFlowOpts = opts.as(DataflowPipelineOptions.class);
+      dataFlowOpts.setSdkContainerImage(
+          CONTAINER_IMAGE_PATH_PREFIX + ReleaseInfo.getReleaseInfo().getVersion());
+      List<String> expOpts = dataFlowOpts.getExperiments();
+      if (expOpts != null) {
+        expOpts.add("use_runner_v2");
+        dataFlowOpts.setExperiments(expOpts);
+      } else {
+        dataFlowOpts.setExperiments(Arrays.asList("use_runner_v2"));
+      }
     }
 
     LOG.info("Building Pipeline");
