@@ -27,17 +27,6 @@ limitations under the License.
     and writers in Google Cloud Dataflow.
   </description>
 
-  <dependencyManagement>
-    <dependencies>
-      <!-- fix conflict beam internal between beam-sdks-java-core & beam-model-pipeline -->
-      <dependency>
-        <groupId>com.google.errorprone</groupId>
-        <artifactId>error_prone_annotations</artifactId>
-        <version>2.13.1</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
   <dependencies>
     <!-- Beam Group: should come first since we will be running in the beam ecosystem -->
     <dependency>
