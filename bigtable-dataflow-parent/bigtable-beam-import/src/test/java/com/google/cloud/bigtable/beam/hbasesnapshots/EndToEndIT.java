@@ -75,7 +75,7 @@ import org.slf4j.LoggerFactory;
 public class EndToEndIT {
   private static Logger LOG = LoggerFactory.getLogger(HBaseResultToMutationFn.class);
   private static final String TEST_SNAPSHOT_NAME = "test-snapshot";
-  private static final String TEST_SNAPPY_SNAPSHOT_NAME = "snappy-compressed-snapshot";
+  private static final String TEST_SNAPPY_SNAPSHOT_NAME = "demo-snapshot";
   private static final String CF = "cf";
 
   private TestProperties properties;
