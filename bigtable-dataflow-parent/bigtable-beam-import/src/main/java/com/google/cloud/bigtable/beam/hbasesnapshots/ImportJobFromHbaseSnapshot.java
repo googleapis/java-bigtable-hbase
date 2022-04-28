@@ -22,7 +22,6 @@ import com.google.cloud.bigtable.beam.sequencefiles.HBaseResultToMutationFn;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob;
 import com.google.cloud.bigtable.beam.sequencefiles.Utils;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
@@ -69,7 +68,12 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 @InternalExtensionOnly
 public class ImportJobFromHbaseSnapshot {
   private static final Log LOG = LogFactory.getLog(ImportJobFromHbaseSnapshot.class);
+<<<<<<< HEAD
   private static final String CONTAINER_IMAGE_PATH_PREFIX = "gcr.io/cloud-bigtable-ecosystem/unified-harness:";
+=======
+  private static final String CONTAINER_IMAGE_PATH_PREFIX =
+      "gcr.io/cloud-bigtable-ecosystem/unified-harness:";
+>>>>>>> d7acbb0ad52fe04f28dd2f6fc5e317680ec18adb
 
   public interface ImportOptions extends ImportJob.ImportOptions {
     @Description("The HBase root dir where HBase snapshot files resides.")
