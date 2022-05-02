@@ -54,12 +54,12 @@ public class HBaseMetricsExporterTest {
   }
 
   @After
-  public void tearDown(){
+  public void tearDown() {
     reset(context, metricsSource);
   }
 
   @Test
-  public void testCreate(){
+  public void testCreate() {
     // Make sure that create returns an HBaseMetricsExporter object. There is no good way to test
     // the other case where incCounter method is not available as it requires adding hbase <1.4 to
     // the classpath along with hbase 1.4.

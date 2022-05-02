@@ -25,19 +25,15 @@ import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * HBaseMetricsExporter implements MetricExporter which bridges with MetricsSource.
- */
+/** HBaseMetricsExporter implements MetricExporter which bridges with MetricsSource. */
 @InternalApi
 public class HBaseMetricsExporter implements MetricsExporter {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseMetricsExporter.class);
 
-
   // Force the use of static factory method to create instances.
   @InternalExtensionOnly
-  protected HBaseMetricsExporter() {
-  }
+  protected HBaseMetricsExporter() {}
 
   // same pattern as used by HbaseInterClusterRepl
   private MetricsSource metricsSource;
@@ -54,8 +50,8 @@ public class HBaseMetricsExporter implements MetricsExporter {
   /**
    * Creates the right implementation for HBaseMetricsExporter. The incCounter method used to
    * integrate with HBase metrics was introduced in HBase 1.4, so when running on HBase version 1.3
-   * or lower, we need to skip incrementing the counters.
-   * More details on: https://github.com/googleapis/java-bigtable-hbase/issues/3596
+   * or lower, we need to skip incrementing the counters. More details on:
+   * https://github.com/googleapis/java-bigtable-hbase/issues/3596
    */
   public static HBaseMetricsExporter create() {
     // TODO: Define configuration that allows users to inject a custom implementation of
@@ -65,10 +61,12 @@ public class HBaseMetricsExporter implements MetricsExporter {
       // HBase version > 1.4, supports incCounters, return normal MetricsExporter.
       return new HBaseMetricsExporter();
     } catch (NoSuchMethodException e) {
-      // HBase version <1.4 : HBase does not support generic counters. Revert to no-op metrics exporter.
-      LOG.warn("Can not find MetricsSource.incCounters method, probably running HBase 1.3 or older."
-          + " Disabling metrics for IncompatibleMutations. Please refer to "
-          + "https://github.com/googleapis/java-bigtable-hbase/issues/3596 for details.");
+      // HBase version <1.4 : HBase does not support generic counters. Revert to no-op metrics
+      // exporter.
+      LOG.warn(
+          "Can not find MetricsSource.incCounters method, probably running HBase 1.3 or older."
+              + " Disabling metrics for IncompatibleMutations. Please refer to "
+              + "https://github.com/googleapis/java-bigtable-hbase/issues/3596 for details.");
       return new NoOpHBaseMetricsExporter();
     }
   }

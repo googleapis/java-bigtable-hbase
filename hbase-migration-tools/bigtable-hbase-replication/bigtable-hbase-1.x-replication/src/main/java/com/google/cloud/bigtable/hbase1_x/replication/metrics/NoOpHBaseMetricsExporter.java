@@ -11,7 +11,7 @@ public class NoOpHBaseMetricsExporter extends HBaseMetricsExporter {
 
   // Use the HBaseMetricsExporter.create method to create instances of this class.
   @InternalApi
-  NoOpHBaseMetricsExporter(){}
+  NoOpHBaseMetricsExporter() {}
 
   @Override
   public void incCounters(String counterName, long delta) {}
