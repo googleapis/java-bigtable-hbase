@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.2.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.1.1...v2.2.0) (2022-05-03)
+
+
+### Features
+
+* log version and settings on startup ([#3601](https://github.com/googleapis/java-bigtable-hbase/issues/3601)) ([109023a](https://github.com/googleapis/java-bigtable-hbase/commit/109023aa980aaf26229544f271ca348466eac5fe))
+* next release from main branch is 2.2.0 ([#3593](https://github.com/googleapis/java-bigtable-hbase/issues/3593)) ([58a6ce4](https://github.com/googleapis/java-bigtable-hbase/commit/58a6ce47f0990260a097b9d2f641f74745a9f163))
+
+
+### Bug Fixes
+
+* disabling incompatible mutation metrics for HBase 1.3 or lower ([#3599](https://github.com/googleapis/java-bigtable-hbase/issues/3599)) ([9a693e8](https://github.com/googleapis/java-bigtable-hbase/commit/9a693e823a683542acef9932d042778a32495769))
+* published dependencies of bigtable-beam-import ([#3600](https://github.com/googleapis/java-bigtable-hbase/issues/3600)) ([0dfb130](https://github.com/googleapis/java-bigtable-hbase/commit/0dfb13089c6afa56dc1f8f7eddfb63c1d33e483a))
+
+
+### Dependencies
+
+* update dependency net.bytebuddy:byte-buddy to v1.12.10 ([#3597](https://github.com/googleapis/java-bigtable-hbase/issues/3597)) ([283cef8](https://github.com/googleapis/java-bigtable-hbase/commit/283cef872a6c08771cd5e5b9f760d386b07e97c8))
+
 ### [2.1.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.1.0...v2.1.1) (2022-04-20)
 
 
