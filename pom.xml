@@ -19,7 +19,7 @@ limitations under the License.
 
   <groupId>com.google.cloud.bigtable</groupId>
   <artifactId>bigtable-client-parent</artifactId>
-  <version>2.1.1</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+  <version>2.2.0</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   <packaging>pom</packaging>
   <name>${project.groupId}:${project.artifactId}</name>
   <url>https://cloud.google.com/bigtable/</url>
@@ -70,7 +70,7 @@ limitations under the License.
     <hbase2-metrics.version>3.2.6</hbase2-metrics.version>
 
     <!-- bytebuddy dependency version for resolving hbase backward incompatible changes -->
-    <byte.buddy.version>1.12.9</byte.buddy.version>
+    <byte.buddy.version>1.12.10</byte.buddy.version>
 
     <!-- testing dependency versions -->
     <commons-lang.version>2.6</commons-lang.version>
@@ -162,7 +162,8 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>3.3.0</version>
+          <!-- MSHADE-419: 3.3.0 Shade plugin causes pom to be created without compile dependencies -->
+          <version>3.2.4</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>

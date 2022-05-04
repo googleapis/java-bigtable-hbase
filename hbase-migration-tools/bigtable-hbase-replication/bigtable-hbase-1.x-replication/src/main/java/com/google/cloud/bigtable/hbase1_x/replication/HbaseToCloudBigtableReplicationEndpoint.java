@@ -37,12 +37,12 @@ public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndp
 
   public HbaseToCloudBigtableReplicationEndpoint() {
     cloudBigtableReplicator = new CloudBigtableReplicator();
-    metricsExporter = new HBaseMetricsExporter();
+    metricsExporter = HBaseMetricsExporter.create();
   }
 
   @Override
   protected synchronized void doStart() {
-    metricsExporter.setMetricsSource(ctx.getMetrics());
+    metricsExporter.init(ctx);
     cloudBigtableReplicator.start(ctx.getConfiguration(), metricsExporter);
     notifyStarted();
   }

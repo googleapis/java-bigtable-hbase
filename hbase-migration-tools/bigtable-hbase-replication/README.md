@@ -61,7 +61,10 @@ data. Near zero downtime migrations include the following steps:
    and service account json file.
 4. Add a CBT replication peer in HBase. On HBase shell
    execute `add_peer '2', ENDPOINT_CLASSNAME => 'com.google.cloud.bigtable.hbase2_x.replication.HbaseToCloudBigtableReplicationEndpoint'`
-   . Please use endpoint class `com.google.cloud.bigtable.hbase1_x.replication.HbaseToCloudBigtableReplicationEndpoint` for HBase 1.x clusters. Use add_peer options to enable replication for select tables.
+   . Please use endpoint
+   class `com.google.cloud.bigtable.hbase1_x.replication.HbaseToCloudBigtableReplicationEndpoint`
+   for HBase 1.x clusters. Use add_peer options to enable replication for select
+   tables.
 5. Immediately disable the CBT replication peer, this allows WAL logs to
    accumulate on HDFS. On HBase shell execute:  `disable_peer '2'`
 6. Check the replicated tables by executing `list_replicated_tables` and enable
@@ -111,9 +114,11 @@ classpath.
 </property>
 ```
 
-We recommend specifying a single-cluster routing [application profile](https://cloud.google.com/bigtable/docs/app-profiles#routing) by setting config key 
+We recommend specifying a single-cluster
+routing [application profile](https://cloud.google.com/bigtable/docs/app-profiles#routing)
+by setting config key
 `google.bigtable.app_profile.id`. A single-cluster routing application profile
-preserves order of mutations between HBase and Cloud Bigtable. 
+preserves order of mutations between HBase and Cloud Bigtable.
 
 Next, you should configure Cloud Bigtable authentication. Create a service
 account and download a json file as shown
@@ -236,7 +241,9 @@ in `hbase-site.xml` but we recommend setting it during peer creation.
 Enabling/disabling dry run mode during peer creation can avoid restarting the
 HBase cluster to pickup changes to `hbase-site.xml` file. Enable dry run mode by
 running the following command to add Cloud Bigtable replication peer (please
-change the endpoint class to `com.google.cloud.bigtable.hbase1_x.replication.HbaseToCloudBigtableReplicationEndpoint` for HBase 1.x):
+change the endpoint class
+to `com.google.cloud.bigtable.hbase1_x.replication.HbaseToCloudBigtableReplicationEndpoint`
+for HBase 1.x):
 
 ```
 add_peer 'peer_id',
@@ -283,7 +290,8 @@ are 3 kinds of metrics that the replication library will publish:
 2. Cloud Bigtable client side metrics. These will include latencies and failures
    of various CBT APIs.
 3. Custom metrics from the replication library. For example,
-   NumberOfIncompatibleMutations.
+   NumberOfIncompatibleMutations. Please note that cusotm metrics support is
+   available for HBase 1.4 or newer.
 
 Please refer to javadocs for class HBaseToCloudBigtableReplicationMetrics for
 list of available metrics.
