@@ -291,6 +291,13 @@ limitations under the License.
   </dependencies>
 
   <build>
+    <testResources>
+      <testResource>
+        <!-- Prevent maven from trying to filter the binary zip files -->
+        <directory>src/test/resources</directory>
+        <filtering>false</filtering>
+      </testResource>
+    </testResources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
