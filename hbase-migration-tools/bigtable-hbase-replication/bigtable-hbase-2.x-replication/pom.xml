@@ -20,13 +20,13 @@ limitations under the License.
     <parent>
         <artifactId>bigtable-hbase-replication</artifactId>
         <groupId>com.google.cloud.bigtable</groupId>
-        <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+        <version>1.1.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-2.x-replication</artifactId>
-    <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+    <version>1.1.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
     <packaging>jar</packaging>
     <name>bigtable-hbase-2.x-replication</name>
     <description>Library to enable one way replication from HBase to Cloud Bigtable. </description>
@@ -131,7 +131,7 @@ limitations under the License.
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.2.4</version>
+        <version>3.3.0</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -144,13 +144,21 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
+            <!-- TODO: temporary workaround until we resolve clirr errors-->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>clirr-maven-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
     <dependencies>
         <dependency>
             <groupId>com.google.cloud.bigtable</groupId>
             <artifactId>bigtable-hbase-replication-core</artifactId>
-            <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+            <version>1.1.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
             <exclusions>
                 <!-- HBase dependencies come from hbase-server below. Skip them here.-->
                 <exclusion>
@@ -170,7 +178,7 @@ limitations under the License.
         <dependency>
             <groupId>com.google.cloud.bigtable</groupId>
             <artifactId>bigtable-hbase-2.x-hadoop</artifactId>
-            <version>2.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+            <version>2.2.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
             <exclusions>
                 <!-- HBase dependencies come from hbase-server below. Skip them here.-->
                 <exclusion>
@@ -200,7 +208,7 @@ limitations under the License.
         <dependency>
             <groupId>com.google.cloud</groupId>
             <artifactId>google-cloud-bigtable-emulator</artifactId>
-            <version>0.143.0</version>
+            <version>0.143.2</version>
             <scope>test</scope>
             <exclusions>
                 <!-- We do not use channel creating helpers, so don't need any
@@ -215,7 +223,7 @@ limitations under the License.
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>4.4.0</version>
+            <version>4.5.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>

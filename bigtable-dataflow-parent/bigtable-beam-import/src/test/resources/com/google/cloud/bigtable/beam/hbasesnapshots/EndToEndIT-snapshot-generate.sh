@@ -1,4 +1,11 @@
-// Run from HBase shell. Run `hbase shell` from unix terminal on HBase master.
+#!/bin/bash
+
+set -e
+
+# The easiest way to use this is to run it on the master node
+# and then scp /tmp/EndToEndIT-snapshot.zip to the git repo.
+
+hbase shell <<EOF
 create 'test', 'cf', {SPLITS => ["1", "2", "3", "4", "5", "6", "7", "8", "9"]}
 put 'test','1', 'cf:a', 'value1', 100
 put 'test','2', 'cf:a', 'value2', 100
@@ -102,32 +109,18 @@ put 'test','99', 'cf:a', 'value99', 100
 put 'test','100', 'cf:a', 'value100', 100
 snapshot 'test', 'test-snapshot'
 list_snapshots
+EOF
 
+mkdir /tmp/EndToEndIT-snapshot
+# Export the snapshot
+hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot test-snapshot -copy-to /tmp/EndToEndIT-snapshot/data -mappers 16
 
-////////////////////Run from Unix shell on HBase master node//////////////////
-// Export the snapshot
-hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot test-snapshot -copy-to /integration-test/data -mappers 16
+hbase org.apache.hadoop.hbase.mapreduce.HashTable --batchsize=10 --numhashfiles=10 test /tmp/EndToEndIT-snapshot/hashtable
 
-// Create the hashes for the table. Run the command from unix shell on an HBase
-// node.
-hbase org.apache.hadoop.hbase.mapreduce.HashTable --batchsize=10 --numhashfiles=10 test /integration-test/hashtable
-
-// Export the data into GCS
-hadoop fs -copyToLocal /integration-test /tmp/
-gsutil cp -r /tmp/integration-test gs://<my-bucket>/
-
-// GCS bucket should look like this:
-$ gsutil ls gs://<my-bucket>/integration-test/data
-gs://<my-bucket>/integration-test/data/
-gs://<my-bucket>/integration-test/data/.hbase-snapshot/
-gs://<my-bucket>/integration-test/data/archive/
-$ gsutil ls gs://<my-bucket>/integration-test/hashtable
-gs://<my-bucket>/integration-test/hashtable/manifest
-gs://<my-bucket>/integration-test/hashtable/partitions
-gs://<my-bucket>/integration-test/hashtable/hashes/
-
-// Run from HBase shell. Run `hbase shell` from unix terminal on HBase master.
-// clean up the table
+hbase shell <<EOF
 disable 'test'
 drop 'test'
-exit
+EOF
+
+cd /tmp/EndToEndIT-snapshot
+zip -r /tmp/EndToEndIT-snapshot.zip data hashtable

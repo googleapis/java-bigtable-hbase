@@ -16,10 +16,15 @@
 
 package com.google.cloud.bigtable.hbase1_x.replication.metrics;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import org.apache.hadoop.hbase.replication.ReplicationEndpoint.Context;
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,6 +38,7 @@ import org.mockito.junit.MockitoRule;
 public class HBaseMetricsExporterTest {
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
+  @Mock Context context;
   @Mock MetricsSource metricsSource;
 
   HBaseMetricsExporter hbaseMetricsExporter;
@@ -42,8 +48,22 @@ public class HBaseMetricsExporterTest {
 
   @Before
   public void setUp() {
-    hbaseMetricsExporter = new HBaseMetricsExporter();
-    hbaseMetricsExporter.setMetricsSource(metricsSource);
+    when(context.getMetrics()).thenReturn(metricsSource);
+    hbaseMetricsExporter = HBaseMetricsExporter.create();
+    hbaseMetricsExporter.init(context);
+  }
+
+  @After
+  public void tearDown() {
+    reset(context, metricsSource);
+  }
+
+  @Test
+  public void testCreate() {
+    // Make sure that create returns an HBaseMetricsExporter object. There is no good way to test
+    // the other case where incCounter method is not available as it requires adding hbase <1.4 to
+    // the classpath along with hbase 1.4.
+    assertEquals(HBaseMetricsExporter.class, hbaseMetricsExporter.getClass());
   }
 
   @Test
