@@ -5,6 +5,7 @@ branchProtectionRules:
   - pattern: main
     isAdminEnforced: true
     requiredStatusCheckContexts:
+      - 'Kokoro - Test: Binary Compatibility'
       - 'Kokoro - Test: Code Format'
       - 'Kokoro - Test: Dependencies'
       - 'Kokoro - Test: Integration'
@@ -60,6 +61,7 @@ branchProtectionRules:
   - pattern: 2.1.x
     isAdminEnforced: true
     requiredStatusCheckContexts:
+      - 'Kokoro - Test: Binary Compatibility'
       - 'Kokoro - Test: Code Format'
       - 'Kokoro - Test: Dependencies'
       - 'Kokoro - Test: Integration'
