@@ -115,7 +115,7 @@ mkdir /tmp/EndToEndIT-snapshot
 # Export the snapshot
 hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot test-snapshot -copy-to /tmp/EndToEndIT-snapshot/data -mappers 16
 
-hbase org.apache.hadoop.hbase.mapreduce.HashTable --batchsize=10 --numhashfiles=10 test /tmp/tmp/EndToEndIT-snapshot/hashtable
+hbase org.apache.hadoop.hbase.mapreduce.HashTable --batchsize=10 --numhashfiles=10 test /tmp/EndToEndIT-snapshot/hashtable
 
 hbase shell <<EOF
 disable 'test'
