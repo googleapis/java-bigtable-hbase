@@ -135,17 +135,12 @@ public class EndToEndIT {
 
   @After
   public void teardown() throws IOException {
-    final List<GcsPath> paths = gcsUtil.expand(GcsPath.fromUri(syncTableOutputDir + "*"));
+    final List<GcsPath> paths = gcsUtil.expand(GcsPath.fromUri(workDir + "*"));
 
     if (!paths.isEmpty()) {
-      final List<String> pathStrs = new ArrayList<>();
-
-      for (GcsPath path : paths) {
-        pathStrs.add(path.toString());
-      }
       // TODO: cleanup fails when tests time out. Add a orphan cleaner in the setup()
       // https://github.com/googleapis/java-bigtable/blob/35588d89b9b243eb691a29d3aff16b9f5a08fbb8/google-cloud-bigtable/src/test/java/com/google/cloud/bigtable/test_helpers/env/AbstractTestEnv.java#L108-L119
-      this.gcsUtil.remove(pathStrs);
+      this.gcsUtil.remove(paths.stream().map(GcsPath::toString).collect(Collectors.toList()));
     }
 
     connection.getAdmin().deleteTable(TableName.valueOf(tableId));
