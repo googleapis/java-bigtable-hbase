@@ -23,6 +23,7 @@ import com.google.cloud.bigtable.beam.sequencefiles.ImportJob;
 import com.google.cloud.bigtable.beam.sequencefiles.Utils;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.Pipeline;
@@ -30,6 +31,7 @@ import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.Wait;
@@ -68,12 +70,7 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 @InternalExtensionOnly
 public class ImportJobFromHbaseSnapshot {
   private static final Log LOG = LogFactory.getLog(ImportJobFromHbaseSnapshot.class);
-<<<<<<< HEAD
   private static final String CONTAINER_IMAGE_PATH_PREFIX = "gcr.io/cloud-bigtable-ecosystem/unified-harness:";
-=======
-  private static final String CONTAINER_IMAGE_PATH_PREFIX =
-      "gcr.io/cloud-bigtable-ecosystem/unified-harness:";
->>>>>>> d7acbb0ad52fe04f28dd2f6fc5e317680ec18adb
 
   public interface ImportOptions extends ImportJob.ImportOptions {
     @Description("The HBase root dir where HBase snapshot files resides.")
@@ -101,18 +98,6 @@ public class ImportJobFromHbaseSnapshot {
     ImportOptions opts =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(ImportOptions.class);
 
-    if(opts.getEnableSnappy() != null && opts.getEnableSnappy()) {
-        DataflowPipelineOptions dataFlowOpts = opts.as(DataflowPipelineOptions.class);
-        dataFlowOpts.setSdkContainerImage(CONTAINER_IMAGE_PATH_PREFIX + ReleaseInfo.getReleaseInfo().getVersion());
-        List<String> svcOpts = dataFlowOpts.getDataflowServiceOptions();
-        if (svcOpts != null) {
-          svcOpts.add("use_runner_v2");
-          dataFlowOpts.setDataflowServiceOptions(svcOpts);
-        } else {
-          dataFlowOpts.setDataflowServiceOptions(Arrays.asList("use_runner_v2"));
-        }
-    }
-
     LOG.info("Building Pipeline");
     Pipeline pipeline = buildPipeline(opts);
     LOG.info("Running Pipeline");
@@ -125,6 +110,19 @@ public class ImportJobFromHbaseSnapshot {
 
   @VisibleForTesting
   static Pipeline buildPipeline(ImportOptions opts) throws Exception {
+
+    if(opts.getEnableSnappy() != null && opts.getEnableSnappy()) {
+        DataflowPipelineOptions dataFlowOpts = opts.as(DataflowPipelineOptions.class);
+        dataFlowOpts.setSdkContainerImage(CONTAINER_IMAGE_PATH_PREFIX + ReleaseInfo.getReleaseInfo().getVersion());
+        List<String> expOpts = dataFlowOpts.getExperiments();
+        if (expOpts != null) {
+            expOpts.add("use_runner_v2");
+            dataFlowOpts.setExperiments(expOpts);
+        } else {
+            final List<String> exps = new ArrayList<String>(Arrays.asList("use_runner_v2"));
+            dataFlowOpts.setExperiments(exps);
+        }
+    }
 
     Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
     HBaseSnapshotInputConfigBuilder configurationBuilder =

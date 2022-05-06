@@ -84,7 +84,7 @@ public class EndToEndIT {
   private static final Logger LOG = LoggerFactory.getLogger(HBaseResultToMutationFn.class);
   private static final String SNAPSHOT_FIXTURE_NAME = "EndToEndIT-snapshot.zip";
   private static final String TEST_SNAPSHOT_NAME = "test-snapshot";
-  private static final String TEST_SNAPPY_SNAPSHOT_NAME = "demo-snapshot";
+  private static final String TEST_SNAPPY_SNAPSHOT_NAME = "test-snappy-snapshot";
   private static final String CF = "cf";
 
   private TestProperties properties;
@@ -346,7 +346,7 @@ public class EndToEndIT {
 
     // Validate the counters.
     Map<String, Long> counters = getCountMap(result);
-    Assert.assertEquals(counters.get("ranges_matched"), (Long) 101L);
+    Assert.assertEquals(counters.get("ranges_matched"), (Long) 100L);
     Assert.assertEquals(counters.get("ranges_not_matched"), (Long) 0L);
   }
 
@@ -409,7 +409,7 @@ public class EndToEndIT {
 
     // Assert that the output collection is the right one.
     Map<String, Long> counters = getCountMap(result);
-    Assert.assertEquals(counters.get("ranges_matched"), (Long) 97L);
+    Assert.assertEquals(counters.get("ranges_matched"), (Long) 96L);
     Assert.assertEquals(counters.get("ranges_not_matched"), (Long) 4L);
   }
 
@@ -459,7 +459,7 @@ public class EndToEndIT {
 
     // Validate the counters.
     Map<String, Long> counters = getCountMap(result);
-    Assert.assertEquals(counters.get("ranges_matched"), (Long) 101L);
+    Assert.assertEquals(counters.get("ranges_matched"), (Long) 100L);
     Assert.assertEquals(counters.get("ranges_not_matched"), (Long) 0L);
   }
 }
