@@ -22,6 +22,7 @@ import com.google.cloud.bigtable.beam.sequencefiles.HBaseResultToMutationFn;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob;
 import com.google.cloud.bigtable.beam.sequencefiles.Utils;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.MoreObjects;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,7 @@ import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO;
+import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.PipelineOptions;
@@ -86,6 +88,7 @@ public class ImportJobFromHbaseSnapshot {
     void setSnapshotName(String snapshotName);
 
     @Description("Is importing Snappy compressed snapshot.")
+    @Default.Boolean(false)
     Boolean getEnableSnappy();
 
     @SuppressWarnings("unused")
@@ -111,17 +114,16 @@ public class ImportJobFromHbaseSnapshot {
   @VisibleForTesting
   static Pipeline buildPipeline(ImportOptions opts) throws Exception {
 
-    if(opts.getEnableSnappy() != null && opts.getEnableSnappy()) {
+    if(opts.getEnableSnappy()) {
         DataflowPipelineOptions dataFlowOpts = opts.as(DataflowPipelineOptions.class);
         dataFlowOpts.setSdkContainerImage(CONTAINER_IMAGE_PATH_PREFIX + ReleaseInfo.getReleaseInfo().getVersion());
-        List<String> expOpts = dataFlowOpts.getExperiments();
-        if (expOpts != null) {
-            expOpts.add("use_runner_v2");
-            dataFlowOpts.setExperiments(expOpts);
-        } else {
-            final List<String> exps = new ArrayList<String>(Arrays.asList("use_runner_v2"));
-            dataFlowOpts.setExperiments(exps);
+        
+        List<String> expOpts = MoreObjects.firstNonNull(dataFlowOpts.getExperiments(), new ArrayList());
+        if (!expOpts.contains("use_runner_v2")) {
+          expOpts = new ArrayList<>(expOpts);
+          expOpts.add("use_runner_v2");
         }
+        dataFlowOpts.setExperiments(expOpts);
     }
 
     Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
