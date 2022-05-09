@@ -222,12 +222,12 @@ mkdir /tmp/EndToEndIT-snapshot
 hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot test-snapshot -copy-to /tmp/EndToEndIT-snapshot/data -mappers 16
 hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot test-snappy-snapshot -copy-to /tmp/EndToEndIT-snapshot/data -mappers 16
  
-# Copy the data to local filesystem
-hadoop fs -copyToLocal /tmp/EndToEndIT-snapshot/ /tmp/
- 
 # You only need 1 hashtable output as logically the data is same in compressed and uncompressed tables.
 hbase org.apache.hadoop.hbase.mapreduce.HashTable --batchsize=10 --numhashfiles=10 test-table /tmp/EndToEndIT-snapshot/hashtable
  
+# Copy the data to local filesystem
+hadoop fs -copyToLocal /tmp/EndToEndIT-snapshot/ /tmp/
+ dd
 # Export the snapshot
 cd /tmp/EndToEndIT-snapshot
 zip -r /tmp/EndToEndIT-snapshot.zip data hashtable
@@ -243,3 +243,5 @@ drop 'test-snappy-table'
 delete_snapshot 'test-snapshot'
 delete_snapshot 'test-snappy-snapshot'
 EOF
+
+hadoop fs -rm -r /tmp/EndToEndIT-snapshot
