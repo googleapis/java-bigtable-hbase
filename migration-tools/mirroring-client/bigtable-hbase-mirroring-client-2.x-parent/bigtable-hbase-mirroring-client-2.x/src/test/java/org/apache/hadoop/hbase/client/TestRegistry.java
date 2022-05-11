@@ -28,27 +28,25 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.RegionLocations;
 import org.apache.hadoop.hbase.ServerName;
 
-public class TestRegistry implements AsyncRegistry {
+// TODO (Vermas2012) The upstream AsyncRegistry is deleted in latest hbase version (2.3+), we need
+// to understand if we need this registry now. There is just 1 test depending on it.
+public class TestRegistry  {
   TestRegistry(Configuration conf) {}
 
-  @Override
   public CompletableFuture<RegionLocations> getMetaRegionLocation() {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public CompletableFuture<String> getClusterId() {
     CompletableFuture<String> future = new CompletableFuture();
     future.complete("clusterId");
     return future;
   }
 
-  @Override
   public CompletableFuture<ServerName> getMasterAddress() {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void close() {
     throw new UnsupportedOperationException();
   }

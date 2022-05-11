@@ -62,6 +62,7 @@ import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.AsyncTable;
+import org.apache.hadoop.hbase.client.AsyncTableRegionLocator;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
@@ -74,6 +75,7 @@ import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.ScanResultConsumerBase;
 import org.apache.hadoop.hbase.client.ServiceCaller;
+import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.io.TimeRange;
 import org.apache.hadoop.hbase.shaded.com.google.protobuf.RpcChannel;
 
@@ -128,6 +130,16 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
   @Override
   public TableName getName() {
     return this.primaryTable.getName();
+  }
+
+  @Override
+  public CompletableFuture<TableDescriptor> getDescriptor(){
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
+  public AsyncTableRegionLocator getRegionLocator() {
+    throw new UnsupportedOperationException("not implemented");
   }
 
   @Override
@@ -513,6 +525,12 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
   @Override
   public CheckAndMutateBuilder checkAndMutate(byte[] row, byte[] family) {
     return new MirroringCheckAndMutateBuilder(this.primaryTable.checkAndMutate(row, family));
+  }
+
+  @Override
+  // TODO(vermas2012) Implement the method.
+  public CheckAndMutateWithFilterBuilder checkAndMutate(byte[] row, org.apache.hadoop.hbase.filter.Filter filter) {
+    throw new UnsupportedOperationException("not implemented");
   }
 
   @Override

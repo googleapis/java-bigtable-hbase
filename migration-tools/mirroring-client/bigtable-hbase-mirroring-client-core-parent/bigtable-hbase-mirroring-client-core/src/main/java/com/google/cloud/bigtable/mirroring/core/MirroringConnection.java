@@ -206,6 +206,11 @@ public class MirroringConnection implements Connection {
   }
 
   @Override
+  public String getClusterId(){
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
   public Table getTable(TableName tableName) throws IOException {
     Log.trace("getTable(%s)", tableName);
     return this.getTable(tableName, this.executorService);

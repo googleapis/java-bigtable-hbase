@@ -441,6 +441,12 @@ limitations under the License.
             </configuration>
           </execution>
           <execution>
+            <id>enforce-version-consistency</id>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
+          <execution>
             <id>enforce-banned-deps</id>
             <goals>
               <goal>enforce</goal>

@@ -28,6 +28,7 @@ import java.util.concurrent.ExecutorService;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.TableDescriptor;
@@ -67,6 +68,11 @@ public class MirroringTable extends com.google.cloud.bigtable.mirroring.core.Mir
   @Override
   public TableDescriptor getDescriptor() throws IOException {
     return primaryTable.getDescriptor();
+  }
+
+  @Override
+  public RegionLocator getRegionLocator(){
+    throw new UnsupportedOperationException("not implemented");
   }
 
   @Override

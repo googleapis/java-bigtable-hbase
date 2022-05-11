@@ -414,6 +414,12 @@ limitations under the License.
         <artifactId>maven-enforcer-plugin</artifactId>
         <executions>
           <execution>
+            <id>enforce-version-consistency</id>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
+          <execution>
             <id>enforce</id>
             <configuration>
               <skip>true</skip>

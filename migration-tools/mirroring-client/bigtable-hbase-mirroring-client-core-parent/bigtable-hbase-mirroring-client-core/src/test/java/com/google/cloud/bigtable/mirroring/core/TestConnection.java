@@ -60,6 +60,11 @@ public class TestConnection implements Connection {
   }
 
   @Override
+  public String getClusterId(){
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
   public Table getTable(TableName tableName) throws IOException {
     ResultScanner scanner = mock(ResultScanner.class);
     doReturn(Result.create(new Cell[0])).when(scanner).next();

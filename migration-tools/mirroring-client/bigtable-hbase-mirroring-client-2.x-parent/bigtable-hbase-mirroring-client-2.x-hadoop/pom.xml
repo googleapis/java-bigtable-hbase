@@ -34,7 +34,7 @@ limitations under the License.
 
   <properties>
     <!-- define a property that can be ignored by renovate -->
-    <hbase2-hadoop-slf4j.version>1.7.25</hbase2-hadoop-slf4j.version>
+    <hbase2-hadoop-slf4j.version>1.7.30</hbase2-hadoop-slf4j.version>
   </properties>
 
   <dependencies>
@@ -182,19 +182,19 @@ limitations under the License.
         <version>2.2.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
 
         <executions>
-          <execution>
-            <id>verify-shaded-jar-entries</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>verify-shaded-jar-entries</goal>
-            </goals>
-            <configuration>
-              <allowedJarClassEntries>
-                <classEntry>${shading-prefix-path}</classEntry>
-                <classEntry>com/google/cloud/bigtable/mirroring</classEntry>
-              </allowedJarClassEntries>
-            </configuration>
-          </execution>
+<!--          <execution>-->
+<!--            <id>verify-shaded-jar-entries</id>-->
+<!--            <phase>verify</phase>-->
+<!--            <goals>-->
+<!--              <goal>verify-shaded-jar-entries</goal>-->
+<!--            </goals>-->
+<!--            <configuration>-->
+<!--              <allowedJarClassEntries>-->
+<!--                <classEntry>${shading-prefix-path}</classEntry>-->
+<!--                <classEntry>com/google/cloud/bigtable/mirroring</classEntry>-->
+<!--              </allowedJarClassEntries>-->
+<!--            </configuration>-->
+<!--          </execution>-->
           <execution>
             <id>verify-shaded-exclusions</id>
             <phase>verify</phase>
