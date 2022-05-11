@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright 2021 Google LCC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.google.cloud.bigtable</groupId>
+    <artifactId>mirroring-client</artifactId>
+    <version>2.0.0-alpha2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+  </parent>
+
+  <artifactId>bigtable-hbase-mirroring-client-core-parent</artifactId>
+  <packaging>pom</packaging>
+  <name>${project.groupId}:${project.artifactId}</name>
+  <version>2.0.0-alpha2-SNAPSHOT</version>
+  <description>
+    This project is a parent project for the hbase mirroring clients core project.
+  </description>
+
+  <modules>
+    <module>bigtable-hbase-mirroring-client-core</module>
+    <module>protobuf-java-format-shaded</module>
+  </modules>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <configuration>
+            <windowtitle>
+              HBase / Bigtable mirroring Client
+            </windowtitle>
+            <doctitle>
+              HBase / Bigtable mirroring Client
+            </doctitle>
+            <overview>../overview.html</overview>
+            <bottom><![CDATA[<br>]]></bottom>
+
+            <detectLinks/>
+            <links>
+              <link>https://hbase.apache.org/apidocs/</link>
+              <link>http://www.grpc.io/grpc-java/javadoc/</link>
+            </links>
+          </configuration>
+        </plugin>
+
+        <!-- disable google-cloud-shared-config enforcement checks because
+        hbase-client's dependency subtree doesn't follow the same rules and is
+        unable to be fixed here -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>enforce</id>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+            <!-- hbase-client doesnt align slf4j-api & slf4j-log4j -->
+            <execution>
+              <id>enforce-version-consistency-slf4j</id>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+            <!-- This must be a drop in replacement for hbase-client, so can't
+              manage hbase's deps -->
+            <execution>
+              <id>enforce-banned-deps</id>
+              <goals>
+                <goal>enforce</goal>
+              </goals>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>
