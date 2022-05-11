@@ -32,4 +32,8 @@ public interface Serializer {
    * @return data representing the relevant log entry
    */
   byte[] serialize(Mutation mutation, Throwable failureCause);
+
+  interface Factory {
+    Serializer create() throws Throwable;
+  }
 }

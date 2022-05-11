@@ -220,11 +220,10 @@ public class LogBufferTest {
     assertNull(res.poll());
 
     // The buffer should no longer block on `drain()`. Instead, it should return `null`.
-    res = buffer.drain();
-    assertNull(res);
+    assertNull(buffer.drain());
   }
 
-  @Test
+  @Test(timeout = 5000)
   public void closingUnblocksDrain() throws InterruptedException {
     final LogBuffer buffer = new LogBuffer(11, true);
 
@@ -252,7 +251,7 @@ public class LogBufferTest {
     thread.join();
   }
 
-  @Test
+  @Test(timeout = 5000)
   public void closingUnblocksAppend() throws InterruptedException, ExecutionException {
     final LogBuffer buffer = new LogBuffer(3, false);
     final byte[] buf1 = new byte[] {0, 1, 2};
@@ -299,17 +298,19 @@ public class LogBufferTest {
   @Test
   public void closureCauseIsReported() throws InterruptedException {
     final LogBuffer buffer = new LogBuffer(11, true);
-    buffer.closeWithCause(new IOException("foo"));
-    buffer.closeWithCause(new IOException("bar"));
+    // Close the buffer with an exception, effectively simulating the storage failing.
+    buffer.closeWithCause(new IOException("exception_1"));
+    // Verify that the first exception is not clobbered by further closures.
+    buffer.closeWithCause(new IOException("exception_2"));
     buffer.close();
     final byte[] buf1 = new byte[] {0, 1, 2};
     try {
-      buffer.append("foo".getBytes(StandardCharsets.UTF_8));
+      buffer.append("failed_mutation".getBytes(StandardCharsets.UTF_8));
       fail("IllegalStateException was expected.");
     } catch (IllegalStateException e) {
       Throwable cause = e.getCause();
       assertNotNull(cause);
-      assertEquals("foo", cause.getMessage());
+      assertEquals("exception_1", cause.getMessage());
     }
   }
 }

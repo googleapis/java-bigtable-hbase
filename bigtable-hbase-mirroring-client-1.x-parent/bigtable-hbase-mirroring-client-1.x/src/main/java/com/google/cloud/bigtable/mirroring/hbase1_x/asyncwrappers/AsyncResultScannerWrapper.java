@@ -18,14 +18,11 @@ package com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringResultScanner;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOException;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableCloseable;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import io.opencensus.common.Scope;
 import io.opencensus.trace.Span;
 import java.io.IOException;
@@ -35,7 +32,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.client.Table;
 
 /**
  * {@link MirroringResultScanner} schedules asynchronous next()s after synchronous operations to
@@ -45,8 +41,7 @@ import org.apache.hadoop.hbase.client.Table;
  * <p>Note that next() method returns a Supplier<> as its result is used only in callbacks
  */
 @InternalApi("For internal usage only")
-public class AsyncResultScannerWrapper implements ListenableCloseable {
-  private final Table table;
+public class AsyncResultScannerWrapper {
   private final MirroringTracer mirroringTracer;
   /**
    * We use this queue to ensure that asynchronous next()s are called in the same order and with the
@@ -54,61 +49,50 @@ public class AsyncResultScannerWrapper implements ListenableCloseable {
    */
   private final ConcurrentLinkedQueue<ScannerRequestContext> nextContextQueue;
 
+  /**
+   * We use this queue to ensure that asynchronous verification of scan results is called in the
+   * same order as next()s on primary result scanner.
+   */
+  public final ConcurrentLinkedQueue<AsyncScannerVerificationPayload> nextResultQueue;
+
   private final ResultScanner scanner;
   private final ListeningExecutorService executorService;
   private final AtomicBoolean closed = new AtomicBoolean(false);
-  /**
-   * We are counting references to this object to be able to call {@link ResultScanner#close()} on
-   * underlying scanner in a predictable way. The reference count is increased before submitting
-   * each asynchronous task, and decreased after it finishes. Moreover, this object holds an
-   * implicit self-reference, which in released in {@link #asyncClose()}.
-   *
-   * <p>In this way we are able to call ResultScanner#close() only if all scheduled tasks have
-   * finished and #asyncClose() was called.
-   */
-  private ListenableReferenceCounter pendingOperationsReferenceCounter;
 
   public AsyncResultScannerWrapper(
-      Table table,
       ResultScanner scanner,
       ListeningExecutorService executorService,
       MirroringTracer mirroringTracer) {
-    super();
-    this.table = table;
     this.scanner = scanner;
     this.mirroringTracer = mirroringTracer;
-    this.pendingOperationsReferenceCounter = new ListenableReferenceCounter();
     this.executorService = executorService;
     this.nextContextQueue = new ConcurrentLinkedQueue<>();
+    this.nextResultQueue = new ConcurrentLinkedQueue<>();
   }
 
-  public Supplier<ListenableFuture<AsyncScannerVerificationPayload>> next(
-      final ScannerRequestContext context) {
-    return new Supplier<ListenableFuture<AsyncScannerVerificationPayload>>() {
+  public Supplier<ListenableFuture<Void>> next(final ScannerRequestContext context) {
+    return new Supplier<ListenableFuture<Void>>() {
       @Override
-      public ListenableFuture<AsyncScannerVerificationPayload> get() {
-        // TODO(mwalkiewicz): this is not locked - check if it is ok?
+      public ListenableFuture<Void> get() {
         nextContextQueue.add(context);
-        ListenableFuture<AsyncScannerVerificationPayload> future = scheduleNext();
-        pendingOperationsReferenceCounter.holdReferenceUntilCompletion(future);
-        return future;
+        return scheduleNext();
       }
     };
   }
 
-  private ListenableFuture<AsyncScannerVerificationPayload> scheduleNext() {
+  private ListenableFuture<Void> scheduleNext() {
     return this.executorService.submit(
-        new Callable<AsyncScannerVerificationPayload>() {
+        new Callable<Void>() {
           @Override
-          public AsyncScannerVerificationPayload call() throws AsyncScannerExceptionWithContext {
-            // TODO: verify if lock on table is required or the lock on the scanner would be enough.
-            synchronized (AsyncResultScannerWrapper.this.table) {
+          public Void call() throws AsyncScannerExceptionWithContext {
+            synchronized (AsyncResultScannerWrapper.this) {
               final ScannerRequestContext requestContext =
                   AsyncResultScannerWrapper.this.nextContextQueue.remove();
               try (Scope scope =
                   AsyncResultScannerWrapper.this.mirroringTracer.spanFactory.spanAsScope(
                       requestContext.span)) {
-                return performNext(requestContext);
+                AsyncResultScannerWrapper.this.nextResultQueue.add(performNext(requestContext));
+                return null;
               }
             }
           }
@@ -156,52 +140,24 @@ public class AsyncResultScannerWrapper implements ListenableCloseable {
     return new AsyncScannerVerificationPayload(requestContext, result);
   }
 
-  public ListenableFuture<Boolean> renewLease() {
-    return submitTask(
-        new Callable<Boolean>() {
-          @Override
-          public Boolean call() {
-            boolean result;
-            synchronized (table) {
-              result = scanner.renewLease();
-            }
-            return result;
-          }
-        });
+  /**
+   * This operation is thread-safe, but not asynchronous, because there is no need to invoke it
+   * asynchronously.
+   */
+  public boolean renewLease() {
+    synchronized (this) {
+      return scanner.renewLease();
+    }
   }
 
-  public ListenableFuture<Void> asyncClose() {
+  public void close() {
     if (this.closed.getAndSet(true)) {
-      return this.pendingOperationsReferenceCounter.getOnLastReferenceClosed();
+      return;
     }
 
-    this.pendingOperationsReferenceCounter.decrementReferenceCount();
-    this.pendingOperationsReferenceCounter
-        .getOnLastReferenceClosed()
-        .addListener(
-            new Runnable() {
-              @Override
-              public void run() {
-                synchronized (table) {
-                  scanner.close();
-                }
-              }
-            },
-            MoreExecutors.directExecutor());
-    return this.pendingOperationsReferenceCounter.getOnLastReferenceClosed();
-  }
-
-  public <T> ListenableFuture<T> submitTask(Callable<T> task) {
-    ListenableFuture<T> future = this.executorService.submit(task);
-    this.pendingOperationsReferenceCounter.holdReferenceUntilCompletion(future);
-    return future;
-  }
-
-  @Override
-  public void addOnCloseListener(Runnable listener) {
-    this.pendingOperationsReferenceCounter
-        .getOnLastReferenceClosed()
-        .addListener(listener, MoreExecutors.directExecutor());
+    synchronized (this) {
+      scanner.close();
+    }
   }
 
   /**
@@ -214,8 +170,6 @@ public class AsyncResultScannerWrapper implements ListenableCloseable {
     public final Scan scan;
     /** Results of corresponding scan operation on primary ResultScanner. */
     public final Result[] result;
-    /** Number of Results that were retrieved from this scanner before current request. */
-    public final int startingIndex;
     /** Number of Results requested in current next call. */
     public final int numRequests;
     /** Tracing Span will be used as a parent span of current request. */
@@ -228,27 +182,20 @@ public class AsyncResultScannerWrapper implements ListenableCloseable {
     public final boolean singleNext;
 
     private ScannerRequestContext(
-        Scan scan,
-        Result[] result,
-        int startingIndex,
-        int numRequests,
-        boolean singleNext,
-        Span span) {
+        Scan scan, Result[] result, int numRequests, boolean singleNext, Span span) {
       this.scan = scan;
       this.result = result;
-      this.startingIndex = startingIndex;
       this.numRequests = numRequests;
       this.span = span;
       this.singleNext = singleNext;
     }
 
-    public ScannerRequestContext(
-        Scan scan, Result[] result, int startingIndex, int numRequests, Span span) {
-      this(scan, result, startingIndex, numRequests, false, span);
+    public ScannerRequestContext(Scan scan, Result[] result, int numRequests, Span span) {
+      this(scan, result, numRequests, false, span);
     }
 
-    public ScannerRequestContext(Scan scan, Result result, int startingIndex, Span span) {
-      this(scan, new Result[] {result}, startingIndex, 1, true, span);
+    public ScannerRequestContext(Scan scan, Result result, Span span) {
+      this(scan, new Result[] {result}, 1, true, span);
     }
   }
 

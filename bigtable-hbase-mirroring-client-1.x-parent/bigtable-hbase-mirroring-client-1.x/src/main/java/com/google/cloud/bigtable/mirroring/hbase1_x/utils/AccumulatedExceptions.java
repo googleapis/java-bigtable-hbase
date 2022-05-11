@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
 
 import com.google.api.core.InternalApi;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 
 /**
@@ -53,7 +54,7 @@ public class AccumulatedExceptions {
     if (this.exception instanceof IOException) {
       throw (IOException) this.exception;
     } else {
-      assert this.exception instanceof RuntimeException;
+      Preconditions.checkState(this.exception instanceof RuntimeException);
       throw (RuntimeException) this.exception;
     }
   }
@@ -62,7 +63,6 @@ public class AccumulatedExceptions {
     try {
       this.rethrowIfCaptured();
     } catch (IOException e) {
-      assert false;
       throw new RuntimeException(e);
     }
   }

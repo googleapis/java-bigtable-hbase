@@ -116,4 +116,11 @@ public class DefaultSerializer implements Serializer {
       }
     }
   }
+
+  public static class Factory implements Serializer.Factory {
+    @Override
+    public Serializer create() {
+      return new DefaultSerializer();
+    }
+  }
 }

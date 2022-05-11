@@ -17,8 +17,9 @@ package com.google.cloud.bigtable.hbase.mirroring.utils;
 
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.DefaultSecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.Logger;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.FailedMutationLogger;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
+import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hadoop.hbase.client.Mutation;
@@ -29,8 +30,8 @@ public class TestWriteErrorConsumer implements SecondaryWriteErrorConsumer {
   static AtomicInteger errorCount = new AtomicInteger(0);
   private final DefaultSecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
 
-  public TestWriteErrorConsumer(Logger writeErrorLogger) {
-    this.secondaryWriteErrorConsumer = new DefaultSecondaryWriteErrorConsumer(writeErrorLogger);
+  public TestWriteErrorConsumer(FailedMutationLogger failedMutationLogger) {
+    this.secondaryWriteErrorConsumer = new DefaultSecondaryWriteErrorConsumer(failedMutationLogger);
   }
 
   public static int getErrorCount() {
@@ -43,7 +44,7 @@ public class TestWriteErrorConsumer implements SecondaryWriteErrorConsumer {
 
   @Override
   public void consume(HBaseOperation operation, Row row, Throwable cause) {
-    assert row instanceof Mutation || row instanceof RowMutations;
+    Preconditions.checkArgument(row instanceof Mutation || row instanceof RowMutations);
     errorCount.addAndGet(1);
     this.secondaryWriteErrorConsumer.consume(operation, row, cause);
   }
@@ -51,9 +52,16 @@ public class TestWriteErrorConsumer implements SecondaryWriteErrorConsumer {
   @Override
   public void consume(HBaseOperation operation, List<? extends Row> operations, Throwable cause) {
     for (Row row : operations) {
-      assert row instanceof Mutation || row instanceof RowMutations;
+      Preconditions.checkArgument(row instanceof Mutation || row instanceof RowMutations);
     }
     errorCount.addAndGet(operations.size());
     this.secondaryWriteErrorConsumer.consume(operation, operations, cause);
+  }
+
+  public static class Factory implements SecondaryWriteErrorConsumer.Factory {
+    @Override
+    public SecondaryWriteErrorConsumer create(FailedMutationLogger failedMutationLogger) {
+      return new TestWriteErrorConsumer(failedMutationLogger);
+    }
   }
 }

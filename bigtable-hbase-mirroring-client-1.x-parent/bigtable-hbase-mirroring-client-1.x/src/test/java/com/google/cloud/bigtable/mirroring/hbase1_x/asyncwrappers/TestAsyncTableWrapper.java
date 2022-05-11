@@ -22,9 +22,6 @@ import static org.mockito.Mockito.verify;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.apache.hadoop.hbase.client.Table;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,13 +31,12 @@ import org.junit.runners.JUnit4;
 public class TestAsyncTableWrapper {
 
   @Test
-  public void testMultipleCloseCallsCloseOnTableOnlyOnce()
-      throws InterruptedException, ExecutionException, TimeoutException, IOException {
+  public void testMultipleCloseCallsCloseOnTableOnlyOnce() throws IOException {
     Table table = mock(Table.class);
     AsyncTableWrapper asyncTableWrapper =
         new AsyncTableWrapper(table, mock(ListeningExecutorService.class), new MirroringTracer());
-    asyncTableWrapper.asyncClose().get(3, TimeUnit.SECONDS);
-    asyncTableWrapper.asyncClose().get(3, TimeUnit.SECONDS);
+    asyncTableWrapper.close();
+    asyncTableWrapper.close();
     verify(table, times(1)).close();
   }
 }

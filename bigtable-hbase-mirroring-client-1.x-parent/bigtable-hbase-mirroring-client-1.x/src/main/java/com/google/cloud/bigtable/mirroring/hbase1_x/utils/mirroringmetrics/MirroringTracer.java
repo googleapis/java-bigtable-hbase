@@ -20,6 +20,13 @@ import io.opencensus.stats.Stats;
 import io.opencensus.tags.Tags;
 import io.opencensus.trace.Tracing;
 
+/**
+ * Sets up {@link MirroringSpanFactory} and {@link MirroringMetricsRecorder} using default {@link
+ * io.opencensus.tags.Tagger}, {@link io.opencensus.stats.StatsRecorder} and {@link
+ * io.opencensus.trace.Tracer}.
+ *
+ * <p>Used as a provider for {@link MirroringSpanFactory} and {@link MirroringMetricsRecorder}.
+ */
 @InternalApi("For internal usage only")
 public class MirroringTracer {
   public final MirroringSpanFactory spanFactory;

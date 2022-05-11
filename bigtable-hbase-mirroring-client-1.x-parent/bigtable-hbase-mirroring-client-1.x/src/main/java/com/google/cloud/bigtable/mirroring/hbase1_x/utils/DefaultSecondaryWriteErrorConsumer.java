@@ -15,26 +15,30 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
 
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.Logger;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.FailedMutationLogger;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import java.util.List;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 
+/**
+ * Default implementation of {@link SecondaryWriteErrorConsumer} which forwards write errors to
+ * {@link FailedMutationLogger}.
+ */
 public class DefaultSecondaryWriteErrorConsumer implements SecondaryWriteErrorConsumer {
   private static final com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger Log =
       new com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger(
           DefaultSecondaryWriteErrorConsumer.class);
-  private final Logger writeErrorLogger;
+  private final FailedMutationLogger failedMutationLogger;
 
-  public DefaultSecondaryWriteErrorConsumer(Logger writeErrorLogger) {
-    this.writeErrorLogger = writeErrorLogger;
+  public DefaultSecondaryWriteErrorConsumer(FailedMutationLogger failedMutationLogger) {
+    this.failedMutationLogger = failedMutationLogger;
   }
 
   private void consume(Mutation r, Throwable cause) {
     try {
-      writeErrorLogger.mutationFailed(r, cause);
+      failedMutationLogger.mutationFailed(r, cause);
     } catch (InterruptedException e) {
       Log.error(
           "Writing mutation that failed on secondary database to faillog interrupted: mutation=%s, failure_cause=%s, exception=%s",
@@ -56,7 +60,6 @@ public class DefaultSecondaryWriteErrorConsumer implements SecondaryWriteErrorCo
     } else if (row instanceof RowMutations) {
       consume((RowMutations) row, cause);
     } else {
-      assert false;
       throw new IllegalArgumentException("Not a write operation");
     }
   }
@@ -65,6 +68,13 @@ public class DefaultSecondaryWriteErrorConsumer implements SecondaryWriteErrorCo
   public void consume(HBaseOperation operation, List<? extends Row> operations, Throwable cause) {
     for (Row row : operations) {
       consume(operation, row, cause);
+    }
+  }
+
+  public static class Factory implements SecondaryWriteErrorConsumer.Factory {
+    @Override
+    public SecondaryWriteErrorConsumer create(FailedMutationLogger failedMutationLogger) {
+      return new DefaultSecondaryWriteErrorConsumer(failedMutationLogger);
     }
   }
 }

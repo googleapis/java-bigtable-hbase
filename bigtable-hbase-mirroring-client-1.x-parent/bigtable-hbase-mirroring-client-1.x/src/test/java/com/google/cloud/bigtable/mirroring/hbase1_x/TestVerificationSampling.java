@@ -33,6 +33,9 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.NoopTimestamper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -60,6 +63,7 @@ import org.mockito.stubbing.Answer;
 @RunWith(JUnit4.class)
 public class TestVerificationSampling {
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  Timestamper timestamper = new NoopTimestamper();
 
   @Rule
   public final ExecutorServiceRule executorServiceRule =
@@ -90,8 +94,12 @@ public class TestVerificationSampling {
                 flowController,
                 secondaryWriteErrorConsumer,
                 readSampler,
+                timestamper,
                 false,
-                new MirroringTracer()));
+                false,
+                new MirroringTracer(),
+                mock(ReferenceCounter.class),
+                10));
   }
 
   @Test
@@ -165,7 +173,34 @@ public class TestVerificationSampling {
   }
 
   @Test
-  public void isBatchSampled() throws IOException, InterruptedException {
+  public void isBatchSampledWithSamplingEnabled() throws IOException, InterruptedException {
+    Put put = createPut("test", "test", "test", "test");
+    List<? extends Row> ops = ImmutableList.of(get, put);
+
+    doAnswer(
+            new Answer<Void>() {
+              @Override
+              public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
+                Object[] args = invocationOnMock.getArguments();
+                Object[] result = (Object[]) args[1];
+                result[0] = Result.create(new Cell[0]);
+                result[1] = Result.create(new Cell[0]);
+                return null;
+              }
+            })
+        .when(primaryTable)
+        .batch(eq(ops), any(Object[].class));
+
+    withSamplingEnabled(true);
+    mirroringTable.batch(ops);
+    executorServiceRule.waitForExecutor();
+    verify(readSampler, times(1)).shouldNextReadOperationBeSampled();
+    verify(primaryTable, times(1)).batch(eq(ops), any(Object[].class));
+    verify(secondaryTable, times(1)).batch(eq(ops), any(Object[].class));
+  }
+
+  @Test
+  public void isBatchSampledWithSamplingDisabled() throws IOException, InterruptedException {
     Put put = createPut("test", "test", "test", "test");
     List<? extends Row> ops = ImmutableList.of(get, put);
 
@@ -185,15 +220,9 @@ public class TestVerificationSampling {
 
     withSamplingEnabled(false);
     mirroringTable.batch(ops);
+    executorServiceRule.waitForExecutor();
     verify(readSampler, times(1)).shouldNextReadOperationBeSampled();
     verify(primaryTable, times(1)).batch(eq(ops), any(Object[].class));
-
-    withSamplingEnabled(true);
-    mirroringTable.batch(ops);
-    executorServiceRule.waitForExecutor();
-    verify(readSampler, times(2)).shouldNextReadOperationBeSampled();
-    verify(primaryTable, times(2)).batch(eq(ops), any(Object[].class));
-    verify(secondaryTable, times(1)).batch(eq(ops), any(Object[].class));
     verify(secondaryTable, times(1)).batch(eq(ImmutableList.of(put)), any(Object[].class));
   }
 

@@ -15,10 +15,18 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Set;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Row;
 
 public class OperationUtils {
   public static Put makePutFromResult(Result result) {
@@ -37,5 +45,44 @@ public class OperationUtils {
       }
     }
     return put;
+  }
+
+  public static Result emptyResult() {
+    return Result.create(new Cell[0]);
+  }
+
+  public static class RewrittenIncrementAndAppendIndicesInfo<T extends Row> {
+    /** In batch() when an input Row's isReturnResults is false an empty Result is returned. */
+    public final List<T> operations;
+
+    private final Set<Integer> unwantedResultIndices;
+
+    public RewrittenIncrementAndAppendIndicesInfo(List<? extends T> inputOperations) {
+      this.unwantedResultIndices = new HashSet<>();
+      this.operations = new ArrayList<>(inputOperations);
+      for (int i = 0; i < operations.size(); i++) {
+        Row row = operations.get(i);
+        if (row instanceof Increment) {
+          ((Increment) row).setReturnResults(true);
+          this.unwantedResultIndices.add(i);
+        } else if (row instanceof Append) {
+          ((Append) row).setReturnResults(true);
+          this.unwantedResultIndices.add(i);
+        }
+      }
+    }
+
+    public void discardUnwantedResults(Object[] results) {
+      if (!this.unwantedResultIndices.isEmpty()) {
+        for (int i = 0; i < results.length; i++) {
+          if (results[i] instanceof Result && this.unwantedResultIndices.contains(i)) {
+            Row op = this.operations.get(i);
+            if (op instanceof Increment || op instanceof Append) {
+              results[i] = emptyResult();
+            }
+          }
+        }
+      }
+    }
   }
 }

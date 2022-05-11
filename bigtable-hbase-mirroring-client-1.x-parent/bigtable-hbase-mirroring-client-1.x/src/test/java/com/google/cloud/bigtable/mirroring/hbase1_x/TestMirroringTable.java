@@ -40,19 +40,25 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringMetricsRecorder;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanFactory;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.NoopTimestamper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.verification.DefaultMismatchDetector;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
+import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector.ScannerResultVerifier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Longs;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
+import io.opencensus.trace.Tracing;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -106,15 +112,24 @@ public class TestMirroringTable {
 
   @Mock Table primaryTable;
   @Mock Table secondaryTable;
-  @Mock MismatchDetector mismatchDetector;
   @Mock FlowController flowController;
   @Mock SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
+  @Mock ReferenceCounter referenceCounter;
+  @Mock MirroringMetricsRecorder mirroringMetricsRecorder;
+  Timestamper timestamper = new NoopTimestamper();
 
+  MismatchDetector mismatchDetector;
   MirroringTable mirroringTable;
+  MirroringTracer mirroringTracer;
 
   @Before
   public void setUp() {
     setupFlowControllerMock(flowController);
+    this.mirroringTracer =
+        new MirroringTracer(
+            new MirroringSpanFactory(Tracing.getTracer(), mirroringMetricsRecorder),
+            mirroringMetricsRecorder);
+    this.mismatchDetector = spy(new DefaultMismatchDetector(this.mirroringTracer, 100));
     this.mirroringTable =
         spy(
             new MirroringTable(
@@ -125,13 +140,19 @@ public class TestMirroringTable {
                 flowController,
                 secondaryWriteErrorConsumer,
                 new ReadSampler(100),
+                this.timestamper,
                 false,
-                new MirroringTracer()));
+                false,
+                this.mirroringTracer,
+                this.referenceCounter,
+                1000));
   }
 
   private void waitForMirroringScanner(ResultScanner mirroringScanner)
       throws InterruptedException, ExecutionException, TimeoutException {
-    ((MirroringResultScanner) mirroringScanner).asyncClose().get(3, TimeUnit.SECONDS);
+    ((MirroringResultScanner) mirroringScanner)
+        .closePrimaryAndScheduleSecondaryClose()
+        .get(3, TimeUnit.SECONDS);
   }
 
   @Test
@@ -151,6 +172,24 @@ public class TestMirroringTable {
     verify(mismatchDetector, never()).get((Get) any(), (Throwable) any());
     verify(mismatchDetector, never())
         .get(ArgumentMatchers.<Get>anyList(), any(Result[].class), any(Result[].class));
+  }
+
+  @Test
+  public void testPrimaryReadExceptionDoesntCallSecondaryNorVerification() throws IOException {
+    Get request = createGet("test");
+    IOException expectedException = new IOException("expected");
+    when(primaryTable.get(request)).thenThrow(expectedException);
+
+    try {
+      mirroringTable.get(request);
+      fail("should have thrown");
+    } catch (IOException e) {
+      assertThat(e).isEqualTo(expectedException);
+    }
+    executorServiceRule.waitForExecutor();
+
+    verify(secondaryTable, never()).get(any(Get.class));
+    verify(mismatchDetector, never()).get(request, expectedException);
   }
 
   @Test
@@ -305,11 +344,15 @@ public class TestMirroringTable {
     waitForMirroringScanner(mirroringScanner);
     executorServiceRule.waitForExecutor();
 
-    verify(mismatchDetector, times(1)).scannerNext(scan, 0, expected1, expected1);
-    verify(mismatchDetector, times(1)).scannerNext(scan, 1, expected2, expected2);
-    verify(mismatchDetector, times(1)).scannerNext(scan, 2, (Result) null, null);
+    verify(mismatchDetector, times(1))
+        .scannerNext(eq(scan), any(ScannerResultVerifier.class), eq(expected1), eq(expected1));
+    verify(mismatchDetector, times(1))
+        .scannerNext(eq(scan), any(ScannerResultVerifier.class), eq(expected2), eq(expected2));
+    verify(mismatchDetector, times(1))
+        .scannerNext(
+            eq(scan), any(ScannerResultVerifier.class), eq((Result) null), eq((Result) null));
     verify(mismatchDetector, times(3))
-        .scannerNext(eq(scan), anyInt(), (Result) any(), (Result) any());
+        .scannerNext(eq(scan), any(ScannerResultVerifier.class), (Result) any(), (Result) any());
   }
 
   @Test
@@ -344,11 +387,14 @@ public class TestMirroringTable {
     waitForMirroringScanner(mirroringScanner);
     executorServiceRule.waitForExecutor();
 
-    verify(mismatchDetector, times(1)).scannerNext(scan, 0, expected1, expected1);
-    verify(mismatchDetector, times(1)).scannerNext(scan, 1, expectedException);
-    verify(mismatchDetector, times(1)).scannerNext(scan, 2, (Result) null, null);
+    verify(mismatchDetector, times(1))
+        .scannerNext(eq(scan), any(ScannerResultVerifier.class), eq(expected1), eq(expected1));
+    verify(mismatchDetector, times(1)).scannerNext(scan, expectedException);
+    verify(mismatchDetector, times(1))
+        .scannerNext(
+            eq(scan), any(ScannerResultVerifier.class), eq((Result) null), eq((Result) null));
     verify(mismatchDetector, times(2))
-        .scannerNext(eq(scan), anyInt(), (Result) any(), (Result) any());
+        .scannerNext(eq(scan), any(ScannerResultVerifier.class), (Result) any(), (Result) any());
   }
 
   @Test
@@ -375,7 +421,8 @@ public class TestMirroringTable {
     waitForMirroringScanner(mirroringScanner);
     executorServiceRule.waitForExecutor();
 
-    verify(mismatchDetector, times(1)).scannerNext(scan, 0, expected, expected);
+    verify(mismatchDetector, times(1))
+        .scannerNext(eq(scan), any(ScannerResultVerifier.class), eq(expected), eq(expected));
   }
 
   @Test
@@ -403,7 +450,7 @@ public class TestMirroringTable {
     waitForMirroringScanner(mirroringScanner);
     executorServiceRule.waitForExecutor();
 
-    verify(mismatchDetector, times(1)).scannerNext(scan, 0, 2, expectedException);
+    verify(mismatchDetector, times(1)).scannerNext(scan, 2, expectedException);
   }
 
   @Test
@@ -426,7 +473,7 @@ public class TestMirroringTable {
   }
 
   @Test
-  public void testScannerRenewLease()
+  public void testScannerRenewLeaseSecondaryFailed()
       throws IOException, InterruptedException, ExecutionException, TimeoutException {
     ResultScanner primaryScannerMock = mock(ResultScanner.class);
     when(primaryScannerMock.renewLease()).thenReturn(true);
@@ -448,33 +495,52 @@ public class TestMirroringTable {
   }
 
   @Test
-  public void testClosingTableWithFutureDecreasesListenableCounter()
+  public void testScannerRenewLeaseSecondaryUnsupported()
       throws IOException, InterruptedException, ExecutionException, TimeoutException {
-    ListenableReferenceCounter listenableReferenceCounter = spy(new ListenableReferenceCounter());
-    listenableReferenceCounter.holdReferenceUntilClosing(mirroringTable);
+    ResultScanner primaryScannerMock = mock(ResultScanner.class);
+    when(primaryScannerMock.renewLease()).thenReturn(true);
+    when(primaryTable.getScanner((Scan) any())).thenReturn(primaryScannerMock);
 
-    verify(listenableReferenceCounter, times(1)).incrementReferenceCount();
-    verify(listenableReferenceCounter, never()).decrementReferenceCount();
-    final ListenableFuture<Void> closingFuture = mirroringTable.asyncClose();
-    closingFuture.get(3, TimeUnit.SECONDS);
-    verify(listenableReferenceCounter, times(1)).decrementReferenceCount();
+    ResultScanner secondaryScannerMock = mock(ResultScanner.class);
+    when(secondaryScannerMock.renewLease())
+        .thenThrow(new UnsupportedOperationException("expected"));
+    when(secondaryTable.getScanner((Scan) any())).thenReturn(secondaryScannerMock);
+
+    Scan scan = new Scan();
+    ResultScanner mirroringScanner = mirroringTable.getScanner(scan);
+
+    // Secondary's renewLease thrown UnsupportedOperationException, thus we assume that it is a
+    // Bigtable scanner and renewing the lease is not needed. Primary succeeded and we should
+    // return true.
+    assertThat(mirroringScanner.renewLease()).isTrue();
+
+    waitForMirroringScanner(mirroringScanner);
+    executorServiceRule.waitForExecutor();
+    verify(secondaryScannerMock, times(1)).renewLease();
   }
 
   @Test
-  public void testClosingTableWithoutFutureDecreasesListenableCounter() throws IOException {
-    ListenableReferenceCounter listenableReferenceCounter = spy(new ListenableReferenceCounter());
-    listenableReferenceCounter.holdReferenceUntilClosing(mirroringTable);
+  public void testScannerRenewLeasePrimaryUnsupported()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
+    ResultScanner primaryScannerMock = mock(ResultScanner.class);
+    when(primaryScannerMock.renewLease()).thenThrow(new UnsupportedOperationException("expected"));
+    when(primaryTable.getScanner((Scan) any())).thenReturn(primaryScannerMock);
 
-    verify(listenableReferenceCounter, times(1)).incrementReferenceCount();
-    verify(listenableReferenceCounter, never()).decrementReferenceCount();
+    ResultScanner secondaryScannerMock = mock(ResultScanner.class);
+    when(secondaryScannerMock.renewLease()).thenReturn(true);
+    when(secondaryTable.getScanner((Scan) any())).thenReturn(secondaryScannerMock);
 
-    IOException expectedException = new IOException("expected");
-    doThrow(expectedException).when(secondaryTable).close();
+    Scan scan = new Scan();
+    ResultScanner mirroringScanner = mirroringTable.getScanner(scan);
 
-    mirroringTable.close();
+    // Primary's renewLease thrown UnsupportedOperationException, thus we assume that it is a
+    // Bigtable scanner and renewing the lease is not needed. Secondary succeeded and we should
+    // return true.
+    assertThat(mirroringScanner.renewLease()).isTrue();
+
+    waitForMirroringScanner(mirroringScanner);
     executorServiceRule.waitForExecutor();
-
-    verify(listenableReferenceCounter, times(1)).decrementReferenceCount();
+    verify(secondaryScannerMock, times(1)).renewLease();
   }
 
   @Test
@@ -494,57 +560,6 @@ public class TestMirroringTable {
     executorServiceRule.waitForExecutor();
 
     verify(secondaryTable, times(1)).close();
-  }
-
-  @Test
-  public void testListenersAreCalledOnClose()
-      throws IOException, InterruptedException, ExecutionException, TimeoutException {
-
-    final SettableFuture<Integer> listenerFuture1 = SettableFuture.create();
-    mirroringTable.addOnCloseListener(
-        new Runnable() {
-          @Override
-          public void run() {
-            listenerFuture1.set(1);
-          }
-        });
-
-    final SettableFuture<Integer> listenerFuture2 = SettableFuture.create();
-    mirroringTable.addOnCloseListener(
-        new Runnable() {
-          @Override
-          public void run() {
-            listenerFuture2.set(2);
-          }
-        });
-
-    mirroringTable.asyncClose().get(3, TimeUnit.SECONDS);
-    assertThat(listenerFuture1.get(3, TimeUnit.SECONDS)).isEqualTo(1);
-    assertThat(listenerFuture2.get(3, TimeUnit.SECONDS)).isEqualTo(2);
-  }
-
-  @Test
-  public void testListenersAreNotCalledAfterSecondClose()
-      throws IOException, InterruptedException, ExecutionException, TimeoutException {
-
-    final SettableFuture<Integer> listenerFuture1 = SettableFuture.create();
-
-    Runnable onCloseAction =
-        spy(
-            new Runnable() {
-              @Override
-              public void run() {
-                listenerFuture1.set(1);
-              }
-            });
-
-    mirroringTable.addOnCloseListener(onCloseAction);
-
-    mirroringTable.asyncClose().get(3, TimeUnit.SECONDS);
-    assertThat(listenerFuture1.get(3, TimeUnit.SECONDS)).isEqualTo(1);
-    mirroringTable.asyncClose().get(3, TimeUnit.SECONDS);
-
-    verify(onCloseAction, times(1)).run();
   }
 
   @Test
@@ -643,7 +658,7 @@ public class TestMirroringTable {
     verify(secondaryTable, times(1)).batch(eq(secondaryRequests), argument.capture());
     assertThat(argument.getValue().length).isEqualTo(2);
 
-    // successful secondary reads were reported
+    // failed secondary reads were reported
     verify(mismatchDetector, times(1))
         .batch(Arrays.asList(get1), new Result[] {get1Result}, new Result[] {get1Result});
   }
@@ -717,11 +732,11 @@ public class TestMirroringTable {
     verify(secondaryWriteErrorConsumer, times(1))
         .consume(eq(HBaseOperation.BATCH), eq(put1), (Throwable) isNull());
 
-    // successful secondary reads were reported
+    // failed secondary reads were reported
     verify(mismatchDetector, times(1))
         .batch(Arrays.asList(get3), new Result[] {get3Result}, new Result[] {get3Result});
 
-    // successful secondary reads were reported
+    // failed secondary reads were reported
     verify(mismatchDetector, times(1)).batch(eq(Arrays.asList(get1)), any(IOException.class));
   }
 
@@ -758,7 +773,7 @@ public class TestMirroringTable {
     verify(secondaryTable, times(1)).batch(eq(secondaryRequests), argument.capture());
     assertThat(argument.getValue().length).isEqualTo(1);
 
-    // successful secondary reads were reported
+    // failed secondary reads were reported
     verify(mismatchDetector, times(1))
         .batch(Arrays.asList(get2), new Result[] {get2Result}, new Result[] {get2Result});
 
@@ -821,12 +836,7 @@ public class TestMirroringTable {
         .thenReturn(true);
 
     mirroringTable.checkAndPut(
-        "r1".getBytes(),
-        "f1".getBytes(),
-        "q1".getBytes(),
-        CompareOp.GREATER_OR_EQUAL,
-        "v1".getBytes(),
-        put);
+        "r1".getBytes(), "f1".getBytes(), "q1".getBytes(), "v1".getBytes(), put);
     executorServiceRule.waitForExecutor();
 
     verify(secondaryTable, times(1)).mutateRow(any(RowMutations.class));
@@ -845,18 +855,10 @@ public class TestMirroringTable {
         .thenReturn(true);
 
     mirroringTable.checkAndDelete(
-        "r1".getBytes(),
-        "f1".getBytes(),
-        "q1".getBytes(),
-        CompareOp.GREATER_OR_EQUAL,
-        "v1".getBytes(),
-        delete);
-
-    mirroringTable.checkAndDelete(
         "r1".getBytes(), "f1".getBytes(), "q1".getBytes(), "v1".getBytes(), delete);
     executorServiceRule.waitForExecutor();
 
-    verify(secondaryTable, times(2)).mutateRow(any(RowMutations.class));
+    verify(secondaryTable, times(1)).mutateRow(any(RowMutations.class));
   }
 
   @Test
@@ -995,6 +997,108 @@ public class TestMirroringTable {
             return new CellComparator().compare(a, b);
           }
         });
+  }
+
+  @Test
+  public void testAppendWhichDoesntWantResult() throws IOException {
+    final byte[] row = "r1".getBytes();
+    final byte[] family = "f1".getBytes();
+    final byte[] qualifier = "q1".getBytes();
+    final long ts = 12;
+    final byte[] value = "v1".getBytes();
+
+    Append appendIgnoringResult = new Append(row).setReturnResults(false);
+
+    when(primaryTable.append(any(Append.class)))
+        .thenReturn(
+            Result.create(
+                new Cell[] {
+                  CellUtil.createCell(row, family, qualifier, ts, Type.Put.getCode(), value)
+                }));
+    Result appendWithoutResult = mirroringTable.append(appendIgnoringResult);
+
+    ArgumentCaptor<Append> appendCaptor = ArgumentCaptor.forClass(Append.class);
+    verify(primaryTable, times(1)).append(appendCaptor.capture());
+    assertThat(appendCaptor.getValue().isReturnResults()).isTrue();
+    assertThat(appendWithoutResult).isNull();
+  }
+
+  @Test
+  public void testIncrementWhichDoesntWantResult() throws IOException {
+    final byte[] row = "r1".getBytes();
+    final byte[] family = "f1".getBytes();
+    final byte[] qualifier = "q1".getBytes();
+    final long ts = 12;
+    final byte[] value = "v1".getBytes();
+
+    Increment incrementIgnoringResult = new Increment(row).setReturnResults(false);
+
+    when(primaryTable.increment(any(Increment.class)))
+        .thenReturn(
+            Result.create(
+                new Cell[] {
+                  CellUtil.createCell(row, family, qualifier, ts, Type.Put.getCode(), value)
+                }));
+    Result incrementWithoutResult = mirroringTable.increment(incrementIgnoringResult);
+
+    ArgumentCaptor<Increment> incrementCaptor = ArgumentCaptor.forClass(Increment.class);
+    verify(primaryTable, times(1)).increment(incrementCaptor.capture());
+    assertThat(incrementCaptor.getValue().isReturnResults()).isTrue();
+    assertThat(incrementWithoutResult.value()).isNull();
+  }
+
+  @Test
+  public void testBatchAppendWhichDoesntWantResult() throws IOException, InterruptedException {
+    final byte[] row = "r1".getBytes();
+    final byte[] family = "f1".getBytes();
+    final byte[] qualifier = "q1".getBytes();
+    final long ts = 12;
+    final byte[] value = "v1".getBytes();
+
+    List<Append> batchAppendIgnoringResult =
+        Collections.singletonList(new Append(row).setReturnResults(false));
+
+    mockBatch(
+        primaryTable,
+        batchAppendIgnoringResult.get(0),
+        Result.create(
+            new Cell[] {
+              CellUtil.createCell(row, family, qualifier, ts, Type.Put.getCode(), value)
+            }));
+    Object[] batchAppendWithoutResult = mirroringTable.batch(batchAppendIgnoringResult);
+
+    ArgumentCaptor<List<Row>> listCaptor = ArgumentCaptor.forClass(List.class);
+    verify(primaryTable, times(1)).batch(listCaptor.capture(), any(Object[].class));
+    assertThat(listCaptor.getValue().size()).isEqualTo(1);
+    assertThat(((Append) listCaptor.getValue().get(0)).isReturnResults()).isTrue();
+    assertThat(((Result) batchAppendWithoutResult[0]).value()).isNull();
+  }
+
+  @Test
+  public void testBatchIncrementWhichDoesntWantResult() throws IOException, InterruptedException {
+    final byte[] row = "r1".getBytes();
+    final byte[] family = "f1".getBytes();
+    final byte[] qualifier = "q1".getBytes();
+    final long ts = 12;
+    final byte[] value = "v1".getBytes();
+
+    List<Increment> batchIncrementIgnoringResult =
+        Collections.singletonList(new Increment(row).setReturnResults(false));
+
+    mockBatch(
+        primaryTable,
+        batchIncrementIgnoringResult.get(0),
+        Result.create(
+            new Cell[] {
+              CellUtil.createCell(row, family, qualifier, ts, Type.Put.getCode(), value)
+            }));
+    Object[] batchIncrementWithoutResult = mirroringTable.batch(batchIncrementIgnoringResult);
+
+    ArgumentCaptor<List<Row>> listCaptor = ArgumentCaptor.forClass(List.class);
+    verify(primaryTable, times(1)).batch(listCaptor.capture(), any(Object[].class));
+    assertThat(listCaptor.getValue().size()).isEqualTo(1);
+    assertThat(((Increment) listCaptor.getValue().get(0)).isReturnResults()).isTrue();
+    assertThat(((Result) batchIncrementWithoutResult[0]).value()).isNull();
   }
 
   @Test
@@ -1157,6 +1261,8 @@ public class TestMirroringTable {
   @Test
   public void testConcurrentWritesAreFlowControlledBeforePrimaryAction()
       throws IOException, InterruptedException {
+    boolean performWritesConcurrently = true;
+    boolean waitForSecondaryWrites = true;
     this.mirroringTable =
         spy(
             new MirroringTable(
@@ -1167,9 +1273,12 @@ public class TestMirroringTable {
                 flowController,
                 secondaryWriteErrorConsumer,
                 new ReadSampler(100),
-                true,
-                new MirroringTracer()));
-
+                this.timestamper,
+                performWritesConcurrently,
+                waitForSecondaryWrites,
+                this.mirroringTracer,
+                this.referenceCounter,
+                10));
     Put put1 = createPut("r1", "f1", "q1", "v1");
 
     // Both batches should be called even if first one fails.
@@ -1194,13 +1303,19 @@ public class TestMirroringTable {
   @Test
   public void testNonConcurrentOpsWontBePerformedConcurrently()
       throws IOException, InterruptedException {
-    setupMirroringTableWithDirectExecutor();
+    setupConcurrentMirroringTableWithDirectExecutor();
     Get get = createGet("get1");
     Increment increment = new Increment("row".getBytes());
     Append append = new Append("row".getBytes());
 
     Put put = createPut("test1", "f1", "q1", "v1");
     Delete delete = createDelete("test2");
+
+    Put putMutation = createPut("test3", "f1", "q1", "v1");
+    Delete deleteMutation = createDelete("test3");
+    RowMutations rowMutations = new RowMutations("test3".getBytes());
+    rowMutations.add(putMutation);
+    rowMutations.add(deleteMutation);
 
     mockBatch(
         primaryTable,
@@ -1212,20 +1327,32 @@ public class TestMirroringTable {
         append,
         createResult("row", "v2"));
 
+    // Only Puts and Deletes (and RowMutations which can contain only Puts and Deletes)
+    // can be performed concurrently. Other operations force us to wait for primary result
+    // (e.g. we implement Increment on secondary as a Put of result from primary).
+    // We expect that even though our MirroringTable is concurrent, the operations which cannot be
+    // performed concurrently will be performed sequentially.
+
+    // Batch contains an operation which causes the batch to be performed sequentially.
     checkBatchCalledSequentially(Arrays.asList(get));
     checkBatchCalledSequentially(Arrays.asList(increment));
     checkBatchCalledSequentially(Arrays.asList(append));
 
+    // Batch contains only operations which can be performed concurrently.
     checkBatchCalledConcurrently(Arrays.asList(put));
     checkBatchCalledConcurrently(Arrays.asList(delete));
-    checkBatchCalledConcurrently(Arrays.asList(put, delete));
+    checkBatchCalledConcurrently(Arrays.asList(rowMutations));
+    checkBatchCalledConcurrently(Arrays.asList(put, delete, rowMutations));
 
-    checkBatchCalledSequentially(Arrays.asList(put, delete, get));
-    checkBatchCalledSequentially(Arrays.asList(put, delete, increment));
-    checkBatchCalledSequentially(Arrays.asList(put, delete, append));
+    // Batch contains an operation which causes the batch to be performed sequentially.
+    checkBatchCalledSequentially(Arrays.asList(put, delete, rowMutations, get));
+    checkBatchCalledSequentially(Arrays.asList(put, delete, rowMutations, increment));
+    checkBatchCalledSequentially(Arrays.asList(put, delete, rowMutations, append));
   }
 
-  private void setupMirroringTableWithDirectExecutor() {
+  private void setupConcurrentMirroringTableWithDirectExecutor() {
+    boolean performWritesConcurrently = true;
+    boolean waitForSecondaryWrites = true;
     this.mirroringTable =
         spy(
             new MirroringTable(
@@ -1236,8 +1363,12 @@ public class TestMirroringTable {
                 flowController,
                 secondaryWriteErrorConsumer,
                 new ReadSampler(100),
-                true,
-                new MirroringTracer()));
+                this.timestamper,
+                performWritesConcurrently,
+                waitForSecondaryWrites,
+                this.mirroringTracer,
+                this.referenceCounter,
+                10));
   }
 
   private void checkBatchCalledSequentially(List<? extends Row> requests)
@@ -1254,13 +1385,19 @@ public class TestMirroringTable {
     InOrder inOrder = Mockito.inOrder(primaryTable, flowController, secondaryTable);
     this.mirroringTable.batch(requests, new Object[requests.size()]);
     inOrder.verify(flowController).asyncRequestResource(any(RequestResourcesDescription.class));
+    // When batch is performed concurrently first secondary database request is scheduled
+    // asynchronously, then primary request is executed synchronously.
+    // Then depending on configuration the mirroring client may wait for secondary result.
+    // In order to be able to verify that the batch is called concurrently we configure the
+    // MirroringTable to wait for secondary results and use DirectExecutor.
+    // That guarantees us that the method on secondary table is called first.
     inOrder.verify(secondaryTable).batch(eq(requests), any(Object[].class));
     inOrder.verify(primaryTable).batch(eq(requests), any(Object[].class));
   }
 
   @Test
   public void testConcurrentWritesWithErrors() throws IOException, InterruptedException {
-    setupMirroringTableWithDirectExecutor();
+    setupConcurrentMirroringTableWithDirectExecutor();
 
     Put put1 = createPut("test1", "f1", "q1", "v1");
     Put put2 = createPut("test2", "f2", "q2", "v2");
@@ -1277,9 +1414,7 @@ public class TestMirroringTable {
     //           |  p1  |  p2  |  p3  |  p4  |  d1  |  d2  |  d3  |  d4
     // primary   |  v   |  v   |  x   |  x   |  v   |  v   |  x   |  x
     // secondary |  v   |  x   |  v   |  x   |  v   |  x   |  v   |  x
-    // Primary errors should be visible in the results.
-    // Secondary errors should be written to the faillog.
-    // Operations that failed on both primary and secondary shouldn't be reported to the faillog.
+    // All errors should be visible in the results.
 
     IOException put2exception = new IOException("put2");
     IOException put3exception = new IOException("put3");
@@ -1334,24 +1469,39 @@ public class TestMirroringTable {
     } catch (IOException ignored) {
     }
     assertThat(results[0]).isInstanceOf(Result.class);
-    assertThat(results[1]).isInstanceOf(Result.class);
+    assertThat(results[1]).isEqualTo(put2exception);
     assertThat(results[2]).isEqualTo(put3exception);
     assertThat(results[3]).isEqualTo(put4exception);
 
     assertThat(results[4]).isInstanceOf(Result.class);
-    assertThat(results[5]).isInstanceOf(Result.class);
+    assertThat(results[5]).isEqualTo(delete2exception);
     assertThat(results[6]).isEqualTo(delete3exception);
     assertThat(results[7]).isEqualTo(delete4exception);
 
-    verify(secondaryWriteErrorConsumer, times(1))
-        .consume(HBaseOperation.BATCH, put2, put2exception);
-    verify(secondaryWriteErrorConsumer, times(1))
-        .consume(HBaseOperation.BATCH, delete2, delete2exception);
+    verify(secondaryWriteErrorConsumer, never())
+        .consume(any(HBaseOperation.class), any(Put.class), any(Throwable.class));
   }
 
   @Test
   public void testConcurrentOpsAreRunConcurrently() throws IOException, InterruptedException {
-    setupMirroringTableWithDirectExecutor();
+    boolean performWritesConcurrently = true;
+    boolean waitForSecondaryWrites = true;
+    this.mirroringTable =
+        spy(
+            new MirroringTable(
+                primaryTable,
+                secondaryTable,
+                this.executorServiceRule.executorService,
+                mismatchDetector,
+                flowController,
+                secondaryWriteErrorConsumer,
+                new ReadSampler(100),
+                this.timestamper,
+                performWritesConcurrently,
+                waitForSecondaryWrites,
+                this.mirroringTracer,
+                this.referenceCounter,
+                10));
 
     Put put = createPut("test1", "f1", "q1", "v1");
     mockBatch(primaryTable, secondaryTable);
@@ -1393,19 +1543,298 @@ public class TestMirroringTable {
   public void testConcurrentOpsAreNotPerformedWhenFlowControllerRejectsRequest()
       throws IOException, InterruptedException {
     IOException flowControllerExpection = setupFlowControllerToRejectRequests(flowController);
-    setupMirroringTableWithDirectExecutor();
+    setupConcurrentMirroringTableWithDirectExecutor();
 
     Put put = createPut("test1", "f1", "q1", "v1");
     try {
       mirroringTable.put(put);
       fail("should throw");
     } catch (IOException e) {
-      // FlowController exception is wrapped in IOException by mirroringTable and in
-      // ExecutionException by a future.
-      assertThat(e).hasCauseThat().hasCauseThat().isEqualTo(flowControllerExpection);
+      // FlowController exception is wrapped in IOException by mirroringTable.
+      assertThat(e).hasCauseThat().isEqualTo(flowControllerExpection);
     }
 
     verify(primaryTable, never()).batch(ArgumentMatchers.<Row>anyList(), any(Object[].class));
     verify(secondaryTable, never()).batch(ArgumentMatchers.<Row>anyList(), any(Object[].class));
+  }
+
+  @Test
+  public void testUnmatchedScannerResultQueuesAreFlushedWhenResultScannerIsClosed()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
+    ScannerResultVerifier verifier =
+        spy(mismatchDetector.createScannerResultVerifier(new Scan(), 100));
+    when(mismatchDetector.createScannerResultVerifier(any(Scan.class), anyInt()))
+        .thenReturn(verifier);
+
+    Result expected1 = createResult("test1", "value1");
+    Result expected2 = createResult("test2", "value2");
+
+    ResultScanner primaryScannerMock = mock(ResultScanner.class);
+    when(primaryScannerMock.next()).thenReturn(expected1);
+    when(primaryTable.getScanner((Scan) any())).thenReturn(primaryScannerMock);
+
+    ResultScanner secondaryScannerMock = mock(ResultScanner.class);
+    when(secondaryScannerMock.next()).thenReturn(expected2);
+    when(secondaryTable.getScanner((Scan) any())).thenReturn(secondaryScannerMock);
+
+    Scan scan = new Scan();
+    ResultScanner mirroringScanner = spy(mirroringTable.getScanner(scan));
+    assertThat(mirroringScanner.next()).isEqualTo(expected1);
+    verify(mirroringMetricsRecorder, never())
+        .recordReadMismatches(any(HBaseOperation.class), eq(1));
+    waitForMirroringScanner(mirroringScanner);
+
+    verify(verifier, times(1)).verify(any(Result[].class), any(Result[].class));
+    verify(mirroringMetricsRecorder, never())
+        .recordReadMatches(any(HBaseOperation.class), anyInt());
+    verify(mirroringMetricsRecorder, times(2))
+        .recordReadMismatches(any(HBaseOperation.class), eq(1));
+  }
+
+  @Test
+  public void testScannerResultVerifierWithBufferSizeZero()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
+    ScannerResultVerifier verifier =
+        spy(mismatchDetector.createScannerResultVerifier(new Scan(), 0));
+    when(mismatchDetector.createScannerResultVerifier(any(Scan.class), anyInt()))
+        .thenReturn(verifier);
+
+    Result expected1 = createResult("test1", "value1");
+    Result expected2 = createResult("test2", "value2");
+    Result expected3 = createResult("test3", "value3");
+    Result expected4 = createResult("test4", "value4");
+    Result expected5 = createResult("test5", "value5");
+    Result expected6 = createResult("test6", "value6");
+    Result expected7 = createResult("test7", "value7");
+
+    ResultScanner primaryScannerMock = mock(ResultScanner.class);
+    when(primaryScannerMock.next())
+        .thenReturn(expected1, expected2, expected3, expected4, expected5, expected6, expected7);
+    when(primaryTable.getScanner((Scan) any())).thenReturn(primaryScannerMock);
+
+    ResultScanner secondaryScannerMock = mock(ResultScanner.class);
+    when(secondaryScannerMock.next())
+        .thenReturn(expected1, expected3, expected5, expected7, null, null, null);
+    when(secondaryTable.getScanner((Scan) any())).thenReturn(secondaryScannerMock);
+
+    Scan scan = new Scan();
+    ResultScanner mirroringScanner = spy(mirroringTable.getScanner(scan));
+    assertThat(mirroringScanner.next()).isEqualTo(expected1);
+    assertThat(mirroringScanner.next()).isEqualTo(expected2);
+    assertThat(mirroringScanner.next()).isEqualTo(expected3);
+    assertThat(mirroringScanner.next()).isEqualTo(expected4);
+    assertThat(mirroringScanner.next()).isEqualTo(expected5);
+    assertThat(mirroringScanner.next()).isEqualTo(expected6);
+    assertThat(mirroringScanner.next()).isEqualTo(expected7);
+    waitForMirroringScanner(mirroringScanner);
+
+    verify(verifier, times(7)).verify(any(Result[].class), any(Result[].class));
+    verify(mirroringMetricsRecorder, times(1)).recordReadMatches(any(HBaseOperation.class), eq(1));
+    verify(mirroringMetricsRecorder, times(9))
+        .recordReadMismatches(any(HBaseOperation.class), eq(1));
+  }
+
+  @Test
+  public void testScannerUnmatchedBufferSpaceRunsOut()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
+    ScannerResultVerifier verifier =
+        spy(mismatchDetector.createScannerResultVerifier(new Scan(), 2));
+    when(mismatchDetector.createScannerResultVerifier(any(Scan.class), anyInt()))
+        .thenReturn(verifier);
+
+    Result expected1 = createResult("test1", "value1");
+    Result expected2 = createResult("test2", "value2");
+    Result expected3 = createResult("test3", "value3");
+    Result expected4 = createResult("test4", "value4");
+    Result expected5 = createResult("test5", "value5");
+    Result expected6 = createResult("test6", "value6");
+    Result expected7 = createResult("test7", "value7");
+
+    ResultScanner primaryScannerMock = mock(ResultScanner.class);
+    when(primaryScannerMock.next()).thenReturn(expected1, expected2, expected3, expected4);
+    when(primaryTable.getScanner((Scan) any())).thenReturn(primaryScannerMock);
+
+    ResultScanner secondaryScannerMock = mock(ResultScanner.class);
+    when(secondaryScannerMock.next()).thenReturn(expected4, expected5, expected6, expected7);
+    when(secondaryTable.getScanner((Scan) any())).thenReturn(secondaryScannerMock);
+
+    Scan scan = new Scan();
+    ResultScanner mirroringScanner = spy(mirroringTable.getScanner(scan));
+    assertThat(mirroringScanner.next()).isEqualTo(expected1);
+    assertThat(mirroringScanner.next()).isEqualTo(expected2);
+    assertThat(mirroringScanner.next()).isEqualTo(expected3);
+    assertThat(mirroringScanner.next()).isEqualTo(expected4);
+    waitForMirroringScanner(mirroringScanner);
+
+    verify(verifier, times(4)).verify(any(Result[].class), any(Result[].class));
+    verify(mirroringMetricsRecorder, never())
+        .recordReadMatches(any(HBaseOperation.class), anyInt());
+    verify(mirroringMetricsRecorder, times(8))
+        .recordReadMismatches(any(HBaseOperation.class), eq(1));
+  }
+
+  @Test
+  public void testScannerUnmatchedBufferSpaceRunsOutThenReturnsMatches()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
+    ScannerResultVerifier verifier =
+        spy(mismatchDetector.createScannerResultVerifier(new Scan(), 2));
+    when(mismatchDetector.createScannerResultVerifier(any(Scan.class), anyInt()))
+        .thenReturn(verifier);
+
+    Result expected1 = createResult("test1", "value1");
+    Result expected2 = createResult("test2", "value2");
+    Result expected3 = createResult("test3", "value3");
+    Result expected4 = createResult("test4", "value4");
+    Result expected5 = createResult("test5", "value5");
+    Result expected6 = createResult("test6", "value6");
+    Result expected7 = createResult("test7", "value7");
+
+    ResultScanner primaryScannerMock = mock(ResultScanner.class);
+    when(primaryScannerMock.next())
+        .thenReturn(expected1, expected2, expected3, expected4, expected1, expected2, expected3);
+    when(primaryTable.getScanner((Scan) any())).thenReturn(primaryScannerMock);
+
+    ResultScanner secondaryScannerMock = mock(ResultScanner.class);
+    when(secondaryScannerMock.next())
+        .thenReturn(expected4, expected5, expected6, expected7, expected1, expected2, expected3);
+    when(secondaryTable.getScanner((Scan) any())).thenReturn(secondaryScannerMock);
+
+    Scan scan = new Scan();
+    ResultScanner mirroringScanner = spy(mirroringTable.getScanner(scan));
+    assertThat(mirroringScanner.next()).isEqualTo(expected1);
+    assertThat(mirroringScanner.next()).isEqualTo(expected2);
+    assertThat(mirroringScanner.next()).isEqualTo(expected3);
+    assertThat(mirroringScanner.next()).isEqualTo(expected4);
+    assertThat(mirroringScanner.next()).isEqualTo(expected1);
+    assertThat(mirroringScanner.next()).isEqualTo(expected2);
+    assertThat(mirroringScanner.next()).isEqualTo(expected3);
+    waitForMirroringScanner(mirroringScanner);
+
+    verify(verifier, times(7)).verify(any(Result[].class), any(Result[].class));
+    verify(mirroringMetricsRecorder, times(3))
+        .recordReadMatches(any(HBaseOperation.class), anyInt());
+    verify(mirroringMetricsRecorder, times(8))
+        .recordReadMismatches(any(HBaseOperation.class), eq(1));
+  }
+
+  @Test
+  public void testScannerSkippedSomeResults()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
+    ScannerResultVerifier verifier =
+        spy(mismatchDetector.createScannerResultVerifier(new Scan(), 100));
+    when(mismatchDetector.createScannerResultVerifier(any(Scan.class), anyInt()))
+        .thenReturn(verifier);
+
+    Result expected1 = createResult("test1", "value1");
+    Result expected2 = createResult("test2", "value2");
+    Result expected3 = createResult("test3", "value3");
+    Result expected4 = createResult("test4", "value4");
+    Result expected5 = createResult("test5", "value5");
+    Result expected6 = createResult("test6", "value6");
+    Result expected7 = createResult("test7", "value7");
+
+    ResultScanner primaryScannerMock = mock(ResultScanner.class);
+    when(primaryScannerMock.next())
+        .thenReturn(expected1, expected2, expected3, expected5, expected6, expected7);
+    when(primaryTable.getScanner((Scan) any())).thenReturn(primaryScannerMock);
+
+    ResultScanner secondaryScannerMock = mock(ResultScanner.class);
+    when(secondaryScannerMock.next())
+        .thenReturn(expected1, expected3, expected4, expected5, expected6, null);
+    when(secondaryTable.getScanner((Scan) any())).thenReturn(secondaryScannerMock);
+
+    Scan scan = new Scan();
+    ResultScanner mirroringScanner = spy(mirroringTable.getScanner(scan));
+    assertThat(mirroringScanner.next()).isEqualTo(expected1);
+    assertThat(mirroringScanner.next()).isEqualTo(expected2);
+    assertThat(mirroringScanner.next()).isEqualTo(expected3);
+    assertThat(mirroringScanner.next()).isEqualTo(expected5);
+    assertThat(mirroringScanner.next()).isEqualTo(expected6);
+    assertThat(mirroringScanner.next()).isEqualTo(expected7);
+    waitForMirroringScanner(mirroringScanner);
+
+    verify(verifier, times(6)).verify(any(Result[].class), any(Result[].class));
+    verify(mirroringMetricsRecorder, times(4))
+        .recordReadMatches(any(HBaseOperation.class), anyInt());
+    verify(mirroringMetricsRecorder, times(3))
+        .recordReadMismatches(any(HBaseOperation.class), eq(1));
+  }
+
+  @Test
+  public void testScannerValueMismatchIsDetected()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
+    ScannerResultVerifier verifier =
+        spy(mismatchDetector.createScannerResultVerifier(new Scan(), 100));
+    when(mismatchDetector.createScannerResultVerifier(any(Scan.class), anyInt()))
+        .thenReturn(verifier);
+
+    Result expected1 = createResult("test1", "value1");
+    Result expected2 = createResult("test2", "value2");
+    Result expected31 = createResult("test3", "value31");
+    Result expected32 = createResult("test3", "value32");
+    Result expected4 = createResult("test4", "value4");
+
+    ResultScanner primaryScannerMock = mock(ResultScanner.class);
+    when(primaryScannerMock.next()).thenReturn(expected1, expected2, expected31, expected4);
+    when(primaryTable.getScanner((Scan) any())).thenReturn(primaryScannerMock);
+
+    ResultScanner secondaryScannerMock = mock(ResultScanner.class);
+    when(secondaryScannerMock.next()).thenReturn(expected1, expected2, expected32, expected4);
+    when(secondaryTable.getScanner((Scan) any())).thenReturn(secondaryScannerMock);
+
+    Scan scan = new Scan();
+    ResultScanner mirroringScanner = spy(mirroringTable.getScanner(scan));
+    assertThat(mirroringScanner.next()).isEqualTo(expected1);
+    assertThat(mirroringScanner.next()).isEqualTo(expected2);
+    assertThat(mirroringScanner.next()).isEqualTo(expected31);
+    assertThat(mirroringScanner.next()).isEqualTo(expected4);
+    waitForMirroringScanner(mirroringScanner);
+
+    verify(verifier, times(4)).verify(any(Result[].class), any(Result[].class));
+    verify(mirroringMetricsRecorder, times(3)).recordReadMatches(HBaseOperation.NEXT, 1);
+    verify(mirroringMetricsRecorder, times(1)).recordReadMismatches(HBaseOperation.NEXT, 1);
+  }
+
+  @Test
+  public void testScannerRowsResynchronization()
+      throws IOException, InterruptedException, ExecutionException, TimeoutException {
+    ScannerResultVerifier verifier =
+        spy(mismatchDetector.createScannerResultVerifier(new Scan(), 100));
+    when(mismatchDetector.createScannerResultVerifier(any(Scan.class), anyInt()))
+        .thenReturn(verifier);
+
+    Result expected11 = createResult("test11", "value1");
+    Result expected12 = createResult("test12", "value1");
+    Result expected21 = createResult("test21", "value2");
+    Result expected22 = createResult("test22", "value2");
+    Result expected31 = createResult("test31", "value3");
+    Result expected32 = createResult("test32", "value3");
+    Result expected4 = createResult("test4", "value4");
+    Result expected51 = createResult("test51", "value5");
+    Result expected52 = createResult("test52", "value5");
+
+    ResultScanner primaryScannerMock = mock(ResultScanner.class);
+    when(primaryScannerMock.next())
+        .thenReturn(expected11, expected21, expected31, expected4, expected51);
+    when(primaryTable.getScanner((Scan) any())).thenReturn(primaryScannerMock);
+
+    ResultScanner secondaryScannerMock = mock(ResultScanner.class);
+    when(secondaryScannerMock.next())
+        .thenReturn(expected12, expected22, expected32, expected4, expected52);
+    when(secondaryTable.getScanner((Scan) any())).thenReturn(secondaryScannerMock);
+
+    Scan scan = new Scan();
+    ResultScanner mirroringScanner = spy(mirroringTable.getScanner(scan));
+    assertThat(mirroringScanner.next()).isEqualTo(expected11);
+    assertThat(mirroringScanner.next()).isEqualTo(expected21);
+    assertThat(mirroringScanner.next()).isEqualTo(expected31);
+    assertThat(mirroringScanner.next()).isEqualTo(expected4);
+    assertThat(mirroringScanner.next()).isEqualTo(expected51);
+    executorServiceRule.waitForExecutor();
+
+    verify(verifier, times(5)).verify(any(Result[].class), any(Result[].class));
+    verify(mirroringMetricsRecorder, times(1)).recordReadMatches(HBaseOperation.NEXT, 1);
+    // 51 and 52 were not yet compared
+    verify(mirroringMetricsRecorder, times(6)).recordReadMismatches(HBaseOperation.NEXT, 1);
   }
 }

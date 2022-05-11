@@ -29,7 +29,6 @@ mutations.
   * failed mutation
   * operation specific context (i.e. condition of the conditional mutation or
     index in the bulk mutation or read-modify-write proto)
-  * checksum (to ensure integrity in case of a power outage)
 * We log JSON - one message per one line; that way all central logging solutions
   will be able to digest such data in a meaningful way
 * We write our own, custom logging mechanism

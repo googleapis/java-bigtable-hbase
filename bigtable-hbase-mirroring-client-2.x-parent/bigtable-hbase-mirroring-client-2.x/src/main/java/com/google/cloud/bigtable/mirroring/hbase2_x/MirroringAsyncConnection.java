@@ -15,20 +15,25 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase2_x;
 
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.AccumulatedExceptions;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.Logger;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.FailedMutationLogger;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.reflection.ReflectionConstructor;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ListenableReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -37,6 +42,7 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AdvancedScanResultConsumer;
 import org.apache.hadoop.hbase.client.AsyncAdminBuilder;
+import org.apache.hadoop.hbase.client.AsyncBufferedMutator;
 import org.apache.hadoop.hbase.client.AsyncBufferedMutatorBuilder;
 import org.apache.hadoop.hbase.client.AsyncConnection;
 import org.apache.hadoop.hbase.client.AsyncTable;
@@ -49,6 +55,8 @@ import org.apache.hadoop.hbase.client.ScanResultConsumerBase;
 import org.apache.hadoop.hbase.security.User;
 
 public class MirroringAsyncConnection implements AsyncConnection {
+  private static final Logger Log = new Logger(MirroringAsyncConnection.class);
+
   private final MirroringAsyncConfiguration configuration;
   private final AsyncConnection primaryConnection;
   private final AsyncConnection secondaryConnection;
@@ -58,6 +66,9 @@ public class MirroringAsyncConnection implements AsyncConnection {
   private final SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
   private final MirroringTracer mirroringTracer;
   private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final ReadSampler readSampler;
+  private final ExecutorService executorService;
+  private final Timestamper timestamper;
 
   /**
    * The constructor called from {@link
@@ -76,7 +87,7 @@ public class MirroringAsyncConnection implements AsyncConnection {
       Object ignoredRegistry,
       String ignoredClusterId,
       User user)
-      throws ExecutionException, InterruptedException {
+      throws Throwable {
     this.configuration = new MirroringAsyncConfiguration(conf);
 
     this.mirroringTracer = new MirroringTracer();
@@ -91,33 +102,62 @@ public class MirroringAsyncConnection implements AsyncConnection {
     this.referenceCounter = new ListenableReferenceCounter();
     this.flowController =
         new FlowController(
-            ReflectionConstructor.construct(
-                this.configuration.mirroringOptions.flowControllerStrategyClass,
-                this.configuration.mirroringOptions));
+            this.configuration
+                .mirroringOptions
+                .flowControllerStrategyFactoryClass
+                .newInstance()
+                .create(this.configuration.mirroringOptions));
     this.mismatchDetector =
-        ReflectionConstructor.construct(
-            this.configuration.mirroringOptions.mismatchDetectorClass, this.mirroringTracer);
+        this.configuration
+            .mirroringOptions
+            .mismatchDetectorFactoryClass
+            .newInstance()
+            .create(
+                this.mirroringTracer,
+                this.configuration.mirroringOptions.maxLoggedBinaryValueLength);
 
-    Logger failedWritesLogger =
-        new Logger(
-            ReflectionConstructor.construct(
-                this.configuration.mirroringOptions.writeErrorLogAppenderClass,
-                Configuration.class,
-                this.configuration),
-            ReflectionConstructor.construct(
-                this.configuration.mirroringOptions.writeErrorLogSerializerClass));
+    FailedMutationLogger failedMutationLogger =
+        new FailedMutationLogger(
+            this.configuration
+                .mirroringOptions
+                .faillog
+                .writeErrorLogAppenderFactoryClass
+                .newInstance()
+                .create(this.configuration.mirroringOptions.faillog),
+            this.configuration
+                .mirroringOptions
+                .faillog
+                .writeErrorLogSerializerFactoryClass
+                .newInstance()
+                .create());
 
     SecondaryWriteErrorConsumer writeErrorConsumer =
-        ReflectionConstructor.construct(
-            this.configuration.mirroringOptions.writeErrorConsumerClass, failedWritesLogger);
+        this.configuration
+            .mirroringOptions
+            .writeErrorConsumerFactoryClass
+            .newInstance()
+            .create(failedMutationLogger);
 
     this.secondaryWriteErrorConsumer =
         new SecondaryWriteErrorConsumerWithMetrics(this.mirroringTracer, writeErrorConsumer);
+
+    this.readSampler = new ReadSampler(this.configuration.mirroringOptions.readSamplingRate);
+    this.executorService = Executors.newCachedThreadPool();
+    this.timestamper =
+        Timestamper.create(this.configuration.mirroringOptions.enableDefaultClientSideTimestamps);
+  }
+
+  public AsyncConnection getPrimaryConnection() {
+    return this.primaryConnection;
+  }
+
+  public AsyncConnection getSecondaryConnection() {
+    return this.secondaryConnection;
   }
 
   @Override
   public Configuration getConfiguration() {
-    return this.configuration;
+    return this.configuration.baseConfiguration;
   }
 
   @Override
@@ -131,18 +171,49 @@ public class MirroringAsyncConnection implements AsyncConnection {
       return;
     }
 
+    final AccumulatedExceptions exceptions = new AccumulatedExceptions();
+    try {
+      primaryConnection.close();
+    } catch (IOException e) {
+      exceptions.add(e);
+    }
+
+    CompletableFuture<Void> closingFinishedFuture = new CompletableFuture<>();
+
+    // The secondary connection can only be closed after all in-flight requests are finished.
+    this.referenceCounter
+        .getOnLastReferenceClosed()
+        .addListener(
+            () -> {
+              try {
+                secondaryConnection.close();
+                closingFinishedFuture.complete(null);
+              } catch (IOException e) {
+                closingFinishedFuture.completeExceptionally(e);
+              }
+            },
+            MoreExecutors.directExecutor());
+
     this.referenceCounter.decrementReferenceCount();
     try {
-      this.referenceCounter.getOnLastReferenceClosed().get();
-      this.primaryConnection.close();
-      this.secondaryConnection.close();
-    } catch (InterruptedException e) {
-      IOException wrapperException = new InterruptedIOException();
-      wrapperException.initCause(e);
-      throw wrapperException;
-    } catch (ExecutionException e) {
-      throw new RuntimeException(e);
+      // Wait for in-flight requests to be finished but with a timeout to prevent deadlock.
+      closingFinishedFuture.get(
+          this.configuration.mirroringOptions.connectionTerminationTimeoutMillis,
+          TimeUnit.MILLISECONDS);
+    } catch (ExecutionException | InterruptedException e) {
+      // If the secondary close has thrown while we were waiting, the error will be
+      // propagated to the user.
+      exceptions.add(new IOException(e));
+    } catch (TimeoutException e) {
+      // But if the timeout was reached, we just leave the operation pending.
+      Log.error(
+          "MirroringAsyncConnection#close() timed out. Some of operations on secondary "
+              + "database are still in-flight and might be lost, but are not cancelled and "
+              + "will be performed asynchronously until the program terminates.");
+      // This error is not reported to the user.
     }
+
+    exceptions.rethrowIfCaptured();
   }
 
   public AsyncTableBuilder<AdvancedScanResultConsumer> getTableBuilder(TableName tableName) {
@@ -160,8 +231,21 @@ public class MirroringAsyncConnection implements AsyncConnection {
   }
 
   @Override
+  public AsyncBufferedMutatorBuilder getBufferedMutatorBuilder(TableName tableName) {
+    return new MirroringAsyncBufferedMutatorBuilder(
+        this.primaryConnection.getBufferedMutatorBuilder(tableName),
+        this.secondaryConnection.getBufferedMutatorBuilder(tableName));
+  }
+
+  @Override
+  public AsyncBufferedMutatorBuilder getBufferedMutatorBuilder(
+      TableName tableName, ExecutorService executorService) {
+    return getBufferedMutatorBuilder(tableName);
+  }
+
+  @Override
   public AsyncTableRegionLocator getRegionLocator(TableName tableName) {
-    throw new UnsupportedOperationException();
+    return this.primaryConnection.getRegionLocator(tableName);
   }
 
   @Override
@@ -180,17 +264,6 @@ public class MirroringAsyncConnection implements AsyncConnection {
   }
 
   @Override
-  public AsyncBufferedMutatorBuilder getBufferedMutatorBuilder(TableName tableName) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public AsyncBufferedMutatorBuilder getBufferedMutatorBuilder(
-      TableName tableName, ExecutorService executorService) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public CompletableFuture<Hbck> getHbck() {
     throw new UnsupportedOperationException();
   }
@@ -201,7 +274,7 @@ public class MirroringAsyncConnection implements AsyncConnection {
   }
 
   private class MirroringAsyncTableBuilder<C extends ScanResultConsumerBase>
-      implements AsyncTableBuilder<C> {
+      extends BuilderParameterSetter<AsyncTableBuilder<C>> implements AsyncTableBuilder<C> {
     private final AsyncTableBuilder<C> primaryTableBuilder;
     private final AsyncTableBuilder<C> secondaryTableBuilder;
 
@@ -213,112 +286,220 @@ public class MirroringAsyncConnection implements AsyncConnection {
 
     @Override
     public AsyncTable<C> build() {
-      return new MirroringAsyncTable<C>(
+      return new MirroringAsyncTable<>(
           this.primaryTableBuilder.build(),
           this.secondaryTableBuilder.build(),
           mismatchDetector,
           flowController,
           secondaryWriteErrorConsumer,
           mirroringTracer,
-          referenceCounter);
-    }
-
-    private AsyncTableBuilder<C> setTimeParameter(
-        long timeAmount,
-        TimeUnit timeUnit,
-        BiFunction<Long, TimeUnit, AsyncTableBuilder<C>> primaryFunction,
-        BiFunction<Long, TimeUnit, AsyncTableBuilder<C>> secondaryFunction) {
-      primaryFunction.apply(timeAmount, timeUnit);
-      secondaryFunction.apply(timeAmount, timeUnit);
-      return this;
-    }
-
-    private AsyncTableBuilder<C> setIntegerParameter(
-        int value,
-        Function<Integer, AsyncTableBuilder<C>> primaryFunction,
-        Function<Integer, AsyncTableBuilder<C>> secondaryFunction) {
-      primaryFunction.apply(value);
-      secondaryFunction.apply(value);
-      return this;
+          readSampler,
+          timestamper,
+          referenceCounter,
+          executorService,
+          configuration.mirroringOptions.resultScannerBufferedMismatchedResults);
     }
 
     @Override
     public AsyncTableBuilder<C> setOperationTimeout(long timeout, TimeUnit unit) {
-      return setTimeParameter(
+      setTimeParameter(
           timeout,
           unit,
           this.primaryTableBuilder::setOperationTimeout,
           this.secondaryTableBuilder::setOperationTimeout);
+      return this;
     }
 
     @Override
     public AsyncTableBuilder<C> setScanTimeout(long timeout, TimeUnit unit) {
-      return setTimeParameter(
+      setTimeParameter(
           timeout,
           unit,
           this.primaryTableBuilder::setScanTimeout,
           this.secondaryTableBuilder::setScanTimeout);
+      return this;
     }
 
     @Override
     public AsyncTableBuilder<C> setRpcTimeout(long timeout, TimeUnit unit) {
-      return setTimeParameter(
+      setTimeParameter(
           timeout,
           unit,
           this.primaryTableBuilder::setRpcTimeout,
           this.secondaryTableBuilder::setRpcTimeout);
+      return this;
     }
 
     @Override
     public AsyncTableBuilder<C> setReadRpcTimeout(long timeout, TimeUnit unit) {
-      return setTimeParameter(
+      setTimeParameter(
           timeout,
           unit,
           this.primaryTableBuilder::setReadRpcTimeout,
           this.secondaryTableBuilder::setReadRpcTimeout);
+      return this;
     }
 
     @Override
     public AsyncTableBuilder<C> setWriteRpcTimeout(long timeout, TimeUnit unit) {
-      return setTimeParameter(
+      setTimeParameter(
           timeout,
           unit,
           this.primaryTableBuilder::setWriteRpcTimeout,
           this.secondaryTableBuilder::setWriteRpcTimeout);
+      return this;
     }
 
     @Override
     public AsyncTableBuilder<C> setRetryPause(long pause, TimeUnit unit) {
-      return setTimeParameter(
+      setTimeParameter(
           pause,
           unit,
           this.primaryTableBuilder::setRetryPause,
           this.secondaryTableBuilder::setRetryPause);
+      return this;
     }
 
     @Override
     public AsyncTableBuilder<C> setRetryPauseForCQTBE(long pause, TimeUnit unit) {
-      return setTimeParameter(
+      setTimeParameter(
           pause,
           unit,
           this.primaryTableBuilder::setRetryPauseForCQTBE,
           this.secondaryTableBuilder::setRetryPauseForCQTBE);
+      return this;
     }
 
     @Override
     public AsyncTableBuilder<C> setMaxAttempts(int maxAttempts) {
-      return setIntegerParameter(
+      setIntegerParameter(
           maxAttempts,
           this.primaryTableBuilder::setMaxAttempts,
           this.secondaryTableBuilder::setMaxAttempts);
+      return this;
     }
 
     @Override
     public AsyncTableBuilder<C> setStartLogErrorsCnt(int maxRetries) {
-      return setIntegerParameter(
+      setIntegerParameter(
           maxRetries,
           this.primaryTableBuilder::setStartLogErrorsCnt,
           this.secondaryTableBuilder::setStartLogErrorsCnt);
+      return this;
+    }
+  }
+
+  private class MirroringAsyncBufferedMutatorBuilder
+      extends BuilderParameterSetter<AsyncBufferedMutatorBuilder>
+      implements AsyncBufferedMutatorBuilder {
+    private final AsyncBufferedMutatorBuilder primaryMutatorBuilder;
+    private final AsyncBufferedMutatorBuilder secondaryMutatorBuilder;
+
+    public MirroringAsyncBufferedMutatorBuilder(
+        AsyncBufferedMutatorBuilder primaryMutatorBuilder,
+        AsyncBufferedMutatorBuilder secondaryMutatorBuilder) {
+      this.primaryMutatorBuilder = primaryMutatorBuilder;
+      this.secondaryMutatorBuilder = secondaryMutatorBuilder;
+    }
+
+    @Override
+    public AsyncBufferedMutator build() {
+      return new MirroringAsyncBufferedMutator(
+          this.primaryMutatorBuilder.build(),
+          this.secondaryMutatorBuilder.build(),
+          configuration,
+          flowController,
+          secondaryWriteErrorConsumer,
+          timestamper);
+    }
+
+    @Override
+    public AsyncBufferedMutatorBuilder setOperationTimeout(long timeout, TimeUnit unit) {
+      setTimeParameter(
+          timeout,
+          unit,
+          this.primaryMutatorBuilder::setOperationTimeout,
+          this.secondaryMutatorBuilder::setOperationTimeout);
+      return this;
+    }
+
+    @Override
+    public AsyncBufferedMutatorBuilder setRpcTimeout(long timeout, TimeUnit unit) {
+      setTimeParameter(
+          timeout,
+          unit,
+          this.primaryMutatorBuilder::setRpcTimeout,
+          this.secondaryMutatorBuilder::setRpcTimeout);
+      return this;
+    }
+
+    @Override
+    public AsyncBufferedMutatorBuilder setRetryPause(long pause, TimeUnit unit) {
+      setTimeParameter(
+          pause,
+          unit,
+          this.primaryMutatorBuilder::setRetryPause,
+          this.secondaryMutatorBuilder::setRetryPause);
+      return this;
+    }
+
+    @Override
+    public AsyncBufferedMutatorBuilder setWriteBufferSize(long writeBufferSize) {
+      setLongParameter(
+          writeBufferSize,
+          this.primaryMutatorBuilder::setWriteBufferSize,
+          this.secondaryMutatorBuilder::setWriteBufferSize);
+      return this;
+    }
+
+    @Override
+    public AsyncBufferedMutatorBuilder setMaxAttempts(int maxAttempts) {
+      setIntegerParameter(
+          maxAttempts,
+          this.primaryMutatorBuilder::setMaxAttempts,
+          this.secondaryMutatorBuilder::setMaxAttempts);
+      return this;
+    }
+
+    @Override
+    public AsyncBufferedMutatorBuilder setStartLogErrorsCnt(int startLogErrorsCnt) {
+      setIntegerParameter(
+          startLogErrorsCnt,
+          this.primaryMutatorBuilder::setStartLogErrorsCnt,
+          this.secondaryMutatorBuilder::setStartLogErrorsCnt);
+      return this;
+    }
+
+    @Override
+    public AsyncBufferedMutatorBuilder setMaxKeyValueSize(int maxKeyValueSize) {
+      setIntegerParameter(
+          maxKeyValueSize,
+          this.primaryMutatorBuilder::setMaxKeyValueSize,
+          this.secondaryMutatorBuilder::setMaxKeyValueSize);
+      return this;
+    }
+  }
+
+  private static class BuilderParameterSetter<T> {
+    protected void setTimeParameter(
+        long timeAmount,
+        TimeUnit timeUnit,
+        BiFunction<Long, TimeUnit, T> primaryFunction,
+        BiFunction<Long, TimeUnit, T> secondaryFunction) {
+      primaryFunction.apply(timeAmount, timeUnit);
+      secondaryFunction.apply(timeAmount, timeUnit);
+    }
+
+    protected void setIntegerParameter(
+        int value, Function<Integer, T> primaryFunction, Function<Integer, T> secondaryFunction) {
+      primaryFunction.apply(value);
+      secondaryFunction.apply(value);
+    }
+
+    protected void setLongParameter(
+        long value, Function<Long, T> primaryFunction, Function<Long, T> secondaryFunction) {
+      primaryFunction.apply(value);
+      secondaryFunction.apply(value);
     }
   }
 }

@@ -17,34 +17,38 @@ package com.google.cloud.bigtable.mirroring.hbase2_x.utils;
 
 import static com.google.cloud.bigtable.mirroring.hbase2_x.utils.AsyncRequestScheduling.reserveFlowControlResourcesThenScheduleSecondary;
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController.ResourceReservation;
 import com.google.common.util.concurrent.FutureCallback;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.client.Result;
 import org.junit.Test;
 
 public class TestAsyncRequestScheduling {
   @Test
   public void testExceptionalPrimaryFuture() throws ExecutionException, InterruptedException {
-    CompletableFuture<Void> exceptionalFuture = new CompletableFuture<>();
-    IOException ioe = new IOException("expected");
-    exceptionalFuture.completeExceptionally(ioe);
+    // We want to test that when primary database fails and returns an exceptional future,
+    // no request is sent to secondary database and FlowController is appropriately dealt with.
 
-    FlowController.ResourceReservation resourceReservation =
-        mock(FlowController.ResourceReservation.class);
-    CompletableFuture<FlowController.ResourceReservation> resourceReservationFuture =
+    CompletableFuture<Void> exceptionalPrimaryFuture = new CompletableFuture<>();
+    IOException ioe = new IOException("expected");
+    exceptionalPrimaryFuture.completeExceptionally(ioe);
+
+    ResourceReservation resourceReservation = mock(ResourceReservation.class);
+    CompletableFuture<ResourceReservation> resourceReservationFuture =
         CompletableFuture.completedFuture(resourceReservation);
 
     Supplier<CompletableFuture<Void>> secondaryFutureSupplier = mock(Supplier.class);
@@ -53,59 +57,76 @@ public class TestAsyncRequestScheduling {
 
     AsyncRequestScheduling.OperationStages<CompletableFuture<Void>> result =
         reserveFlowControlResourcesThenScheduleSecondary(
-            exceptionalFuture,
+            exceptionalPrimaryFuture,
             resourceReservationFuture,
             secondaryFutureSupplier,
             verificationCreator,
             flowControlReservationErrorHandler);
 
+    // reserveFlowControlResourcesThenScheduleSecondary() returns a pair of futures:
+    // - verificationCompleted: completed with null when secondary request
+    //   and its verification are finished. It's never completed exceptionally,
+    // - userNotified: completed with primary request value or exception
+    //   after receiving a ResourceReservation from FlowController.
+
+    // We make sure that verificationCompleted is completed as expected.
     result.getVerificationCompletedFuture().get();
-    final List<Throwable> resultThrowableList = new ArrayList<>();
-    result
-        .userNotified
-        .exceptionally(
-            t -> {
-              resultThrowableList.add(t);
-              return null;
-            })
-        .get();
-    assertThat(resultThrowableList.size()).isEqualTo(1);
-    assertThat(resultThrowableList.get(0)).isEqualTo(ioe);
 
+    // We make sure that userNotified passes the primary result through.
+    // Note that CompletableFuture#get() wraps the exception in an ExecutionException.
+    Exception primaryException = assertThrows(ExecutionException.class, result.userNotified::get);
+    assertThat(primaryException.getCause()).isEqualTo(ioe);
+
+    // resourceReservationFuture is a normally completed future so
+    // flowControlReservationErrorHandler was never called.
+    verify(flowControlReservationErrorHandler, never()).accept(nullable(Throwable.class));
+    // The obtained resources must be released.
     verify(resourceReservation, times(1)).release();
-    verify(verificationCreator, never()).apply((Void) any());
-    verify(secondaryFutureSupplier, never()).get();
-    verify(flowControlReservationErrorHandler, never()).accept(any());
 
-    assertThat(resourceReservationFuture.isCancelled());
+    // Primary request failed, so there was no secondary request nor verification.
+    verify(secondaryFutureSupplier, never()).get();
+    verify(verificationCreator, never()).apply(nullable(Void.class));
   }
 
   @Test
   public void testExceptionalReservationFuture() throws ExecutionException, InterruptedException {
-    CompletableFuture<Void> primaryFuture = CompletableFuture.completedFuture(null);
-    CompletableFuture<FlowController.ResourceReservation> exceptionalFuture =
-        new CompletableFuture<>();
-    IOException ioe = new IOException("expected");
-    exceptionalFuture.completeExceptionally(ioe);
+    // reserveFlowControlResourcesThenScheduleSecondary() returns a pair of futures:
+    // - verificationCompleted: completed with null when secondary request
+    //   and its verification are finished. It's never completed exceptionally,
+    // - userNotified: completed with primary request value or exception
+    //   after receiving a ResourceReservation from FlowController.
 
-    Supplier<CompletableFuture<Void>> secondaryFutureSupplier = mock(Supplier.class);
-    Function<Void, FutureCallback<Void>> verificationCreator = mock(Function.class);
+    // We want to test that when FlowController fails and returns an exceptional future,
+    // both of the result futures are completed as expected.
+
+    Result primaryResult = Result.create(new Cell[0]);
+    CompletableFuture<Result> primaryFuture = CompletableFuture.completedFuture(primaryResult);
+    CompletableFuture<ResourceReservation> exceptionalReservationFuture = new CompletableFuture<>();
+    IOException ioe = new IOException("expected");
+    exceptionalReservationFuture.completeExceptionally(ioe);
+
+    Supplier<CompletableFuture<Result>> secondaryFutureSupplier = mock(Supplier.class);
+    Function<Result, FutureCallback<Result>> verificationCreator = mock(Function.class);
     Consumer<Throwable> flowControlReservationErrorHandler = mock(Consumer.class);
 
-    AsyncRequestScheduling.OperationStages<CompletableFuture<Void>> result =
+    AsyncRequestScheduling.OperationStages<CompletableFuture<Result>> result =
         reserveFlowControlResourcesThenScheduleSecondary(
             primaryFuture,
-            exceptionalFuture,
+            exceptionalReservationFuture,
             secondaryFutureSupplier,
             verificationCreator,
             flowControlReservationErrorHandler);
 
-    final List<Throwable> resultThrowableList = new ArrayList<>();
-    result.userNotified.get();
+    // We make sure that userNotified passes the primary result through.
+    assertThat(result.userNotified.get()).isEqualTo(primaryResult);
+    // We make sure that verificationCompleted is completed normally.
     result.getVerificationCompletedFuture().get();
 
-    verify(verificationCreator, never()).apply((Void) any());
+    // FlowController failed so the appropriate error handler was called.
+    verify(flowControlReservationErrorHandler, times(1)).accept(any(Throwable.class));
+
+    // FlowController failed, so there was no secondary request nor verification.
+    verify(verificationCreator, never()).apply(nullable(Result.class));
     verify(secondaryFutureSupplier, never()).get();
-    verify(flowControlReservationErrorHandler, times(1)).accept(any());
   }
 }

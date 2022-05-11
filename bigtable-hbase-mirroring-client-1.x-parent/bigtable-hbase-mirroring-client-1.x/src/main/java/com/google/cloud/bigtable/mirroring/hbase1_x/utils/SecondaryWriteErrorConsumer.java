@@ -16,13 +16,26 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
 
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.FailedMutationLogger;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import java.util.List;
 import org.apache.hadoop.hbase.client.Row;
 
+/**
+ * Implementations of this interface consume mutations ({@link
+ * org.apache.hadoop.hbase.client.Mutation} and {@link org.apache.hadoop.hbase.client.RowMutations})
+ * that succeeded on primary database but have failed on the secondary.
+ *
+ * <p>Default implementation ({@link DefaultSecondaryWriteErrorConsumer}) forwards those writes to
+ * {@link FailedMutationLogger} (which, by default, writes them to on-disk log).
+ */
 @InternalApi("For internal usage only")
 public interface SecondaryWriteErrorConsumer {
   void consume(HBaseOperation operation, Row row, Throwable cause);
 
   void consume(HBaseOperation operation, List<? extends Row> operations, Throwable cause);
+
+  interface Factory {
+    SecondaryWriteErrorConsumer create(FailedMutationLogger failedMutationLogger) throws Throwable;
+  }
 }

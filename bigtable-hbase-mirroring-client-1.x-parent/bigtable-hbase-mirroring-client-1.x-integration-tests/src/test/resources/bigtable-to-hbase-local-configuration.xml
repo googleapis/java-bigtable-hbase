@@ -38,14 +38,4 @@
     <name>google.bigtable.mirroring.write-error-log.appender.prefix-path</name>
     <value>/tmp/write-error-log</value>
   </property>
-
-  <property>
-    <name>google.bigtable.mirroring.write-error-log.appender.max-buffer-size</name>
-    <value>8388608</value>
-  </property>
-
-  <property>
-    <name>google.bigtable.mirroring.write-error-log.appender.drop-on-overflow</name>
-    <value>false</value>
-  </property>
 </configuration>

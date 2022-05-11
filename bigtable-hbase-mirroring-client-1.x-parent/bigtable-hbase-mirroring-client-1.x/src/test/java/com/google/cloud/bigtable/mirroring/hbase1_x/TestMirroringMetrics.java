@@ -20,11 +20,13 @@ import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.createPut
 import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.createResult;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.mockBatch;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.TestHelpers.setupFlowControllerMock;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.FLOW_CONTROL_LATENCY;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.MIRRORING_LATENCY;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.PRIMARY_ERRORS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.PRIMARY_LATENCY;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.SECONDARY_ERRORS;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.SECONDARY_LATENCY;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.SECONDARY_WRITE_ERROR_HANDLER_LATENCY;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -39,14 +41,21 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.DefaultSecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.Appender;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.FailedMutationLogger;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.Serializer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringMetricsRecorder;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanFactory;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.NoopTimestamper;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.DefaultMismatchDetector;
 import io.opencensus.trace.Tracing;
 import java.io.IOException;
@@ -61,6 +70,7 @@ import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -84,6 +94,7 @@ public class TestMirroringMetrics {
   @Mock Table primaryTable;
   @Mock Table secondaryTable;
   @Mock FlowController flowController;
+  Timestamper timestamper = new NoopTimestamper();
 
   @Mock MirroringMetricsRecorder mirroringMetricsRecorder;
 
@@ -101,13 +112,19 @@ public class TestMirroringMetrics {
                 primaryTable,
                 secondaryTable,
                 this.executorServiceRule.executorService,
-                new DefaultMismatchDetector(tracer),
+                new DefaultMismatchDetector(tracer, 32),
                 flowController,
                 new SecondaryWriteErrorConsumerWithMetrics(
-                    tracer, mock(SecondaryWriteErrorConsumer.class)),
+                    tracer,
+                    new DefaultSecondaryWriteErrorConsumer(
+                        new FailedMutationLogger(mock(Appender.class), mock(Serializer.class)))),
                 new ReadSampler(100),
+                this.timestamper,
                 false,
-                tracer));
+                false,
+                tracer,
+                mock(ReferenceCounter.class),
+                10));
   }
 
   @Test
@@ -136,10 +153,10 @@ public class TestMirroringMetrics {
     verify(mirroringMetricsRecorder, times(1))
         .recordOperation(eq(HBaseOperation.GET), eq(MIRRORING_LATENCY), anyLong());
 
+    verify(mirroringMetricsRecorder, times(1))
+        .recordReadMismatches(any(HBaseOperation.class), eq(0));
     verify(mirroringMetricsRecorder, never())
-        .recordReadMismatches(any(HBaseOperation.class), anyInt());
-    verify(mirroringMetricsRecorder, never())
-        .recordWriteMismatches(any(HBaseOperation.class), anyInt());
+        .recordSecondaryWriteErrors(any(HBaseOperation.class), anyInt());
   }
 
   @Test
@@ -156,7 +173,87 @@ public class TestMirroringMetrics {
 
     verify(mirroringMetricsRecorder, times(1)).recordReadMismatches(HBaseOperation.GET, 1);
     verify(mirroringMetricsRecorder, never())
-        .recordWriteMismatches(any(HBaseOperation.class), anyInt());
+        .recordSecondaryWriteErrors(any(HBaseOperation.class), anyInt());
+  }
+
+  @Test
+  public void testMatchingReadReportsZeroMismatches() throws IOException {
+    Get get = createGet("test");
+    Result result1 = createResult("test", "value1");
+
+    when(primaryTable.get(get)).thenReturn(result1);
+    when(secondaryTable.get(get)).thenReturn(result1);
+
+    mirroringTable.get(get);
+    executorServiceRule.waitForExecutor();
+
+    verify(mirroringMetricsRecorder, times(1)).recordReadMismatches(HBaseOperation.GET, 0);
+    verify(mirroringMetricsRecorder, never())
+        .recordSecondaryWriteErrors(any(HBaseOperation.class), anyInt());
+  }
+
+  @Test
+  public void testSuccessfulConditionalWriteReportsZeroFailures() throws IOException {
+    byte[] row = new byte[] {1};
+    byte[] family = new byte[] {2};
+    byte[] qualifier = new byte[] {3};
+    byte[] value = new byte[] {4};
+
+    Put put = new Put(row);
+    put.addColumn(family, qualifier, value);
+
+    RowMutations rm = new RowMutations(row);
+    rm.add(put);
+
+    when(primaryTable.checkAndMutate(row, family, qualifier, CompareOp.EQUAL, value, rm))
+        .thenReturn(true);
+
+    mirroringTable.checkAndPut(row, family, qualifier, CompareOp.EQUAL, value, put);
+    executorServiceRule.waitForExecutor();
+
+    verify(mirroringMetricsRecorder, times(1))
+        .recordOperation(
+            eq(HBaseOperation.CHECK_AND_MUTATE),
+            eq(PRIMARY_LATENCY),
+            anyLong(),
+            eq(PRIMARY_ERRORS),
+            eq(false));
+    verify(mirroringMetricsRecorder, times(1))
+        .recordOperation(
+            eq(HBaseOperation.MUTATE_ROW),
+            eq(SECONDARY_LATENCY),
+            anyLong(),
+            eq(SECONDARY_ERRORS),
+            eq(false));
+    verify(mirroringMetricsRecorder, times(1))
+        .recordSecondaryWriteErrors(HBaseOperation.MUTATE_ROW, 0);
+  }
+
+  @Test
+  public void testSuccessfulWriteReportsZeroFailures() throws IOException, InterruptedException {
+    Put put = createPut("test", "f1", "q1", "v1");
+
+    mockBatch(primaryTable, put, new Result());
+    mockBatch(secondaryTable, put, new Result());
+
+    mirroringTable.put(put);
+    executorServiceRule.waitForExecutor();
+
+    verify(mirroringMetricsRecorder, times(1))
+        .recordOperation(
+            eq(HBaseOperation.BATCH),
+            eq(PRIMARY_LATENCY),
+            anyLong(),
+            eq(PRIMARY_ERRORS),
+            eq(false));
+    verify(mirroringMetricsRecorder, times(1))
+        .recordOperation(
+            eq(HBaseOperation.BATCH),
+            eq(SECONDARY_LATENCY),
+            anyLong(),
+            eq(SECONDARY_ERRORS),
+            eq(false));
+    verify(mirroringMetricsRecorder, times(1)).recordSecondaryWriteErrors(HBaseOperation.BATCH, 0);
   }
 
   @Test
@@ -193,7 +290,7 @@ public class TestMirroringMetrics {
     verify(mirroringMetricsRecorder, never())
         .recordReadMismatches(any(HBaseOperation.class), anyInt());
     verify(mirroringMetricsRecorder, never())
-        .recordWriteMismatches(any(HBaseOperation.class), anyInt());
+        .recordSecondaryWriteErrors(any(HBaseOperation.class), anyInt());
   }
 
   @Test
@@ -226,7 +323,7 @@ public class TestMirroringMetrics {
     verify(mirroringMetricsRecorder, never())
         .recordReadMismatches(any(HBaseOperation.class), anyInt());
     verify(mirroringMetricsRecorder, never())
-        .recordWriteMismatches(any(HBaseOperation.class), anyInt());
+        .recordSecondaryWriteErrors(any(HBaseOperation.class), anyInt());
   }
 
   @Test
@@ -258,9 +355,13 @@ public class TestMirroringMetrics {
     verify(mirroringMetricsRecorder, times(1))
         .recordOperation(eq(HBaseOperation.PUT), eq(MIRRORING_LATENCY), anyLong());
 
+    verify(mirroringMetricsRecorder, times(1)).recordLatency(eq(FLOW_CONTROL_LATENCY), anyLong());
+    verify(mirroringMetricsRecorder, times(1))
+        .recordLatency(eq(SECONDARY_WRITE_ERROR_HANDLER_LATENCY), anyLong());
+
     verify(mirroringMetricsRecorder, never())
         .recordReadMismatches(any(HBaseOperation.class), anyInt());
-    verify(mirroringMetricsRecorder, times(1)).recordWriteMismatches(HBaseOperation.BATCH, 1);
+    verify(mirroringMetricsRecorder, times(1)).recordSecondaryWriteErrors(HBaseOperation.BATCH, 1);
   }
 
   @Test
@@ -304,12 +405,7 @@ public class TestMirroringMetrics {
         .when(secondaryTable)
         .batch(ArgumentMatchers.<Row>anyList(), any(Object[].class));
 
-    try {
-      mirroringTable.put(put);
-    } catch (RetriesExhaustedWithDetailsException e) {
-
-    }
-
+    mirroringTable.put(put);
     executorServiceRule.waitForExecutor();
 
     verify(mirroringMetricsRecorder, times(1))
@@ -333,7 +429,7 @@ public class TestMirroringMetrics {
 
     verify(mirroringMetricsRecorder, never())
         .recordReadMismatches(any(HBaseOperation.class), anyInt());
-    verify(mirroringMetricsRecorder, times(2)).recordWriteMismatches(HBaseOperation.BATCH, 1);
+    verify(mirroringMetricsRecorder, times(2)).recordSecondaryWriteErrors(HBaseOperation.BATCH, 1);
   }
 
   @Test
@@ -353,12 +449,13 @@ public class TestMirroringMetrics {
     secondaryWriteErrorConsumerWithMetrics.consume(HBaseOperation.PUT_LIST, puts, new Throwable());
     verify(secondaryWriteErrorConsumer, times(1))
         .consume(eq(HBaseOperation.PUT_LIST), eq(puts), any(Throwable.class));
-    verify(mirroringMetricsRecorder, times(1)).recordWriteMismatches(HBaseOperation.PUT_LIST, 2);
+    verify(mirroringMetricsRecorder, times(1))
+        .recordSecondaryWriteErrors(HBaseOperation.PUT_LIST, 2);
 
     Put put = createPut("r1", "f", "q", "1");
     secondaryWriteErrorConsumerWithMetrics.consume(HBaseOperation.PUT, put, new Throwable());
 
-    verify(mirroringMetricsRecorder, times(1)).recordWriteMismatches(HBaseOperation.PUT, 1);
+    verify(mirroringMetricsRecorder, times(1)).recordSecondaryWriteErrors(HBaseOperation.PUT, 1);
     verify(secondaryWriteErrorConsumer, times(1))
         .consume(eq(HBaseOperation.PUT), eq(put), any(Throwable.class));
 
@@ -368,6 +465,7 @@ public class TestMirroringMetrics {
 
     verify(secondaryWriteErrorConsumer, times(1))
         .consume(eq(HBaseOperation.MUTATE_ROW), eq(rowMutations), any(Throwable.class));
-    verify(mirroringMetricsRecorder, times(1)).recordWriteMismatches(HBaseOperation.MUTATE_ROW, 1);
+    verify(mirroringMetricsRecorder, times(1))
+        .recordSecondaryWriteErrors(HBaseOperation.MUTATE_ROW, 1);
   }
 }

@@ -16,8 +16,9 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics;
 
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.OPERATION_KEY;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.READ_MATCHES;
 import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.READ_MISMATCHES;
-import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.WRITE_MISMATCHES;
+import static com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.SECONDARY_WRITE_ERRORS;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
@@ -28,6 +29,13 @@ import io.opencensus.tags.TagContext;
 import io.opencensus.tags.TagContextBuilder;
 import io.opencensus.tags.Tagger;
 
+/**
+ * Used to record metrics related to operations (by {@link MirroringSpanFactory}) and to record read
+ * mismatches and secondary write errors (in these cases accessed from {@link
+ * com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection}'s {@link MirroringTracer}).
+ *
+ * <p>Created by {@link MirroringTracer}.
+ */
 @InternalApi("For internal usage only")
 public class MirroringMetricsRecorder {
   private final Tagger tagger;
@@ -48,8 +56,8 @@ public class MirroringMetricsRecorder {
 
     MeasureMap map = statsRecorder.newMeasureMap();
     map.put(latencyMeasure, latencyMs);
-    if (failed) {
-      map.put(errorMeasure, 1);
+    if (errorMeasure != null) {
+      map.put(errorMeasure, failed ? 1 : 0);
     }
     map.record(tagContext);
   }
@@ -72,10 +80,24 @@ public class MirroringMetricsRecorder {
     map.record(tagContext);
   }
 
-  public void recordWriteMismatches(HBaseOperation operation, int numberOfMismatches) {
+  public void recordSecondaryWriteErrors(HBaseOperation operation, int numberOfErrors) {
     TagContext tagContext = getTagContext(operation);
     MeasureMap map = statsRecorder.newMeasureMap();
-    map.put(WRITE_MISMATCHES, numberOfMismatches);
+    map.put(SECONDARY_WRITE_ERRORS, numberOfErrors);
+    map.record(tagContext);
+  }
+
+  public void recordReadMatches(HBaseOperation operation, int numberOfMatches) {
+    TagContext tagContext = getTagContext(operation);
+    MeasureMap map = statsRecorder.newMeasureMap();
+    map.put(READ_MATCHES, numberOfMatches);
+    map.record(tagContext);
+  }
+
+  public void recordLatency(MeasureLong latencyMeasure, long latencyMs) {
+    TagContext tagContext = tagger.emptyBuilder().build();
+    MeasureMap map = statsRecorder.newMeasureMap();
+    map.put(latencyMeasure, latencyMs);
     map.record(tagContext);
   }
 }

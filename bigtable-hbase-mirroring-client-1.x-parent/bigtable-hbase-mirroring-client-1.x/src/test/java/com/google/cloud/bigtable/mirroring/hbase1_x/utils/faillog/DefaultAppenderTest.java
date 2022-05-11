@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.*;
 
 import com.google.common.collect.Sets;
@@ -25,9 +26,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -75,28 +81,50 @@ public class DefaultAppenderTest {
     return paths;
   }
 
+  private DefaultAppender createAppender() throws IOException {
+    final int maxBufferSize = 4096; // just an arbitrary value
+    final boolean dropOnOverflow = false;
+    return new DefaultAppender(tmpdir.resolve("test").toString(), maxBufferSize, dropOnOverflow);
+  }
+
   @Test
   public void startupAndShutdown() throws Exception {
-    try (Appender appender = new DefaultAppender(tmpdir.resolve("test").toString(), 4096, false)) {
+    try (Appender appender = createAppender()) {
       appender.append("foo".getBytes(StandardCharsets.UTF_8));
     }
   }
 
   @Test
   public void pathNamesHaveTimestampAndTid() throws Exception {
-    try (Appender appender = new DefaultAppender(tmpdir.resolve("test").toString(), 4096, false)) {
+    final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss.SSS");
+    // File names should look like test.yyyy-MM-dd_HH-mm-ss.SSS.TID"
+    final Pattern filePattern =
+        Pattern.compile(
+            "test\\.(20[0-9]{2}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2}\\.[0-9]+)\\.([0-9]+)");
+    final long thisThreadId = Thread.currentThread().getId();
+
+    Date beforeLogCreation = new Date();
+    try (Appender appender = createAppender()) {
       appender.append("foo".getBytes(StandardCharsets.UTF_8));
     }
-    try (Appender appender = new DefaultAppender(tmpdir.resolve("test").toString(), 4096, false)) {
+    try (Appender appender = createAppender()) {
       appender.append("bar".getBytes(StandardCharsets.UTF_8));
     }
+    Date afterLogCreation = new Date();
 
     List<String> paths = listLogFiles();
     assertEquals(2, paths.size());
+
     for (String path : paths) {
-      assertTrue(
-          path.matches(
-              "test\\.20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]_[0-9][0-9]-[0-9][0-9]-[0-9][0-9]\\.[0-9]+\\.[0-9]+"));
+      Matcher matcher = filePattern.matcher(path);
+      assertTrue(matcher.matches());
+      String timestampStr = matcher.group(1);
+
+      dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+      final Date timestamp = dateFormat.parse(timestampStr);
+      assertThat(timestamp).isAtLeast(beforeLogCreation);
+      assertThat(timestamp).isAtMost(afterLogCreation);
+      assertEquals(Long.parseLong(matcher.group(2)), thisThreadId);
     }
   }
 

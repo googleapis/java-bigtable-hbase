@@ -21,6 +21,6 @@ import org.junit.rules.ExternalResource;
 public class MismatchDetectorCounterRule extends ExternalResource {
   @Override
   public void before() {
-    MismatchDetectorCounter.getInstance().clearErrors();
+    TestMismatchDetectorCounter.getInstance().clearErrors();
   }
 }
