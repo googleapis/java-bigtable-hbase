@@ -93,6 +93,8 @@ limitations under the License.
          while still respecting global skipTests override. -->
     <skipTests>false</skipTests>
     <skipUnitTests>${skipTests}</skipUnitTests>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
 
   <scm>
