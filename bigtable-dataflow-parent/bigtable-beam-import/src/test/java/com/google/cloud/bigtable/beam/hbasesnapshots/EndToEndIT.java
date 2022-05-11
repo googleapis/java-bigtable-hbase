@@ -425,13 +425,9 @@ public class EndToEndIT {
     String restorePathPrefix =
         CleanupHBaseSnapshotRestoreFilesFn.getListPrefix(
             HBaseSnapshotInputConfigBuilder.RESTORE_DIR);
-    List<StorageObject> allObjects = new ArrayList<>();
-    Objects objects = gcsUtil.listObjects(bucket, restorePathPrefix, null);
-    List<StorageObject> items = objects.getItems();
-    if (items != null) {
-      allObjects.addAll(items);
-    }
-    Assert.assertTrue("Restore directory wasn't deleted", allObjects.isEmpty());
+
+    Objects restoreFiles = gcsUtil.listObjects(bucket, restorePathPrefix, null);
+    Assert.assertTrue("Restore directory wasn't deleted", restoreFiles.isEmpty());
 
     // Verify the import using the sync job
     SyncTableOptions syncOpts = createSyncTableOptions();

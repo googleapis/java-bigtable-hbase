@@ -3,8 +3,7 @@
 <differences>
     <difference>
         <differenceType>7012</differenceType>
-        <className>com/google/cloud/bigtable/beam/hbasesnapshots/ImportJobFromHbaseSnapshot/ImportOptions</className>
-        <method>get*</method>
-        <method>set*</method>
+        <className>com/google/cloud/bigtable/beam/hbasesnapshots/ImportJobFromHbaseSnapshot$ImportOptions</className>
+        <method>*</method>
     </difference>
 </differences>
