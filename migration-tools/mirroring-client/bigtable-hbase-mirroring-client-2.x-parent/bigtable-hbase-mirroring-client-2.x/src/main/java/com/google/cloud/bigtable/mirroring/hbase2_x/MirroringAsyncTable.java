@@ -133,7 +133,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
   }
 
   @Override
-  public CompletableFuture<TableDescriptor> getDescriptor(){
+  public CompletableFuture<TableDescriptor> getDescriptor() {
     throw new UnsupportedOperationException("not implemented");
   }
 
@@ -529,7 +529,8 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
 
   @Override
   // TODO(vermas2012) Implement the method.
-  public CheckAndMutateWithFilterBuilder checkAndMutate(byte[] row, org.apache.hadoop.hbase.filter.Filter filter) {
+  public CheckAndMutateWithFilterBuilder checkAndMutate(
+      byte[] row, org.apache.hadoop.hbase.filter.Filter filter) {
     throw new UnsupportedOperationException("not implemented");
   }
 

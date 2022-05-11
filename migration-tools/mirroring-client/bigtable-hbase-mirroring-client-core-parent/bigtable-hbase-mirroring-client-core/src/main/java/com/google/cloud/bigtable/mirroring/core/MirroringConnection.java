@@ -206,7 +206,7 @@ public class MirroringConnection implements Connection {
   }
 
   @Override
-  public String getClusterId(){
+  public String getClusterId() {
     throw new UnsupportedOperationException("not implemented");
   }
 

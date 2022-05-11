@@ -30,7 +30,7 @@ import org.apache.hadoop.hbase.ServerName;
 
 // TODO (Vermas2012) The upstream AsyncRegistry is deleted in latest hbase version (2.3+), we need
 // to understand if we need this registry now. There is just 1 test depending on it.
-public class TestRegistry  {
+public class TestRegistry {
   TestRegistry(Configuration conf) {}
 
   public CompletableFuture<RegionLocations> getMetaRegionLocation() {

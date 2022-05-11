@@ -36,11 +36,7 @@ import org.apache.hadoop.hbase.client.AsyncTableRegionLocator;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Hbck;
 import org.apache.hadoop.hbase.client.ScanResultConsumer;
-import org.apache.hadoop.hbase.client.TestRegistry;
 import org.apache.hadoop.hbase.security.User;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 class TestAsyncConnection implements AsyncConnection {
   public TestAsyncConnection(

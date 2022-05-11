@@ -71,7 +71,7 @@ public class MirroringTable extends com.google.cloud.bigtable.mirroring.core.Mir
   }
 
   @Override
-  public RegionLocator getRegionLocator(){
+  public RegionLocator getRegionLocator() {
     throw new UnsupportedOperationException("not implemented");
   }
 
