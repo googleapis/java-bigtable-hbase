@@ -27,7 +27,7 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('bigtable-hbase-mirroring-client-1.x-parent/bigtable-hbase-mirroring-client-1.x/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
       - name: verify 1.x
-        run: mvn --batch-mode --update-snapshots verify -pl bigtable-hbase-mirroring-client-1.x-parent/bigtable-hbase-mirroring-client-1.x
+        run: mvn --batch-mode --update-snapshots verify -pl bigtable-test/bigtable-build-helper,bigtable-hbase-mirroring-client-core-parent/bigtable-hbase-mirroring-client-core,bigtable-hbase-mirroring-client-1.x-parent/bigtable-hbase-mirroring-client-1.x
   tests_2_x:
     runs-on: ubuntu-latest
     steps:
@@ -44,4 +44,4 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('bigtable-hbase-mirroring-client-2.x-parent/bigtable-hbase-mirroring-client-2.x/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
       - name: verify 2.x
-        run: mvn --batch-mode --update-snapshots verify -pl bigtable-hbase-mirroring-client-1.x-parent/bigtable-hbase-mirroring-client-1.x,bigtable-hbase-mirroring-client-2.x-parent/bigtable-hbase-mirroring-client-2.x
+        run: mvn --batch-mode --update-snapshots verify -pl bigtable-test/bigtable-build-helper,bigtable-hbase-mirroring-client-core-parent/bigtable-hbase-mirroring-client-core,bigtable-hbase-mirroring-client-2.x-parent/bigtable-hbase-mirroring-client-2.x

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>bigtable-hbase-mirroring-client-core-parent</artifactId>
+    <groupId>com.google.cloud.bigtable</groupId>
+    <version>2.0.0-alpha2-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>protobuf-java-format-shaded</artifactId>
+  <version>1.4</version>
+  <description>
+    This is a wrapper around `com.googlecode.protobuf-java-format:protobuf-java-format` that rewrites the bytecode to use `org.apache.hadoop.hbase.shaded.com.google.protobuf` instead of plain
+    `com.google.protobuf` for compatibility with `hbase-shaded-client`. Classes using shaded protobufs are exposed in `com.google.bigtable.hbase.mirroring.shaded.com.googlecode.protobuf.format`
+    package.
+  </description>
+
+  <properties>
+    <hbase-shading-prefix>org.apache.hadoop.hbase.shaded</hbase-shading-prefix>
+    <hbase-shading-prefix-path>org/apache/hadoop/hbase/shaded</hbase-shading-prefix-path>
+    <shading-prefix>com.google.bigtable.hbase.mirroring.shaded</shading-prefix>
+    <shading-prefix-path>com/google/bigtable/hbase/mirroring/shaded</shading-prefix-path>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.googlecode.protobuf-java-format</groupId>
+      <artifactId>protobuf-java-format</artifactId>
+      <version>1.4</version>
+      <scope>compile</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <shadedArtifactAttached>false</shadedArtifactAttached>
+              <createDependencyReducedPom>true</createDependencyReducedPom>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+              <relocations>
+                <relocation>
+                  <pattern>com.google.protobuf</pattern>
+                  <shadedPattern>${hbase-shading-prefix}.com.google.protobuf</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.googlecode.protobuf.format</pattern>
+                  <shadedPattern>${shading-prefix}.com.googlecode.protobuf.format</shadedPattern>
+                </relocation>
+              </relocations>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>2.0.0-alpha2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+        <executions>
+          <execution>
+            <id>verify-shaded-jar-entries</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-shaded-jar-entries</goal>
+            </goals>
+            <configuration>
+              <allowedJarClassEntries>
+                <classEntry>${shading-prefix-path}/com/googlecode/protobuf/format</classEntry>
+              </allowedJarClassEntries>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
