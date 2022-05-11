@@ -16,12 +16,15 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol;
 
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringOptions;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController.ResourceReservation;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * Interface used by {@link FlowController} to decide whether resources needed for performing a
  * secondary database request can be acquired.
+ *
+ * <p>Implementations of this class should be thread-safe.
  */
 @InternalApi("For internal usage only")
 public interface FlowControlStrategy {
@@ -41,4 +44,8 @@ public interface FlowControlStrategy {
 
   /** Releases resources associated with provided description. */
   void releaseResource(RequestResourcesDescription resource);
+
+  interface Factory {
+    FlowControlStrategy create(MirroringOptions options) throws Throwable;
+  }
 }

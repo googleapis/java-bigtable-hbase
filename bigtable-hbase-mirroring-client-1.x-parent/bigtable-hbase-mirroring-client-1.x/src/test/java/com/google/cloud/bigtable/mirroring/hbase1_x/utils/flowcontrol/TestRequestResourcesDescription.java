@@ -19,10 +19,14 @@ import static com.google.common.truth.Truth.assertThat;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue.Type;
 import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Mutation;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.junit.Test;
@@ -39,7 +43,7 @@ public class TestRequestResourcesDescription {
     // 2 aligned to 8
     assertThat(new RequestResourcesDescription(new boolean[] {true, false}).sizeInBytes)
         .isEqualTo(8);
-    // 9 aligned to 8
+    // 9 aligned to 16
     assertThat(new RequestResourcesDescription(new boolean[9]).sizeInBytes).isEqualTo(16);
     Cell c1 =
         CellUtil.createCell(
@@ -96,5 +100,38 @@ public class TestRequestResourcesDescription {
 
     assertThat(new RequestResourcesDescription(Arrays.asList(delete, delete2)).sizeInBytes)
         .isAtLeast(15); // 14 bytes of data + some overhead
+  }
+
+  @Test
+  public void testCountingSimpleRequests() throws IOException {
+    boolean bool = true;
+    boolean[] boolArray = new boolean[] {true, false};
+    Result result = Result.create(new Cell[0]);
+    Result[] resultArray = new Result[] {Result.create(new Cell[0]), Result.create(new Cell[0])};
+    Mutation mutation = new Put("r1".getBytes());
+    List<Mutation> mutationList =
+        Arrays.asList(new Put("r1".getBytes()), new Delete("r2".getBytes()));
+
+    List<Get> readOperations = Arrays.asList(new Get("r1".getBytes()), new Get("r2".getBytes()));
+    Result[] successfulReadResults = resultArray;
+
+    RowMutations rowMutations = new RowMutations("r1".getBytes());
+    rowMutations.add(new Put("r1".getBytes()));
+    rowMutations.add(new Delete("r1".getBytes()));
+
+    assertThat(new RequestResourcesDescription(bool).numberOfResults).isEqualTo(1);
+    assertThat(new RequestResourcesDescription(boolArray).numberOfResults).isEqualTo(2);
+
+    assertThat(new RequestResourcesDescription(result).numberOfResults).isEqualTo(1);
+    assertThat(new RequestResourcesDescription(resultArray).numberOfResults).isEqualTo(2);
+
+    assertThat(new RequestResourcesDescription(mutation).numberOfResults).isEqualTo(1);
+    assertThat(new RequestResourcesDescription(mutationList).numberOfResults).isEqualTo(2);
+
+    assertThat(new RequestResourcesDescription(rowMutations).numberOfResults).isEqualTo(1);
+
+    assertThat(
+            new RequestResourcesDescription(readOperations, successfulReadResults).numberOfResults)
+        .isEqualTo(2);
   }
 }

@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.mirroring.hbase1_x;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -26,14 +25,19 @@ import static org.mockito.Mockito.when;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController.ResourceReservation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.RequestResourcesDescription;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue.Type;
@@ -41,9 +45,13 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.Table;
 import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
+import org.mockito.exceptions.base.MockitoException;
+import org.mockito.invocation.Invocation;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -134,23 +142,85 @@ public class TestHelpers {
         SettableFuture.create();
     resourceReservationFuture.setException(thrownException);
 
-    doReturn(resourceReservationFuture)
+    lenient()
+        .doReturn(resourceReservationFuture)
         .when(flowController)
         .asyncRequestResource(any(RequestResourcesDescription.class));
     return thrownException;
   }
 
+  /**
+   * A helper function that blocks method on a mock until a future is set or default timeout is
+   * reached.
+   *
+   * <p>Once unblocked by {@link SettableFuture#set} the call is unblocked and let through.
+   *
+   * <p>When timeout is reached a TimeoutException is thrown and blocked method is never called.
+   *
+   * @param mock mock whose method is blocked
+   * @param futureToWaitFor future which unblocks method calls
+   * @param before action to be called before waiting for {@param futureToWaitFor}
+   * @param <T> - type of {@param mock}
+   * @return {@param mock}
+   */
   public static <T> T blockMethodCall(
-      T table, final SettableFuture<Void> secondaryOperationAllowedFuture) {
+      T mock, final SettableFuture<Void> futureToWaitFor, final Runnable before) {
     return doAnswer(
             new Answer<Object>() {
               @Override
               public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                secondaryOperationAllowedFuture.get(10, TimeUnit.SECONDS);
-                return invocationOnMock.callRealMethod();
+                before.run();
+                futureToWaitFor.get(10, TimeUnit.SECONDS);
+                try {
+                  return invocationOnMock.callRealMethod();
+                } catch (MockitoException e) {
+                  // there was no real method to call, ignore.
+                  return null;
+                }
               }
             })
-        .when(table);
+        .when(mock);
+  }
+
+  public static <T> T blockMethodCall(
+      T mock, final SettableFuture<Void> secondaryOperationAllowedFuture) {
+    return blockMethodCall(
+        mock,
+        secondaryOperationAllowedFuture,
+        new Runnable() {
+          @Override
+          public void run() {}
+        });
+  }
+
+  public static <T> T blockMethodCall(
+      T mock,
+      final SettableFuture<Void> secondaryOperationAllowedFuture,
+      final SettableFuture<Void> startedFuture) {
+    return blockMethodCall(
+        mock,
+        secondaryOperationAllowedFuture,
+        new Runnable() {
+          @Override
+          public void run() {
+            startedFuture.set(null);
+          }
+        });
+  }
+
+  public static <T> T blockMethodCall(
+      T mock,
+      final SettableFuture<Void> secondaryOperationAllowedFuture,
+      final Semaphore startedSemaphore) {
+    return blockMethodCall(
+        mock,
+        secondaryOperationAllowedFuture,
+        new Runnable() {
+          @Override
+          public void run() {
+            startedSemaphore.release();
+          }
+        });
   }
 
   public static <T> SettableFuture<Void> blockMethodCall(T methodCall) {
@@ -161,10 +231,55 @@ public class TestHelpers {
               @Override
               public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 secondaryOperationAllowedFuture.get(10, TimeUnit.SECONDS);
-                return invocationOnMock.callRealMethod();
+                try {
+                  return invocationOnMock.callRealMethod();
+                } catch (MockitoException e) {
+                  // there was no real method to call, ignore.
+                  return null;
+                }
               }
             });
     return secondaryOperationAllowedFuture;
+  }
+
+  public static <T> T delayMethodCall(T mock, final int ms) {
+    return doAnswer(
+            new Answer<Object>() {
+              @Override
+              public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                Thread.sleep(ms);
+                try {
+                  return invocationOnMock.callRealMethod();
+                } catch (MockitoException e) {
+                  // there was no real method to call, ignore.
+                  return null;
+                }
+              }
+            })
+        .when(mock);
+  }
+
+  public static <T> void waitUntilCalled(
+      T mockitoObject, String methodName, int calls, int timeoutSeconds) throws TimeoutException {
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    while (stopwatch.elapsed(TimeUnit.SECONDS) < timeoutSeconds) {
+      Collection<Invocation> invocations = Mockito.mockingDetails(mockitoObject).getInvocations();
+      long count = 0;
+      for (Invocation invocation : invocations) {
+        if (invocation.getMethod().getName().equals(methodName)) {
+          count++;
+        }
+      }
+      if (count >= calls) {
+        return;
+      }
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    throw new TimeoutException();
   }
 
   public static void assertPutsAreEqual(
@@ -187,7 +302,7 @@ public class TestHelpers {
   }
 
   public static Map<Object, Object> mapOf(Object... keyValuePairs) {
-    assert keyValuePairs.length % 2 == 0;
+    Preconditions.checkArgument(keyValuePairs.length % 2 == 0);
     Map<Object, Object> mapping = new HashMap<>();
     for (int i = 0; i < keyValuePairs.length; i += 2) {
       mapping.put(keyValuePairs[i], keyValuePairs[i + 1]);
@@ -210,24 +325,46 @@ public class TestHelpers {
         .batch(ArgumentMatchers.<Row>anyList(), any(Object[].class));
   }
 
+  /**
+   * Function used to mock Table.batch(operations, results) call by filling the result Array.
+   *
+   * <p>For objects in {@param keyValuePairs} returns a provided value, otherwise constructs a
+   * default one.
+   *
+   * <p>Throws iff any of the values returned to caller of batch is a Throwable.
+   *
+   * @param keyValuePairs - key:value pairs of objects, key may be either operation or operation
+   *     class
+   * @return {@link Answer} for use in {@link org.mockito.stubbing.BaseStubber#doAnswer(Answer)}
+   */
   public static Answer<Void> createMockBatchAnswer(final Object... keyValuePairs) {
     final Map<Object, Object> mapping = mapOf(keyValuePairs);
 
     return new Answer<Void>() {
       @Override
       public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
-        boolean shouldThrow = false;
         Object[] args = invocationOnMock.getArguments();
         List<? extends Row> operations = (List<? extends Row>) args[0];
         Object[] result = (Object[]) args[1];
 
+        List<Throwable> exceptions = new ArrayList<>();
+        List<Row> failedOps = new ArrayList<>();
+        List<String> hostnameAndPorts = new ArrayList<>();
+
         for (int i = 0; i < operations.size(); i++) {
           Row operation = operations.get(i);
-          if (mapping.containsKey(operation)) {
-            Object value = mapping.get(operation);
+          if (mapping.containsKey(operation) || mapping.containsKey(operation.getClass())) {
+            Object value;
+            if (mapping.containsKey(operation)) {
+              value = mapping.get(operation);
+            } else {
+              value = mapping.get(operation.getClass());
+            }
             result[i] = value;
             if (value instanceof Throwable) {
-              shouldThrow = true;
+              failedOps.add(operation);
+              exceptions.add((Throwable) value);
+              hostnameAndPorts.add("test:1");
             }
           } else if (operation instanceof Get) {
             Get get = (Get) operation;
@@ -236,8 +373,8 @@ public class TestHelpers {
             result[i] = Result.create(new Cell[0]);
           }
         }
-        if (shouldThrow) {
-          throw new IOException();
+        if (!failedOps.isEmpty()) {
+          throw new RetriesExhaustedWithDetailsException(exceptions, failedOps, hostnameAndPorts);
         }
         return null;
       }

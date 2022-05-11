@@ -77,6 +77,7 @@ limitations under the License.
 
                   <systemPropertyVariables>
                     <integration-tests-config-file-name>hbase-to-bigtable-local-configuration.xml</integration-tests-config-file-name>
+                    <integrations.compat.table-creator-impl>com.google.cloud.bigtable.hbase.mirroring.utils.compat.TableCreator1x</integrations.compat.table-creator-impl>
                   </systemPropertyVariables>
 
                   <environmentVariables>
@@ -143,6 +144,7 @@ limitations under the License.
 
                   <systemPropertyVariables>
                     <integration-tests-config-file-name>bigtable-to-hbase-local-configuration.xml</integration-tests-config-file-name>
+                    <integrations.compat.table-creator-impl>com.google.cloud.bigtable.hbase.mirroring.utils.compat.TableCreator1x</integrations.compat.table-creator-impl>
                   </systemPropertyVariables>
 
                   <environmentVariables>
@@ -318,6 +320,12 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>3.8.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-api</artifactId>
       <version>2.14.1</version>
@@ -328,6 +336,19 @@ limitations under the License.
       <artifactId>log4j-core</artifactId>
       <version>2.14.1</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-hbase-mirroring-client-1.x</artifactId>
+      <version>2.0.0-alpha2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <type>test-jar</type>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>org.apache.hbase</artifactId>
+          <groupId>*</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 

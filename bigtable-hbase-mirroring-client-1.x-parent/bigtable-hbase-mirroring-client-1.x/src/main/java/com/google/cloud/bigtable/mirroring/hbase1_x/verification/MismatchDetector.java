@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x.verification;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
 import java.util.List;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
@@ -42,15 +43,34 @@ public interface MismatchDetector {
 
   void get(List<Get> request, Throwable throwable);
 
-  void scannerNext(Scan request, int entriesAlreadyRead, Result primary, Result secondary);
+  void scannerNext(
+      Scan request, ScannerResultVerifier mismatches, Result primary, Result secondary);
 
-  void scannerNext(Scan request, int entriesAlreadyRead, Throwable throwable);
+  void scannerNext(Scan request, Throwable throwable);
 
-  void scannerNext(Scan request, int entriesAlreadyRead, Result[] primary, Result[] secondary);
+  void scannerNext(
+      Scan request, ScannerResultVerifier mismatches, Result[] primary, Result[] secondary);
 
-  void scannerNext(Scan request, int entriesAlreadyRead, int entriesRequested, Throwable throwable);
+  void scannerNext(Scan request, int entriesRequested, Throwable throwable);
 
   void batch(List<Get> request, Result[] primary, Result[] secondary);
 
   void batch(List<Get> request, Throwable throwable);
+
+  interface Factory {
+    MismatchDetector create(MirroringTracer mirroringTracer, Integer maxLoggedBinaryValueLength)
+        throws Throwable;
+  }
+
+  ScannerResultVerifier createScannerResultVerifier(Scan request, int maxBufferedResults);
+
+  /**
+   * Interface of helper classes used to detect non-trivial mismatches in scan operations, such as
+   * elements missing in one of the databases.
+   */
+  interface ScannerResultVerifier {
+    void verify(Result[] primary, Result[] secondary);
+
+    void flush();
+  }
 }

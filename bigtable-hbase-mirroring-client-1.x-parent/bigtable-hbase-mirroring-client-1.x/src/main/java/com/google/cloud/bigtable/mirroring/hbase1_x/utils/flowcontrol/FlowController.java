@@ -16,21 +16,47 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol;
 
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
+import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 /**
- * FlowController limits the number of concurrently performed requests to the secondary database.
- * Call to {@link #asyncRequestResource(RequestResourcesDescription)} returns a future that will be
- * completed when {@link FlowControlStrategy} decides that it can be allowed to perform the
- * requests. The future might also be completed exceptionally if the resource was not allowed to
- * obtain the resources.
+ * FlowController limits resources (RAM, number of requests) used by asynchronous requests to
+ * secondary database. It is used to keep track of all requests sent to secondary from {@link
+ * com.google.cloud.bigtable.mirroring.hbase1_x.MirroringTable} and {@link
+ * com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.MirroringBufferedMutator}, most of
+ * the times called from a helper method {@link
+ * com.google.cloud.bigtable.mirroring.hbase1_x.utils.RequestScheduling#scheduleRequestWithCallback(
+ * RequestResourcesDescription, Supplier, FutureCallback, FlowController, MirroringTracer,
+ * Function)}. FlowController and {@link FlowControlStrategy} do not allocate any actual resources,
+ * they are used for accounting the amount of resources used by other classes, thus we say that they
+ * "reserve" resources rather than allocate them.
  *
- * <p>Order of allowing requests in determined by {@link FlowControlStrategy}.
+ * <p>Call to {@link #asyncRequestResource(RequestResourcesDescription)} returns a future that will
+ * be completed when {@link FlowControlStrategy} reserves requested amount of resources and the
+ * requesting actor is allowed perform its operation. {@link ResourceReservation}s obtained this way
+ * should be released using {@link ResourceReservation#release()} after the operation is completed.
+ * The future might also be completed exceptionally if the {@link FlowControlStrategy} rejects a
+ * request and resources for it won't be reserved. The future returned from {@link
+ * #asyncRequestResource(RequestResourcesDescription)} can be cancelled (using {@link
+ * #cancelRequest(Future)}) if the requesting actor is not longer willing to perform the request.
+ * Each request should be released or have its future cancelled. Futures can be safely cancelled
+ * even if they have been already completed - that would simply release reserved resources.
  *
- * <p>Thread-safe.
+ * <p>Requests are completed in order determined by {@link FlowControlStrategy}.
+ *
+ * <p>{@link FlowController} and {@link AcquiredResourceReservation} provide a simpler interface
+ * over {@link FlowControlStrategy} - a {@link ResourceReservation#release()} called on {@link
+ * ResourceReservation} obtained from an instance of FlowController will always release appropriate
+ * amount of resources from correct {@link FlowControlStrategy}.
+ *
+ * <p>Thread-safe because uses thread-safe interface of {@link FlowControlStrategy}.
  */
 @InternalApi("For internal usage only")
 public class FlowController {
@@ -49,14 +75,21 @@ public class FlowController {
     // The cancellation may fail if the resources were already allocated by the FlowController, then
     // we should free them, or when the reservation was rejected, which we should ignore.
     if (!resourceReservationFuture.cancel(true)) {
+      // We cannot cancel the reservation future. This means that the future was already completed
+      // by calling `set()` or `setException()`.
       try {
         resourceReservationFuture.get().release();
       } catch (InterruptedException ex) {
-        // If we couldn't cancel the request, it must have already been set, we assume
-        // that we will get the reservation without problems
-        assert false;
+        // This shouldn't happen. The future was already set with `set()` or `setException()`, which
+        // means that calling `.get()` on it shouldn't block.
+        throw new IllegalStateException(
+            "A reservation future couldn't be cancelled, but obtaining its result has thrown "
+                + "InterruptedException. This is unexpected.",
+            ex);
       } catch (ExecutionException ex) {
-        // The request was rejected.
+        // The request was rejected by flow controller (e.g. cancelled).
+        // `AcquiredResourceReservation` handles such cases correctly and will release associated
+        // resources.
       }
     }
   }
@@ -74,6 +107,8 @@ public class FlowController {
    * Default implementation of {@link ResourceReservation} that can be used by {@link
    * FlowControlStrategy} implementations as an entry to be notified when resources for request are
    * available.
+   *
+   * <p>Not thread-safe.
    */
   public static class AcquiredResourceReservation implements ResourceReservation {
     final RequestResourcesDescription requestResourcesDescription;
@@ -92,11 +127,11 @@ public class FlowController {
       this.notified = false;
     }
 
-    void notifyWaiter() {
-      assert !this.notified;
+    public void notifyWaiter() {
+      Preconditions.checkState(!this.notified);
       this.notified = true;
       if (!this.notification.set(this)) {
-        assert this.notification.isCancelled();
+        Preconditions.checkState(this.notification.isCancelled());
         // The notification was cancelled, we should release its resources.
         this.release();
       }

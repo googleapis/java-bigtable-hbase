@@ -16,23 +16,39 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x.utils;
 
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.compat.CellComparatorCompat;
 import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.CellComparator;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
 
 @InternalApi("For internal usage only")
 public class Comparators {
+  private static CellComparatorCompat cellComparator;
+
+  static {
+    // Try to construct 2.x CellComparator compatibility wrapper if available.
+    final String comparatorCompat1xImplClass =
+        "com.google.cloud.bigtable.mirroring.hbase1_x.utils.compat.CellComparatorCompatImpl";
+    final String comparatorCompat2xImplClass =
+        "com.google.cloud.bigtable.mirroring.hbase2_x.utils.compat.CellComparatorCompatImpl";
+    try {
+      cellComparator =
+          (CellComparatorCompat) Class.forName(comparatorCompat2xImplClass).newInstance();
+    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+      try {
+        cellComparator =
+            (CellComparatorCompat) Class.forName(comparatorCompat1xImplClass).newInstance();
+      } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
+        throw new IllegalStateException(ex);
+      }
+    }
+  }
+
   public static boolean resultsEqual(Result result1, Result result2) {
     if (result1 == null && result2 == null) {
       return true;
     }
     if (result1 == null || result2 == null) {
-      return false;
-    }
-    int rowsComparisionResult =
-        CellComparator.compareRows(result1.getRow(), 0, 0, result2.getRow(), 0, 0);
-    if (rowsComparisionResult != 0) {
       return false;
     }
     Cell[] cells1 = result1.rawCells();
@@ -49,8 +65,17 @@ public class Comparators {
     if (cells1.length != cells2.length) {
       return false;
     }
+
     for (int i = 0; i < cells1.length; i++) {
-      int cellResult = CellComparator.compare(cells1[i], cells2[i], true);
+      if (cells1[i] == null && cells2[i] == null) {
+        continue;
+      }
+
+      if (cells1[i] == null || cells2[i] == null) {
+        return false;
+      }
+
+      int cellResult = cellComparator.compareCells(cells1[i], cells2[i]);
       if (cellResult != 0) {
         return false;
       }

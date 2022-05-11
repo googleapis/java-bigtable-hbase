@@ -21,11 +21,11 @@ import static org.junit.Assert.assertEquals;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConfigurationHelper;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.DatabaseHelpers;
-import com.google.cloud.bigtable.hbase.mirroring.utils.ExecutorServiceRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.Helpers;
-import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounter;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRule;
+import com.google.cloud.bigtable.hbase.mirroring.utils.TestMismatchDetectorCounter;
 import com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.FailingHBaseHRegionRule;
+import com.google.cloud.bigtable.mirroring.hbase1_x.ExecutorServiceRule;
 import com.google.cloud.bigtable.mirroring.hbase1_x.MirroringConnection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Longs;
@@ -41,26 +41,26 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class TestReadVerificationSampling {
-
   @ClassRule public static ConnectionRule connectionRule = new ConnectionRule();
-
-  @Rule public ExecutorServiceRule executorServiceRule = new ExecutorServiceRule();
-  @Rule public FailingHBaseHRegionRule failingHBaseHRegionRule = new FailingHBaseHRegionRule();
-  public DatabaseHelpers databaseHelpers = new DatabaseHelpers(connectionRule, executorServiceRule);
+  @Rule public ExecutorServiceRule executorServiceRule = ExecutorServiceRule.cachedPoolExecutor();
+  private DatabaseHelpers databaseHelpers =
+      new DatabaseHelpers(connectionRule, executorServiceRule);
 
   @Rule
   public MismatchDetectorCounterRule mismatchDetectorCounterRule =
       new MismatchDetectorCounterRule();
 
-  static final byte[] family1 = "cf1".getBytes();
-  static final byte[] qualifier1 = "cq1".getBytes();
+  @Rule public FailingHBaseHRegionRule failingHBaseHRegionRule = new FailingHBaseHRegionRule();
+
+  private static final byte[] columnFamily1 = "cf1".getBytes();
+  private static final byte[] qualifier1 = "cq1".getBytes();
 
   @Test
   public void testPartialReadsVerificationOnGets() throws IOException {
     TableName tableName;
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
-      tableName = connectionRule.createTable(connection, family1);
-      databaseHelpers.fillTable(tableName, 1000, family1, qualifier1);
+      tableName = connectionRule.createTable(connection, columnFamily1);
+      databaseHelpers.fillTable(tableName, 1000, columnFamily1, qualifier1);
     }
 
     Configuration configuration = ConfigurationHelper.newConfiguration();
@@ -70,32 +70,37 @@ public class TestReadVerificationSampling {
       try (Table table = connection.getTable(tableName)) {
         for (int i = 0; i < 500; i++) {
           int index = (i % 100) * 10;
-          table.get(Helpers.createGet(Longs.toByteArray(index), family1, qualifier1));
+          table.get(Helpers.createGet(Longs.toByteArray(index), columnFamily1, qualifier1));
           table.get(
               ImmutableList.of(
-                  Helpers.createGet(Longs.toByteArray(index + 1), family1, qualifier1),
-                  Helpers.createGet(Longs.toByteArray(index + 2), family1, qualifier1),
-                  Helpers.createGet(Longs.toByteArray(index + 3), family1, qualifier1),
-                  Helpers.createGet(Longs.toByteArray(index + 4), family1, qualifier1),
-                  Helpers.createGet(Longs.toByteArray(index + 5), family1, qualifier1),
-                  Helpers.createGet(Longs.toByteArray(index + 6), family1, qualifier1),
-                  Helpers.createGet(Longs.toByteArray(index + 7), family1, qualifier1),
-                  Helpers.createGet(Longs.toByteArray(index + 8), family1, qualifier1),
-                  Helpers.createGet(Longs.toByteArray(index + 9), family1, qualifier1)));
+                  Helpers.createGet(Longs.toByteArray(index + 1), columnFamily1, qualifier1),
+                  Helpers.createGet(Longs.toByteArray(index + 2), columnFamily1, qualifier1),
+                  Helpers.createGet(Longs.toByteArray(index + 3), columnFamily1, qualifier1),
+                  Helpers.createGet(Longs.toByteArray(index + 4), columnFamily1, qualifier1),
+                  Helpers.createGet(Longs.toByteArray(index + 5), columnFamily1, qualifier1),
+                  Helpers.createGet(Longs.toByteArray(index + 6), columnFamily1, qualifier1),
+                  Helpers.createGet(Longs.toByteArray(index + 7), columnFamily1, qualifier1),
+                  Helpers.createGet(Longs.toByteArray(index + 8), columnFamily1, qualifier1),
+                  Helpers.createGet(Longs.toByteArray(index + 9), columnFamily1, qualifier1)));
         }
       }
     }
 
-    assertThat(MismatchDetectorCounter.getInstance().getVerificationsFinishedCounter())
-        .isLessThan(20);
+    // ReadSampler decides whether to verify read per whole request (e.g. it verifies all Gets in a
+    // batch or none). We sent 1000 requests. None of them should fail or be a mismatch.
+    // Our ReadSampler is probabilistic. We have a 0.01 chance of verifying a request.
+    // Assuming that our random number generator really is random and there are no unexpected
+    // errors, probability that this counter is at least 25 is about 0.000042.
+    assertThat(TestMismatchDetectorCounter.getInstance().getVerificationsFinishedCounter())
+        .isLessThan(25);
   }
 
   @Test
   public void testAllReadsVerificationOnGets() throws IOException {
     TableName tableName;
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
-      tableName = connectionRule.createTable(connection, family1);
-      databaseHelpers.fillTable(tableName, 10, family1, qualifier1);
+      tableName = connectionRule.createTable(connection, columnFamily1);
+      databaseHelpers.fillTable(tableName, 10, columnFamily1, qualifier1);
     }
 
     Configuration configuration = ConfigurationHelper.newConfiguration();
@@ -104,20 +109,20 @@ public class TestReadVerificationSampling {
     try (MirroringConnection connection = databaseHelpers.createConnection(configuration)) {
       try (Table table = connection.getTable(tableName)) {
         for (int i = 0; i < 10; i++) {
-          table.get(Helpers.createGet(Longs.toByteArray(i), family1, qualifier1));
+          table.get(Helpers.createGet(Longs.toByteArray(i), columnFamily1, qualifier1));
         }
       }
     }
 
-    assertEquals(10, MismatchDetectorCounter.getInstance().getVerificationsFinishedCounter());
+    assertEquals(10, TestMismatchDetectorCounter.getInstance().getVerificationsFinishedCounter());
   }
 
   @Test
   public void testNoReadsVerificationOnGets() throws IOException {
     TableName tableName;
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
-      tableName = connectionRule.createTable(connection, family1);
-      databaseHelpers.fillTable(tableName, 10, family1, qualifier1);
+      tableName = connectionRule.createTable(connection, columnFamily1);
+      databaseHelpers.fillTable(tableName, 10, columnFamily1, qualifier1);
     }
 
     Configuration configuration = ConfigurationHelper.newConfiguration();
@@ -126,11 +131,11 @@ public class TestReadVerificationSampling {
     try (MirroringConnection connection = databaseHelpers.createConnection(configuration)) {
       try (Table table = connection.getTable(tableName)) {
         for (int i = 0; i < 10; i++) {
-          table.get(Helpers.createGet(Longs.toByteArray(i), family1, qualifier1));
+          table.get(Helpers.createGet(Longs.toByteArray(i), columnFamily1, qualifier1));
         }
       }
     }
 
-    assertEquals(0, MismatchDetectorCounter.getInstance().getVerificationsFinishedCounter());
+    assertEquals(0, TestMismatchDetectorCounter.getInstance().getVerificationsFinishedCounter());
   }
 }

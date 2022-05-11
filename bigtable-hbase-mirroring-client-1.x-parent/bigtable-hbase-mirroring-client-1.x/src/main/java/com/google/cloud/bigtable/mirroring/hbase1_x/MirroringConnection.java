@@ -15,27 +15,30 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
+import com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.MirroringBufferedMutator;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.AccumulatedExceptions;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.CallableThrowingIOException;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.SecondaryWriteErrorConsumerWithMetrics;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.Appender;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.Logger;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.Serializer;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowControlStrategy;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.faillog.FailedMutationLogger;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.mirroringmetrics.MirroringTracer;
-import com.google.cloud.bigtable.mirroring.hbase1_x.utils.reflection.ReflectionConstructor;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.referencecounting.ListenableReferenceCounter;
+import com.google.cloud.bigtable.mirroring.hbase1_x.utils.timestamper.Timestamper;
 import com.google.cloud.bigtable.mirroring.hbase1_x.verification.MismatchDetector;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import io.opencensus.common.Scope;
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -51,20 +54,45 @@ import org.apache.hadoop.hbase.security.User;
 public class MirroringConnection implements Connection {
   private static final com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger Log =
       new com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger(MirroringConnection.class);
-  private final FlowController flowController;
-  private final ExecutorService executorService;
-  private final MismatchDetector mismatchDetector;
-  private final ListenableReferenceCounter referenceCounter;
-  private final MirroringTracer mirroringTracer;
-  private final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
-  private final ReadSampler readSampler;
-  private final Logger failedWritesLogger;
-  private final MirroringConfiguration configuration;
+  protected final FlowController flowController;
+  protected final ExecutorService executorService;
+  protected final MismatchDetector mismatchDetector;
+  /**
+   * Counter of all asynchronous operations that are using the secondary connection. Incremented
+   * when scheduling operations by underlying {@link MirroringTable} and {@link
+   * MirroringResultScanner}.
+   */
+  protected final ListenableReferenceCounter referenceCounter;
+
+  protected final MirroringTracer mirroringTracer;
+  protected final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
+  protected final ReadSampler readSampler;
+  private final FailedMutationLogger failedMutationLogger;
+  protected final MirroringConfiguration configuration;
   private final Connection primaryConnection;
   private final Connection secondaryConnection;
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final AtomicBoolean aborted = new AtomicBoolean(false);
-  private final boolean performWritesConcurrently;
+
+  /**
+   * Enables concurrent writes mode. Should always be enabled together with {@link
+   * #waitForSecondaryWrites}.
+   *
+   * <p>In this mode some of the writes ({@link org.apache.hadoop.hbase.client.Put}s, {@link
+   * org.apache.hadoop.hbase.client.Delete}s and {@link
+   * org.apache.hadoop.hbase.client.RowMutations}) performed using {@link
+   * org.apache.hadoop.hbase.client.Table} API will be performed concurrently and {@link
+   * com.google.cloud.bigtable.mirroring.hbase1_x.bufferedmutator.ConcurrentMirroringBufferedMutator}
+   * instances will be returned by {@link
+   * org.apache.hadoop.hbase.client.Connection#getBufferedMutator}. Moreover, all operations in this
+   * mode wait for secondary database operation to finish before returning to the user (because
+   * {@link #waitForSecondaryWrites} should be set).
+   */
+  protected final boolean performWritesConcurrently;
+
+  protected final boolean waitForSecondaryWrites;
+  // Depending on configuration, ensures that mutations have an explicitly set timestamp.
+  protected final Timestamper timestamper;
 
   /**
    * The constructor called from {@link
@@ -75,15 +103,40 @@ public class MirroringConnection implements Connection {
    * are passed back to the user.
    */
   public MirroringConnection(Configuration conf, boolean managed, ExecutorService pool, User user)
+      throws Throwable {
+    this(new MirroringConfiguration(conf), pool, user);
+    // This is an always-false legacy hbase parameter.
+    Preconditions.checkArgument(!managed, "Mirroring client doesn't support managed connections.");
+  }
+
+  public MirroringConnection(MirroringConfiguration mirroringConfiguration, ExecutorService pool)
       throws IOException {
-    assert !managed; // This is always-false legacy hbase parameter.
-    this.configuration = new MirroringConfiguration(conf);
+    this(
+        mirroringConfiguration,
+        pool,
+        ConnectionFactory.createConnection(mirroringConfiguration.primaryConfiguration, pool),
+        ConnectionFactory.createConnection(mirroringConfiguration.secondaryConfiguration, pool));
+  }
+
+  private MirroringConnection(MirroringConfiguration conf, ExecutorService pool, User user)
+      throws IOException {
+    this(
+        conf,
+        pool,
+        ConnectionFactory.createConnection(conf.primaryConfiguration, pool, user),
+        ConnectionFactory.createConnection(conf.secondaryConfiguration, pool, user));
+  }
+
+  private MirroringConnection(
+      MirroringConfiguration conf,
+      ExecutorService pool,
+      Connection primaryConnection,
+      Connection secondaryConnection) {
+    this.configuration = conf;
     this.mirroringTracer = new MirroringTracer();
 
-    this.primaryConnection =
-        ConnectionFactory.createConnection(this.configuration.primaryConfiguration, pool, user);
-    this.secondaryConnection =
-        ConnectionFactory.createConnection(this.configuration.secondaryConfiguration, pool, user);
+    this.primaryConnection = primaryConnection;
+    this.secondaryConnection = secondaryConnection;
 
     if (pool == null) {
       this.executorService = Executors.newCachedThreadPool();
@@ -92,38 +145,64 @@ public class MirroringConnection implements Connection {
     }
 
     referenceCounter = new ListenableReferenceCounter();
-    this.flowController =
-        new FlowController(
-            ReflectionConstructor.<FlowControlStrategy>construct(
-                this.configuration.mirroringOptions.flowControllerStrategyClass,
-                this.configuration.mirroringOptions));
-    this.mismatchDetector =
-        ReflectionConstructor.construct(
-            this.configuration.mirroringOptions.mismatchDetectorClass, this.mirroringTracer);
 
-    this.failedWritesLogger =
-        new Logger(
-            ReflectionConstructor.<Appender>construct(
-                this.configuration.mirroringOptions.writeErrorLogAppenderClass,
-                Configuration.class,
-                this.configuration),
-            ReflectionConstructor.<Serializer>construct(
-                this.configuration.mirroringOptions.writeErrorLogSerializerClass));
+    try {
+      this.flowController =
+          new FlowController(
+              this.configuration
+                  .mirroringOptions
+                  .flowControllerStrategyFactoryClass
+                  .newInstance()
+                  .create(this.configuration.mirroringOptions));
+      this.mismatchDetector =
+          this.configuration
+              .mirroringOptions
+              .mismatchDetectorFactoryClass
+              .newInstance()
+              .create(
+                  this.mirroringTracer, configuration.mirroringOptions.maxLoggedBinaryValueLength);
 
-    final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer =
-        ReflectionConstructor.construct(
-            this.configuration.mirroringOptions.writeErrorConsumerClass, this.failedWritesLogger);
+      this.failedMutationLogger =
+          new FailedMutationLogger(
+              this.configuration
+                  .mirroringOptions
+                  .faillog
+                  .writeErrorLogAppenderFactoryClass
+                  .newInstance()
+                  .create(this.configuration.mirroringOptions.faillog),
+              this.configuration
+                  .mirroringOptions
+                  .faillog
+                  .writeErrorLogSerializerFactoryClass
+                  .newInstance()
+                  .create());
 
-    this.secondaryWriteErrorConsumer =
-        new SecondaryWriteErrorConsumerWithMetrics(
-            this.mirroringTracer, secondaryWriteErrorConsumer);
-    this.readSampler = new ReadSampler(this.configuration.mirroringOptions.readSamplingRate);
-    this.performWritesConcurrently = this.configuration.mirroringOptions.performWritesConcurrently;
+      final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer =
+          this.configuration
+              .mirroringOptions
+              .writeErrorConsumerFactoryClass
+              .newInstance()
+              .create(this.failedMutationLogger);
+
+      this.timestamper =
+          Timestamper.create(this.configuration.mirroringOptions.enableDefaultClientSideTimestamps);
+
+      this.secondaryWriteErrorConsumer =
+          new SecondaryWriteErrorConsumerWithMetrics(
+              this.mirroringTracer, secondaryWriteErrorConsumer);
+      this.readSampler = new ReadSampler(this.configuration.mirroringOptions.readSamplingRate);
+      this.performWritesConcurrently =
+          this.configuration.mirroringOptions.performWritesConcurrently;
+      this.waitForSecondaryWrites = this.configuration.mirroringOptions.waitForSecondaryWrites;
+    } catch (Throwable throwable) {
+      // Throwable are thrown by `newInstance` and `create` methods.
+      throw new RuntimeException(throwable);
+    }
   }
 
   @Override
   public Configuration getConfiguration() {
-    return this.configuration;
+    return this.configuration.baseConfiguration;
   }
 
   @Override
@@ -147,19 +226,20 @@ public class MirroringConnection implements Connection {
               },
               HBaseOperation.GET_TABLE);
       Table secondaryTable = this.secondaryConnection.getTable(tableName);
-      MirroringTable table =
-          new MirroringTable(
-              primaryTable,
-              secondaryTable,
-              executorService,
-              this.mismatchDetector,
-              this.flowController,
-              this.secondaryWriteErrorConsumer,
-              this.readSampler,
-              this.performWritesConcurrently,
-              this.mirroringTracer);
-      this.referenceCounter.holdReferenceUntilClosing(table);
-      return table;
+      return new MirroringTable(
+          primaryTable,
+          secondaryTable,
+          executorService,
+          this.mismatchDetector,
+          this.flowController,
+          this.secondaryWriteErrorConsumer,
+          this.readSampler,
+          this.timestamper,
+          this.performWritesConcurrently,
+          this.waitForSecondaryWrites,
+          this.mirroringTracer,
+          this.referenceCounter,
+          this.configuration.mirroringOptions.maxLoggedBinaryValueLength);
     }
   }
 
@@ -171,23 +251,23 @@ public class MirroringConnection implements Connection {
   @Override
   public BufferedMutator getBufferedMutator(BufferedMutatorParams bufferedMutatorParams)
       throws IOException {
-    try (Scope scope =
-        this.mirroringTracer.spanFactory.operationScope(HBaseOperation.GET_BUFFERED_MUTATOR)) {
-      return new MirroringBufferedMutator(
-          primaryConnection,
-          secondaryConnection,
-          bufferedMutatorParams,
-          configuration,
-          flowController,
-          executorService,
-          secondaryWriteErrorConsumer,
-          mirroringTracer);
-    }
+    return MirroringBufferedMutator.create(
+        performWritesConcurrently,
+        primaryConnection,
+        secondaryConnection,
+        bufferedMutatorParams,
+        configuration,
+        flowController,
+        executorService,
+        secondaryWriteErrorConsumer,
+        referenceCounter,
+        timestamper,
+        mirroringTracer);
   }
 
   @Override
   public RegionLocator getRegionLocator(TableName tableName) throws IOException {
-    throw new UnsupportedOperationException();
+    return this.primaryConnection.getRegionLocator(tableName);
   }
 
   @Override
@@ -204,30 +284,28 @@ public class MirroringConnection implements Connection {
         return;
       }
 
-      // TODO: we should add a timeout to prevent deadlock in case of a bug on our side.
+      final AccumulatedExceptions exceptions = new AccumulatedExceptions();
       try {
-        closeMirroringConnectionAndWaitForAsyncOperations();
-      } catch (InterruptedException e) {
-        IOException wrapperException = new InterruptedIOException();
-        wrapperException.initCause(e);
-        throw wrapperException;
-      } finally {
-        try {
-          this.failedWritesLogger.close();
-        } catch (Exception e) {
-          throw new IOException(e);
-        }
-      }
-
-      AccumulatedExceptions exceptions = new AccumulatedExceptions();
-      try {
-        this.primaryConnection.close();
+        primaryConnection.close();
       } catch (IOException e) {
         exceptions.add(e);
       }
 
+      CallableThrowingIOException<Void> closeSecondaryConnection =
+          new CallableThrowingIOException<Void>() {
+            @Override
+            public Void call() {
+              try {
+                secondaryConnection.close();
+              } catch (IOException e) {
+                exceptions.add(e);
+              }
+              return null;
+            }
+          };
+
       try {
-        this.secondaryConnection.close();
+        terminateSecondaryConnectionWithTimeout(closeSecondaryConnection);
       } catch (IOException e) {
         exceptions.add(e);
       }
@@ -242,7 +320,7 @@ public class MirroringConnection implements Connection {
   }
 
   @Override
-  public void abort(String s, Throwable throwable) {
+  public void abort(final String s, final Throwable throwable) {
     try (Scope scope =
         this.mirroringTracer.spanFactory.operationScope(
             HBaseOperation.MIRRORING_CONNECTION_ABORT)) {
@@ -250,14 +328,23 @@ public class MirroringConnection implements Connection {
         return;
       }
 
-      try {
-        closeMirroringConnectionAndWaitForAsyncOperations();
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
+      primaryConnection.abort(s, throwable);
 
-      this.primaryConnection.abort(s, throwable);
-      this.secondaryConnection.abort(s, throwable);
+      final CallableThrowingIOException<Void> abortSecondaryConnection =
+          new CallableThrowingIOException<Void>() {
+            @Override
+            public Void call() {
+              secondaryConnection.abort(s, throwable);
+              return null;
+            }
+          };
+      try {
+        terminateSecondaryConnectionWithTimeout(abortSecondaryConnection);
+      } catch (IOException e) {
+        if (e.getCause() instanceof InterruptedException) {
+          throw new RuntimeException(e.getCause());
+        }
+      }
     }
   }
 
@@ -266,20 +353,54 @@ public class MirroringConnection implements Connection {
     return this.aborted.get();
   }
 
+  @VisibleForTesting
   public Connection getPrimaryConnection() {
     return this.primaryConnection;
   }
 
+  @VisibleForTesting
   public Connection getSecondaryConnection() {
     return this.secondaryConnection;
   }
 
-  private void closeMirroringConnectionAndWaitForAsyncOperations() throws InterruptedException {
+  private void terminateSecondaryConnectionWithTimeout(
+      final CallableThrowingIOException<Void> terminatingAction) throws IOException {
+    final SettableFuture<Void> terminationFinishedFuture = SettableFuture.create();
+
+    // The secondary termination action should be run after all in-flight requests are finished.
+    this.referenceCounter
+        .getOnLastReferenceClosed()
+        .addListener(
+            new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  terminatingAction.call();
+                  terminationFinishedFuture.set(null);
+                } catch (Throwable e) {
+                  terminationFinishedFuture.setException(e);
+                }
+              }
+            },
+            MoreExecutors.directExecutor());
+
     this.referenceCounter.decrementReferenceCount();
     try {
-      this.referenceCounter.getOnLastReferenceClosed().get();
-    } catch (ExecutionException e) {
-      throw new RuntimeException(e);
+      // Wait for in-flight requests to be finished but with a timeout to prevent deadlock.
+      terminationFinishedFuture.get(
+          this.configuration.mirroringOptions.connectionTerminationTimeoutMillis,
+          TimeUnit.MILLISECONDS);
+    } catch (ExecutionException | InterruptedException e) {
+      // If the secondary terminating action has thrown while we were waiting, the error will be
+      // propagated to the user.
+      throw new IOException(e);
+    } catch (TimeoutException e) {
+      // But if the timeout was reached, we just leave the operation pending.
+      Log.error(
+          "MirroringConnection#close() timed out. Some of operations on secondary "
+              + "database are still in-flight and might be lost, but are not cancelled and "
+              + "will be performed asynchronously until the program terminates.");
+      // This error is not reported to the user.
     }
   }
 }

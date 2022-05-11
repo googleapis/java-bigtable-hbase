@@ -52,15 +52,35 @@ public class MirroringSpanConstants {
           "Count of errors on secondary database.",
           "1");
 
+  public static final MeasureLong READ_MATCHES =
+      MeasureLong.create(
+          "com/google/cloud/bigtable/mirroring/read_verification/matches",
+          "Count of successfully verified reads.",
+          "1");
+
   public static final MeasureLong READ_MISMATCHES =
       MeasureLong.create(
-          "com/google/cloud/bigtable/mirroring/mismatch/read",
+          "com/google/cloud/bigtable/mirroring/read_verification/mismatches",
           "Count of read mismatches detected.",
           "1");
 
-  public static final MeasureLong WRITE_MISMATCHES =
+  public static final MeasureLong SECONDARY_WRITE_ERRORS =
       MeasureLong.create(
-          "com/google/cloud/bigtable/mirroring/mismatch/write", "Count of write mismatches.", "1");
+          "com/google/cloud/bigtable/mirroring/secondary/write_error_rate",
+          "Count of write errors on secondary database.",
+          "1");
+
+  public static final MeasureLong FLOW_CONTROL_LATENCY =
+      MeasureLong.create(
+          "com/google/cloud/bigtable/mirroring/flow_control_latency",
+          "Distribution of latency of acquiring flow controller resources.",
+          "ms");
+
+  public static final MeasureLong SECONDARY_WRITE_ERROR_HANDLER_LATENCY =
+      MeasureLong.create(
+          "com/google/cloud/bigtable/mirroring/secondary_write_error_handler_latency",
+          "Distribution of secondary write error handling latency.",
+          "ms");
 
   public static TagKey OPERATION_KEY = TagKey.create("operation");
 
@@ -86,7 +106,6 @@ public class MirroringSpanConstants {
     BATCH_CALLBACK("batchCallback"),
     TABLE_CLOSE("close"),
     GET_TABLE("getTable"),
-    GET_BUFFERED_MUTATOR("getBufferedMutator"),
     BUFFERED_MUTATOR_FLUSH("flush"),
     BUFFERED_MUTATOR_MUTATE("mutate"),
     BUFFERED_MUTATOR_MUTATE_LIST("mutateList"),

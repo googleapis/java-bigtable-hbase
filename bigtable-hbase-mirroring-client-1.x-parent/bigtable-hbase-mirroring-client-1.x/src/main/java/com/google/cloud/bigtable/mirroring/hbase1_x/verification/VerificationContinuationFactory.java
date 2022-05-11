@@ -21,6 +21,7 @@ import com.google.cloud.bigtable.mirroring.hbase1_x.asyncwrappers.AsyncResultSca
 import com.google.cloud.bigtable.mirroring.hbase1_x.utils.Logger;
 import com.google.common.util.concurrent.FutureCallback;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
@@ -115,21 +116,27 @@ public class VerificationContinuationFactory {
     return results[0];
   }
 
-  public FutureCallback<AsyncScannerVerificationPayload> scannerNext() {
-    return new FutureCallback<AsyncScannerVerificationPayload>() {
+  public FutureCallback<Void> scannerNext(
+      final Object verificationLock,
+      final ConcurrentLinkedQueue<AsyncScannerVerificationPayload> resultQueue,
+      final MismatchDetector.ScannerResultVerifier unmatched) {
+    return new FutureCallback<Void>() {
       @Override
-      public void onSuccess(@NullableDecl AsyncScannerVerificationPayload results) {
-        Log.trace("verification onSuccess scannerNext(Scan, int)");
-        Scan request = results.context.scan;
-        if (results.context.singleNext) {
-          VerificationContinuationFactory.this.mismatchDetector.scannerNext(
-              request,
-              results.context.startingIndex,
-              firstOrNull(results.context.result),
-              firstOrNull(results.secondary));
-        } else {
-          VerificationContinuationFactory.this.mismatchDetector.scannerNext(
-              request, results.context.startingIndex, results.context.result, results.secondary);
+      public void onSuccess(@NullableDecl Void ignored) {
+        synchronized (verificationLock) {
+          AsyncScannerVerificationPayload results = resultQueue.remove();
+          Log.trace("verification onSuccess scannerNext(Scan, int)");
+          Scan request = results.context.scan;
+          if (results.context.singleNext) {
+            VerificationContinuationFactory.this.mismatchDetector.scannerNext(
+                request,
+                unmatched,
+                firstOrNull(results.context.result),
+                firstOrNull(results.secondary));
+          } else {
+            VerificationContinuationFactory.this.mismatchDetector.scannerNext(
+                request, unmatched, results.context.result, results.secondary);
+          }
         }
       }
 
@@ -142,13 +149,10 @@ public class VerificationContinuationFactory {
           Scan request = exceptionWithContext.context.scan;
           if (exceptionWithContext.context.singleNext) {
             VerificationContinuationFactory.this.mismatchDetector.scannerNext(
-                request, exceptionWithContext.context.startingIndex, throwable.getCause());
+                request, throwable.getCause());
           } else {
             VerificationContinuationFactory.this.mismatchDetector.scannerNext(
-                request,
-                exceptionWithContext.context.startingIndex,
-                exceptionWithContext.context.numRequests,
-                throwable.getCause());
+                request, exceptionWithContext.context.numRequests, throwable.getCause());
           }
         } else {
           Log.error(

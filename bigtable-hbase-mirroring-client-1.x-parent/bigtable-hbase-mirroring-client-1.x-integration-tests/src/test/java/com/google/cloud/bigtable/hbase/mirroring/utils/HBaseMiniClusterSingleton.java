@@ -33,7 +33,11 @@ public class HBaseMiniClusterSingleton {
 
   public HBaseMiniClusterSingleton() {
     Configuration configuration = HBaseConfiguration.create();
-    configuration.set("hbase.hregion.impl", FailingHBaseHRegion.class.getCanonicalName());
+    configuration.set(
+        "hbase.hregion.impl",
+        System.getProperty(
+            "integrations.compat.failingregion.impl",
+            FailingHBaseHRegion.class.getCanonicalName()));
     helper = new HBaseTestingUtility(configuration);
   }
 
