@@ -19,14 +19,13 @@ import static com.google.cloud.bigtable.hbase2_x.ApiFutureUtils.failedFuture;
 import static com.google.cloud.bigtable.hbase2_x.ApiFutureUtils.toCompletableFuture;
 
 import com.google.api.core.InternalApi;
+import com.google.bigtable.admin.v2.ClusterName;
 import com.google.cloud.bigtable.admin.v2.internal.NameUtil;
 import com.google.cloud.bigtable.admin.v2.models.Cluster;
 import com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.RestoreTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
-import com.google.cloud.bigtable.grpc.BigtableClusterName;
-import com.google.cloud.bigtable.grpc.BigtableInstanceName;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
@@ -86,7 +85,7 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
   private final BigtableHBaseSettings settings;
   private final CommonConnection asyncConnection;
   private final String bigtableInstanceName;
-  private BigtableClusterName bigtableSnapshotClusterName;
+  private ClusterName bigtableSnapshotClusterName;
   private final int ttlSeconds;
 
   public BigtableAsyncAdmin(CommonConnection asyncConnection) throws IOException {
@@ -101,11 +100,11 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
     String clusterId =
         configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
     if (clusterId != null) {
-      BigtableInstanceName bigtableInstanceName =
-          new BigtableInstanceName(
+      bigtableSnapshotClusterName =
+          ClusterName.of(
               asyncConnection.getBigtableSettings().getProjectId(),
-              asyncConnection.getBigtableSettings().getInstanceId());
-      bigtableSnapshotClusterName = bigtableInstanceName.toClusterName(clusterId);
+              asyncConnection.getBigtableSettings().getInstanceId(),
+              clusterId);
     }
     this.ttlSeconds =
         configuration.getInt(
@@ -336,7 +335,7 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
   public CompletableFuture<Void> deleteSnapshot(String snapshotId) {
     return toCompletableFuture(
         bigtableTableAdminClient.deleteBackupAsync(
-            getBackupClusterName().getClusterId(), snapshotId));
+            getBackupClusterName().getCluster(), snapshotId));
   }
 
   @Override
@@ -464,7 +463,7 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
 
     return toCompletableFuture(
             bigtableTableAdminClient.createBackupAsync(
-                CreateBackupRequest.of(getBackupClusterName().getClusterId(), snapshotId)
+                CreateBackupRequest.of(getBackupClusterName().getCluster(), snapshotId)
                     .setExpireTime(expireTime)
                     .setSourceTableId(tableName.getNameAsString())))
         .thenAccept(backup -> {});
@@ -474,7 +473,7 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
   public CompletableFuture<Void> cloneSnapshot(String snapshotId, TableName tableName) {
     return toCompletableFuture(
             bigtableTableAdminClient.restoreTableAsync(
-                RestoreTableRequest.of(getBackupClusterName().getClusterId(), snapshotId)
+                RestoreTableRequest.of(getBackupClusterName().getCluster(), snapshotId)
                     .setTableId(tableName.getNameAsString())))
         .thenAccept(backup -> {});
   }
@@ -487,7 +486,7 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
 
   @Override
   public CompletableFuture<List<SnapshotDescription>> listSnapshots() {
-    return CompletableFuture.supplyAsync(() -> getBackupClusterName().getClusterId())
+    return CompletableFuture.supplyAsync(() -> getBackupClusterName().getCluster())
         .thenCompose(
             c ->
                 toCompletableFuture(bigtableTableAdminClient.listBackupsAsync(c))
@@ -517,7 +516,7 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
     return r.stream().filter(predicate).collect(Collectors.toList());
   }
 
-  private synchronized BigtableClusterName getBackupClusterName() {
+  private synchronized ClusterName getBackupClusterName() {
     if (this.bigtableSnapshotClusterName == null) {
       List<Cluster> clusters =
           asyncConnection
@@ -531,12 +530,11 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
               asyncConnection.getBigtableSettings().getProjectId(),
               asyncConnection.getBigtableSettings().getInstanceId(),
               clusters.size()));
-      String clusterName =
-          NameUtil.formatClusterName(
+      bigtableSnapshotClusterName =
+          ClusterName.of(
               asyncConnection.getBigtableSettings().getProjectId(),
               asyncConnection.getBigtableSettings().getInstanceId(),
               clusters.get(0).getId());
-      bigtableSnapshotClusterName = new BigtableClusterName(clusterName);
     }
     return bigtableSnapshotClusterName;
   }
