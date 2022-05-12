@@ -331,7 +331,7 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
   public CompletableFuture<Void> deleteSnapshot(String snapshotId) {
     return toCompletableFuture(
         bigtableTableAdminClient.deleteBackupAsync(
-            getBackupClusterName().getCluster(), snapshotId));
+            getBackupClusterName(), snapshotId));
   }
 
   @Override
