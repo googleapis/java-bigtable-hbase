@@ -19,7 +19,6 @@ import static com.google.cloud.bigtable.hbase2_x.ApiFutureUtils.failedFuture;
 import static com.google.cloud.bigtable.hbase2_x.ApiFutureUtils.toCompletableFuture;
 
 import com.google.api.core.InternalApi;
-import com.google.bigtable.admin.v2.ClusterName;
 import com.google.cloud.bigtable.admin.v2.internal.NameUtil;
 import com.google.cloud.bigtable.admin.v2.models.Cluster;
 import com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest;
@@ -330,8 +329,7 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Void> deleteSnapshot(String snapshotId) {
     return toCompletableFuture(
-        bigtableTableAdminClient.deleteBackupAsync(
-            getBackupClusterName(), snapshotId));
+        bigtableTableAdminClient.deleteBackupAsync(getBackupClusterName(), snapshotId));
   }
 
   @Override
