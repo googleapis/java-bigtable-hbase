@@ -97,8 +97,7 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
 
     Configuration configuration = asyncConnection.getConfiguration();
 
-    snapshotClusterId =
-        configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
+    snapshotClusterId = configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY);
 
     this.ttlSeconds =
         configuration.getInt(
