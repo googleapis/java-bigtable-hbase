@@ -84,7 +84,7 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
   private final BigtableHBaseSettings settings;
   private final CommonConnection asyncConnection;
   private final String bigtableInstanceName;
-  private String bigtableSnapshotClusterId;
+  private String snapshotClusterId;
   private final int ttlSeconds;
 
   public BigtableAsyncAdmin(CommonConnection asyncConnection) throws IOException {
@@ -96,11 +96,10 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
     this.asyncConnection = asyncConnection;
 
     Configuration configuration = asyncConnection.getConfiguration();
-    String clusterId =
+
+    snapshotClusterId =
         configuration.get(BigtableOptionsFactory.BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY, null);
-    if (clusterId != null) {
-      bigtableSnapshotClusterId = clusterId;
-    }
+
     this.ttlSeconds =
         configuration.getInt(
             BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY,
@@ -511,7 +510,7 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   private synchronized String getBackupClusterId() {
-    if (this.bigtableSnapshotClusterId == null) {
+    if (this.snapshotClusterId == null) {
       List<Cluster> clusters =
           asyncConnection
               .getBigtableApi()
@@ -524,9 +523,9 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
               asyncConnection.getBigtableSettings().getProjectId(),
               asyncConnection.getBigtableSettings().getInstanceId(),
               clusters.size()));
-      bigtableSnapshotClusterId = clusters.get(0).getId();
+      snapshotClusterId = clusters.get(0).getId();
     }
-    return bigtableSnapshotClusterId;
+    return snapshotClusterId;
   }
 
   @Override
