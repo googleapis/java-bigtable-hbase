@@ -88,8 +88,6 @@ public class HbaseToCloudBigtableReplicationEndpointDryRunTest {
     ReplicationPeerConfig peerConfig = new ReplicationPeerConfig();
     peerConfig.setReplicationEndpointImpl(
         HbaseToCloudBigtableReplicationEndpoint.class.getTypeName());
-    // Cluster key is required, we don't really have a clusterKey for CBT.
-    peerConfig.setClusterKey(hbaseTestingUtil.getClusterKey());
     replicationAdmin.addPeer("cbt", peerConfig);
 
     LOG.info("#################### SETUP COMPLETE ##############################");

@@ -79,7 +79,7 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService
 
   @Override
   public boolean canReplicateToSameCluster() {
-    return false;
+    return true;
   }
 
   @Override
