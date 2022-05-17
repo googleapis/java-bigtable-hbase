@@ -103,7 +103,7 @@ Exporting HBase snapshots from Bigtable is not supported.
     ```
 1. Run the export.
    ```
-   java -jar bigtable-beam-import-2.2.1-SNAPSHOT-shaded.jar export \
+   java -jar bigtable-beam-import-2.2.1.jar export \
         --runner=dataflow \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
@@ -143,7 +143,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
     
 1. Run the import.
     ```
-    java -jar bigtable-beam-import-2.2.1-SNAPSHOT-shaded.jar importsnapshot \
+    java -jar bigtable-beam-import-2.2.1.jar importsnapshot \
         --runner=DataflowRunner \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
@@ -171,7 +171,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
 
 1. Run the import.
     ```
-    java -jar bigtable-beam-import-2.2.1-SNAPSHOT-shaded.jar importsnapshot \
+    java -jar bigtable-beam-import-2.2.1.jar importsnapshot \
         --runner=DataflowRunner \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
@@ -199,7 +199,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
     ```
 1. Run the import.
     ```
-    java -jar bigtable-beam-import-2.2.1-SNAPSHOT-shaded.jar import \
+    java -jar bigtable-beam-import-2.2.1.jar import \
         --runner=dataflow \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
@@ -227,7 +227,7 @@ check if there are any rows with mismatched data.
     ```
 1. Run the sync job. It will put the results into `$SNAPSHOT_GCS_PATH/data-verification/output-TIMESTAMP`. 
     ```
-    java -jar bigtable-beam-import-2.2.1-SNAPSHOT-shaded.jar sync-table  \
+    java -jar bigtable-beam-import-2.2.1.jar sync-table  \
         --runner=dataflow \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
