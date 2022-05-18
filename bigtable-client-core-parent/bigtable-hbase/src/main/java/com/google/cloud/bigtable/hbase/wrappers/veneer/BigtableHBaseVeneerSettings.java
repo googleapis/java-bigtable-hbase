@@ -85,6 +85,7 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.metrics.MetricsApiTracerAdapterFactory;
 import com.google.common.base.Joiner;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -255,6 +256,15 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   /** Utility to convert {@link Configuration} to {@link BigtableInstanceAdminSettings}. */
   public BigtableInstanceAdminSettings getInstanceAdminSettings() {
     return instanceAdminSettings;
+  }
+
+  @Override
+  public String toDebugString() {
+    return MoreObjects.toStringHelper(this)
+        .add("dataSettings", dataSettings)
+        .add("tableAdminSettings", tableAdminSettings)
+        .add("instanceAdminSettings", instanceAdminSettings)
+        .toString();
   }
 
   // ************** Private Helpers **************

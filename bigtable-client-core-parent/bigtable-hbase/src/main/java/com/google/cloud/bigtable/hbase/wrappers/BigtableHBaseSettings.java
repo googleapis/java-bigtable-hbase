@@ -87,4 +87,6 @@ public abstract class BigtableHBaseSettings {
         !isNullOrEmpty(value), String.format("%s must be supplied via %s", displayName, key));
     return value;
   }
+
+  public abstract String toDebugString();
 }

@@ -1,5 +1,74 @@
 # Changelog
 
+## [2.2.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.1.1...v2.2.0) (2022-05-03)
+
+
+### Features
+
+* log version and settings on startup ([#3601](https://github.com/googleapis/java-bigtable-hbase/issues/3601)) ([109023a](https://github.com/googleapis/java-bigtable-hbase/commit/109023aa980aaf26229544f271ca348466eac5fe))
+* next release from main branch is 2.2.0 ([#3593](https://github.com/googleapis/java-bigtable-hbase/issues/3593)) ([58a6ce4](https://github.com/googleapis/java-bigtable-hbase/commit/58a6ce47f0990260a097b9d2f641f74745a9f163))
+
+
+### Bug Fixes
+
+* disabling incompatible mutation metrics for HBase 1.3 or lower ([#3599](https://github.com/googleapis/java-bigtable-hbase/issues/3599)) ([9a693e8](https://github.com/googleapis/java-bigtable-hbase/commit/9a693e823a683542acef9932d042778a32495769))
+* published dependencies of bigtable-beam-import ([#3600](https://github.com/googleapis/java-bigtable-hbase/issues/3600)) ([0dfb130](https://github.com/googleapis/java-bigtable-hbase/commit/0dfb13089c6afa56dc1f8f7eddfb63c1d33e483a))
+
+
+### Dependencies
+
+* update dependency net.bytebuddy:byte-buddy to v1.12.10 ([#3597](https://github.com/googleapis/java-bigtable-hbase/issues/3597)) ([283cef8](https://github.com/googleapis/java-bigtable-hbase/commit/283cef872a6c08771cd5e5b9f760d386b07e97c8))
+
+### [2.1.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.1.0...v2.1.1) (2022-04-20)
+
+
+### Bug Fixes
+
+* [hbase-cbt-replication] use instance/project URI in log ([#3575](https://github.com/googleapis/java-bigtable-hbase/issues/3575)) ([87d36b3](https://github.com/googleapis/java-bigtable-hbase/commit/87d36b3d04c2adc65a835779a91fba2b7814e6c3))
+
+
+### Dependencies
+
+* update dependency com.google.cloud:google-cloud-bigtable-emulator to v0.143.2 ([#3564](https://github.com/googleapis/java-bigtable-hbase/issues/3564)) ([10e2128](https://github.com/googleapis/java-bigtable-hbase/commit/10e21285800f9d3ee7078a8bfa89f644b250d3b1))
+* update dependency com.google.errorprone:error_prone_annotations to v2.12.1 ([#3576](https://github.com/googleapis/java-bigtable-hbase/issues/3576)) ([705741d](https://github.com/googleapis/java-bigtable-hbase/commit/705741d1f9b6b06e341dade14c72ba42fe0adf89))
+* update dependency com.google.errorprone:error_prone_annotations to v2.13.1 ([#3580](https://github.com/googleapis/java-bigtable-hbase/issues/3580)) ([a34a82a](https://github.com/googleapis/java-bigtable-hbase/commit/a34a82a99301d27e221fe472358e6efcccd24bb5))
+* update dependency net.bytebuddy:byte-buddy to v1.12.9 ([#3578](https://github.com/googleapis/java-bigtable-hbase/issues/3578)) ([31c2268](https://github.com/googleapis/java-bigtable-hbase/commit/31c226814af840edb2974eeec40c3e7203330981))
+* upgrade guava to 31.1-jre and Bigtable to 2.6.2 ([#3582](https://github.com/googleapis/java-bigtable-hbase/issues/3582)) ([f9e988d](https://github.com/googleapis/java-bigtable-hbase/commit/f9e988d40925559ac40bdc09f5a0f468e24d7748))
+
+## [2.1.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.0.0...v2.1.0) (2022-04-01)
+
+
+### Features
+
+* [hase-cbt-replication]Add a metrics for hbase<>bigtable timestamp overflow ([#3540](https://github.com/googleapis/java-bigtable-hbase/issues/3540)) ([9c73318](https://github.com/googleapis/java-bigtable-hbase/commit/9c73318e39e8a5ce8ced7ef9fac8ebecd2724c74))
+* Adding a detailed readme for HBase replication support. ([#3527](https://github.com/googleapis/java-bigtable-hbase/issues/3527)) ([b406ac5](https://github.com/googleapis/java-bigtable-hbase/commit/b406ac53f971a888a1ff0ce1ac3d71e7bbba4523))
+* enable dry-run mode for HBase to Cloud Bigtable replication ([#3532](https://github.com/googleapis/java-bigtable-hbase/issues/3532)) ([164738b](https://github.com/googleapis/java-bigtable-hbase/commit/164738b8481044ae05df673a566ba74eb2d434a6))
+* Enable HBase to Cloud Bigtable replication  ([#3510](https://github.com/googleapis/java-bigtable-hbase/issues/3510)) ([68d4a01](https://github.com/googleapis/java-bigtable-hbase/commit/68d4a012a158e42759facae7377ff1aa75fcf0fd))
+* flag a put in future timestamp and record a metrics ([#3534](https://github.com/googleapis/java-bigtable-hbase/issues/3534)) ([7dd7653](https://github.com/googleapis/java-bigtable-hbase/commit/7dd76539bd3763d0dd106ad0da821ec885706c55))
+* remove base repl endpoint from hbase 2.x ([#3539](https://github.com/googleapis/java-bigtable-hbase/issues/3539)) ([f748c70](https://github.com/googleapis/java-bigtable-hbase/commit/f748c709b31a4b3f9ea7f762ee4f9d0f79a216c4))
+
+
+### Bug Fixes
+
+* [hbase-cbt-replication] make hbase2.x endpoint context private ([#3559](https://github.com/googleapis/java-bigtable-hbase/issues/3559)) ([5ec3b18](https://github.com/googleapis/java-bigtable-hbase/commit/5ec3b1887db2154d1c045b42609c47df465d6db2))
+* consistent behavior of customwalentry filter across hbase1.x and hbase2.x ([#3562](https://github.com/googleapis/java-bigtable-hbase/issues/3562)) ([f70b0cb](https://github.com/googleapis/java-bigtable-hbase/commit/f70b0cbd82e1cd4b7397531d425b2b43488cce5e))
+* license and notice files for all the shaded artifacts ([#3565](https://github.com/googleapis/java-bigtable-hbase/issues/3565)) ([86a5643](https://github.com/googleapis/java-bigtable-hbase/commit/86a56431079d5ca5ffd3c1346bdf4a5bde9b9395))
+* minor documentation update ([#3572](https://github.com/googleapis/java-bigtable-hbase/issues/3572)) ([68db6c2](https://github.com/googleapis/java-bigtable-hbase/commit/68db6c2ccc3b938f0e58d66a7f7777b0a6c3aacf))
+
+
+### Documentation
+
+* fix typos in README and add --region option ([#3520](https://github.com/googleapis/java-bigtable-hbase/issues/3520)) ([c189d46](https://github.com/googleapis/java-bigtable-hbase/commit/c189d46b91924f393d0837e4e80ee99c9ec132c3))
+
+
+### Dependencies
+
+* update dependency ch.qos.logback:logback-classic to v1.2.11 ([#3538](https://github.com/googleapis/java-bigtable-hbase/issues/3538)) ([92e8b63](https://github.com/googleapis/java-bigtable-hbase/commit/92e8b634a48ef09ef4a48866da9b188b88e8a6c5))
+* update dependency com.google.cloud:google-cloud-bigtable-emulator to v0.142.3 ([#3528](https://github.com/googleapis/java-bigtable-hbase/issues/3528)) ([33a8eba](https://github.com/googleapis/java-bigtable-hbase/commit/33a8ebaa80083fdc0fecef785e427cfc75bf4e3e))
+* update dependency com.google.cloud:google-cloud-bigtable-emulator to v0.143.0 ([#3543](https://github.com/googleapis/java-bigtable-hbase/issues/3543)) ([2d57f14](https://github.com/googleapis/java-bigtable-hbase/commit/2d57f1470c56e9d4c47251abbf375aebeee274e2))
+* update dependency net.bytebuddy:byte-buddy to v1.12.8 ([#3502](https://github.com/googleapis/java-bigtable-hbase/issues/3502)) ([77ae2f1](https://github.com/googleapis/java-bigtable-hbase/commit/77ae2f128c385ec3a601aa35630f801c3e03a3df))
+* update jmh.version to v1.35 ([#3561](https://github.com/googleapis/java-bigtable-hbase/issues/3561)) ([188738d](https://github.com/googleapis/java-bigtable-hbase/commit/188738d9dd0f40235d34eac672cc6af7f30fc416))
+
 ## [2.0.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.0.0-beta6...v2.0.0) (2022-02-11)
 
 This is the first release of Bigtable HBase 2.0.0. The main focus of Bigtable HBase 2.0.0 is to migrate the internal logic 

@@ -18,6 +18,7 @@ package org.apache.hadoop.hbase.client;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
+import com.google.cloud.bigtable.hbase.BigtableHBaseVersion;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
@@ -30,10 +31,12 @@ import com.google.common.base.MoreObjects;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -114,9 +117,41 @@ public abstract class AbstractBigtableConnection
       throw ioe;
     }
 
+    logStartup(LOG, conf, settings);
+
     this.batchPool = pool;
     this.closed = false;
     this.bigtableApi = BigtableApi.create(settings);
+  }
+
+  private static final AtomicBoolean firstConnection = new AtomicBoolean();
+
+  private void logStartup(Logger logger, Configuration userConfig, BigtableHBaseSettings settings) {
+    if (firstConnection.compareAndSet(false, true)) {
+      String jarPath;
+      try {
+        jarPath = getClass().getProtectionDomain().getCodeSource().getLocation().toString();
+      } catch (RuntimeException e) {
+        jarPath = "<unknown>";
+      }
+
+      logger.info(
+          "Using bigtable-hbase client from jar %s. Version: %s",
+          jarPath, BigtableHBaseVersion.getVersion());
+    }
+    // Dump user configuration
+    if (logger.getLog().isDebugEnabled()) {
+      MoreObjects.ToStringHelper configHelper = MoreObjects.toStringHelper("BigtableConfiguration");
+
+      for (Map.Entry<String, String> entry : userConfig) {
+        if (!entry.getKey().startsWith("google.bigtable")) {
+          continue;
+        }
+        configHelper.add(entry.getKey(), entry.getValue());
+      }
+      logger.debug("User Configuration: " + configHelper);
+      logger.debug("Effective settings: " + settings.toDebugString());
+    }
   }
 
   /** {@inheritDoc} */

@@ -119,7 +119,9 @@ public class CloudBigtableReplicator {
         configurationCopy.set(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "HBaseReplication");
         // If an App profile is provided, it will be picked automatically by the connection.
         Connection connection = BigtableConfiguration.connect(configurationCopy);
-        LOG.info("Created a connection to CBT. " + projectId + "--" + instanceId);
+        LOG.info(
+            String.format(
+                "Created a connection to CBT. projects/%s/instances/%s", projectId, instanceId));
 
         INSTANCE = new SharedResources(connection, executorService);
       }

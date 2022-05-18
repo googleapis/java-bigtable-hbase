@@ -142,8 +142,6 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     // Setup Replication in HBase mini cluster
     ReplicationPeerConfig peerConfig = new ReplicationPeerConfig();
     peerConfig.setReplicationEndpointImpl(TestReplicationEndpoint.class.getTypeName());
-    // Cluster key is required, we don't really have a clusterKey for CBT.
-    peerConfig.setClusterKey(hbaseTestingUtil.getClusterKey());
     replicationAdmin.addPeer("cbt", peerConfig);
 
     LOG.info("#################### SETUP COMPLETE ##############################");
