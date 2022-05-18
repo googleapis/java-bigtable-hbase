@@ -454,7 +454,7 @@ public abstract class BigtableAsyncTable implements AsyncTable<ScanResultConsume
                       .and(ElementMatchers.returns(CompletableFuture.class)))
               .intercept(
                   MethodCall.invoke(
-                          BigtableTable.class.getDeclaredMethod(
+                          BigtableAsyncTable.class.getDeclaredMethod(
                               "mutateRowVoid", RowMutations.class))
                       .withAllArguments())
               .make()
