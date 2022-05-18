@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.3.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.2.0...v2.3.0) (2022-05-18)
+
+
+### Features
+
+* add enableSnappy flag to import snapshot pipeline and select th… ([#3586](https://github.com/googleapis/java-bigtable-hbase/issues/3586)) ([8c1854d](https://github.com/googleapis/java-bigtable-hbase/commit/8c1854dacd3c5d257bc8233f5a831ae106e9f35a))
+
+
+### Dependencies
+
+* remove client-core dependency from bigtable-hbase-2.x ([#3620](https://github.com/googleapis/java-bigtable-hbase/issues/3620)) ([413a2fd](https://github.com/googleapis/java-bigtable-hbase/commit/413a2fdd47c5959338466341e08806f138848e21))
+
+
+### Documentation
+
+* Update README to use --enableSnappy flag to import snappy compre… ([#3623](https://github.com/googleapis/java-bigtable-hbase/issues/3623)) ([ea73be9](https://github.com/googleapis/java-bigtable-hbase/commit/ea73be934e4b088e5b582bddefeecab9194332a5))
+
 ## [2.2.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.1.1...v2.2.0) (2022-05-03)
 
 
