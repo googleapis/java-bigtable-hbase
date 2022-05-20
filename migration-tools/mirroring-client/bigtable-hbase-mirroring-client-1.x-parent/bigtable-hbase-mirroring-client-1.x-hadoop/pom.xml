@@ -182,7 +182,6 @@ limitations under the License.
               <allowedJarClassEntries>
                 <classEntry>${shading-prefix-path}</classEntry>
                 <classEntry>com/google/cloud/bigtable/mirroring</classEntry>
-<!--                <classEntry>org/apache/htrace</classEntry>-->
               </allowedJarClassEntries>
             </configuration>
           </execution>
