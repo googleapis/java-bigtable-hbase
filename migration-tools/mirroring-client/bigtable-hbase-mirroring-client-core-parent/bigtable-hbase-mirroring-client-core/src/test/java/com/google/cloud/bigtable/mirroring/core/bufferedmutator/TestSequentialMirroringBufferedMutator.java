@@ -129,16 +129,17 @@ public class TestSequentialMirroringBufferedMutator {
     bm.mutate(common.mutation1);
     bm.mutate(common.mutation1);
     bm.close();
+    // close() flushes primary BM and waits until the flush finishes. Secondary flush is scheduled
+    // asynchronously.
     verify(common.primaryBufferedMutator, times(3)).mutate(singletonMutation1);
-    verify(common.secondaryBufferedMutator, times(1))
-        .mutate(Arrays.asList(common.mutation1, common.mutation1, common.mutation1));
-    // close() waits until primary's flush() finishes and schedules secondary operation
     verify(common.primaryBufferedMutator, times(1)).flush();
     // decrement initial reference value - now only asynchronous flush should hold a reference in
     // reference counter.
     referenceCounter.decrementReferenceCount();
     // wait until secondary flush is finished
     referenceCounter.getOnLastReferenceClosed().get(3, TimeUnit.SECONDS);
+    verify(common.secondaryBufferedMutator, times(1))
+        .mutate(Arrays.asList(common.mutation1, common.mutation1, common.mutation1));
     verify(common.secondaryBufferedMutator, times(1)).flush();
     verify(common.resourceReservation, times(3)).release();
   }
