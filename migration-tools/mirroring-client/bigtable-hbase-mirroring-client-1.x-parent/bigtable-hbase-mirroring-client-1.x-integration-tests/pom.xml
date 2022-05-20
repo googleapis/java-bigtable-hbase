@@ -82,7 +82,7 @@ limitations under the License.
                   </systemPropertyVariables>
 
                   <environmentVariables>
-                    <BIGTABLE_EMULATOR_HOST>${bigtable.emulator.endpoint}</BIGTABLE_EMULATOR_HOST>
+                    <_BIGTABLE_EMULATOR_HOST>${bigtable.emulator.endpoint}</_BIGTABLE_EMULATOR_HOST>
                   </environmentVariables>
 
                   <redirectTestOutputToFile>true</redirectTestOutputToFile>
@@ -149,7 +149,7 @@ limitations under the License.
                   </systemPropertyVariables>
 
                   <environmentVariables>
-                    <BIGTABLE_EMULATOR_HOST>${bigtable.emulator.endpoint}</BIGTABLE_EMULATOR_HOST>
+                    <_BIGTABLE_EMULATOR_HOST>${bigtable.emulator.endpoint}</_BIGTABLE_EMULATOR_HOST>
                   </environmentVariables>
 
                   <redirectTestOutputToFile>true</redirectTestOutputToFile>

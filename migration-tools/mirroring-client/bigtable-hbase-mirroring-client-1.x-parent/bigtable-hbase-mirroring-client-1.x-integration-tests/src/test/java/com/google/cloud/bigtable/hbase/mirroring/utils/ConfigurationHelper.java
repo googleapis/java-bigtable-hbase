@@ -81,5 +81,9 @@ public class ConfigurationHelper {
     configuration.setIfUnset(
         "google.bigtable.mirroring.write-error-consumer.factory-impl",
         TestWriteErrorConsumer.Factory.class.getName());
+
+    configuration.setIfUnset(
+        "google.bigtable.emulator.endpoint.host",
+        System.getenv("_BIGTABLE_EMULATOR_HOST"));
   }
 }
