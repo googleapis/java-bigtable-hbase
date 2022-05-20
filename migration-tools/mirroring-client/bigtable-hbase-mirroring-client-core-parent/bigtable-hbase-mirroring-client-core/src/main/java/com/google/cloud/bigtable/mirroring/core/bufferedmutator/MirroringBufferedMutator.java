@@ -295,7 +295,7 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
         exceptions.add(new IOException(e));
       }
 
-      // Close the primary buffered mutator, if is flushed in both cases.
+      // Close the primary buffered mutator, it is flushed in both cases.
       try {
         closePrimaryBufferedMutator();
       } catch (IOException e) {

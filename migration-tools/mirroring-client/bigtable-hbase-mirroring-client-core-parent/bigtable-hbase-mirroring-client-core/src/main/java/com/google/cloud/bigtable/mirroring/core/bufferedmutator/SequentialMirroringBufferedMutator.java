@@ -336,6 +336,8 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
             },
             HBaseOperation.BUFFERED_MUTATOR_FLUSH);
       }
+      // We have to release reservations before we complete `completionFuture`.
+      releaseReservations(dataToFlush);
       completionFuture.set(null);
     } catch (Throwable e) {
       // Our listener is registered and should catch non-fatal errors. This is either
@@ -343,9 +345,9 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
       // not completed - the worst that can happen is that we will have some writes in both
       // secondary database and on-disk log.
       reportWriteErrors(mutations, e);
-      completionFuture.setException(e);
-    } finally {
+      // We have to release reservations before we complete `completionFuture`.
       releaseReservations(dataToFlush);
+      completionFuture.setException(e);
     }
   }
 
