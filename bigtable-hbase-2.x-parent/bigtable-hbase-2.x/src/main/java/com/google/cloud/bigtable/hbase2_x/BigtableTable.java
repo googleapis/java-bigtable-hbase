@@ -22,15 +22,25 @@ import com.google.cloud.bigtable.hbase.adapters.CheckAndMutateUtil;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.util.FutureUtil;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.InvocationHandlerAdapter;
+import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.matcher.ElementMatchers;
 import org.apache.hadoop.hbase.CompareOperator;
+import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RegionLocator;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.TableDescriptor;
@@ -40,7 +50,7 @@ import org.apache.hadoop.hbase.io.TimeRange;
 
 /** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
-public class BigtableTable extends AbstractBigtableTable {
+public abstract class BigtableTable extends AbstractBigtableTable {
 
   @SuppressWarnings("deprecation")
   public static final CompareOp toCompareOp(CompareOperator compareOp) {
@@ -248,5 +258,70 @@ public class BigtableTable extends AbstractBigtableTable {
       return;
     }
     super.batchCallback(actions, results, callback);
+  }
+
+  private static Class<? extends BigtableTable> tableClass = null;
+
+  /**
+   * This is a workaround for incompatible changes in hbase minor versions. Dynamically generates a
+   * class that extends AbstractBigtableTable so incompatible methods won't be accessed unless the
+   * methods are called. If a method is implemented by AbstractBigtableTable, the generated class
+   * will invoke the implementation in AbstractBigtableTable.
+   */
+  private static synchronized Class<? extends BigtableTable> getSubclass()
+      throws NoSuchMethodException {
+    if (tableClass == null) {
+      tableClass =
+          new ByteBuddy()
+              .subclass(BigtableTable.class)
+              .method(ElementMatchers.named("coprocessorService"))
+              .intercept(
+                  InvocationHandlerAdapter.of(
+                      new AbstractBigtableAdmin.UnsupportedOperationsHandler()))
+              .method(ElementMatchers.named("batchCoprocessorService"))
+              .intercept(
+                  InvocationHandlerAdapter.of(
+                      new AbstractBigtableAdmin.UnsupportedOperationsHandler()))
+              .method(
+                  ElementMatchers.named("mutateRow")
+                      .and(ElementMatchers.returns(TypeDescription.VOID)))
+              .intercept(
+                  MethodCall.invoke(
+                          AbstractBigtableTable.class.getDeclaredMethod(
+                              "mutateRowVoid", RowMutations.class))
+                      .withAllArguments())
+              .method(ElementMatchers.named("mutateRow").and(ElementMatchers.returns(Result.class)))
+              .intercept(
+                  MethodCall.invoke(
+                          AbstractBigtableTable.class.getDeclaredMethod(
+                              "mutateRowResult", RowMutations.class))
+                      .withAllArguments())
+              .make()
+              .load(
+                  AbstractBigtableTable.class.getClassLoader(),
+                  ClassLoadingStrategy.Default.INJECTION)
+              .getLoaded();
+    }
+    return tableClass;
+  }
+
+  public static BigtableTable createInstance(
+      AbstractBigtableConnection bigtableConnection, HBaseRequestAdapter hbaseAdapter)
+      throws IOException {
+    try {
+      return getSubclass()
+          .getDeclaredConstructor(AbstractBigtableConnection.class, HBaseRequestAdapter.class)
+          .newInstance(bigtableConnection, hbaseAdapter);
+    } catch (InvocationTargetException e) {
+      // Unwrap and throw IOException or RuntimeException as is, and convert all other exceptions to
+      // IOException because
+      // org.apache.hadoop.hbase.client.Connection#getAdmin() only throws
+      // IOException
+      Throwables.throwIfInstanceOf(e.getTargetException(), IOException.class);
+      Throwables.throwIfInstanceOf(e.getTargetException(), RuntimeException.class);
+      throw new IOException(e);
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
   }
 }

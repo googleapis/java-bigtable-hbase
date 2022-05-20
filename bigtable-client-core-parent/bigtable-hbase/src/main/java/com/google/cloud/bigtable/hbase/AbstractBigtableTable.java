@@ -504,7 +504,7 @@ public abstract class AbstractBigtableTable implements Table {
   }
 
   /** {@inheritDoc} */
-  public void mutateRowRowMutations(RowMutations rowMutations) throws IOException {
+  protected void mutateRowVoid(RowMutations rowMutations) throws IOException {
     LOG.trace("mutateRow(RowMutation)");
     if (rowMutations.getMutations().isEmpty()) {
       return;
@@ -512,6 +512,24 @@ public abstract class AbstractBigtableTable implements Table {
     Span span = TRACER.spanBuilder("BigtableTable.mutateRow").startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
       FutureUtil.unwrap(clientWrapper.mutateRowAsync(hbaseAdapter.adapt(rowMutations)));
+    } catch (Throwable t) {
+      span.setStatus(Status.UNKNOWN);
+      throw logAndCreateIOException("mutateRow", rowMutations.getRow(), t);
+    } finally {
+      span.end();
+    }
+  }
+
+  protected Result mutateRowResult(RowMutations rowMutations) throws IOException {
+    LOG.trace("mutateRow(RowMutation)");
+    if (rowMutations.getMutations().isEmpty()) {
+      return Result.EMPTY_RESULT;
+    }
+    Span span = TRACER.spanBuilder("BigtableTable.mutateRow").startSpan();
+    try (Scope scope = TRACER.withSpan(span)) {
+      FutureUtil.unwrap(clientWrapper.mutateRowAsync(hbaseAdapter.adapt(rowMutations)));
+      return Result.EMPTY_RESULT;
+
     } catch (Throwable t) {
       span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException("mutateRow", rowMutations.getRow(), t);
@@ -721,7 +739,13 @@ public abstract class AbstractBigtableTable implements Table {
               .intercept(
                   MethodCall.invoke(
                           AbstractBigtableTable.class.getDeclaredMethod(
-                              "mutateRowRowMutations", RowMutations.class))
+                              "mutateRowVoid", RowMutations.class))
+                      .withAllArguments())
+              .method(ElementMatchers.named("mutateRow").and(ElementMatchers.returns(Result.class)))
+              .intercept(
+                  MethodCall.invoke(
+                          AbstractBigtableTable.class.getDeclaredMethod(
+                              "mutateRowResult", RowMutations.class))
                       .withAllArguments())
               .make()
               .load(
