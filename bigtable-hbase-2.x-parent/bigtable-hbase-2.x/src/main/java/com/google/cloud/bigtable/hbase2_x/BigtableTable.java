@@ -315,7 +315,7 @@ public abstract class BigtableTable extends AbstractBigtableTable {
     } catch (InvocationTargetException e) {
       // Unwrap and throw IOException or RuntimeException as is, and convert all other exceptions to
       // IOException because
-      // org.apache.hadoop.hbase.client.Connection#getAdmin() only throws
+      // org.apache.hadoop.hbase.client.Connection#getTable() only throws
       // IOException
       Throwables.throwIfInstanceOf(e.getTargetException(), IOException.class);
       Throwables.throwIfInstanceOf(e.getTargetException(), RuntimeException.class);

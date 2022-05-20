@@ -70,6 +70,7 @@ public class TestBatch extends AbstractTestBatch {
     actualError = null;
 
     try {
+      // Table#mutateRow ignores requests without Mutations.
       table.mutateRow(new RowMutations(new byte[0]));
     } catch (Exception ex) {
       actualError = ex;
@@ -78,7 +79,6 @@ public class TestBatch extends AbstractTestBatch {
     actualError = null;
 
     try {
-      // Table#mutateRow ignores requests without Mutations.
       table.mutateRow(new RowMutations(new byte[1]));
     } catch (Exception ex) {
       actualError = ex;

@@ -456,6 +456,7 @@ public abstract class AbstractTestBatch extends AbstractTest {
     actualError = null;
 
     try {
+      // Table#mutateRow ignores requests without Mutations.
       table.mutateRow(new RowMutations(new byte[0]));
     } catch (Exception ex) {
       actualError = ex;
@@ -464,7 +465,6 @@ public abstract class AbstractTestBatch extends AbstractTest {
     actualError = null;
 
     try {
-      // Table#mutateRow ignores requests without Mutations.
       table.mutateRow(new RowMutations(new byte[1]));
     } catch (Exception ex) {
       actualError = ex;

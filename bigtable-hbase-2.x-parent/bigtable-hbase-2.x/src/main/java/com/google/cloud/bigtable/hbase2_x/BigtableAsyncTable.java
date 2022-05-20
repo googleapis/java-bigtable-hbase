@@ -325,7 +325,7 @@ public abstract class BigtableAsyncTable implements AsyncTable<ScanResultConsume
   }
 
   /** {@inheritDoc} */
-  public CompletableFuture<Void> mutateRowVoid(RowMutations rowMutations) {
+  protected CompletableFuture<Void> mutateRowVoid(RowMutations rowMutations) {
     return toCompletableFuture(clientWrapper.mutateRowAsync(hbaseAdapter.adapt(rowMutations)));
   }
 
@@ -474,7 +474,7 @@ public abstract class BigtableAsyncTable implements AsyncTable<ScanResultConsume
     } catch (InvocationTargetException e) {
       // Unwrap and throw IOException or RuntimeException as is, and convert all other exceptions to
       // IOException because
-      // org.apache.hadoop.hbase.client.Connection#getAdmin() only throws
+      // org.apache.hadoop.hbase.client.Connection#getTable() only throws
       // IOException
       Throwables.throwIfInstanceOf(e.getTargetException(), IOException.class);
       Throwables.throwIfInstanceOf(e.getTargetException(), RuntimeException.class);
