@@ -176,10 +176,11 @@ public class TestMirroringTable {
 
     int databaseEntriesCount = 1000;
 
+    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName2 = connectionRule.createTable(columnFamily1);
+
     FailingHBaseHRegion.failMutation(
         failEvenRowKeysPredicate, OperationStatusCode.SANITY_CHECK_FAILURE, "failed");
-
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
 
     ReportedErrorsContext reportedErrorsContext1 = new ReportedErrorsContext();
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
@@ -194,7 +195,6 @@ public class TestMirroringTable {
     reportedErrorsContext1.assertNewErrorsReported(databaseEntriesCount / 2);
 
     ReportedErrorsContext reportedErrorsContext2 = new ReportedErrorsContext();
-    final TableName tableName2 = connectionRule.createTable(columnFamily1);
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table t1 = connection.getTable(tableName2)) {
         int id = 0;

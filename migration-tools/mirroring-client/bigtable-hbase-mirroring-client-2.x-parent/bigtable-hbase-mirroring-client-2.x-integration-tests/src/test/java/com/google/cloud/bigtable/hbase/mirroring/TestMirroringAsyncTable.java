@@ -203,10 +203,12 @@ public class TestMirroringAsyncTable {
 
     int databaseEntriesCount = 1000;
 
+    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName2 = connectionRule.createTable(columnFamily1);
+
     FailingHBaseHRegion.failMutation(
         failPredicate, HConstants.OperationStatusCode.SANITY_CHECK_FAILURE, "failed");
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
 
     TestMirroringTable.ReportedErrorsContext reportedErrorsContext1 =
         new TestMirroringTable.ReportedErrorsContext();
@@ -229,7 +231,6 @@ public class TestMirroringAsyncTable {
 
     TestMirroringTable.ReportedErrorsContext reportedErrorsContext2 =
         new TestMirroringTable.ReportedErrorsContext();
-    final TableName tableName2 = connectionRule.createTable(columnFamily1);
     try (MirroringAsyncConnection asyncConnection =
         asyncConnectionRule.createAsyncConnection(config)) {
       AsyncTable<AdvancedScanResultConsumer> t = asyncConnection.getTable(tableName1);
