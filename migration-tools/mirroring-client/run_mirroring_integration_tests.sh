@@ -18,11 +18,13 @@ targets=(
 
 cmd="mvn clean compile verify -pl $( IFS=, ; echo "${targets[*]}" ) -Penable-integration-tests,"
 
-# TODO: fix HBase 2.x ITs.
-hbaseToBigtableTargets=HBaseToBigtableLocalIntegrationTests #,HBase12ToBigtableLocalIntegrationTests,HBase2ToBigtableLocalIntegrationTests
-bigtableToHbaseTargets=BigtableToHBaseLocalIntegrationTests #,BigtableToHBase12LocalIntegrationTests,BigtableToHBase2LocalIntegrationTests
+hbaseToBigtableTargets=HBaseToBigtableLocalIntegrationTests,HBase12ToBigtableLocalIntegrationTests,HBase2ToBigtableLocalIntegrationTests
+bigtableToHbaseTargets=BigtableToHBaseLocalIntegrationTests,BigtableToHBase12LocalIntegrationTests,BigtableToHBase2LocalIntegrationTests
 
 # We have to run mvn twice - once to test HBase to Bigtable mirroring and once again to test Bigtable to HBase mirroring,
 # because they run the same code but with distinct configurations.
+# We are not able to test every case with just HBase -> Bigtable mirroring because we emulate server-side errors by injecting
+# custom HRegion implementation into HBase MiniCluster. Bigtable -> HBase mirroring run is required to verify if errors from
+# secondary database are handled correctly.
 ${cmd}${hbaseToBigtableTargets}
 ${cmd}${bigtableToHbaseTargets}

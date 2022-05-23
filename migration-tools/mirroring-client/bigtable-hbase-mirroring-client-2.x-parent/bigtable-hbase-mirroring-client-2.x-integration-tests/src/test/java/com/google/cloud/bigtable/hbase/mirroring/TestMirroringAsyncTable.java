@@ -144,10 +144,12 @@ public class TestMirroringAsyncTable {
 
     int databaseEntriesCount = 1000;
 
-    FailingHBaseHRegion.failMutation(
+    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName2 = connectionRule.createTable(columnFamily1);
+
+     FailingHBaseHRegion.failMutation(
         failPredicate, HConstants.OperationStatusCode.SANITY_CHECK_FAILURE, "failed");
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
     try (MirroringAsyncConnection asyncConnection =
         asyncConnectionRule.createAsyncConnection(config)) {
       AsyncTable<AdvancedScanResultConsumer> t = asyncConnection.getTable(tableName1);
@@ -166,7 +168,6 @@ public class TestMirroringAsyncTable {
     }
     databaseHelpers.verifyTableConsistency(tableName1);
 
-    final TableName tableName2 = connectionRule.createTable(columnFamily1);
     try (MirroringAsyncConnection asyncConnection =
         asyncConnectionRule.createAsyncConnection(config)) {
       AsyncTable<AdvancedScanResultConsumer> t = asyncConnection.getTable(tableName1);

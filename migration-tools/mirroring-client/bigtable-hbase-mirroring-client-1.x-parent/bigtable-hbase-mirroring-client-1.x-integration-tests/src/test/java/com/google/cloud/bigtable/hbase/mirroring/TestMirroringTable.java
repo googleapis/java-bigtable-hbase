@@ -125,10 +125,12 @@ public class TestMirroringTable {
     Assume.assumeTrue(
         ConfigurationHelper.isPrimaryHBase() && ConfigurationHelper.isUsingHBaseMiniCluster());
 
+    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName2 = connectionRule.createTable(columnFamily1);
+
     FailingHBaseHRegion.failMutation(
         failEvenRowKeysPredicate, OperationStatusCode.SANITY_CHECK_FAILURE, "failed");
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table t1 = connection.getTable(tableName1)) {
         for (int i = 0; i < databaseEntriesCount; i++) {
@@ -147,7 +149,6 @@ public class TestMirroringTable {
     }
     databaseHelpers.verifyTableConsistency(tableName1);
 
-    final TableName tableName2 = connectionRule.createTable(columnFamily1);
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table t1 = connection.getTable(tableName2)) {
         int id = 0;
