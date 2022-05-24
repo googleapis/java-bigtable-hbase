@@ -18,7 +18,7 @@ limitations under the License.
   <parent>
     <artifactId>bigtable-hbase-2.x-parent</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>2.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.3.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -68,7 +68,7 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-2.x</artifactId>
-      <version>2.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.3.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
@@ -124,10 +124,37 @@ limitations under the License.
       <version>${grpc-conscrypt.version}</version>
       <scope>runtime</scope>
     </dependency>
+    <!--    needs to be declared as a dependency to be excluded from shading-->
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+      <version>${jsr305.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>2.0.0</version>
+        <executions>
+          <execution>
+            <id>default-cli</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>add-third-party</goal>
+            </goals>
+            <configuration>
+              <excludedScopes>test,provided,system</excludedScopes>
+              <!--Should match the exclusions of shade plugin-->
+              <excludedArtifacts>metrics-core|commons-logging|hbase-shaded-client|slf4j-api|slf4j-log4j12|log4j|htrace-core4|audience-annotations|findbugs-annotations|conscrypt-openjdk-uber|jsr305</excludedArtifacts>
+              <excludedGroups>org.bouncycastle|javax.annotation|org.checkerframework</excludedGroups>
+              <generateBundle>true</generateBundle>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
@@ -147,6 +174,10 @@ limitations under the License.
                 false
               </promoteTransitiveDependencies>
               <transformers>
+                <transformer
+                    implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
+                <transformer
+                    implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer"/>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
               </transformers>
               <filters>
@@ -157,11 +188,7 @@ limitations under the License.
                     <exclude>META-INF/*.DSA</exclude>
                     <exclude>META-INF/*.RSA</exclude>
                     <exclude>META-INF/MANIFEST.MF</exclude>
-                    <exclude>META-INF/LICENSE</exclude>
-                    <exclude>META-INF/LICENSE.txt</exclude>
-                    <exclude>META-INF/NOTICE</exclude>
                     <exclude>META-INF/DEPENDENCIES</exclude>
-                    <exclude>META-INF/NOTICE.txt</exclude>
                     <exclude>META-INF/versions/9/module-info.class</exclude>
                   </excludes>
                 </filter>
@@ -181,10 +208,12 @@ limitations under the License.
                   <exclude>
                     com.github.stephenc.findbugs:findbugs-annotations
                   </exclude>
-                  <exclude>log4j:log4j</exclude>
                   <!-- See notes in bigtable-client-core/bigtable-hbase/pom.xml#verify-conscrypt-version -->
                   <exclude>org.conscrypt:conscrypt-openjdk-uber</exclude>
                   <exclude>org.bouncycastle:*</exclude>
+                  <exclude>javax.annotation:*</exclude>
+                  <exclude>org.checkerframework:*</exclude>
+                  <exclude>com.google.code.findbugs:jsr305</exclude>
                 </excludes>
               </artifactSet>
               <relocations>
@@ -284,7 +313,6 @@ limitations under the License.
                     META-INF/native/com_google_bigtable_repackaged_io_grpc_netty_shaded_netty
                   </shadedPattern>
                 </relocation>
-
                 <relocation>
                   <pattern>org.joda</pattern>
                   <shadedPattern>
@@ -321,18 +349,9 @@ limitations under the License.
                     com.google.bigtable.repackaged.org.codehaus
                   </shadedPattern>
                 </relocation>
-
-                <relocation>
-                  <pattern>org.checkerframework</pattern>
-                  <shadedPattern>com.google.bigtable.repackaged.org.checkerframework</shadedPattern>
-                </relocation>
                 <relocation>
                   <pattern>android.annotation</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.android.annotation</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>javax.annotation</pattern>
-                  <shadedPattern>com.google.bigtable.repackaged.javax.annotation</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>net.bytebuddy</pattern>
@@ -346,7 +365,7 @@ limitations under the License.
       <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>
         <artifactId>bigtable-build-helper</artifactId>
-        <version>2.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+        <version>2.3.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
 
         <executions>
           <execution>

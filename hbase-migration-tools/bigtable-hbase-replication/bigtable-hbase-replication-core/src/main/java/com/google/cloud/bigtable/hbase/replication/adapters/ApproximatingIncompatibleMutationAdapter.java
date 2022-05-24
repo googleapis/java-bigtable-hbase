@@ -72,8 +72,8 @@ public class ApproximatingIncompatibleMutationAdapter extends IncompatibleMutati
                 LATEST_TIMESTAMP,
                 KeyValue.Type.DeleteFamily));
       } else {
-        LOG.error(
-            "Dropping entry: "
+        LOG.warn(
+            "Dropping incompatible mutation (DeleteFamilyBeforeTimestamp): "
                 + cell
                 + " cell time: "
                 + cell.getTimestamp()

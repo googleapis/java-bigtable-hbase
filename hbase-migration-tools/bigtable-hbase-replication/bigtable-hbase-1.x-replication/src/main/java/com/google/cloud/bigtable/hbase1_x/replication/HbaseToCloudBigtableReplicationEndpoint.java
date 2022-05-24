@@ -27,27 +27,22 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
 import org.apache.hadoop.hbase.wal.WAL;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** Basic endpoint that listens to CDC from HBase 1.x and replicates to Cloud Bigtable. */
 @InternalExtensionOnly
 public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndpoint {
-
-  private static final Logger LOG =
-      LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpoint.class);
 
   private final CloudBigtableReplicator cloudBigtableReplicator;
   private final HBaseMetricsExporter metricsExporter;
 
   public HbaseToCloudBigtableReplicationEndpoint() {
     cloudBigtableReplicator = new CloudBigtableReplicator();
-    metricsExporter = new HBaseMetricsExporter();
+    metricsExporter = HBaseMetricsExporter.create();
   }
 
   @Override
   protected synchronized void doStart() {
-    metricsExporter.setMetricsSource(ctx.getMetrics());
+    metricsExporter.init(ctx);
     cloudBigtableReplicator.start(ctx.getConfiguration(), metricsExporter);
     notifyStarted();
   }

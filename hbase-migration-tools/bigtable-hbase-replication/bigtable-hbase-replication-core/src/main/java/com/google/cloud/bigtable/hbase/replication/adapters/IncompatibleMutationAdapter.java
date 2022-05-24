@@ -17,7 +17,10 @@
 package com.google.cloud.bigtable.hbase.replication.adapters;
 
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.PUTS_IN_FUTURE_METRIC_KEY;
 
 import com.google.cloud.bigtable.hbase.adapters.DeleteAdapter;
 import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
@@ -26,6 +29,7 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Connection;
 import org.slf4j.Logger;
@@ -47,6 +51,8 @@ public abstract class IncompatibleMutationAdapter {
   private final Connection connection;
   private final Configuration conf;
   private final MetricsExporter metricsExporter;
+  // Maximum timestamp that hbase can send to bigtable in ms.
+  static final long BIGTABLE_EFFECTIVE_MAX = Long.MAX_VALUE / 1000L;
 
   private void incrementDroppedIncompatibleMutations() {
     metricsExporter.incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
@@ -54,6 +60,20 @@ public abstract class IncompatibleMutationAdapter {
 
   private void incrementIncompatibleMutations() {
     metricsExporter.incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+  }
+
+  private void incrementTimestampOverflowMutations() {
+    metricsExporter.incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 1);
+    incrementIncompatibleMutations();
+  }
+
+  private void incrementIncompatibleDeletesMutations() {
+    metricsExporter.incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 1);
+    incrementIncompatibleMutations();
+  }
+
+  private void incrementPutsInFutureMutations() {
+    metricsExporter.incCounters(PUTS_IN_FUTURE_METRIC_KEY, 1);
   }
 
   /**
@@ -77,6 +97,9 @@ public abstract class IncompatibleMutationAdapter {
     // Make sure that the counters show up.
     metricsExporter.incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     metricsExporter.incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    metricsExporter.incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
+    metricsExporter.incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+    metricsExporter.incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
   }
 
   private boolean isValidDelete(Cell delete) {
@@ -99,8 +122,31 @@ public abstract class IncompatibleMutationAdapter {
     List<Cell> returnedCells = new ArrayList<>(cellsToAdapt.size());
     for (int index = 0; index < cellsToAdapt.size(); index++) {
       Cell cell = cellsToAdapt.get(index);
+      // check whether there is timestamp overflow from HBase -> CBT and make sure
+      // it does clash with valid delete which require the timestamp to be
+      // HConstants.LATEST_TIMESTAMP,
+      // this will be true for reverse timestamps.
+      // Do not enable trace logging as there can be many writes of this type.
+      // The following log message will spam the logs and degrade the replication performance.
+      if (cell.getTimestamp() >= BIGTABLE_EFFECTIVE_MAX
+          && cell.getTimestamp() != HConstants.LATEST_TIMESTAMP) {
+        incrementTimestampOverflowMutations();
+        LOG.trace(
+            "Incompatible entry: "
+                + cell
+                + " cell time: "
+                + cell.getTimestamp()
+                + " max timestamp from hbase to bigtable: "
+                + BIGTABLE_EFFECTIVE_MAX);
+      }
+
       // All puts are valid.
       if (cell.getTypeByte() == KeyValue.Type.Put.getCode()) {
+        // flag if put is issued for future timestamp
+        // do not log as we might fill up disk space due condition being true from clock skew
+        if (cell.getTimestamp() > walEntry.getWalWriteTime()) {
+          incrementPutsInFutureMutations();
+        }
         returnedCells.add(cell);
         continue;
       }
@@ -115,20 +161,20 @@ public abstract class IncompatibleMutationAdapter {
 
         // Incompatible delete: Adapt it.
         try {
-          LOG.debug("Encountered incompatible mutation: " + cell);
-          incrementIncompatibleMutations();
+          LOG.info("Encountered incompatible mutation: " + cell);
+          incrementIncompatibleDeletesMutations();
           returnedCells.addAll(adaptIncompatibleMutation(walEntry, index));
         } catch (UnsupportedOperationException use) {
           // Drop the mutation, not dropping it will lead to stalling of replication.
           incrementDroppedIncompatibleMutations();
-          LOG.error("Dropping incompatible mutation: " + cell);
+          LOG.warn("Dropping incompatible mutation: " + cell);
         }
         continue;
       }
 
       // Replication should only produce PUT and Delete mutation. Appends/Increments are converted
       // to PUTs. Log the unexpected mutation and drop it as we don't know what CBT client will do.
-      LOG.error("Dropping unexpected type of mutation: " + cell);
+      LOG.warn("Dropping unexpected type of mutation: " + cell);
       incrementIncompatibleMutations();
       incrementDroppedIncompatibleMutations();
     }

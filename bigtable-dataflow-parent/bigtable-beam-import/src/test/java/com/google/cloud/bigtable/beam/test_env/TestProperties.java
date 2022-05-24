@@ -29,7 +29,6 @@ public class TestProperties {
   private final String instanceId;
   private final String dataflowRegion;
   private final String workdir;
-  private final String cloudDataDir;
   private final Optional<String> dataEndpoint;
   private final Optional<String> adminEndpoint;
 
@@ -38,14 +37,12 @@ public class TestProperties {
       String instanceId,
       String dataflowRegion,
       String workdir,
-      String cloudDataDir,
       Optional<String> dataEndpoint,
       Optional<String> adminEndpoint) {
     this.projectId = projectId;
     this.instanceId = instanceId;
     this.dataflowRegion = dataflowRegion;
     this.workdir = workdir;
-    this.cloudDataDir = cloudDataDir;
     this.dataEndpoint = dataEndpoint;
     this.adminEndpoint = adminEndpoint;
   }
@@ -83,11 +80,6 @@ public class TestProperties {
     return ensureTrailingSlash(getWorkdir()) + "workdir-" + testId + "/";
   }
 
-  // TODO: make this ephemeral
-  public String getCloudDataDir() {
-    return cloudDataDir;
-  }
-
   public Optional<String> getDataEndpoint() {
     return dataEndpoint;
   }
@@ -113,7 +105,6 @@ public class TestProperties {
         getProp("google.bigtable.instance.id"),
         getProp("region"),
         ensureTrailingSlash(workDir),
-        ensureTrailingSlash(getProp("cloud.test.data.folder")),
         Optional.ofNullable(System.getProperty(BigtableOptionsFactory.BIGTABLE_HOST_KEY)),
         Optional.ofNullable(System.getProperty(BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY)));
   }

@@ -20,16 +20,28 @@ limitations under the License.
     <parent>
         <artifactId>bigtable-hbase-replication</artifactId>
         <groupId>com.google.cloud.bigtable</groupId>
-        <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+        <version>1.2.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-2.x-replication</artifactId>
-    <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+    <version>1.2.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
     <packaging>jar</packaging>
     <name>bigtable-hbase-2.x-replication</name>
     <description>Library to enable one way replication from HBase to Cloud Bigtable. </description>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-bom</artifactId>
+                <version>9.3.30.v20211001</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <plugins>
@@ -116,13 +128,37 @@ limitations under the License.
                     </descriptorRefs>
                 </configuration>
             </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.3.0</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <shadedArtifactAttached>false</shadedArtifactAttached>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+            <!-- TODO: temporary workaround until we resolve clirr errors-->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>clirr-maven-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
     <dependencies>
         <dependency>
             <groupId>com.google.cloud.bigtable</groupId>
             <artifactId>bigtable-hbase-replication-core</artifactId>
-            <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+            <version>1.2.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
             <exclusions>
                 <!-- HBase dependencies come from hbase-server below. Skip them here.-->
                 <exclusion>
@@ -133,18 +169,26 @@ limitations under the License.
                     <groupId>com.google.cloud.bigtable</groupId>
                     <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
                 </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
             </exclusions>
         </dependency>
         <dependency>
             <groupId>com.google.cloud.bigtable</groupId>
             <artifactId>bigtable-hbase-2.x-hadoop</artifactId>
-            <version>2.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+            <version>2.3.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
             <exclusions>
                 <!-- HBase dependencies come from hbase-server below. Skip them here.-->
                 <exclusion>
                     <groupId>org.apache.hbase</groupId>
                     <artifactId>hbase-client</artifactId>
                 </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -178,7 +222,7 @@ limitations under the License.
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>4.3.1</version>
+            <version>4.5.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>

@@ -17,7 +17,6 @@ package org.apache.hadoop.hbase.client;
 
 import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.SampleRowKeysRequest;
-import com.google.cloud.bigtable.config.BigtableOptions;
 import com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
@@ -107,10 +106,6 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
   public BigtableApi getBigtableApi() {
     return bigtableApi;
-  }
-
-  public BigtableOptions getOptions() {
-    throw new UnsupportedOperationException("veneer client does not support BigtableOptions");
   }
 
   @Override

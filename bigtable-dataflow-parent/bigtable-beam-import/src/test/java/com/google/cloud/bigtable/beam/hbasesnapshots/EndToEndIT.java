@@ -26,18 +26,25 @@ import com.google.cloud.bigtable.beam.validation.HadoopHashTableSource.RangeHash
 import com.google.cloud.bigtable.beam.validation.SyncTableJob;
 import com.google.cloud.bigtable.beam.validation.SyncTableJob.SyncTableOptions;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.common.base.Preconditions;
+import com.google.common.io.ByteStreams;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
+import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.PipelineResult.State;
@@ -73,8 +80,11 @@ import org.slf4j.LoggerFactory;
  *  gs://<test_bucket>/cloud-data-dir/
  */
 public class EndToEndIT {
-  private static Logger LOG = LoggerFactory.getLogger(HBaseResultToMutationFn.class);
+
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseResultToMutationFn.class);
+  private static final String SNAPSHOT_FIXTURE_NAME = "EndToEndIT-snapshot.zip";
   private static final String TEST_SNAPSHOT_NAME = "test-snapshot";
+  private static final String TEST_SNAPPY_SNAPSHOT_NAME = "test-snappy-snapshot";
   private static final String CF = "cf";
 
   private TestProperties properties;
@@ -84,12 +94,12 @@ public class EndToEndIT {
   private byte[][] keySplits;
 
   // Input setup
+  private String fixtureDir;
   private String hbaseSnapshotDir;
   private String hashDir;
 
   // Output
   private String workDir;
-  private String tempDir;
   private String syncTableOutputDir;
   private String tableId;
 
@@ -98,19 +108,19 @@ public class EndToEndIT {
     EnvSetup.initialize();
     properties = TestProperties.fromSystem();
 
-    // Configure inputs
-    hbaseSnapshotDir = properties.getCloudDataDir() + "data/";
-    hashDir = properties.getCloudDataDir() + "hashtable/";
-
-    // Configure output
+    // Configure paths
     workDir = properties.getTestWorkdir(UUID.randomUUID());
-    tempDir = workDir + "temp/";
     syncTableOutputDir = workDir + "output/";
+    fixtureDir = workDir + "hbase-snapshot/";
+    hbaseSnapshotDir = fixtureDir + "data/";
+    hashDir = fixtureDir + "hashtable/";
 
     // Cloud Storage config
     GcpOptions gcpOptions = PipelineOptionsFactory.create().as(GcpOptions.class);
     properties.applyTo(gcpOptions);
     gcsUtil = new GcsUtil.GcsUtilFactory().create(gcpOptions);
+
+    uploadFixture(gcsUtil, SNAPSHOT_FIXTURE_NAME, fixtureDir);
 
     // Bigtable config
     connection =
@@ -135,21 +145,60 @@ public class EndToEndIT {
 
   @After
   public void teardown() throws IOException {
-    final List<GcsPath> paths = gcsUtil.expand(GcsPath.fromUri(syncTableOutputDir + "*"));
+    final List<GcsPath> paths = gcsUtil.expand(GcsPath.fromUri(workDir + "*"));
 
     if (!paths.isEmpty()) {
-      final List<String> pathStrs = new ArrayList<>();
-
-      for (GcsPath path : paths) {
-        pathStrs.add(path.toString());
-      }
       // TODO: cleanup fails when tests time out. Add a orphan cleaner in the setup()
       // https://github.com/googleapis/java-bigtable/blob/35588d89b9b243eb691a29d3aff16b9f5a08fbb8/google-cloud-bigtable/src/test/java/com/google/cloud/bigtable/test_helpers/env/AbstractTestEnv.java#L108-L119
-      this.gcsUtil.remove(pathStrs);
+      this.gcsUtil.remove(paths.stream().map(GcsPath::toString).collect(Collectors.toList()));
     }
 
     connection.getAdmin().deleteTable(TableName.valueOf(tableId));
     connection.close();
+  }
+
+  private static void uploadFixture(GcsUtil gcsUtil, String fixtureName, String destPath)
+      throws IOException {
+    InputStream fixtureStream =
+        Preconditions.checkNotNull(
+            EndToEndIT.class.getResourceAsStream(fixtureName),
+            "Failed to find fixture resource: {}",
+            fixtureName);
+
+    // Unzip files into memory
+    Map<String, byte[]> filesToUpload = new HashMap<>();
+    try (ZipInputStream zis = new ZipInputStream(fixtureStream)) {
+      ZipEntry entry;
+
+      while ((entry = zis.getNextEntry()) != null) {
+        if (entry.isDirectory()) {
+          continue;
+        }
+        filesToUpload.put(entry.getName(), ByteStreams.toByteArray(zis));
+      }
+    }
+
+    // Upload to GCS in parallel
+    filesToUpload
+        .entrySet()
+        .parallelStream()
+        .forEach(
+            e -> {
+              GcsPath path = GcsPath.fromUri(destPath + e.getKey());
+              GcsUtil.CreateOptions opts =
+                  GcsUtil.CreateOptions.builder()
+                      .setContentType("application/octet-stream")
+                      .build();
+
+              ByteBuffer buffer = ByteBuffer.wrap(e.getValue());
+              try (WritableByteChannel out = gcsUtil.create(path, opts)) {
+                while (buffer.hasRemaining()) {
+                  out.write(buffer);
+                }
+              } catch (IOException ex) {
+                throw new RuntimeException(ex);
+              }
+            });
   }
 
   private SyncTableOptions createSyncTableOptions() {
@@ -292,7 +341,7 @@ public class EndToEndIT {
 
     // Validate the counters.
     Map<String, Long> counters = getCountMap(result);
-    Assert.assertEquals(counters.get("ranges_matched"), (Long) 101L);
+    Assert.assertEquals(counters.get("ranges_matched"), (Long) 100L);
     Assert.assertEquals(counters.get("ranges_not_matched"), (Long) 0L);
   }
 
@@ -355,7 +404,58 @@ public class EndToEndIT {
 
     // Assert that the output collection is the right one.
     Map<String, Long> counters = getCountMap(result);
-    Assert.assertEquals(counters.get("ranges_matched"), (Long) 97L);
+    Assert.assertEquals(counters.get("ranges_matched"), (Long) 96L);
     Assert.assertEquals(counters.get("ranges_not_matched"), (Long) 4L);
+  }
+
+  @Test
+  public void testSnappyCompressedHBaseSnapshotImport() throws Exception {
+    // Start import
+    ImportOptions importOpts = createImportOptions();
+    importOpts.setEnableSnappy(true);
+    importOpts.setSnapshotName(TEST_SNAPPY_SNAPSHOT_NAME);
+
+    // run pipeline
+    State state = ImportJobFromHbaseSnapshot.buildPipeline(importOpts).run().waitUntilFinish();
+    Assert.assertEquals(State.DONE, state);
+
+    // check that the .restore dir used for temp files has been removed
+    // The restore directory is stored relative to the snapshot directory and contains the job name
+    String bucket = GcsPath.fromUri(hbaseSnapshotDir).getBucket();
+    String restorePathPrefix =
+        CleanupHBaseSnapshotRestoreFilesFn.getListPrefix(
+            HBaseSnapshotInputConfigBuilder.RESTORE_DIR);
+
+    List<StorageObject> allObjects = new ArrayList<>();
+    String nextToken;
+    do {
+      Objects objects = gcsUtil.listObjects(bucket, restorePathPrefix, null);
+      List<StorageObject> items = objects.getItems();
+      if (items != null) {
+        allObjects.addAll(items);
+      }
+      nextToken = objects.getNextPageToken();
+    } while (nextToken != null);
+
+    List<StorageObject> myObjects =
+        allObjects.stream()
+            .filter(o -> o.getName().contains(importOpts.getJobName()))
+            .collect(Collectors.toList());
+    Assert.assertTrue("Restore directory wasn't deleted", myObjects.isEmpty());
+
+    // Verify the import using the sync job
+    SyncTableOptions syncOpts = createSyncTableOptions();
+
+    PipelineResult result = SyncTableJob.buildPipeline(syncOpts).run();
+    state = result.waitUntilFinish();
+    Assert.assertEquals(State.DONE, state);
+
+    // Read the output files and validate that there are no mismatches.
+    Assert.assertEquals(0, readMismatchesFromOutputFiles().size());
+
+    // Validate the counters.
+    Map<String, Long> counters = getCountMap(result);
+    Assert.assertEquals(counters.get("ranges_matched"), (Long) 100L);
+    Assert.assertEquals(counters.get("ranges_not_matched"), (Long) 0L);
   }
 }
