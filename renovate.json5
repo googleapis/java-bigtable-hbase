@@ -72,6 +72,12 @@
       "groupName": "jackson dependencies"
     },
     {
+      "packagePatterns": [
+        "^com.google.cloud:google-cloud-bigtable"
+      ],
+      "groupName": "veneer dependencies"
+    },
+    {
       // pin to beam deps
       "packagePatterns": ["^beam-slf4j.version"],
       "enabled": false
