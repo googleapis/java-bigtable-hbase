@@ -16,8 +16,6 @@ limitations under the License.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.google.cloud.bigtable</groupId>
-  <version>2.2.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
 
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
@@ -27,6 +25,8 @@ limitations under the License.
 
   <artifactId>hbase-migration-tools</artifactId>
   <packaging>pom</packaging>
+  <version>2.2.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+
   <name>${project.groupId}:${project.artifactId}</name>
   <description>
     This project is a parent project for the hbase migration tooling.

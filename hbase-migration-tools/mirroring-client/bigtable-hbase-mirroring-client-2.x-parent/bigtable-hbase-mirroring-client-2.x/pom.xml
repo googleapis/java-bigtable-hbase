@@ -26,8 +26,9 @@ limitations under the License.
 
   <artifactId>bigtable-hbase-mirroring-client-2.x</artifactId>
   <packaging>jar</packaging>
-  <name>${project.groupId}:${project.artifactId}</name>
   <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+
+  <name>${project.groupId}:${project.artifactId}</name>
   <description>
     Bigtable/HBase Mirroring Client conforming to HBase API 2.x. Uses hbase-shaded-client and exposes all dependencies.
   </description>

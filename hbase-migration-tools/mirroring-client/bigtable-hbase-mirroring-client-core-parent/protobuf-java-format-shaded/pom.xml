@@ -2,15 +2,17 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
   <parent>
     <artifactId>bigtable-hbase-mirroring-client-core-parent</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
     <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
   </parent>
-  <modelVersion>4.0.0</modelVersion>
 
   <artifactId>protobuf-java-format-shaded</artifactId>
   <version>1.4</version>
+
   <description>
     This is a wrapper around `com.googlecode.protobuf-java-format:protobuf-java-format` that rewrites the bytecode to use `org.apache.hadoop.hbase.shaded.com.google.protobuf` instead of plain
     `com.google.protobuf` for compatibility with `hbase-shaded-client`. Classes using shaded protobufs are exposed in `com.google.bigtable.hbase.mirroring.shaded.com.googlecode.protobuf.format`
