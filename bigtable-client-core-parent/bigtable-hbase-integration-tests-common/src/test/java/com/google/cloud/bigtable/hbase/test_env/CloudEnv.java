@@ -37,7 +37,7 @@ import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 
-class BigtableEnv extends SharedTestEnv {
+class CloudEnv extends SharedTestEnv {
   private final Logger LOG = new Logger(getClass());
 
   private static final Set<String> KEYS =

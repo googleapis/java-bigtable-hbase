@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -67,6 +68,7 @@ public abstract class AbstractTestTruncateTable extends AbstractTest {
   }
 
   @Test
+  @Category(KnownEmulatorGap.class)
   public void testTruncateWithSplits() throws IOException {
     byte[][] splits =
         new byte[][] {

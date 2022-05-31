@@ -68,7 +68,7 @@ limitations under the License.
                   <!-- Fork & set system properties -->
                   <forkCount>1</forkCount>
                   <systemPropertyVariables>
-                    <google.bigtable.test_env>bigtable</google.bigtable.test_env>
+                    <google.bigtable.test_env>cloud</google.bigtable.test_env>
                   </systemPropertyVariables>
                   <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
 
@@ -128,23 +128,6 @@ limitations under the License.
       <build>
         <plugins>
           <plugin>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>bigtable-emulator-maven-plugin</artifactId>
-            <version>2.2.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
-            <executions>
-              <execution>
-                <goals>
-                  <goal>start</goal>
-                  <goal>stop</goal>
-                </goals>
-                <configuration>
-                  <propertyName>bigtable.emulator.endpoint</propertyName>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-
-          <plugin>
             <artifactId>maven-failsafe-plugin</artifactId>
             <executions>
               <execution>
@@ -159,13 +142,8 @@ limitations under the License.
                   </includes>
                   <excludedGroups>KnownEmulatorGap,KnownGap</excludedGroups>
                   <systemPropertyVariables>
-                    <google.bigtable.project.id>fake-project</google.bigtable.project.id>
-                    <google.bigtable.instance.id>fake-instance</google.bigtable.instance.id>
-                    <google.bigtable.test_env>bigtable</google.bigtable.test_env>
+                    <google.bigtable.test_env>emulator</google.bigtable.test_env>
                   </systemPropertyVariables>
-                  <environmentVariables>
-                    <BIGTABLE_EMULATOR_HOST>${bigtable.emulator.endpoint}</BIGTABLE_EMULATOR_HOST>
-                  </environmentVariables>
                   <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                   <!-- Make sure to fail the build when the suite fails to initialize -->
                   <failIfNoTests>true</failIfNoTests>
