@@ -85,7 +85,12 @@ public class PutAdapter extends MutationAdapter<Put> {
         // 20 bytes for metadata plus the length of all the elements.
         int keyValueSize = (20 + rowLength + familySize + qualifierLength + valueLength);
         if (maxKeyValueSize > 0 && keyValueSize > maxKeyValueSize) {
-          throw new IllegalArgumentException("KeyValue size too large. Expected < " + maxKeyValueSize + "; got " + keyValueSize);
+          throw new IllegalArgumentException(
+              "KeyValue size too large. Got "
+                  + keyValueSize
+                  + " max allowed: "
+                  + maxKeyValueSize
+                  + ".");
         }
 
         ByteString cellQualifierByteString =
