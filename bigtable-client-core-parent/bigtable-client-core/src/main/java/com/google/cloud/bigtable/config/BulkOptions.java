@@ -179,9 +179,9 @@ public class BulkOptions implements Serializable, Cloneable {
     }
 
     /**
-     * Configure the threshold latency for enabling throttling. When enabled via {@link #enableBulkMutationThrottling},
-     * the client will reduce the amount of concurrency when average latency is higher than the
-     * configured target.
+     * Configure the threshold latency for enabling throttling. When enabled via {@link
+     * #enableBulkMutationThrottling}, the client will reduce the amount of concurrency when average
+     * latency is higher than the configured target.
      */
     public Builder setBulkMutationRpcTargetMs(int bulkMutationRpcTargetMs) {
       options.bulkMutationRpcTargetMs = bulkMutationRpcTargetMs;
