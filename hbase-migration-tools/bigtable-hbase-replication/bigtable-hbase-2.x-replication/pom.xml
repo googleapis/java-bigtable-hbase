@@ -208,7 +208,7 @@ limitations under the License.
         <dependency>
             <groupId>com.google.cloud</groupId>
             <artifactId>google-cloud-bigtable-emulator</artifactId>
-            <version>0.144.0</version>
+            <version>0.145.0</version>
             <scope>test</scope>
             <exclusions>
                 <!-- We do not use channel creating helpers, so don't need any
