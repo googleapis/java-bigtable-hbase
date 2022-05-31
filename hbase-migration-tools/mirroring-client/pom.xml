@@ -9,8 +9,9 @@
   </parent>
 
   <artifactId>mirroring-client</artifactId>
-  <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
   <packaging>pom</packaging>
+  <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+
   <build>
     <plugins>
       <plugin>

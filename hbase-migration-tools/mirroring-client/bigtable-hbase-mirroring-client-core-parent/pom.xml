@@ -26,8 +26,9 @@ limitations under the License.
 
   <artifactId>bigtable-hbase-mirroring-client-core-parent</artifactId>
   <packaging>pom</packaging>
-  <name>${project.groupId}:${project.artifactId}</name>
   <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+
+  <name>${project.groupId}:${project.artifactId}</name>
   <description>
     This project is a parent project for the hbase mirroring clients core project.
   </description>
