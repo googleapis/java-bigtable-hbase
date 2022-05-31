@@ -84,6 +84,7 @@ public class EndToEndIT {
   private static final Logger LOG = LoggerFactory.getLogger(HBaseResultToMutationFn.class);
   private static final String SNAPSHOT_FIXTURE_NAME = "EndToEndIT-snapshot.zip";
   private static final String TEST_SNAPSHOT_NAME = "test-snapshot";
+  private static final String TEST_SNAPPY_SNAPSHOT_NAME = "test-snappy-snapshot";
   private static final String CF = "cf";
 
   private TestProperties properties;
@@ -340,7 +341,7 @@ public class EndToEndIT {
 
     // Validate the counters.
     Map<String, Long> counters = getCountMap(result);
-    Assert.assertEquals(counters.get("ranges_matched"), (Long) 101L);
+    Assert.assertEquals(counters.get("ranges_matched"), (Long) 100L);
     Assert.assertEquals(counters.get("ranges_not_matched"), (Long) 0L);
   }
 
@@ -403,7 +404,58 @@ public class EndToEndIT {
 
     // Assert that the output collection is the right one.
     Map<String, Long> counters = getCountMap(result);
-    Assert.assertEquals(counters.get("ranges_matched"), (Long) 97L);
+    Assert.assertEquals(counters.get("ranges_matched"), (Long) 96L);
     Assert.assertEquals(counters.get("ranges_not_matched"), (Long) 4L);
+  }
+
+  @Test
+  public void testSnappyCompressedHBaseSnapshotImport() throws Exception {
+    // Start import
+    ImportOptions importOpts = createImportOptions();
+    importOpts.setEnableSnappy(true);
+    importOpts.setSnapshotName(TEST_SNAPPY_SNAPSHOT_NAME);
+
+    // run pipeline
+    State state = ImportJobFromHbaseSnapshot.buildPipeline(importOpts).run().waitUntilFinish();
+    Assert.assertEquals(State.DONE, state);
+
+    // check that the .restore dir used for temp files has been removed
+    // The restore directory is stored relative to the snapshot directory and contains the job name
+    String bucket = GcsPath.fromUri(hbaseSnapshotDir).getBucket();
+    String restorePathPrefix =
+        CleanupHBaseSnapshotRestoreFilesFn.getListPrefix(
+            HBaseSnapshotInputConfigBuilder.RESTORE_DIR);
+
+    List<StorageObject> allObjects = new ArrayList<>();
+    String nextToken;
+    do {
+      Objects objects = gcsUtil.listObjects(bucket, restorePathPrefix, null);
+      List<StorageObject> items = objects.getItems();
+      if (items != null) {
+        allObjects.addAll(items);
+      }
+      nextToken = objects.getNextPageToken();
+    } while (nextToken != null);
+
+    List<StorageObject> myObjects =
+        allObjects.stream()
+            .filter(o -> o.getName().contains(importOpts.getJobName()))
+            .collect(Collectors.toList());
+    Assert.assertTrue("Restore directory wasn't deleted", myObjects.isEmpty());
+
+    // Verify the import using the sync job
+    SyncTableOptions syncOpts = createSyncTableOptions();
+
+    PipelineResult result = SyncTableJob.buildPipeline(syncOpts).run();
+    state = result.waitUntilFinish();
+    Assert.assertEquals(State.DONE, state);
+
+    // Read the output files and validate that there are no mismatches.
+    Assert.assertEquals(0, readMismatchesFromOutputFiles().size());
+
+    // Validate the counters.
+    Map<String, Long> counters = getCountMap(result);
+    Assert.assertEquals(counters.get("ranges_matched"), (Long) 100L);
+    Assert.assertEquals(counters.get("ranges_not_matched"), (Long) 0L);
   }
 }

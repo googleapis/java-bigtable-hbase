@@ -103,7 +103,7 @@ Exporting HBase snapshots from Bigtable is not supported.
     ```
 1. Run the export.
    ```
-   java -jar bigtable-beam-import-2.0.0.jar export \
+   java -jar bigtable-beam-import-2.3.0.jar export \
         --runner=dataflow \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
@@ -143,7 +143,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
     
 1. Run the import.
     ```
-    java -jar bigtable-beam-import-2.0.0.jar importsnapshot \
+    java -jar bigtable-beam-import-2.3.0.jar importsnapshot \
         --runner=DataflowRunner \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
@@ -151,7 +151,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
         --hbaseSnapshotSourceDir=$SNAPSHOT_GCS_PATH/data \
         --snapshotName=$SNAPSHOT_NAME \
         --stagingLocation=$SNAPSHOT_GCS_PATH/staging \
-        --tempLocation=$SNAPSHOT_GCS_PATH/temp \
+        --gcpTempLocation=$SNAPSHOT_GCS_PATH/temp \
         --maxWorkerNodes=$(expr 3 \* $CLUSTER_NUM_NODES) \
         --region=$REGION
     ```
@@ -171,7 +171,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
 
 1. Run the import.
     ```
-    java -jar bigtable-beam-import-2.0.0.jar importsnapshot \
+    java -jar bigtable-beam-import-2.3.0.jar importsnapshot \
         --runner=DataflowRunner \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
@@ -179,11 +179,10 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
         --hbaseSnapshotSourceDir=$SNAPSHOT_GCS_PATH/data \
         --snapshotName=$SNAPSHOT_NAME \
         --stagingLocation=$SNAPSHOT_GCS_PATH/staging \
-        --tempLocation=$SNAPSHOT_GCS_PATH/temp \
+        --gcpTempLocation=$SNAPSHOT_GCS_PATH/temp \
         --maxWorkerNodes=$(expr 3 \* $CLUSTER_NUM_NODES) \
         --region=$REGION \
-        --experiments=use_runner_v2 \
-        --sdkContainerImage=gcr.io/cloud-bigtable-ecosystem/unified-harness:latest
+        --enableSnappy=true
     ```
 
 ### Sequence Files
@@ -200,7 +199,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
     ```
 1. Run the import.
     ```
-    java -jar bigtable-beam-import-2.0.0.jar import \
+    java -jar bigtable-beam-import-2.3.0.jar import \
         --runner=dataflow \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
@@ -228,7 +227,7 @@ check if there are any rows with mismatched data.
     ```
 1. Run the sync job. It will put the results into `$SNAPSHOT_GCS_PATH/data-verification/output-TIMESTAMP`. 
     ```
-    java -jar bigtable-beam-import-2.0.0.jar sync-table  \
+    java -jar bigtable-beam-import-2.3.0.jar sync-table  \
         --runner=dataflow \
         --project=$PROJECT_ID \
         --bigtableInstanceId=$INSTANCE_ID \
