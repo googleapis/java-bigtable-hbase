@@ -100,7 +100,7 @@ limitations under the License.
     </dependency>
     <dependency>
       <groupId>com.google.cloud</groupId>
-      <artifactId>google-cloud-bigtable-emulator</artifactId>
+      <artifactId>google-cloud-bigtable-emulator-core</artifactId>
       <version>${google-cloud-bigtable-emulator.version}</version>
       <scope>test</scope>
     </dependency>
