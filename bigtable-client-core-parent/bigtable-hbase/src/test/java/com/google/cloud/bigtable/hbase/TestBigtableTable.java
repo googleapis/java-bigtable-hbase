@@ -160,12 +160,12 @@ public class TestBigtableTable {
     Assert.assertEquals(
         FILTERS
             .chain()
+            .filter(FILTERS.limit().cellsPerColumn(1))
             .filter(
                 FILTERS
                     .chain()
                     .filter(FILTERS.family().regex("family"))
                     .filter(FILTERS.qualifier().regex("qualifier")))
-            .filter(FILTERS.limit().cellsPerColumn(1))
             .toProto(),
         filterCaptor.getValue().toProto());
   }

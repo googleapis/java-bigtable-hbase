@@ -36,6 +36,8 @@ import com.google.common.collect.RangeSet;
 import com.google.common.collect.TreeRangeSet;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import org.apache.hadoop.hbase.client.Scan;
@@ -115,18 +117,8 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
    */
   public Filters.Filter buildFilter(Scan scan, ReadHooks hooks) {
     ChainFilter chain = FILTERS.chain();
-    Optional<Filters.Filter> familyFilter = createColumnFamilyFilter(scan);
-    if (familyFilter.isPresent()) {
-      chain.filter(familyFilter.get());
-    }
 
-    if (scan.getTimeRange() != null && !scan.getTimeRange().isAllTime()) {
-      chain.filter(createTimeRangeFilter(scan.getTimeRange()));
-    }
-
-    if (scan.getMaxVersions() != Integer.MAX_VALUE) {
-      chain.filter(createColumnLimitFilter(scan.getMaxVersions()));
-    }
+    buildStartFilter(scan).forEach(chain::filter);
 
     Optional<Filters.Filter> userFilter = createUserFilter(scan, hooks);
     if (userFilter.isPresent()) {
@@ -138,6 +130,28 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
       chain.filter(colFamilyTimeFilter.get());
     }
     return chain;
+  }
+
+  private List<Filters.Filter> buildStartFilter(Scan scan) {
+    List<Filters.Filter> filterList = new ArrayList<>();
+
+    Optional<Filters.Filter> familyFilter = createColumnFamilyFilter(scan);
+    if (familyFilter.isPresent()) {
+      filterList.add(familyFilter.get());
+    }
+
+    boolean hasTimeRange = false;
+    if (scan.getTimeRange() != null && !scan.getTimeRange().isAllTime()) {
+      filterList.add(createTimeRangeFilter(scan.getTimeRange()));
+      hasTimeRange = true;
+    }
+
+    // maxVersions should appear as early as possible, but it must appear after timeRange
+    if (scan.getMaxVersions() != Integer.MAX_VALUE) {
+      int i = hasTimeRange ? filterList.size() : 0;
+      filterList.add(i, createColumnLimitFilter(scan.getMaxVersions()));
+    }
+    return filterList;
   }
 
   /** {@inheritDoc} */
