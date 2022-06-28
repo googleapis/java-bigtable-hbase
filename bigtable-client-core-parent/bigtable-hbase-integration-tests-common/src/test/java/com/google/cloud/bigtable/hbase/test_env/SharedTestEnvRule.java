@@ -139,7 +139,7 @@ public class SharedTestEnvRule extends ExternalResource {
 
   public boolean isBigtable() {
     // TODO(igorbernstein2): clean this up
-    return sharedTestEnv instanceof BigtableEnv;
+    return sharedTestEnv instanceof CloudEnv;
   }
 
   public TableName getDefaultTableName() {

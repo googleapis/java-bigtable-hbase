@@ -49,8 +49,10 @@ abstract class SharedTestEnv {
     switch (testEnv) {
       case "minicluster":
         return new MiniClusterEnv();
-      case "bigtable":
-        return new BigtableEnv();
+      case "cloud":
+        return new CloudEnv();
+      case "emulator":
+        return new EmulatorEnv();
       default:
         throw new IllegalStateException("unsupported test environment");
     }
