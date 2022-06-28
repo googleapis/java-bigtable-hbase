@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.4.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.3.0...v2.4.0) (2022-06-09)
+
+
+### Features
+
+* optimize scan filters ([#3651](https://github.com/googleapis/java-bigtable-hbase/issues/3651)) ([23af529](https://github.com/googleapis/java-bigtable-hbase/commit/23af52933a570e9e80ba9ee06824c566abf6deb1))
+
+
+### Dependencies
+
+* update bigtable.version to v2.7.0 ([#3629](https://github.com/googleapis/java-bigtable-hbase/issues/3629)) ([90956d1](https://github.com/googleapis/java-bigtable-hbase/commit/90956d1cb30f1aa0259b14354d7b2d7ded612f97))
+* update bigtable.version to v2.8.0 ([#3640](https://github.com/googleapis/java-bigtable-hbase/issues/3640)) ([93b7067](https://github.com/googleapis/java-bigtable-hbase/commit/93b7067c65e6f86fe642f8265f8bb131a43f0f56))
+* update dependency com.google.cloud:google-cloud-bigtable-emulator to v0.144.0 ([#3630](https://github.com/googleapis/java-bigtable-hbase/issues/3630)) ([5cd5c59](https://github.com/googleapis/java-bigtable-hbase/commit/5cd5c5977de70ddace5cbc67e2fa5352f2cda1b1))
+* update dependency com.google.cloud:google-cloud-bigtable-emulator to v0.144.0 ([#3631](https://github.com/googleapis/java-bigtable-hbase/issues/3631)) ([3c4db31](https://github.com/googleapis/java-bigtable-hbase/commit/3c4db31681fdd79911da574534ef85c741885293))
+* update dependency org.codehaus.plexus:plexus-utils to v3.4.2 ([#3624](https://github.com/googleapis/java-bigtable-hbase/issues/3624)) ([c555559](https://github.com/googleapis/java-bigtable-hbase/commit/c555559a425b154023e7eb41b59a837d1dd67a81))
+
 ## [2.3.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.2.0...v2.3.0) (2022-05-18)
 
 
