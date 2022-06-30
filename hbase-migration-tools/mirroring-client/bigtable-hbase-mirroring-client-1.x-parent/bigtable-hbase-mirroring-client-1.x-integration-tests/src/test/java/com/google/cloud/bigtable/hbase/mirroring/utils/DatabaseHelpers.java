@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.cloud.bigtable.hbase.mirroring.utils.compat.TableCreator;
 import com.google.cloud.bigtable.mirroring.core.ExecutorServiceRule;
 import com.google.cloud.bigtable.mirroring.core.MirroringConnection;
 import com.google.cloud.bigtable.mirroring.core.utils.Comparators;
@@ -28,10 +29,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.Executors;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -40,11 +44,11 @@ import org.apache.hadoop.hbase.client.Table;
 
 public class DatabaseHelpers {
   private final ExecutorServiceRule executorServiceRule;
-  private final ConnectionRule connectionRule;
+  private final Configuration configuration;
 
-  public DatabaseHelpers(ConnectionRule connectionRule, ExecutorServiceRule executorServiceRule) {
+  public DatabaseHelpers(Configuration configuration, ExecutorServiceRule executorServiceRule) {
     this.executorServiceRule = executorServiceRule;
-    this.connectionRule = connectionRule;
+    this.configuration = configuration;
   }
 
   public enum DatabaseSelector {
@@ -72,6 +76,41 @@ public class DatabaseHelpers {
     public RowCellsCount(int rows, int cells) {
       this.rows = rows;
       this.cells = cells;
+    }
+  }
+
+  public String createTableName() {
+    return String.format(
+        "mirroring-test-table-%s-%s", System.currentTimeMillis(), (new Random()).nextInt());
+  }
+
+  public TableName createTable(byte[]... columnFamilies) throws IOException {
+    String tableName = createTableName();
+    try (MirroringConnection connection = createConnection()) {
+      createTable(connection.getPrimaryConnection(), tableName, columnFamilies);
+      createTable(connection.getSecondaryConnection(), tableName, columnFamilies);
+      return TableName.valueOf(tableName);
+    }
+  }
+
+  public TableName createTable(MirroringConnection connection, byte[]... columnFamilies)
+      throws IOException {
+    String tableName = createTableName();
+    createTable(connection.getPrimaryConnection(), tableName, columnFamilies);
+    createTable(connection.getSecondaryConnection(), tableName, columnFamilies);
+    return TableName.valueOf(tableName);
+  }
+
+  public void createTable(Connection connection, String tableName, byte[]... columnFamilies)
+      throws IOException {
+    try {
+      TableCreator tableCreator =
+          (TableCreator)
+              Class.forName(System.getProperty("integrations.compat.table-creator-impl"))
+                  .newInstance();
+      tableCreator.createTable(connection, tableName, columnFamilies);
+    } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+      throw new IOException(e);
     }
   }
 
@@ -180,10 +219,10 @@ public class DatabaseHelpers {
   }
 
   public MirroringConnection createConnection() throws IOException {
-    return connectionRule.createConnection(this.executorServiceRule.executorService);
+    return createConnection(configuration);
   }
 
   public MirroringConnection createConnection(Configuration configuration) throws IOException {
-    return connectionRule.createConnection(this.executorServiceRule.executorService, configuration);
+    return (MirroringConnection) ConnectionFactory.createConnection(configuration, executorServiceRule.executorService);
   }
 }

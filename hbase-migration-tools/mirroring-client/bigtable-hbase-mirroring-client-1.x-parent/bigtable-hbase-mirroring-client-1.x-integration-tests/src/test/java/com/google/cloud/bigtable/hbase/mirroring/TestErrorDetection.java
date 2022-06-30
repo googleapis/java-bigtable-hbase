@@ -27,6 +27,8 @@ import com.google.cloud.bigtable.hbase.mirroring.utils.Helpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.PropagatingThread;
 import com.google.cloud.bigtable.hbase.mirroring.utils.TestMismatchDetectorCounter;
+import com.google.cloud.bigtable.hbase.mirroring.utils.env.TestEnv;
+import com.google.cloud.bigtable.hbase.mirroring.utils.env.TestEnvRunner;
 import com.google.cloud.bigtable.mirroring.core.ExecutorServiceRule;
 import com.google.cloud.bigtable.mirroring.core.MirroringConnection;
 import com.google.common.primitives.Longs;
@@ -47,12 +49,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
+@RunWith(TestEnvRunner.class)
 public class TestErrorDetection {
   @ClassRule public static ConnectionRule connectionRule = new ConnectionRule();
   @Rule public ExecutorServiceRule executorServiceRule = ExecutorServiceRule.cachedPoolExecutor();
-  private DatabaseHelpers databaseHelpers =
-      new DatabaseHelpers(connectionRule, executorServiceRule);
+  private final DatabaseHelpers databaseHelpers;
 
   @Rule
   public MismatchDetectorCounterRule mismatchDetectorCounterRule =
@@ -62,6 +63,10 @@ public class TestErrorDetection {
   private static final byte[] qualifier1 = "q1".getBytes();
   private static final byte[] row1 = "r1".getBytes();
   private static final byte[] value1 = "v1".getBytes();
+
+  public TestErrorDetection(TestEnv testEnv) {
+    this.databaseHelpers = new DatabaseHelpers(testEnv.getMirroringConfig(), executorServiceRule);
+  }
 
   @Test
   public void readsAndWritesArePerformed() throws IOException {

@@ -24,6 +24,7 @@ import com.google.cloud.bigtable.hbase.mirroring.utils.DatabaseHelpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.Helpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.TestMismatchDetectorCounter;
+import com.google.cloud.bigtable.hbase.mirroring.utils.env.TestEnv;
 import com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.FailingHBaseHRegionRule;
 import com.google.cloud.bigtable.mirroring.core.ExecutorServiceRule;
 import com.google.cloud.bigtable.mirroring.core.MirroringConnection;
@@ -41,10 +42,8 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class TestReadVerificationSampling {
-  @ClassRule public static ConnectionRule connectionRule = new ConnectionRule();
   @Rule public ExecutorServiceRule executorServiceRule = ExecutorServiceRule.cachedPoolExecutor();
-  private DatabaseHelpers databaseHelpers =
-      new DatabaseHelpers(connectionRule, executorServiceRule);
+  private final DatabaseHelpers databaseHelpers;
 
   @Rule
   public MismatchDetectorCounterRule mismatchDetectorCounterRule =
@@ -55,11 +54,15 @@ public class TestReadVerificationSampling {
   private static final byte[] columnFamily1 = "cf1".getBytes();
   private static final byte[] qualifier1 = "cq1".getBytes();
 
+  public TestReadVerificationSampling(TestEnv testEnv) {
+    databaseHelpers = new DatabaseHelpers(testEnv.getMirroringConfig(), executorServiceRule);
+  }
+
   @Test
   public void testPartialReadsVerificationOnGets() throws IOException {
     TableName tableName;
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
-      tableName = connectionRule.createTable(connection, columnFamily1);
+      tableName = databaseHelpers.createTable(connection, columnFamily1);
       databaseHelpers.fillTable(tableName, 1000, columnFamily1, qualifier1);
     }
 
@@ -99,7 +102,7 @@ public class TestReadVerificationSampling {
   public void testAllReadsVerificationOnGets() throws IOException {
     TableName tableName;
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
-      tableName = connectionRule.createTable(connection, columnFamily1);
+      tableName = databaseHelpers.createTable(connection, columnFamily1);
       databaseHelpers.fillTable(tableName, 10, columnFamily1, qualifier1);
     }
 
@@ -121,7 +124,7 @@ public class TestReadVerificationSampling {
   public void testNoReadsVerificationOnGets() throws IOException {
     TableName tableName;
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
-      tableName = connectionRule.createTable(connection, columnFamily1);
+      tableName = databaseHelpers.createTable(connection, columnFamily1);
       databaseHelpers.fillTable(tableName, 10, columnFamily1, qualifier1);
     }
 

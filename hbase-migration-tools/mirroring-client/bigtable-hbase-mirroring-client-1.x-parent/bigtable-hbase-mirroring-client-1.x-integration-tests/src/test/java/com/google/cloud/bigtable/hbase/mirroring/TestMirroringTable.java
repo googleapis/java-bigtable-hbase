@@ -26,6 +26,8 @@ import com.google.cloud.bigtable.hbase.mirroring.utils.Helpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.TestMismatchDetectorCounter;
 import com.google.cloud.bigtable.hbase.mirroring.utils.TestWriteErrorConsumer;
+import com.google.cloud.bigtable.hbase.mirroring.utils.env.TestEnv;
+import com.google.cloud.bigtable.hbase.mirroring.utils.env.TestEnvRunner;
 import com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.FailingHBaseHRegion;
 import com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.FailingHBaseHRegionRule;
 import com.google.cloud.bigtable.mirroring.core.ExecutorServiceRule;
@@ -53,12 +55,12 @@ import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(TestEnvRunner.class)
 public class TestMirroringTable {
-  @ClassRule public static ConnectionRule connectionRule = new ConnectionRule();
   @Rule public ExecutorServiceRule executorServiceRule = ExecutorServiceRule.cachedPoolExecutor();
-  private DatabaseHelpers databaseHelpers =
-      new DatabaseHelpers(connectionRule, executorServiceRule);
+  private final DatabaseHelpers databaseHelpers;
 
   @Rule
   public MismatchDetectorCounterRule mismatchDetectorCounterRule =
@@ -81,6 +83,10 @@ public class TestMirroringTable {
         }
       };
 
+  public TestMirroringTable(TestEnv testEnv) {
+    databaseHelpers = new DatabaseHelpers(testEnv.getMirroringConfig(), executorServiceRule);
+  }
+
   public static byte[] rowKeyFromId(int id) {
     return Longs.toByteArray(id);
   }
@@ -89,7 +95,7 @@ public class TestMirroringTable {
   public void testPut() throws IOException {
     int databaseEntriesCount = 1000;
 
-    final TableName tableName = connectionRule.createTable(columnFamily1);
+    final TableName tableName = databaseHelpers.createTable(columnFamily1);
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table t1 = connection.getTable(tableName)) {
         for (int i = 0; i < databaseEntriesCount; i++) {
@@ -102,7 +108,7 @@ public class TestMirroringTable {
 
   @Test
   public void testPuts() throws IOException {
-    final TableName tableName = connectionRule.createTable(columnFamily1);
+    final TableName tableName = databaseHelpers.createTable(columnFamily1);
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table t1 = connection.getTable(tableName)) {
         int id = 0;
@@ -125,8 +131,8 @@ public class TestMirroringTable {
     Assume.assumeTrue(
         ConfigurationHelper.isPrimaryHBase() && ConfigurationHelper.isUsingHBaseMiniCluster());
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
-    final TableName tableName2 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
+    final TableName tableName2 = databaseHelpers.createTable(columnFamily1);
 
     FailingHBaseHRegion.failMutation(
         failEvenRowKeysPredicate, OperationStatusCode.SANITY_CHECK_FAILURE, "failed");
@@ -176,8 +182,8 @@ public class TestMirroringTable {
 
     int databaseEntriesCount = 1000;
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
-    final TableName tableName2 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
+    final TableName tableName2 = databaseHelpers.createTable(columnFamily1);
 
     FailingHBaseHRegion.failMutation(
         failEvenRowKeysPredicate, OperationStatusCode.SANITY_CHECK_FAILURE, "failed");
@@ -215,7 +221,7 @@ public class TestMirroringTable {
   @Test
   public void testDelete() throws IOException {
     int databaseEntriesCount = 1000;
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table t1 = connection.getTable(tableName1)) {
@@ -227,7 +233,7 @@ public class TestMirroringTable {
     }
     databaseHelpers.verifyTableConsistency(tableName1);
 
-    final TableName tableName2 = connectionRule.createTable(columnFamily1);
+    final TableName tableName2 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName2, databaseEntriesCount, columnFamily1, qualifier1);
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table t1 = connection.getTable(tableName2)) {
@@ -255,10 +261,10 @@ public class TestMirroringTable {
     int databaseEntriesCount = 1000;
 
     // Fill tables before forcing operations to fail.
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
 
-    final TableName tableName2 = connectionRule.createTable(columnFamily1);
+    final TableName tableName2 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName2, databaseEntriesCount, columnFamily1, qualifier1);
 
     FailingHBaseHRegion.failMutation(
@@ -323,10 +329,10 @@ public class TestMirroringTable {
     int databaseEntriesCount = 1000;
 
     // Fill tables before forcing operations to fail.
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
 
-    final TableName tableName2 = connectionRule.createTable(columnFamily1);
+    final TableName tableName2 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName2, databaseEntriesCount, columnFamily1, qualifier1);
 
     FailingHBaseHRegion.failMutation(
@@ -373,7 +379,7 @@ public class TestMirroringTable {
   public void testCheckAndPut() throws IOException {
     int databaseEntriesCount = 1000;
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
 
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
@@ -444,7 +450,7 @@ public class TestMirroringTable {
 
     int databaseEntriesCount = 1000;
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
 
     FailingHBaseHRegion.failMutation(failEvenRowKeysPredicate, "failed");
@@ -487,7 +493,7 @@ public class TestMirroringTable {
 
     int databaseEntriesCount = 1000;
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
 
     FailingHBaseHRegion.failMutation(failEvenRowKeysPredicate, "failed");
@@ -532,7 +538,7 @@ public class TestMirroringTable {
   public void testCheckAndDelete() throws IOException {
     int databaseEntriesCount = 1000;
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(
         tableName1,
         databaseEntriesCount,
@@ -606,7 +612,7 @@ public class TestMirroringTable {
         ConfigurationHelper.isPrimaryHBase() && ConfigurationHelper.isUsingHBaseMiniCluster());
     int databaseEntriesCount = 1000;
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(
         tableName1, databaseEntriesCount, columnFamily1, qualifier1, qualifier2);
 
@@ -651,7 +657,7 @@ public class TestMirroringTable {
 
     int databaseEntriesCount = 1000;
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
 
     FailingHBaseHRegion.failMutation(failEvenRowKeysPredicate, "failed");
@@ -694,7 +700,7 @@ public class TestMirroringTable {
   public void testCheckAndMutate() throws IOException {
     int databaseEntriesCount = 1000;
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
 
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
@@ -750,7 +756,7 @@ public class TestMirroringTable {
         ConfigurationHelper.isPrimaryHBase() && ConfigurationHelper.isUsingHBaseMiniCluster());
     int databaseEntriesCount = 1000;
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(
         tableName1, databaseEntriesCount, columnFamily1, qualifier1, qualifier2);
 
@@ -797,7 +803,7 @@ public class TestMirroringTable {
 
     int databaseEntriesCount = 1000;
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
 
     FailingHBaseHRegion.failMutation(failEvenRowKeysPredicate, "failed");
@@ -839,7 +845,7 @@ public class TestMirroringTable {
   public void testIncrement() throws IOException {
     int databaseEntriesCount = 1000;
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
 
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
@@ -870,7 +876,7 @@ public class TestMirroringTable {
         ConfigurationHelper.isPrimaryHBase() && ConfigurationHelper.isUsingHBaseMiniCluster());
     int databaseEntriesCount = 1000;
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
 
     FailingHBaseHRegion.failMutation(failEvenRowKeysPredicate, "failed");
@@ -901,7 +907,7 @@ public class TestMirroringTable {
 
     int databaseEntriesCount = 1000;
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
 
     TestWriteErrorConsumer.clearErrors();
@@ -927,7 +933,7 @@ public class TestMirroringTable {
   public void testAppend() throws IOException {
     int databaseEntriesCount = 1000;
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
 
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
@@ -960,7 +966,7 @@ public class TestMirroringTable {
         ConfigurationHelper.isPrimaryHBase() && ConfigurationHelper.isUsingHBaseMiniCluster());
     int databaseEntriesCount = 1000;
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
 
     FailingHBaseHRegion.failMutation(failEvenRowKeysPredicate, "failed");
@@ -992,7 +998,7 @@ public class TestMirroringTable {
 
     int databaseEntriesCount = 1000;
 
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
 
     TestWriteErrorConsumer.clearErrors();
@@ -1017,7 +1023,7 @@ public class TestMirroringTable {
   @Test
   public void testGet() throws IOException {
     int databaseEntriesCount = 1000;
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table t1 = connection.getTable(tableName1)) {
@@ -1037,7 +1043,7 @@ public class TestMirroringTable {
         ConfigurationHelper.isPrimaryHBase() && ConfigurationHelper.isUsingHBaseMiniCluster());
 
     int databaseEntriesCount = 1000;
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
 
     FailingHBaseHRegion.failMutation(failEvenRowKeysPredicate, "failed");
@@ -1066,7 +1072,7 @@ public class TestMirroringTable {
         ConfigurationHelper.isSecondaryHBase() && ConfigurationHelper.isUsingHBaseMiniCluster());
 
     int databaseEntriesCount = 1000;
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
 
     FailingHBaseHRegion.failMutation(failEvenRowKeysPredicate, "failed");
@@ -1088,7 +1094,7 @@ public class TestMirroringTable {
   @Test
   public void testExists() throws IOException {
     int databaseEntriesCount = 1000;
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table t1 = connection.getTable(tableName1)) {
@@ -1107,7 +1113,7 @@ public class TestMirroringTable {
         ConfigurationHelper.isPrimaryHBase() && ConfigurationHelper.isUsingHBaseMiniCluster());
 
     int databaseEntriesCount = 1000;
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
 
     FailingHBaseHRegion.failMutation(failEvenRowKeysPredicate, "failed");
@@ -1136,7 +1142,7 @@ public class TestMirroringTable {
         ConfigurationHelper.isSecondaryHBase() && ConfigurationHelper.isUsingHBaseMiniCluster());
 
     int databaseEntriesCount = 1000;
-    final TableName tableName1 = connectionRule.createTable(columnFamily1);
+    final TableName tableName1 = databaseHelpers.createTable(columnFamily1);
     databaseHelpers.fillTable(tableName1, databaseEntriesCount, columnFamily1, qualifier1);
 
     FailingHBaseHRegion.failMutation(failEvenRowKeysPredicate, "failed");
@@ -1159,7 +1165,7 @@ public class TestMirroringTable {
   public void testBatch() throws IOException, InterruptedException {
     int databaseEntriesCount = 1000;
 
-    final TableName tableName = connectionRule.createTable(columnFamily1);
+    final TableName tableName = databaseHelpers.createTable(columnFamily1);
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table t1 = connection.getTable(tableName)) {
         int id = 0;
@@ -1188,7 +1194,7 @@ public class TestMirroringTable {
 
     FailingHBaseHRegion.failMutation(failEvenRowKeysPredicate, "failed");
 
-    final TableName tableName = connectionRule.createTable(columnFamily1);
+    final TableName tableName = databaseHelpers.createTable(columnFamily1);
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table t1 = connection.getTable(tableName)) {
         int id = 0;
@@ -1231,7 +1237,7 @@ public class TestMirroringTable {
     FailingHBaseHRegion.failMutation(failEvenRowKeysPredicate, "failed");
 
     ReportedErrorsContext reportedErrorsContext1 = new ReportedErrorsContext();
-    final TableName tableName2 = connectionRule.createTable(columnFamily1);
+    final TableName tableName2 = databaseHelpers.createTable(columnFamily1);
     try (MirroringConnection connection = databaseHelpers.createConnection()) {
       try (Table t1 = connection.getTable(tableName2)) {
         int id = 0;

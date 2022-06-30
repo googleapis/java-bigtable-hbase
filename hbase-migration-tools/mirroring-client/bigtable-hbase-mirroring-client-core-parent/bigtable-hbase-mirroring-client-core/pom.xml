@@ -33,13 +33,6 @@ limitations under the License.
     Classes common for bigtable-hbase-mirroring-client-1.x and bigtable-hbase-mirroring-client-2.x.
   </description>
 
-  <properties>
-    <hbase-shading-prefix>org.apache.hadoop.hbase.shaded</hbase-shading-prefix>
-    <hbase-shading-prefix-path>org/apache/hadoop/hbase/shaded</hbase-shading-prefix-path>
-    <shading-prefix>com.google.cloud.bigtable.mirroring.shaded</shading-prefix>
-    <shading-prefix-path>com/google/cloud/bigtable/mirroring/shaded</shading-prefix-path>
-  </properties>
-
   <dependencies>
     <!-- external deps -->
     <dependency>

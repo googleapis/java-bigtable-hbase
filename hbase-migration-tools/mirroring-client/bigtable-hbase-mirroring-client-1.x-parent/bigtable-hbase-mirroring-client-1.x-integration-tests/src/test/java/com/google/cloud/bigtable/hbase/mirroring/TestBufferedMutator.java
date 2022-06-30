@@ -25,13 +25,14 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConfigurationHelper;
-import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.DatabaseHelpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.PropagatingThread;
 import com.google.cloud.bigtable.hbase.mirroring.utils.TestMismatchDetectorCounter;
 import com.google.cloud.bigtable.hbase.mirroring.utils.TestMismatchDetectorCounter.Mismatch;
 import com.google.cloud.bigtable.hbase.mirroring.utils.TestWriteErrorConsumer;
+import com.google.cloud.bigtable.hbase.mirroring.utils.env.TestEnv;
+import com.google.cloud.bigtable.hbase.mirroring.utils.env.TestEnvRunner;
 import com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.FailingHBaseHRegion;
 import com.google.cloud.bigtable.hbase.mirroring.utils.failinghbaseminicluster.FailingHBaseHRegionRule;
 import com.google.cloud.bigtable.mirroring.core.ExecutorServiceRule;
@@ -63,18 +64,15 @@ import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.junit.Assume;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-@RunWith(Parameterized.class)
+@RunWith(TestEnvRunner.class)
 public class TestBufferedMutator {
-  @ClassRule public static ConnectionRule connectionRule = new ConnectionRule();
+
+  private final TestEnv testEnv;
   @Rule public ExecutorServiceRule executorServiceRule = ExecutorServiceRule.cachedPoolExecutor();
-  private DatabaseHelpers databaseHelpers =
-      new DatabaseHelpers(connectionRule, executorServiceRule);
 
   @Rule
   public MismatchDetectorCounterRule mismatchDetectorCounterRule =
@@ -85,30 +83,32 @@ public class TestBufferedMutator {
   private static final byte[] columnFamily1 = "cf1".getBytes();
   private static final byte[] qualifier1 = "cq1".getBytes();
 
-  @Parameterized.Parameters(name = "mutateConcurrently: {0}")
-  public static Object[] data() {
-    return new Object[] {false, true};
+  public TestBufferedMutator(TestEnv testEnv) {
+    this.testEnv = testEnv;
   }
 
-  private final boolean mutateConcurrently;
-
-  public TestBufferedMutator(boolean mutateConcurrently) {
-    this.mutateConcurrently = mutateConcurrently;
-  }
-
-  private Configuration createConfiguration() {
+  private Configuration createConfiguration(boolean mutateConcurrently) {
     Configuration configuration = ConfigurationHelper.newConfiguration();
     // MirroringOptions constructor verifies that MIRRORING_SYNCHRONOUS_WRITES is true when
     // MIRRORING_CONCURRENT_WRITES is true (consult its constructor for more details).
     // We are keeping MIRRORING_SYNCHRONOUS_WRITES false if we do not write concurrently (we are not
     // testing the other case here anyways) and set it to true to meet the requirements otherwise.
-    configuration.set(MIRRORING_CONCURRENT_WRITES, String.valueOf(this.mutateConcurrently));
-    configuration.set(MIRRORING_SYNCHRONOUS_WRITES, String.valueOf(this.mutateConcurrently));
+    configuration.set(MIRRORING_CONCURRENT_WRITES, String.valueOf(mutateConcurrently));
+    configuration.set(MIRRORING_SYNCHRONOUS_WRITES, String.valueOf(mutateConcurrently));
     return configuration;
   }
 
+
   @Test
-  public void testBufferedMutatorPerformsMutations() throws IOException, InterruptedException {
+  public void testBufferedMutatorPerformsMutationsConcurrent() throws IOException, InterruptedException {
+    testBufferedMutatorPerformsMutations(true);
+  }
+  @Test
+  public void testBufferedMutatorPerformsMutationsNonConcurrent() throws IOException, InterruptedException {
+    testBufferedMutatorPerformsMutations(false);
+  }
+
+  public void testBufferedMutatorPerformsMutations(boolean mutateConcurrently) throws IOException {
     final int numThreads = 10;
     final int numMutationsInBatch = 100;
     final int numBatchesPerThread = 1000;
@@ -147,13 +147,14 @@ public class TestBufferedMutator {
       }
     }
 
-    Configuration config = this.createConfiguration();
+    Configuration config = this.createConfiguration(mutateConcurrently);
     // Set flow controller requests limit to high value to increase concurrency.
     config.set(MIRRORING_FLOW_CONTROLLER_STRATEGY_MAX_OUTSTANDING_REQUESTS, "10000");
 
+    DatabaseHelpers databaseHelpers = new DatabaseHelpers(config, executorServiceRule);
     TableName tableName;
     try (MirroringConnection connection = databaseHelpers.createConnection(config)) {
-      tableName = connectionRule.createTable(connection, columnFamily1);
+      tableName = databaseHelpers.createTable(connection, columnFamily1);
       try (BufferedMutator bm = connection.getBufferedMutator(tableName)) {
         List<PropagatingThread> threads = new ArrayList<>();
         for (int i = 0; i < numThreads; i++) {
@@ -202,7 +203,14 @@ public class TestBufferedMutator {
   }
 
   @Test
-  public void testBufferedMutatorSecondaryErrorHandling() throws IOException {
+  public void testBufferedMutatorSecondaryErrorHandlingConcurrently() throws IOException {
+    testBufferedMutatorPerformsMutations(true);
+  }
+  public void testBufferedMutatorSecondaryErrorHandlingNonConcurrently() throws IOException {
+    testBufferedMutatorPerformsMutations(false);
+  }
+
+  private void testBufferedMutatorSecondaryErrorHandling(boolean mutateConcurrently) throws IOException {
     Assume.assumeTrue(
         ConfigurationHelper.isSecondaryHBase() && ConfigurationHelper.isUsingHBaseMiniCluster());
 
@@ -212,15 +220,16 @@ public class TestBufferedMutator {
         Longs.toByteArray(7), OperationStatusCode.SANITY_CHECK_FAILURE, "row-7-error");
 
     TestWriteErrorConsumer.clearErrors();
-    Configuration configuration = this.createConfiguration();
+    Configuration configuration = this.createConfiguration(mutateConcurrently);
     configuration.set(
         "google.bigtable.mirroring.write-error-consumer.factory-impl",
         TestWriteErrorConsumer.Factory.class.getName());
 
     TableName tableName;
     List<Throwable> flushExceptions = null;
+    DatabaseHelpers databaseHelpers = new DatabaseHelpers(configuration, executorServiceRule);
     try (MirroringConnection connection = databaseHelpers.createConnection(configuration)) {
-      tableName = connectionRule.createTable(connection, columnFamily1);
+      tableName = databaseHelpers.createTable(connection, columnFamily1);
       BufferedMutatorParams params = new BufferedMutatorParams(tableName);
       try (BufferedMutator bm = connection.getBufferedMutator(params)) {
         for (int intRowId = 0; intRowId < 10; intRowId++) {
@@ -241,7 +250,7 @@ public class TestBufferedMutator {
       }
     } // connection close will wait for secondary writes
 
-    if (this.mutateConcurrently) {
+    if (mutateConcurrently) {
       // ConcurrentBufferedMutator does not report secondary write errors.
       assertThat(TestWriteErrorConsumer.getErrorCount()).isEqualTo(0);
 
@@ -296,7 +305,14 @@ public class TestBufferedMutator {
   }
 
   @Test
-  public void testBufferedMutatorPrimaryErrorHandling() throws IOException {
+  public void testBufferedMutatorPrimaryErrorHandlingConcurrently() throws IOException {
+    testBufferedMutatorPrimaryErrorHandling(true);
+  }
+  @Test
+  public void testBufferedMutatorPrimaryErrorHandlingNonConcurrently() throws IOException {
+    testBufferedMutatorPrimaryErrorHandling(false);
+  }
+  public void testBufferedMutatorPrimaryErrorHandling(boolean mutateConcurrently) throws IOException {
     Assume.assumeTrue(
         ConfigurationHelper.isPrimaryHBase() && ConfigurationHelper.isUsingHBaseMiniCluster());
 
@@ -305,13 +321,15 @@ public class TestBufferedMutator {
     FailingHBaseHRegion.failMutation(
         Longs.toByteArray(7), OperationStatusCode.SANITY_CHECK_FAILURE, "row-7-error");
 
-    Configuration configuration = this.createConfiguration();
+    Configuration configuration = this.createConfiguration(mutateConcurrently);
+    DatabaseHelpers databaseHelpers = new DatabaseHelpers(configuration, executorServiceRule);
 
     final Set<Throwable> exceptionsThrown = new HashSet<>();
     final List<ByteBuffer> exceptionRows = new ArrayList<>();
     TableName tableName;
+
     try (MirroringConnection connection = databaseHelpers.createConnection(configuration)) {
-      tableName = connectionRule.createTable(connection, columnFamily1);
+      tableName = databaseHelpers.createTable(connection, columnFamily1);
       BufferedMutatorParams params = new BufferedMutatorParams(tableName);
       params.listener(
           new ExceptionListener() {
@@ -350,7 +368,7 @@ public class TestBufferedMutator {
     assertThat(exceptionRows).contains(ByteBuffer.wrap(Longs.toByteArray(3)));
     assertThat(exceptionRows).contains(ByteBuffer.wrap(Longs.toByteArray(7)));
 
-    if (this.mutateConcurrently) {
+    if (mutateConcurrently) {
       assertEquals(2, exceptionsThrown.size());
       for (Throwable e : exceptionsThrown) {
         Throwable cause = e.getCause();

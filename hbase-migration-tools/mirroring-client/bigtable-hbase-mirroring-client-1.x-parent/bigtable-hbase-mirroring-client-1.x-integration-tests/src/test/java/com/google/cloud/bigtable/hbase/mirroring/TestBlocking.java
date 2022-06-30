@@ -24,11 +24,12 @@ import static org.junit.Assert.fail;
 import com.google.cloud.bigtable.hbase.mirroring.utils.BlockingFlowControllerStrategy;
 import com.google.cloud.bigtable.hbase.mirroring.utils.BlockingMismatchDetector;
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConfigurationHelper;
-import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.DatabaseHelpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.Helpers;
 import com.google.cloud.bigtable.hbase.mirroring.utils.MismatchDetectorCounterRule;
 import com.google.cloud.bigtable.hbase.mirroring.utils.TestMismatchDetectorCounter;
+import com.google.cloud.bigtable.hbase.mirroring.utils.env.TestEnv;
+import com.google.cloud.bigtable.hbase.mirroring.utils.env.TestEnvRunner;
 import com.google.cloud.bigtable.mirroring.core.ExecutorServiceRule;
 import com.google.cloud.bigtable.mirroring.core.MirroringConnection;
 import com.google.common.util.concurrent.SettableFuture;
@@ -41,18 +42,14 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Table;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
+@RunWith(TestEnvRunner.class)
 public class TestBlocking {
-  @ClassRule public static ConnectionRule connectionRule = new ConnectionRule();
   @Rule public ExecutorServiceRule executorServiceRule = ExecutorServiceRule.cachedPoolExecutor();
-  private DatabaseHelpers databaseHelpers =
-      new DatabaseHelpers(connectionRule, executorServiceRule);
+  private final DatabaseHelpers databaseHelpers;
 
   @Rule
   public MismatchDetectorCounterRule mismatchDetectorCounterRule =
@@ -63,9 +60,13 @@ public class TestBlocking {
 
   private TableName tableName;
 
+  public TestBlocking(TestEnv testEnv) {
+    databaseHelpers = new DatabaseHelpers(testEnv.getMirroringConfig(), executorServiceRule);
+  }
+
   @Before
   public void setUp() throws IOException {
-    this.tableName = connectionRule.createTable(columnFamily1);
+    this.tableName = databaseHelpers.createTable(columnFamily1);
   }
 
   @Test(timeout = 10000)
@@ -79,7 +80,7 @@ public class TestBlocking {
 
     TableName tableName;
     final MirroringConnection connection = databaseHelpers.createConnection(config);
-    tableName = connectionRule.createTable(connection, columnFamily1);
+    tableName = databaseHelpers.createTable(connection, columnFamily1);
     try (Table t = connection.getTable(tableName)) {
       for (int i = 0; i < 10; i++) {
         Get get = new Get("1".getBytes());
@@ -195,7 +196,7 @@ public class TestBlocking {
 
     final byte[] row = "1".getBytes();
 
-    final TableName tableName = connectionRule.createTable(columnFamily1);
+    final TableName tableName = databaseHelpers.createTable(columnFamily1);
     final SettableFuture<MirroringConnection> closingThreadStartedFuture = SettableFuture.create();
     final SettableFuture<Long> closingThreadFinishedFuture = SettableFuture.create();
 
