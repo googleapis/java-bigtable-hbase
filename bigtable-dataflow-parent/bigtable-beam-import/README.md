@@ -152,7 +152,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
         --snapshotName=$SNAPSHOT_NAME \
         --stagingLocation=$SNAPSHOT_GCS_PATH/staging \
         --gcpTempLocation=$SNAPSHOT_GCS_PATH/temp \
-        --maxWorkerNodes=$(expr 3 \* $CLUSTER_NUM_NODES) \
+        --maxNumWorkers=$(expr 3 \* $CLUSTER_NUM_NODES) \
         --region=$REGION
     ```
 
@@ -180,7 +180,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
         --snapshotName=$SNAPSHOT_NAME \
         --stagingLocation=$SNAPSHOT_GCS_PATH/staging \
         --gcpTempLocation=$SNAPSHOT_GCS_PATH/temp \
-        --maxWorkerNodes=$(expr 3 \* $CLUSTER_NUM_NODES) \
+        --maxNumWorkers=$(expr 3 \* $CLUSTER_NUM_NODES) \
         --region=$REGION \
         --enableSnappy=true
     ```
