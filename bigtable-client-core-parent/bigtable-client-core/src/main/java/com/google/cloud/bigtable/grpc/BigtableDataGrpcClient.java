@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.grpc;
 
+import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor.GRPC_PARAMS_KEY;
 import static com.google.cloud.bigtable.grpc.io.GoogleCloudResourcePrefixInterceptor.GRPC_RESOURCE_PREFIX_KEY;
 
 import com.google.api.core.ApiClock;
@@ -56,6 +57,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
@@ -241,7 +243,9 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     if (shouldOverrideAppProfile(request.getAppProfileId())) {
       request = request.toBuilder().setAppProfileId(clientDefaultAppProfileId).build();
     }
-    return createUnaryListener(request, mutateRowRpc, request.getTableName()).getBlockingResult();
+    return createUnaryListener(
+            request, mutateRowRpc, request.getTableName(), request.getAppProfileId())
+        .getBlockingResult();
   }
 
   /** {@inheritDoc} */
@@ -250,7 +254,9 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     if (shouldOverrideAppProfile(request.getAppProfileId())) {
       request = request.toBuilder().setAppProfileId(clientDefaultAppProfileId).build();
     }
-    return createUnaryListener(request, mutateRowRpc, request.getTableName()).getAsyncResult();
+    return createUnaryListener(
+            request, mutateRowRpc, request.getTableName(), request.getAppProfileId())
+        .getAsyncResult();
   }
 
   /** {@inheritDoc} */
@@ -278,7 +284,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
     DeadlineGenerator deadlineGenerator =
         deadlineGeneratorFactory.getRequestDeadlineGenerator(
             request, mutateRowsRpc.isRetryable(request));
-    Metadata metadata = createMetadata(request.getTableName());
+    Metadata metadata = createMetadata(request.getTableName(), request.getAppProfileId());
     return new RetryingMutateRowsOperation(
         retryOptions,
         request,
@@ -296,7 +302,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       request = request.toBuilder().setAppProfileId(clientDefaultAppProfileId).build();
     }
 
-    return createUnaryListener(request, checkAndMutateRpc, request.getTableName())
+    return createUnaryListener(
+            request, checkAndMutateRpc, request.getTableName(), request.getAppProfileId())
         .getBlockingResult();
   }
 
@@ -308,7 +315,9 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       request = request.toBuilder().setAppProfileId(clientDefaultAppProfileId).build();
     }
 
-    return createUnaryListener(request, checkAndMutateRpc, request.getTableName()).getAsyncResult();
+    return createUnaryListener(
+            request, checkAndMutateRpc, request.getTableName(), request.getAppProfileId())
+        .getAsyncResult();
   }
 
   /** {@inheritDoc} */
@@ -318,7 +327,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       request = request.toBuilder().setAppProfileId(clientDefaultAppProfileId).build();
     }
 
-    return createUnaryListener(request, readWriteModifyRpc, request.getTableName())
+    return createUnaryListener(
+            request, readWriteModifyRpc, request.getTableName(), request.getAppProfileId())
         .getBlockingResult();
   }
 
@@ -330,7 +340,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       request = request.toBuilder().setAppProfileId(clientDefaultAppProfileId).build();
     }
 
-    return createUnaryListener(request, readWriteModifyRpc, request.getTableName())
+    return createUnaryListener(
+            request, readWriteModifyRpc, request.getTableName(), request.getAppProfileId())
         .getAsyncResult();
   }
 
@@ -341,7 +352,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       request = request.toBuilder().setAppProfileId(clientDefaultAppProfileId).build();
     }
 
-    return createStreamingListener(request, sampleRowKeysAsync, request.getTableName())
+    return createStreamingListener(
+            request, sampleRowKeysAsync, request.getTableName(), request.getAppProfileId())
         .getBlockingResult();
   }
 
@@ -353,7 +365,8 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
       request = request.toBuilder().setAppProfileId(clientDefaultAppProfileId).build();
     }
 
-    return createStreamingListener(request, sampleRowKeysAsync, request.getTableName())
+    return createStreamingListener(
+            request, sampleRowKeysAsync, request.getTableName(), request.getAppProfileId())
         .getAsyncResult();
   }
 
@@ -404,29 +417,37 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
   }
 
   private <ReqT, RespT> RetryingUnaryOperation<ReqT, RespT> createUnaryListener(
-      ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
+      ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String tableName, String appProfileId) {
     DeadlineGenerator deadlineGenerator =
         deadlineGeneratorFactory.getRequestDeadlineGenerator(request, rpc.isRetryable(request));
-    Metadata metadata = createMetadata(tableName);
+    Metadata metadata = createMetadata(tableName, appProfileId);
     return new RetryingUnaryOperation<>(
         retryOptions, request, rpc, deadlineGenerator, retryExecutorService, metadata, CLOCK);
   }
 
   private <ReqT, RespT> RetryingStreamOperation<ReqT, RespT> createStreamingListener(
-      ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String tableName) {
+      ReqT request, BigtableAsyncRpc<ReqT, RespT> rpc, String tableName, String appProfileId) {
     DeadlineGenerator deadlineGenerator =
         deadlineGeneratorFactory.getRequestDeadlineGenerator(request, rpc.isRetryable(request));
-    Metadata metadata = createMetadata(tableName);
+    Metadata metadata = createMetadata(tableName, appProfileId);
     return new RetryingStreamOperation<>(
         retryOptions, request, rpc, deadlineGenerator, retryExecutorService, metadata, CLOCK);
   }
 
   /** Creates a {@link Metadata} that contains pertinent headers. */
-  private Metadata createMetadata(String tableName) {
+  private Metadata createMetadata(String tableName, String appProfileId) {
     Metadata metadata = new Metadata();
-    if (tableName != null) {
-      metadata.put(GRPC_RESOURCE_PREFIX_KEY, tableName);
+    // legacy resource header
+    metadata.put(GRPC_RESOURCE_PREFIX_KEY, tableName);
+
+    // request params
+    StringBuilder requestParams = new StringBuilder();
+    requestParams.append("table_name=" + tableName);
+    if (!Strings.isNullOrEmpty(appProfileId)) {
+      requestParams.append("&app_profile_id=" + appProfileId);
     }
+    metadata.put(GRPC_PARAMS_KEY, requestParams.toString());
+
     return metadata;
   }
 
@@ -529,7 +550,7 @@ public class BigtableDataGrpcClient implements BigtableDataClient {
         deadlineGeneratorFactory.getRequestDeadlineGenerator(
             request, readRowsAsync.isRetryable(request)),
         retryExecutorService,
-        createMetadata(request.getTableName()),
+        createMetadata(request.getTableName(), request.getAppProfileId()),
         CLOCK);
   }
 

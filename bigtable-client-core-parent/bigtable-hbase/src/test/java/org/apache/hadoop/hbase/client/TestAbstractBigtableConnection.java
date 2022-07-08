@@ -203,30 +203,20 @@ public class TestAbstractBigtableConnection {
         .contains("gl-java/" + System.getProperty("java.specification.version"));
     Truth.assertThat(xGoogClient)
         .contains("grpc/" + GrpcUtil.getGrpcBuildVersion().getImplementationVersion());
-    // Do we need this?
-    // Truth.assertThat(xGoogClient).contains("cbt/" + BigtableHBaseVersion.getVersion());
 
-    // Request must have exactly one of these
-    String requestParams =
-        metadata.get(Key.of("x-goog-request-params", Metadata.ASCII_STRING_MARSHALLER));
-    String resourcePath =
-        metadata.get(Key.of("google-cloud-resource-prefix", Metadata.ASCII_STRING_MARSHALLER));
-
-    if (requestParams != null) {
-      Truth.assertThat(requestParams)
-          .contains(
-              "table_name="
-                  + String.format(
-                      "projects/%s/instances/%s/tables/%s",
-                      PROJECT_ID, INSTANCE_ID, TABLE_NAME.getNameAsString()));
-      Truth.assertThat(resourcePath).isNull();
-    } else {
-      Truth.assertThat(resourcePath)
-          .isEqualTo(
-              String.format(
-                  "projects/%s/instances/%s/tables/%s",
-                  PROJECT_ID, INSTANCE_ID, TABLE_NAME.getNameAsString()));
-    }
+    Truth.assertThat(
+            metadata.get(Key.of("x-goog-request-params", Metadata.ASCII_STRING_MARSHALLER)))
+        .contains(
+            "table_name="
+                + String.format(
+                    "projects/%s/instances/%s/tables/%s",
+                    PROJECT_ID, INSTANCE_ID, TABLE_NAME.getNameAsString()));
+    Truth.assertThat(
+            metadata.get(Key.of("google-cloud-resource-prefix", Metadata.ASCII_STRING_MARSHALLER)))
+        .isEqualTo(
+            String.format(
+                "projects/%s/instances/%s/tables/%s",
+                PROJECT_ID, INSTANCE_ID, TABLE_NAME.getNameAsString()));
   }
 
   private class TestBigtableConnectionImpl extends AbstractBigtableConnection {

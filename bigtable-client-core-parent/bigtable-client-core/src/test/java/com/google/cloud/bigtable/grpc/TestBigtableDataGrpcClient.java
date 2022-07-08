@@ -87,6 +87,8 @@ public class TestBigtableDataGrpcClient {
   private static final String TABLE_NAME =
       new BigtableInstanceName("projectId", "instanceId").toTableNameStr("tableId");
 
+  private static final String APP_PROFILE_ID = "my-app-profile-id";
+
   @Mock Channel mockChannel;
 
   @Mock ClientCall mockClientCall;
@@ -123,7 +125,11 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testRetryableMutateRow() {
-    MutateRowRequest request = MutateRowRequest.newBuilder().setTableName(TABLE_NAME).build();
+    MutateRowRequest request =
+        MutateRowRequest.newBuilder()
+            .setTableName(TABLE_NAME)
+            .setAppProfileId(APP_PROFILE_ID)
+            .build();
     setResponse(MutateRowResponse.getDefaultInstance());
     defaultClient.mutateRow(request);
     verifyRequestCalled(request);
@@ -131,7 +137,11 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testRetryableMutateRowAsync() {
-    MutateRowRequest request = MutateRowRequest.newBuilder().setTableName(TABLE_NAME).build();
+    MutateRowRequest request =
+        MutateRowRequest.newBuilder()
+            .setTableName(TABLE_NAME)
+            .setAppProfileId(APP_PROFILE_ID)
+            .build();
     defaultClient.mutateRowAsync(request);
     verifyRequestCalled(request);
   }
@@ -139,7 +149,10 @@ public class TestBigtableDataGrpcClient {
   @Test
   public void testRetryableCheckAndMutateRow() {
     CheckAndMutateRowRequest request =
-        CheckAndMutateRowRequest.newBuilder().setTableName(TABLE_NAME).build();
+        CheckAndMutateRowRequest.newBuilder()
+            .setTableName(TABLE_NAME)
+            .setAppProfileId(APP_PROFILE_ID)
+            .build();
     setResponse(CheckAndMutateRowResponse.getDefaultInstance());
     defaultClient.checkAndMutateRow(request);
     verifyRequestCalled(request);
@@ -148,7 +161,10 @@ public class TestBigtableDataGrpcClient {
   @Test
   public void testRetryableCheckAndMutateRowAsync() {
     CheckAndMutateRowRequest request =
-        CheckAndMutateRowRequest.newBuilder().setTableName(TABLE_NAME).build();
+        CheckAndMutateRowRequest.newBuilder()
+            .setTableName(TABLE_NAME)
+            .setAppProfileId(APP_PROFILE_ID)
+            .build();
     defaultClient.checkAndMutateRowAsync(request);
     verifyRequestCalled(request);
   }
@@ -202,7 +218,8 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testSingleRowRead() {
-    ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
+    ReadRowsRequest.Builder requestBuilder =
+        ReadRowsRequest.newBuilder().setTableName(TABLE_NAME).setAppProfileId(APP_PROFILE_ID);
     requestBuilder.getRowsBuilder().addRowKeys(ByteString.EMPTY);
     defaultClient.readRows(requestBuilder.build());
     verifyRequestCalled(requestBuilder.build());
@@ -210,7 +227,8 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testMultiRowRead() {
-    ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
+    ReadRowsRequest.Builder requestBuilder =
+        ReadRowsRequest.newBuilder().setTableName(TABLE_NAME).setAppProfileId(APP_PROFILE_ID);
     requestBuilder.getRowsBuilder().addRowRanges(RowRange.getDefaultInstance());
     defaultClient.readRows(requestBuilder.build());
     verifyRequestCalled(requestBuilder.build());
@@ -218,7 +236,8 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testListReadRows() {
-    ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
+    ReadRowsRequest.Builder requestBuilder =
+        ReadRowsRequest.newBuilder().setTableName(TABLE_NAME).setAppProfileId(APP_PROFILE_ID);
     requestBuilder.getRowsBuilder().addRowKeys(ByteString.EMPTY);
     setResponse(ReadRowsResponse.getDefaultInstance());
     defaultClient.readFlatRowsList(requestBuilder.build());
@@ -227,7 +246,8 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testScanner() throws IOException {
-    ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
+    ReadRowsRequest.Builder requestBuilder =
+        ReadRowsRequest.newBuilder().setTableName(TABLE_NAME).setAppProfileId(APP_PROFILE_ID);
 
     ResultScanner<FlatRow> scanner = defaultClient.readFlatRows(requestBuilder.build());
     ArgumentCaptor<ClientCall.Listener> listenerCaptor =
@@ -248,7 +268,8 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testScannerIdle() throws IOException {
-    ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
+    ReadRowsRequest.Builder requestBuilder =
+        ReadRowsRequest.newBuilder().setTableName(TABLE_NAME).setAppProfileId(APP_PROFILE_ID);
 
     ResultScanner<FlatRow> scanner = defaultClient.readFlatRows(requestBuilder.build());
     ArgumentCaptor<ClientCall.Listener> listenerCaptor =
@@ -279,7 +300,8 @@ public class TestBigtableDataGrpcClient {
 
   @Test
   public void testReadFlatRowsAsyncWaitTimeoutRetry() throws Exception {
-    ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
+    ReadRowsRequest.Builder requestBuilder =
+        ReadRowsRequest.newBuilder().setTableName(TABLE_NAME).setAppProfileId(APP_PROFILE_ID);
 
     // Start the call
     ListenableFuture<List<FlatRow>> resultFuture =
@@ -334,7 +356,8 @@ public class TestBigtableDataGrpcClient {
               }
             });
 
-    ReadRowsRequest.Builder requestBuilder = ReadRowsRequest.newBuilder().setTableName(TABLE_NAME);
+    ReadRowsRequest.Builder requestBuilder =
+        ReadRowsRequest.newBuilder().setTableName(TABLE_NAME).setAppProfileId(APP_PROFILE_ID);
 
     // Start the call
     ListenableFuture<List<FlatRow>> resultFuture =
@@ -396,6 +419,10 @@ public class TestBigtableDataGrpcClient {
   private void checkHeader(Metadata metadata) {
     Assert.assertEquals(
         TABLE_NAME, metadata.get(GoogleCloudResourcePrefixInterceptor.GRPC_RESOURCE_PREFIX_KEY));
+
+    Assert.assertEquals(
+        String.format("table_name=%s&app_profile_id=%s", TABLE_NAME, APP_PROFILE_ID),
+        metadata.get(GoogleCloudResourcePrefixInterceptor.GRPC_PARAMS_KEY));
   }
 
   private void verifyRequestCalled(Object request) {
