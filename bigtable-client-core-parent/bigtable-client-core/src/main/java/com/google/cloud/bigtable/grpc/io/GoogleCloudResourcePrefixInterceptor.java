@@ -27,10 +27,11 @@ import io.grpc.Metadata;
 @InternalApi("For internal usage only")
 public class GoogleCloudResourcePrefixInterceptor extends HeaderInterceptor {
 
-  /** Constant <code>GRPC_RESOURCE_PREFIX_KEY</code> */
+  // legacy resource prefix
   public static final Metadata.Key<String> GRPC_RESOURCE_PREFIX_KEY =
       Metadata.Key.of("google-cloud-resource-prefix", Metadata.ASCII_STRING_MARSHALLER);
 
+  // new request params - see https://github.com/googleapis/gax-java/pull/375 for the inspiration
   public static final Metadata.Key<String> GRPC_PARAMS_KEY =
       Metadata.Key.of("x-goog-request-params", Metadata.ASCII_STRING_MARSHALLER);
 
