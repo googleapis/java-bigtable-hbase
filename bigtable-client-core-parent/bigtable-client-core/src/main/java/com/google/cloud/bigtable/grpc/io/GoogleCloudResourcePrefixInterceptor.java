@@ -31,6 +31,9 @@ public class GoogleCloudResourcePrefixInterceptor extends HeaderInterceptor {
   public static final Metadata.Key<String> GRPC_RESOURCE_PREFIX_KEY =
       Metadata.Key.of("google-cloud-resource-prefix", Metadata.ASCII_STRING_MARSHALLER);
 
+  public static final Metadata.Key<String> GRPC_PARAMS_KEY =
+      Metadata.Key.of("x-goog-request-params", Metadata.ASCII_STRING_MARSHALLER);
+
   /**
    * Constructor for GoogleCloudResourcePrefixInterceptor.
    *
