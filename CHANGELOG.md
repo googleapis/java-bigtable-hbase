@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.27.0](https://github.com/googleapis/java-bigtable-hbase/compare/v1.26.3...v1.27.0) (2022-07-08)
+
+
+### Features
+
+* populate x-goog-params with table name and app profile id ([#3677](https://github.com/googleapis/java-bigtable-hbase/issues/3677)) ([5c2a11d](https://github.com/googleapis/java-bigtable-hbase/commit/5c2a11d46e37512df260b9484cfe2524b4afce62))
+
 ### [1.26.3](https://github.com/googleapis/java-bigtable-hbase/compare/v1.26.2...v1.26.3) (2022-01-18)
 
 
