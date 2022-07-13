@@ -331,11 +331,15 @@ limitations under the License.
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
-
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-client-core-config</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase</artifactId>
-      <version>1.27.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>${project.version}</version>
       <scope>test</scope>
       <exclusions>
         <!-- included in hbase-shaded-testing-util -->
@@ -363,7 +367,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-integration-tests-common</artifactId>
-      <version>1.27.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>${project.version}</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <type>test-jar</type>
       <scope>test</scope>
       <exclusions>
