@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.5.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.4.0...v2.5.0) (2022-07-13)
+
+
+### Features
+
+* add ocagent exporter to shaded jars to allow customers more fle… ([#3683](https://github.com/googleapis/java-bigtable-hbase/issues/3683)) ([25b2af8](https://github.com/googleapis/java-bigtable-hbase/commit/25b2af8df85063447cf3ace9b29bda97d96fc823))
+* add toString for RowKeyWrapper to ease debugging ([#3648](https://github.com/googleapis/java-bigtable-hbase/issues/3648)) ([9007abc](https://github.com/googleapis/java-bigtable-hbase/commit/9007abc5056466d77e441b920ae199d6d8d8156a))
+
+
+### Dependencies
+
+* update bigtable.version to v2.9.0 ([#3666](https://github.com/googleapis/java-bigtable-hbase/issues/3666)) ([b67c790](https://github.com/googleapis/java-bigtable-hbase/commit/b67c7905961c72e759b314fcb8231554bb6da8e2))
+* update dependency net.bytebuddy:byte-buddy to v1.12.12 ([#3658](https://github.com/googleapis/java-bigtable-hbase/issues/3658)) ([07772b1](https://github.com/googleapis/java-bigtable-hbase/commit/07772b112e1a4e67d9e25662ebe5a1b2d1ee326b))
+
 ## [2.4.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.3.0...v2.4.0) (2022-06-09)
 
 
