@@ -15,12 +15,13 @@
  */
 package com.google.cloud.bigtable.util;
 
+import static com.google.cloud.bigtable.config.CredentialOptions.CredentialType;
+
 import com.google.api.core.InternalApi;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.CredentialOptions;
-import com.google.cloud.bigtable.config.CredentialOptions.CredentialType;
 import com.google.cloud.bigtable.config.Logger;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;

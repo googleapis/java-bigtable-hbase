@@ -19,7 +19,6 @@ import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
-import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
@@ -240,8 +239,8 @@ public class BigtableOptions implements Serializable, Cloneable {
     }
 
     /**
-     * This enables an experimental {@link BigtableSession} feature that caches datapools for cases
-     * where there are many HBase Connections / BigtableSessions opened. This happens frequently in
+     * This enables an experimental BigtableSession feature that caches datapools for cases where
+     * there are many HBase Connections / BigtableSessions opened. This happens frequently in
      * Dataflow
      *
      * @param useCachedDataPool a flag to decide connection pool usages.
@@ -607,7 +606,7 @@ public class BigtableOptions implements Serializable, Cloneable {
    * Experimental feature to allow situations with multiple connections to optimize their startup
    * time.
    *
-   * @return true if this feature should be turned on in {@link BigtableSession}.
+   * @return true if this feature should be turned on in BigtableSession.
    */
   public boolean useCachedChannel() {
     return useCachedDataPool;

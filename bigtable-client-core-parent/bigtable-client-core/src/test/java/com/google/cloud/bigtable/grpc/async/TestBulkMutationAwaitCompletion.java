@@ -104,7 +104,7 @@ public class TestBulkMutationAwaitCompletion {
         Collections.synchronizedList(new ArrayList<ListenableFuture<MutateRowResponse>>());
 
     // Keep track of methods of completing mutateRowsAsync calls.  This method will add a Runnable
-    // that can set the correct value of the MutateRowsResponse future.
+    // that can set the correct value of the MutateRowsResponse future.O
     when(mockClient.mutateRowsAsync(any(MutateRowsRequest.class)))
         .thenAnswer(
             new Answer<ListenableFuture<List<MutateRowsResponse>>>() {

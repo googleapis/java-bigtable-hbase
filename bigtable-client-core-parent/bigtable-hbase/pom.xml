@@ -65,13 +65,13 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-client-core</artifactId>
-      <version>1.27.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>${project.version}</version>
     </dependency>
 
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-metrics-api</artifactId>
-      <version>1.27.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>${project.version}</version>
     </dependency>
 
     <dependency>

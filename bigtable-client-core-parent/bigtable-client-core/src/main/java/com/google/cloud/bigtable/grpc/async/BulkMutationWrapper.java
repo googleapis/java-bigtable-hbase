@@ -20,7 +20,6 @@ import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.MutateRowResponse;
 import com.google.cloud.bigtable.core.IBulkMutation;
 import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
 import com.google.cloud.bigtable.util.ApiFutureUtil;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;

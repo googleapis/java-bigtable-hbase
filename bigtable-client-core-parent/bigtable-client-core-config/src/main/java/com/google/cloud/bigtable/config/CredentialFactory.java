@@ -15,6 +15,10 @@
  */
 package com.google.cloud.bigtable.config;
 
+import static com.google.cloud.bigtable.config.CredentialOptions.JsonCredentialsOptions;
+import static com.google.cloud.bigtable.config.CredentialOptions.P12CredentialOptions;
+import static com.google.cloud.bigtable.config.CredentialOptions.UserSuppliedCredentialOptions;
+
 import com.google.api.client.util.SecurityUtils;
 import com.google.api.core.InternalApi;
 import com.google.auth.Credentials;
@@ -23,9 +27,6 @@ import com.google.auth.http.HttpTransportFactory;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.auth.oauth2.ServiceAccountJwtAccessCredentials;
-import com.google.cloud.bigtable.config.CredentialOptions.JsonCredentialsOptions;
-import com.google.cloud.bigtable.config.CredentialOptions.P12CredentialOptions;
-import com.google.cloud.bigtable.config.CredentialOptions.UserSuppliedCredentialOptions;
 import com.google.cloud.http.HttpTransportOptions.DefaultHttpTransportFactory;
 import com.google.common.collect.ImmutableList;
 import java.io.FileInputStream;

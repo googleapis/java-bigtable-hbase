@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.config;
 
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
-import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
@@ -53,8 +52,8 @@ public class BulkOptions implements Serializable, Cloneable {
   public static final int BIGTABLE_BULK_MAX_ROW_KEY_COUNT_DEFAULT = 100;
 
   /**
-   * Whether or not to enable a mechanism that reduces the likelihood that a {@link BulkMutation}
-   * intensive application will overload a cluster.
+   * Whether or not to enable a mechanism that reduces the likelihood that a BulkMutation intensive
+   * application will overload a cluster.
    *
    * <p>For internal use only - public for technical reasons.
    */
@@ -169,8 +168,8 @@ public class BulkOptions implements Serializable, Cloneable {
     }
 
     /**
-     * Enable an experimental feature that will throttle requests from {@link BulkMutation} if
-     * request latency surpasses a latency threshold. The default is {@link
+     * Enable an experimental feature that will throttle requests from BulkMutation if request
+     * latency surpasses a latency threshold. The default is {@link
      * BulkOptions#BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT}.
      *
      * @deprecated This will be removed in the future
@@ -363,7 +362,7 @@ public class BulkOptions implements Serializable, Cloneable {
   /**
    * toBuilder.
    *
-   * @return a {@link com.google.cloud.bigtable.config.BulkOptions.Builder} object.
+   * @return a {@link Builder} object.
    */
   public Builder toBuilder() {
     return new Builder(this);

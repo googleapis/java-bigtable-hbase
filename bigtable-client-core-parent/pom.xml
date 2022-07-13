@@ -36,5 +36,6 @@ limitations under the License.
     <module>bigtable-hbase</module>
     <module>bigtable-hbase-integration-tests-common</module>
     <module>bigtable-metrics-api</module>
+    <module>bigtable-client-core-config</module>
   </modules>
 </project>

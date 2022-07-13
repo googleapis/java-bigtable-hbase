@@ -20,7 +20,6 @@ import com.google.auth.Credentials;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.bigtable.config.CredentialFactory;
 import com.google.cloud.bigtable.config.CredentialOptions;
-import com.google.cloud.bigtable.config.CredentialOptions.CredentialType;
 import io.grpc.ClientInterceptor;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -75,7 +74,8 @@ public class CredentialInterceptorCache {
     // Default credentials is the most likely CredentialType. It's also the only CredentialType
     // that can be safely cached.
     boolean isDefaultCredentials =
-        credentialOptions.getCredentialType() == CredentialType.DefaultCredentials;
+        credentialOptions.getCredentialType()
+            == CredentialOptions.CredentialType.DefaultCredentials;
 
     if (isDefaultCredentials && defaultCredentialInterceptor != null) {
       return defaultCredentialInterceptor;
