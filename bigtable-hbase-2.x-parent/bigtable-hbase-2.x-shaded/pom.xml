@@ -93,6 +93,31 @@ limitations under the License.
       <groupId>io.opencensus</groupId>
       <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.opencensus</groupId>
+      <artifactId>opencensus-exporter-metrics-ocagent</artifactId>
+      <version>${opencensus.version}</version>
+      <exclusions>
+        <!-- we already use netty-shaded -->
+        <exclusion>
+          <groupId>io.grpc</groupId>
+          <artifactId>grpc-netty</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>io.opencensus</groupId>
+      <artifactId>opencensus-exporter-trace-ocagent</artifactId>
+      <version>${opencensus.version}</version>
+      <exclusions>
+        <!-- we already use netty-shaded -->
+        <exclusion>
+          <groupId>io.grpc</groupId>
+          <artifactId>grpc-netty</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
     <!-- grpc-census needed alongside opencensus-exporter-stats-stackdriver for GRPC stats exports to work -->
     <dependency>
       <groupId>io.grpc</groupId>

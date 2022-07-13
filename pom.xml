@@ -83,6 +83,7 @@ limitations under the License.
     <guava.version>31.1-jre</guava.version>
     <gcs-guava.version>29.0-jre</gcs-guava.version>
     <beam-slf4j.version>1.7.30</beam-slf4j.version>
+    <opencensus.version>0.28.0</opencensus.version>
 
     <!-- Benchmarks related dependencies -->
     <jmh.version>1.35</jmh.version>
@@ -318,7 +319,7 @@ limitations under the License.
                     <!-- gax-grpc transitvely brings in opencensus-proto, which the latest version is 0.2.0-->
                     <!-- Only allow 0.2.0 for opencensus-proto and then the latest version (currently 0.28.0) for all other modules-->
                     <!-- this will need to be updated whenever the opencensus version gets updated -->
-                    <dependency>io.opencensus:*:[0.28.0]</dependency>
+                    <dependency>io.opencensus:*:[${opencensus.version}]</dependency>
                     <dependency>io.opencensus:opencensus-proto:[0.2.0]</dependency>
                   </includes>
                 </bannedDependencies>
