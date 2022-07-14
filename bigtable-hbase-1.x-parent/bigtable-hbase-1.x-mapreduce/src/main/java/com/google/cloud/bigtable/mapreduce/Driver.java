@@ -16,7 +16,9 @@
 package com.google.cloud.bigtable.mapreduce;
 
 import com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportHBaseSnapshotJob;
+import com.google.cloud.bigtable.mapreduce.validation.BigtableSyncTableJob;
 import org.apache.hadoop.classification.InterfaceStability.Evolving;
+import org.apache.hadoop.hbase.mapreduce.HashTable;
 import org.apache.hadoop.util.ProgramDriver;
 
 /** Driver for bigtable mapreduce jobs. Select which to run by passing name of job to this main. */
@@ -44,6 +46,14 @@ public class Driver {
           "import-snapshot",
           ImportHBaseSnapshotJob.class,
           "A map/reduce program that imports an hbase snapshot to a table.");
+      programDriver.addClass(
+          "hash-table",
+          HashTable.class,
+          "A map/reduce program that computes hashes on source and outputs to filesystem (or cloud storage).");
+      programDriver.addClass(
+          "sync-table",
+          BigtableSyncTableJob.class,
+          "A map/reduce program that computes hashes on target and compares with hashes from source.");
       programDriver.driver(args);
       exitCode = programDriver.run(args);
     } catch (Throwable e) {

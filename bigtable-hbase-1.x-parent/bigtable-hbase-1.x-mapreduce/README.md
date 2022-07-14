@@ -2,51 +2,90 @@
 
 This module provides a work alike to some of the jobs implemented in hbase-server.
 Specifically this currently has the ability to export and import SequenceFiles
-from/to Cloud Bigtable and import HBase snapshots using a Map Reduce cluster (ie. dataproc).
+from/to Cloud Bigtable, import HBase snapshots using a Map Reduce cluster (ie. 
+dataproc), and HashTable/SyncTable for validation.  
+
+## Setup
+
+To use the tools in this folder, you can download them from the maven repository, or
+you can build them using Maven.
+
+[//]: # ({x-version-update-start:bigtable-client-parent:released})
+### Download the jars
+Download [bigtable-hbase-1.x-mapreduce jars](https://search.maven.org/artifact/com.google.cloud.bigtable/bigtable-hbase-1.x-mapreduce), which is an aggregation of all required jars.
+
+### Build the jars yourself
+
+Go to the top level directory and build the repo
+then return to this sub directory.
+
+```
+cd ../../
+mvn clean install -DskipTests=true
+cd bigtable-hbase-1.x-parent/bigtable-hbase-1.x-mapreduce
+```
 
 ## Expected Usage 
 
-[//]: # ({x-version-update-start:bigtable-client-parent:released})
 ### On-prem Hadoop
 
-1. Download or build bigtable-hbase-1.x-mapreduce-2.0.0-alpha1-hadoop.jar
+1. Download or build bigtable-hbase-1.x-mapreduce-2.5.0-shaded-byo-hadoop.jar
 2. Download service account credentials json from Google Cloud Console.
 3. Submit the job using your edge node's hadoop installation. 
    ```bash
-   # Export to SequenceFiles
-   GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json \
-   hadoop jar bigtable-hbase-1.x-mapreduce-2.0.0-alpha1-hadoop.jar \
-       export-table \
-       -Dgoogle.bigtable.project.id=<project-id> \
-       -Dgoogle.bigtable.instance.id=<instance-id> \
-       <table-id> \
-       <outputdir>
+    # Export to SequenceFiles
+    GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json \
+    hadoop jar bigtable-hbase-1.x-mapreduce-2.5.0-shaded-byo-hadoop.jar \
+        export-table \
+        -Dgoogle.bigtable.project.id=<project-id> \
+        -Dgoogle.bigtable.instance.id=<instance-id> \
+        <table-id> \
+        <outputdir>
    
-   # Import from SequenceFiles
-      GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json \
-      hadoop jar bigtable-hbase-1.x-mapreduce-2.0.0-alpha1-hadoop.jar \
-          import-table \
-          -Dgoogle.bigtable.project.id=<project-id> \
-          -Dgoogle.bigtable.instance.id=<instance-id> \
-          <table-id> \
-          <inputdir>
+    # Import from SequenceFiles
+    GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json \
+    hadoop jar bigtable-hbase-1.x-mapreduce-2.5.0-shaded-byo-hadoop.jar \
+        import-table \
+        -Dgoogle.bigtable.project.id=<project-id> \
+        -Dgoogle.bigtable.instance.id=<instance-id> \
+        <table-id> \
+        <inputdir>
    
-   # Import from HBase snapshot
-      GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json \
-      hadoop jar bigtable-hbase-1.x-mapreduce-2.0.0-alpha1-hadoop.jar \
-          import-snapshot \
-          -Dgoogle.bigtable.project.id=<project-id> \
-          -Dgoogle.bigtable.instance.id=<instance-id> \
-          <snapshot-name> \
-          <snapshot-dir> \
-          <table-id> \
-          <tmp-dir>
+    # Import from HBase snapshot
+    GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json \
+    hadoop jar bigtable-hbase-1.x-mapreduce-2.5.0-shaded-byo-hadoop.jar \
+        import-snapshot \
+        -Dgoogle.bigtable.project.id=<project-id> \
+        -Dgoogle.bigtable.instance.id=<instance-id> \
+        <snapshot-name> \
+        <snapshot-dir> \
+        <table-id> \
+        <tmp-dir>
+   
+    # HashTable on HBase
+    GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json \
+    hadoop jar bigtable-hbase-1.x-mapreduce-2.5.0-shaded-byo-hadoop.jar \
+        hash-table \
+        -Dhbase.zookeeper.quorum=<source-zk-quorum> \
+        <source-table-id> \
+        <hash-outputdir-hbase>
+   
+    # SyncTable on Bigtable
+    GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json \
+    hadoop jar bigtable-hbase-1.x-mapreduce-2.5.0-shaded-byo-hadoop.jar \
+        sync-table \
+        --dryrun=true \
+        --sourcezkcluster=<source-zk-quorum> \
+        --targetbigtableproject=<project-id> \
+        --targetbigtableinstance=<instance-id> \
+        <hash-outputdir-hbase> \
+        <source-table-id> \
+        <target-table-id>
    ```
-
 
 ### Dataproc
 
-1. Download or build bigtable-hbase-1.x-mapreduce-2.0.0-alpha1-hadoop.jar.
+1. Download or build bigtable-hbase-1.x-mapreduce-2.5.0-shaded-byo-hadoop.jar.
 2. Install the gcloud sdk.
 3. Configure [Bigtable IAM roles](https://cloud.google.com/bigtable/docs/access-control#roles) 
     for the [Dataproc Service Account](https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/service-accounts#what_are_service_accounts) 
@@ -55,9 +94,10 @@ from/to Cloud Bigtable and import HBase snapshots using a Map Reduce cluster (ie
    ```bash
     # Export to SequenceFiles
     gcloud dataproc jobs submit hadoop \
+        --project <project-id> \
         --cluster <dataproc-cluster> \
         --region <dataproc-region> \
-        --jar bigtable-hbase-1.x-mapreduce-2.0.0-alpha1-hadoop.jar \
+        --jar bigtable-hbase-1.x-mapreduce-2.5.0-shaded-byo-hadoop.jar \
         -- \
         export-table \
         -Dgoogle.bigtable.project.id=<project-id> \
@@ -67,9 +107,10 @@ from/to Cloud Bigtable and import HBase snapshots using a Map Reduce cluster (ie
    
     # Import from SequenceFiles
     gcloud dataproc jobs submit hadoop \
+        --project <project-id> \
         --cluster <dataproc-cluster> \
         --region <dataproc-region> \
-        --jar bigtable-hbase-1.x-mapreduce-2.0.0-alpha1-hadoop.jar \
+        --jar bigtable-hbase-1.x-mapreduce-2.5.0-shaded-byo-hadoop.jar \
         -- \
         import-table \
         -Dgoogle.bigtable.project.id=<project-id> \
@@ -79,9 +120,10 @@ from/to Cloud Bigtable and import HBase snapshots using a Map Reduce cluster (ie
    
     # Import from HBase snapshot
     gcloud dataproc jobs submit hadoop \
+        --project <project-id> \
         --cluster <dataproc-cluster> \
         --region <dataproc-region> \
-        --jar bigtable-hbase-1.x-mapreduce-2.0.0-alpha1-hadoop.jar \
+        --jar bigtable-hbase-1.x-mapreduce-2.5.0-shaded-byo-hadoop.jar \
         -- \
         import-snapshot \
         -Dgoogle.bigtable.project.id=<project-id> \
@@ -89,7 +131,35 @@ from/to Cloud Bigtable and import HBase snapshots using a Map Reduce cluster (ie
         <snapshot-name> \
         <snapshot-dir> \
         <table-id> \
-        <tmp-dir>   
+        <tmp-dir>
+   
+    # HashTable on HBase
+    gcloud dataproc jobs submit hadoop \
+        --project <project-id> \
+        --cluster <dataproc-cluster> \
+        --region <dataproc-region> \
+        --jar bigtable-hbase-1.x-mapreduce-2.5.0-shaded-byo-hadoop.jar \
+        -- \
+        hash-table \
+        -Dhbase.zookeeper.quorum=<source-zk-quorum> \
+        <table-id> \
+        <hash-outputdir-hbase>
+   
+    # SyncTable on Bigtable
+    gcloud dataproc jobs submit hadoop \
+        --project <project-id> \
+        --cluster <dataproc-cluster> \
+        --region <dataproc-region> \
+        --jar bigtable-hbase-1.x-mapreduce-2.5.0-shaded-byo-hadoop.jar \
+        -- \
+        sync-table \
+        --dryrun=true \
+        --sourcezkcluster=<source-zk-quorum> \
+        --targetbigtableproject=<project-id> \
+        --targetbigtableinstance=<instance-id> \
+        <hash-outputdir-hbase> \
+        <source-table-id> \
+        <target-table-id>
    ```
 
 ## Examples
@@ -109,7 +179,7 @@ for the on-prem application to write to GCS).
     ```bash
     hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot \
      -snapshot <snapshotName> \
-     -copy-to gs://<bucket/<snapshot-dir> \
+     -copy-to gs://<bucket>/<snapshot-dir> \
      -mappers <num-mappers>
     ```
 
@@ -133,7 +203,7 @@ environment variables for running the subsequent steps.
     export CBT_COLUMN_FAMILY=<CF1[,CF]>
     
     # dataproc job jar
-    export JOB_JAR=bigtable-hbase-1.x-mapreduce-2.0.0-alpha1-hadoop.jar
+    export JOB_JAR=bigtable-hbase-1.x-mapreduce-2.5.0-shaded-byo-hadoop.jar
     
     # dataproc job args
     export JOB_ARG_SNAPSHOT_NAME=<SNAPSHOT_NAME>
@@ -172,13 +242,14 @@ the command:
 
 #### Run the import snapshot job
 
-1. Run the following command to start the import snapshot job on the Dataproc cluster
+1. Run the following command to start the `import-snapshot` job on the Dataproc cluster
 that was created. Slowly scale the dataproc cluster to increase/decrease throughput 
 and similarly scale up/down the bigtable cluster to meet the throughput demand. See 
 Bigtable [scaling limitations](https://cloud.google.com/bigtable/docs/scaling#limitations) if observing slower performance than expected.
 
     ```bash
     gcloud dataproc jobs submit hadoop \
+        --project ${PROJECT_ID} \
         --cluster ${DATAPROC_CLUSTER} \
         --region ${REGION} \
         --project ${PROJECT_ID} \
@@ -226,12 +297,63 @@ setting the properties for the job. For example:
     -Dhbase.snapshot.thread.pool.max=10
     ```
 
+### Example jobs to validate the data migrated from source to target
+
+1. Set the following additional environment variables for running the validation steps.
+    ```bash
+    # hash-table validation job
+    export HBASE_TABLENAME=<HBASE_TABLENAME>
+    # hbase zookeeper quorum (ie. zk1.example.com:2181)
+    export HBASE_ZK_QUORUM=<ZK_QUORUM>
+    export HASH_OUTPUTDIR=<HASH_OUTPUTDIR>
+
+    # sync-table validation job
+    export HBASE_ZK_QUORUM_FULL=${HBASE_ZK_QUORUM}:/hbase
+    ```
+
+2. Run `hash-table` and compute hashes for ranges on the source table and output 
+   results to a GCS bucket (See [HashTable/SyncTable](https://hbase.apache.org/book.html#_step_1_hashtable) doc for more details).
+    ```bash
+    hadoop jar ${JOB_JAR} \
+        hash-table \
+        -Dhbase.zookeeper.quorum=${HBASE_ZK_QUORUM} \
+        ${HBASE_TABLENAME} \
+        ${HASH_OUTPUTDIR}
+    ```
+
+3. Run `sync-table` to generate hashes on the target table and compare these hashes with
+   the output from `hash-table`. For diverging hashes, a cell-level comparison is performed    
+   between the source and target and summarized in the job counters. 
+    ```bash
+   
+    gcloud dataproc jobs submit hadoop \
+        --project ${PROJECT_ID} \
+        --cluster ${DATAPROC_CLUSTER} \
+        --region ${REGION} \
+        --project ${PROJECT_ID} \
+        --jar ${JOB_JAR} \
+        -- \
+        sync-table \
+        --dryrun=true \
+        --sourcezkcluster=${HBASE_ZK_QUORUM_FULL} \
+        --targetbigtableproject=${PROJECT_ID} \
+        --targetbigtableinstance=${CBT_INSTANCE} \
+        ${HASH_OUTPUTDIR} \
+        ${HBASE_TABLENAME} \
+        ${CBT_TABLENAME}
+    ```
+Note: Connection with the source is required for providing cell-level comparison. Users may 
+enable debug mode `--properties mapreduce.map.log.level=DEBUG` on the job to provide additional 
+details on the diverging hash ranges and cell mismatches if divergence is detected. Job 
+configurations may also be updated to run `hash-table` against bigtable and `sync-table` run 
+against hbase.
+
 ## Backwards compatibility
 
 To maintain backwards compatibility of this artifact, we still provide
-`bigtable-hbase-1.x-mapreduce-2.0.0-alpha1.jar` artifact that includes
+`bigtable-hbase-1.x-mapreduce-2.5.0-shaded.jar` artifact that includes
 hadoop jars. However we encourage our users to migrate to 
-`bigtable-hbase-1.x-mapreduce-2.0.0-alpha1-hadoop.jar` to avoid dependency
+`bigtable-hbase-1.x-mapreduce-2.5.0-shaded-byo-hadoop.jar` to avoid dependency
 conflicts with the existing classpath on Hadoop workers.
 
 [//]: # ({x-version-update-end})
