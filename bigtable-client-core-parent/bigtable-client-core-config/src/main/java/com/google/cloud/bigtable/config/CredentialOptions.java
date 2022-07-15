@@ -54,9 +54,6 @@ public class CredentialOptions implements Serializable {
   @InternalApi("For internal usage only")
   public static final String SERVICE_ACCOUNT_JSON_ENV_VARIABLE = "GOOGLE_APPLICATION_CREDENTIALS";
 
-  /** Constant <code>LOG</code> */
-  protected static final Logger LOG = new Logger(CredentialOptions.class);
-
   public enum CredentialType {
     DefaultCredentials,
     P12,
@@ -141,7 +138,6 @@ public class CredentialOptions implements Serializable {
    * @return a {@link CredentialOptions} object.
    */
   public static CredentialOptions nullCredential() {
-    LOG.info("Enabling the use of null credentials. This should not be used in production.");
     return new CredentialOptions(CredentialType.None);
   }
 

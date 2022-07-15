@@ -85,8 +85,6 @@ public class BigtableOptions implements Serializable, Cloneable {
   /** @deprecated This field will be removed in future versions. */
   @Deprecated public static final String BIGTABLE_CLIENT_ADAPTER = "BIGTABLE_CLIENT_ADAPTER";
 
-  private static final Logger LOG = new Logger(BigtableOptions.class);
-
   private static int getDefaultDataChannelCount() {
     // 20 Channels seemed to work well on a 4 CPU machine, and this ratio seems to scale well for
     // higher CPU machines. Use no more than 250 Channels by default.
@@ -315,7 +313,6 @@ public class BigtableOptions implements Serializable, Cloneable {
       setAdminHost(host);
       setPort(port);
 
-      LOG.info("Connecting to the Bigtable emulator at " + host + ":" + port);
       return this;
     }
 
@@ -355,10 +352,6 @@ public class BigtableOptions implements Serializable, Cloneable {
         }
         options.retryOptions = retryOptionsBuilder.build();
       }
-      LOG.debug(
-          "Connection Configuration: projectId: %s, instanceId: %s, data host %s, "
-              + "admin host %s.",
-          options.projectId, options.instanceId, options.dataHost, options.adminHost);
 
       return options;
     }

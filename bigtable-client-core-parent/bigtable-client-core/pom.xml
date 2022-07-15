@@ -147,6 +147,10 @@ limitations under the License.
       <groupId>com.google.http-client</groupId>
       <artifactId>google-http-client</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-core-http</artifactId>
+    </dependency>
 
     <!-- GRPC -->
     <dependency>
