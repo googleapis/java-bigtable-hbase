@@ -184,6 +184,9 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
         conf.get(BigtableOptionsFactory.INSTANCE_ID_KEY),
         conf.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY, ""));
 
+    // Set user agent
+    conf.set(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "HBaseMRImport");
+
     // implicit table outputformat configs that are used in the job to write map output to a table
     conf.set(TableOutputFormat.OUTPUT_TABLE, conf.get(TABLENAME_KEY));
     conf.setStrings(

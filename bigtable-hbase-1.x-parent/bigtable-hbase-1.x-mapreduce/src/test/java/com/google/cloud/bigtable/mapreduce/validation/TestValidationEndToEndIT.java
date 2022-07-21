@@ -43,25 +43,26 @@ import org.apache.hadoop.hbase.mapreduce.SyncTable.SyncMapper.Counter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.Counters;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
  * end to end integration test for HashTable and SyncTableValidationOnlyJob from Bigtable to HBase
  * and HBase to Bigtable
  */
-public class EndToEndIT {
+// TODO - parameterize this to run against prod in future
+public class TestValidationEndToEndIT {
 
-  private static final Log LOG = LogFactory.getLog(EndToEndIT.class);
+  private static final Log LOG = LogFactory.getLog(TestValidationEndToEndIT.class);
 
   private static final HBaseTestingUtility HB_TEST_UTIL = new HBaseTestingUtility();
 
-  @Rule public final BigtableEmulatorRule bigtableEmulator = BigtableEmulatorRule.create();
+  @ClassRule
+  public static final BigtableEmulatorRule bigtableEmulator = BigtableEmulatorRule.create();
 
   // Clients that will be connected to the emulator
-  private Connection bigtableConn;
+  private static Connection bigtableConn;
 
   private static final long TEST_TS = System.currentTimeMillis();
 
@@ -73,20 +74,17 @@ public class EndToEndIT {
   public static void setUpBeforeClass() throws Exception {
     HB_TEST_UTIL.startMiniCluster(1);
     HB_TEST_UTIL.setJobWithoutMRCluster();
+
+    Configuration conf = BigtableConfiguration.configure(BT_TEST_PROJECT, BT_TEST_INSTANCE);
+    conf.set(
+        BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY,
+        "localhost:" + bigtableEmulator.getPort());
+    bigtableConn = BigtableConfiguration.connect(conf);
   }
 
   @AfterClass
   public static void tearDownAfterClass() throws Exception {
     HB_TEST_UTIL.shutdownMiniCluster();
-  }
-
-  @Before
-  public void setup() {
-    Configuration conf = BigtableConfiguration.configure(BT_TEST_PROJECT, BT_TEST_INSTANCE);
-    conf.set(
-        BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY,
-        "localhost:" + bigtableEmulator.getPort());
-    this.bigtableConn = BigtableConfiguration.connect(conf);
   }
 
   /** Set configs, create conn to bigtable emulator, and setup table for test. */
@@ -140,16 +138,17 @@ public class EndToEndIT {
 
   /** validate data migrated from Bigtable to HBase */
   @Test
-  public void testSyncTableBigtabletoHBaseValidation() throws Exception {
+  public void testSyncTableBigtabletoHBaseValidationMatches() throws Exception {
     long testRunTs = System.currentTimeMillis();
 
     // source and target
-    TableName BT_TEST_SOURCE_TABLE = TableName.valueOf("cbt-testsourcetable-" + testRunTs);
-    TableName HB_TEST_TARGET_TABLE = TableName.valueOf("hbase-testtargettable-" + testRunTs);
-    Path testHashOutDir = HB_TEST_UTIL.getDataTestDirOnTestFS("hash-out-cbt-" + testRunTs);
+    TableName BT_TEST_SOURCE_TABLE = TableName.valueOf("cbt-testsourcetable-matches-" + testRunTs);
+    TableName HB_TEST_TARGET_TABLE =
+        TableName.valueOf("hbase-testtargettable-matches-" + testRunTs);
+    Path testHashOutDir = HB_TEST_UTIL.getDataTestDirOnTestFS("hash-out-cbt-matches-" + testRunTs);
 
     // generate data
-    writeTestData(BT_TEST_SOURCE_TABLE, false, HB_TEST_TARGET_TABLE, true);
+    writeMatchTestData(BT_TEST_SOURCE_TABLE, false, HB_TEST_TARGET_TABLE, true);
 
     // hash table
     hashSourceBigtable(BT_TEST_SOURCE_TABLE, testHashOutDir);
@@ -162,18 +161,47 @@ public class EndToEndIT {
     assertVerifySyncMatches(syncCounters);
   }
 
-  /** validate data migrated from HBase to Bigtable */
+  /** validate data migrated from Bigtable to HBase */
   @Test
-  public void testSyncTableHBaseToBigtableValidation() throws Exception {
+  public void testSyncTableBigtabletoHBaseValidationMismatches() throws Exception {
     long testRunTs = System.currentTimeMillis();
 
     // source and target
-    TableName HB_TEST_SOURCE_TABLE = TableName.valueOf("hbase-testsourcetable-" + testRunTs);
-    TableName BT_TEST_TARGET_TABLE = TableName.valueOf("cbt-testtargettable-" + testRunTs);
-    Path testHashOutDir = HB_TEST_UTIL.getDataTestDirOnTestFS("hash-out-hbase-" + +testRunTs);
+    TableName BT_TEST_SOURCE_TABLE =
+        TableName.valueOf("cbt-testsourcetable-mismatches-" + testRunTs);
+    TableName HB_TEST_TARGET_TABLE =
+        TableName.valueOf("hbase-testtargettable-mismatches-" + testRunTs);
+    Path testHashOutDir =
+        HB_TEST_UTIL.getDataTestDirOnTestFS("hash-out-cbt-mismatches-" + testRunTs);
 
     // generate data
-    writeTestData(HB_TEST_SOURCE_TABLE, true, BT_TEST_TARGET_TABLE, false);
+    writeMismatchTestData(BT_TEST_SOURCE_TABLE, false, HB_TEST_TARGET_TABLE, true);
+
+    // hash table
+    hashSourceBigtable(BT_TEST_SOURCE_TABLE, testHashOutDir);
+
+    // sync table validation
+    Counters syncCounters =
+        bigtableSyncTableJobSourceBigtableTargetHBase(
+            BT_TEST_SOURCE_TABLE, HB_TEST_TARGET_TABLE, testHashOutDir);
+
+    assertVerifySyncMismatches(syncCounters);
+  }
+
+  /** validate data migrated from HBase to Bigtable */
+  @Test
+  public void testSyncTableHBaseToBigtableValidationMatches() throws Exception {
+    long testRunTs = System.currentTimeMillis();
+
+    // source and target
+    TableName HB_TEST_SOURCE_TABLE =
+        TableName.valueOf("hbase-testsourcetable-matches-" + testRunTs);
+    TableName BT_TEST_TARGET_TABLE = TableName.valueOf("cbt-testtargettable-matches-" + testRunTs);
+    Path testHashOutDir =
+        HB_TEST_UTIL.getDataTestDirOnTestFS("hash-out-hbase-matches-" + +testRunTs);
+
+    // generate data
+    writeMatchTestData(HB_TEST_SOURCE_TABLE, true, BT_TEST_TARGET_TABLE, false);
 
     // hash table
     hashSourceHBaseTable(HB_TEST_SOURCE_TABLE, testHashOutDir);
@@ -186,8 +214,43 @@ public class EndToEndIT {
     assertVerifySyncMatches(syncCounters);
   }
 
+  /** validate data migrated from HBase to Bigtable */
+  @Test
+  public void testSyncTableHBaseToBigtableValidationMismatches() throws Exception {
+    long testRunTs = System.currentTimeMillis();
+
+    // source and target
+    TableName HB_TEST_SOURCE_TABLE =
+        TableName.valueOf("hbase-testsourcetable-mismatches-" + testRunTs);
+    TableName BT_TEST_TARGET_TABLE =
+        TableName.valueOf("cbt-testtargettable-mismatches-" + testRunTs);
+    Path testHashOutDir =
+        HB_TEST_UTIL.getDataTestDirOnTestFS("hash-out-hbase-mismatches-" + +testRunTs);
+
+    // generate data
+    writeMismatchTestData(HB_TEST_SOURCE_TABLE, true, BT_TEST_TARGET_TABLE, false);
+
+    // hash table
+    hashSourceHBaseTable(HB_TEST_SOURCE_TABLE, testHashOutDir);
+
+    // sync table validation
+    Counters syncCounters =
+        bigtableSyncTableJobSourceHBaseTargetBigtable(
+            HB_TEST_SOURCE_TABLE, BT_TEST_TARGET_TABLE, testHashOutDir);
+
+    assertVerifySyncMismatches(syncCounters);
+  }
+
   /** assert match/mismatch results from counters and output records */
   private void assertVerifySyncMatches(Counters syncCounters) {
+    assertEquals(
+        syncCounters.findCounter(Counter.HASHES_MATCHED).getValue(),
+        syncCounters.findCounter(Counter.BATCHES).getValue());
+    assertEquals(0, syncCounters.findCounter(Counter.HASHES_NOT_MATCHED).getValue());
+  }
+
+  /** assert match/mismatch results from counters and output records */
+  private void assertVerifySyncMismatches(Counters syncCounters) {
     // verify counters
     assertEquals(60, syncCounters.findCounter(Counter.ROWSWITHDIFFS).getValue());
     assertEquals(10, syncCounters.findCounter(Counter.SOURCEMISSINGROWS).getValue());
@@ -273,7 +336,7 @@ public class EndToEndIT {
       TableName sourceTableName, Path testHashOutDir, Configuration conf, String... options)
       throws Exception {
     long batchSize = 100;
-    int numHashFiles = 3;
+    int numHashFiles = 2;
     int scanBatch = 1;
     String[] args = Arrays.copyOf(options, options.length + 5);
     args[options.length] = "--batchsize=" + batchSize;
@@ -297,7 +360,61 @@ public class EndToEndIT {
     LOG.info("Hash table completed");
   }
 
-  private void writeTestData(
+  private void writeMatchTestData(
+      TableName sourceTableName,
+      boolean isSourceHBase,
+      TableName targetTableName,
+      boolean isTargetHBase,
+      long... timestamps)
+      throws IOException {
+    final byte[] family = Bytes.toBytes("cf");
+    final byte[] column1 = Bytes.toBytes("c1");
+    final byte[] column2 = Bytes.toBytes("c2");
+    final byte[] value1 = Bytes.toBytes("val1");
+    final byte[] value2 = Bytes.toBytes("val2");
+
+    int numRows = 100;
+    int sourceRegions = 10;
+    int targetRegions = 6;
+    if (ArrayUtils.isEmpty(timestamps)) {
+      long current = System.currentTimeMillis();
+      timestamps = new long[] {current, current};
+    }
+
+    // create source/target tables
+    Table sourceTable = null;
+    if (isSourceHBase) {
+      sourceTable = createHBaseTable(sourceTableName, family, numRows, sourceRegions);
+    } else {
+      sourceTable = createBigtable(sourceTableName, family, numRows, sourceRegions);
+    }
+
+    Table targetTable = null;
+    if (isTargetHBase) {
+      targetTable = createHBaseTable(targetTableName, family, numRows, targetRegions);
+    } else {
+      targetTable = createBigtable(targetTableName, family, numRows, targetRegions);
+    }
+
+    int rowIndex = 0;
+    // a bunch of identical rows
+    for (; rowIndex < numRows; rowIndex++) {
+      Put sourcePut = new Put(Bytes.toBytes(rowIndex));
+      sourcePut.addColumn(family, column1, timestamps[0], value1);
+      sourcePut.addColumn(family, column2, timestamps[0], value2);
+      sourceTable.put(sourcePut);
+
+      Put targetPut = new Put(Bytes.toBytes(rowIndex));
+      targetPut.addColumn(family, column1, timestamps[1], value1);
+      targetPut.addColumn(family, column2, timestamps[1], value2);
+      targetTable.put(targetPut);
+    }
+
+    sourceTable.close();
+    targetTable.close();
+  }
+
+  private void writeMismatchTestData(
       TableName sourceTableName,
       boolean isSourceHBase,
       TableName targetTableName,
