@@ -1,4 +1,4 @@
-# Mirroring client (Alpha)
+# Mirroring client
 
 ## High-level overview
 The aim of this project is to provide a drop-in replacement for the HBase client that mirrors operations performed on the HBase cluster to the Bigtable cluster to facilitate migration from HBase to Bigtable.
