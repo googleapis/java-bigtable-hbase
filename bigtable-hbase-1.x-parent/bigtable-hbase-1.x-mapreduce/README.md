@@ -70,11 +70,10 @@ cd bigtable-hbase-1.x-parent/bigtable-hbase-1.x-mapreduce
         <source-table-id> \
         <hash-outputdir-hbase>
    
-    # SyncTable on Bigtable
+    # SyncTable on Bigtable (dryrun enabled by default)
     GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json \
     hadoop jar bigtable-hbase-1.x-mapreduce-2.5.0-shaded-byo-hadoop.jar \
         sync-table \
-        --dryrun=true \
         --sourcezkcluster=<source-zk-quorum> \
         --targetbigtableproject=<project-id> \
         --targetbigtableinstance=<instance-id> \
@@ -145,7 +144,7 @@ cd bigtable-hbase-1.x-parent/bigtable-hbase-1.x-mapreduce
         <table-id> \
         <hash-outputdir-hbase>
    
-    # SyncTable on Bigtable
+    # SyncTable on Bigtable (dryrun enabled by default)
     gcloud dataproc jobs submit hadoop \
         --project <project-id> \
         --cluster <dataproc-cluster> \
@@ -153,7 +152,6 @@ cd bigtable-hbase-1.x-parent/bigtable-hbase-1.x-mapreduce
         --jar bigtable-hbase-1.x-mapreduce-2.5.0-shaded-byo-hadoop.jar \
         -- \
         sync-table \
-        --dryrun=true \
         --sourcezkcluster=<source-zk-quorum> \
         --targetbigtableproject=<project-id> \
         --targetbigtableinstance=<instance-id> \
@@ -325,7 +323,7 @@ setting the properties for the job. For example:
    the output from `hash-table`. For diverging hashes, a cell-level comparison is performed    
    between the source and target and summarized in the job counters. 
     ```bash
-   
+    # dryrun mode (readonly) enabled by default 
     gcloud dataproc jobs submit hadoop \
         --project ${PROJECT_ID} \
         --cluster ${DATAPROC_CLUSTER} \
@@ -334,7 +332,6 @@ setting the properties for the job. For example:
         --jar ${JOB_JAR} \
         -- \
         sync-table \
-        --dryrun=true \
         --sourcezkcluster=${HBASE_ZK_QUORUM_FULL} \
         --targetbigtableproject=${PROJECT_ID} \
         --targetbigtableinstance=${CBT_INSTANCE} \
@@ -347,6 +344,16 @@ enable debug mode `--properties mapreduce.map.log.level=DEBUG` on the job to pro
 details on the diverging hash ranges and cell mismatches if divergence is detected. Job 
 configurations may also be updated to run `hash-table` against bigtable and `sync-table` run 
 against hbase.
+
+Additional Options:
+
+1. Disable dry run mode to perform synchronization between source and target for diverging hash ranges.
+
+    ```bash
+    --dryrun=false
+    ```
+
+2. Other job configuration and details may be referred to in [HBase SyncTable description](https://www.google.com/url?sa=D&q=https%3A%2F%2Fhbase.apache.org%2Fbook.html%23_step_2_synctable).
 
 ## Backwards compatibility
 

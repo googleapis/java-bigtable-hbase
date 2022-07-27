@@ -30,7 +30,7 @@ public class TestBigtableSyncTableJob {
       "--sourcezkcluster=hbase-m:2181:/hbase",
       "--targetbigtableproject=prod-app-bigtable-svcs",
       "--targetbigtableinstance=prod-app-events",
-      "--targetbigtableprofile=default",
+      "--targetbigtableappprofile=default",
       "gs://hbase-migration-table1-bucket/hbase-hash-output/",
       "table-source"
     };
@@ -48,7 +48,7 @@ public class TestBigtableSyncTableJob {
       "--sourcezkcluster=hbase-m:2181:/hbase",
       "--targetbigtableproject=prod-app-bigtable-svcs",
       "--targetbigtableinstance=prod-app-events",
-      "--targetbigtableprofile=default",
+      "--targetbigtableappprofile=default",
       "gs://hbase-migration-table1-bucket/hbase-hash-output/",
       "table-source",
       "table-target"
@@ -71,7 +71,7 @@ public class TestBigtableSyncTableJob {
     String[] args = {
       "--sourcebigtableproject=prod-app-bigtable-svcs",
       "--sourcebigtableinstance=prod-app-events",
-      "--sourcebigtableprofile=default",
+      "--sourcebigtableappprofile=default",
       "--targetzkcluster=hbase-m:2181:/hbase",
       "gs://hbase-migration-table1-bucket/bigtable-hash-output/",
       "table-source",
@@ -91,12 +91,46 @@ public class TestBigtableSyncTableJob {
   }
 
   @Test
+  public void testArgsHBaseToHbase() {
+    String[] args = {
+      "--sourcezkcluster=hbase-m:2181:/hbase",
+      "--targetzkcluster=hbase-m:2181:/hbase",
+      "gs://hbase-migration-table1-bucket/bigtable-hash-output/",
+      "table-source",
+      "table-target"
+    };
+
+    Configuration conf = new Configuration(false);
+    BigtableSyncTableJob bigtableSyncTable = new BigtableSyncTableJob(conf);
+    boolean isSuccess = bigtableSyncTable.doCommandLine(bigtableSyncTable, args);
+
+    Assert.assertTrue(isSuccess);
+    Assert.assertEquals(
+        parseKeyValueArg(args[0]), BigtableSyncTableAccessor.getSourceZkCluster(bigtableSyncTable));
+    Assert.assertEquals(
+        parseKeyValueArg(args[1]), BigtableSyncTableAccessor.getTargetZkCluster(bigtableSyncTable));
+  }
+
+  @Test
+  public void testArgsFailureNoSourceOrTarget() {
+    String[] args = {
+      "gs://hbase-migration-table1-bucket/bigtable-hash-output/", "table-source", "table-target"
+    };
+
+    Configuration conf = new Configuration(false);
+    BigtableSyncTableJob bigtableSyncTable = new BigtableSyncTableJob(conf);
+    boolean isSuccess = bigtableSyncTable.doCommandLine(bigtableSyncTable, args);
+
+    Assert.assertFalse(isSuccess);
+  }
+
+  @Test
   public void testArgsFailureBothSources() {
     String[] args = {
       "--sourcezkcluster=hbase-m:2181:/hbase",
       "--sourcebigtableproject=prod-app-bigtable-svcs",
       "--sourcebigtableinstance=prod-app-events",
-      "--sourcebigtableprofile=default",
+      "--sourcebigtableappprofile=default",
       "--targetzkcluster=hbase-m:2181:/hbase",
       "gs://hbase-migration-table1-bucket/bigtable-hash-output/",
       "table-source",
@@ -114,7 +148,7 @@ public class TestBigtableSyncTableJob {
   public void testArgsFailureSourceBigtableMissingProject() {
     String[] args = {
       "--sourcebigtableinstance=prod-app-events",
-      "--sourcebigtableprofile=default",
+      "--sourcebigtableappprofile=default",
       "--targetzkcluster=hbase-m:2181:/hbase",
       "gs://hbase-migration-table1-bucket/bigtable-hash-output/",
       "table-source",
@@ -132,7 +166,7 @@ public class TestBigtableSyncTableJob {
   public void testArgsFailureSourceBigtableMissingInstance() {
     String[] args = {
       "--sourcebigtableinstance=prod-app-events",
-      "--sourcebigtableprofile=default",
+      "--sourcebigtableappprofile=default",
       "--targetzkcluster=hbase-m:2181:/hbase",
       "gs://hbase-migration-table1-bucket/bigtable-hash-output/",
       "table-source",
@@ -153,7 +187,7 @@ public class TestBigtableSyncTableJob {
       "--targetzkcluster=hbase-m:2181:/hbase",
       "--targetbigtableproject=prod-app-bigtable-svcs",
       "--targetbigtableinstance=prod-app-events",
-      "--targetbigtableprofile=default",
+      "--targetbigtableappprofile=default",
       "gs://hbase-migration-table1-bucket/hbase-hash-output/",
       "table-source",
       "table-target"
@@ -171,7 +205,7 @@ public class TestBigtableSyncTableJob {
     String[] args = {
       "--sourcezkcluster=hbase-m:2181:/hbase",
       "--targetbigtableinstance=prod-app-events",
-      "--targetbigtableprofile=default",
+      "--targetbigtableappprofile=default",
       "gs://hbase-migration-table1-bucket/hbase-hash-output/",
       "table-source",
       "table-target"
@@ -190,7 +224,7 @@ public class TestBigtableSyncTableJob {
       "--sourcezkcluster=hbase-m:2181:/hbase",
       "--targetzkcluster=hbase-m:2181:/hbase",
       "--targetbigtableproject=prod-app-bigtable-svcs",
-      "--targetbigtableprofile=default",
+      "--targetbigtableappprofile=default",
       "gs://hbase-migration-table1-bucket/hbase-hash-output/",
       "table-source",
       "table-target"
