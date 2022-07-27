@@ -43,7 +43,8 @@ import org.apache.hadoop.util.ToolRunner;
  * <p>SyncTable is part 2 of 2 stages used for byte level validation between a source and target
  * table only. BigtableSyncTableJob extends functionality to provide connectivity to Bigtable as a
  * source or target and relies on {@link org.apache.hadoop.hbase.mapreduce.SyncTable} for core
- * functionality.
+ * functionality. BigtableSyncTableJob overrides dryrun configuration as true by default to perform
+ * a read-only validation report only.
  *
  * <p>SyncTable is a Mapreduce job that generates hashes on the target table and compares these
  * hashes with the output from {@Link org.apache.hadoop.hbase.mapreduce.HashTable}. For diverging
@@ -108,7 +109,6 @@ public class BigtableSyncTableJob extends SyncTable {
    */
   protected boolean doCommandLine(SyncTable syncTable, final String[] args) {
     if (!parseCommandLine(syncTable, NUM_ARGS, args)) return false;
-
     // return false if options and args are not properly set
     if (!verifyRequiredArgsSet(
         syncTable,
@@ -151,12 +151,26 @@ public class BigtableSyncTableJob extends SyncTable {
       BigtableSyncTableAccessor.setSourceTableName(syncTable, args[args.length - 2]);
       BigtableSyncTableAccessor.setTargetTableName(syncTable, args[args.length - 1]);
 
-      for (int i = 0; i < args.length - NUM_ARGS; i++) {
-        String cmd = args[i];
-        if (cmd.equals("-h") || cmd.startsWith("--h")) {
+      int cntArgs = 0;
+      for (int i = 0; i < args.length; i++) {
+        String arg = args[i];
+        if (arg.equals("-h") || arg.startsWith("--h")) {
           printUsage(null, args);
           return false;
         }
+
+        if (!arg.startsWith("--")) {
+          cntArgs++;
+        }
+      }
+
+      if (cntArgs != 3) {
+        printUsage("expected " + NUM_ARGS + ", but received " + cntArgs++, args);
+        return false;
+      }
+
+      for (int i = 0; i < args.length - NUM_ARGS; i++) {
+        String cmd = args[i];
 
         final String sourceZkClusterKey = "--sourcezkcluster=";
         if (cmd.startsWith(sourceZkClusterKey)) {
@@ -265,34 +279,69 @@ public class BigtableSyncTableJob extends SyncTable {
       String sourceBigtableInstance,
       String targetBigtableProjectId,
       String targetBigtableInstance) {
+
+    // neither source zk or source bigtable config set
     if (BigtableSyncTableAccessor.getSourceZkCluster(syncTable) == null
-        && (sourceBigtableProjectId == null || sourceBigtableInstance == null)) {
+        && (sourceBigtableProjectId == null && sourceBigtableInstance == null)) {
       printUsage(
           "--sourcezkcluster or --sourcebigtableproject and --sourcebigtableinstance required.",
           args);
       return false;
     }
 
-    if (BigtableSyncTableAccessor.getTargetZkCluster(syncTable) == null
-        && (targetBigtableProjectId == null || targetBigtableInstance == null)) {
+    // both source zk and source bigtable configs are set
+    if (BigtableSyncTableAccessor.getSourceZkCluster(syncTable) != null
+        && (sourceBigtableProjectId != null || sourceBigtableInstance != null)) {
       printUsage(
-          "--targetzkcluster or -targetbigtableproject and --targetbigtableinstance required.",
+          "--sourcezkcluster and --sourcebigtableproject and --sourcebigtableinstance are set. Set one or the other.",
           args);
       return false;
     }
 
+    // source bigtable project or source instance not set
+    if (BigtableSyncTableAccessor.getSourceZkCluster(syncTable) == null
+        && ((sourceBigtableProjectId == null || sourceBigtableInstance == null))) {
+      printUsage("--sourcebigtableproject and --sourcebigtableinstance required.", args);
+      return false;
+    }
+
+    // neither target zk or target bigtable config set
+    if (BigtableSyncTableAccessor.getTargetZkCluster(syncTable) == null
+        && (targetBigtableProjectId == null && targetBigtableInstance == null)) {
+      printUsage(
+          "--targetzkcluster or --targetbigtableproject and --targetbigtableinstance required.",
+          args);
+      return false;
+    }
+
+    // both target zk and target bigtable configs are set
+    if (BigtableSyncTableAccessor.getTargetZkCluster(syncTable) != null
+        && (targetBigtableProjectId != null || targetBigtableInstance != null)) {
+      printUsage(
+          "--targetzkcluster or --targetbigtableproject and --targetbigtableinstance are set. Set one or the other.",
+          args);
+      return false;
+    }
+
+    // target bigtable project or target instance not set
+    if (BigtableSyncTableAccessor.getTargetZkCluster(syncTable) == null
+        && ((targetBigtableProjectId == null || targetBigtableInstance == null))) {
+      printUsage("--targetbigtableproject and --targetbigtableinstance required.", args);
+      return false;
+    }
+
     if (BigtableSyncTableAccessor.getSourceHashDir(syncTable) == null) {
-      printUsage("--sourcehashdir is required.", args);
+      printUsage("<sourcehashdir> argument is required.", args);
       return false;
     }
 
     if (BigtableSyncTableAccessor.getSourceTableName(syncTable) == null) {
-      printUsage("--sourcetablename is required.", args);
+      printUsage("<sourcetable> argument is required.", args);
       return false;
     }
 
     if (BigtableSyncTableAccessor.getTargetTableName(syncTable) == null) {
-      printUsage("--targettablename is required.", args);
+      printUsage("<targettable> argument is required.", args);
       return false;
     }
 
@@ -384,6 +433,31 @@ public class BigtableSyncTableJob extends SyncTable {
       jobConf.set(HConstants.ZOOKEEPER_ZNODE_PARENT, zkClusterKey.getZnodeParent());
     }
 
+    // set bigtable target configuration
+    if (targetBigtableProjectId != null && targetBigtableInstance != null) {
+      if (targetZkCluster != null)
+        LOG.warn(
+            "targetZkCluster config("
+                + targetZkCluster
+                + ") overridden with targetBigtableProjectId("
+                + targetBigtableProjectId
+                + "), targetBigtableInstance("
+                + targetBigtableInstance
+                + ")");
+
+      jobConf.set(TARGET_BT_PROJECTID_CONF_KEY, targetBigtableProjectId);
+      jobConf.set(TARGET_BT_INSTANCE_CONF_KEY, targetBigtableInstance);
+
+      if (targetBigtableAppProfile != null)
+        jobConf.set(TARGET_BT_APP_PROFILE_CONF_KEY, targetBigtableAppProfile);
+
+      BigtableConfiguration.configure(
+          jobConf,
+          jobConf.get(TARGET_BT_PROJECTID_CONF_KEY),
+          jobConf.get(TARGET_BT_INSTANCE_CONF_KEY),
+          jobConf.get(TARGET_BT_APP_PROFILE_CONF_KEY, ""));
+    }
+
     // enable dry run as default
     String DRY_RUN_CONF_KEY = BigtableSyncTableAccessor.getConfDryRunKey();
     jobConf.setBoolean(DRY_RUN_CONF_KEY, jobConf.getBoolean(DRY_RUN_CONF_KEY, true));
@@ -408,29 +482,6 @@ public class BigtableSyncTableJob extends SyncTable {
 
       if (sourceBigtableAppProfile != null)
         jobConf.set(SOURCE_BT_APP_PROFILE_CONF_KEY, sourceBigtableAppProfile);
-    }
-    if (targetBigtableProjectId != null && targetBigtableInstance != null) {
-      if (targetZkCluster != null)
-        LOG.warn(
-            "targetZkCluster config("
-                + targetZkCluster
-                + ") overridden with targetBigtableProjectId("
-                + targetBigtableProjectId
-                + "), targetBigtableInstance("
-                + targetBigtableInstance
-                + ")");
-
-      jobConf.set(TARGET_BT_PROJECTID_CONF_KEY, targetBigtableProjectId);
-      jobConf.set(TARGET_BT_INSTANCE_CONF_KEY, targetBigtableInstance);
-
-      if (targetBigtableAppProfile != null)
-        jobConf.set(TARGET_BT_APP_PROFILE_CONF_KEY, targetBigtableAppProfile);
-
-      BigtableConfiguration.configure(
-          jobConf,
-          jobConf.get(TARGET_BT_PROJECTID_CONF_KEY),
-          jobConf.get(TARGET_BT_INSTANCE_CONF_KEY),
-          jobConf.get(TARGET_BT_APP_PROFILE_CONF_KEY, ""));
     }
 
     Scan jobScan = TableMapReduceUtil.convertStringToScan(jobConf.get(TableInputFormat.SCAN));

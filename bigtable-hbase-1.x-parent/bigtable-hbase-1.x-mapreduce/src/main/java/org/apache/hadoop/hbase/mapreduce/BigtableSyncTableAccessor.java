@@ -15,6 +15,7 @@
  */
 package org.apache.hadoop.hbase.mapreduce;
 
+import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -25,6 +26,7 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.mapreduce.SyncTable.SyncMapper;
 
 /** A helper class to access package private fields of SyncTable. */
+@InternalApi
 public class BigtableSyncTableAccessor {
 
   // Restrict object creation. This class should only be used as accessor for SyncTable

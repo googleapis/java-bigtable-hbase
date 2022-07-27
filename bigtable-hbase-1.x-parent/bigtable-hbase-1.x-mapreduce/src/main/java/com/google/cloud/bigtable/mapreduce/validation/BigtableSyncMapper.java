@@ -23,6 +23,7 @@ import static com.google.cloud.bigtable.mapreduce.validation.BigtableSyncTableJo
 import static com.google.cloud.bigtable.mapreduce.validation.BigtableSyncTableJob.TARGET_BT_PROJECTID_CONF_KEY;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -169,6 +170,7 @@ public class BigtableSyncMapper extends SyncMapper {
         bigtableConf.get(projectIdKey),
         bigtableConf.get(instanceKey),
         bigtableConf.get(appProfileKey, ""));
+    bigtableConf.set(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "HBaseMRSyncTable");
 
     LOG.info(
         "configuring "
