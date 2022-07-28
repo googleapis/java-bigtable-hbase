@@ -7,8 +7,8 @@ scriptDir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
 cd ${scriptDir}/../..
 
 targets=(
-  migration-tools/mirroring-client/bigtable-hbase-mirroring-client-core-parent/protobuf-java-format-shaded
-  migration-tools/mirroring-client/bigtable-hbase-mirroring-client-core-parent/bigtable-hbase-mirroring-client-core
+  hbase-migration-tools/mirroring-client/bigtable-hbase-mirroring-client-core-parent/protobuf-java-format-shaded
+  hbase-migration-tools/mirroring-client/bigtable-hbase-mirroring-client-core-parent/bigtable-hbase-mirroring-client-core
   migration-tools/mirroring-client/bigtable-hbase-mirroring-client-1.x-parent/bigtable-hbase-mirroring-client-1.x
   migration-tools/mirroring-client/bigtable-hbase-mirroring-client-1.x-parent/bigtable-hbase-mirroring-client-1.x-integration-tests
   migration-tools/mirroring-client/bigtable-hbase-mirroring-client-2.x-parent/bigtable-hbase-mirroring-client-2.x
