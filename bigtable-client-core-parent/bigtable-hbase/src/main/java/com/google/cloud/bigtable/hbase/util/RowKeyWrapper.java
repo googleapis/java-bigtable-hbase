@@ -66,4 +66,9 @@ public class RowKeyWrapper implements Comparable<RowKeyWrapper> {
     }
     return Integer.compare(key1.size(), key2.size());
   }
+
+  @Override
+  public String toString() {
+    return key.toString();
+  }
 }

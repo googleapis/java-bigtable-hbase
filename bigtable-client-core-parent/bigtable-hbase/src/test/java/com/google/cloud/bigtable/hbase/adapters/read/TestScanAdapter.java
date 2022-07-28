@@ -42,6 +42,7 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
@@ -366,6 +367,85 @@ public class TestScanAdapter {
                                     .range()
                                     .of(secRangeStart * 1000, secRangeEnd * 1000))));
 
+    Assert.assertEquals(expected.toProto(), query.toProto(requestContext).getFilter());
+  }
+
+  @Test
+  public void testMaxVersionsOptimizationDefault() {
+    Scan scan =
+        new Scan()
+            .addColumn("cf".getBytes(), "q".getBytes())
+            .setFilter(new PrefixFilter("blah".getBytes()));
+
+    scanAdapter.adapt(scan, throwingReadHooks, query);
+
+    Filters.Filter expected =
+        FILTERS
+            .chain()
+            // Optimization: limit is first
+            .filter(FILTERS.limit().cellsPerColumn(1))
+            // scan columns next
+            .filter(
+                FILTERS
+                    .chain()
+                    .filter(FILTERS.family().exactMatch("cf"))
+                    .filter(FILTERS.qualifier().exactMatch("q")))
+            // user filter
+            .filter(FILTERS.key().regex("blah\\C*"));
+    Assert.assertEquals(expected.toProto(), query.toProto(requestContext).getFilter());
+  }
+
+  @Test
+  public void testMaxVersionsOptimization() {
+    Scan scan =
+        new Scan()
+            .addColumn("cf".getBytes(), "q".getBytes())
+            .setFilter(new PrefixFilter("blah".getBytes()))
+            .setMaxVersions(10);
+
+    scanAdapter.adapt(scan, throwingReadHooks, query);
+
+    Filters.Filter expected =
+        FILTERS
+            .chain()
+            // Optimization: limit is first
+            .filter(FILTERS.limit().cellsPerColumn(10))
+            // scan columns next
+            .filter(
+                FILTERS
+                    .chain()
+                    .filter(FILTERS.family().exactMatch("cf"))
+                    .filter(FILTERS.qualifier().exactMatch("q")))
+            // user filter
+            .filter(FILTERS.key().regex("blah\\C*"));
+    Assert.assertEquals(expected.toProto(), query.toProto(requestContext).getFilter());
+  }
+
+  @Test
+  public void testMaxVersionsWithTimeRanges() throws IOException {
+    Scan scan =
+        new Scan()
+            .setTimeRange(0, 1_000)
+            .addColumn("cf".getBytes(), "q".getBytes())
+            .setFilter(new PrefixFilter("blah".getBytes()));
+
+    scanAdapter.adapt(scan, throwingReadHooks, query);
+
+    Filters.Filter expected =
+        FILTERS
+            .chain()
+            // scan columns first, since maxVersion must come after timeRange
+            .filter(
+                FILTERS
+                    .chain()
+                    .filter(FILTERS.family().exactMatch("cf"))
+                    .filter(FILTERS.qualifier().exactMatch("q")))
+            // Timestamp range next
+            .filter(FILTERS.timestamp().range().of(0L, 1_000 * 1_000L))
+            // maxVersions after range
+            .filter(FILTERS.limit().cellsPerColumn(1))
+            // user filter
+            .filter(FILTERS.key().regex("blah\\C*"));
     Assert.assertEquals(expected.toProto(), query.toProto(requestContext).getFilter());
   }
 }

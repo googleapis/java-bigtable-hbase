@@ -27,6 +27,8 @@ java.common_templates(excludes=[
   '.kokoro/linkage-monitor.sh',
   '.kokoro/presubmit/linkage-monitor.cfg',
   '.kokoro/presubmit/integration.cfg',
+  '.kokoro/presubmit/graalvm-native.cfg',
+  '.kokoro/presubmit/graalvm-native-17.cfg',
   '.kokoro/nightly/integration.cfg',
   '.kokoro/nightly/java11-integration.cfg',
   '.kokoro/presubmit/java7.cfg',

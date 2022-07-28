@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
 
 public abstract class AbstractTestCreateTable extends AbstractTest {
@@ -168,6 +169,7 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
   }
 
   @Test
+  @Category(KnownEmulatorGap.class)
   public void testSplitKeys() throws Exception {
     byte[][] splits =
         new byte[][] {
@@ -231,6 +233,7 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
   }
 
   @Test
+  @Category(KnownEmulatorGap.class)
   public void testThreeRegionSplit() throws Exception {
 
     TableName tableName = sharedTestEnv.newTestTableName();
@@ -266,6 +269,7 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
   }
 
   @Test
+  @Category(KnownEmulatorGap.class)
   public void testFiveRegionSplit() throws Exception {
     TableName tableName = sharedTestEnv.newTestTableName();
     byte[] startKey = Bytes.toBytes("AAA");

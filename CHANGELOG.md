@@ -1,5 +1,52 @@
 # Changelog
 
+## [2.5.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.4.0...v2.5.0) (2022-07-13)
+
+
+### Features
+
+* add ocagent exporter to shaded jars to allow customers more fle… ([#3683](https://github.com/googleapis/java-bigtable-hbase/issues/3683)) ([25b2af8](https://github.com/googleapis/java-bigtable-hbase/commit/25b2af8df85063447cf3ace9b29bda97d96fc823))
+* add toString for RowKeyWrapper to ease debugging ([#3648](https://github.com/googleapis/java-bigtable-hbase/issues/3648)) ([9007abc](https://github.com/googleapis/java-bigtable-hbase/commit/9007abc5056466d77e441b920ae199d6d8d8156a))
+
+
+### Dependencies
+
+* update bigtable.version to v2.9.0 ([#3666](https://github.com/googleapis/java-bigtable-hbase/issues/3666)) ([b67c790](https://github.com/googleapis/java-bigtable-hbase/commit/b67c7905961c72e759b314fcb8231554bb6da8e2))
+* update dependency net.bytebuddy:byte-buddy to v1.12.12 ([#3658](https://github.com/googleapis/java-bigtable-hbase/issues/3658)) ([07772b1](https://github.com/googleapis/java-bigtable-hbase/commit/07772b112e1a4e67d9e25662ebe5a1b2d1ee326b))
+
+## [2.4.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.3.0...v2.4.0) (2022-06-09)
+
+
+### Features
+
+* optimize scan filters ([#3651](https://github.com/googleapis/java-bigtable-hbase/issues/3651)) ([23af529](https://github.com/googleapis/java-bigtable-hbase/commit/23af52933a570e9e80ba9ee06824c566abf6deb1))
+
+
+### Dependencies
+
+* update bigtable.version to v2.7.0 ([#3629](https://github.com/googleapis/java-bigtable-hbase/issues/3629)) ([90956d1](https://github.com/googleapis/java-bigtable-hbase/commit/90956d1cb30f1aa0259b14354d7b2d7ded612f97))
+* update bigtable.version to v2.8.0 ([#3640](https://github.com/googleapis/java-bigtable-hbase/issues/3640)) ([93b7067](https://github.com/googleapis/java-bigtable-hbase/commit/93b7067c65e6f86fe642f8265f8bb131a43f0f56))
+* update dependency com.google.cloud:google-cloud-bigtable-emulator to v0.144.0 ([#3630](https://github.com/googleapis/java-bigtable-hbase/issues/3630)) ([5cd5c59](https://github.com/googleapis/java-bigtable-hbase/commit/5cd5c5977de70ddace5cbc67e2fa5352f2cda1b1))
+* update dependency com.google.cloud:google-cloud-bigtable-emulator to v0.144.0 ([#3631](https://github.com/googleapis/java-bigtable-hbase/issues/3631)) ([3c4db31](https://github.com/googleapis/java-bigtable-hbase/commit/3c4db31681fdd79911da574534ef85c741885293))
+* update dependency org.codehaus.plexus:plexus-utils to v3.4.2 ([#3624](https://github.com/googleapis/java-bigtable-hbase/issues/3624)) ([c555559](https://github.com/googleapis/java-bigtable-hbase/commit/c555559a425b154023e7eb41b59a837d1dd67a81))
+
+## [2.3.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.2.0...v2.3.0) (2022-05-18)
+
+
+### Features
+
+* add enableSnappy flag to import snapshot pipeline and select th… ([#3586](https://github.com/googleapis/java-bigtable-hbase/issues/3586)) ([8c1854d](https://github.com/googleapis/java-bigtable-hbase/commit/8c1854dacd3c5d257bc8233f5a831ae106e9f35a))
+
+
+### Dependencies
+
+* remove client-core dependency from bigtable-hbase-2.x ([#3620](https://github.com/googleapis/java-bigtable-hbase/issues/3620)) ([413a2fd](https://github.com/googleapis/java-bigtable-hbase/commit/413a2fdd47c5959338466341e08806f138848e21))
+
+
+### Documentation
+
+* Update README to use --enableSnappy flag to import snappy compre… ([#3623](https://github.com/googleapis/java-bigtable-hbase/issues/3623)) ([ea73be9](https://github.com/googleapis/java-bigtable-hbase/commit/ea73be934e4b088e5b582bddefeecab9194332a5))
+
 ## [2.2.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.1.1...v2.2.0) (2022-05-03)
 
 

@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.bigtable.v2.CheckAndMutateRowRequest;
 import com.google.bigtable.v2.Mutation;
@@ -75,8 +76,8 @@ public class TestCheckAndMutateUtil {
     RowFilter expected =
         FILTERS
             .chain()
-            .filter(FAMILY_AND_QUAL_FILTER)
             .filter(FILTERS.limit().cellsPerColumn(1))
+            .filter(FAMILY_AND_QUAL_FILTER)
             .filter(
                 FILTERS
                     .value()
@@ -260,10 +261,10 @@ public class TestCheckAndMutateUtil {
     RowFilter expected =
         FILTERS
             .chain()
-            .filter(FAMILY_AND_QUAL_FILTER)
             .filter(FILTERS.limit().cellsPerColumn(1))
+            .filter(FAMILY_AND_QUAL_FILTER)
             .toProto();
-    Assert.assertEquals(expected, result.getPredicateFilter());
+    assertThat(result.getPredicateFilter()).isEqualTo(expected);
   }
 
   @Test
@@ -287,12 +288,12 @@ public class TestCheckAndMutateUtil {
     RowFilter expected =
         FILTERS
             .chain()
-            .filter(FAMILY_AND_QUAL_FILTER)
             .filter(FILTERS.limit().cellsPerColumn(1))
+            .filter(FAMILY_AND_QUAL_FILTER)
             .toProto();
 
     checkPutMutation(result.getTrueMutations(0));
-    Assert.assertEquals(expected, result.getPredicateFilter());
+    assertThat(result.getPredicateFilter()).isEqualTo(expected);
   }
 
   @Test
@@ -320,11 +321,11 @@ public class TestCheckAndMutateUtil {
     RowFilter expected =
         FILTERS
             .chain()
-            .filter(FAMILY_AND_QUAL_FILTER)
             .filter(FILTERS.limit().cellsPerColumn(1))
+            .filter(FAMILY_AND_QUAL_FILTER)
             .toProto();
 
     checkPutMutation(result.getFalseMutations(0));
-    Assert.assertEquals(expected, result.getPredicateFilter());
+    assertThat(result.getPredicateFilter()).isEqualTo(expected);
   }
 }
