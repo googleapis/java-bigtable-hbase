@@ -83,7 +83,6 @@ public class ConfigurationHelper {
         TestWriteErrorConsumer.Factory.class.getName());
 
     configuration.setIfUnset(
-        "google.bigtable.emulator.endpoint.host",
-        System.getenv("_BIGTABLE_EMULATOR_HOST"));
+        "google.bigtable.emulator.endpoint.host", System.getenv("_BIGTABLE_EMULATOR_HOST"));
   }
 }

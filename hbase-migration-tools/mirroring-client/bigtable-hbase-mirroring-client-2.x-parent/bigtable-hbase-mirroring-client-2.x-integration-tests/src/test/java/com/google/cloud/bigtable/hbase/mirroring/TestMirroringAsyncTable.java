@@ -147,7 +147,7 @@ public class TestMirroringAsyncTable {
     final TableName tableName1 = connectionRule.createTable(columnFamily1);
     final TableName tableName2 = connectionRule.createTable(columnFamily1);
 
-     FailingHBaseHRegion.failMutation(
+    FailingHBaseHRegion.failMutation(
         failPredicate, HConstants.OperationStatusCode.SANITY_CHECK_FAILURE, "failed");
 
     try (MirroringAsyncConnection asyncConnection =
@@ -208,7 +208,6 @@ public class TestMirroringAsyncTable {
 
     FailingHBaseHRegion.failMutation(
         failPredicate, HConstants.OperationStatusCode.SANITY_CHECK_FAILURE, "failed");
-
 
     TestMirroringTable.ReportedErrorsContext reportedErrorsContext1 =
         new TestMirroringTable.ReportedErrorsContext();
