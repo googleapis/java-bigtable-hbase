@@ -26,6 +26,7 @@ import com.google.cloud.bigtable.grpc.DeadlineGenerator;
 import com.google.cloud.bigtable.grpc.async.MutateRowsRequestManager.ProcessingStatus;
 import com.google.common.collect.ImmutableMap;
 import io.grpc.Metadata;
+import io.grpc.Status;
 import io.opencensus.trace.AttributeValue;
 import java.util.Arrays;
 import java.util.List;
@@ -77,6 +78,12 @@ public class RetryingMutateRowsOperation
     } catch (Exception e) {
       setException(e);
     }
+  }
+
+  @Override
+  protected boolean isStatusRetryable(Status status) {
+    return retryOptions.isRetryable(status.getCode())
+        || AbstractRetryingOperation.isRstStream(status);
   }
 
   @Override

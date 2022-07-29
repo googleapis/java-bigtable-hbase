@@ -75,6 +75,14 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     return prefix + "." + fullMethodName.replace('/', '.');
   }
 
+  public static boolean isRstStream(Status status) {
+    if (status.getCode() == Code.INTERNAL && status.getDescription() != null) {
+      String description = status.getDescription().toLowerCase();
+      return description.contains("rst stream") || description.contains("rst_stream");
+    }
+    return false;
+  }
+
   protected class GrpcFuture<RespT> extends AbstractFuture<RespT> {
     /**
      * This gets called from {@link Future#cancel(boolean)} for cancel(true). If a user explicitly

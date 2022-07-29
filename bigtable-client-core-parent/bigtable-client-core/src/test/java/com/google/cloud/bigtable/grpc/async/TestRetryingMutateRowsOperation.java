@@ -244,6 +244,23 @@ public class TestRetryingMutateRowsOperation {
     }
   }
 
+  @Test
+  public void testRetryOnRstStream() {
+    RetryingMutateRowsOperation underTest = createOperation(createRequest(1));
+    ListenableFuture<?> future = underTest.getAsyncResult();
+    underTest.onClose(
+        io.grpc.Status.INTERNAL.withDescription(
+            "HTTP/2 error code: INTERNAL_ERROR\\nReceived Rst stream"),
+        null);
+    send(underTest, createResponse(OK));
+    checkExecutor(1);
+    try {
+      future.get(3, TimeUnit.MILLISECONDS);
+    } catch (Exception e) {
+      Assert.fail("Rst stream error should be retried");
+    }
+  }
+
   private RetryingMutateRowsOperation createOperation(MutateRowsRequest request) {
     return new RetryingMutateRowsOperation(
         RETRY_OPTIONS,
