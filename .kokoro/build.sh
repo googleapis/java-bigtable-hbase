@@ -56,7 +56,6 @@ integration)
     ;;
 integration-migration)
    apt update && apt -y install google-cloud-sdk-bigtable-emulator
-   export MAVEN_OPTS="-Xmx2048m ${MAVEN_OPTS}"
   ./hbase-migration-tools/mirroring-client/run_mirroring_integration_tests.sh
   RETURN_CODE=$?
   ;;
