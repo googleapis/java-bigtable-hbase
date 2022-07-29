@@ -89,7 +89,7 @@ public class TestRetryRstStream {
     }
     Assert.assertEquals(2, attemptCount.get());
   }
-  
+
   @After
   public void close() {
     server.shutdown();
