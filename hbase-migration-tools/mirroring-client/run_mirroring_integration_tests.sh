@@ -13,7 +13,8 @@ targets=(
 )
 
 # install all of the dependencies into the local repository
-mvn clean install -DskipTests -am -pl $( IFS=, ; echo "${targets[*]}" )
+echo "Installing all artifacts into local maven repository"
+mvn clean install -DskipTests -am -pl $( IFS=, ; echo "${targets[*]}" ),bigtable-test/bigtable-emulator-maven-plugin,bigtable-test/bigtable-build-helper
 
 # Then run integration tests on the leaves
 cmd="mvn verify -pl $( IFS=, ; echo "${targets[*]}" ) -Penable-integration-tests,"
@@ -26,5 +27,7 @@ bigtableToHbaseTargets=BigtableToHBaseLocalIntegrationTests,BigtableToHBase12Loc
 # We are not able to test every case with just HBase -> Bigtable mirroring because we emulate server-side errors by injecting
 # custom HRegion implementation into HBase MiniCluster. Bigtable -> HBase mirroring run is required to verify if errors from
 # secondary database are handled correctly.
+echo "Running hbaseToBigtableTargets"
 ${cmd}${hbaseToBigtableTargets}
+echo "Running bigtableToHbaseTargets"
 ${cmd}${bigtableToHbaseTargets}
