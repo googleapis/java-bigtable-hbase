@@ -89,18 +89,7 @@ public class TestRetryRstStream {
     }
     Assert.assertEquals(2, attemptCount.get());
   }
-
-  @Test
-  public void testCheckAndMutateIsNotRetried() {
-    try {
-      session.getDataClient().checkAndMutateRow(CheckAndMutateRowRequest.getDefaultInstance());
-      Assert.fail("rst errors should not be retried for check and mutate");
-    } catch (Exception e) {
-      Assert.assertTrue(e.getMessage().contains("Received Rst Stream"));
-    }
-    Assert.assertEquals(1, attemptCount.get());
-  }
-
+  
   @After
   public void close() {
     server.shutdown();
