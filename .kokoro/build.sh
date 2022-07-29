@@ -55,6 +55,7 @@ integration)
     RETURN_CODE=$?
     ;;
 integration-migration)
+   gcloud components install --quiet bigtable
   ./hbase-migration-tools/mirroring-client/run_mirroring_integration_tests.sh
   RETURN_CODE=$?
   ;;
