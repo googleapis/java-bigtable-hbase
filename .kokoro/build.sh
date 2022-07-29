@@ -51,10 +51,13 @@ javadoc)
     ;;
 integration)
 # clean needed when running more than one IT profile
-    mvn --no-transfer-progress clean verify -B ${INTEGRATION_TEST_ARGS} -Penable-integration-tests -DtrimStackTrace=false -Dclirr.skip=true -fae && \
-      ./hbase-migration-tools/mirroring-client/run_mirroring_integration_tests.sh
+    mvn --no-transfer-progress clean verify -B ${INTEGRATION_TEST_ARGS} -Penable-integration-tests -DtrimStackTrace=false -Dclirr.skip=true -fae
     RETURN_CODE=$?
     ;;
+integration-migration)
+  ./hbase-migration-tools/mirroring-client/run_mirroring_integration_tests.sh
+  RETURN_CODE=$?
+  ;;
 clirr)
     mvn --no-transfer-progress install -B -Denforcer.skip=true clirr:check
     RETURN_CODE=$?
