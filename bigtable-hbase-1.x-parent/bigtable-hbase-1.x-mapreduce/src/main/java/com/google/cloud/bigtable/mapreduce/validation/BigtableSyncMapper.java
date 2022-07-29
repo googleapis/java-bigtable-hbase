@@ -28,10 +28,13 @@ import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.ClusterConnection;
 import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.BigtableSyncTableAccessor;
 import org.apache.hadoop.hbase.mapreduce.SyncTable.SyncMapper;
@@ -51,36 +54,52 @@ public class BigtableSyncMapper extends SyncMapper {
     Configuration conf = context.getConfiguration();
     conf.unset(ClusterConnection.HBASE_CLIENT_CONNECTION_IMPL);
 
-    // since both source/target require establishing a connection, set the source as the target or
-    // target as source if not set and connecting with bigtable
-    String targetZkClusterConf = BigtableSyncTableAccessor.getTargetZkClusterConf(conf);
-    String sourceZkClusterConf = BigtableSyncTableAccessor.getSourceZkClusterConf(conf);
-    if (null == targetZkClusterConf && null != sourceZkClusterConf) {
-      BigtableSyncTableAccessor.setTargetZkClusterConf(conf, sourceZkClusterConf);
-      LOG.info(
-          "target conn temporarily set as source for initialization only: " + sourceZkClusterConf);
-    }
+    // required setup for SyncMapper with Bigtable as source or target
+    setupForParentSyncMapper(context);
 
-    if (null == sourceZkClusterConf && null != targetZkClusterConf) {
-      BigtableSyncTableAccessor.setSourceZkClusterConf(conf, targetZkClusterConf);
-      LOG.info(
-          "source conn temporarily set as target for initialization only: " + targetZkClusterConf);
-    }
-
-    // SyncTable initializes map task configuration and connections with source and target. A valid
-    // source and target are required for initialization. The connection is not used in the setup
-    // and only required for initialization.
-    super.setup(context);
-
-    // establish target connection to bigtable
+    // override existing target connection and establish connection to bigtable
     if (!conf.onlyKeyExists(TARGET_BT_PROJECTID_CONF_KEY)) {
       createBigtableTargetConnection(conf);
     }
 
-    // establish source connection to bigtable
+    // override existing source connection and establish connection to bigtable
     if (!conf.onlyKeyExists(SOURCE_BT_PROJECTID_CONF_KEY)) {
       createBigtableSourceConnection(conf);
     }
+  }
+
+  /**
+   * Method that prepares configuration for SyncTable.SyncMapper.super(context). SyncTable
+   * initializes map task configuration and connections with source and target. A valid source and
+   * target are required for initialization and a temporary connection is established if Bigtable is
+   * configured as a source or as a target. The connection is not used in the setup and only
+   * required for initialization.
+   *
+   * @param context
+   */
+  private void setupForParentSyncMapper(Context context) throws IOException {
+    Configuration conf = context.getConfiguration();
+
+    // since both source/target require establishing a connection in super.setup(), set the source
+    // as the target or target as source to mock a connection if bigtable is configured at either side
+    // of the sync.
+    String targetZkClusterConf = conf.get(BigtableSyncTableAccessor.getTargetZkClusterConfKey());
+    String sourceZkClusterConf = conf.get(BigtableSyncTableAccessor.getSourceZkClusterConfKey());
+    if (null == targetZkClusterConf && null != sourceZkClusterConf) {
+      conf.set(BigtableSyncTableAccessor.getTargetZkClusterConfKey(), sourceZkClusterConf);
+      LOG.info(
+          "target connection temporarily set as source for initialization only: "
+              + sourceZkClusterConf);
+    }
+
+    if (null == sourceZkClusterConf && null != targetZkClusterConf) {
+      conf.set(BigtableSyncTableAccessor.getSourceZkClusterConfKey(), targetZkClusterConf);
+      LOG.info(
+          "source connection temporarily set as target for initialization only: "
+              + targetZkClusterConf);
+    }
+
+    super.setup(context);
   }
 
   /**
@@ -102,8 +121,13 @@ public class BigtableSyncMapper extends SyncMapper {
             SOURCE_BT_INSTANCE_CONF_KEY,
             SOURCE_BT_APP_PROFILE_CONF_KEY,
             "source");
-    Connection srcConn = BigtableSyncTableAccessor.setSourceConnection(this, bigtableConf);
-    BigtableSyncTableAccessor.setSourceTable(this, srcConn, bigtableConf);
+    Connection srcConn =
+        BigtableSyncTableAccessor.setSourceConnection(
+            this, ConnectionFactory.createConnection(bigtableConf));
+    TableName tableName =
+        TableName.valueOf(bigtableConf.get(BigtableSyncTableAccessor.getSourceTableConfKey()));
+    Table table = srcConn.getTable(tableName);
+    BigtableSyncTableAccessor.setSourceTable(this, table);
   }
 
   /**
@@ -125,8 +149,13 @@ public class BigtableSyncMapper extends SyncMapper {
             TARGET_BT_INSTANCE_CONF_KEY,
             TARGET_BT_APP_PROFILE_CONF_KEY,
             "target");
-    Connection targetConn = BigtableSyncTableAccessor.setTargetConnection(this, bigtableConf);
-    BigtableSyncTableAccessor.setTargetTable(this, targetConn, bigtableConf);
+    Connection targetConn =
+        BigtableSyncTableAccessor.setTargetConnection(
+            this, ConnectionFactory.createConnection(bigtableConf));
+    TableName tableName =
+        TableName.valueOf(bigtableConf.get(BigtableSyncTableAccessor.getTargetTableConfKey()));
+    Table table = targetConn.getTable(tableName);
+    BigtableSyncTableAccessor.setTargetTable(this, table);
   }
 
   /**
@@ -164,7 +193,6 @@ public class BigtableSyncMapper extends SyncMapper {
       String sourceOrTarget) {
     Configuration bigtableConf = new Configuration(conf);
 
-    bigtableConf.unset(ClusterConnection.HBASE_CLIENT_CONNECTION_IMPL);
     BigtableConfiguration.configure(
         bigtableConf,
         bigtableConf.get(projectIdKey),

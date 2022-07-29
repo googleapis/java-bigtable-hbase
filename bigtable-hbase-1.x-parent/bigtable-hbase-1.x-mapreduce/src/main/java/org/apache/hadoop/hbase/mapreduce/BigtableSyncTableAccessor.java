@@ -17,15 +17,15 @@ package org.apache.hadoop.hbase.mapreduce;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import java.io.IOException;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.mapreduce.SyncTable.SyncMapper;
 
-/** A helper class to access package private fields of SyncTable. */
+/**
+ * A helper class to provide access to package protected variables of {@link
+ * org.apache.hadoop.hbase.mapreduce.SyncTable}.
+ */
 @InternalApi
 public class BigtableSyncTableAccessor {
 
@@ -108,43 +108,37 @@ public class BigtableSyncTableAccessor {
     return mapper.targetTable;
   }
 
-  public static String getTargetZkClusterConf(Configuration conf) {
-    return conf.get(SyncTable.TARGET_ZK_CLUSTER_CONF_KEY);
+  public static String getTargetZkClusterConfKey() {
+    return SyncTable.TARGET_ZK_CLUSTER_CONF_KEY;
   }
 
-  public static String getSourceZkClusterConf(Configuration conf) {
-    return conf.get(SyncTable.SOURCE_ZK_CLUSTER_CONF_KEY);
+  public static String getSourceZkClusterConfKey() {
+    return SyncTable.SOURCE_ZK_CLUSTER_CONF_KEY;
   }
 
-  public static void setTargetZkClusterConf(Configuration conf, String targetZkClusterConf) {
-    conf.set(SyncTable.TARGET_ZK_CLUSTER_CONF_KEY, targetZkClusterConf);
+  public static String getSourceTableConfKey() {
+    return SyncTable.SOURCE_TABLE_CONF_KEY;
   }
 
-  public static void setSourceZkClusterConf(Configuration conf, String sourceZkClusterConf) {
-    conf.set(SyncTable.SOURCE_ZK_CLUSTER_CONF_KEY, sourceZkClusterConf);
+  public static String getTargetTableConfKey() {
+    return SyncTable.TARGET_TABLE_CONF_KEY;
   }
 
-  public static Connection setSourceConnection(SyncMapper mapper, Configuration conf)
-      throws IOException {
-    mapper.sourceConnection = ConnectionFactory.createConnection(conf);
+  public static Connection setSourceConnection(SyncMapper mapper, Connection sourceConn) {
+    mapper.sourceConnection = sourceConn;
     return mapper.sourceConnection;
   }
 
-  public static void setSourceTable(SyncMapper mapper, Connection connection, Configuration conf)
-      throws IOException {
-    mapper.sourceTable =
-        connection.getTable(TableName.valueOf(conf.get(SyncTable.SOURCE_TABLE_CONF_KEY)));
+  public static void setSourceTable(SyncMapper mapper, Table sourceTable) {
+    mapper.sourceTable = sourceTable;
   }
 
-  public static Connection setTargetConnection(SyncMapper mapper, Configuration conf)
-      throws IOException {
-    mapper.targetConnection = ConnectionFactory.createConnection(conf);
+  public static Connection setTargetConnection(SyncMapper mapper, Connection targetConn) {
+    mapper.targetConnection = targetConn;
     return mapper.targetConnection;
   }
 
-  public static void setTargetTable(SyncMapper mapper, Connection connection, Configuration conf)
-      throws IOException {
-    mapper.targetTable =
-        connection.getTable(TableName.valueOf(conf.get(SyncTable.TARGET_TABLE_CONF_KEY)));
+  public static void setTargetTable(SyncMapper mapper, Table targetTable) {
+    mapper.targetTable = targetTable;
   }
 }
