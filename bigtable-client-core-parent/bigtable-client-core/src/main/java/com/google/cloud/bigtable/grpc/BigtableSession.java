@@ -36,6 +36,7 @@ import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.grpc.async.BulkMutation;
 import com.google.cloud.bigtable.grpc.async.BulkMutationWrapper;
 import com.google.cloud.bigtable.grpc.async.BulkRead;
+import com.google.cloud.bigtable.grpc.async.ConvertExceptionInterceptor;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiter;
 import com.google.cloud.bigtable.grpc.async.ResourceLimiterStats;
 import com.google.cloud.bigtable.grpc.async.ThrottlingClientInterceptor;
@@ -339,6 +340,7 @@ public class BigtableSession implements Closeable {
     if (options.getInstanceName() != null) {
       interceptors.add(
           new GoogleCloudResourcePrefixInterceptor(options.getInstanceName().toString()));
+      interceptors.add(new ConvertExceptionInterceptor());
     }
 
     interceptors.add(createGaxHeaderInterceptor());

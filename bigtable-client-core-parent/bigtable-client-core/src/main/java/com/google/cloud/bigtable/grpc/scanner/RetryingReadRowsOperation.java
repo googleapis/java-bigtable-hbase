@@ -243,13 +243,6 @@ public class RetryingReadRowsOperation
     return true;
   }
 
-  /** Read rows requests are retryable if the status is a rst stream error. */
-  @Override
-  protected boolean isStatusRetryable(Status status) {
-    return retryOptions.isRetryable(status.getCode())
-        || AbstractRetryingOperation.isRstStream(status);
-  }
-
   /** {@inheritDoc} */
   @Override
   protected boolean onOK(Metadata trailers) {

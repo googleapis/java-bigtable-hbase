@@ -75,14 +75,6 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
     return prefix + "." + fullMethodName.replace('/', '.');
   }
 
-  public static boolean isRstStream(Status status) {
-    if (status.getCode() == Code.INTERNAL && status.getDescription() != null) {
-      String description = status.getDescription().toLowerCase();
-      return description.contains("rst stream") || description.contains("rst_stream");
-    }
-    return false;
-  }
-
   protected class GrpcFuture<RespT> extends AbstractFuture<RespT> {
     /**
      * This gets called from {@link Future#cancel(boolean)} for cancel(true). If a user explicitly
@@ -214,7 +206,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
         || !isStatusRetryable(status)
         // Unauthenticated is special because the request never made it to
         // to the server, so all requests are retryable
-        || !(isRequestRetryable() || code == Code.UNAUTHENTICATED || code == Code.UNAVAILABLE)) {
+        || !(isRequestRetryable() || code == Code.UNAUTHENTICATED)) {
       LOG.error(
           "Could not complete RPC. Failure #%d, got: %s on channel %s.\nTrailers: %s",
           status.getCause(), failedCount, status, channelId, trailers);
