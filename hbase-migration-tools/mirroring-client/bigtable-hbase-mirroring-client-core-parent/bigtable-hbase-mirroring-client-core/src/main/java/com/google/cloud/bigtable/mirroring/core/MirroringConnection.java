@@ -322,7 +322,7 @@ public class MirroringConnection implements Connection {
       } catch (Exception e) {
         Log.error("Failed to close failedMutationLogger.", e);
       }
-      
+
       exceptions.rethrowIfCaptured();
     }
   }
