@@ -315,6 +315,14 @@ public class MirroringConnection implements Connection {
         exceptions.add(e);
       }
 
+      // Close the failed mutation logger, which will close all the
+      // contained resources (file streams and buffers).
+      try {
+        failedMutationLogger.close();
+      } catch (Exception e) {
+        Log.error("Failed to close failedMutationLogger.", e);
+      }
+      
       exceptions.rethrowIfCaptured();
     }
   }
