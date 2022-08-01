@@ -64,17 +64,11 @@ limitations under the License.
                 </goals>
                 <phase>integration-test</phase>
                 <configuration>
+                  <forkCount>1</forkCount>
                   <includes>
                     <include>**/IntegrationTestsNoKnownGap.java</include>
                   </includes>
                   <redirectTestOutputToFile>true</redirectTestOutputToFile>
-
-                  <!-- Run tests in parallel -->
-                  <parallel>classes</parallel>
-                  <threadCount>4</threadCount>
-
-                  <!-- Fork & set system properties -->
-                  <forkCount>1</forkCount>
                   <reportNameSuffix>bigtable-server</reportNameSuffix>
                   <systemPropertyVariables>
                     <google.bigtable.connection.impl>
