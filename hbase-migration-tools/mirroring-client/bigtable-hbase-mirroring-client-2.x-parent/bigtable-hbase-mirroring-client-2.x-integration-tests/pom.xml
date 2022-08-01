@@ -93,7 +93,6 @@ limitations under the License.
                   <!-- Fork & set system properties -->
                   <forkCount>1</forkCount>
                   <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
-                  <argLine>-Xmx2048m</argLine>
 
                   <!-- Make sure to fail the build when the suite fails to initialize -->
                   <failIfNoTests>true</failIfNoTests>
@@ -162,7 +161,6 @@ limitations under the License.
                   <!-- Fork & set system properties -->
                   <forkCount>1</forkCount>
                   <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
-                  <argLine>-Xmx2048m</argLine>
 
                   <!-- Make sure to fail the build when the suite fails to initialize -->
                   <failIfNoTests>true</failIfNoTests>
