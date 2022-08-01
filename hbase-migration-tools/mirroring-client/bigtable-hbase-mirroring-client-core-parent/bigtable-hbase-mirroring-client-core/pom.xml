@@ -56,7 +56,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.api</groupId>
       <artifactId>api-common</artifactId>
-      <version>1.10.4</version>
+      <version>1.10.6</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
