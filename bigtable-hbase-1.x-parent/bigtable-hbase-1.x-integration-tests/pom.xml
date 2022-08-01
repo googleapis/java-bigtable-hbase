@@ -35,7 +35,7 @@ limitations under the License.
     <google.bigtable.connection.impl>
       com.google.cloud.bigtable.hbase1_x.BigtableConnection
     </google.bigtable.connection.impl>
-    <test.timeout>1800</test.timeout>
+    <test.timeout>2700</test.timeout>
   </properties>
 
   <profiles>
