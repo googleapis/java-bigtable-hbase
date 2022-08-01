@@ -206,7 +206,7 @@ public abstract class AbstractRetryingOperation<RequestT, ResponseT, ResultT>
         || !isStatusRetryable(status)
         // Unauthenticated is special because the request never made it to
         // to the server, so all requests are retryable
-        || !(isRequestRetryable() || code == Code.UNAUTHENTICATED || code == Code.UNAVAILABLE)) {
+        || !(isRequestRetryable() || code == Code.UNAUTHENTICATED)) {
       LOG.error(
           "Could not complete RPC. Failure #%d, got: %s on channel %s.\nTrailers: %s",
           status.getCause(), failedCount, status, channelId, trailers);
