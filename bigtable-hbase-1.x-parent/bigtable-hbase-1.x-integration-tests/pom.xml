@@ -68,7 +68,6 @@ limitations under the License.
                   <includes>
                     <include>**/IntegrationTestsNoKnownGap.java</include>
                   </includes>
-                  <redirectTestOutputToFile>true</redirectTestOutputToFile>
                   <reportNameSuffix>bigtable-server</reportNameSuffix>
                   <systemPropertyVariables>
                     <google.bigtable.connection.impl>
