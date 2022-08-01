@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.27.1](https://github.com/googleapis/java-bigtable-hbase/compare/v1.27.0...v1.27.1) (2022-08-01)
+
+
+### Bug Fixes
+
+* Add an exception interceptor to convert RST_STREAM errors to unavailable ([#3701](https://github.com/googleapis/java-bigtable-hbase/issues/3701)) ([8fadf5e](https://github.com/googleapis/java-bigtable-hbase/commit/8fadf5e957e981b39f6f7930597af6260fbdb59f))
+
 ## [1.27.0](https://github.com/googleapis/java-bigtable-hbase/compare/v1.26.3...v1.27.0) (2022-07-08)
 
 
