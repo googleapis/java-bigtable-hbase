@@ -3,3 +3,4 @@
 
 bigtable-client-parent:2.5.0:2.5.1-SNAPSHOT
 bigtable-hbase-replication:1.4.0:1.4.1-SNAPSHOT
+bigtable-hbase-mirroring:0.0.0:0.0.1-SNAPSHOT

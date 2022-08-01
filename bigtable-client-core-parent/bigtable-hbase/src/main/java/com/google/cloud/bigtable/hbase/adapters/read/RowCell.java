@@ -24,6 +24,7 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.Type;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.ClassSize;
 
 /**
  * RowCell is an alternative implementation of {@link KeyValue}. Unlike KeyValue, RowCell stores
@@ -276,5 +277,23 @@ public class RowCell implements Cell {
         + (KeyValue.humanReadableTimestamp(timestamp))
         + "/"
         + Type.codeToType(getTypeByte());
+  }
+
+  public long heapSize() {
+    long labelSize = ClassSize.ARRAYLIST;
+    for (String label : labels) {
+      labelSize += ClassSize.STRING + ClassSize.align(label.length());
+    }
+    return ClassSize.align(rowArray.length)
+        + ClassSize.ARRAY
+        + ClassSize.align(familyArray.length)
+        + ClassSize.ARRAY
+        + ClassSize.align(qualifierArray.length)
+        + ClassSize.ARRAY
+        + 8 // timestamp
+        + ClassSize.align(valueArray.length)
+        + ClassSize.ARRAY
+        + labelSize
+        + ClassSize.OBJECT;
   }
 }

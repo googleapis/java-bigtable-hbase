@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.google.cloud.bigtable</groupId>
+    <artifactId>hbase-migration-tools</artifactId>
+    <version>2.5.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+  </parent>
+
+  <artifactId>mirroring-client</artifactId>
+  <packaging>pom</packaging>
+  <version>0.0.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+
+  <properties>
+    <shading-prefix>com.google.bigtable.hbase.mirroring.shaded</shading-prefix>
+    <shading-prefix-path>com/google/bigtable/hbase/mirroring/shaded</shading-prefix-path>
+  </properties>
+
+  <modules>
+    <module>bigtable-hbase-mirroring-client-core-parent</module>
+    <module>bigtable-hbase-mirroring-client-1.x-parent</module>
+    <module>bigtable-hbase-mirroring-client-2.x-parent</module>
+  </modules>
+
+</project>
