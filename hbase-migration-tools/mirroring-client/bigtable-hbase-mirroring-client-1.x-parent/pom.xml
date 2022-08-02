@@ -43,9 +43,9 @@ limitations under the License.
 
   <modules>
     <module>bigtable-hbase-mirroring-client-1.x</module>
+    <module>bigtable-hbase-mirroring-client-1.x-integration-tests</module>
     <module>bigtable-hbase-mirroring-client-1.x-shaded</module>
     <module>bigtable-hbase-mirroring-client-1.x-hadoop</module>
-    <module>bigtable-hbase-mirroring-client-1.x-integration-tests</module>
   </modules>
 
   <build>
