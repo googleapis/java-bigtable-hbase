@@ -172,17 +172,17 @@ public class BulkOptions implements Serializable, Cloneable {
      * Enable an experimental feature that will throttle requests from {@link BulkMutation} if
      * request latency surpasses a latency threshold. The default is {@link
      * BulkOptions#BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT}.
-     *
-     * @deprecated This will be removed in the future
      */
-    @Deprecated
     public Builder enableBulkMutationThrottling() {
       options.enableBulkMutationThrottling = true;
       return this;
     }
 
-    /** @deprecated This will be removed in the future */
-    @Deprecated
+    /**
+     * Configure the threshold latency for enabling throttling. When enabled via {@link
+     * #enableBulkMutationThrottling}, the client will reduce the amount of concurrency when average
+     * latency is higher than the configured target.
+     */
     public Builder setBulkMutationRpcTargetMs(int bulkMutationRpcTargetMs) {
       options.bulkMutationRpcTargetMs = bulkMutationRpcTargetMs;
       return this;
