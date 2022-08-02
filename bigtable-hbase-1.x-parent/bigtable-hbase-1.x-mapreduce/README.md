@@ -189,24 +189,24 @@ environment variables for running the subsequent steps.
     GCP environment properties 
     ```bash
     # set env properties
-    export PROJECT_ID=<PROJECT_ID>
-    export ZONE=<ZONE>
-    export REGION=${ZONE%-*}
-    export DATAPROC_CLUSTER=<DATAPROC_CLUSTER_NAME>
+    PROJECT_ID=<PROJECT_ID>
+    ZONE=<ZONE>
+    REGION=${ZONE%-*}
+    DATAPROC_CLUSTER=<DATAPROC_CLUSTER_NAME>
     
     # bigtable table properties
-    export CBT_INSTANCE=<BIGTABLE_INSTANCE>
-    export CBT_CLUSTER=<BIGTABLE_CLUSTER>
-    export CBT_TABLENAME=<TABLENAME>
-    export CBT_COLUMN_FAMILY=<CF1[,CF]>
+    CBT_INSTANCE=<BIGTABLE_INSTANCE>
+    CBT_CLUSTER=<BIGTABLE_CLUSTER>
+    CBT_TABLENAME=<TABLENAME>
+    CBT_COLUMN_FAMILY=<CF1[,CF]>
     
     # dataproc job jar
-    export JOB_JAR=bigtable-hbase-1.x-mapreduce-2.5.0-shaded-byo-hadoop.jar
+    JOB_JAR=bigtable-hbase-1.x-mapreduce-2.5.0-shaded-byo-hadoop.jar
     
     # dataproc job args
-    export JOB_ARG_SNAPSHOT_NAME=<SNAPSHOT_NAME>
-    export JOB_ARG_SNAPSHOT_DIR=<SNAPSHOT_DIR>
-    export JOB_ARG_TEMP_DIR=<JOB_TEMP_DIR>
+    JOB_ARG_SNAPSHOT_NAME=<SNAPSHOT_NAME>
+    JOB_ARG_SNAPSHOT_DIR=<SNAPSHOT_DIR>
+    JOB_ARG_TEMP_DIR=<JOB_TEMP_DIR>
     ```
 
 2. [Create a Dataproc Cluster](https://cloud.google.com/dataproc/docs/guides/create-cluster) for executing the import snapshot job.
@@ -300,13 +300,13 @@ setting the properties for the job. For example:
 1. Set the following additional environment variables for running the validation steps.
     ```bash
     # hash-table validation job
-    export HBASE_TABLENAME=<HBASE_TABLENAME>
+    HBASE_TABLENAME=<HBASE_TABLENAME>
     # hbase zookeeper quorum (ie. zk1.example.com:2181)
-    export HBASE_ZK_QUORUM=<ZK_QUORUM>
-    export HASH_OUTPUTDIR=<HASH_OUTPUTDIR>
+    HBASE_ZK_QUORUM=<ZK_QUORUM>
+    HASH_OUTPUTDIR=<HASH_OUTPUTDIR>
 
     # sync-table validation job
-    export HBASE_ZK_QUORUM_FULL=${HBASE_ZK_QUORUM}:/hbase
+    HBASE_ZK_QUORUM_FULL=${HBASE_ZK_QUORUM}:/hbase
     ```
 
 2. Run `hash-table` and compute hashes for ranges on the source table and output 

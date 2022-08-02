@@ -81,8 +81,8 @@ public class BigtableSyncMapper extends SyncMapper {
     Configuration conf = context.getConfiguration();
 
     // since both source/target require establishing a connection in super.setup(), set the source
-    // as the target or target as source to mock a connection if bigtable is configured at either side
-    // of the sync.
+    // as the target or target as source to mock a connection if bigtable is configured at either
+    // side of the sync.
     String targetZkClusterConf = conf.get(BigtableSyncTableAccessor.getTargetZkClusterConfKey());
     String sourceZkClusterConf = conf.get(BigtableSyncTableAccessor.getSourceZkClusterConfKey());
     if (null == targetZkClusterConf && null != sourceZkClusterConf) {
@@ -164,14 +164,14 @@ public class BigtableSyncMapper extends SyncMapper {
    * @param conn
    * @param sourceOrTarget
    */
-  private void closeConnection(Connection conn, String sourceOrTarget) {
+  private void closeConnection(Connection conn, String sourceOrTarget) throws IOException {
     try {
       if (conn != null) {
         conn.close();
       }
     } catch (IOException ioe) {
-      LOG.debug("error closing temporary " + sourceOrTarget + " connection, " + ioe.getMessage());
-      ioe.printStackTrace();
+      LOG.warn("error closing temporary " + sourceOrTarget + " connection, " + ioe.getMessage());
+      throw ioe;
     }
   }
 
