@@ -1,5 +1,31 @@
 # Changelog
 
+## [2.6.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.5.0...v2.6.0) (2022-08-10)
+
+
+### Features
+
+* add mirroring client for migrations ([#3698](https://github.com/googleapis/java-bigtable-hbase/issues/3698)) ([d350c36](https://github.com/googleapis/java-bigtable-hbase/commit/d350c36505ff4b5bcc763a31d6d9e07ee586a1f3))
+* mapreduce hashtable/synctable jobs ([#3688](https://github.com/googleapis/java-bigtable-hbase/issues/3688)) ([cbcb555](https://github.com/googleapis/java-bigtable-hbase/commit/cbcb5553ae491b0bf266925d64ba444ecabdd9ca))
+
+
+### Bug Fixes
+
+* update syntax in readme for dataflow max workers ([#3675](https://github.com/googleapis/java-bigtable-hbase/issues/3675)) ([ded52ad](https://github.com/googleapis/java-bigtable-hbase/commit/ded52ad433631d9f204af29cfc19769ceda8b463))
+
+
+### Dependencies
+
+* update bigtable-client-core.version to v1.27.0 ([#3680](https://github.com/googleapis/java-bigtable-hbase/issues/3680)) ([46d6bf3](https://github.com/googleapis/java-bigtable-hbase/commit/46d6bf31ba3c1cf004c9ba4ff8ac7d044ed33cb3))
+* update bigtable-client-core.version to v1.27.1 ([#3712](https://github.com/googleapis/java-bigtable-hbase/issues/3712)) ([793c78c](https://github.com/googleapis/java-bigtable-hbase/commit/793c78ca9e51417ef446a232cee6ddf9450e66c2))
+* update dependency com.google.api:api-common to v1.10.6 ([#3713](https://github.com/googleapis/java-bigtable-hbase/issues/3713)) ([887e112](https://github.com/googleapis/java-bigtable-hbase/commit/887e1129c8ddd826e5067369c1db3fe09ab474ee))
+* update dependency com.google.cloud.bigtable:bigtable-client-core to v1.27.0 ([#3681](https://github.com/googleapis/java-bigtable-hbase/issues/3681)) ([eae4d4b](https://github.com/googleapis/java-bigtable-hbase/commit/eae4d4baba25360a038fa5b4a2fa387ff1cd5429))
+* update dependency com.google.cloud.bigtable:bigtable-client-core to v1.27.1 ([#3715](https://github.com/googleapis/java-bigtable-hbase/issues/3715)) ([7c2366f](https://github.com/googleapis/java-bigtable-hbase/commit/7c2366f3e6c369a76d43e2ce0798019dd4735a94))
+* update dependency io.prometheus:simpleclient_httpserver to v0.16.0 ([#3723](https://github.com/googleapis/java-bigtable-hbase/issues/3723)) ([6522923](https://github.com/googleapis/java-bigtable-hbase/commit/6522923be0f08ca9b8cdc20818a2f2c841d16152))
+* update dependency net.bytebuddy:byte-buddy to v1.12.13 ([#3716](https://github.com/googleapis/java-bigtable-hbase/issues/3716)) ([b8acf1f](https://github.com/googleapis/java-bigtable-hbase/commit/b8acf1f739bbc9bd229fccb41b8c48c1e82672ab))
+* update hbase1.version to v1.7.2 ([#3736](https://github.com/googleapis/java-bigtable-hbase/issues/3736)) ([ad2967a](https://github.com/googleapis/java-bigtable-hbase/commit/ad2967a8f54644b8d998dd21e20a432f7a636e52))
+* upgrade jackson-databind to 2.13.3 ([#3734](https://github.com/googleapis/java-bigtable-hbase/issues/3734)) ([f66be5d](https://github.com/googleapis/java-bigtable-hbase/commit/f66be5db9ce0412f8ac3b4e13754d57ba79a9ec1))
+
 ## [2.5.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.4.0...v2.5.0) (2022-07-13)
 
 
