@@ -30,7 +30,7 @@
     <dependency>
       <groupId>com.googlecode.protobuf-java-format</groupId>
       <artifactId>protobuf-java-format</artifactId>
-      <version>0.1.0</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+      <version>1.4</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
