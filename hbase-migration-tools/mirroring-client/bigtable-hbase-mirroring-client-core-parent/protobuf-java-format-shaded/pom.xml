@@ -54,6 +54,7 @@
                   <artifact>*:*</artifact>
                   <excludes>
                     <exclude>META-INF/MANIFEST.MF</exclude>
+                    <exclude>com/google/cloud/bigtable/mirroring/protobuf_java_format_shaded/MavenPlaceholderProtobufJavaFormatShaded.class</exclude>
                   </excludes>
                 </filter>
               </filters>
