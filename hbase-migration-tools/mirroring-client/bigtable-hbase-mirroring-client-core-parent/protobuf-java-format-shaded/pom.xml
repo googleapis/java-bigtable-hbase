@@ -11,7 +11,7 @@
   </parent>
 
   <artifactId>protobuf-java-format-shaded</artifactId>
-  <version>1.4</version>
+  <version>0.1.0</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
 
   <description>
     This is a wrapper around `com.googlecode.protobuf-java-format:protobuf-java-format` that rewrites the bytecode to use `org.apache.hadoop.hbase.shaded.com.google.protobuf` instead of plain
@@ -54,6 +54,7 @@
                   <artifact>*:*</artifact>
                   <excludes>
                     <exclude>META-INF/MANIFEST.MF</exclude>
+                    <exclude>com/google/cloud/bigtable/mirroring/protobuf_java_format_shaded/MavenPlaceholderProtobufJavaFormatShaded.class</exclude>
                   </excludes>
                 </filter>
               </filters>
