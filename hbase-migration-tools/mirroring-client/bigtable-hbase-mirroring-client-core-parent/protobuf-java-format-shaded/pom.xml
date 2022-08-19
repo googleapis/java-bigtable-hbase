@@ -84,6 +84,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>clirr-maven-plugin</artifactId>
+        <!-- this is an internal artifact, so we do not need to run clirr -->
         <configuration>
           <skip>true</skip>
         </configuration>
