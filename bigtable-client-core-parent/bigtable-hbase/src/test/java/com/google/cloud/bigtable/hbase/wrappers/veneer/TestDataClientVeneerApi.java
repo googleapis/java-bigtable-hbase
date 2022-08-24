@@ -225,7 +225,6 @@ public class TestDataClientVeneerApi {
         .call(Mockito.eq(query), Mockito.any(GrpcCallContext.class));
   }
 
-
   @Test
   public void testReadRowsCancel() throws IOException {
 
@@ -238,11 +237,9 @@ public class TestDataClientVeneerApi {
         .thenReturn(serverStream);
 
     Iterator<Result> mockIter = Mockito.mock(Iterator.class);
-    when(serverStream.iterator())
-        .thenReturn(mockIter);
+    when(serverStream.iterator()).thenReturn(mockIter);
     when(mockIter.hasNext()).thenReturn(true);
     when(mockIter.next()).thenReturn(EXPECTED_RESULT);
-
 
     ResultScanner resultScanner = dataClientWrapper.readRows(query);
     assertResult(EXPECTED_RESULT, resultScanner.next());
