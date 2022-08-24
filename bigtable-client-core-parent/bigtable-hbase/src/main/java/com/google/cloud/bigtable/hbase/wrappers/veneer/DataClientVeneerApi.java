@@ -254,9 +254,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
     @Override
     public void close() {
-      if (iterator.hasNext()) {
-        serverStream.cancel();
-      }
+      serverStream.cancel();
     }
 
     public boolean renewLease() {

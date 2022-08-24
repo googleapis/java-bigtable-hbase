@@ -48,6 +48,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Result;
@@ -222,6 +223,37 @@ public class TestDataClientVeneerApi {
     verify(serverStream, times(2)).iterator();
     verify(mockStreamingCallable, times(2))
         .call(Mockito.eq(query), Mockito.any(GrpcCallContext.class));
+  }
+
+
+  @Test
+  public void testReadRowsCancel() throws IOException {
+
+    Query query = Query.create(TABLE_ID).rowKey(ROW_KEY);
+    when(mockDataClient.readRowsCallable(Mockito.<RowResultAdapter>any()))
+        .thenReturn(mockStreamingCallable)
+        .thenReturn(mockStreamingCallable);
+
+    when(mockStreamingCallable.call(Mockito.eq(query), Mockito.any(GrpcCallContext.class)))
+        .thenReturn(serverStream);
+
+    Iterator<Result> mockIter = Mockito.mock(Iterator.class);
+    when(serverStream.iterator())
+        .thenReturn(mockIter);
+    when(mockIter.hasNext()).thenReturn(true);
+    when(mockIter.next()).thenReturn(EXPECTED_RESULT);
+
+
+    ResultScanner resultScanner = dataClientWrapper.readRows(query);
+    assertResult(EXPECTED_RESULT, resultScanner.next());
+
+    doNothing().when(serverStream).cancel();
+    resultScanner.close();
+
+    // make sure that the scanner doesn't iteract with the iterator on close
+    verify(serverStream).cancel();
+    verify(mockIter, times(1)).hasNext();
+    verify(mockIter, times(1)).next();
   }
 
   @Test
