@@ -160,6 +160,8 @@ limitations under the License.
           <groupId>org.apache.hbase</groupId>
           <artifactId>hbase-shaded-client</artifactId>
         </exclusion>
+
+        <!-- google-cloud-bigtable pulls in a newer version of this, but we want to match beam's version-->
         <exclusion>
           <groupId>org.conscrypt</groupId>
           <artifactId>conscrypt-openjdk-uber</artifactId>

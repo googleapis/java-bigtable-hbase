@@ -15,9 +15,9 @@
  */
 package com.google.cloud.bigtable.mapreduce.hbasesnapshots;
 
-import com.google.cloud.bigtable.emulator.v2.BigtableEmulatorRule;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.mapreduce.BigtableEmulatorRule;
 import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.util.Arrays;
@@ -60,7 +60,7 @@ public class EndToEndIT {
 
   private static final HBaseTestingUtility HB_TEST_UTIL = new HBaseTestingUtility();
 
-  @Rule public final BigtableEmulatorRule bigtableEmulator = BigtableEmulatorRule.create();
+  @Rule public final BigtableEmulatorRule bigtableEmulator = new BigtableEmulatorRule();
 
   // Clients that will be connected to the emulator
   private Connection bigtableConn;

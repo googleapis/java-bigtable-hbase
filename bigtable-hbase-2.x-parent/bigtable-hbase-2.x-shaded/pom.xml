@@ -69,6 +69,14 @@ limitations under the License.
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-2.x</artifactId>
       <version>2.6.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <exclusions>
+        <exclusion>
+          <!-- this currently conflicts with opencensus,
+          google-cloud-monitoring is brought in as a compile dependency-->
+          <groupId>com.google.cloud</groupId>
+          <artifactId>google-cloud-monitoring</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
@@ -88,12 +96,6 @@ limitations under the License.
     <dependency>
       <groupId>io.opencensus</groupId>
       <artifactId>opencensus-exporter-stats-stackdriver</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.cloud</groupId>
-          <artifactId>google-cloud-monitoring</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.opencensus</groupId>

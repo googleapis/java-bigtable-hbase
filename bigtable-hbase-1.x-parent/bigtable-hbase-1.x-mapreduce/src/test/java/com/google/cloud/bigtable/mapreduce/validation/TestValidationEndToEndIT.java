@@ -17,11 +17,12 @@ package com.google.cloud.bigtable.mapreduce.validation;
 
 import static org.junit.Assert.assertEquals;
 
-import com.google.cloud.bigtable.emulator.v2.BigtableEmulatorRule;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import java.io.IOException;
 import java.util.Arrays;
+
+import com.google.cloud.bigtable.mapreduce.BigtableEmulatorRule;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -59,7 +60,7 @@ public class TestValidationEndToEndIT {
   private static final HBaseTestingUtility HB_TEST_UTIL = new HBaseTestingUtility();
 
   @ClassRule
-  public static final BigtableEmulatorRule bigtableEmulator = BigtableEmulatorRule.create();
+  public static final BigtableEmulatorRule bigtableEmulator = new BigtableEmulatorRule();
 
   // Clients that will be connected to the emulator
   private static Connection bigtableConn;
