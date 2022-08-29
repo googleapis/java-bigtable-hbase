@@ -39,6 +39,15 @@
             <groupId>io.grpc</groupId>
             <artifactId>grpc-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-bigtable-emulator-core</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

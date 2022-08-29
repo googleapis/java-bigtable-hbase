@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration;
 import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
+import com.google.cloud.bigtable.test.helper.VeneerEmulatorRule;
 import java.io.IOException;
 import java.util.UUID;
 import org.apache.hadoop.conf.Configuration;
@@ -56,7 +57,7 @@ public class HbaseToCloudBigtableReplicationEndpointDryRunTest {
   private static HBaseTestingUtility hbaseTestingUtil = new HBaseTestingUtility();
   private static ReplicationAdmin replicationAdmin;
 
-  @ClassRule public static final BigtableEmulatorRule bigtableEmulator = new BigtableEmulatorRule();
+  @ClassRule public static final VeneerEmulatorRule bigtableEmulator = new VeneerEmulatorRule();
 
   private static Connection cbtConnection;
   private static Connection hbaseConnection;
