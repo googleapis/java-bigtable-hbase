@@ -21,7 +21,6 @@ import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.FILTER
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.ROW_KEY;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.assertEquals;
 
-import com.google.cloud.bigtable.emulator.v2.BigtableEmulatorRule;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
 import java.io.IOException;
@@ -111,8 +110,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
   private static HBaseTestingUtility hbaseTestingUtil = new HBaseTestingUtility();
   private static ReplicationAdmin replicationAdmin;
 
-  @ClassRule
-  public static final BigtableEmulatorRule bigtableEmulator = BigtableEmulatorRule.create();
+  @ClassRule public static final BigtableEmulatorRule bigtableEmulator = new BigtableEmulatorRule();
 
   private static Connection cbtConnection;
   private static Connection hbaseConnection;

@@ -19,7 +19,6 @@ package com.google.cloud.bigtable.hbase2_x.replication;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.ENABLE_DRY_RUN_MODE_KEY;
 import static org.junit.Assert.assertFalse;
 
-import com.google.cloud.bigtable.emulator.v2.BigtableEmulatorRule;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
 import java.io.IOException;
@@ -57,8 +56,7 @@ public class HbaseToCloudBigtableReplicationEndpointDryRunTest {
   private static HBaseTestingUtility hbaseTestingUtil = new HBaseTestingUtility();
   private static ReplicationAdmin replicationAdmin;
 
-  @ClassRule
-  public static final BigtableEmulatorRule bigtableEmulator = BigtableEmulatorRule.create();
+  @ClassRule public static final BigtableEmulatorRule bigtableEmulator = new BigtableEmulatorRule();
 
   private static Connection cbtConnection;
   private static Connection hbaseConnection;

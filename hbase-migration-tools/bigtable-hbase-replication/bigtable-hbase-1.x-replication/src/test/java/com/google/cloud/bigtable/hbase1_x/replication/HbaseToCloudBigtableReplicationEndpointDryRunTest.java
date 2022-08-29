@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.hbase1_x.replication;
 
 import static org.junit.Assert.assertFalse;
 
-import com.google.cloud.bigtable.emulator.v2.BigtableEmulatorRule;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration;
 import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
@@ -57,8 +56,7 @@ public class HbaseToCloudBigtableReplicationEndpointDryRunTest {
   private static HBaseTestingUtility hbaseTestingUtil = new HBaseTestingUtility();
   private static ReplicationAdmin replicationAdmin;
 
-  @ClassRule
-  public static final BigtableEmulatorRule bigtableEmulator = BigtableEmulatorRule.create();
+  @ClassRule public static final BigtableEmulatorRule bigtableEmulator = new BigtableEmulatorRule();
 
   private static Connection cbtConnection;
   private static Connection hbaseConnection;
