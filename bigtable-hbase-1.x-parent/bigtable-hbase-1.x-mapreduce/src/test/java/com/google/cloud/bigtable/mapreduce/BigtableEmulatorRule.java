@@ -19,20 +19,20 @@ import com.google.cloud.bigtable.emulator.core.EmulatorController;
 import org.junit.rules.ExternalResource;
 
 public class BigtableEmulatorRule extends ExternalResource {
-    private EmulatorController emulatorController;
+  private EmulatorController emulatorController;
 
-    @Override
-    protected void before() throws Throwable {
-        emulatorController = EmulatorController.createBundled();
-        emulatorController.start();
-    }
+  @Override
+  protected void before() throws Throwable {
+    emulatorController = EmulatorController.createBundled();
+    emulatorController.start();
+  }
 
-    @Override
-    protected void after() {
-        emulatorController.stop();
-    }
+  @Override
+  protected void after() {
+    emulatorController.stop();
+  }
 
-    public int getPort() {
-        return emulatorController.getPort();
-    }
+  public int getPort() {
+    return emulatorController.getPort();
+  }
 }
