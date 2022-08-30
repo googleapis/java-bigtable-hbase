@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.6.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.6.0...v2.6.1) (2022-08-29)
+
+
+### Bug Fixes
+
+* add maven placeholder to protobuf-java-format-shaded module, match version number to mirroring client ([#3741](https://github.com/googleapis/java-bigtable-hbase/issues/3741)) ([2e39ff5](https://github.com/googleapis/java-bigtable-hbase/commit/2e39ff52bec004b03c6e5db05b9ab23582bcf32e))
+* prevent scanner cancellation from reading an extra row ([#3759](https://github.com/googleapis/java-bigtable-hbase/issues/3759)) ([dc66f9d](https://github.com/googleapis/java-bigtable-hbase/commit/dc66f9d4a6027d4f15d568401d5779e9db8d8e1e))
+
+
+### Dependencies
+
+* update dependency com.google.cloud:google-cloud-bigtable-emulator-core to v0.148.1 ([#3763](https://github.com/googleapis/java-bigtable-hbase/issues/3763)) ([543a8f4](https://github.com/googleapis/java-bigtable-hbase/commit/543a8f444d14d4c8e3d3954b492dc77fe95228dd))
+* update dependency net.bytebuddy:byte-buddy to v1.12.14 ([#3754](https://github.com/googleapis/java-bigtable-hbase/issues/3754)) ([dd75b71](https://github.com/googleapis/java-bigtable-hbase/commit/dd75b7157a8d3990da0b56e5cef27a6b84999ee7))
+* update dependency org.junit.platform:junit-platform-launcher to v1.9.0 ([#3724](https://github.com/googleapis/java-bigtable-hbase/issues/3724)) ([0e83e32](https://github.com/googleapis/java-bigtable-hbase/commit/0e83e3238ef8b61be7cdeac79c5169cd963160ca))
+* upgrade bigtable.version to 2.11.1 ([#3761](https://github.com/googleapis/java-bigtable-hbase/issues/3761)) ([f40496c](https://github.com/googleapis/java-bigtable-hbase/commit/f40496c920025395fb89188d2769f0bfe926a1ed))
+
 ## [2.6.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.5.0...v2.6.0) (2022-08-10)
 
 
