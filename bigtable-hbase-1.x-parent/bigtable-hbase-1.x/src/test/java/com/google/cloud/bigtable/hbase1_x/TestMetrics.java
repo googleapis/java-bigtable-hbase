@@ -271,9 +271,7 @@ public class TestMetrics {
             .get("google-cloud-bigtable.grpc.method.ReadRows.firstResponse.latency")
             .get();
 
-    // adding buffer time to the upper range to allow for a race between the emulator and the client
-    // recording the duration
-    assertThat(firstResponseLatencyMetric).isAtMost(methodInvocationLatency - 20 / 2);
+    assertThat(firstResponseLatencyMetric).isAtMost(methodInvocationLatency);
   }
 
   @Test
