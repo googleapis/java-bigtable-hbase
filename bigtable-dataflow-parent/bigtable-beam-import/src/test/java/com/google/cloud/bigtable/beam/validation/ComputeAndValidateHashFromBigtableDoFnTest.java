@@ -24,7 +24,7 @@ import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.beam.validation.HadoopHashTableSource.RangeHash;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.test.helper.VeneerEmulatorRule;
+import com.google.cloud.bigtable.test.helper.BigtableEmulatorRule;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,7 +78,7 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
   private static final int FIRST_ROW_INDEX = 20;
   private static final int LAST_ROW_INDEX = 31;
 
-  @Rule public final VeneerEmulatorRule bigtableEmulator = new VeneerEmulatorRule();
+  @Rule public final BigtableEmulatorRule bigtableEmulator = new BigtableEmulatorRule();
 
   @Rule public final transient TestPipeline p = TestPipeline.create();
 

@@ -18,7 +18,7 @@ package com.google.cloud.bigtable.test.helper;
 import com.google.cloud.bigtable.emulator.core.EmulatorController;
 import org.junit.rules.ExternalResource;
 
-public class VeneerEmulatorRule extends ExternalResource {
+public class BigtableEmulatorRule extends ExternalResource {
   private EmulatorController emulatorController;
 
   @Override

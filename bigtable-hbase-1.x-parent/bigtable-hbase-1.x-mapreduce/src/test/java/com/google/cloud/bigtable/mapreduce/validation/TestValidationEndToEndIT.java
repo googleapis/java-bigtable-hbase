@@ -19,7 +19,7 @@ import static org.junit.Assert.assertEquals;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.test.helper.VeneerEmulatorRule;
+import com.google.cloud.bigtable.test.helper.BigtableEmulatorRule;
 import java.io.IOException;
 import java.util.Arrays;
 import org.apache.commons.lang.ArrayUtils;
@@ -58,7 +58,7 @@ public class TestValidationEndToEndIT {
 
   private static final HBaseTestingUtility HB_TEST_UTIL = new HBaseTestingUtility();
 
-  @ClassRule public static final VeneerEmulatorRule bigtableEmulator = new VeneerEmulatorRule();
+  @ClassRule public static final BigtableEmulatorRule bigtableEmulator = new BigtableEmulatorRule();
 
   // Clients that will be connected to the emulator
   private static Connection bigtableConn;
