@@ -19,7 +19,7 @@ import static org.junit.Assert.assertEquals;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.mapreduce.BigtableEmulatorRule;
+import com.google.cloud.bigtable.test.helper.BigtableEmulatorRule;
 import java.io.IOException;
 import java.util.Arrays;
 import org.apache.commons.lang.ArrayUtils;

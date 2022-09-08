@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration;
 import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
+import com.google.cloud.bigtable.test.helper.BigtableEmulatorRule;
 import java.io.IOException;
 import java.util.UUID;
 import org.apache.hadoop.conf.Configuration;

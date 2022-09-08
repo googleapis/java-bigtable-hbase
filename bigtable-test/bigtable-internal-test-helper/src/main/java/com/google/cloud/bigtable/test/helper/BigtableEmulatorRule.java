@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.mapreduce;
+package com.google.cloud.bigtable.test.helper;
 
 import com.google.cloud.bigtable.emulator.core.EmulatorController;
 import org.junit.rules.ExternalResource;

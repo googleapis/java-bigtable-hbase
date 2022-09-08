@@ -23,6 +23,7 @@ import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.assert
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
+import com.google.cloud.bigtable.test.helper.BigtableEmulatorRule;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;

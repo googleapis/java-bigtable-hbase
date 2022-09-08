@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.mapreduce.hbasesnapshots;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.mapreduce.BigtableEmulatorRule;
+import com.google.cloud.bigtable.test.helper.BigtableEmulatorRule;
 import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.util.Arrays;
