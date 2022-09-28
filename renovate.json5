@@ -12,7 +12,8 @@
   ],
   "ignorePaths": [
     // ignore pom.xmls that are used as test subjects
-    "bigtable-test/bigtable-build-helper/src/it/**"
+    "bigtable-test/bigtable-build-helper/src/it/**",
+    ".kokoro/requirements.txt"
   ],
   "packageRules": [
     {
