@@ -32,4 +32,7 @@ public class ImportJobCommon {
 
   public static final String SNAPSHOT_SPLITS_PER_REGION_KEY =
       "google.bigtable.import.snapshot.splits.per.region";
+
+  @Deprecated
+  public static final int SNAPSHOT_SPLITS_PER_REGION_DEFAULT = 2;
 }
