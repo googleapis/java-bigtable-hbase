@@ -213,10 +213,11 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
     Path hbaseRoot = CommonFSUtils.getRootDir(configuration);
     String snapshotName = configuration.get(SNAPSHOTNAME_KEY);
     FileSystem fileSystem = hbaseRoot.getFileSystem(configuration);
-    long targetSplitSize = configuration.getLong(SNAPSHOT_SPLIT_TARGET_SIZE_KEY,
-        SNAPSHOT_SPLIT_TARGET_SIZE_DEFAULT);
-    SnapshotManifest manifest = TableSnapshotInputFormatImpl.getSnapshotManifest(configuration,
-        snapshotName, hbaseRoot, fileSystem);
+    long targetSplitSize =
+        configuration.getLong(SNAPSHOT_SPLIT_TARGET_SIZE_KEY, SNAPSHOT_SPLIT_TARGET_SIZE_DEFAULT);
+    SnapshotManifest manifest =
+        TableSnapshotInputFormatImpl.getSnapshotManifest(
+            configuration, snapshotName, hbaseRoot, fileSystem);
 
     long maxRegionSize = 0;
 
@@ -231,10 +232,9 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
     }
 
     numSplitsPerRegion = (int) Math.ceil(maxRegionSize / (float) targetSplitSize);
-    if (numSplitsPerRegion < 1) {
-      numSplitsPerRegion = 1;
-    }
-    ;
+    // Constrain the split count to be between 1 and 1 million
+    numSplitsPerRegion = Math.min(Math.max(1, numSplitsPerRegion), 1_000_000);
+
     return numSplitsPerRegion;
   }
 
@@ -248,6 +248,8 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
   protected static Job createSubmittableJob(Configuration conf) throws IOException {
     Job job = Job.getInstance(conf, conf.get(IMPORT_SNAPSHOT_JOBNAME_KEY));
     job.setJarByClass(ImportHBaseSnapshotJob.class);
+    int splitsPerRegion = computeSplitsPerRegion(conf);
+    LOG.info(String.format("Using %d splits per region", splitsPerRegion));
     ShuffledTableMapReduceUtil.initTableSnapshotMapperJob(
         conf.get(SNAPSHOTNAME_KEY),
         new Scan().setMaxVersions(),
@@ -258,7 +260,7 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
         true,
         new Path(conf.get(SNAPSHOT_RESTOREDIR_KEY)),
         new UniformSplit(),
-        computeSplitsPerRegion(conf));
+        splitsPerRegion);
 
     job.setNumReduceTasks(0);
     job.setOutputFormatClass(TableOutputFormat.class);
