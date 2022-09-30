@@ -37,7 +37,6 @@ java.common_templates(excludes=[
   '.kokoro/dependencies.sh',
   '.kokoro/build.sh',
   '.kokoro/build.bat',
-  '.kokoro/release/stage.sh',
   'samples/*',
   'renovate.json'
 ])
