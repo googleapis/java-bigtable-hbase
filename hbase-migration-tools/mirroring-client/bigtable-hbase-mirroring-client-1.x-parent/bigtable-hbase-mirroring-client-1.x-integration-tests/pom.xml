@@ -38,7 +38,7 @@ limitations under the License.
     <hbase.version>${hbase1.version}</hbase.version>
     <google.bigtable.connection.impl>com.google.cloud.bigtable.hbase1_x.BigtableConnection</google.bigtable.connection.impl>
     <test.timeout>1800</test.timeout>
-    <hbase1-hadoop-slf4j.version>1.6.1</hbase1-hadoop-slf4j.version>
+    <hbase1-hadoop-slf4j.version>2.0.3</hbase1-hadoop-slf4j.version>
   </properties>
 
   <profiles>
