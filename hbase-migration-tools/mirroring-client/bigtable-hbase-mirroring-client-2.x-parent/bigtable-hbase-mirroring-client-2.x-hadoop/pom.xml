@@ -35,7 +35,7 @@ limitations under the License.
 
   <properties>
     <!-- define a property that can be ignored by renovate -->
-    <hbase2-hadoop-slf4j.version>1.7.30</hbase2-hadoop-slf4j.version>
+    <hbase2-hadoop-slf4j.version>2.0.3</hbase2-hadoop-slf4j.version>
   </properties>
 
   <dependencies>
