@@ -378,7 +378,7 @@ public class RetryOptions implements Serializable, Cloneable {
   /**
    * toBuilder.
    *
-   * @return a {@link com.google.cloud.bigtable.config.RetryOptions.Builder} object.
+   * @return a {@link Builder} object.
    */
   public Builder toBuilder() {
     return new Builder(this);

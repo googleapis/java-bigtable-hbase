@@ -20,8 +20,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
- * Wrapper around {@link org.apache.commons.logging.Log} to conditionally format messages if a
- * specified log level is enabled.
+ * Wrapper around {@link Log} to conditionally format messages if a specified log level is enabled.
  *
  * <p>For internal use only - public for technical reasons.
  */
@@ -32,7 +31,7 @@ public class Logger {
   /**
    * Constructor for Logger.
    *
-   * @param logClass a {@link java.lang.Class} object.
+   * @param logClass a {@link Class} object.
    */
   public Logger(Class<?> logClass) {
     this.log = LogFactory.getLog(logClass);
@@ -69,7 +68,7 @@ public class Logger {
    *
    * @see Log#debug
    * @param message Format string.
-   * @param t a {@link java.lang.Throwable} object.
+   * @param t a {@link Throwable} object.
    * @param args Arguments for format string.
    */
   public void debug(String message, Throwable t, Object... args) {
@@ -96,7 +95,7 @@ public class Logger {
    *
    * @see Log#info
    * @param message Format string.
-   * @param t a {@link java.lang.Throwable} object.
+   * @param t a {@link Throwable} object.
    * @param args Arguments for format string.
    */
   public void info(String message, Throwable t, Object... args) {
@@ -123,7 +122,7 @@ public class Logger {
    *
    * @see Log#warn
    * @param message Format string.
-   * @param t a {@link java.lang.Throwable} object.
+   * @param t a {@link Throwable} object.
    * @param args Arguments for format string.
    */
   public void warn(String message, Throwable t, Object... args) {
@@ -150,7 +149,7 @@ public class Logger {
    *
    * @see Log#error
    * @param message Format string.
-   * @param t a {@link java.lang.Throwable} object.
+   * @param t a {@link Throwable} object.
    * @param args Arguments for format string.
    */
   public void error(String message, Throwable t, Object... args) {
@@ -163,8 +162,8 @@ public class Logger {
    * fatal
    *
    * @see Log#fatal
-   * @param message a {@link java.lang.String} object.
-   * @param args a {@link java.lang.Object} object.
+   * @param message a {@link String} object.
+   * @param args a {@link Object} object.
    */
   public void fatal(String message, Object... args) {
     if (log.isFatalEnabled()) {
@@ -177,7 +176,7 @@ public class Logger {
    *
    * @see Log#fatal
    * @param message Format string.
-   * @param t a {@link java.lang.Throwable} object.
+   * @param t a {@link Throwable} object.
    * @param args Arguments for format string.
    */
   public void fatal(String message, Throwable t, Object... args) {
@@ -186,7 +185,7 @@ public class Logger {
     }
   }
 
-  /** Get the underlying {@link org.apache.commons.logging.Log} */
+  /** Get the underlying {@link Log} */
   public Log getLog() {
     return log;
   }

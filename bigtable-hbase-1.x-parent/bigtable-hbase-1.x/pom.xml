@@ -75,6 +75,11 @@ limitations under the License.
     </dependency>
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-client-core-config</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-metrics-api</artifactId>
       <version>1.27.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>

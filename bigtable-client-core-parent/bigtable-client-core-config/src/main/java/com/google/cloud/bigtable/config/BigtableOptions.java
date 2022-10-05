@@ -19,7 +19,6 @@ import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.cloud.bigtable.grpc.BigtableInstanceName;
-import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
@@ -85,8 +84,6 @@ public class BigtableOptions implements Serializable, Cloneable {
 
   /** @deprecated This field will be removed in future versions. */
   @Deprecated public static final String BIGTABLE_CLIENT_ADAPTER = "BIGTABLE_CLIENT_ADAPTER";
-
-  private static final Logger LOG = new Logger(BigtableOptions.class);
 
   private static int getDefaultDataChannelCount() {
     // 20 Channels seemed to work well on a 4 CPU machine, and this ratio seems to scale well for
@@ -240,8 +237,8 @@ public class BigtableOptions implements Serializable, Cloneable {
     }
 
     /**
-     * This enables an experimental {@link BigtableSession} feature that caches datapools for cases
-     * where there are many HBase Connections / BigtableSessions opened. This happens frequently in
+     * This enables an experimental BigtableSession feature that caches datapools for cases where
+     * there are many HBase Connections / BigtableSessions opened. This happens frequently in
      * Dataflow
      *
      * @param useCachedDataPool a flag to decide connection pool usages.
@@ -316,7 +313,6 @@ public class BigtableOptions implements Serializable, Cloneable {
       setAdminHost(host);
       setPort(port);
 
-      LOG.info("Connecting to the Bigtable emulator at " + host + ":" + port);
       return this;
     }
 
@@ -356,10 +352,6 @@ public class BigtableOptions implements Serializable, Cloneable {
         }
         options.retryOptions = retryOptionsBuilder.build();
       }
-      LOG.debug(
-          "Connection Configuration: projectId: %s, instanceId: %s, data host %s, "
-              + "admin host %s.",
-          options.projectId, options.instanceId, options.dataHost, options.adminHost);
 
       return options;
     }
@@ -607,7 +599,7 @@ public class BigtableOptions implements Serializable, Cloneable {
    * Experimental feature to allow situations with multiple connections to optimize their startup
    * time.
    *
-   * @return true if this feature should be turned on in {@link BigtableSession}.
+   * @return true if this feature should be turned on in BigtableSession.
    */
   public boolean useCachedChannel() {
     return useCachedDataPool;

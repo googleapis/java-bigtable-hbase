@@ -380,7 +380,6 @@ limitations under the License.
       </exclusions>
     </dependency>
 
-
     <!-- java-bigtable Modules -->
     <dependency>
       <groupId>com.google.cloud</groupId>

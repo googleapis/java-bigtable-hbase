@@ -15,10 +15,10 @@
  */
 package com.google.cloud.bigtable.grpc;
 
-import com.google.api.client.util.Strings;
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.io.Serializable;
 
 /**
@@ -64,8 +64,8 @@ public class BigtableInstanceName implements Serializable {
    * Transforms a tableName within this instance of the form
    * projects/(projectId)/instances/(instanceId)/tables/(tableId) to (tableId).
    *
-   * @param tableName a {@link java.lang.String} object.
-   * @return a {@link java.lang.String} object.
+   * @param tableName a {@link String} object.
+   * @return a {@link String} object.
    */
   public String toTableId(String tableName) {
     Preconditions.checkNotNull(tableName, "Table name cannot be null");
@@ -83,8 +83,8 @@ public class BigtableInstanceName implements Serializable {
   /**
    * toTableNameStr.
    *
-   * @param tableId a {@link java.lang.String} object.
-   * @return a {@link java.lang.String} object.
+   * @param tableId a {@link String} object.
+   * @return a {@link String} object.
    */
   public String toTableNameStr(String tableId) {
     return instanceName + TABLE_SEPARATOR + tableId;
@@ -93,8 +93,8 @@ public class BigtableInstanceName implements Serializable {
   /**
    * toTableName.
    *
-   * @param tableId a {@link java.lang.String} object.
-   * @return a {@link com.google.cloud.bigtable.grpc.BigtableTableName} object.
+   * @param tableId a {@link String} object.
+   * @return a {@link BigtableTableName} object.
    */
   public BigtableTableName toTableName(String tableId) {
     return new BigtableTableName(toTableNameStr(tableId));

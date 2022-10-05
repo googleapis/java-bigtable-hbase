@@ -31,7 +31,6 @@ import com.google.bigtable.v2.ReadModifyWriteRowRequest;
 import com.google.bigtable.v2.ReadModifyWriteRowResponse;
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.ReadRowsResponse;
-import com.google.cloud.bigtable.config.Logger;
 import com.google.common.collect.ImmutableMap;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;

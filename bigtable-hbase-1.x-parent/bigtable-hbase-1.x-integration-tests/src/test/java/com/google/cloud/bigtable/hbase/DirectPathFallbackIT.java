@@ -15,10 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import static com.google.cloud.bigtable.config.BigtableOptions.ChannelConfigurator;
+
 import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.v2.RowSet;
 import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.BigtableOptions.ChannelConfigurator;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.cloud.bigtable.hbase.test_env.ConnectionMode;
 import com.google.cloud.bigtable.hbase.util.IpVerificationInterceptor;

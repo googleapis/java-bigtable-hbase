@@ -431,7 +431,7 @@ public class CallOptionsConfig implements Serializable {
   /**
    * toBuilder.
    *
-   * @return a {@link com.google.cloud.bigtable.config.CallOptionsConfig.Builder} object.
+   * @return a {@link Builder} object.
    */
   public Builder toBuilder() {
     return new Builder(this);

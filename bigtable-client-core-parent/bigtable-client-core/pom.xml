@@ -60,6 +60,11 @@ limitations under the License.
   </dependencyManagement>
 
   <dependencies>
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-client-core-config</artifactId>
+      <version>1.27.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    </dependency>
     <!-- Bigtable Java Veneer client -->
     <dependency>
       <groupId>com.google.cloud</groupId>

@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.core;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
-import com.google.cloud.bigtable.grpc.BigtableTableName;
 import java.io.IOException;
 
 /**

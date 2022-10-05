@@ -19,7 +19,6 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.config.Logger;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -38,7 +37,6 @@ import java.util.concurrent.ExecutorService;
 public class FutureUtils {
 
   public static final ExecutorService DIRECT_EXECUTOR = MoreExecutors.newDirectExecutorService();
-  static Logger logger = new Logger(FutureUtils.class);
 
   public static <T> CompletableFuture<T> toCompletableFuture(ApiFuture<T> apiFuture) {
     CompletableFuture<T> completableFuture =
