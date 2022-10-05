@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.6.3](https://github.com/googleapis/java-bigtable-hbase/compare/v2.6.2...v2.6.3) (2022-10-05)
+
+
+### Dependencies
+
+* Update bigtable.version to v2.14.1 ([#3810](https://github.com/googleapis/java-bigtable-hbase/issues/3810)) ([99fb1be](https://github.com/googleapis/java-bigtable-hbase/commit/99fb1be346044663330538990c228fd4f91ba460))
+* Update dependency com.google.cloud:google-cloud-bigtable-emulator-core to v0.151.1 ([#3811](https://github.com/googleapis/java-bigtable-hbase/issues/3811)) ([6ffc6a6](https://github.com/googleapis/java-bigtable-hbase/commit/6ffc6a69410be0ebfd3d7cb3ff986a5369d79abb))
+* Update dependency com.google.cloud:google-cloud-bigtable-emulator-core to v0.151.1 ([#3812](https://github.com/googleapis/java-bigtable-hbase/issues/3812)) ([6e4144a](https://github.com/googleapis/java-bigtable-hbase/commit/6e4144a69e1020bac3b9bedd4b2d635c8d08cd00))
+
 ## [2.6.2](https://github.com/googleapis/java-bigtable-hbase/compare/v2.6.1...v2.6.2) (2022-10-04)
 
 
