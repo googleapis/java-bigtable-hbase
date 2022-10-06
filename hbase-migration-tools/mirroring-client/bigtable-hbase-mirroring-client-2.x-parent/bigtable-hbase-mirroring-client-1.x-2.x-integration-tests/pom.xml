@@ -254,7 +254,7 @@ limitations under the License.
     <dependency>
       <groupId>io.opencensus</groupId>
       <artifactId>opencensus-impl</artifactId>
-      <version>0.28.0</version>
+      <version>0.31.1</version>
     </dependency>
     <dependency>
       <groupId>io.opencensus</groupId>
