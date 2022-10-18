@@ -51,6 +51,9 @@ mvn clean javadoc:javadoc
 cd ../bigtable-hbase-1.x-parent/
 mvn clean javadoc:javadoc
 
+# go back to the project root directory
+cd ..
+
 # include CHANGELOG
 cp CHANGELOG.md target/docfx-yml/history.md
 
