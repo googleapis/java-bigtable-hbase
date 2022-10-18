@@ -355,7 +355,7 @@ public class EndToEndIT {
 
     // Assert that the output collection is the right one.
     Map<String, Long> counters = getCountMap(result);
-    Assert.assertEquals(counters.get("ranges_matched"), (Long) 97L);
+    Assert.assertEquals(counters.get("ranges_matched"), (Long) 96L);
     Assert.assertEquals(counters.get("ranges_not_matched"), (Long) 4L);
   }
 }
