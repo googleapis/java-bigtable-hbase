@@ -38,5 +38,6 @@ java.common_templates(excludes=[
   '.kokoro/build.sh',
   '.kokoro/build.bat',
   'samples/*',
-  'renovate.json'
+  'renovate.json',
+  '.kokoro/release/publish_javadoc11.sh'
 ])
