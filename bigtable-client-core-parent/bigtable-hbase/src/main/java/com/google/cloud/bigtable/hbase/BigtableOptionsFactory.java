@@ -309,7 +309,7 @@ public class BigtableOptionsFactory {
 
   /**
    * If this option is set to true, log a warning when creating a managed connection instead of
-   * throwing invalid argument exception.
+   * throwing illegal argument exception.
    */
   @BetaApi("This API is not yet stable and may change in the future")
   public static final String MANAGED_CONNECTION_WARNING =

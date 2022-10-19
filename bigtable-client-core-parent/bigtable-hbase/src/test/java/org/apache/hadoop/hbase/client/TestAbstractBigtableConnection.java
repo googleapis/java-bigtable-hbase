@@ -23,7 +23,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
-import com.google.api.gax.rpc.InvalidArgumentException;
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
@@ -227,22 +226,20 @@ public class TestAbstractBigtableConnection {
   }
 
   @Test
-  public void testManagedConnectionWarning() throws IOException {
+  public void testManagedConnectionOverride() throws IOException {
     Configuration configuration = new Configuration(false);
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, PROJECT_ID);
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, INSTANCE_ID);
-    configuration.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
-    configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
+    configuration.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
+    configuration.setInt(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, 1);
     configuration.set(
         BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, HOST_NAME + ":" + server.getPort());
-    configuration.set(BigtableOptionsFactory.MANAGED_CONNECTION_WARNING, "true");
-    try {
-      Connection newConnection =
-          new TestBigtableConnectionImpl(
-              configuration, true, Executors.newSingleThreadExecutor(), null);
-      newConnection.close();
-    } catch (InvalidArgumentException e) {
-      fail("Should not throw invalid argument exception");
+    configuration.setBoolean(BigtableOptionsFactory.MANAGED_CONNECTION_WARNING, true);
+    try (Connection newConnection =
+        new TestBigtableConnectionImpl(
+            configuration, true, Executors.newSingleThreadExecutor(), null)) {
+    } catch (IllegalArgumentException e) {
+      fail("Should not throw IllegalArgumentException");
     }
   }
 
