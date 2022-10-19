@@ -306,4 +306,12 @@ public class BigtableOptionsFactory {
   /** Tracing cookie to send in the header with the requests */
   @BetaApi("The API for setting tracing cookie is not yet stable and may change in the future")
   public static final String BIGTABLE_TRACING_COOKIE = "google.bigtable.tracing.cookie.header";
+
+  /**
+   * If this option is set to true, log a warning when creating a managed connection instead of
+   * throwing illegal argument exception.
+   */
+  @BetaApi("This API is not yet stable and may change in the future")
+  public static final String MANAGED_CONNECTION_WARNING =
+      "google.bigtable.managed.connection.warning";
 }
