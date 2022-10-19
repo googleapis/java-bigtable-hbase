@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.client;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.BigtableBufferedMutator;
 import com.google.cloud.bigtable.hbase.BigtableHBaseVersion;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.BigtableRegionLocator;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
@@ -107,7 +108,12 @@ public abstract class AbstractBigtableConnection
   protected AbstractBigtableConnection(
       Configuration conf, boolean managed, ExecutorService pool, User user) throws IOException {
     if (managed) {
-      throw new IllegalArgumentException("Bigtable does not support managed connections.");
+      if (conf.getBoolean(BigtableOptionsFactory.MANAGED_CONNECTION_WARNING, false)) {
+        LOG.warn(
+            "Bigtable does not support managed connections. This connection will end up leaking.");
+      } else {
+        throw new IllegalArgumentException("Bigtable does not support managed connections.");
+      }
     }
 
     try {

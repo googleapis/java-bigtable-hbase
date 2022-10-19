@@ -20,8 +20,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
+import com.google.api.gax.rpc.InvalidArgumentException;
 import com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.v2.MutateRowRequest;
 import com.google.bigtable.v2.MutateRowResponse;
@@ -50,6 +52,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hadoop.conf.Configuration;
@@ -57,6 +60,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.VersionInfo;
 import org.junit.After;
@@ -222,10 +226,35 @@ public class TestAbstractBigtableConnection {
     }
   }
 
+  @Test
+  public void testManagedConnectionWarning() throws IOException {
+    Configuration configuration = new Configuration(false);
+    configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, PROJECT_ID);
+    configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, INSTANCE_ID);
+    configuration.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
+    configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
+    configuration.set(
+        BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, HOST_NAME + ":" + server.getPort());
+    configuration.set(BigtableOptionsFactory.MANAGED_CONNECTION_WARNING, "true");
+    try {
+      Connection newConnection =
+          new TestBigtableConnectionImpl(
+              configuration, true, Executors.newSingleThreadExecutor(), null);
+      newConnection.close();
+    } catch (InvalidArgumentException e) {
+      fail("Should not throw invalid argument exception");
+    }
+  }
+
   private class TestBigtableConnectionImpl extends AbstractBigtableConnection {
 
     TestBigtableConnectionImpl(Configuration conf) throws IOException {
       super(conf);
+    }
+
+    TestBigtableConnectionImpl(Configuration conf, boolean managed, ExecutorService pool, User user)
+        throws IOException {
+      super(conf, managed, pool, user);
     }
 
     @Override
