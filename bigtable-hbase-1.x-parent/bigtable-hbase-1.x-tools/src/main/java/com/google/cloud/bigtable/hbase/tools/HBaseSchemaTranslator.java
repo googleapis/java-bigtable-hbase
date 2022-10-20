@@ -341,7 +341,7 @@ public class HBaseSchemaTranslator {
           LOG.info("Created table {} in Bigtable.", tableName);
         } catch (Exception e) {
           failedTables.add(tableName);
-          LOG.error("Failed to create table {}.", e, tableName);
+          LOG.error("Failed to create table " + tableName + ".", e);
           // Continue creating tables in BT. Skipping creation failures makes the script idempotent
           // as BT will throw TableExistsException for a table that is already present.
         }
