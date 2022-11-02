@@ -293,12 +293,6 @@ limitations under the License.
                 </requireSameVersions>
                 <requireSameVersions>
                   <dependencies>
-                    <dependency>com.fasterxml.jackson.core:*</dependency>
-                    <dependency>com.fasterxml.jackson:*</dependency>
-                  </dependencies>
-                </requireSameVersions>
-                <requireSameVersions>
-                  <dependencies>
                     <dependency>com.google.auto.value</dependency>
                   </dependencies>
                 </requireSameVersions>
@@ -324,6 +318,11 @@ limitations under the License.
                     <!-- this will need to be updated whenever the opencensus version gets updated -->
                     <dependency>io.opencensus:*:[${opencensus.version}]</dependency>
                     <dependency>io.opencensus:opencensus-proto:[0.2.0]</dependency>
+                    <!-- todo: revert this once we have a unified version -->
+                    <!-- jackson-databind's latest version is 2.13.4.2, while other jackson deps' latest version is 2.13.4 -->
+                    <dependency>com.fasterxml.jackson.core:jackson-databind:[2.13.4.2]</dependency>
+                    <dependency>com.fasterxml.jackson.core:[2.13.4]</dependency>
+                    <dependency>com.fasterxml.jackson:*</dependency>
                   </includes>
                 </bannedDependencies>
               </rules>
