@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.bigtable.repackaged.io.grpc.netty.shaded.io.netty.handler.ssl.OpenSsl;
 import com.google.cloud.bigtable.hbase2_x.BigtableConnection;
 import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
@@ -70,12 +69,5 @@ public class TestBigtableConnection {
     Admin admin = connection.getAdmin();
     Table table = connection.getTable(TableName.valueOf("someTable"));
     BufferedMutator mutator = connection.getBufferedMutator(TableName.valueOf("someTable"));
-  }
-
-  @Test
-  public void testOpenSSL() throws Throwable {
-    if (!OpenSsl.isAvailable()) {
-      throw OpenSsl.unavailabilityCause();
-    }
   }
 }
