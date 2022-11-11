@@ -71,6 +71,11 @@ limitations under the License.
           <groupId>org.hamcrest</groupId>
           <artifactId>hamcrest</artifactId>
         </exclusion>
+        <!-- we set our own version of hadoop, excluding to avoid dependency conflicts-->
+        <exclusion>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
