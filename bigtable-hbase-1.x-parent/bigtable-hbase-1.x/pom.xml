@@ -202,4 +202,21 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.3.0</version>
+        <configuration>
+          <ignoredNonTestScopedDependencies>
+            <!-- Dependencies declared in this file are transitive dependencies of bigtable-client-core, which needs them during runtime.
+             For more information please see https://github.com/googleapis/java-bigtable-hbase/pull/2447 -->
+            <ignoredNonTestScopedDependency>*</ignoredNonTestScopedDependency>
+          </ignoredNonTestScopedDependencies>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

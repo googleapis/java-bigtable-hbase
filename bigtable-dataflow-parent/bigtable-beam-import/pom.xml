@@ -465,6 +465,15 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <configuration>
+          <ignoredUnusedDeclaredDependencies>
+            <ignoredUnusedDeclaredDependency>com.google.cloud.bigdataoss:gcs-connector:*:*</ignoredUnusedDeclaredDependency>
+          </ignoredUnusedDeclaredDependencies>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 
@@ -514,7 +523,7 @@ limitations under the License.
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-failsafe-plugin</artifactId>
-            <version>3.0.0-M4</version>
+            <version>3.0.0-M7</version>
             <executions>
               <execution>
                 <id>beam-integration-test</id>
