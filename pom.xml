@@ -56,7 +56,7 @@ limitations under the License.
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- core dependency versions -->
-    <bigtable.version>2.14.1</bigtable.version>
+    <bigtable.version>2.16.0</bigtable.version>
     <bigtable-client-core.version>1.27.1</bigtable-client-core.version>
     <grpc-conscrypt.version>2.5.2</grpc-conscrypt.version>
     <!--  keeping at this version to align with hbase-->
@@ -97,6 +97,15 @@ limitations under the License.
     <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.google.auto.value</groupId>
+        <artifactId>auto-value-annotations</artifactId>
+        <version>1.10</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <scm>
     <connection>
       scm:git:git@github.com:googleapis/java-bigtable-hbase.git
