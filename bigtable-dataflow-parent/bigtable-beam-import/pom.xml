@@ -235,12 +235,6 @@ limitations under the License.
 
     <!-- CVE Group: force update transitive deps to exclude CVEs -->
     <dependency>
-      <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
-      <version>1.15</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-compress</artifactId>
       <version>1.22</version>
