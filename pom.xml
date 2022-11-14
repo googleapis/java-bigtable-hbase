@@ -87,7 +87,7 @@ limitations under the License.
     <opencensus.version>0.28.0</opencensus.version>
 
     <!-- Benchmarks related dependencies -->
-    <jmh.version>1.35</jmh.version>
+    <jmh.version>1.36</jmh.version>
 
     <!-- Enable the ability to skip unit tests and only run integration tests,
          while still respecting global skipTests override. -->
