@@ -283,7 +283,7 @@ limitations under the License.
     <dependency>
       <groupId>org.junit.vintage</groupId>
       <artifactId>junit-vintage-engine</artifactId>
-      <version>5.8.2</version>
+      <version>${junit-vintage-engine.version}</version>
       <scope>test</scope>
     </dependency>
 

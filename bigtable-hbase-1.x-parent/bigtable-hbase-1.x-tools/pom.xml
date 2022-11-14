@@ -88,6 +88,7 @@
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>${guava.version}</version>
+      <!--  we use repackaged guava in the main classes-->
       <scope>test</scope>
     </dependency>
     <dependency>
