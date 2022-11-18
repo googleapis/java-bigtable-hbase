@@ -89,10 +89,15 @@ limitations under the License.
           <groupId>org.hamcrest</groupId>
           <artifactId>hamcrest</artifactId>
         </exclusion>
-          <exclusion>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest</artifactId>
-          </exclusion>
+        <exclusion>
+          <groupId>org.hamcrest</groupId>
+          <artifactId>hamcrest</artifactId>
+        </exclusion>
+        <exclusion>
+          <!-- transitively brought in by bigquery dependency, use the bigtable version of autovalue instead-->
+          <groupId>com.google.auto.value</groupId>
+          <artifactId>auto-value</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
