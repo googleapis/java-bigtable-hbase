@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.28.0](https://github.com/googleapis/java-bigtable-hbase/compare/v1.27.1...v1.28.0) (2022-10-28)
+
+
+### Features
+
+* relocate bigtable-client-core configuration to bigtable-client-core-config ([3d0c2a5](https://github.com/googleapis/java-bigtable-hbase/commit/3d0c2a548e6d4f18f9972d873332f8f0b6db0719))
+
 ## [1.27.1](https://github.com/googleapis/java-bigtable-hbase/compare/v1.27.0...v1.27.1) (2022-08-01)
 
 
