@@ -191,8 +191,8 @@ limitations under the License.
         <version>3.3.0</version>
         <configuration>
           <ignoredNonTestScopedDependencies>
-            <!-- Dependencies declared in this file are transitive dependencies of bigtable-client-core, which needs them during runtime.
-             For more information please see https://github.com/googleapis/java-bigtable-hbase/pull/2447 -->
+            <!-- Temporarily disable dependency plugin until we figure out why it thinks compile deps like google-cloud-bigtable are unused
+                  See bigtable-hbase-1.x pom.xml for more details-->
             <ignoredNonTestScopedDependency>*</ignoredNonTestScopedDependency>
           </ignoredNonTestScopedDependencies>
         </configuration>
