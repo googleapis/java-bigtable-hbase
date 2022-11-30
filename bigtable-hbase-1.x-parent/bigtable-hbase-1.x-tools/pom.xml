@@ -63,11 +63,6 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>${guava.version}</version>
-    </dependency>
-    <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
       <version>3.0.2</version>
@@ -88,6 +83,13 @@
       <artifactId>logback-classic</artifactId>
       <version>1.2.11</version>
       <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>${guava.version}</version>
+      <!--  todo: align guava deps - we use repackaged guava in the main classes-->
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
