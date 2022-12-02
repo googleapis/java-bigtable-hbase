@@ -82,10 +82,10 @@ public class TestSnapshots extends AbstractTestSnapshot {
 
   @Test
   public void listSnapshots() throws IOException, InterruptedException {
-    String snapshot1 = generateId("snapshot-1");
+    String snapshot1 = newSnapshotId();
     snapshot(snapshot1, tableName);
 
-    String snapshot2 = generateId("snapshot-2");
+    String snapshot2 = newSnapshotId();
     snapshot(snapshot2, tableName);
 
     try (Admin admin = getConnection().getAdmin()) {

@@ -19,6 +19,7 @@ import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -74,22 +75,23 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
 
   @Test
   public void testSnapshot() throws IOException, InterruptedException, ExecutionException {
-    String snapshotName = generateId("test-snapshot");
+    String snapshotId = newSnapshotId();
     try {
-      snapshot(snapshotName, tableName);
-      Assert.assertEquals(1, listSnapshotsSize(snapshotName));
+      snapshot(snapshotId, tableName);
+      Assert.assertEquals(1, listSnapshotsSize(snapshotId));
     } finally {
-      deleteSnapshot(snapshotName);
-      Assert.assertEquals(0, listSnapshotsSize(snapshotName));
+      deleteSnapshot(snapshotId);
+      Assert.assertEquals(0, listSnapshotsSize(snapshotId));
     }
   }
 
   @Test
   public void testListAndDeleteSnapshots()
       throws IOException, InterruptedException, ExecutionException {
-    String snapshotName = generateId("list-1");
-    String snapshotName2 = generateId("list-2");
-    Pattern allSnapshots = Pattern.compile(prefix + ".*" + "list" + ".*");
+    String prefix = newSnapshotId();
+    String snapshotName = prefix + "-1";
+    String snapshotName2 = prefix + "-2";
+    Pattern allSnapshots = Pattern.compile(prefix + ".*");
 
     try {
       snapshot(snapshotName, tableName);
@@ -108,7 +110,7 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
 
   @Test
   public void testCloneSnapshot() throws IOException, InterruptedException {
-    String cloneSnapshotName = generateId("clone-test");
+    String cloneSnapshotName = newSnapshotId();
     snapshot(cloneSnapshotName, tableName);
 
     // Wait 2 minutes so that the RestoreTable API will trigger an optimize restored
@@ -186,5 +188,9 @@ public abstract class AbstractTestSnapshot extends AbstractTest {
 
   protected static String generateId(String name) {
     return prefix + "-" + name + "-" + TEST_BACKUP_SUFFIX;
+  }
+
+  protected static String newSnapshotId() {
+    return UUID.randomUUID().toString();
   }
 }

@@ -80,6 +80,11 @@ class BigtableEnv extends SharedTestEnv {
       }
     }
 
+    // Auto expire orphaned snapshots. Minimum ttl is 6h
+    configuration.setIfUnset(
+        "google.bigtable.snapshot.default.ttl.secs",
+        String.valueOf(TimeUnit.HOURS.toSeconds(6) + 1));
+
     // Configure DirectPath settings:
     // - when a required mode is specified, ensure that ip address match the mode
     // - specify a user agent that will trigger deny/allow lists on the serverside
