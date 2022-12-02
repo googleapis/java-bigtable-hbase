@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.google.cloud.bigtable</groupId>
         <artifactId>bigtable-client-core-parent</artifactId>
-        <version>1.28.0</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+        <version>1.28.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
