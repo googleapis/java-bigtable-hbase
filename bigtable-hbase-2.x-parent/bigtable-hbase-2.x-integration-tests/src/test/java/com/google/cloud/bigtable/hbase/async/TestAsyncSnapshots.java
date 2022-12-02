@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
@@ -55,22 +54,6 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
 
   @Before
   public void setUp() throws ExecutionException, InterruptedException, IOException {
-    // Setup a prefix to avoid collisions between concurrent test runs
-    prefix = String.format("020%d", System.currentTimeMillis());
-
-    // clean up stale backups
-    String stalePrefix =
-        String.format("020%d", System.currentTimeMillis() - TimeUnit.HOURS.toMillis(2));
-
-    for (SnapshotDescription snapshotDescription : getAsyncAdmin().listSnapshots().get()) {
-      int i = snapshotDescription.getName().lastIndexOf("/");
-      String backupId = snapshotDescription.getName().substring(i + 1);
-      if (backupId.endsWith(TEST_BACKUP_SUFFIX) && stalePrefix.compareTo(backupId) > 0) {
-        LOG.info("Deleting old snapshot: " + backupId);
-        getAsyncAdmin().deleteSnapshot(backupId);
-      }
-    }
-
     values = createAndPopulateTable(tableName);
   }
 
@@ -103,10 +86,10 @@ public class TestAsyncSnapshots extends AbstractTestSnapshot {
 
   @Test
   public void listSnapshots() throws IOException, InterruptedException, ExecutionException {
-    String snapshot1 = generateId("snapshot-1");
+    String snapshot1 = newSnapshotId();
     snapshot(snapshot1, tableName);
 
-    String snapshot2 = generateId("snapshot-2");
+    String snapshot2 = newSnapshotId();
     snapshot(snapshot2, tableName);
     try {
       List<SnapshotDescription> snapshotDescriptions = getAsyncAdmin().listSnapshots().get();
