@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.6.5](https://github.com/googleapis/java-bigtable-hbase/compare/v2.6.4...v2.6.5) (2022-12-08)
+
+
+### Dependencies
+
+* Update bigtable-client-core.version to v1.28.0 ([#3870](https://github.com/googleapis/java-bigtable-hbase/issues/3870)) ([961bd52](https://github.com/googleapis/java-bigtable-hbase/commit/961bd52885306f3ae49afb01332fc5dc964bd789))
+* Update dependency com.google.cloud.bigtable:bigtable-client-core to v1.28.0 ([#3871](https://github.com/googleapis/java-bigtable-hbase/issues/3871)) ([3823a3e](https://github.com/googleapis/java-bigtable-hbase/commit/3823a3e858f9eaff2576716d8d172697bdc24a22))
+* Update dependency com.google.protobuf:protobuf-java to v3.21.10 ([#3874](https://github.com/googleapis/java-bigtable-hbase/issues/3874)) ([a454aee](https://github.com/googleapis/java-bigtable-hbase/commit/a454aee2adea293613367a47e6113b3fb22744d1))
+* Update opencensus to 0.31.1 and use variable where needed ([#3862](https://github.com/googleapis/java-bigtable-hbase/issues/3862)) ([bf01607](https://github.com/googleapis/java-bigtable-hbase/commit/bf016078c5d15e7c4c22027b1e7dcd407c308724))
+* Upgrade beam to 2.43.0 ([#3857](https://github.com/googleapis/java-bigtable-hbase/issues/3857)) ([fc106a7](https://github.com/googleapis/java-bigtable-hbase/commit/fc106a7eb7165f0d89bc31d04c1c78011d1d7ef0))
+
 ## [2.6.4](https://github.com/googleapis/java-bigtable-hbase/compare/v2.6.3...v2.6.4) (2022-11-30)
 
 
