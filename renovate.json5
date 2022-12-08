@@ -91,6 +91,11 @@
       "enabled": false
     },
     {
+      // pinned to avoid internal deps conflict between beam-sdks-java-core & beam-model-pipeline
+      "packagePatterns": ["^error_prone_annotations"],
+      "enabled": false
+    },
+    {
       "packagePatterns": [
         "^org.apache.maven.plugins:maven-shade-plugin"
       ],

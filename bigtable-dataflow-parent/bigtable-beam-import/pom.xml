@@ -90,10 +90,15 @@ limitations under the License.
           <groupId>org.hamcrest</groupId>
           <artifactId>hamcrest</artifactId>
         </exclusion>
-          <exclusion>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest</artifactId>
-          </exclusion>
+        <exclusion>
+          <groupId>org.hamcrest</groupId>
+          <artifactId>hamcrest</artifactId>
+        </exclusion>
+        <exclusion>
+          <!-- transitively brought in by bigquery dependency, use the bigtable version of autovalue instead-->
+          <groupId>com.google.auto.value</groupId>
+          <artifactId>auto-value</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -204,7 +209,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-storage</artifactId>
-      <version>v1-rev20210127-1.31.0</version>
+      <version>v1-rev20220705-2.0.0</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
@@ -235,12 +240,6 @@ limitations under the License.
 
 
     <!-- CVE Group: force update transitive deps to exclude CVEs -->
-    <dependency>
-      <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
-      <version>1.15</version>
-      <scope>runtime</scope>
-    </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-compress</artifactId>
@@ -465,6 +464,23 @@ limitations under the License.
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <configuration>
+          <ignoredUnusedDeclaredDependencies>
+            <ignoredUnusedDeclaredDependency>com.google.cloud.bigdataoss:gcs-connector:*:*</ignoredUnusedDeclaredDependency>
+            <!-- seems to be a bug in the dependency analyzer, removing this dep reports the reverse problem
+            See: https://issues.apache.org/jira/browse/MDEP-679 -->
+            <ignoredUnusedDeclaredDependency> commons-logging:commons-logging:*:*</ignoredUnusedDeclaredDependency>
+          </ignoredUnusedDeclaredDependencies>
+          <ignoredUsedUndeclaredDependencies>
+            <!-- seems to be a bug in the dependency analyzer, adding this dep reports the reverse problem
+            See: https://issues.apache.org/jira/browse/MDEP-679 -->
+            <ignoredUsedUndeclaredDependency>org.springframework:spring-jcl:*:*</ignoredUsedUndeclaredDependency>
+          </ignoredUsedUndeclaredDependencies>
+        </configuration>
       </plugin>
     </plugins>
   </build>
