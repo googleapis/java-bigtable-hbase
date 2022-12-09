@@ -177,7 +177,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-bigtable-emulator-core</artifactId>
-      <version>0.153.0</version>
+      <version>${bigtable-emulator.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

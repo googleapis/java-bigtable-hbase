@@ -101,6 +101,14 @@
       ],
       // Exclude version 3.3.0 due to https://issues.apache.org/jira/projects/MSHADE/issues/MSHADE-419
       "allowedVersions": "(,3.3.0),(3.3.0,)"
+    },
+    {
+      "packagePatterns": [
+        "^com.google.cloud:google-cloud-bigtable",
+        "^com.google.cloud:google-cloud-bigtable-emulator-core",
+        "^com.google.cloud:google-cloud-bigtable-emulator",
+      ],
+      "groupName": "google-cloud-bigtable dependencies"
     }
   ],
   "semanticCommits": true,
