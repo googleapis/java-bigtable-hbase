@@ -685,11 +685,20 @@ public class CloudBigtableIO {
 
     /** Closes the {@link ResultScanner}, {@link Table}, and {@link Connection}. */
     @Override
-    public void close() throws IOException {
+    public void close() {
       if (scanner != null) {
         scanner.close();
         scanner = null;
       }
+
+      if (connection != null) {
+        try {
+          connection.close();
+        } catch (IOException ignored) {
+        }
+        connection = null;
+      }
+
       long totalOps = getRowsReadCount();
       long elapsedTimeMs = System.currentTimeMillis() - workStart;
       long operationsPerSecond = elapsedTimeMs == 0 ? 0 : (totalOps * 1000 / elapsedTimeMs);
@@ -809,7 +818,7 @@ public class CloudBigtableIO {
       mutationsCounter.inc();
     }
 
-    /** Closes the {@link BufferedMutator} and {@link Connection}. */
+    /** Closes the {@link BufferedMutator}. */
     @FinishBundle
     public synchronized void finishBundle(@SuppressWarnings("unused") FinishBundleContext context)
         throws Exception {

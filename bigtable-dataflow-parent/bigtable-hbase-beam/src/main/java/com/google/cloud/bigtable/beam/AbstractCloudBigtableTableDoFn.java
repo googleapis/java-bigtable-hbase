@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.beam;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -124,5 +125,18 @@ public abstract class AbstractCloudBigtableTableDoFn<In, Out> extends DoFn<In, O
 
   public CloudBigtableConfiguration getConfig() {
     return config;
+  }
+
+  @Teardown
+  public void tearDown() {
+    // Close connection when DoFn is aborted.
+    if (connection != null) {
+      try {
+        connection.close();
+      } catch (IOException e) {
+        DOFN_LOG.info("Ignore an exception encountered while closing the connection", e);
+      }
+      connection = null;
+    }
   }
 }
