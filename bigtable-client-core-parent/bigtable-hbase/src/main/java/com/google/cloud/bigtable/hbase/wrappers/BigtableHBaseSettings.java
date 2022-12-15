@@ -25,6 +25,7 @@ import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 
 /** For internal use only - public for technical reasons. */
@@ -88,5 +89,9 @@ public abstract class BigtableHBaseSettings {
     return value;
   }
 
+  // Prints the full set of settings.
   public abstract String toDebugString();
+
+  // Each element prints part of the settings, in case the full set is too long for logging.
+  public abstract Map<String, String> toDebugStrings();
 }

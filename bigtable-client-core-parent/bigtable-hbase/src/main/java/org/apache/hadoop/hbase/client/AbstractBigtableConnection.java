@@ -153,8 +153,15 @@ public abstract class AbstractBigtableConnection
       }
       configHelper.add(entry.getKey(), entry.getValue());
     }
-    logger.info("User Configuration: " + configHelper);
-    logger.info("Effective settings: " + settings.toDebugString());
+    logger.info(
+        "User Configuration:\n" + ToStringHelperPrettyPrinter.print(configHelper.toString()));
+    settings
+        .toDebugStrings()
+        .forEach(
+            (k, v) ->
+                logger.info(
+                    "Effective settings: BigtableHBaseVeneerSettings\n"
+                        + ToStringHelperPrettyPrinter.print(v)));
   }
 
   /** {@inheritDoc} */
@@ -349,5 +356,74 @@ public abstract class AbstractBigtableConnection
 
   public BigtableApi getBigtableApi() {
     return bigtableApi;
+  }
+
+  // A helper function to parse the pretty print the string from ToStringHelper.
+  private static class ToStringHelperPrettyPrinter {
+    // A state machine to parse the string.
+    enum State {
+      DEFAULT, // Print special symbols, new lines, indentation and omit spaces.
+      IN_PHRASE, // Print verbatim for strings, including spaces, e.g. "Hello World".
+      IN_SET, // Print verbatim for sets, including commas and spaces, e.g. "[foo, bar]".
+    }
+
+    private static void appendIndent(StringBuilder sb, int level) {
+      for (int i = 0; i < level; i++) {
+        sb.append("  ");
+      }
+    }
+
+    private static String print(String str) {
+      StringBuilder sb = new StringBuilder();
+      int indent = 0;
+      State state = State.DEFAULT;
+      for (char c : str.toCharArray()) {
+        switch (c) {
+          case '{':
+            state = State.DEFAULT;
+            sb.append(" {\n");
+            appendIndent(sb, ++indent);
+            break;
+          case '=':
+            state = State.DEFAULT;
+            sb.append(" = ");
+            break;
+          case ',':
+            if (state == State.IN_SET) {
+              sb.append(',');
+              break;
+            }
+            state = State.DEFAULT;
+            sb.append(",\n");
+            appendIndent(sb, indent);
+            break;
+          case '}':
+            state = State.DEFAULT;
+            sb.append("\n");
+            appendIndent(sb, --indent);
+            sb.append("}");
+            break;
+          case ' ':
+            if (state == State.IN_PHRASE || state == State.IN_SET) {
+              sb.append(" ");
+            }
+            break;
+          case '[':
+            sb.append('[');
+            state = State.IN_SET;
+            break;
+          case ']':
+            sb.append(']');
+            state = State.DEFAULT;
+            break;
+          default:
+            if (state != State.IN_SET) {
+              state = State.IN_PHRASE;
+            }
+            sb.append(c);
+        }
+      }
+      return sb.toString();
+    }
   }
 }

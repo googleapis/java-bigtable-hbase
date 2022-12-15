@@ -102,6 +102,7 @@ import java.security.PrivateKey;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
@@ -265,6 +266,17 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
         .add("tableAdminSettings", tableAdminSettings)
         .add("instanceAdminSettings", instanceAdminSettings)
         .toString();
+  }
+
+  @Override
+  public Map<String, String> toDebugStrings() {
+    return ImmutableMap.of(
+        "dataSettings",
+        dataSettings.toString(),
+        "tableAdminSettings",
+        tableAdminSettings.toString(),
+        "instanceAdminSettings",
+        instanceAdminSettings.toString());
   }
 
   // ************** Private Helpers **************
