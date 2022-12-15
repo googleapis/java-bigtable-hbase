@@ -146,18 +146,15 @@ public abstract class AbstractBigtableConnection
           jarPath, BigtableHBaseVersion.getVersion());
     }
     // Dump user configuration
-    if (logger.getLog().isDebugEnabled()) {
-      MoreObjects.ToStringHelper configHelper = MoreObjects.toStringHelper("BigtableConfiguration");
-
-      for (Map.Entry<String, String> entry : userConfig) {
-        if (!entry.getKey().startsWith("google.bigtable")) {
-          continue;
-        }
-        configHelper.add(entry.getKey(), entry.getValue());
+    MoreObjects.ToStringHelper configHelper = MoreObjects.toStringHelper("BigtableConfiguration");
+    for (Map.Entry<String, String> entry : userConfig) {
+      if (!entry.getKey().startsWith("google.bigtable")) {
+        continue;
       }
-      logger.debug("User Configuration: " + configHelper);
-      logger.debug("Effective settings: " + settings.toDebugString());
+      configHelper.add(entry.getKey(), entry.getValue());
     }
+    logger.info("User Configuration: " + configHelper);
+    logger.info("Effective settings: " + settings.toDebugString());
   }
 
   /** {@inheritDoc} */
