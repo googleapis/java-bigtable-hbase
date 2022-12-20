@@ -33,7 +33,7 @@ public final class Main {
   @InternalApi("For internal usage only")
   public Main() {}
 
-  public static void main(String[] args) throws Exception{
+  public static void main(String[] args) throws Exception {
     if (args.length < 1) {
       usage();
       System.exit(1);
