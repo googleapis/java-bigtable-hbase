@@ -28,12 +28,12 @@ import java.util.Arrays;
 
 /** Entry point for create-table/import/export job submission. */
 @InternalExtensionOnly
-final class Main {
+public final class Main {
   /** For internal use only - public for technical reasons. */
   @InternalApi("For internal usage only")
   public Main() {}
 
-  public static void main(String[] args) throws Exception {
+  public static void main(String[] args) {
     if (args.length < 1) {
       usage();
       System.exit(1);
