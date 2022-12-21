@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import avro.shaded.com.google.common.collect.ImmutableMap;
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowRange;
@@ -29,15 +30,24 @@ import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
+
+import org.apache.beam.sdk.coders.SerializableCoder;
+import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.io.range.ByteKey;
 import org.apache.beam.sdk.io.range.ByteKeyRange;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
+import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
 
 /**
  * This class defines configuration that a Cloud Bigtable client needs to connect to a user's Cloud
@@ -315,7 +325,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       return query.toProto(RequestContext.create(getProjectId(), getInstanceId(), getTableId()));
     } else {
       Query query = Query.create(PLACEHOLDER_TABLE_ID);
-      Adapters.SCAN_ADAPTER.adapt(scan.get(), new DefaultReadHooks(), query);
+      query = Adapters.SCAN_ADAPTER.adapt(scan.get(), new DefaultReadHooks(), query);
       return query.toProto(RequestContext.create(getProjectId(), getInstanceId(), getTableId()));
     }
   }

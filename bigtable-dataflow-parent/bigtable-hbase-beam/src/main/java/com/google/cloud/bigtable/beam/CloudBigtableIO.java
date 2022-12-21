@@ -18,10 +18,15 @@ package com.google.cloud.bigtable.beam;
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
+import com.google.bigtable.repackaged.com.google.protobuf.GeneratedMessageV3;
 import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,10 +34,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicLong;
+
+import com.google.cloud.bigtable.hbase.BigtableFixedRequestExtendedScan;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import org.apache.beam.sdk.annotations.Experimental;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.CoderRegistry;
+import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.BoundedSource.BoundedReader;
 import org.apache.beam.sdk.io.range.ByteKey;
@@ -41,6 +50,7 @@ import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Gauge;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptions;
+import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
@@ -65,7 +75,10 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
+import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.yarn.webapp.hamlet.Hamlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,6 +141,65 @@ public class CloudBigtableIO {
   @InternalExtensionOnly
   @SuppressWarnings("serial")
   abstract static class AbstractSource extends BoundedSource<Result> {
+
+    private Object writeReplace() {
+      return new SerializationProxy(getConfiguration());
+    }
+
+    static class SerializationProxy implements Serializable {
+      private String projectId;
+      private String instanceId;
+      private String tableId;
+      private Map<String, ValueProvider<String>> additionalConfig;
+      private Scan scan;
+
+      public SerializationProxy() {}
+      public SerializationProxy(CloudBigtableScanConfiguration configuration) {
+        this.projectId = configuration.getProjectId();
+        this.instanceId = configuration.getInstanceId();
+        this.tableId = configuration.getTableId();
+        this.additionalConfig = configuration.getConfiguration();
+        this.scan = configuration.getScan();
+      }
+
+      private void writeObject(ObjectOutputStream out) throws IOException {
+        StringUtf8Coder.of().encode(projectId, out);
+        StringUtf8Coder.of().encode(instanceId, out);
+        StringUtf8Coder.of().encode(tableId, out);
+        out.writeObject(additionalConfig);
+        if (scan instanceof BigtableFixedRequestExtendedScan) {
+          out.writeObject(true);
+          out.writeObject(((BigtableFixedRequestExtendedScan) scan).getQuery());
+        } else {
+          out.writeObject(false);
+          ProtobufUtil.toScan(scan).writeDelimitedTo(out);
+        }
+      }
+
+      private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        projectId = StringUtf8Coder.of().decode(in);
+        instanceId = StringUtf8Coder.of().decode(in);
+        tableId = StringUtf8Coder.of().decode(in);
+        additionalConfig = (Map<String, ValueProvider<String>>) in.readObject();
+        boolean isExtendedScan = (Boolean) in.readObject();
+        if (isExtendedScan) {
+          Query query = (Query) in.readObject();
+          scan = new BigtableFixedRequestExtendedScan(query);
+        } else {
+          scan = ProtobufUtil.toScan(ClientProtos.Scan.parseDelimitedFrom(in));
+        }
+      }
+
+      Object readResolve() {
+        CloudBigtableConfiguration.Builder builder = new CloudBigtableConfiguration.Builder();
+        builder.copyFrom(additionalConfig);
+        CloudBigtableTableConfiguration tableConfiguration =
+                CloudBigtableTableConfiguration.fromConfig(builder.build(), tableId);
+        CloudBigtableScanConfiguration scanConfiguration =
+                CloudBigtableScanConfiguration.fromConfig(tableConfiguration, scan);
+        return CloudBigtableIO.read(scanConfiguration.toBuilder().withProjectId(projectId).withInstanceId(instanceId).build());
+      }
+    }
     protected static final Logger SOURCE_LOG = LoggerFactory.getLogger(AbstractSource.class);
     protected static final long SIZED_BASED_MAX_SPLIT_COUNT = 4_000;
     static final long COUNT_MAX_SPLIT_COUNT = 15_360;
@@ -154,6 +226,7 @@ public class CloudBigtableIO {
               calculateEstimatedSizeBytes(null) / SIZED_BASED_MAX_SPLIT_COUNT,
               desiredBundleSizeBytes);
       CloudBigtableScanConfiguration conf = getConfiguration();
+      SOURCE_LOG.info("get configuration successfully");
       byte[] scanStartKey = conf.getZeroCopyStartRow();
       byte[] scanEndKey = conf.getZeroCopyStopRow();
       List<SourceWithKeys> splits = new ArrayList<>();
@@ -264,6 +337,7 @@ public class CloudBigtableIO {
       if (sampleRowKeys == null) {
         sampleRowKeys = new CloudBigtableServiceImpl().getSampleRowKeys(getConfiguration());
       }
+      SOURCE_LOG.info("returning sample row keys");
       return sampleRowKeys;
     }
 
@@ -406,6 +480,7 @@ public class CloudBigtableIO {
   public static class Source extends AbstractSource {
     private static final long serialVersionUID = -5580115943635114126L;
 
+
     Source(CloudBigtableScanConfiguration configuration) {
       super(configuration);
     }
@@ -447,6 +522,10 @@ public class CloudBigtableIO {
     @Override
     public Coder<Result> getOutputCoder() {
       return getResultCoder();
+    }
+
+    private Object writeReplace() {
+      return new SerializationProxy(getConfiguration());
     }
   }
 
@@ -533,6 +612,10 @@ public class CloudBigtableIO {
           Bytes.toStringBinary(getConfiguration().getZeroCopyStopRow()),
           estimatedSize);
     }
+
+    private Object writeReplace() {
+      return new SerializationProxy(getConfiguration());
+    }
   }
   /** Reads rows for a specific {@link Table}, usually filtered by a {@link Scan}. */
   @VisibleForTesting
@@ -561,12 +644,14 @@ public class CloudBigtableIO {
     @Override
     public boolean start() throws IOException {
       initializeScanner();
+      READER_LOG.info("starting");
       workStart = System.currentTimeMillis();
       return advance();
     }
 
     @VisibleForTesting
     void initializeScanner() throws IOException {
+      READER_LOG.info("initalizing scanner");
       Configuration config = source.getConfiguration().toHBaseConfig();
 
       connection = ConnectionFactory.createConnection(config);
@@ -580,6 +665,7 @@ public class CloudBigtableIO {
     /** Calls {@link ResultScanner#next()}. */
     @Override
     public boolean advance() throws IOException {
+      READER_LOG.info("advance is called");
       Result row = scanner.next();
       if (row != null && rangeTracker.tryReturnRecordAt(true, ByteKey.copyFrom(row.getRow()))) {
         current = row;

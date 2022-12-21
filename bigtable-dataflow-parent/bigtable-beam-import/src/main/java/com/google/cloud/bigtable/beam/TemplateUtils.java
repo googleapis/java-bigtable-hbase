@@ -15,22 +15,12 @@
  */
 package com.google.cloud.bigtable.beam;
 
-import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.PLACEHOLDER_APP_PROFILE_ID;
-import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.PLACEHOLDER_INSTANCE_ID;
-import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.PLACEHOLDER_PROJECT_ID;
-import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.PLACEHOLDER_TABLE_ID;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
-import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal.RequestContext;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.beam.sequencefiles.ExportJob.ExportOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob.ImportOptions;
 import com.google.cloud.bigtable.beam.validation.SyncTableJob.SyncTableOptions;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase.adapters.Adapters;
-import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
-import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 import java.io.Serializable;
 import java.nio.charset.CharacterCodingException;
 import org.apache.beam.sdk.options.ValueProvider;
@@ -93,13 +83,12 @@ public class TemplateUtils {
   }
 
   /** Provides a request that is constructed with some attributes. */
-  private static class RequestValueProvider
-      implements ValueProvider<ReadRowsRequest>, Serializable {
+  private static class RequestValueProvider implements ValueProvider<Scan>, Serializable {
     private final ValueProvider<String> start;
     private final ValueProvider<String> stop;
     private final ValueProvider<Integer> maxVersion;
     private final ValueProvider<String> filter;
-    private ReadRowsRequest cachedRequest;
+    private Scan cachedScan;
 
     RequestValueProvider(ExportOptions options) {
       this.start = options.getBigtableStartRow();
@@ -109,8 +98,8 @@ public class TemplateUtils {
     }
 
     @Override
-    public ReadRowsRequest get() {
-      if (cachedRequest == null) {
+    public Scan get() {
+      if (cachedScan == null) {
         Scan scan = new Scan();
         if (start.get() != null && !start.get().isEmpty()) {
           scan.setStartRow(start.get().getBytes());
@@ -129,18 +118,9 @@ public class TemplateUtils {
           }
         }
 
-        ReadHooks readHooks = new DefaultReadHooks();
-        Query query = Query.create(PLACEHOLDER_TABLE_ID);
-        Adapters.SCAN_ADAPTER.adapt(scan, readHooks, query);
-        readHooks.applyPreSendHook(query);
-        RequestContext requestContext =
-            RequestContext.create(
-                PLACEHOLDER_PROJECT_ID, PLACEHOLDER_INSTANCE_ID, PLACEHOLDER_APP_PROFILE_ID);
-
-        cachedRequest =
-            query.toProto(requestContext).toBuilder().setTableName("").setAppProfileId("").build();
+        cachedScan = scan;
       }
-      return cachedRequest;
+      return cachedScan;
     }
 
     @Override
@@ -162,7 +142,7 @@ public class TemplateUtils {
 
   /** Builds CloudBigtableScanConfiguration from input runtime parameters for export job. */
   public static CloudBigtableScanConfiguration buildExportConfig(ExportOptions options) {
-    ValueProvider<ReadRowsRequest> request = new RequestValueProvider(options);
+    ValueProvider<Scan> scan = new RequestValueProvider(options);
     CloudBigtableScanConfiguration.Builder configBuilder =
         new CloudBigtableScanConfiguration.Builder()
             .withProjectId(options.getBigtableProject())
@@ -171,7 +151,7 @@ public class TemplateUtils {
             .withAppProfileId(options.getBigtableAppProfileId())
             .withConfiguration(
                 BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "SequenceFileExportJob")
-            .withRequest(request);
+            .withScan(scan.get());
 
     return configBuilder.build();
   }
