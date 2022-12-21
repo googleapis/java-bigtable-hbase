@@ -25,6 +25,7 @@ import com.google.cloud.bigtable.data.v2.models.Filters.InterleaveFilter;
 import com.google.cloud.bigtable.data.v2.models.Filters.TimestampRangeFilter;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
+import com.google.cloud.bigtable.hbase.BigtableFixedRequestExtendedScan;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
 import com.google.cloud.bigtable.hbase.util.RowKeyWrapper;
@@ -156,14 +157,19 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
 
   /** {@inheritDoc} */
   @Override
-  public void adapt(Scan scan, ReadHooks readHooks, Query query) {
-    throwIfUnsupportedScan(scan);
+  public Query adapt(Scan scan, ReadHooks readHooks, Query query) {
+    if (scan instanceof BigtableFixedRequestExtendedScan) {
+      return ((BigtableFixedRequestExtendedScan) scan).getQuery();
+    } else {
+      throwIfUnsupportedScan(scan);
 
-    toByteStringRange(scan, query);
-    query.filter(buildFilter(scan, readHooks));
+      toByteStringRange(scan, query);
+      query.filter(buildFilter(scan, readHooks));
 
-    if (LIMIT_AVAILABLE && scan.getLimit() > 0) {
-      query.limit(scan.getLimit());
+      if (LIMIT_AVAILABLE && scan.getLimit() > 0) {
+        query.limit(scan.getLimit());
+      }
+      return query;
     }
   }
 

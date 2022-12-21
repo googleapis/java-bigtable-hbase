@@ -55,11 +55,11 @@ public class GetAdapter implements ReadOperationAdapter<Get> {
 
   /** {@inheritDoc} */
   @Override
-  public void adapt(Get operation, ReadHooks readHooks, Query query) {
+  public Query adapt(Get operation, ReadHooks readHooks, Query query) {
     Scan operationAsScan = new Scan(addKeyOnlyFilter(operation));
     scanAdapter.throwIfUnsupportedScan(operationAsScan);
 
-    query
+    return query
         .filter(scanAdapter.buildFilter(operationAsScan, readHooks))
         .rowKey(ByteString.copyFrom(operation.getRow()));
   }

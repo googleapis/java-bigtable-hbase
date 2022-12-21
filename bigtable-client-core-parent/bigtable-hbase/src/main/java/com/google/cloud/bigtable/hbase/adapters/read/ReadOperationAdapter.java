@@ -33,5 +33,5 @@ public interface ReadOperationAdapter<T extends Operation> {
    * @param readHooks a {@link ReadHooks} object.
    * @param query a {@link Query} object.
    */
-  void adapt(T request, ReadHooks readHooks, Query query);
+  Query adapt(T request, ReadHooks readHooks, Query query);
 }

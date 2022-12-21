@@ -24,6 +24,7 @@ import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
+import com.google.cloud.bigtable.hbase.BigtableFixedRequestExtendedScan;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
 import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
@@ -69,7 +70,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
   /** Builds a {@link CloudBigtableScanConfiguration}. */
   public static class Builder extends CloudBigtableTableConfiguration.Builder {
-    private ValueProvider<ReadRowsRequest> request;
+    private ValueProvider<Scan> scan;
 
     public Builder() {}
 
@@ -80,21 +81,12 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
     public Builder withScan(Scan scan) {
-      Preconditions.checkArgument(scan != null, "Scan cannot be null");
-      Query query = Query.create(PLACEHOLDER_TABLE_ID);
-      ReadHooks readHooks = new DefaultReadHooks();
-      Adapters.SCAN_ADAPTER.adapt(scan, readHooks, query);
-      readHooks.applyPreSendHook(query);
-      withQuery(query);
+      this.scan = StaticValueProvider.of(scan);
       return this;
     }
 
     Builder withQuery(Query query) {
-      RequestContext dummyContext =
-          RequestContext.create(
-              PLACEHOLDER_PROJECT_ID, PLACEHOLDER_INSTANCE_ID, PLACEHOLDER_APP_PROFILE_ID);
-      return this.withRequest(
-          query.toProto(dummyContext).toBuilder().setTableName("").setAppProfileId("").build());
+      return withScan(new BigtableFixedRequestExtendedScan(query));
     }
 
     /**
@@ -105,7 +97,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     @Deprecated
     public Builder withRequest(ReadRowsRequest request) {
-      return withRequest(StaticValueProvider.of(request));
+      return withQuery(Query.fromProto(request));
     }
 
     /**
@@ -116,8 +108,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     @Deprecated
     public Builder withRequest(ValueProvider<ReadRowsRequest> request) {
-      this.request = request;
-      return this;
+      return withRequest(request.get());
     }
 
     /**
@@ -128,19 +119,15 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
     Builder withKeys(byte[] startKey, byte[] stopKey) {
-      Preconditions.checkNotNull(request, "Request cannot be empty.");
-      Preconditions.checkState(request.isAccessible(), "Request must be accessible.");
-      final ByteString start = ByteStringer.wrap(startKey);
-      final ByteString stop = ByteStringer.wrap(stopKey);
-      return withRequest(
-          request
-              .get()
-              .toBuilder()
-              .setRows(
-                  RowSet.newBuilder()
-                      .addRowRanges(
-                          RowRange.newBuilder().setStartKeyClosed(start).setEndKeyOpen(stop)))
-              .build());
+      Preconditions.checkNotNull(scan, "Request cannot be empty.");
+      Preconditions.checkState(scan.isAccessible(), "Request must be accessible.");
+      if (scan.get() instanceof BigtableFixedRequestExtendedScan) {
+        ByteString start = ByteString.copyFrom(startKey);
+        ByteString end = ByteString.copyFrom(stopKey);
+        return withQuery(((BigtableFixedRequestExtendedScan) scan.get()).getQuery().range(start, end));
+      } else {
+        return withScan(scan.get().withStartRow(startKey).withStopRow(stopKey));
+      }
     }
 
     /**
@@ -238,51 +225,45 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     @Override
     public CloudBigtableScanConfiguration build() {
-      if (request == null) {
+      if (scan == null) {
         withScan(new Scan());
       }
       return new CloudBigtableScanConfiguration(
-          projectId, instanceId, tableId, request, additionalConfiguration);
+          projectId, instanceId, tableId, scan, additionalConfiguration);
     }
   }
 
-  private final ValueProvider<ReadRowsRequest> request;
+  private final ValueProvider<Scan> scan;
 
   /**
    * Provides an updated request by setting the table name in the existing request if the table name
    * wasn't set.
    */
   private static class RequestWithTableNameValueProvider
-      implements ValueProvider<ReadRowsRequest>, Serializable {
+      implements ValueProvider<Scan>, Serializable {
     private final ValueProvider<String> projectId;
     private final ValueProvider<String> instanceId;
     private final ValueProvider<String> tableId;
-    private final ValueProvider<ReadRowsRequest> request;
-    private ReadRowsRequest cachedRequest;
+    private final ValueProvider<Scan> scanValueProvider;
+    private Scan cachedScan;
 
     RequestWithTableNameValueProvider(
         ValueProvider<String> projectId,
         ValueProvider<String> instanceId,
         ValueProvider<String> tableId,
-        ValueProvider<ReadRowsRequest> request) {
+        ValueProvider<Scan> scan) {
       this.projectId = projectId;
       this.instanceId = instanceId;
       this.tableId = tableId;
-      this.request = request;
+      this.scanValueProvider = scan;
     }
 
     @Override
-    public ReadRowsRequest get() {
-      if (cachedRequest == null) {
-        if (request.get().getTableName().isEmpty()) {
-          String fullTableName =
-              NameUtil.formatTableName(projectId.get(), instanceId.get(), tableId.get());
-          cachedRequest = request.get().toBuilder().setTableName(fullTableName).build();
-        } else {
-          cachedRequest = request.get();
-        }
+    public Scan get() {
+      if (cachedScan == null) {
+        cachedScan = scanValueProvider.get();
       }
-      return cachedRequest;
+      return cachedScan;
     }
 
     @Override
@@ -290,7 +271,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       return projectId.isAccessible()
           && instanceId.isAccessible()
           && tableId.isAccessible()
-          && request.isAccessible();
+          && scanValueProvider.isAccessible();
     }
 
     @Override
@@ -309,17 +290,17 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * @param projectId The project ID for the instance.
    * @param instanceId The instance ID.
    * @param tableId The table to connect to in the instance.
-   * @param request The {@link ReadRowsRequest} that will be used to filter the table.
+   * @param scan The {@link ReadRowsRequest} that will be used to filter the table.
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
   protected CloudBigtableScanConfiguration(
       ValueProvider<String> projectId,
       ValueProvider<String> instanceId,
       ValueProvider<String> tableId,
-      ValueProvider<ReadRowsRequest> request,
+      ValueProvider<Scan> scan,
       Map<String, ValueProvider<String>> additionalConfiguration) {
     super(projectId, instanceId, tableId, additionalConfiguration);
-    this.request = new RequestWithTableNameValueProvider(projectId, instanceId, tableId, request);
+    this.scan = new RequestWithTableNameValueProvider(projectId, instanceId, tableId, scan);
   }
 
   /**
@@ -329,7 +310,18 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    */
   @Deprecated
   public ReadRowsRequest getRequest() {
-    return request.get();
+    if (scan.get() instanceof BigtableFixedRequestExtendedScan) {
+      Query query = ((BigtableFixedRequestExtendedScan) scan.get()).getQuery();
+      return query.toProto(RequestContext.create(getProjectId(), getInstanceId(), getTableId()));
+    } else {
+      Query query = Query.create(PLACEHOLDER_TABLE_ID);
+      Adapters.SCAN_ADAPTER.adapt(scan.get(), new DefaultReadHooks(), query);
+      return query.toProto(RequestContext.create(getProjectId(), getInstanceId(), getTableId()));
+    }
+  }
+
+  public Scan getScan() {
+    return scan.get();
   }
 
   /** @return The start row for this configuration. */
@@ -397,6 +389,6 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   public void populateDisplayData(DisplayData.Builder builder) {
     super.populateDisplayData(builder);
     builder.add(
-        DisplayData.item("readRowsRequest", getDisplayValue(request)).withLabel("ReadRowsRequest"));
+        DisplayData.item("scan", getDisplayValue(scan)).withLabel("Scan"));
   }
 }

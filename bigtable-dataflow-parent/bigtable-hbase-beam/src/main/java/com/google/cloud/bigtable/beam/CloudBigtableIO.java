@@ -570,11 +570,7 @@ public class CloudBigtableIO {
       Configuration config = source.getConfiguration().toHBaseConfig();
 
       connection = ConnectionFactory.createConnection(config);
-      Scan scan =
-          new Scan()
-              .withStartRow(source.getConfiguration().getZeroCopyStartRow())
-              .withStopRow(source.getConfiguration().getZeroCopyStopRow())
-              .setMaxVersions(Integer.MAX_VALUE);
+      Scan scan = source.getConfiguration().getScan();
       scanner =
           connection
               .getTable(TableName.valueOf(source.getConfiguration().getTableId()))
