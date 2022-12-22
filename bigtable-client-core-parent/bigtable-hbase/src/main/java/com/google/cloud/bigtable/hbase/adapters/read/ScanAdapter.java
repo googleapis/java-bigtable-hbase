@@ -44,8 +44,6 @@ import java.util.NavigableSet;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.io.TimeRange;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * An adapter for {@link Scan} operation that makes use of the proto filter language.
@@ -54,8 +52,6 @@ import org.slf4j.LoggerFactory;
  */
 @InternalApi("For internal usage only")
 public class ScanAdapter implements ReadOperationAdapter<Scan> {
-
-  protected static final Logger LOG = LoggerFactory.getLogger(ScanAdapter.class);
 
   private static final int UNSET_MAX_RESULTS_PER_COLUMN_FAMILY = -1;
   private static final boolean OPEN_CLOSED_AVAILABLE = isOpenClosedAvailable();
@@ -162,9 +158,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   /** {@inheritDoc} */
   @Override
   public Query adapt(Scan scan, ReadHooks readHooks, Query query) {
-    LOG.info("in scan adapter");
     if (scan instanceof BigtableFixedRequestExtendedScan) {
-      LOG.info("retunring bigtableFixedRequestExtendedScan");
       return ((BigtableFixedRequestExtendedScan) scan).getQuery();
     } else {
       throwIfUnsupportedScan(scan);

@@ -18,19 +18,13 @@ package com.google.cloud.bigtable.hbase;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import org.apache.hadoop.hbase.client.Scan;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @InternalApi
 public class BigtableFixedRequestExtendedScan extends Scan {
 
-  protected static final Logger LOG =
-      LoggerFactory.getLogger(BigtableFixedRequestExtendedScan.class);
-
   private final Query query;
 
   public BigtableFixedRequestExtendedScan(Query query) {
-    LOG.info("Setting a query: " + query.toString());
     this.query = query;
   }
 

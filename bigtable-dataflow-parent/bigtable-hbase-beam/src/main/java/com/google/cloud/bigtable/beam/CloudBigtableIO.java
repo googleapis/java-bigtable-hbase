@@ -221,7 +221,6 @@ public class CloudBigtableIO {
               calculateEstimatedSizeBytes(null) / SIZED_BASED_MAX_SPLIT_COUNT,
               desiredBundleSizeBytes);
       CloudBigtableScanConfiguration conf = getConfiguration();
-      SOURCE_LOG.info("get configuration successfully");
       byte[] scanStartKey = conf.getZeroCopyStartRow();
       byte[] scanEndKey = conf.getZeroCopyStopRow();
       List<SourceWithKeys> splits = new ArrayList<>();
@@ -332,7 +331,6 @@ public class CloudBigtableIO {
       if (sampleRowKeys == null) {
         sampleRowKeys = new CloudBigtableServiceImpl().getSampleRowKeys(getConfiguration());
       }
-      SOURCE_LOG.info("returning sample row keys");
       return sampleRowKeys;
     }
 
@@ -638,14 +636,12 @@ public class CloudBigtableIO {
     @Override
     public boolean start() throws IOException {
       initializeScanner();
-      READER_LOG.info("starting");
       workStart = System.currentTimeMillis();
       return advance();
     }
 
     @VisibleForTesting
     void initializeScanner() throws IOException {
-      READER_LOG.info("initalizing scanner");
       Configuration config = source.getConfiguration().toHBaseConfig();
 
       connection = ConnectionFactory.createConnection(config);
@@ -659,7 +655,6 @@ public class CloudBigtableIO {
     /** Calls {@link ResultScanner#next()}. */
     @Override
     public boolean advance() throws IOException {
-      READER_LOG.info("advance is called");
       Result row = scanner.next();
       if (row != null && rangeTracker.tryReturnRecordAt(true, ByteKey.copyFrom(row.getRow()))) {
         current = row;
