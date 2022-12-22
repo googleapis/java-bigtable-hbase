@@ -15,39 +15,28 @@
  */
 package com.google.cloud.bigtable.beam;
 
-import avro.shaded.com.google.common.collect.ImmutableMap;
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowRange;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowSet;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal.NameUtil;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.hbase.BigtableFixedRequestExtendedScan;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
-import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
-
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
-
-import org.apache.beam.sdk.coders.SerializableCoder;
-import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.io.range.ByteKey;
 import org.apache.beam.sdk.io.range.ByteKeyRange;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
-import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
 
 /**
  * This class defines configuration that a Cloud Bigtable client needs to connect to a user's Cloud
@@ -76,6 +65,27 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     CloudBigtableScanConfiguration.Builder builder = new CloudBigtableScanConfiguration.Builder();
     config.copyConfig(builder);
     return builder.withScan(scan).build();
+  }
+
+  public static CloudBigtableScanConfiguration fromConfig(
+      String projectId,
+      String instanceId,
+      String tableId,
+      Scan scan,
+      Map<String, ValueProvider<String>> configuration) {
+    CloudBigtableScanConfiguration.Builder builder = new CloudBigtableScanConfiguration.Builder();
+    for (String key : configuration.keySet()) {
+      if (!key.equals(BigtableOptionsFactory.PROJECT_ID_KEY)
+          && !key.equals(BigtableOptionsFactory.INSTANCE_ID_KEY)) {
+        builder.withConfiguration(key, configuration.get(key));
+      }
+    }
+    return builder
+        .withProjectId(projectId)
+        .withInstanceId(instanceId)
+        .withTableId(tableId)
+        .withScan(scan)
+        .build();
   }
 
   /** Builds a {@link CloudBigtableScanConfiguration}. */
@@ -134,7 +144,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       if (scan.get() instanceof BigtableFixedRequestExtendedScan) {
         ByteString start = ByteString.copyFrom(startKey);
         ByteString end = ByteString.copyFrom(stopKey);
-        return withQuery(((BigtableFixedRequestExtendedScan) scan.get()).getQuery().range(start, end));
+        return withQuery(
+            ((BigtableFixedRequestExtendedScan) scan.get()).getQuery().range(start, end));
       } else {
         return withScan(scan.get().withStartRow(startKey).withStopRow(stopKey));
       }
@@ -322,11 +333,13 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   public ReadRowsRequest getRequest() {
     if (scan.get() instanceof BigtableFixedRequestExtendedScan) {
       Query query = ((BigtableFixedRequestExtendedScan) scan.get()).getQuery();
-      return query.toProto(RequestContext.create(getProjectId(), getInstanceId(), getTableId()));
+      return query.toProto(
+          RequestContext.create(getProjectId(), getInstanceId(), getAppProfileId()));
     } else {
-      Query query = Query.create(PLACEHOLDER_TABLE_ID);
+      Query query = Query.create(getTableId());
       query = Adapters.SCAN_ADAPTER.adapt(scan.get(), new DefaultReadHooks(), query);
-      return query.toProto(RequestContext.create(getProjectId(), getInstanceId(), getTableId()));
+      return query.toProto(
+          RequestContext.create(getProjectId(), getInstanceId(), getAppProfileId()));
     }
   }
 
@@ -398,7 +411,6 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   @Override
   public void populateDisplayData(DisplayData.Builder builder) {
     super.populateDisplayData(builder);
-    builder.add(
-        DisplayData.item("scan", getDisplayValue(scan)).withLabel("Scan"));
+    builder.add(DisplayData.item("scan", getDisplayValue(scan)).withLabel("Scan"));
   }
 }

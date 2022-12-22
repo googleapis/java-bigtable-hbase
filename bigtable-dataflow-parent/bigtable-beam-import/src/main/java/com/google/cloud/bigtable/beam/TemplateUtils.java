@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.beam;
 
-
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.beam.sequencefiles.ExportJob.ExportOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob.ImportOptions;

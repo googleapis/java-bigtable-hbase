@@ -191,6 +191,9 @@ public class CloudBigtableConfiguration implements Serializable {
 
   /** Get the Cloud Bigtable App Profile id. */
   public String getAppProfileId() {
+    if (configuration.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY) == null) {
+      return "default";
+    }
     return configuration.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY).get();
   }
 

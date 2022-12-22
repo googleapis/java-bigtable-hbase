@@ -21,8 +21,8 @@ import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.K
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
-import com.google.bigtable.repackaged.com.google.protobuf.GeneratedMessageV3;
 import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
+import com.google.cloud.bigtable.hbase.BigtableFixedRequestExtendedScan;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -34,9 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicLong;
-
-import com.google.cloud.bigtable.hbase.BigtableFixedRequestExtendedScan;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import org.apache.beam.sdk.annotations.Experimental;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -78,7 +75,6 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.yarn.webapp.hamlet.Hamlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -154,6 +150,7 @@ public class CloudBigtableIO {
       private Scan scan;
 
       public SerializationProxy() {}
+
       public SerializationProxy(CloudBigtableScanConfiguration configuration) {
         this.projectId = configuration.getProjectId();
         this.instanceId = configuration.getInstanceId();
@@ -191,15 +188,13 @@ public class CloudBigtableIO {
       }
 
       Object readResolve() {
-        CloudBigtableConfiguration.Builder builder = new CloudBigtableConfiguration.Builder();
-        builder.copyFrom(additionalConfig);
-        CloudBigtableTableConfiguration tableConfiguration =
-                CloudBigtableTableConfiguration.fromConfig(builder.build(), tableId);
-        CloudBigtableScanConfiguration scanConfiguration =
-                CloudBigtableScanConfiguration.fromConfig(tableConfiguration, scan);
-        return CloudBigtableIO.read(scanConfiguration.toBuilder().withProjectId(projectId).withInstanceId(instanceId).build());
+        CloudBigtableScanConfiguration conf =
+            CloudBigtableScanConfiguration.fromConfig(
+                projectId, instanceId, tableId, scan, additionalConfig);
+        return CloudBigtableIO.read(conf);
       }
     }
+
     protected static final Logger SOURCE_LOG = LoggerFactory.getLogger(AbstractSource.class);
     protected static final long SIZED_BASED_MAX_SPLIT_COUNT = 4_000;
     static final long COUNT_MAX_SPLIT_COUNT = 15_360;
@@ -479,7 +474,6 @@ public class CloudBigtableIO {
   @InternalExtensionOnly
   public static class Source extends AbstractSource {
     private static final long serialVersionUID = -5580115943635114126L;
-
 
     Source(CloudBigtableScanConfiguration configuration) {
       super(configuration);

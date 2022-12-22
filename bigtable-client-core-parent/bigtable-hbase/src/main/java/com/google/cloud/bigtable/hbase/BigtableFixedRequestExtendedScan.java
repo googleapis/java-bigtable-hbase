@@ -21,12 +21,11 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Serializable;
-
 @InternalApi
 public class BigtableFixedRequestExtendedScan extends Scan {
 
-  protected static final Logger LOG = LoggerFactory.getLogger(BigtableFixedRequestExtendedScan.class);
+  protected static final Logger LOG =
+      LoggerFactory.getLogger(BigtableFixedRequestExtendedScan.class);
 
   private final Query query;
 

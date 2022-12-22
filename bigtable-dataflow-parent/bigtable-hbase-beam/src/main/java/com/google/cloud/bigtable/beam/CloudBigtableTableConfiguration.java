@@ -189,7 +189,7 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
   }
 
   public static CloudBigtableTableConfiguration fromConfig(
-          CloudBigtableConfiguration config, String tableId) {
+      CloudBigtableConfiguration config, String tableId) {
     CloudBigtableTableConfiguration.Builder builder = new CloudBigtableTableConfiguration.Builder();
     config.copyConfig(builder);
     return builder.withTableId(tableId).build();
