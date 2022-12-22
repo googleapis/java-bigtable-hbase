@@ -81,15 +81,15 @@ public class TemplateUtils {
     return builder.build();
   }
 
-  /** Provides a request that is constructed with some attributes. */
-  private static class RequestValueProvider implements ValueProvider<Scan>, Serializable {
+  /** Provides a scan that is constructed with some attributes. */
+  private static class ScanValueProvider implements ValueProvider<Scan>, Serializable {
     private final ValueProvider<String> start;
     private final ValueProvider<String> stop;
     private final ValueProvider<Integer> maxVersion;
     private final ValueProvider<String> filter;
     private Scan cachedScan;
 
-    RequestValueProvider(ExportOptions options) {
+    ScanValueProvider(ExportOptions options) {
       this.start = options.getBigtableStartRow();
       this.stop = options.getBigtableStopRow();
       this.maxVersion = options.getBigtableMaxVersions();
@@ -141,7 +141,7 @@ public class TemplateUtils {
 
   /** Builds CloudBigtableScanConfiguration from input runtime parameters for export job. */
   public static CloudBigtableScanConfiguration buildExportConfig(ExportOptions options) {
-    ValueProvider<Scan> scan = new RequestValueProvider(options);
+    ValueProvider<Scan> scan = new ScanValueProvider(options);
     CloudBigtableScanConfiguration.Builder configBuilder =
         new CloudBigtableScanConfiguration.Builder()
             .withProjectId(options.getBigtableProject())

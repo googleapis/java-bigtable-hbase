@@ -22,7 +22,7 @@ import org.apache.hadoop.hbase.client.Scan;
 @InternalApi
 public class BigtableFixedRequestExtendedScan extends Scan {
 
-  private final Query query;
+  private Query query;
 
   public BigtableFixedRequestExtendedScan(Query query) {
     this.query = query;
@@ -30,5 +30,9 @@ public class BigtableFixedRequestExtendedScan extends Scan {
 
   public Query getQuery() {
     return query;
+  }
+
+  public void setQuery(Query query) {
+    this.query = query;
   }
 }

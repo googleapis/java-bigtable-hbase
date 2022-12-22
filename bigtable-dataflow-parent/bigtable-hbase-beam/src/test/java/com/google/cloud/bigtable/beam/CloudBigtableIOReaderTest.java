@@ -106,7 +106,14 @@ public class CloudBigtableIOReaderTest {
   public void testPercent() throws IOException {
     byte[] start = "aa".getBytes();
     byte[] end = "zz".getBytes();
-    CloudBigtableScanConfiguration config = createDefaultConfig().withKeys(start, end).build();
+    CloudBigtableScanConfiguration config =
+        new CloudBigtableScanConfiguration.Builder()
+            .withProjectId("test")
+            .withInstanceId("test")
+            .withTableId("test")
+            .withRequest(ReadRowsRequest.getDefaultInstance())
+            .withKeys(start, end)
+            .build();
     CloudBigtableIO.Reader underTest = initializeReader(config);
     ByteKeyRangeTracker tracker =
         ByteKeyRangeTracker.of(ByteKeyRange.of(ByteKey.copyFrom(start), ByteKey.copyFrom(end)));
@@ -143,7 +150,13 @@ public class CloudBigtableIOReaderTest {
     byte[] startKey = "AAAAAAA".getBytes();
     byte[] stopKey = "ZZZZZZZ".getBytes();
     CloudBigtableScanConfiguration config =
-        createDefaultConfig().withKeys(startKey, stopKey).build();
+        new CloudBigtableScanConfiguration.Builder()
+            .withProjectId("test")
+            .withInstanceId("test")
+            .withTableId("test")
+            .withRequest(ReadRowsRequest.getDefaultInstance())
+            .withKeys(startKey, stopKey)
+            .build();
     CloudBigtableIO.Source source = (CloudBigtableIO.Source) CloudBigtableIO.read(config);
     BoundedSource<Result> sourceWithKeys = source.createSourceWithKeys(startKey, stopKey, 10);
 

@@ -19,24 +19,34 @@ import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowRange;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.RowSet;
+import com.google.bigtable.repackaged.com.google.bigtable.v2.TableName;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
+import com.google.bigtable.repackaged.com.google.common.collect.ImmutableMap;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
 import com.google.cloud.bigtable.hbase.BigtableFixedRequestExtendedScan;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
+import com.google.cloud.bigtable.hbase.adapters.read.ReadHooks;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.io.range.ByteKey;
 import org.apache.beam.sdk.io.range.ByteKeyRange;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
+import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
 
 /**
  * This class defines configuration that a Cloud Bigtable client needs to connect to a user's Cloud
@@ -47,6 +57,7 @@ import org.apache.hadoop.hbase.client.Scan;
 public class CloudBigtableScanConfiguration extends CloudBigtableTableConfiguration {
 
   private static final long serialVersionUID = 2435897354284600685L;
+
   protected static final String PLACEHOLDER_TABLE_ID = "PLACEHOLDER_TABLE_ID";
   protected static final String PLACEHOLDER_PROJECT_ID = "PLACEHOLDER_PROJECT_ID";
   protected static final String PLACEHOLDER_INSTANCE_ID = "PLACEHOLDER_INSTANCE_ID";
@@ -91,6 +102,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   /** Builds a {@link CloudBigtableScanConfiguration}. */
   public static class Builder extends CloudBigtableTableConfiguration.Builder {
     private ValueProvider<Scan> scan;
+    private BigtableFixedRequestExtendedScan fixed;
 
     public Builder() {}
 
@@ -106,7 +118,20 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     }
 
     Builder withQuery(Query query) {
-      return withScan(new BigtableFixedRequestExtendedScan(query));
+      if (fixed == null) {
+        fixed = new BigtableFixedRequestExtendedScan(query);
+      } else {
+        // Updating query shouldn't update the original table id
+        ReadRowsRequest request =
+            query.toProto(
+                RequestContext.create(
+                    projectId.get(), instanceId.get(), build().getAppProfileId()));
+        ReadRowsRequest.Builder builder = request.toBuilder();
+        builder.setTableName(TableName.format(projectId.get(), instanceId.get(), tableId.get()));
+        Query newQuery = Query.fromProto(builder.build());
+        fixed.setQuery(newQuery);
+      }
+      return withScan(fixed);
     }
 
     /**
@@ -117,7 +142,9 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     @Deprecated
     public Builder withRequest(ReadRowsRequest request) {
-      return withQuery(Query.fromProto(request));
+      ReadRowsRequest.Builder builder = request.toBuilder();
+      builder.setTableName(TableName.format(projectId.get(), instanceId.get(), tableId.get()));
+      return withQuery(Query.fromProto(builder.build()));
     }
 
     /**
@@ -139,13 +166,25 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
     Builder withKeys(byte[] startKey, byte[] stopKey) {
-      Preconditions.checkNotNull(scan, "Request cannot be empty.");
-      Preconditions.checkState(scan.isAccessible(), "Request must be accessible.");
+      Preconditions.checkNotNull(scan, "Scan cannot be empty.");
+      Preconditions.checkState(scan.isAccessible(), "Scan must be accessible.");
       if (scan.get() instanceof BigtableFixedRequestExtendedScan) {
         ByteString start = ByteString.copyFrom(startKey);
         ByteString end = ByteString.copyFrom(stopKey);
-        return withQuery(
-            ((BigtableFixedRequestExtendedScan) scan.get()).getQuery().range(start, end));
+        // Keep the behavior from the previous implementation, create a new rowRange instead of
+        // adding to the
+        // existing row ranges.
+        ReadRowsRequest.Builder request =
+            ((BigtableFixedRequestExtendedScan) scan.get())
+                .getQuery()
+                .toProto(
+                    RequestContext.create(
+                        projectId.get(), instanceId.get(), build().getAppProfileId()))
+                .toBuilder();
+        request.setRows(
+            RowSet.newBuilder()
+                .addRowRanges(RowRange.newBuilder().setStartKeyClosed(start).setEndKeyOpen(end)));
+        return withRequest(request.build());
       } else {
         return withScan(scan.get().withStartRow(startKey).withStopRow(stopKey));
       }
@@ -260,15 +299,14 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * Provides an updated request by setting the table name in the existing request if the table name
    * wasn't set.
    */
-  private static class RequestWithTableNameValueProvider
-      implements ValueProvider<Scan>, Serializable {
+  private static class ScanWithTableNameValueProvider implements ValueProvider<Scan>, Serializable {
     private final ValueProvider<String> projectId;
     private final ValueProvider<String> instanceId;
     private final ValueProvider<String> tableId;
     private final ValueProvider<Scan> scanValueProvider;
     private Scan cachedScan;
 
-    RequestWithTableNameValueProvider(
+    ScanWithTableNameValueProvider(
         ValueProvider<String> projectId,
         ValueProvider<String> instanceId,
         ValueProvider<String> tableId,
@@ -311,7 +349,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * @param projectId The project ID for the instance.
    * @param instanceId The instance ID.
    * @param tableId The table to connect to in the instance.
-   * @param scan The {@link ReadRowsRequest} that will be used to filter the table.
+   * @param scan The {@link Scan} that will be used to filter the table.
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
    */
   protected CloudBigtableScanConfiguration(
@@ -321,7 +359,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       ValueProvider<Scan> scan,
       Map<String, ValueProvider<String>> additionalConfiguration) {
     super(projectId, instanceId, tableId, additionalConfiguration);
-    this.scan = new RequestWithTableNameValueProvider(projectId, instanceId, tableId, scan);
+    this.scan = new ScanWithTableNameValueProvider(projectId, instanceId, tableId, scan);
   }
 
   /**
@@ -336,8 +374,10 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       return query.toProto(
           RequestContext.create(getProjectId(), getInstanceId(), getAppProfileId()));
     } else {
+      ReadHooks readHooks = new DefaultReadHooks();
       Query query = Query.create(getTableId());
-      query = Adapters.SCAN_ADAPTER.adapt(scan.get(), new DefaultReadHooks(), query);
+      query = Adapters.SCAN_ADAPTER.adapt(scan.get(), readHooks, query);
+      readHooks.applyPreSendHook(query);
       return query.toProto(
           RequestContext.create(getProjectId(), getInstanceId(), getAppProfileId()));
     }
@@ -412,5 +452,75 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   public void populateDisplayData(DisplayData.Builder builder) {
     super.populateDisplayData(builder);
     builder.add(DisplayData.item("scan", getDisplayValue(scan)).withLabel("Scan"));
+  }
+
+  /**
+   * The writeReplace method allows the developer to provide a replacement object that will be
+   * serialized instead of the original one. We use this to keep the enclosed class immutable. For
+   * more details on the technique see <a
+   * href="https://lingpipe-blog.com/2009/08/10/serializing-immutable-singletons-serialization-proxy/">this
+   * article</a>.
+   */
+  private Object writeReplace() {
+    return new SerializationProxy(this);
+  }
+
+  private static class SerializationProxy implements Serializable {
+
+    private String projectId;
+    private String instanceId;
+    private String tableId;
+    private Scan scan;
+    private ImmutableMap<String, ValueProvider<String>> additionalConfiguration;
+
+    public SerializationProxy(CloudBigtableScanConfiguration configuration) {
+      this.projectId = configuration.getProjectId();
+      this.instanceId = configuration.getInstanceId();
+      this.tableId = configuration.getTableId();
+      this.scan = configuration.getScan();
+      Map<String, ValueProvider<String>> map = new HashMap<>();
+      map.putAll(configuration.getConfiguration());
+      map.remove(BigtableOptionsFactory.PROJECT_ID_KEY);
+      map.remove(BigtableOptionsFactory.INSTANCE_ID_KEY);
+      this.additionalConfiguration =
+          new ImmutableMap.Builder<String, ValueProvider<String>>().putAll(map).build();
+    }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+      StringUtf8Coder.of().encode(projectId, out);
+      StringUtf8Coder.of().encode(instanceId, out);
+      StringUtf8Coder.of().encode(tableId, out);
+      out.writeObject(additionalConfiguration);
+      if (scan instanceof BigtableFixedRequestExtendedScan) {
+        out.writeObject(true);
+        out.writeObject(((BigtableFixedRequestExtendedScan) scan).getQuery());
+      } else {
+        out.writeObject(false);
+        ProtobufUtil.toScan(scan).writeDelimitedTo(out);
+      }
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+      projectId = StringUtf8Coder.of().decode(in);
+      instanceId = StringUtf8Coder.of().decode(in);
+      tableId = StringUtf8Coder.of().decode(in);
+      additionalConfiguration = (ImmutableMap<String, ValueProvider<String>>) in.readObject();
+      boolean isExtendedScan = (Boolean) in.readObject();
+      if (isExtendedScan) {
+        Query query = (Query) in.readObject();
+        scan = new BigtableFixedRequestExtendedScan(query);
+      } else {
+        scan = ProtobufUtil.toScan(ClientProtos.Scan.parseDelimitedFrom(in));
+      }
+    }
+
+    Object readResolve() {
+      return new CloudBigtableScanConfiguration(
+          StaticValueProvider.of(projectId),
+          StaticValueProvider.of(instanceId),
+          StaticValueProvider.of(tableId),
+          StaticValueProvider.of(scan),
+          additionalConfiguration);
+    }
   }
 }

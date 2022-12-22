@@ -138,6 +138,13 @@ public class CloudBigtableIO {
   @SuppressWarnings("serial")
   abstract static class AbstractSource extends BoundedSource<Result> {
 
+    /**
+     * The writeReplace method allows the developer to provide a replacement object that will be
+     * serialized instead of the original one. We use this to keep the enclosed class immutable. For
+     * more details on the technique see <a
+     * href="https://lingpipe-blog.com/2009/08/10/serializing-immutable-singletons-serialization-proxy/">this
+     * article</a>.
+     */
     private Object writeReplace() {
       return new SerializationProxy(getConfiguration());
     }
