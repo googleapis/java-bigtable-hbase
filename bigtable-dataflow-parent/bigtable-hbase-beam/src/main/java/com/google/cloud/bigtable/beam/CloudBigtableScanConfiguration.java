@@ -25,7 +25,7 @@ import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Q
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.common.collect.ImmutableMap;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
-import com.google.cloud.bigtable.hbase.BigtableFixedRequestExtendedScan;
+import com.google.cloud.bigtable.hbase.BigtableFixedQueryScan;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
@@ -102,7 +102,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   /** Builds a {@link CloudBigtableScanConfiguration}. */
   public static class Builder extends CloudBigtableTableConfiguration.Builder {
     private ValueProvider<Scan> scan;
-    private BigtableFixedRequestExtendedScan fixed;
+    private BigtableFixedQueryScan fixed;
 
     public Builder() {}
 
@@ -119,7 +119,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
     Builder withQuery(Query query) {
       if (fixed == null) {
-        fixed = new BigtableFixedRequestExtendedScan(query);
+        fixed = new BigtableFixedQueryScan(query);
       } else {
         // Updating query shouldn't update the original table id
         ReadRowsRequest request =
@@ -168,13 +168,13 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     Builder withKeys(byte[] startKey, byte[] stopKey) {
       Preconditions.checkNotNull(scan, "Scan cannot be empty.");
       Preconditions.checkState(scan.isAccessible(), "Scan must be accessible.");
-      if (scan.get() instanceof BigtableFixedRequestExtendedScan) {
+      if (scan.get() instanceof BigtableFixedQueryScan) {
         ByteString start = ByteString.copyFrom(startKey);
         ByteString end = ByteString.copyFrom(stopKey);
         // Keep the behavior from the previous implementation, create a new rowRange instead of
         // adding to the existing row ranges.
         ReadRowsRequest.Builder request =
-            ((BigtableFixedRequestExtendedScan) scan.get())
+            ((BigtableFixedQueryScan) scan.get())
                 .getQuery()
                 .toProto(
                     RequestContext.create(
@@ -425,8 +425,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    */
   @Deprecated
   public ReadRowsRequest getRequest() {
-    if (scan.get() instanceof BigtableFixedRequestExtendedScan) {
-      Query query = ((BigtableFixedRequestExtendedScan) scan.get()).getQuery();
+    if (scan.get() instanceof BigtableFixedQueryScan) {
+      Query query = ((BigtableFixedQueryScan) scan.get()).getQuery();
       return query.toProto(
           RequestContext.create(getProjectId(), getInstanceId(), getAppProfileId()));
     } else {
@@ -552,9 +552,9 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       StringUtf8Coder.of().encode(instanceId, out);
       StringUtf8Coder.of().encode(tableId, out);
       out.writeObject(additionalConfiguration);
-      if (scan instanceof BigtableFixedRequestExtendedScan) {
+      if (scan instanceof BigtableFixedQueryScan) {
         out.writeObject("fixed");
-        out.writeObject(((BigtableFixedRequestExtendedScan) scan).getQuery());
+        out.writeObject(((BigtableFixedQueryScan) scan).getQuery());
       } else if (scan instanceof SerializableScan) {
         out.writeObject("serialized");
         out.writeObject(scan);
@@ -572,7 +572,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       String scanType = (String) in.readObject();
       if (scanType.equals("fixed")) {
         Query query = (Query) in.readObject();
-        scan = new BigtableFixedRequestExtendedScan(query);
+        scan = new BigtableFixedQueryScan(query);
       } else if (scanType.equals("serialized")) {
         scan = (SerializableScan) in.readObject();
       } else {

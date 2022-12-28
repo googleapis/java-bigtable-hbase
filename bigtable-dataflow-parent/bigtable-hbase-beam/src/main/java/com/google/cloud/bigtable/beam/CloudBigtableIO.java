@@ -22,7 +22,7 @@ import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Q
 import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
-import com.google.cloud.bigtable.hbase.BigtableFixedRequestExtendedScan;
+import com.google.cloud.bigtable.hbase.BigtableFixedQueryScan;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -171,9 +171,9 @@ public class CloudBigtableIO {
         out.writeObject(instanceId);
         StringUtf8Coder.of().encode(tableId, out);
         out.writeObject(additionalConfig);
-        if (scan.get() instanceof BigtableFixedRequestExtendedScan) {
+        if (scan.get() instanceof BigtableFixedQueryScan) {
           out.writeObject("fixed");
-          out.writeObject(((BigtableFixedRequestExtendedScan) scan.get()).getQuery());
+          out.writeObject(((BigtableFixedQueryScan) scan.get()).getQuery());
         } else if (scan
             instanceof CloudBigtableScanConfiguration.SerializableScanWithTableNameValueProvider) {
           out.writeObject("serializable");
@@ -198,7 +198,7 @@ public class CloudBigtableIO {
         String scanType = (String) in.readObject();
         if (scanType.equals("fixed")) {
           Query query = (Query) in.readObject();
-          scan = ValueProvider.StaticValueProvider.of(new BigtableFixedRequestExtendedScan(query));
+          scan = ValueProvider.StaticValueProvider.of(new BigtableFixedQueryScan(query));
         } else if (scanType.equals("serializable")) {
           scan =
               (CloudBigtableScanConfiguration.SerializableScanWithTableNameValueProvider)
