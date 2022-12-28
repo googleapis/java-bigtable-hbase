@@ -44,8 +44,6 @@ import java.util.NavigableSet;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.io.TimeRange;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * An adapter for {@link Scan} operation that makes use of the proto filter language.
@@ -54,9 +52,6 @@ import org.slf4j.LoggerFactory;
  */
 @InternalApi("For internal usage only")
 public class ScanAdapter implements ReadOperationAdapter<Scan> {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(ScanAdapter.class);
-
   private static final int UNSET_MAX_RESULTS_PER_COLUMN_FAMILY = -1;
   private static final boolean OPEN_CLOSED_AVAILABLE = isOpenClosedAvailable();
   private static final boolean LIMIT_AVAILABLE = isLimitAvailable();
@@ -163,8 +158,6 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   @Override
   public Query adapt(Scan scan, ReadHooks readHooks, Query query) {
     if (scan instanceof BigtableFixedQueryScan) {
-      LOGGER.warn(
-          "returning bigtable fixedrequest query: " + ((BigtableFixedQueryScan) scan).getQuery());
       return ((BigtableFixedQueryScan) scan).getQuery();
     } else {
       throwIfUnsupportedScan(scan);
@@ -174,7 +167,6 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
       if (LIMIT_AVAILABLE && scan.getLimit() > 0) {
         query.limit(scan.getLimit());
       }
-      LOGGER.warn("returning adapted query: " + query);
       return query;
     }
   }
