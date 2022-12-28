@@ -150,47 +150,65 @@ public class CloudBigtableIO {
     }
 
     static class SerializationProxy implements Serializable {
-      private String projectId;
-      private String instanceId;
+      private ValueProvider<String> projectId;
+      private ValueProvider<String> instanceId;
       private String tableId;
       private Map<String, ValueProvider<String>> additionalConfig;
-      private Scan scan;
+      private ValueProvider<Scan> scan;
 
       public SerializationProxy() {}
 
       public SerializationProxy(CloudBigtableScanConfiguration configuration) {
-        this.projectId = configuration.getProjectId();
-        this.instanceId = configuration.getInstanceId();
+        this.projectId = configuration.getProjectIdValueProvider();
+        this.instanceId = configuration.getInstanceIdValueProvider();
         this.tableId = configuration.getTableId();
         this.additionalConfig = configuration.getConfiguration();
         this.scan = configuration.getScan();
       }
 
       private void writeObject(ObjectOutputStream out) throws IOException {
-        StringUtf8Coder.of().encode(projectId, out);
-        StringUtf8Coder.of().encode(instanceId, out);
+        out.writeObject(projectId);
+        out.writeObject(instanceId);
         StringUtf8Coder.of().encode(tableId, out);
         out.writeObject(additionalConfig);
-        if (scan instanceof BigtableFixedRequestExtendedScan) {
-          out.writeObject(true);
-          out.writeObject(((BigtableFixedRequestExtendedScan) scan).getQuery());
+        if (scan.get() instanceof BigtableFixedRequestExtendedScan) {
+          out.writeObject("fixed");
+          out.writeObject(((BigtableFixedRequestExtendedScan) scan.get()).getQuery());
+        } else if (scan
+            instanceof CloudBigtableScanConfiguration.SerializableScanWithTableNameValueProvider) {
+          out.writeObject("serializable");
+          out.writeObject(scan);
         } else {
-          out.writeObject(false);
-          ProtobufUtil.toScan(scan).writeDelimitedTo(out);
+          out.writeObject("hbase");
+          if (scan.isAccessible()) {
+            out.writeObject(true);
+            ProtobufUtil.toScan(scan.get()).writeDelimitedTo(out);
+          } else {
+            out.writeObject(false);
+          }
         }
       }
 
       private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        projectId = StringUtf8Coder.of().decode(in);
-        instanceId = StringUtf8Coder.of().decode(in);
+        projectId = (ValueProvider<String>) in.readObject();
+        instanceId = (ValueProvider<String>) in.readObject();
+
         tableId = StringUtf8Coder.of().decode(in);
         additionalConfig = (Map<String, ValueProvider<String>>) in.readObject();
-        boolean isExtendedScan = (Boolean) in.readObject();
-        if (isExtendedScan) {
+        String scanType = (String) in.readObject();
+        if (scanType.equals("fixed")) {
           Query query = (Query) in.readObject();
-          scan = new BigtableFixedRequestExtendedScan(query);
+          scan = ValueProvider.StaticValueProvider.of(new BigtableFixedRequestExtendedScan(query));
+        } else if (scanType.equals("serializable")) {
+          scan =
+              (CloudBigtableScanConfiguration.SerializableScanWithTableNameValueProvider)
+                  in.readObject();
         } else {
-          scan = ProtobufUtil.toScan(ClientProtos.Scan.parseDelimitedFrom(in));
+          if ((boolean) in.readObject()) {
+            scan =
+                ValueProvider.StaticValueProvider.of(
+                    ProtobufUtil.toScan(ClientProtos.Scan.parseDelimitedFrom(in)));
+          }
         }
       }
 
@@ -652,7 +670,7 @@ public class CloudBigtableIO {
       Configuration config = source.getConfiguration().toHBaseConfig();
 
       connection = ConnectionFactory.createConnection(config);
-      Scan scan = source.getConfiguration().getScan();
+      Scan scan = source.getConfiguration().getScan().get();
       scanner =
           connection
               .getTable(TableName.valueOf(source.getConfiguration().getTableId()))

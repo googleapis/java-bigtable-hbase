@@ -25,7 +25,7 @@ import com.google.cloud.bigtable.data.v2.models.Filters.InterleaveFilter;
 import com.google.cloud.bigtable.data.v2.models.Filters.TimestampRangeFilter;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
-import com.google.cloud.bigtable.hbase.BigtableFixedRequestExtendedScan;
+import com.google.cloud.bigtable.hbase.BigtableFixedQueryScan;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
 import com.google.cloud.bigtable.hbase.util.RowKeyWrapper;
@@ -44,6 +44,8 @@ import java.util.NavigableSet;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.io.TimeRange;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An adapter for {@link Scan} operation that makes use of the proto filter language.
@@ -52,6 +54,8 @@ import org.apache.hadoop.hbase.io.TimeRange;
  */
 @InternalApi("For internal usage only")
 public class ScanAdapter implements ReadOperationAdapter<Scan> {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(ScanAdapter.class);
 
   private static final int UNSET_MAX_RESULTS_PER_COLUMN_FAMILY = -1;
   private static final boolean OPEN_CLOSED_AVAILABLE = isOpenClosedAvailable();
@@ -158,17 +162,19 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   /** {@inheritDoc} */
   @Override
   public Query adapt(Scan scan, ReadHooks readHooks, Query query) {
-    if (scan instanceof BigtableFixedRequestExtendedScan) {
-      return ((BigtableFixedRequestExtendedScan) scan).getQuery();
+    if (scan instanceof BigtableFixedQueryScan) {
+      LOGGER.warn(
+          "returning bigtable fixedrequest query: " + ((BigtableFixedQueryScan) scan).getQuery());
+      return ((BigtableFixedQueryScan) scan).getQuery();
     } else {
       throwIfUnsupportedScan(scan);
-
       toByteStringRange(scan, query);
       query.filter(buildFilter(scan, readHooks));
 
       if (LIMIT_AVAILABLE && scan.getLimit() > 0) {
         query.limit(scan.getLimit());
       }
+      LOGGER.warn("returning adapted query: " + query);
       return query;
     }
   }

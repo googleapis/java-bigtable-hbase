@@ -79,10 +79,10 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   }
 
   public static CloudBigtableScanConfiguration fromConfig(
-      String projectId,
-      String instanceId,
+      ValueProvider<String> projectId,
+      ValueProvider<String> instanceId,
       String tableId,
-      Scan scan,
+      ValueProvider<Scan> scan,
       Map<String, ValueProvider<String>> configuration) {
     CloudBigtableScanConfiguration.Builder builder = new CloudBigtableScanConfiguration.Builder();
     for (String key : configuration.keySet()) {
@@ -172,8 +172,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
         ByteString start = ByteString.copyFrom(startKey);
         ByteString end = ByteString.copyFrom(stopKey);
         // Keep the behavior from the previous implementation, create a new rowRange instead of
-        // adding to the
-        // existing row ranges.
+        // adding to the existing row ranges.
         ReadRowsRequest.Builder request =
             ((BigtableFixedRequestExtendedScan) scan.get())
                 .getQuery()
@@ -278,6 +277,11 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       return this;
     }
 
+    public Builder withScan(ValueProvider<Scan> scan) {
+      this.scan = scan;
+      return this;
+    }
+
     /**
      * Builds the {@link CloudBigtableScanConfiguration}.
      *
@@ -285,9 +289,6 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     @Override
     public CloudBigtableScanConfiguration build() {
-      if (scan == null) {
-        withScan(new Scan());
-      }
       return new CloudBigtableScanConfiguration(
           projectId, instanceId, tableId, scan, additionalConfiguration);
     }
@@ -320,7 +321,56 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     @Override
     public Scan get() {
       if (cachedScan == null) {
-        cachedScan = scanValueProvider.get();
+        if (scanValueProvider == null) {
+          cachedScan = new Scan();
+          cachedScan.setMaxVersions(Integer.MAX_VALUE);
+        } else {
+          cachedScan = scanValueProvider.get();
+        }
+      }
+      return cachedScan;
+    }
+
+    @Override
+    public boolean isAccessible() {
+      return projectId.isAccessible()
+          && instanceId.isAccessible()
+          && tableId.isAccessible()
+          && scanValueProvider.isAccessible();
+    }
+
+    @Override
+    public String toString() {
+      if (isAccessible()) {
+        return String.valueOf(get());
+      }
+      return VALUE_UNAVAILABLE;
+    }
+  }
+
+  public static class SerializableScanWithTableNameValueProvider
+      implements ValueProvider<Scan>, Serializable {
+    private final ValueProvider<String> projectId;
+    private final ValueProvider<String> instanceId;
+    private final ValueProvider<String> tableId;
+    private final ValueProvider<Scan> scanValueProvider;
+    private SerializableScan cachedScan;
+
+    SerializableScanWithTableNameValueProvider(
+        ValueProvider<String> projectId,
+        ValueProvider<String> instanceId,
+        ValueProvider<String> tableId,
+        ValueProvider<Scan> scan) {
+      this.projectId = projectId;
+      this.instanceId = instanceId;
+      this.tableId = tableId;
+      this.scanValueProvider = scan;
+    }
+
+    @Override
+    public Scan get() {
+      if (cachedScan == null) {
+        cachedScan = ((SerializableScan) scanValueProvider.get());
       }
       return cachedScan;
     }
@@ -359,7 +409,13 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       ValueProvider<Scan> scan,
       Map<String, ValueProvider<String>> additionalConfiguration) {
     super(projectId, instanceId, tableId, additionalConfiguration);
-    this.scan = new ScanWithTableNameValueProvider(projectId, instanceId, tableId, scan);
+    if (scan instanceof SerializableScanWithTableNameValueProvider
+        || (scan instanceof StaticValueProvider && scan.get() instanceof SerializableScan)) {
+      this.scan =
+          new SerializableScanWithTableNameValueProvider(projectId, instanceId, tableId, scan);
+    } else {
+      this.scan = new ScanWithTableNameValueProvider(projectId, instanceId, tableId, scan);
+    }
   }
 
   /**
@@ -374,17 +430,22 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       return query.toProto(
           RequestContext.create(getProjectId(), getInstanceId(), getAppProfileId()));
     } else {
+      Scan hbaseScan = null;
+      if (scan.get() instanceof SerializableScan) {
+        hbaseScan = ((SerializableScan) scan.get()).toScan();
+      }
       ReadHooks readHooks = new DefaultReadHooks();
       Query query = Query.create(getTableId());
-      query = Adapters.SCAN_ADAPTER.adapt(scan.get(), readHooks, query);
+      query =
+          Adapters.SCAN_ADAPTER.adapt(hbaseScan == null ? scan.get() : hbaseScan, readHooks, query);
       readHooks.applyPreSendHook(query);
       return query.toProto(
           RequestContext.create(getProjectId(), getInstanceId(), getAppProfileId()));
     }
   }
 
-  public Scan getScan() {
-    return scan.get();
+  public ValueProvider<Scan> getScan() {
+    return scan;
   }
 
   /** @return The start row for this configuration. */
@@ -477,7 +538,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       this.projectId = configuration.getProjectId();
       this.instanceId = configuration.getInstanceId();
       this.tableId = configuration.getTableId();
-      this.scan = configuration.getScan();
+      this.scan = configuration.getScan().get();
       Map<String, ValueProvider<String>> map = new HashMap<>();
       map.putAll(configuration.getConfiguration());
       map.remove(BigtableOptionsFactory.PROJECT_ID_KEY);
@@ -492,10 +553,13 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       StringUtf8Coder.of().encode(tableId, out);
       out.writeObject(additionalConfiguration);
       if (scan instanceof BigtableFixedRequestExtendedScan) {
-        out.writeObject(true);
+        out.writeObject("fixed");
         out.writeObject(((BigtableFixedRequestExtendedScan) scan).getQuery());
+      } else if (scan instanceof SerializableScan) {
+        out.writeObject("serialized");
+        out.writeObject(scan);
       } else {
-        out.writeObject(false);
+        out.writeObject("hbase");
         ProtobufUtil.toScan(scan).writeDelimitedTo(out);
       }
     }
@@ -505,10 +569,12 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       instanceId = StringUtf8Coder.of().decode(in);
       tableId = StringUtf8Coder.of().decode(in);
       additionalConfiguration = (ImmutableMap<String, ValueProvider<String>>) in.readObject();
-      boolean isExtendedScan = (Boolean) in.readObject();
-      if (isExtendedScan) {
+      String scanType = (String) in.readObject();
+      if (scanType.equals("fixed")) {
         Query query = (Query) in.readObject();
         scan = new BigtableFixedRequestExtendedScan(query);
+      } else if (scanType.equals("serialized")) {
+        scan = (SerializableScan) in.readObject();
       } else {
         scan = ProtobufUtil.toScan(ClientProtos.Scan.parseDelimitedFrom(in));
       }

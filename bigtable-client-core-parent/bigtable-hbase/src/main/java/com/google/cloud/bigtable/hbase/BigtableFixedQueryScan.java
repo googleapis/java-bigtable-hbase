@@ -20,11 +20,11 @@ import com.google.cloud.bigtable.data.v2.models.Query;
 import org.apache.hadoop.hbase.client.Scan;
 
 @InternalApi
-public class BigtableFixedRequestExtendedScan extends Scan {
+public class BigtableFixedQueryScan extends Scan {
 
   private Query query;
 
-  public BigtableFixedRequestExtendedScan(Query query) {
+  public BigtableFixedQueryScan(Query query) {
     this.query = query;
   }
 

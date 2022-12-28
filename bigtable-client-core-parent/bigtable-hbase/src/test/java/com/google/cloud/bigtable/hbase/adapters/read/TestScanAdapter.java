@@ -25,7 +25,7 @@ import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
-import com.google.cloud.bigtable.hbase.BigtableFixedRequestExtendedScan;
+import com.google.cloud.bigtable.hbase.BigtableFixedQueryScan;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
@@ -452,7 +452,7 @@ public class TestScanAdapter {
 
   @Test
   public void testFixedRequest() {
-    BigtableFixedRequestExtendedScan fixedRequestScan = new BigtableFixedRequestExtendedScan(query);
+    BigtableFixedQueryScan fixedRequestScan = new BigtableFixedQueryScan(query);
 
     Query newQuery =
         scanAdapter.adapt(

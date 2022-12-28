@@ -20,11 +20,7 @@ import com.google.cloud.bigtable.beam.sequencefiles.ExportJob.ExportOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob.ImportOptions;
 import com.google.cloud.bigtable.beam.validation.SyncTableJob.SyncTableOptions;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import java.io.Serializable;
-import java.nio.charset.CharacterCodingException;
 import org.apache.beam.sdk.options.ValueProvider;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.ParseFilter;
 
 /**
  * !!! DO NOT TOUCH THIS CLASS !!!
@@ -81,67 +77,8 @@ public class TemplateUtils {
     return builder.build();
   }
 
-  /** Provides a scan that is constructed with some attributes. */
-  private static class ScanValueProvider implements ValueProvider<Scan>, Serializable {
-    private final ValueProvider<String> start;
-    private final ValueProvider<String> stop;
-    private final ValueProvider<Integer> maxVersion;
-    private final ValueProvider<String> filter;
-    private Scan cachedScan;
-
-    ScanValueProvider(ExportOptions options) {
-      this.start = options.getBigtableStartRow();
-      this.stop = options.getBigtableStopRow();
-      this.maxVersion = options.getBigtableMaxVersions();
-      this.filter = options.getBigtableFilter();
-    }
-
-    @Override
-    public Scan get() {
-      if (cachedScan == null) {
-        Scan scan = new Scan();
-        if (start.get() != null && !start.get().isEmpty()) {
-          scan.setStartRow(start.get().getBytes());
-        }
-        if (stop.get() != null && !stop.get().isEmpty()) {
-          scan.setStopRow(stop.get().getBytes());
-        }
-        if (maxVersion.get() != null) {
-          scan.setMaxVersions(maxVersion.get());
-        }
-        if (filter.get() != null && !filter.get().isEmpty()) {
-          try {
-            scan.setFilter(new ParseFilter().parseFilterString(filter.get()));
-          } catch (CharacterCodingException e) {
-            throw new RuntimeException(e);
-          }
-        }
-
-        cachedScan = scan;
-      }
-      return cachedScan;
-    }
-
-    @Override
-    public boolean isAccessible() {
-      return start.isAccessible()
-          && stop.isAccessible()
-          && maxVersion.isAccessible()
-          && filter.isAccessible();
-    }
-
-    @Override
-    public String toString() {
-      if (isAccessible()) {
-        return String.valueOf(get());
-      }
-      return CloudBigtableConfiguration.VALUE_UNAVAILABLE;
-    }
-  }
-
   /** Builds CloudBigtableScanConfiguration from input runtime parameters for export job. */
   public static CloudBigtableScanConfiguration buildExportConfig(ExportOptions options) {
-    ValueProvider<Scan> scan = new ScanValueProvider(options);
     CloudBigtableScanConfiguration.Builder configBuilder =
         new CloudBigtableScanConfiguration.Builder()
             .withProjectId(options.getBigtableProject())
@@ -150,7 +87,12 @@ public class TemplateUtils {
             .withAppProfileId(options.getBigtableAppProfileId())
             .withConfiguration(
                 BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "SequenceFileExportJob")
-            .withScan(scan.get());
+            .withScan(
+                new SerializableScan(
+                    options.getBigtableStartRow(),
+                    options.getBigtableStopRow(),
+                    options.getBigtableMaxVersions(),
+                    options.getBigtableFilter()));
 
     return configBuilder.build();
   }
