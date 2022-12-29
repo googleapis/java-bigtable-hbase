@@ -19,6 +19,7 @@ import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import org.apache.hadoop.hbase.client.Scan;
 
+/** A wrapper class that wraps a Bigtable {@link Query}. */
 @InternalApi
 public class BigtableFixedQueryScan extends Scan {
 

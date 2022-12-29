@@ -57,7 +57,6 @@ import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
 public class CloudBigtableScanConfiguration extends CloudBigtableTableConfiguration {
 
   private static final long serialVersionUID = 2435897354284600685L;
-
   protected static final String PLACEHOLDER_TABLE_ID = "PLACEHOLDER_TABLE_ID";
   protected static final String PLACEHOLDER_PROJECT_ID = "PLACEHOLDER_PROJECT_ID";
   protected static final String PLACEHOLDER_INSTANCE_ID = "PLACEHOLDER_INSTANCE_ID";
@@ -118,7 +117,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   /** Builds a {@link CloudBigtableScanConfiguration}. */
   public static class Builder extends CloudBigtableTableConfiguration.Builder {
     private ValueProvider<Scan> scan;
-    private BigtableFixedQueryScan fixed;
+    private BigtableFixedQueryScan fixedQueryScan;
 
     public Builder() {}
 
@@ -134,8 +133,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     }
 
     Builder withQuery(Query query) {
-      if (fixed == null) {
-        fixed = new BigtableFixedQueryScan(query);
+      if (fixedQueryScan == null) {
+        fixedQueryScan = new BigtableFixedQueryScan(query);
       } else {
         // Updating query shouldn't update the original table id
         ReadRowsRequest request =
@@ -145,9 +144,9 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
         ReadRowsRequest.Builder builder = request.toBuilder();
         builder.setTableName(TableName.format(projectId.get(), instanceId.get(), tableId.get()));
         Query newQuery = Query.fromProto(builder.build());
-        fixed.setQuery(newQuery);
+        fixedQueryScan.setQuery(newQuery);
       }
-      return withScan(fixed);
+      return withScan(fixedQueryScan);
     }
 
     /**
