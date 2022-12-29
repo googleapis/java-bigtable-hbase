@@ -63,6 +63,12 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   protected static final String PLACEHOLDER_INSTANCE_ID = "PLACEHOLDER_INSTANCE_ID";
   protected static final String PLACEHOLDER_APP_PROFILE_ID = "PLACEHOLDER_APP_PROFILE_ID";
 
+  enum ScanType {
+    FIXED,
+    SERIALIZABLE,
+    HBASE
+  }
+
   /**
    * Converts a {@link CloudBigtableTableConfiguration} object to a {@link
    * CloudBigtableScanConfiguration} that will perform the specified {@link Scan} on the table.
@@ -78,6 +84,16 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     return builder.withScan(scan).build();
   }
 
+  /**
+   * Converts configuration map to a {@link CloudBigtableScanConfiguration}.
+   *
+   * @param projectId Value provider for project id
+   * @param instanceId Value provider for instance id
+   * @param tableId table id
+   * @param scan The {@link Scan} to add to the configuration
+   * @param configuration A map of all the configurations
+   * @return
+   */
   public static CloudBigtableScanConfiguration fromConfig(
       ValueProvider<String> projectId,
       ValueProvider<String> instanceId,
@@ -348,15 +364,14 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     }
   }
 
-  public static class SerializableScanWithTableNameValueProvider
-      implements ValueProvider<Scan>, Serializable {
+  static class SerializableScanValueProvider implements ValueProvider<Scan>, Serializable {
     private final ValueProvider<String> projectId;
     private final ValueProvider<String> instanceId;
     private final ValueProvider<String> tableId;
     private final ValueProvider<Scan> scanValueProvider;
     private SerializableScan cachedScan;
 
-    SerializableScanWithTableNameValueProvider(
+    SerializableScanValueProvider(
         ValueProvider<String> projectId,
         ValueProvider<String> instanceId,
         ValueProvider<String> tableId,
@@ -409,10 +424,9 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       ValueProvider<Scan> scan,
       Map<String, ValueProvider<String>> additionalConfiguration) {
     super(projectId, instanceId, tableId, additionalConfiguration);
-    if (scan instanceof SerializableScanWithTableNameValueProvider
+    if (scan instanceof SerializableScanValueProvider
         || (scan instanceof StaticValueProvider && scan.get() instanceof SerializableScan)) {
-      this.scan =
-          new SerializableScanWithTableNameValueProvider(projectId, instanceId, tableId, scan);
+      this.scan = new SerializableScanValueProvider(projectId, instanceId, tableId, scan);
     } else {
       this.scan = new ScanWithTableNameValueProvider(projectId, instanceId, tableId, scan);
     }
@@ -553,13 +567,13 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       StringUtf8Coder.of().encode(tableId, out);
       out.writeObject(additionalConfiguration);
       if (scan instanceof BigtableFixedQueryScan) {
-        out.writeObject("fixed");
+        out.writeObject(ScanType.FIXED);
         out.writeObject(((BigtableFixedQueryScan) scan).getQuery());
       } else if (scan instanceof SerializableScan) {
-        out.writeObject("serialized");
+        out.writeObject(ScanType.SERIALIZABLE);
         out.writeObject(scan);
       } else {
-        out.writeObject("hbase");
+        out.writeObject(ScanType.HBASE);
         ProtobufUtil.toScan(scan).writeDelimitedTo(out);
       }
     }
@@ -569,11 +583,11 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       instanceId = StringUtf8Coder.of().decode(in);
       tableId = StringUtf8Coder.of().decode(in);
       additionalConfiguration = (ImmutableMap<String, ValueProvider<String>>) in.readObject();
-      String scanType = (String) in.readObject();
-      if (scanType.equals("fixed")) {
+      ScanType scanType = (ScanType) in.readObject();
+      if (scanType == ScanType.FIXED) {
         Query query = (Query) in.readObject();
         scan = new BigtableFixedQueryScan(query);
-      } else if (scanType.equals("serialized")) {
+      } else if (scanType == ScanType.SERIALIZABLE) {
         scan = (SerializableScan) in.readObject();
       } else {
         scan = ProtobufUtil.toScan(ClientProtos.Scan.parseDelimitedFrom(in));

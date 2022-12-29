@@ -21,7 +21,11 @@ import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ParseFilter;
 
-public class SerializableScan extends Scan implements Serializable {
+/**
+ * A wrapper class to wrap the start key, stop key, maxVersion and filter of a HBase scan object
+ * that can be serialized.
+ */
+class SerializableScan extends Scan implements Serializable {
 
   private final ValueProvider<String> start;
   private final ValueProvider<String> stop;
@@ -40,7 +44,7 @@ public class SerializableScan extends Scan implements Serializable {
     this.filter = filter;
   }
 
-  public Scan toScan() {
+  Scan toScan() {
     Scan scan = new Scan();
     // default scan version is 1. reset it to max
     scan.setMaxVersions(Integer.MAX_VALUE);

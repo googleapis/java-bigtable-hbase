@@ -15,6 +15,9 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.ScanType;
+import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.SerializableScanValueProvider;
+
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
@@ -137,88 +140,6 @@ public class CloudBigtableIO {
   @InternalExtensionOnly
   @SuppressWarnings("serial")
   abstract static class AbstractSource extends BoundedSource<Result> {
-
-    /**
-     * The writeReplace method allows the developer to provide a replacement object that will be
-     * serialized instead of the original one. We use this to keep the enclosed class immutable. For
-     * more details on the technique see <a
-     * href="https://lingpipe-blog.com/2009/08/10/serializing-immutable-singletons-serialization-proxy/">this
-     * article</a>.
-     */
-    private Object writeReplace() {
-      return new SerializationProxy(getConfiguration());
-    }
-
-    static class SerializationProxy implements Serializable {
-      private ValueProvider<String> projectId;
-      private ValueProvider<String> instanceId;
-      private String tableId;
-      private Map<String, ValueProvider<String>> additionalConfig;
-      private ValueProvider<Scan> scan;
-
-      public SerializationProxy() {}
-
-      public SerializationProxy(CloudBigtableScanConfiguration configuration) {
-        this.projectId = configuration.getProjectIdValueProvider();
-        this.instanceId = configuration.getInstanceIdValueProvider();
-        this.tableId = configuration.getTableId();
-        this.additionalConfig = configuration.getConfiguration();
-        this.scan = configuration.getScan();
-      }
-
-      private void writeObject(ObjectOutputStream out) throws IOException {
-        out.writeObject(projectId);
-        out.writeObject(instanceId);
-        StringUtf8Coder.of().encode(tableId, out);
-        out.writeObject(additionalConfig);
-        if (scan.get() instanceof BigtableFixedQueryScan) {
-          out.writeObject("fixed");
-          out.writeObject(((BigtableFixedQueryScan) scan.get()).getQuery());
-        } else if (scan
-            instanceof CloudBigtableScanConfiguration.SerializableScanWithTableNameValueProvider) {
-          out.writeObject("serializable");
-          out.writeObject(scan);
-        } else {
-          out.writeObject("hbase");
-          if (scan.isAccessible()) {
-            out.writeObject(true);
-            ProtobufUtil.toScan(scan.get()).writeDelimitedTo(out);
-          } else {
-            out.writeObject(false);
-          }
-        }
-      }
-
-      private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        projectId = (ValueProvider<String>) in.readObject();
-        instanceId = (ValueProvider<String>) in.readObject();
-
-        tableId = StringUtf8Coder.of().decode(in);
-        additionalConfig = (Map<String, ValueProvider<String>>) in.readObject();
-        String scanType = (String) in.readObject();
-        if (scanType.equals("fixed")) {
-          Query query = (Query) in.readObject();
-          scan = ValueProvider.StaticValueProvider.of(new BigtableFixedQueryScan(query));
-        } else if (scanType.equals("serializable")) {
-          scan =
-              (CloudBigtableScanConfiguration.SerializableScanWithTableNameValueProvider)
-                  in.readObject();
-        } else {
-          if ((boolean) in.readObject()) {
-            scan =
-                ValueProvider.StaticValueProvider.of(
-                    ProtobufUtil.toScan(ClientProtos.Scan.parseDelimitedFrom(in)));
-          }
-        }
-      }
-
-      Object readResolve() {
-        CloudBigtableScanConfiguration conf =
-            CloudBigtableScanConfiguration.fromConfig(
-                projectId, instanceId, tableId, scan, additionalConfig);
-        return CloudBigtableIO.read(conf);
-      }
-    }
 
     protected static final Logger SOURCE_LOG = LoggerFactory.getLogger(AbstractSource.class);
     protected static final long SIZED_BASED_MAX_SPLIT_COUNT = 4_000;
@@ -487,6 +408,83 @@ public class CloudBigtableIO {
     public void populateDisplayData(DisplayData.Builder builder) {
       super.populateDisplayData(builder);
       configuration.populateDisplayData(builder);
+    }
+
+    /**
+     * The writeReplace method allows the developer to provide a replacement object that will be
+     * serialized instead of the original one. We use this to keep the enclosed class immutable. For
+     * more details on the technique see <a
+     * href="https://lingpipe-blog.com/2009/08/10/serializing-immutable-singletons-serialization-proxy/">this
+     * article</a>.
+     */
+    private Object writeReplace() {
+      return new SerializationProxy(getConfiguration());
+    }
+
+    static class SerializationProxy implements Serializable {
+      private ValueProvider<String> projectId;
+      private ValueProvider<String> instanceId;
+      private String tableId;
+      private Map<String, ValueProvider<String>> additionalConfig;
+      private ValueProvider<Scan> scan;
+
+      public SerializationProxy(CloudBigtableScanConfiguration configuration) {
+        this.projectId = configuration.getProjectIdValueProvider();
+        this.instanceId = configuration.getInstanceIdValueProvider();
+        this.tableId = configuration.getTableId();
+        this.additionalConfig = configuration.getConfiguration();
+        this.scan = configuration.getScan();
+      }
+
+      private void writeObject(ObjectOutputStream out) throws IOException {
+        out.writeObject(projectId);
+        out.writeObject(instanceId);
+        StringUtf8Coder.of().encode(tableId, out);
+        out.writeObject(additionalConfig);
+        if (scan.get() instanceof BigtableFixedQueryScan) {
+          out.writeObject(ScanType.FIXED);
+          out.writeObject(((BigtableFixedQueryScan) scan.get()).getQuery());
+        } else if (scan instanceof SerializableScanValueProvider) {
+          out.writeObject(ScanType.SERIALIZABLE);
+          out.writeObject(scan);
+        } else {
+          out.writeObject(ScanType.HBASE);
+          if (scan.isAccessible()) {
+            out.writeObject(true);
+            ProtobufUtil.toScan(scan.get()).writeDelimitedTo(out);
+          } else {
+            out.writeObject(false);
+          }
+        }
+      }
+
+      private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        projectId = (ValueProvider<String>) in.readObject();
+        instanceId = (ValueProvider<String>) in.readObject();
+
+        tableId = StringUtf8Coder.of().decode(in);
+        additionalConfig = (Map<String, ValueProvider<String>>) in.readObject();
+        ScanType scanType = (ScanType) in.readObject();
+        if (scanType == ScanType.FIXED) {
+          Query query = (Query) in.readObject();
+          scan = ValueProvider.StaticValueProvider.of(new BigtableFixedQueryScan(query));
+        } else if (scanType == ScanType.SERIALIZABLE) {
+          scan = (SerializableScanValueProvider) in.readObject();
+        } else {
+          if ((boolean) in.readObject()) {
+            scan =
+                ValueProvider.StaticValueProvider.of(
+                    ProtobufUtil.toScan(ClientProtos.Scan.parseDelimitedFrom(in)));
+          }
+        }
+      }
+
+      Object readResolve() {
+        CloudBigtableScanConfiguration conf =
+            CloudBigtableScanConfiguration.fromConfig(
+                projectId, instanceId, tableId, scan, additionalConfig);
+        return CloudBigtableIO.read(conf);
+      }
     }
   }
 
