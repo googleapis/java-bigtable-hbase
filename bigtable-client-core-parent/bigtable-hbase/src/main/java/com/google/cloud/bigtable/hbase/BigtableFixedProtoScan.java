@@ -16,24 +16,25 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.api.core.InternalApi;
+import com.google.bigtable.v2.ReadRowsRequest;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import org.apache.hadoop.hbase.client.Scan;
 
 /** A wrapper class that wraps a Bigtable {@link Query}. */
 @InternalApi
-public class BigtableFixedQueryScan extends Scan {
+public class BigtableFixedProtoScan extends Scan {
 
-  private Query query;
+  private ReadRowsRequest request;
 
-  public BigtableFixedQueryScan(Query query) {
-    this.query = query;
+  public BigtableFixedProtoScan(ReadRowsRequest request) {
+    this.request = request;
   }
 
-  public Query getQuery() {
-    return query;
+  public ReadRowsRequest getRequest() {
+    return request;
   }
 
-  public void setQuery(Query query) {
-    this.query = query;
+  public void setRequest(Query query) {
+    this.request = request;
   }
 }

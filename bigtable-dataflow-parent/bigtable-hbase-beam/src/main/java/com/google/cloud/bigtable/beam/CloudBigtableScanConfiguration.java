@@ -25,7 +25,7 @@ import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Q
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.common.collect.ImmutableMap;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
-import com.google.cloud.bigtable.hbase.BigtableFixedQueryScan;
+import com.google.cloud.bigtable.hbase.BigtableFixedProtoScan;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
 import com.google.cloud.bigtable.hbase.adapters.read.DefaultReadHooks;
@@ -96,7 +96,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   public static CloudBigtableScanConfiguration fromConfig(
       ValueProvider<String> projectId,
       ValueProvider<String> instanceId,
-      String tableId,
+      ValueProvider<String> tableId,
       ValueProvider<Scan> scan,
       Map<String, ValueProvider<String>> configuration) {
     CloudBigtableScanConfiguration.Builder builder = new CloudBigtableScanConfiguration.Builder();
@@ -117,7 +117,6 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   /** Builds a {@link CloudBigtableScanConfiguration}. */
   public static class Builder extends CloudBigtableTableConfiguration.Builder {
     private ValueProvider<Scan> scan;
-    private BigtableFixedQueryScan fixedQueryScan;
 
     public Builder() {}
 
@@ -132,21 +131,15 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       return this;
     }
 
-    Builder withQuery(Query query) {
-      if (fixedQueryScan == null) {
-        fixedQueryScan = new BigtableFixedQueryScan(query);
-      } else {
-        // Updating query shouldn't update the original table id
-        ReadRowsRequest request =
-            query.toProto(
-                RequestContext.create(
-                    projectId.get(), instanceId.get(), build().getAppProfileId()));
-        ReadRowsRequest.Builder builder = request.toBuilder();
-        builder.setTableName(TableName.format(projectId.get(), instanceId.get(), tableId.get()));
-        Query newQuery = Query.fromProto(builder.build());
-        fixedQueryScan.setQuery(newQuery);
-      }
-      return withScan(fixedQueryScan);
+    /**
+     * Specifies the {@link Scan} that will be used to filter the table.
+     *
+     * @param scan The {@link Scan} to add to the configuration.
+     * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
+     */
+    public Builder withScan(ValueProvider<Scan> scan) {
+      this.scan = scan;
+      return this;
     }
 
     /**
@@ -159,7 +152,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     public Builder withRequest(ReadRowsRequest request) {
       ReadRowsRequest.Builder builder = request.toBuilder();
       builder.setTableName(TableName.format(projectId.get(), instanceId.get(), tableId.get()));
-      return withQuery(Query.fromProto(builder.build()));
+      return withScan(new BigtableFixedProtoScan(builder.build()));
     }
 
     /**
@@ -170,7 +163,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     @Deprecated
     public Builder withRequest(ValueProvider<ReadRowsRequest> request) {
-      return withRequest(request.get());
+      return withScan(new BigtableFixedProtoValueProvider(request));
     }
 
     /**
@@ -183,18 +176,20 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     Builder withKeys(byte[] startKey, byte[] stopKey) {
       Preconditions.checkNotNull(scan, "Scan cannot be empty.");
       Preconditions.checkState(scan.isAccessible(), "Scan must be accessible.");
-      if (scan.get() instanceof BigtableFixedQueryScan) {
-        ByteString start = ByteString.copyFrom(startKey);
-        ByteString end = ByteString.copyFrom(stopKey);
+      ByteString start = ByteString.copyFrom(startKey);
+      ByteString end = ByteString.copyFrom(stopKey);
+      if (scan.get() instanceof BigtableFixedProtoScan) {
         // Keep the behavior from the previous implementation, create a new rowRange instead of
         // adding to the existing row ranges.
         ReadRowsRequest.Builder request =
-            ((BigtableFixedQueryScan) scan.get())
-                .getQuery()
-                .toProto(
-                    RequestContext.create(
-                        projectId.get(), instanceId.get(), build().getAppProfileId()))
-                .toBuilder();
+            ((BigtableFixedProtoScan) scan.get()).getRequest().toBuilder();
+        request.setRows(
+            RowSet.newBuilder()
+                .addRowRanges(RowRange.newBuilder().setStartKeyClosed(start).setEndKeyOpen(end)));
+        return withRequest(request.build());
+      } else if (scan instanceof BigtableFixedProtoValueProvider) {
+        ReadRowsRequest.Builder request =
+            ((BigtableFixedProtoValueProvider) scan).getRequest().toBuilder();
         request.setRows(
             RowSet.newBuilder()
                 .addRowRanges(RowRange.newBuilder().setStartKeyClosed(start).setEndKeyOpen(end)));
@@ -292,11 +287,6 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       return this;
     }
 
-    public Builder withScan(ValueProvider<Scan> scan) {
-      this.scan = scan;
-      return this;
-    }
-
     /**
      * Builds the {@link CloudBigtableScanConfiguration}.
      *
@@ -304,6 +294,16 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     @Override
     public CloudBigtableScanConfiguration build() {
+      if (scan == null) {
+        // If scan is not set, default it to a full table scan
+        this.scan =
+            StaticValueProvider.of(
+                new BigtableFixedProtoScan(
+                    ReadRowsRequest.newBuilder()
+                        .setTableName(
+                            TableName.format(projectId.get(), instanceId.get(), tableId.get()))
+                        .build()));
+      }
       return new CloudBigtableScanConfiguration(
           projectId, instanceId, tableId, scan, additionalConfiguration);
     }
@@ -438,10 +438,12 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    */
   @Deprecated
   public ReadRowsRequest getRequest() {
-    if (scan.get() instanceof BigtableFixedQueryScan) {
-      Query query = ((BigtableFixedQueryScan) scan.get()).getQuery();
-      return query.toProto(
-          RequestContext.create(getProjectId(), getInstanceId(), getAppProfileId()));
+    Preconditions.checkNotNull(scan, "Scan cannot be empty.");
+    Preconditions.checkState(scan.isAccessible(), "Scan must be accessible.");
+    if (scan instanceof BigtableFixedProtoValueProvider) {
+      return ((BigtableFixedProtoValueProvider) scan).getRequest();
+    } else if (scan.get() instanceof BigtableFixedProtoScan) {
+      return ((BigtableFixedProtoScan) scan.get()).getRequest();
     } else {
       Scan hbaseScan = null;
       if (scan.get() instanceof SerializableScan) {
@@ -565,9 +567,9 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       StringUtf8Coder.of().encode(instanceId, out);
       StringUtf8Coder.of().encode(tableId, out);
       out.writeObject(additionalConfiguration);
-      if (scan instanceof BigtableFixedQueryScan) {
+      if (scan instanceof BigtableFixedProtoScan) {
         out.writeObject(ScanType.FIXED);
-        out.writeObject(((BigtableFixedQueryScan) scan).getQuery());
+        out.writeObject(((BigtableFixedProtoScan) scan).getRequest());
       } else if (scan instanceof SerializableScan) {
         out.writeObject(ScanType.SERIALIZABLE);
         out.writeObject(scan);
@@ -584,8 +586,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       additionalConfiguration = (ImmutableMap<String, ValueProvider<String>>) in.readObject();
       ScanType scanType = (ScanType) in.readObject();
       if (scanType == ScanType.FIXED) {
-        Query query = (Query) in.readObject();
-        scan = new BigtableFixedQueryScan(query);
+        ReadRowsRequest request = (ReadRowsRequest) in.readObject();
+        scan = new BigtableFixedProtoScan(request);
       } else if (scanType == ScanType.SERIALIZABLE) {
         scan = (SerializableScan) in.readObject();
       } else {

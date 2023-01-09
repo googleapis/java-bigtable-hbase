@@ -20,12 +20,12 @@ import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.Seri
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
+import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
-import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
-import com.google.cloud.bigtable.hbase.BigtableFixedQueryScan;
+import com.google.cloud.bigtable.hbase.BigtableFixedProtoScan;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -41,7 +41,6 @@ import org.apache.beam.sdk.annotations.Experimental;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.CoderRegistry;
-import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.BoundedSource.BoundedReader;
 import org.apache.beam.sdk.io.range.ByteKey;
@@ -423,14 +422,14 @@ public class CloudBigtableIO {
     static class SerializationProxy implements Serializable {
       private ValueProvider<String> projectId;
       private ValueProvider<String> instanceId;
-      private String tableId;
+      private ValueProvider<String> tableId;
       private Map<String, ValueProvider<String>> additionalConfig;
       private ValueProvider<Scan> scan;
 
       public SerializationProxy(CloudBigtableScanConfiguration configuration) {
         this.projectId = configuration.getProjectIdValueProvider();
         this.instanceId = configuration.getInstanceIdValueProvider();
-        this.tableId = configuration.getTableId();
+        this.tableId = configuration.getTableIdValueProvider();
         this.additionalConfig = configuration.getConfiguration();
         this.scan = configuration.getScan();
       }
@@ -438,11 +437,14 @@ public class CloudBigtableIO {
       private void writeObject(ObjectOutputStream out) throws IOException {
         out.writeObject(projectId);
         out.writeObject(instanceId);
-        StringUtf8Coder.of().encode(tableId, out);
+        out.writeObject(tableId);
         out.writeObject(additionalConfig);
-        if (scan.get() instanceof BigtableFixedQueryScan) {
+        if (scan instanceof BigtableFixedProtoValueProvider) {
           out.writeObject(ScanType.FIXED);
-          out.writeObject(((BigtableFixedQueryScan) scan.get()).getQuery());
+          out.writeObject(((BigtableFixedProtoValueProvider) scan).getRequest());
+        } else if (scan.get() instanceof BigtableFixedProtoScan) {
+          out.writeObject(ScanType.FIXED);
+          out.writeObject(((BigtableFixedProtoScan) scan.get()).getRequest());
         } else if (scan instanceof SerializableScanValueProvider) {
           out.writeObject(ScanType.SERIALIZABLE);
           out.writeObject(scan);
@@ -460,13 +462,13 @@ public class CloudBigtableIO {
       private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         projectId = (ValueProvider<String>) in.readObject();
         instanceId = (ValueProvider<String>) in.readObject();
+        tableId = (ValueProvider<String>) in.readObject();
 
-        tableId = StringUtf8Coder.of().decode(in);
         additionalConfig = (Map<String, ValueProvider<String>>) in.readObject();
         ScanType scanType = (ScanType) in.readObject();
         if (scanType == ScanType.FIXED) {
-          Query query = (Query) in.readObject();
-          scan = ValueProvider.StaticValueProvider.of(new BigtableFixedQueryScan(query));
+          ReadRowsRequest request = (ReadRowsRequest) in.readObject();
+          scan = ValueProvider.StaticValueProvider.of(new BigtableFixedProtoScan(request));
         } else if (scanType == ScanType.SERIALIZABLE) {
           scan = (SerializableScanValueProvider) in.readObject();
         } else {

@@ -25,7 +25,7 @@ import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
-import com.google.cloud.bigtable.hbase.BigtableFixedQueryScan;
+import com.google.cloud.bigtable.hbase.BigtableFixedProtoScan;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
@@ -452,14 +452,14 @@ public class TestScanAdapter {
 
   @Test
   public void testFixedRequest() {
-    BigtableFixedQueryScan fixedRequestScan = new BigtableFixedQueryScan(query);
+    BigtableFixedProtoScan fixedRequestScan =
+        new BigtableFixedProtoScan(query.limit(10).toProto(requestContext));
 
-    Query newQuery =
-        scanAdapter.adapt(
-            fixedRequestScan,
-            throwingReadHooks,
-            query.filter(FILTERS.chain().filter(FILTERS.family().exactMatch("cf"))));
+    Query placeholder = Query.create("PLACEHOLDER");
+    Query newQuery = scanAdapter.adapt(fixedRequestScan, throwingReadHooks, placeholder);
 
-    Assert.assertEquals(query.toProto(requestContext), newQuery.toProto(requestContext));
+    Query expected = Query.create("tableId").limit(10);
+
+    Assert.assertEquals(expected.toProto(requestContext), newQuery.toProto(requestContext));
   }
 }

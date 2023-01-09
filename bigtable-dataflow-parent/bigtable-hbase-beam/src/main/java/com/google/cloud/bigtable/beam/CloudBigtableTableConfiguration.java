@@ -197,6 +197,15 @@ public class CloudBigtableTableConfiguration extends CloudBigtableConfiguration 
     return tableId.get();
   }
 
+  /**
+   * Gets the table specified by the configuration.
+   *
+   * @return The table ID value provider.
+   */
+  public ValueProvider<String> getTableIdValueProvider() {
+    return tableId;
+  }
+
   @Override
   public Builder toBuilder() {
     Builder builder = new Builder();
