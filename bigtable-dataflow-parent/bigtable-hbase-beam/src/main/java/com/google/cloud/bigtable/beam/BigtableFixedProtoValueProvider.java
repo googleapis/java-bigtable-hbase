@@ -20,7 +20,8 @@ import com.google.cloud.bigtable.hbase.BigtableFixedProtoScan;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.hadoop.hbase.client.Scan;
 
-public class BigtableFixedProtoValueProvider implements ValueProvider<Scan> {
+/** A {@link ValueProvider} class constructed from a {@link ReadRowsRequest} value provider. */
+class BigtableFixedProtoValueProvider implements ValueProvider<Scan> {
 
   private ValueProvider<ReadRowsRequest> request;
 
@@ -28,15 +29,18 @@ public class BigtableFixedProtoValueProvider implements ValueProvider<Scan> {
     this.request = request;
   }
 
+  /** Returns the {@link ReadRowsRequest}. */
   ReadRowsRequest getRequest() {
     return request.get();
   }
 
+  /** Wraps the {@link ReadRowsRequest} in a {@link BigtableFixedProtoScan}. */
   @Override
   public Scan get() {
     return new BigtableFixedProtoScan(request.get());
   }
 
+  /** Returns true if the {@link ReadRowsRequest} is accessible. */
   @Override
   public boolean isAccessible() {
     return request.isAccessible();

@@ -127,8 +127,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
     public Builder withScan(Scan scan) {
-      this.scan = StaticValueProvider.of(scan);
-      return this;
+      return withScan(StaticValueProvider.of(scan));
     }
 
     /**
@@ -363,6 +362,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     }
   }
 
+  /** Value provider for {@link SerializableScan}. */
   static class SerializableScanValueProvider implements ValueProvider<Scan>, Serializable {
     private final ValueProvider<String> projectId;
     private final ValueProvider<String> instanceId;
