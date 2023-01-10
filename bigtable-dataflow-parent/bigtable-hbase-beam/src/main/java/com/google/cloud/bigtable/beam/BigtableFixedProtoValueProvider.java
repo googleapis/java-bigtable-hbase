@@ -16,33 +16,66 @@
 package com.google.cloud.bigtable.beam;
 
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
+import com.google.bigtable.repackaged.com.google.bigtable.v2.TableName;
 import com.google.cloud.bigtable.hbase.BigtableFixedProtoScan;
+import javax.annotation.Nullable;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.hadoop.hbase.client.Scan;
 
-/** A {@link ValueProvider} class constructed from a {@link ReadRowsRequest} value provider. */
+/** A {@link ValueProvider} class constructed from value providers. */
 class BigtableFixedProtoValueProvider implements ValueProvider<Scan> {
 
   private ValueProvider<ReadRowsRequest> request;
+  @Nullable private ValueProvider<String> projectId;
+  @Nullable private ValueProvider<String> instanceId;
+  @Nullable private ValueProvider<String> tableId;
 
   BigtableFixedProtoValueProvider(ValueProvider<ReadRowsRequest> request) {
     this.request = request;
   }
 
+  BigtableFixedProtoValueProvider(
+      ValueProvider<String> projectId,
+      ValueProvider<String> instanceId,
+      ValueProvider<String> tableId,
+      ReadRowsRequest request) {
+    this.projectId = projectId;
+    this.instanceId = instanceId;
+    this.tableId = tableId;
+    this.request = StaticValueProvider.of(request);
+  }
+
   /** Returns the {@link ReadRowsRequest}. */
   ReadRowsRequest getRequest() {
-    return request.get();
+    if (projectId != null && instanceId != null && tableId != null) {
+      ReadRowsRequest readRowsRequest =
+          request
+              .get()
+              .toBuilder()
+              .setTableName(TableName.format(projectId.get(), instanceId.get(), tableId.get()))
+              .build();
+      return readRowsRequest;
+    } else {
+      return request.get();
+    }
   }
 
   /** Wraps the {@link ReadRowsRequest} in a {@link BigtableFixedProtoScan}. */
   @Override
   public Scan get() {
-    return new BigtableFixedProtoScan(request.get());
+    return new BigtableFixedProtoScan(getRequest());
   }
 
   /** Returns true if the {@link ReadRowsRequest} is accessible. */
   @Override
   public boolean isAccessible() {
-    return request.isAccessible();
+    if (projectId != null && instanceId != null && tableId != null) {
+      return projectId.isAccessible()
+          && instanceId.isAccessible()
+          && tableId.isAccessible()
+          && request.isAccessible();
+    } else {
+      return request.isAccessible();
+    }
   }
 }

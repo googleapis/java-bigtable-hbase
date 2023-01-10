@@ -149,9 +149,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     @Deprecated
     public Builder withRequest(ReadRowsRequest request) {
-      ReadRowsRequest.Builder builder = request.toBuilder();
-      builder.setTableName(TableName.format(projectId.get(), instanceId.get(), tableId.get()));
-      return withScan(new BigtableFixedProtoScan(builder.build()));
+      return withScan(new BigtableFixedProtoValueProvider(projectId, instanceId, tableId, request));
     }
 
     /**
@@ -174,6 +172,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     Builder withKeys(byte[] startKey, byte[] stopKey) {
       Preconditions.checkNotNull(scan, "Scan cannot be empty.");
+      // withKeys is never called from the template so this precondition is valid
       Preconditions.checkState(scan.isAccessible(), "Scan must be accessible.");
       ByteString start = ByteString.copyFrom(startKey);
       ByteString end = ByteString.copyFrom(stopKey);
