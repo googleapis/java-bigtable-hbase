@@ -301,6 +301,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
                     ReadRowsRequest.newBuilder()
                         .setTableName(
                             TableName.format(projectId.get(), instanceId.get(), tableId.get()))
+                        .setRows(
+                            RowSet.newBuilder().addRowRanges(RowRange.newBuilder().build()).build())
                         .build()));
       }
       return new CloudBigtableScanConfiguration(

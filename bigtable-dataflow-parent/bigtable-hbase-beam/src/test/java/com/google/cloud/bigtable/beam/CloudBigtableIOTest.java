@@ -40,7 +40,6 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Before;
@@ -69,7 +68,6 @@ public class CloudBigtableIOTest {
           .withProjectId("project")
           .withInstanceId("instanceId")
           .withTableId("table")
-          .withScan(new Scan())
           .build();
 
   @Before
