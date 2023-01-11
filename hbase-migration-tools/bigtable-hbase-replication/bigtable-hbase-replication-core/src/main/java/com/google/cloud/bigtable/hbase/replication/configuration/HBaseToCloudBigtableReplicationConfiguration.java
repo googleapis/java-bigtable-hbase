@@ -72,6 +72,17 @@ public class HBaseToCloudBigtableReplicationConfiguration {
   // and `replication.source.size.capacity` config keys.
   public static final long DEFAULT_BATCH_SIZE_IN_BYTES = 500_000;
 
-  // TODO(loop): Add de-loop flag
-  // TODO(loop): Add de-loop column-qualifier
+  /**
+   * Enables logic to prevent replication loops from forming when this library is used
+   * in conjunction with a Bigtable-HBase replicator.
+   *
+   * CBT and HBase qualifiers must match those used in CBT replicator configs for this mode to work.
+   */
+  public static final String ENABLE_TWO_WAY_REPLICATION_MODE_KEY = "google.bigtable.replication.enable_two_way_replication";
+  public static final String SOURCE_HBASE_QUALIFIER_KEY = "google.bigtable.replication.hbase_qualifier";
+  public static final String SOURCE_CBT_QUALIFIER_KEY = "google.bigtable.replication.cbt_qualifier";
+
+  public static final boolean DEFAULT_TWO_WAY_REPLICATION_MODE = false;
+  public static final String DEFAULT_SOURCE_HBASE_QUALIFIER  = "SOURCE_HBASE";
+  public static final String DEFAULT_SOURCE_CBT_QUALIFIER = "SOURCE_CBT";
 }

@@ -15,6 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase.replication;
 
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_SOURCE_CBT_QUALIFIER;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_SOURCE_HBASE_QUALIFIER;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.ENABLE_TWO_WAY_REPLICATION_MODE_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.SOURCE_CBT_QUALIFIER_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.SOURCE_HBASE_QUALIFIER_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_METRIC_KEY;
@@ -39,6 +44,7 @@ import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicator.Share
 import com.google.cloud.bigtable.hbase.replication.adapters.ApproximatingIncompatibleMutationAdapter;
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
 import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapter;
+import com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration;
 import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import java.io.IOException;
 import java.util.Arrays;
@@ -64,6 +70,11 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+
+/**
+ * TODO(loop): two-way replication specific configs
+ */
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.ENABLE_DRY_RUN_MODE_KEY;
 
 @RunWith(JUnit4.class)
 public class CloudBigtableReplicatorTest {
@@ -434,6 +445,73 @@ public class CloudBigtableReplicatorTest {
         .submit(
             new CloudBigtableReplicationTask(
                 TABLE_NAME_STRING, mockConnection, expectedBatchOfWal2));
+    Mockito.verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
+    Mockito.verifyNoInteractions(mockConnection);
+  }
+
+  // TODO(loop): modify this to add loop test
+  @Test
+  public void testTwoWayReplicationAddsSpecialMutation() throws IOException {
+    // Create object to test
+    CloudBigtableReplicator replicator = new CloudBigtableReplicator();
+
+
+    Configuration replicationConf = new Configuration(false);
+    replicationConf.setBoolean(ENABLE_TWO_WAY_REPLICATION_MODE_KEY, true);
+    replicator.maybeStartTwoWayReplication(replicationConf);
+    //
+    //     conf.set("google.bigtable.instance.id", "test-instance");
+    // conf.set("google.bigtable.project.id", "test-project");
+    // // This config will connect Replication endpoint to the emulator and not the prod CBT.
+    // conf.set("google.bigtable.emulator.endpoint.host", "localhost:" + bigtableEmulator.getPort());
+    // conf.setBoolean(HBaseToCloudBigtableReplicationConfiguration.ENABLE_DRY_RUN_MODE_KEY, true);
+
+    replicator.start(sharedResources, incompatibleMutationAdapter, 2000, false);
+
+    // Create WALs to replicate
+    Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
+    Cell cell12 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(2));
+    Cell cell13 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(3));
+
+    BigtableWALEntry walEntry1 =
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell11, cell12, cell13), TABLE_NAME_STRING);
+
+    // Cell cell1x = new KeyValue (getRowKey(1), CF1, SOURCE_HBASE_QUALIFIER_KEY, TIMESTAMP, KeyValue.Type.Delete);
+    Cell cell1x = new KeyValue(getRowKey(1),
+        CF1, DEFAULT_SOURCE_HBASE_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
+    BigtableWALEntry walEntry1x = new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell11,cell12,cell13,cell1x), TABLE_NAME_STRING);
+
+    // Cell cell21 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(1));
+    // Cell cell22 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(2));
+    // Cell cell23 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(3));
+    // BigtableWALEntry walEntry2 =
+    //     new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell21, cell22, cell23), TABLE_NAME_STRING);
+    Map<ByteRange, List<Cell>> expectedBatchOfWal = new HashMap<>();
+    expectedBatchOfWal.put(new SimpleByteRange(getRowKey(1)), walEntry1x.getCells());
+    // expectedBatchOfWal.put(new SimpleByteRange(getRowKey(2)), walEntry2.getCells());
+
+    Map<String, List<BigtableWALEntry>> walsToReplicate = new HashMap<>();
+    walsToReplicate.put(TABLE_NAME_STRING, Arrays.asList(walEntry1)); //, walEntry2));
+
+    // Everything succeeds.
+    when(mockExecutorService.submit((Callable<Object>) any()))
+        .thenReturn(CompletableFuture.completedFuture(true));
+
+    // Trigger replication
+    assertTrue(replicator.replicate(walsToReplicate));
+
+    // called during constructor
+    verify(mockMetricExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(mockMetricExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(mockMetricExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
+    verify(mockMetricExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+    verify(mockMetricExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
+
+    // Replicator should submit just 1 CloudBigtableReplicationTask for both WALEntries
+    verify(mockExecutorService)
+        .submit(
+            new CloudBigtableReplicationTask(
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal));
     Mockito.verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
     Mockito.verifyNoInteractions(mockConnection);
   }

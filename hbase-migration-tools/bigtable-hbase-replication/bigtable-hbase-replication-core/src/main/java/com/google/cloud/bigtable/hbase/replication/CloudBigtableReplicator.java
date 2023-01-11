@@ -18,11 +18,19 @@ package com.google.cloud.bigtable.hbase.replication;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.BATCH_SIZE_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_BATCH_SIZE_IN_BYTES;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_DRY_RUN_MODE;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_SOURCE_CBT_QUALIFIER;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_SOURCE_HBASE_QUALIFIER;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_THREAD_COUNT;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_TWO_WAY_REPLICATION_MODE;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.ENABLE_DRY_RUN_MODE_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.ENABLE_TWO_WAY_REPLICATION_MODE_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.INSTANCE_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.NUM_REPLICATION_SINK_THREADS_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.PROJECT_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.SOURCE_CBT_QUALIFIER_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.SOURCE_HBASE_QUALIFIER_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.CBT_SOURCE_DROPPED;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.HBASE_SOURCE_REPLICATED;
 import static java.util.stream.Collectors.groupingBy;
 
 import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
@@ -48,8 +56,10 @@ import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.util.ByteRange;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.SimpleByteRange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +68,8 @@ public class CloudBigtableReplicator {
 
   private static final Logger LOG = LoggerFactory.getLogger(CloudBigtableReplicator.class);
 
+  // TODO(loop): arm metrics exporter
+  private MetricsExporter metricsExporter = null;
   /**
    * Shared resources for all CloudBigtableReplicator objects. Everything here is shared with all
    * the objects of CloudBigtableReplicator and should be managed by this class (using reference
@@ -166,6 +178,13 @@ public class CloudBigtableReplicator {
   private boolean isDryRun;
 
   /**
+   * Two-way replication variables.
+   */
+  private boolean isTwoWayReplication;
+  private byte[] sourceHbaseQualifier;
+  private byte[] sourceCbtQualifier;
+
+  /**
    * Shared resources that are not tied to an object of this class. Lifecycle of resources in this
    * object is usually tied to the lifecycle of JVM.
    */
@@ -207,6 +226,24 @@ public class CloudBigtableReplicator {
         incompatibleMutationAdapter,
         configuration.getLong(BATCH_SIZE_KEY, DEFAULT_BATCH_SIZE_IN_BYTES),
         configuration.getBoolean(ENABLE_DRY_RUN_MODE_KEY, DEFAULT_DRY_RUN_MODE));
+
+      // Enable two-way replication vars if configuration enabled it.
+      maybeStartTwoWayReplication(configuration);
+  }
+
+  /**
+   * Checks if configurations enabled two-way replication.
+   * If it did, then enable two-way replication variables.
+   * @param conf Replicator configurations
+   */
+  @VisibleForTesting
+  synchronized void maybeStartTwoWayReplication(Configuration conf) {
+    this.isTwoWayReplication = conf.getBoolean(ENABLE_TWO_WAY_REPLICATION_MODE_KEY, DEFAULT_TWO_WAY_REPLICATION_MODE);
+    // If enabled, get source qualifiers from configs.
+    if (this.isTwoWayReplication) {
+      this.sourceHbaseQualifier = conf.get(SOURCE_HBASE_QUALIFIER_KEY, DEFAULT_SOURCE_HBASE_QUALIFIER).getBytes();
+      this.sourceCbtQualifier = conf.get(SOURCE_CBT_QUALIFIER_KEY, DEFAULT_SOURCE_CBT_QUALIFIER).getBytes();
+    }
   }
 
   public void stop() {
@@ -271,6 +308,31 @@ public class CloudBigtableReplicator {
 
     for (BigtableWALEntry walEntry : walEntries) {
 
+      /**
+       * When two-way replication is enabled, every WAL entry has its last cell checked to see if
+       * it's a replicated entry. If it is, the entry is skipped.
+       */
+      if (isTwoWayReplication) {
+        Cell lastCell = walEntry.getCells().get(walEntry.getCells().size() - 1);
+        if (Arrays.equals(CellUtil.cloneQualifier(lastCell), sourceCbtQualifier)) {
+          // Prevent a loop, this WAL is coming from CBT, we don't want to replicate it back to source
+          LOG.trace("Dropping WAL entry as it came from CBT , Row key: " +
+              Bytes.toString(CellUtil.cloneRow(lastCell)));
+          if(metricsExporter!= null ){
+            metricsExporter.incCounters(CBT_SOURCE_DROPPED, 1);
+          }
+          continue;
+        } else {
+          LOG.trace("Replicating WAL entry as it originated on HBase , Row key: " +
+              Bytes.toString(CellUtil.cloneRow(lastCell)));
+          if(metricsExporter != null){
+            metricsExporter.incCounters(HBASE_SOURCE_REPLICATED, 1
+            );
+          }
+        }
+      }
+
+
       // Translate the incompatible mutations.
       List<Cell> compatibleCells = incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry);
       cellsToReplicateForTable.addAll(compatibleCells);
@@ -302,13 +364,23 @@ public class CloudBigtableReplicator {
     int numCellsInBatch = 0;
     for (Map.Entry<ByteRange, List<Cell>> rowCells : cellsToReplicateByRow.entrySet()) {
 
+      if (isTwoWayReplication) {
+        // TODO(loop): for each rowMutation, we add a final delete cell for loop prevention.
+        Cell lastCell = rowCells.getValue().get(rowCells.getValue().size() - 1);
+
+        // Add a delete marker on SOUCE_HBASE qualifier, this acts as a source tag for bidirectional
+        // replication. CBT CDC will look at this delete marker and skip replicating the WAL to HBase
+        // TODO fix the timestamp to be a constant
+        Cell sourceHbaseMarker = new KeyValue(CellUtil.cloneRow(lastCell),
+            CellUtil.cloneFamily(lastCell), sourceHbaseQualifier, 0l, KeyValue.Type.Delete);
+        rowCells.getValue().add(sourceHbaseMarker);
+      }
+
       // TODO handle the case where a single row has >100K mutations (very rare, but should not
       // fail)
       numCellsInBatch += rowCells.getValue().size();
       batchSizeInBytes += getRowSize(rowCells);
       batchToReplicate.put(rowCells.getKey(), rowCells.getValue());
-
-      // TODO(loop): for each rowMutation, we add a final delete cell for loop prevention.
 
       // TODO add tests for batch split on size and cell counts
       if (batchSizeInBytes >= batchSizeThresholdInBytes || numCellsInBatch >= 100_000 - 1) {
