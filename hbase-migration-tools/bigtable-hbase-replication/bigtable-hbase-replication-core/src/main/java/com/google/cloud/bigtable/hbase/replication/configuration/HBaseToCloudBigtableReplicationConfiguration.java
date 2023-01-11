@@ -71,4 +71,7 @@ public class HBaseToCloudBigtableReplicationConfiguration {
   // batch capacity by counts and bytes. These capacity are set by `replication.source.nb.capacity`
   // and `replication.source.size.capacity` config keys.
   public static final long DEFAULT_BATCH_SIZE_IN_BYTES = 500_000;
+
+  // TODO(loop): Add de-loop flag
+  // TODO(loop): Add de-loop column-qualifier
 }

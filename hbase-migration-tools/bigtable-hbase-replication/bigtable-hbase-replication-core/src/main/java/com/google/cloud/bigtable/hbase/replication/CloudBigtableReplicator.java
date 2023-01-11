@@ -308,6 +308,8 @@ public class CloudBigtableReplicator {
       batchSizeInBytes += getRowSize(rowCells);
       batchToReplicate.put(rowCells.getKey(), rowCells.getValue());
 
+      // TODO(loop): for each rowMutation, we add a final delete cell for loop prevention.
+
       // TODO add tests for batch split on size and cell counts
       if (batchSizeInBytes >= batchSizeThresholdInBytes || numCellsInBatch >= 100_000 - 1) {
         LOG.trace(
