@@ -68,8 +68,6 @@ public class CloudBigtableReplicator {
 
   private static final Logger LOG = LoggerFactory.getLogger(CloudBigtableReplicator.class);
 
-  // TODO(loop): arm metrics exporter
-  private MetricsExporter metricsExporter = null;
   /**
    * Shared resources for all CloudBigtableReplicator objects. Everything here is shared with all
    * the objects of CloudBigtableReplicator and should be managed by this class (using reference
@@ -179,10 +177,12 @@ public class CloudBigtableReplicator {
 
   /**
    * Two-way replication variables.
+   * These are only initialized if two-way replication is enabled.
    */
   private boolean isTwoWayReplication;
   private byte[] sourceHbaseQualifier;
   private byte[] sourceCbtQualifier;
+  private MetricsExporter metricsExporter = null;
 
   /**
    * Shared resources that are not tied to an object of this class. Lifecycle of resources in this
@@ -228,7 +228,7 @@ public class CloudBigtableReplicator {
         configuration.getBoolean(ENABLE_DRY_RUN_MODE_KEY, DEFAULT_DRY_RUN_MODE));
 
       // Enable two-way replication vars if configuration enabled it.
-      maybeStartTwoWayReplication(configuration);
+      maybeStartTwoWayReplication(configuration, metricsExporter);
   }
 
   /**
@@ -236,13 +236,15 @@ public class CloudBigtableReplicator {
    * If it did, then enable two-way replication variables.
    * @param conf Replicator configurations
    */
-  @VisibleForTesting
-  synchronized void maybeStartTwoWayReplication(Configuration conf) {
+  synchronized void maybeStartTwoWayReplication(Configuration conf, MetricsExporter metricsExporter) {
     this.isTwoWayReplication = conf.getBoolean(ENABLE_TWO_WAY_REPLICATION_MODE_KEY, DEFAULT_TWO_WAY_REPLICATION_MODE);
     // If enabled, get source qualifiers from configs.
     if (this.isTwoWayReplication) {
       this.sourceHbaseQualifier = conf.get(SOURCE_HBASE_QUALIFIER_KEY, DEFAULT_SOURCE_HBASE_QUALIFIER).getBytes();
       this.sourceCbtQualifier = conf.get(SOURCE_CBT_QUALIFIER_KEY, DEFAULT_SOURCE_CBT_QUALIFIER).getBytes();
+
+      // Add metrics exporter to self to log two-way-replication related metrics.
+      this.metricsExporter = metricsExporter;
     }
   }
 
@@ -323,11 +325,11 @@ public class CloudBigtableReplicator {
           }
           continue;
         } else {
+          // TODO(loop): assess if metricsExporter should be here or further down.
           LOG.trace("Replicating WAL entry as it originated on HBase , Row key: " +
               Bytes.toString(CellUtil.cloneRow(lastCell)));
           if(metricsExporter != null){
-            metricsExporter.incCounters(HBASE_SOURCE_REPLICATED, 1
-            );
+            metricsExporter.incCounters(HBASE_SOURCE_REPLICATED, 1);
           }
         }
       }
@@ -364,12 +366,13 @@ public class CloudBigtableReplicator {
     int numCellsInBatch = 0;
     for (Map.Entry<ByteRange, List<Cell>> rowCells : cellsToReplicateByRow.entrySet()) {
 
+
+      // If two-way replication is enabled, add delete marker on SOURCE_HBASE qualifier,
+      // this acts as a source tag for bidirectional replication.
+      // CBT CDC will look at this delete marker and skip replicating the WAL to HBase
       if (isTwoWayReplication) {
-        // TODO(loop): for each rowMutation, we add a final delete cell for loop prevention.
         Cell lastCell = rowCells.getValue().get(rowCells.getValue().size() - 1);
 
-        // Add a delete marker on SOUCE_HBASE qualifier, this acts as a source tag for bidirectional
-        // replication. CBT CDC will look at this delete marker and skip replicating the WAL to HBase
         // TODO fix the timestamp to be a constant
         Cell sourceHbaseMarker = new KeyValue(CellUtil.cloneRow(lastCell),
             CellUtil.cloneFamily(lastCell), sourceHbaseQualifier, 0l, KeyValue.Type.Delete);

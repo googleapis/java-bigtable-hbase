@@ -37,7 +37,7 @@ public class HBaseToCloudBigtableReplicationMetrics {
   public static final String PUTS_IN_FUTURE_METRIC_KEY = "bigtablePutsInFutureMutations";
 
   // If two-way replication is enabled, this will be all row mutation batches sent out
-  public static String HBASE_SOURCE_REPLICATED = "hbaseRowMutationsReplicationsCreated";
+  public static final String HBASE_SOURCE_REPLICATED = "hbaseRowMutationsReplicationsCreated";
   // If two-way replication is enabled, this will be all cbt-replicated row mutation batches dropped
-  public static String CBT_SOURCE_DROPPED = "cbtRowMutationReplicationsDropped";
+  public static final String CBT_SOURCE_DROPPED = "cbtRowMutationReplicationsDropped";
 }
