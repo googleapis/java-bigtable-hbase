@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.beam;
 
 import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.ScanType;
-import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.SerializableScanValueProvider;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
@@ -24,8 +23,10 @@ import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
+import com.google.bigtable.repackaged.com.google.common.collect.ImmutableMap;
 import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
 import com.google.cloud.bigtable.hbase.BigtableFixedProtoScan;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -423,67 +424,63 @@ public class CloudBigtableIO {
       private ValueProvider<String> projectId;
       private ValueProvider<String> instanceId;
       private ValueProvider<String> tableId;
-      private Map<String, ValueProvider<String>> additionalConfig;
-      private ValueProvider<Scan> scan;
+      private Map<String, ValueProvider<String>> additionalConfiguration;
+      private transient ValueProvider<Scan> scan;
 
       public SerializationProxy(CloudBigtableScanConfiguration configuration) {
         this.projectId = configuration.getProjectIdValueProvider();
         this.instanceId = configuration.getInstanceIdValueProvider();
         this.tableId = configuration.getTableIdValueProvider();
-        this.additionalConfig = configuration.getConfiguration();
         this.scan = configuration.getScan();
+        Map<String, ValueProvider<String>> map = new HashMap<>();
+        map.putAll(configuration.getConfiguration());
+        map.remove(BigtableOptionsFactory.PROJECT_ID_KEY);
+        map.remove(BigtableOptionsFactory.INSTANCE_ID_KEY);
+        this.additionalConfiguration =
+            new ImmutableMap.Builder<String, ValueProvider<String>>().putAll(map).build();
       }
 
       private void writeObject(ObjectOutputStream out) throws IOException {
-        out.writeObject(projectId);
-        out.writeObject(instanceId);
-        out.writeObject(tableId);
-        out.writeObject(additionalConfig);
-        if (scan instanceof BigtableFixedProtoValueProvider) {
-          out.writeObject(ScanType.FIXED);
-          out.writeObject(((BigtableFixedProtoValueProvider) scan).getRequest());
-        } else if (scan.get() instanceof BigtableFixedProtoScan) {
-          out.writeObject(ScanType.FIXED);
-          out.writeObject(((BigtableFixedProtoScan) scan.get()).getRequest());
-        } else if (scan instanceof SerializableScanValueProvider) {
-          out.writeObject(ScanType.SERIALIZABLE);
-          out.writeObject(scan);
-        } else {
-          out.writeObject(ScanType.HBASE);
-          if (scan.isAccessible()) {
-            out.writeObject(true);
-            ProtobufUtil.toScan(scan.get()).writeDelimitedTo(out);
+        out.defaultWriteObject();
+        if (scan.isAccessible()) {
+          Scan scanValue = scan.get();
+          if (scanValue instanceof BigtableFixedProtoScan) {
+            out.writeObject(ScanType.FIXED);
+            out.writeObject(((BigtableFixedProtoScan) scanValue).getRequest());
+          } else if (scanValue instanceof SerializableScan) {
+            out.writeObject(ScanType.SERIALIZABLE);
+            out.writeObject(scanValue);
           } else {
-            out.writeObject(false);
+            out.writeObject(ScanType.HBASE);
+            ProtobufUtil.toScan(scanValue).writeDelimitedTo(out);
           }
+        } else {
+          out.writeObject(ScanType.DEFER);
+          out.writeObject(scan);
         }
       }
 
       private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        projectId = (ValueProvider<String>) in.readObject();
-        instanceId = (ValueProvider<String>) in.readObject();
-        tableId = (ValueProvider<String>) in.readObject();
-
-        additionalConfig = (Map<String, ValueProvider<String>>) in.readObject();
+        in.defaultReadObject();
         ScanType scanType = (ScanType) in.readObject();
         if (scanType == ScanType.FIXED) {
           ReadRowsRequest request = (ReadRowsRequest) in.readObject();
           scan = ValueProvider.StaticValueProvider.of(new BigtableFixedProtoScan(request));
         } else if (scanType == ScanType.SERIALIZABLE) {
-          scan = (SerializableScanValueProvider) in.readObject();
+          scan = ValueProvider.StaticValueProvider.of((SerializableScan) in.readObject());
+        } else if (scanType == ScanType.DEFER) {
+          scan = (ValueProvider<Scan>) in.readObject();
         } else {
-          if ((boolean) in.readObject()) {
-            scan =
-                ValueProvider.StaticValueProvider.of(
-                    ProtobufUtil.toScan(ClientProtos.Scan.parseDelimitedFrom(in)));
-          }
+          scan =
+              ValueProvider.StaticValueProvider.of(
+                  ProtobufUtil.toScan(ClientProtos.Scan.parseDelimitedFrom(in)));
         }
       }
 
       Object readResolve() {
         CloudBigtableScanConfiguration conf =
             CloudBigtableScanConfiguration.fromConfig(
-                projectId, instanceId, tableId, scan, additionalConfig);
+                projectId, instanceId, tableId, scan, additionalConfiguration);
         return CloudBigtableIO.read(conf);
       }
     }
