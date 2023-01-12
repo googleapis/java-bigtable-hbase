@@ -446,6 +446,11 @@ public class CloudBigtableReplicatorTest {
     Mockito.verifyNoInteractions(mockConnection);
   }
 
+  /**
+   * Two-way replication should add a special mutation on mutations its replicates.
+   * This should be reflected in both metrics and the adapted WAL log.
+   * @throws IOException
+   */
   @Test
   public void testTwoWayReplicationAddsSpecialMutation() throws IOException {
     // Create object to test
@@ -503,6 +508,10 @@ public class CloudBigtableReplicatorTest {
     Mockito.verifyNoInteractions(mockConnection);
   }
 
+  /**
+   * Two-way replication should drop mutations that come from an external replicated source.
+   * @throws IOException
+   */
   @Test
   public void testTwoWayReplicationDropsReplicatedMutation() throws IOException {
     // Create object to test
@@ -517,14 +526,69 @@ public class CloudBigtableReplicatorTest {
 
     // Row key 1 WAL comes from CBT and should be filtered out.
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
-    // Cell cell12 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(2));
-    // Cell cell13 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(3));
+    // Special replicated mutation from CBT.
+    Cell cell1s = new KeyValue(getRowKey(1),
+        CF1, DEFAULT_SOURCE_CBT_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
+
+    BigtableWALEntry walEntry1 =
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell11, cell1s), TABLE_NAME_STRING); // cell12, cell13,
+
+    // The to-be-replicated batch not have the special mutation. The Replicator will add it.
+    Map<String, List<BigtableWALEntry>> walsToReplicate = new HashMap<>();
+    walsToReplicate.put(TABLE_NAME_STRING, Arrays.asList(walEntry1)); // , walEntry2));
+
+    // Everything succeeds.
+    when(mockExecutorService.submit((Callable<Object>) any()))
+        .thenReturn(CompletableFuture.completedFuture(true));
+
+    // Trigger replication
+    assertTrue(replicator.replicate(walsToReplicate));
+
+    // called during constructor
+    verify(mockMetricExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(mockMetricExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(mockMetricExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
+    verify(mockMetricExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+    verify(mockMetricExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
+
+    // WAL log is empty because all entries were dropped. Refer metrics for test success.
+    // verify(mockExecutorService)
+    //     .submit(
+    //         new CloudBigtableReplicationTask(
+    //             TABLE_NAME_STRING, mockConnection, new HashMap<>()));
+    verify(mockMetricExporter).incCounters(SOURCE_CBT_DROPPED, 1);
+
+    Mockito.verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
+    Mockito.verifyNoInteractions(mockConnection);
+  }
+
+  /**
+   * Two-way replication combined test to check that replicator can drop the externally-replicated
+   * mutation but keep and replicate its own mutation.
+   * @throws IOException
+   */
+  @Test
+  public void testTwoWayReplicationDropsOneReplicatesOther() throws IOException {
+    // Create object to test
+    CloudBigtableReplicator replicator = new CloudBigtableReplicator();
+
+    Configuration replicationConf = new Configuration(false);
+    replicationConf.setBoolean(ENABLE_TWO_WAY_REPLICATION_MODE_KEY, true);
+
+    // Enable two-way replication manually.
+    replicator.maybeStartTwoWayReplication(replicationConf, mockMetricExporter);
+    replicator.start(sharedResources, incompatibleMutationAdapter, 2000, false);
+
+    // Row key 1 WAL comes from CBT and should be filtered out.
+    Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
+    Cell cell12 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(2));
+    Cell cell13 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(3));
     // Special replicated mutation from CBT.
     Cell cell1s = new KeyValue(getRowKey(1),
         CF1, DEFAULT_SOURCE_CBT_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
 
 
-    // Row key 2 WAL comes from HBase and should be replicated.
+    // // Row key 2 WAL comes from HBase and should be replicated.
     Cell cell21 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(1));
     Cell cell2s = new KeyValue(getRowKey(2),
         CF1, DEFAULT_SOURCE_HBASE_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
@@ -542,7 +606,6 @@ public class CloudBigtableReplicatorTest {
     // The expected batch should include the special mutation
     Map<ByteRange, List<Cell>> expectedBatchOfWal = new HashMap<>();
     expectedBatchOfWal.put(new SimpleByteRange(getRowKey(2)), walEntry2s.getCells());
-
 
     // Everything succeeds.
     when(mockExecutorService.submit((Callable<Object>) any()))
@@ -568,8 +631,6 @@ public class CloudBigtableReplicatorTest {
     Mockito.verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
     Mockito.verifyNoInteractions(mockConnection);
   }
-  // TODO(loop): add tests to:
-  // 1. drop CBT mutations
-  // 2. log dropped CBT mutations in metrics
-  // 3. specify column qualifier
+
+  // TODO(loop): add custom column qualifier test.
 }
