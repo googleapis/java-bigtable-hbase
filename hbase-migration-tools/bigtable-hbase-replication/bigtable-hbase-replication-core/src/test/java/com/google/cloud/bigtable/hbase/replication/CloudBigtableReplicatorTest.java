@@ -530,10 +530,9 @@ public class CloudBigtableReplicatorTest {
     Cell cell1s = new KeyValue(getRowKey(1),
         CF1, DEFAULT_SOURCE_CBT_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
 
+    // Create replicator input WAL. Note that we don't have any expected replicator output.
     BigtableWALEntry walEntry1 =
         new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell11, cell1s), TABLE_NAME_STRING);
-
-    // Create WAL.
     Map<String, List<BigtableWALEntry>> walsToReplicate = new HashMap<>();
     walsToReplicate.put(TABLE_NAME_STRING, Arrays.asList(walEntry1));
 
@@ -583,7 +582,6 @@ public class CloudBigtableReplicatorTest {
     // Special replicated mutation from CBT.
     Cell cell1s = new KeyValue(getRowKey(1),
         CF1, DEFAULT_SOURCE_CBT_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
-
 
     // Row key 2 WAL comes from HBase and should be replicated.
     Cell cell21 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(1));
@@ -676,7 +674,7 @@ public class CloudBigtableReplicatorTest {
     Map<String, List<BigtableWALEntry>> walsToReplicate = new HashMap<>();
     walsToReplicate.put(TABLE_NAME_STRING, Arrays.asList(walEntry1, walEntry2));
 
-    // The expected batch include the Hbase originated mutation but drop the external mutation.
+    // Expect only one batch in replicator output.
     Map<ByteRange, List<Cell>> expectedBatchOfWal = new HashMap<>();
     expectedBatchOfWal.put(new SimpleByteRange(getRowKey(2)), walEntry2s.getCells());
 
@@ -693,7 +691,7 @@ public class CloudBigtableReplicatorTest {
     verify(mockMetricExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
     verify(mockMetricExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
     verify(mockMetricExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
-    // Metric for two-way replication
+    // One batch dropped and one batch replicated.
     verify(mockMetricExporter).incCounters(SOURCE_CBT_DROPPED, 1);
     verify(mockMetricExporter).incCounters(SOURCE_HBASE_REPLICATED, 1);
 
