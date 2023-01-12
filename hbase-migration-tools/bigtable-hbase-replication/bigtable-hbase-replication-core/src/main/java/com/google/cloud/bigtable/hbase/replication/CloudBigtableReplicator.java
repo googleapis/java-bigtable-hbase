@@ -29,8 +29,8 @@ import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToC
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.PROJECT_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.SOURCE_CBT_QUALIFIER_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.SOURCE_HBASE_QUALIFIER_KEY;
-import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.CBT_SOURCE_DROPPED;
-import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.HBASE_SOURCE_REPLICATED;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.SOURCE_CBT_DROPPED;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.SOURCE_HBASE_REPLICATED;
 import static java.util.stream.Collectors.groupingBy;
 
 import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
@@ -318,18 +318,18 @@ public class CloudBigtableReplicator {
         Cell lastCell = walEntry.getCells().get(walEntry.getCells().size() - 1);
         if (Arrays.equals(CellUtil.cloneQualifier(lastCell), sourceCbtQualifier)) {
           // Prevent a loop, this WAL is coming from CBT, we don't want to replicate it back to source
+          // So we log and skip this WAL.
           LOG.trace("Dropping WAL entry as it came from CBT , Row key: " +
               Bytes.toString(CellUtil.cloneRow(lastCell)));
           if(metricsExporter!= null ){
-            metricsExporter.incCounters(CBT_SOURCE_DROPPED, 1);
+            metricsExporter.incCounters(SOURCE_CBT_DROPPED, 1);
           }
           continue;
         } else {
-          // TODO(loop): assess if metricsExporter should be here or further down.
           LOG.trace("Replicating WAL entry as it originated on HBase , Row key: " +
               Bytes.toString(CellUtil.cloneRow(lastCell)));
           if(metricsExporter != null){
-            metricsExporter.incCounters(HBASE_SOURCE_REPLICATED, 1);
+            metricsExporter.incCounters(SOURCE_HBASE_REPLICATED, 1);
           }
         }
       }
