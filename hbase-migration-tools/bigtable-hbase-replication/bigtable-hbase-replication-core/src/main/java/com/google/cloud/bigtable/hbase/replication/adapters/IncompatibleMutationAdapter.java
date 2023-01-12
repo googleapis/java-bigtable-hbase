@@ -76,8 +76,6 @@ public abstract class IncompatibleMutationAdapter {
     metricsExporter.incCounters(PUTS_IN_FUTURE_METRIC_KEY, 1);
   }
 
-  // TODO(loop): incrementDroppedReplicatedMutation()
-
   /**
    * Creates an IncompatibleMutationAdapter with HBase configuration, MetricSource, and CBT
    * connection.
@@ -124,9 +122,6 @@ public abstract class IncompatibleMutationAdapter {
     List<Cell> returnedCells = new ArrayList<>(cellsToAdapt.size());
     for (int index = 0; index < cellsToAdapt.size(); index++) {
       Cell cell = cellsToAdapt.get(index);
-      // TODO(loop): filter out the cell if its column qualifier is replicated
-      // if flag -> if cell.getColQualifier() == SOURCE -> incr, trace
-
       // check whether there is timestamp overflow from HBase -> CBT and make sure
       // it does clash with valid delete which require the timestamp to be
       // HConstants.LATEST_TIMESTAMP,
