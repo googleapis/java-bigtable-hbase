@@ -662,7 +662,7 @@ public class CloudBigtableReplicatorTest {
         CF1, customSourceHBaseQualifier.getBytes(), 0l, KeyValue.Type.Delete);
 
     BigtableWALEntry walEntry1 =
-        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell11, cell1s), TABLE_NAME_STRING); // cell12, cell13,
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell11, cell1s), TABLE_NAME_STRING);
 
     BigtableWALEntry walEntry2 = new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell21), TABLE_NAME_STRING);
     BigtableWALEntry walEntry2s = new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell21, cell2s), TABLE_NAME_STRING);
