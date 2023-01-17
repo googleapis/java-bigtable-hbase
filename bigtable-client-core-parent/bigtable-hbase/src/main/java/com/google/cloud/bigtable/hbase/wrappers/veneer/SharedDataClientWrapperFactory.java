@@ -31,7 +31,6 @@ import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,9 +48,6 @@ class SharedDataClientWrapperFactory {
 
   synchronized DataClientWrapper createDataClient(BigtableHBaseVeneerSettings settings)
       throws IOException {
-    Preconditions.checkArgument(
-        !settings.getDataSettings().isRefreshingChannel(),
-        "Channel refreshing is not compatible with cached channel pools");
 
     Key key = Key.createFromSettings(settings.getDataSettings());
 
@@ -76,6 +72,7 @@ class SharedDataClientWrapperFactory {
       Builder builder = settings.getDataSettings().toBuilder();
       builder
           .stubSettings()
+          .setRefreshingChannel(false)
           .setTransportChannelProvider(
               FixedTransportChannelProvider.create(sharedCtx.getTransportChannel()))
           .setCredentialsProvider(FixedCredentialsProvider.create(sharedCtx.getCredentials()))
