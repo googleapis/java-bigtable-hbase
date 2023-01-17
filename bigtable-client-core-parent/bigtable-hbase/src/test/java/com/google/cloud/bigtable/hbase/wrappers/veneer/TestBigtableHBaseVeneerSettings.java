@@ -287,7 +287,6 @@ public class TestBigtableHBaseVeneerSettings {
     BigtableDataSettings dataSettings =
         BigtableHBaseVeneerSettings.create(configuration).getDataSettings();
     assertNull(dataSettings.getStubSettings().getCredentialsProvider().getCredentials());
-    assertNull(dataSettings.getStubSettings().getCredentialsProvider().getCredentials());
 
     BigtableTableAdminSettings adminSettings =
         BigtableHBaseVeneerSettings.create(configuration).getTableAdminSettings();
