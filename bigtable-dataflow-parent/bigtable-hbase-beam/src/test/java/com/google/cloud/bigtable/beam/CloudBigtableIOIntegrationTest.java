@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.beam;
 
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -93,6 +94,7 @@ public class CloudBigtableIOIntegrationTest {
         new CloudBigtableConfiguration.Builder()
             .withProjectId(projectId)
             .withInstanceId(instanceId)
+            .withConfiguration(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, "true")
             .build();
     connection = BigtableConfiguration.connect(projectId, instanceId);
   }

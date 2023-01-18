@@ -27,6 +27,7 @@ import com.google.cloud.bigtable.data.v2.BigtableDataClient;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings.Builder;
 import com.google.cloud.bigtable.data.v2.stub.EnhancedBigtableStubSettings;
+import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
@@ -41,6 +42,8 @@ import java.util.Map;
  * <p>This class is meant to support channel pool caching feature.
  */
 class SharedDataClientWrapperFactory {
+  protected static final Logger LOG = new Logger(SharedDataClientWrapperFactory.class);
+
   private final Map<Key, ClientContext> cachedContexts = new HashMap<>();
   private final Map<Key, Integer> refCounts = new HashMap<>();
 
@@ -49,14 +52,18 @@ class SharedDataClientWrapperFactory {
   synchronized DataClientWrapper createDataClient(BigtableHBaseVeneerSettings settings)
       throws IOException {
 
+    LOG.info("creatring dataclient in shared dataclient wrapper");
     Key key = Key.createFromSettings(settings.getDataSettings());
 
     // Get or create ClientContext that will contained the shared resources
     ClientContext sharedCtx = cachedContexts.get(key);
     if (sharedCtx == null) {
       EnhancedBigtableStubSettings stubSettings = settings.getDataSettings().getStubSettings();
+      LOG.info(
+          "stub settings credential: " + stubSettings.getCredentialsProvider().getCredentials());
       sharedCtx = ClientContext.create(stubSettings);
       cachedContexts.put(key, sharedCtx);
+      LOG.info("shared context credentials: " + sharedCtx.getCredentials());
       refCounts.put(key, 0);
       int channelPoolSize = BigtableVeneerApi.getChannelPoolSize(stubSettings);
       for (int i = 0; i < channelPoolSize; i++) {

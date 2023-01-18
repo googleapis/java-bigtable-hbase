@@ -288,11 +288,13 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     Optional<String> emulatorEndpoint =
         Optional.fromNullable(configuration.get(BIGTABLE_EMULATOR_HOST_KEY));
     if (emulatorEndpoint.isPresent()) {
+      LOG.info("using emulator endpoint");
       int split = emulatorEndpoint.get().lastIndexOf(':');
       String host = emulatorEndpoint.get().substring(0, split);
       int port = Integer.parseInt(emulatorEndpoint.get().substring(split + 1));
       dataBuilder = BigtableDataSettings.newBuilderForEmulator(host, port);
     } else {
+      LOG.info("emulator endpoint is not present");
       dataBuilder = BigtableDataSettings.newBuilder();
       configureConnection(dataBuilder.stubSettings(), BIGTABLE_HOST_KEY);
       configureCredentialProvider(dataBuilder.stubSettings());
@@ -514,13 +516,16 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
     // This preserves user defined Credentials
     if (configuration instanceof BigtableExtendedConfiguration) {
+      LOG.info("using bigtable extended config");
       Credentials credentials = ((BigtableExtendedConfiguration) configuration).getCredentials();
       stubSettings.setCredentialsProvider(FixedCredentialsProvider.create(credentials));
 
     } else if (Boolean.parseBoolean(configuration.get(BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY))) {
+      LOG.info("using null");
       stubSettings.setCredentialsProvider(NoCredentialsProvider.create());
 
     } else if (!Strings.isNullOrEmpty(configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY))) {
+      LOG.info("using service account json");
       String jsonValue = configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY);
       stubSettings.setCredentialsProvider(
           FixedCredentialsProvider.create(
@@ -529,6 +534,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
     } else if (!Strings.isNullOrEmpty(
         configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY))) {
+      LOG.info("using json path");
       String keyFileLocation =
           configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY);
       stubSettings.setCredentialsProvider(
@@ -536,6 +542,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
               GoogleCredentials.fromStream(new FileInputStream(keyFileLocation))));
 
     } else if (!Strings.isNullOrEmpty(configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY))) {
+      LOG.info("using service account email");
       String serviceAccount = configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY);
       String keyFileLocation = configuration.get(BIGTABLE_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY);
       Preconditions.checkState(
@@ -544,6 +551,8 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       stubSettings.setCredentialsProvider(
           FixedCredentialsProvider.create(
               buildCredentialFromPrivateKey(serviceAccount, keyFileLocation)));
+    } else {
+      LOG.info("leaving credentials as is");
     }
   }
 
