@@ -65,12 +65,108 @@ which makes it easy for development teams to get started.
 
 * Refer to the [Java samples documentation](https://cloud.google.com/bigtable/docs/samples) for detailed demonstrations of how to read and write data with Cloud Bigtable. The code for these samples is available in the [Cloud Bigtable examples project](https://github.com/GoogleCloudPlatform/cloud-bigtable-examples).
 
+## Enabling Client Side Metrics
+
+Cloud Bigtable client supports publishing client side metrics to Cloud Monitoring under the bigtable.googleapis.com/client namespace.
+
+This feature is available once you upgrade to version 2.6.4 and above. Follow the guide on https://cloud.google.com/bigtable/docs/client-side-metrics-setup to enable.
+
 ## OpenCensus Integration
 
-The Bigtable HBase Client supports OpenCensus telemetry, specifically exporting gRPC metrics to Stats and supporting
-Tracing.
+### Tracing
+
+The code example below shows how to enable tracing. For more details, see [here](https://cloud.google.com/community/tutorials/bigtable-oc).
+
+##### Maven Setup
+
+If you are _not_ using the shaded Bigtable HBase Client artifact, you need to define the OpenCensus dependencies.
+
+[//]: # ({x-version-update-start:bigtable-client-parent:released})
+```xml
+<!-- OpenCensus dependencies -->
+<dependency>
+    <groupId>com.google.cloud.bigtable</groupId>
+    <artifactId>bigtable-hbase-1.x</artifactId>
+    <version>2.0.0</version>
+</dependency>
+```
+[//]: # ({x-version-update-end})
+```xml
+<dependency>
+    <groupId>io.opencensus</groupId>
+    <artifactId>opencensus-impl</artifactId>
+    <version>0.24.0</version>
+    <scope>runtime</scope>
+</dependency>
+<dependency>
+    <groupId>io.opencensus</groupId>
+    <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
+    <version>0.24.0</version>
+    <exclusions>
+        <exclusion>
+            <groupId>io.grpc</groupId>
+            <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>com.google.auth</groupId>
+            <artifactId>*</artifactId>
+        </exclusion>
+    </exclusions>
+</dependency>
+```
+
+If you _are_ using the shaded Bigtable HBase Client artifact, then the OpenCensus dependencies are embedded in the
+shaded artifact; i.e. nothing additional for you to do.
+
+[//]: # ({x-version-update-start:bigtable-client-parent:released})
+```xml
+<!-- OpenCensus dependencies -->
+<dependency>
+    <groupId>com.google.cloud.bigtable</groupId>
+    <artifactId>bigtable-hbase-1.x-shaded</artifactId>
+    <version>2.0.0</version>
+</dependency>
+```
+[//]: # ({x-version-update-end})
+
+##### Java Example
+
+```java
+// For the non-shaded client, remove the package prefix "com.google.bigtable.repackaged."
+import com.google.bigtable.repackaged.io.opencensus.exporter.trace.stackdriver.StackdriverTraceConfiguration;
+import com.google.bigtable.repackaged.io.opencensus.exporter.trace.stackdriver.StackdriverTraceExporter;
+import com.google.bigtable.repackaged.io.opencensus.trace.Tracing;
+import com.google.bigtable.repackaged.io.opencensus.trace.samplers.Samplers;
+
+import java.io.IOException;
+
+public class OpenCensusExample {
+    String projectId = "your-project-id";
+
+    void setupTracing() throws Exception {
+        // Setup tracing.
+        StackdriverTraceExporter.createAndRegister(
+                StackdriverTraceConfiguration.builder()
+                        .setProjectId(projectId)
+                        .build()
+        );
+        Tracing.getTraceConfig().updateActiveTraceParams(
+                Tracing.getTraceConfig().getActiveTraceParams().toBuilder()
+                        // Adjust the sampling rate as you see fit.
+                        .setSampler(Samplers.probabilitySampler(0.01))
+                        .build()
+        );
+    }
+}
+```
+
 
 ### Stats
+
+---
+Note: We recommend enabling client side built-in metrics if you want to view your metrics on cloud monitoring.
+This integration is only for exporting the metrics to a third party dashboard.
+---
 
 The code example below shows how to enable metrics. For more details, see the [gRPC Java Guide](https://opencensus.io/guides/grpc/java/).
 
@@ -185,92 +281,6 @@ Be sure to choose your Resource Type as the one you defined in your Stackdriver 
 the code.
 
 
-### Tracing
-
-The code example below shows how to enable tracing. For more details, see [here](https://cloud.google.com/community/tutorials/bigtable-oc).
-
-##### Maven Setup
-
-If you are _not_ using the shaded Bigtable HBase Client artifact, you need to define the OpenCensus dependencies.
-
-[//]: # ({x-version-update-start:bigtable-client-parent:released})
-```xml
-<!-- OpenCensus dependencies -->
-<dependency>
-    <groupId>com.google.cloud.bigtable</groupId>
-    <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>2.0.0</version>
-</dependency>
-```
-[//]: # ({x-version-update-end})
-```xml
-<dependency>
-    <groupId>io.opencensus</groupId>
-    <artifactId>opencensus-impl</artifactId>
-    <version>0.24.0</version>
-    <scope>runtime</scope>
-</dependency>
-<dependency>
-    <groupId>io.opencensus</groupId>
-    <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
-    <version>0.24.0</version>
-    <exclusions>
-        <exclusion>
-            <groupId>io.grpc</groupId>
-            <artifactId>*</artifactId>
-        </exclusion>
-        <exclusion>
-            <groupId>com.google.auth</groupId>
-            <artifactId>*</artifactId>
-        </exclusion>
-    </exclusions>
-</dependency>
-```
-
-If you _are_ using the shaded Bigtable HBase Client artifact, then the OpenCensus dependencies are embedded in the
-shaded artifact; i.e. nothing additional for you to do.
-
-[//]: # ({x-version-update-start:bigtable-client-parent:released})
-```xml
-<!-- OpenCensus dependencies -->
-<dependency>
-    <groupId>com.google.cloud.bigtable</groupId>
-    <artifactId>bigtable-hbase-1.x-shaded</artifactId>
-    <version>2.0.0</version>
-</dependency>
-```
-[//]: # ({x-version-update-end})
-
-##### Java Example
-
-```java
-// For the non-shaded client, remove the package prefix "com.google.bigtable.repackaged."
-import com.google.bigtable.repackaged.io.opencensus.exporter.trace.stackdriver.StackdriverTraceConfiguration;
-import com.google.bigtable.repackaged.io.opencensus.exporter.trace.stackdriver.StackdriverTraceExporter;
-import com.google.bigtable.repackaged.io.opencensus.trace.Tracing;
-import com.google.bigtable.repackaged.io.opencensus.trace.samplers.Samplers;
-
-import java.io.IOException;
-
-public class OpenCensusExample {
-    String projectId = "your-project-id";
-
-    void setupTracing() throws Exception {
-        // Setup tracing.
-        StackdriverTraceExporter.createAndRegister(
-                StackdriverTraceConfiguration.builder()
-                        .setProjectId(projectId)
-                        .build()
-        );
-        Tracing.getTraceConfig().updateActiveTraceParams(
-                Tracing.getTraceConfig().getActiveTraceParams().toBuilder()
-                        // Adjust the sampling rate as you see fit.
-                        .setSampler(Samplers.probabilitySampler(0.01))
-                        .build()
-        );
-    }
-}
-```
 
 ## Questions and discussions
 
