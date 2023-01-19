@@ -20,13 +20,13 @@ import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToC
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.ENABLE_TWO_WAY_REPLICATION_MODE_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.SOURCE_CBT_QUALIFIER_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.SOURCE_HBASE_QUALIFIER_KEY;
-import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.SOURCE_CBT_DROPPED;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY;
-import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.SOURCE_HBASE_REPLICATED;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.PUTS_IN_FUTURE_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.SOURCE_CBT_DROPPED;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.SOURCE_HBASE_REPLICATED;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.CF1;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.ROW_KEY;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.TABLE_NAME_STRING;
@@ -446,8 +446,9 @@ public class CloudBigtableReplicatorTest {
   }
 
   /**
-   * Two-way replication should add a special mutation on mutations its replicates.
-   * This should be reflected in both metrics and the adapted WAL log.
+   * Two-way replication should add a special mutation on mutations its replicates. This should be
+   * reflected in both metrics and the adapted WAL log.
+   *
    * @throws IOException
    */
   @Test
@@ -466,8 +467,9 @@ public class CloudBigtableReplicatorTest {
     Cell cell12 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(2));
     Cell cell13 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(3));
     // Create special mutation cell.
-    Cell cell1s = new KeyValue(getRowKey(1),
-        CF1, DEFAULT_SOURCE_HBASE_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
+    Cell cell1s =
+        new KeyValue(
+            getRowKey(1), CF1, DEFAULT_SOURCE_HBASE_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
 
     // Create WAL without special mutation. Replicator will read from this WAL.
     BigtableWALEntry walEntry1 =
@@ -477,7 +479,9 @@ public class CloudBigtableReplicatorTest {
 
     // Create WAL with special mutation. This reflects the expected state of what replicationTask
     // should see after Replicator adds special mutation to the original WAL.
-    BigtableWALEntry walEntry1s = new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell11,cell12,cell13,cell1s), TABLE_NAME_STRING);
+    BigtableWALEntry walEntry1s =
+        new BigtableWALEntry(
+            TIMESTAMP, Arrays.asList(cell11, cell12, cell13, cell1s), TABLE_NAME_STRING);
     // The expected batch should include the special mutation.
     Map<ByteRange, List<Cell>> expectedBatchOfWal = new HashMap<>();
     expectedBatchOfWal.put(new SimpleByteRange(getRowKey(1)), walEntry1s.getCells());
@@ -508,6 +512,7 @@ public class CloudBigtableReplicatorTest {
 
   /**
    * Two-way replication should drop mutations that come from an external replicated source.
+   *
    * @throws IOException
    */
   @Test
@@ -524,8 +529,9 @@ public class CloudBigtableReplicatorTest {
     // Row key 1 WAL comes from CBT and should be filtered out.
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
     // Special replicated mutation from CBT.
-    Cell cell1s = new KeyValue(getRowKey(1),
-        CF1, DEFAULT_SOURCE_CBT_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
+    Cell cell1s =
+        new KeyValue(
+            getRowKey(1), CF1, DEFAULT_SOURCE_CBT_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
 
     // Create replicator input WAL. Note that we don't have any expected replicator output.
     BigtableWALEntry walEntry1 =
@@ -561,6 +567,7 @@ public class CloudBigtableReplicatorTest {
   /**
    * Two-way replication combined test to check that replicator can drop the externally-replicated
    * mutation but keep and replicate its own mutation.
+   *
    * @throws IOException
    */
   @Test
@@ -577,21 +584,25 @@ public class CloudBigtableReplicatorTest {
     // Row key 1 WAL comes from CBT and should be filtered out.
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
     // Special replicated mutation from CBT.
-    Cell cell1s = new KeyValue(getRowKey(1),
-        CF1, DEFAULT_SOURCE_CBT_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
+    Cell cell1s =
+        new KeyValue(
+            getRowKey(1), CF1, DEFAULT_SOURCE_CBT_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
 
     // Row key 2 WAL comes from HBase and should be replicated.
     Cell cell21 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(1));
-    Cell cell2s = new KeyValue(getRowKey(2),
-        CF1, DEFAULT_SOURCE_HBASE_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
+    Cell cell2s =
+        new KeyValue(
+            getRowKey(2), CF1, DEFAULT_SOURCE_HBASE_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
 
     // Create respective WAL entries.
     // Entry 1 will be filtered out.
     BigtableWALEntry walEntry1 =
         new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell11, cell1s), TABLE_NAME_STRING);
     // Entry 2 should be replicated.
-    BigtableWALEntry walEntry2 = new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell21), TABLE_NAME_STRING);
-    BigtableWALEntry walEntry2s = new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell21, cell2s), TABLE_NAME_STRING);
+    BigtableWALEntry walEntry2 =
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell21), TABLE_NAME_STRING);
+    BigtableWALEntry walEntry2s =
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell21, cell2s), TABLE_NAME_STRING);
 
     // Create WAL for replicator.
     Map<String, List<BigtableWALEntry>> walsToReplicate = new HashMap<>();
@@ -627,9 +638,10 @@ public class CloudBigtableReplicatorTest {
   }
 
   /**
-   * Two-way replication allows users to specify custom special column-qualifiers.
-   * Both CBT and HBase qualifiers are tested on 2 rows.
-   * One should be filtered out and the other gets replicated.
+   * Two-way replication allows users to specify custom special column-qualifiers. Both CBT and
+   * HBase qualifiers are tested on 2 rows. One should be filtered out and the other gets
+   * replicated.
+   *
    * @throws IOException
    */
   @Test
@@ -653,19 +665,23 @@ public class CloudBigtableReplicatorTest {
     // Row key 1 WAL comes from CBT and should be filtered out.
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
     // Special replicated mutation from CBT.
-    Cell cell1s = new KeyValue(getRowKey(1),
-        CF1, customSourceCBTQualifier.getBytes(), 0l, KeyValue.Type.Delete);
+    Cell cell1s =
+        new KeyValue(
+            getRowKey(1), CF1, customSourceCBTQualifier.getBytes(), 0l, KeyValue.Type.Delete);
 
     // Row key 2 WAL comes from HBase and should be replicated.
     Cell cell21 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(1));
-    Cell cell2s = new KeyValue(getRowKey(2),
-        CF1, customSourceHBaseQualifier.getBytes(), 0l, KeyValue.Type.Delete);
+    Cell cell2s =
+        new KeyValue(
+            getRowKey(2), CF1, customSourceHBaseQualifier.getBytes(), 0l, KeyValue.Type.Delete);
 
     BigtableWALEntry walEntry1 =
         new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell11, cell1s), TABLE_NAME_STRING);
 
-    BigtableWALEntry walEntry2 = new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell21), TABLE_NAME_STRING);
-    BigtableWALEntry walEntry2s = new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell21, cell2s), TABLE_NAME_STRING);
+    BigtableWALEntry walEntry2 =
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell21), TABLE_NAME_STRING);
+    BigtableWALEntry walEntry2s =
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell21, cell2s), TABLE_NAME_STRING);
 
     // Create WAL for replicator input.
     Map<String, List<BigtableWALEntry>> walsToReplicate = new HashMap<>();
