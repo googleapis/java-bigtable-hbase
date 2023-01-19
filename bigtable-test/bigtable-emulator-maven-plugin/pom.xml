@@ -35,6 +35,17 @@ limitations under the License.
     <maven.version>3.8.7</maven.version>
   </properties>
 
+  <dependencyManagement>
+    <dependencies>
+      <!-- fix RequireUpperBoundDeps enforcement for maven-core transitive deps -->
+      <dependency>
+        <groupId>org.codehaus.plexus</groupId>
+        <artifactId>plexus-utils</artifactId>
+        <version>3.4.1</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <dependency>
       <groupId>org.apache.maven</groupId>
