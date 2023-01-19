@@ -60,7 +60,7 @@ integration-migration)
   RETURN_CODE=$?
   ;;
 clirr)
-    mvn --no-transfer-progress install -B -Denforcer.skip=true clirr:check
+    mvn --no-transfer-progress install -B -DskipTests -Denforcer.skip=true clirr:check
     RETURN_CODE=$?
     ;;
 *)
