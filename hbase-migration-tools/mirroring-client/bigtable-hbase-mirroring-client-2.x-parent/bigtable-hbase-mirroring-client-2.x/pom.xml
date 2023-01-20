@@ -40,6 +40,17 @@ limitations under the License.
       <artifactId>bigtable-hbase-mirroring-client-core</artifactId>
       <version>0.1.6-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
       <scope>compile</scope>
+
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-shaded-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>ch.qos.reload4j</groupId>
+          <artifactId>reload4j</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
@@ -96,6 +107,10 @@ limitations under the License.
         <exclusion>
           <artifactId>org.apache.hbase</artifactId>
           <groupId>*</groupId>
+        </exclusion>
+        <exclusion>
+          <groupId>ch.qos.reload4j</groupId>
+          <artifactId>reload4j</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
