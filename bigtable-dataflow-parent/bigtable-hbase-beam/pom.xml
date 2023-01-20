@@ -97,10 +97,6 @@ limitations under the License.
           <groupId>ch.qos.reload4j</groupId>
           <artifactId>reload4j</artifactId>
         </exclusion>
-        <exclusion>
-          <groupId>commons-logging</groupId>
-          <artifactId>commons-logging</artifactId>
-        </exclusion>
 
         <!-- google-cloud-bigtable pulls in a newer version of this, but we want to match beam's version-->
         <exclusion>
@@ -149,10 +145,6 @@ limitations under the License.
           <groupId>log4j</groupId>
           <artifactId>log4j</artifactId>
         </exclusion>
-        <exclusion>
-          <groupId>commons-logging</groupId>
-          <artifactId>commons-logging</artifactId>
-        </exclusion>
       </exclusions>
     </dependency>
 
@@ -166,13 +158,6 @@ limitations under the License.
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>${beam-slf4j.version}</version>
-    </dependency>
-
-    <!-- redirect jcl logging from bigtable-hbase to slf4j so that beam can pick it up -->
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>jcl-over-slf4j</artifactId>
       <version>${beam-slf4j.version}</version>
     </dependency>
 
