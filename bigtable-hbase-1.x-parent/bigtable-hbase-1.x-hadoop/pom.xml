@@ -88,7 +88,8 @@ limitations under the License.
     <dependency>
       <groupId>ch.qos.reload4j</groupId>
       <artifactId>reload4j</artifactId>
-      <version>1.2.24</version>
+      <version>${reload4j.version}</version>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
