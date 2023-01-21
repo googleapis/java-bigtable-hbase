@@ -192,6 +192,12 @@ limitations under the License.
       <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>ch.qos.reload4j</groupId>
+      <artifactId>reload4j</artifactId>
+      <version>${reload4j.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <profiles>
