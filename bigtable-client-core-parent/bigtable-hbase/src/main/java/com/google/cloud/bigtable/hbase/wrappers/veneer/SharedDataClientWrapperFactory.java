@@ -59,7 +59,7 @@ class SharedDataClientWrapperFactory {
     ClientContext sharedCtx = cachedContexts.get(key);
     if (sharedCtx == null) {
       EnhancedBigtableStubSettings stubSettings = settings.getDataSettings().getStubSettings();
-      sharedCtx = ClientContext.create(stubSettings);g
+      sharedCtx = ClientContext.create(stubSettings);
       cachedContexts.put(key, sharedCtx);
       refCounts.put(key, 0);
       int channelPoolSize = BigtableVeneerApi.getChannelPoolSize(stubSettings);
