@@ -72,6 +72,12 @@ limitations under the License.
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-client</artifactId>
       <version>${hbase1.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
@@ -86,6 +92,13 @@ limitations under the License.
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>${hbase1-hadoop-slf4j.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>ch.qos.reload4j</groupId>
+      <artifactId>reload4j</artifactId>
+      <version>${reload4j.version}</version>
+      <scope>runtime</scope>
     </dependency>
   </dependencies>
 
@@ -212,6 +225,9 @@ limitations under the License.
                 <!-- for some reason hbase-client exposes testing deps as a compile dep, just ignore them -->
                 <dependency>junit:junit</dependency>
                 <dependency>org.hamcrest:hamcrest-core</dependency>
+
+                <!-- log4j was replaced with reload4j -->
+                <dependency>log4j:log4j</dependency>
               </ignoredDependencies>
             </configuration>
           </execution>
