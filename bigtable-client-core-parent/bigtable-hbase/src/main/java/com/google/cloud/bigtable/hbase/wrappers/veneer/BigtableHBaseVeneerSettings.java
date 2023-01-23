@@ -339,6 +339,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     configureRetryableCallSettings(
         dataBuilder.stubSettings().sampleRowKeysSettings(), clientTimeouts.getUnaryTimeouts());
 
+    dataBuilder.setRefreshingChannel(false);
     return dataBuilder.build();
   }
 
