@@ -58,12 +58,9 @@ class SharedDataClientWrapperFactory {
     // Get or create ClientContext that will contained the shared resources
     ClientContext sharedCtx = cachedContexts.get(key);
     if (sharedCtx == null) {
-      EnhancedBigtableStubSettings stubSettings = settings.getDataSettings().getStubSettings();
-      LOG.info(
-          "stub settings credential: " + stubSettings.getCredentialsProvider().getCredentials());
+      EnhancedBigtableStubSettings stubSettings = settings.getDataSettings().getStubSettings();GI
       sharedCtx = ClientContext.create(stubSettings);
       cachedContexts.put(key, sharedCtx);
-      LOG.info("shared context credentials: " + sharedCtx.getCredentials());
       refCounts.put(key, 0);
       int channelPoolSize = BigtableVeneerApi.getChannelPoolSize(stubSettings);
       for (int i = 0; i < channelPoolSize; i++) {
