@@ -302,38 +302,17 @@ public class CloudBigtableReplicator {
     return succeeded;
   }
 
+
   private List<Future<Boolean>> replicateTable(
       String tableName, List<BigtableWALEntry> walEntries) {
     List<Future<Boolean>> futures = new ArrayList<>();
     List<Cell> cellsToReplicateForTable = new ArrayList<>();
     int batchSizeInBytes = 0;
-
     for (BigtableWALEntry walEntry : walEntries) {
-
-      /**
-       * When two-way replication is enabled, every WAL entry has its last cell checked to see if
-       * it's a replicated entry. If it is, the entry is skipped.
-       */
-      if (isTwoWayReplication) {
-        Cell lastCell = walEntry.getCells().get(walEntry.getCells().size() - 1);
-        if (Arrays.equals(CellUtil.cloneQualifier(lastCell), sourceCbtQualifier)) {
-          // Prevent a loop, this WAL is coming from CBT, we don't want to replicate it back to source
-          // So we log and skip this WAL.
-          LOG.trace("Dropping WAL entry as it came from CBT , Row key: " +
-              Bytes.toString(CellUtil.cloneRow(lastCell)));
-          if(metricsExporter!= null ){
-            metricsExporter.incCounters(SOURCE_CBT_DROPPED, 1);
-          }
-          continue;
-        } else {
-          LOG.trace("Replicating WAL entry as it originated on HBase , Row key: " +
-              Bytes.toString(CellUtil.cloneRow(lastCell)));
-          if(metricsExporter != null){
-            metricsExporter.incCounters(SOURCE_HBASE_REPLICATED, 1);
-          }
-        }
+      // To prevent loops in two-way replication, skip entry if it is a Bigtable-replicated entry.
+      if (isTwoWayReplication && isBigtableReplicatedEntry(walEntry)) {
+        continue;
       }
-
 
       // Translate the incompatible mutations.
       List<Cell> compatibleCells = incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry);
@@ -367,16 +346,10 @@ public class CloudBigtableReplicator {
     for (Map.Entry<ByteRange, List<Cell>> rowCells : cellsToReplicateByRow.entrySet()) {
 
 
-      // If two-way replication is enabled, add delete marker on SOURCE_HBASE qualifier,
-      // this acts as a source tag for bidirectional replication.
-      // CBT CDC will look at this delete marker and skip replicating the WAL to HBase
+      // If two-way replication is enabled, tag row cells with origin info so Bigtable CDC knows to
+      // skip this batch and not replicate batch back to HBase.
       if (isTwoWayReplication) {
-        Cell lastCell = rowCells.getValue().get(rowCells.getValue().size() - 1);
-
-        // TODO fix the timestamp to be a constant
-        Cell sourceHbaseMarker = new KeyValue(CellUtil.cloneRow(lastCell),
-            CellUtil.cloneFamily(lastCell), sourceHbaseQualifier, 0l, KeyValue.Type.Delete);
-        rowCells.getValue().add(sourceHbaseMarker);
+        appendOriginInfoToRowCells(rowCells);
       }
 
       // TODO handle the case where a single row has >100K mutations (very rare, but should not
@@ -433,4 +406,50 @@ public class CloudBigtableReplicator {
       return CompletableFuture.completedFuture(false);
     }
   }
+
+  /**
+   * Checks if walEntry is from Bigtable.
+   * @param walEntry from HBase replication WAL log.
+   * @return true is walEntry is from Bigtable.
+   */
+  private boolean isBigtableReplicatedEntry(BigtableWALEntry walEntry) {
+    Cell lastCell = walEntry.getCells().get(walEntry.getCells().size() - 1);
+    if (Arrays.equals(CellUtil.cloneQualifier(lastCell), sourceCbtQualifier)) {
+      LOG.trace("Dropping WAL entry as it came from CBT , Row key: " +
+          Bytes.toString(CellUtil.cloneRow(lastCell)));
+
+      if(metricsExporter!= null ){
+        metricsExporter.incCounters(SOURCE_CBT_DROPPED, 1);
+      }
+      return true;
+    } else {
+      LOG.trace("Replicating WAL entry as it originated on HBase , Row key: " +
+          Bytes.toString(CellUtil.cloneRow(lastCell)));
+      if(metricsExporter != null){
+        metricsExporter.incCounters(SOURCE_HBASE_REPLICATED, 1);
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Append replication origin info to row cells.
+   * @param rowCells map of <RowKey, [Cell]> mutations.
+   * @return
+   */
+  private void appendOriginInfoToRowCells(Map.Entry<ByteRange, List<Cell>> rowCells) {
+    Cell lastCell = rowCells.getValue().get(rowCells.getValue().size() - 1);
+
+    // TODO fix the timestamp to be a constant
+    Cell sourceHbaseMarker = new KeyValue(CellUtil.cloneRow(lastCell),
+        CellUtil.cloneFamily(lastCell), sourceHbaseQualifier, 0l, KeyValue.Type.Delete);
+
+    // Add delete marker on SOURCE_HBASE qualifier,
+    // this acts as a source tag for bidirectional replication.
+    // CBT CDC will look at this delete marker and skip replicating the WAL to HBase
+    rowCells.getValue().add(sourceHbaseMarker);
+
+    return;
+  }
+
 }
