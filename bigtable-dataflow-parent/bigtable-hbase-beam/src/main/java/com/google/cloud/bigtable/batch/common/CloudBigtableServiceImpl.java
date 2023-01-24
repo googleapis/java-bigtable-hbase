@@ -18,14 +18,12 @@ package com.google.cloud.bigtable.batch.common;
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.BigtableDataClient;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
-import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
@@ -36,13 +34,14 @@ public class CloudBigtableServiceImpl implements CloudBigtableService {
   public List<KeyOffset> getSampleRowKeys(CloudBigtableTableConfiguration config)
       throws IOException {
 
-
     // TODO: figure out how to stick to HBase api here
     BigtableHBaseVeneerSettings settings =
         (BigtableHBaseVeneerSettings) BigtableHBaseVeneerSettings.create(config.toHBaseConfig());
     SOURCE_LOG.info("Service impl config: " + config);
     SOURCE_LOG.info("Service impl hbase config: " + config.toHBaseConfig());
-    SOURCE_LOG.info("Service impl settings: " + settings.getDataSettings().getStubSettings().getCredentialsProvider());
+    SOURCE_LOG.info(
+        "Service impl settings: "
+            + settings.getDataSettings().getStubSettings().getCredentialsProvider());
     try (BigtableDataClient client = BigtableDataClient.create(settings.getDataSettings())) {
       return client.sampleRowKeys(config.getTableId());
     }
