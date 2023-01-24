@@ -20,6 +20,7 @@ import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.common.collect.ImmutableMap;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.util.Logger;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,6 +39,7 @@ public class CloudBigtableConfiguration implements Serializable {
 
   private static final long serialVersionUID = 1655181275627002133L;
 
+  private static final Logger LOGGER = new Logger(CloudBigtableConfiguration.class);
   // TODO(kevinsi): Rename to RUNTIME_VARIABLE_UNAVAILABLE?
   public static final String VALUE_UNAVAILABLE = "Unavailable during pipeline construction";
 
@@ -219,6 +221,7 @@ public class CloudBigtableConfiguration implements Serializable {
     //                              BigtableOptions.BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT);
     config.set(BigtableOptionsFactory.BIGTABLE_ASYNC_MUTATOR_COUNT_KEY, "0");
     for (Entry<String, ValueProvider<String>> entry : configuration.entrySet()) {
+      LOGGER.info("toHbaseCOnfig: " + entry.getKey() + " " + entry.getValue().get());
       // If the value from ValueProvider is null, the value was not provided at runtime.
       if (entry.getValue().get() != null) {
         config.set(entry.getKey(), entry.getValue().get());
