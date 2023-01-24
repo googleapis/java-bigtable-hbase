@@ -307,7 +307,6 @@ public class CloudBigtableReplicator {
     return succeeded;
   }
 
-
   private List<Future<Boolean>> replicateTable(
       String tableName, List<BigtableWALEntry> walEntries) {
     List<Future<Boolean>> futures = new ArrayList<>();
@@ -414,23 +413,26 @@ public class CloudBigtableReplicator {
 
   /**
    * Checks if walEntry is from Bigtable.
+   *
    * @param walEntry from HBase replication WAL log.
    * @return true is walEntry is from Bigtable.
    */
   private boolean isBigtableReplicatedEntry(BigtableWALEntry walEntry) {
     Cell lastCell = walEntry.getCells().get(walEntry.getCells().size() - 1);
     if (Arrays.equals(CellUtil.cloneQualifier(lastCell), sourceCbtQualifier)) {
-      LOG.trace("Dropping WAL entry as it came from CBT , Row key: " +
-          Bytes.toString(CellUtil.cloneRow(lastCell)));
+      LOG.trace(
+          "Dropping WAL entry as it came from CBT , Row key: "
+              + Bytes.toString(CellUtil.cloneRow(lastCell)));
 
-      if(metricsExporter!= null ){
+      if (metricsExporter != null) {
         metricsExporter.incCounters(SOURCE_CBT_DROPPED, 1);
       }
       return true;
     } else {
-      LOG.trace("Replicating WAL entry as it originated on HBase , Row key: " +
-          Bytes.toString(CellUtil.cloneRow(lastCell)));
-      if(metricsExporter != null){
+      LOG.trace(
+          "Replicating WAL entry as it originated on HBase , Row key: "
+              + Bytes.toString(CellUtil.cloneRow(lastCell)));
+      if (metricsExporter != null) {
         metricsExporter.incCounters(SOURCE_HBASE_REPLICATED, 1);
       }
       return false;
@@ -439,6 +441,7 @@ public class CloudBigtableReplicator {
 
   /**
    * Append replication origin info to row cells.
+   *
    * @param rowCells map of <RowKey, [Cell]> mutations.
    * @return
    */
@@ -446,8 +449,13 @@ public class CloudBigtableReplicator {
     Cell lastCell = rowCells.getValue().get(rowCells.getValue().size() - 1);
 
     // TODO fix the timestamp to be a constant
-    Cell sourceHbaseMarker = new KeyValue(CellUtil.cloneRow(lastCell),
-        CellUtil.cloneFamily(lastCell), sourceHbaseQualifier, 0l, KeyValue.Type.Delete);
+    Cell sourceHbaseMarker =
+        new KeyValue(
+            CellUtil.cloneRow(lastCell),
+            CellUtil.cloneFamily(lastCell),
+            sourceHbaseQualifier,
+            0l,
+            KeyValue.Type.Delete);
 
     // Add delete marker on SOURCE_HBASE qualifier,
     // this acts as a source tag for bidirectional replication.
@@ -456,5 +464,4 @@ public class CloudBigtableReplicator {
 
     return;
   }
-
 }
