@@ -408,7 +408,6 @@ public class CloudBigtableIO {
 
     Source(CloudBigtableScanConfiguration configuration) {
       super(configuration);
-      SOURCE_LOG.info("Source configuration: " + configuration.toString());
     }
 
     // TODO: Add a method on the server side that will be a more precise split based on server-side

@@ -20,7 +20,6 @@ import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.common.collect.ImmutableMap;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase.util.Logger;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,7 +38,6 @@ public class CloudBigtableConfiguration implements Serializable {
 
   private static final long serialVersionUID = 1655181275627002133L;
 
-  private static final Logger LOGGER = new Logger(CloudBigtableConfiguration.class);
   // TODO(kevinsi): Rename to RUNTIME_VARIABLE_UNAVAILABLE?
   public static final String VALUE_UNAVAILABLE = "Unavailable during pipeline construction";
 
