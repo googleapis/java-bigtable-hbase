@@ -221,7 +221,6 @@ public class CloudBigtableConfiguration implements Serializable {
     //                              BigtableOptions.BIGTABLE_ASYNC_MUTATOR_COUNT_DEFAULT);
     config.set(BigtableOptionsFactory.BIGTABLE_ASYNC_MUTATOR_COUNT_KEY, "0");
     for (Entry<String, ValueProvider<String>> entry : configuration.entrySet()) {
-      LOGGER.info("toHbaseCOnfig: " + entry.getKey() + " " + entry.getValue().get());
       // If the value from ValueProvider is null, the value was not provided at runtime.
       if (entry.getValue().get() != null) {
         config.set(entry.getKey(), entry.getValue().get());

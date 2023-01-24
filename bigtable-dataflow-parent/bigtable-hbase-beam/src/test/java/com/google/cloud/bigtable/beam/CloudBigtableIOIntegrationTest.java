@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.beam;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase.util.Logger;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,8 +63,6 @@ public class CloudBigtableIOIntegrationTest {
 
   public static final byte[] COLUMN_FAMILY = Bytes.toBytes("test_family");
   public static final byte[] QUALIFIER1 = Bytes.toBytes("qualifier1");
-
-  private static final Logger LOG = new Logger(CloudBigtableIOIntegrationTest.class);
 
   private static final String projectId = System.getProperty(BIGTABLE_PROJECT_KEY);
   private static final String instanceId = System.getProperty(BIGTABLE_INSTANCE_KEY);
@@ -256,7 +253,6 @@ public class CloudBigtableIOIntegrationTest {
   @Ignore
   public void testEstimatedAndSplitForSmallTable() throws Exception {
     try (Admin admin = connection.getAdmin()) {
-      LOG.info("Creating table in testEstimatedAndSplitForSmallTable()");
       TableName tableName = createNewTable(admin);
       try (Table table = connection.getTable(tableName)) {
         table.put(
@@ -267,29 +263,22 @@ public class CloudBigtableIOIntegrationTest {
                     .addColumn(COLUMN_FAMILY, QUALIFIER1, Bytes.toBytes("2"))));
       }
 
-      LOG.info("getSampleKeys() in testEstimatedAndSplitForSmallTable()");
-
       try {
         CloudBigtableIO.Source source =
             (CloudBigtableIO.Source) CloudBigtableIO.read(createScanConfig(tableName));
         List<KeyOffset> sampleRowKeys = source.getSampleRowKeys();
-        LOG.info("Creating BoundedSource in testEstimatedAndSplitForSmallTable()");
         long estimatedSizeBytes = source.getEstimatedSizeBytes(null);
         KeyOffset lastSample = sampleRowKeys.get(sampleRowKeys.size() - 1);
         Assert.assertEquals(lastSample.getOffsetBytes(), estimatedSizeBytes);
 
-        LOG.info("Creating Bundles in testEstimatedAndSplitForSmallTable()");
         List<? extends BoundedSource<Result>> bundles =
             source.split(estimatedSizeBytes / 2 + 1, null);
         // This will be a small table with no splits, so we return HConstants.EMPTY_START_ROW
         // which can't be split.
-        LOG.info("Created Bundles in testEstimatedAndSplitForSmallTable()");
         Assert.assertEquals(sampleRowKeys.size() * 2 - 1, bundles.size());
         Assert.assertSame(sampleRowKeys, source.getSampleRowKeys());
       } finally {
-        LOG.info("Deleting table in testEstimatedAndSplitForSmallTable()");
         admin.deleteTable(tableName);
-        LOG.info("Deleted table in testEstimatedAndSplitForSmallTable()");
       }
     }
   }
@@ -297,11 +286,9 @@ public class CloudBigtableIOIntegrationTest {
   @Test
   public void testEstimatedAndSplitForLargeTable() throws Exception {
     try (Admin admin = connection.getAdmin()) {
-      LOG.info("Creating table in testEstimatedAndSplitForLargeTable()");
       TableName tableName = createNewTable(admin);
 
       final int rowCount = 1000;
-      LOG.info("Adding %d rows in testEstimatedAndSplitForLargeTable()", rowCount);
       try (BufferedMutator mutator = connection.getBufferedMutator(tableName)) {
         for (int i = 0; i < rowCount; i++) {
           byte[] largeValue = Bytes.toBytes(RandomStringUtils.randomAlphanumeric(LARGE_VALUE_SIZE));
@@ -311,22 +298,18 @@ public class CloudBigtableIOIntegrationTest {
       }
 
       try {
-        LOG.info("Getting Source in testEstimatedAndSplitForLargeTable()");
         CloudBigtableIO.Source source =
             (CloudBigtableIO.Source) CloudBigtableIO.read(createScanConfig(tableName));
         List<KeyOffset> sampleRowKeys = source.getSampleRowKeys();
-        LOG.info("Getting estimated size in testEstimatedAndSplitForLargeTable()");
         long estimatedSizeBytes = source.getEstimatedSizeBytes(null);
         KeyOffset lastSample = sampleRowKeys.get(sampleRowKeys.size() - 1);
         Assert.assertEquals(lastSample.getOffsetBytes(), estimatedSizeBytes);
 
-        LOG.info("Getting Bundles in testEstimatedAndSplitForLargeTable()");
         List<? extends BoundedSource<Result>> bundles =
             source.split(sampleRowKeys.get(0).getOffsetBytes() / 2, null);
         // The last sample includes the EMPTY_END_ROW key, which cannot be split.
         Assert.assertEquals(sampleRowKeys.size() * 2 - 1, bundles.size());
         final AtomicInteger count = new AtomicInteger();
-        LOG.info("Reading Bundles in testEstimatedAndSplitForLargeTable()");
         ExecutorService es = Executors.newCachedThreadPool();
         try {
           for (final BoundedSource<Result> bundle : bundles) {
@@ -339,12 +322,10 @@ public class CloudBigtableIOIntegrationTest {
                       reader.advance();
                     }
                   } catch (IOException e) {
-                    LOG.warn("Could not read bundle: %s", e, bundle);
                   }
                 });
           }
         } finally {
-          LOG.info("Shutting down executor in testEstimatedAndSplitForLargeTable()");
           es.shutdown();
           while (!es.isTerminated()) {
             es.awaitTermination(1, TimeUnit.SECONDS);
@@ -353,7 +334,6 @@ public class CloudBigtableIOIntegrationTest {
         Assert.assertSame(sampleRowKeys, source.getSampleRowKeys());
         Assert.assertEquals(rowCount, count.intValue());
       } finally {
-        LOG.info("Deleting table in testEstimatedAndSplitForLargeTable()");
         admin.deleteTable(tableName);
       }
     }
