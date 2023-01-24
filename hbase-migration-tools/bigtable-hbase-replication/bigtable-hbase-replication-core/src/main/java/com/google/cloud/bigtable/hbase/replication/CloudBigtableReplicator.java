@@ -176,10 +176,10 @@ public class CloudBigtableReplicator {
   private boolean isDryRun;
 
   /**
-   * Two-way replication variables.
-   * These are only initialized if two-way replication is enabled.
+   * Two-way replication variables. These are only initialized if two-way replication is enabled.
    */
   private boolean isTwoWayReplication;
+
   private byte[] sourceHbaseQualifier;
   private byte[] sourceCbtQualifier;
   private MetricsExporter metricsExporter = null;
@@ -227,21 +227,26 @@ public class CloudBigtableReplicator {
         configuration.getLong(BATCH_SIZE_KEY, DEFAULT_BATCH_SIZE_IN_BYTES),
         configuration.getBoolean(ENABLE_DRY_RUN_MODE_KEY, DEFAULT_DRY_RUN_MODE));
 
-      // Enable two-way replication vars if configuration enabled it.
-      maybeStartTwoWayReplication(configuration, metricsExporter);
+    // Enable two-way replication vars if configuration enabled it.
+    maybeStartTwoWayReplication(configuration, metricsExporter);
   }
 
   /**
-   * Checks if configurations enabled two-way replication.
-   * If it did, then enable two-way replication variables.
+   * Checks if configurations enabled two-way replication. If it did, then enable two-way
+   * replication variables.
+   *
    * @param conf Replicator configurations
    */
-  synchronized void maybeStartTwoWayReplication(Configuration conf, MetricsExporter metricsExporter) {
-    this.isTwoWayReplication = conf.getBoolean(ENABLE_TWO_WAY_REPLICATION_MODE_KEY, DEFAULT_TWO_WAY_REPLICATION_MODE);
+  synchronized void maybeStartTwoWayReplication(
+      Configuration conf, MetricsExporter metricsExporter) {
+    this.isTwoWayReplication =
+        conf.getBoolean(ENABLE_TWO_WAY_REPLICATION_MODE_KEY, DEFAULT_TWO_WAY_REPLICATION_MODE);
     // If enabled, get source qualifiers from configs.
     if (this.isTwoWayReplication) {
-      this.sourceHbaseQualifier = conf.get(SOURCE_HBASE_QUALIFIER_KEY, DEFAULT_SOURCE_HBASE_QUALIFIER).getBytes();
-      this.sourceCbtQualifier = conf.get(SOURCE_CBT_QUALIFIER_KEY, DEFAULT_SOURCE_CBT_QUALIFIER).getBytes();
+      this.sourceHbaseQualifier =
+          conf.get(SOURCE_HBASE_QUALIFIER_KEY, DEFAULT_SOURCE_HBASE_QUALIFIER).getBytes();
+      this.sourceCbtQualifier =
+          conf.get(SOURCE_CBT_QUALIFIER_KEY, DEFAULT_SOURCE_CBT_QUALIFIER).getBytes();
 
       // Add metrics exporter to self to log two-way-replication related metrics.
       this.metricsExporter = metricsExporter;
@@ -344,7 +349,6 @@ public class CloudBigtableReplicator {
     Map<ByteRange, List<Cell>> batchToReplicate = new HashMap<>();
     int numCellsInBatch = 0;
     for (Map.Entry<ByteRange, List<Cell>> rowCells : cellsToReplicateByRow.entrySet()) {
-
 
       // If two-way replication is enabled, tag row cells with origin info so Bigtable CDC knows to
       // skip this batch and not replicate batch back to HBase.
