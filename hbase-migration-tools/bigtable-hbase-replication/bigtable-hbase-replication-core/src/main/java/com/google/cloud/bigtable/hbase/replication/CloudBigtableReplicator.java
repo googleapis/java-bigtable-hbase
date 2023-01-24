@@ -313,6 +313,7 @@ public class CloudBigtableReplicator {
     List<Future<Boolean>> futures = new ArrayList<>();
     List<Cell> cellsToReplicateForTable = new ArrayList<>();
     int batchSizeInBytes = 0;
+
     for (BigtableWALEntry walEntry : walEntries) {
       // To prevent loops in two-way replication, skip entry if it is a Bigtable-replicated entry.
       if (isTwoWayReplication && isBigtableReplicatedEntry(walEntry)) {
