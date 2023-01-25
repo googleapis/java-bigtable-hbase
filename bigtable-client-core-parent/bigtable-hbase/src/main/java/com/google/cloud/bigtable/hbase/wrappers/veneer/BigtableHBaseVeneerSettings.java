@@ -337,9 +337,6 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     configureRetryableCallSettings(
         dataBuilder.stubSettings().sampleRowKeysSettings(), clientTimeouts.getUnaryTimeouts());
 
-    // TODO: we need to enable channel priming by default. Disabling it for now because there seems
-    // to be a bug with the batch endpoint and is causing beam test failures
-    dataBuilder.setRefreshingChannel(false);
     return dataBuilder.build();
   }
 
