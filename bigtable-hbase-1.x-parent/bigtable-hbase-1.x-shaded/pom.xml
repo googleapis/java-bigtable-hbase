@@ -69,6 +69,14 @@ limitations under the License.
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-1.x</artifactId>
       <version>2.6.6-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <exclusions>
+        <!-- api-common recently declared dependency on autovalue during migration to gradle. We don't
+            have a use of it so we're excluding it from the shaded jar. -->
+        <exclusion>
+          <groupId>com.google.auto.value</groupId>
+          <artifactId>auto-value</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
@@ -94,10 +102,26 @@ limitations under the License.
     <dependency>
       <groupId>io.opencensus</groupId>
       <artifactId>opencensus-exporter-stats-stackdriver</artifactId>
+      <exclusions>
+        <!-- api-common recently declared dependency on autovalue during migration to gradle. We don't
+            have a use of it so we're excluding it from the shaded jar. -->
+        <exclusion>
+          <groupId>com.google.auto.value</groupId>
+          <artifactId>auto-value</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.opencensus</groupId>
       <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
+      <exclusions>
+        <!-- api-common recently declared dependency on autovalue during migration to gradle. We don't
+            have a use of it so we're excluding it from the shaded jar. -->
+        <exclusion>
+          <groupId>com.google.auto.value</groupId>
+          <artifactId>auto-value</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.opencensus</groupId>

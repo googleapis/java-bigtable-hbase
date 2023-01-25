@@ -26,7 +26,6 @@ import java.util.List;
 /** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
 public class CloudBigtableServiceImpl implements CloudBigtableService {
-
   @Override
   public List<KeyOffset> getSampleRowKeys(CloudBigtableTableConfiguration config)
       throws IOException {

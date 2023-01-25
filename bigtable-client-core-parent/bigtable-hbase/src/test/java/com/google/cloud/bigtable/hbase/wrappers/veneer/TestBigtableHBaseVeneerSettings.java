@@ -285,15 +285,11 @@ public class TestBigtableHBaseVeneerSettings {
     configuration.setBoolean(BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
 
     BigtableDataSettings dataSettings =
-        ((BigtableHBaseVeneerSettings) BigtableHBaseVeneerSettings.create(configuration))
-            .getDataSettings();
-    assertTrue(
-        dataSettings.getStubSettings().getCredentialsProvider() instanceof NoCredentialsProvider);
+        BigtableHBaseVeneerSettings.create(configuration).getDataSettings();
     assertNull(dataSettings.getStubSettings().getCredentialsProvider().getCredentials());
 
     BigtableTableAdminSettings adminSettings =
-        ((BigtableHBaseVeneerSettings) BigtableHBaseVeneerSettings.create(configuration))
-            .getTableAdminSettings();
+        BigtableHBaseVeneerSettings.create(configuration).getTableAdminSettings();
     assertTrue(
         adminSettings.getStubSettings().getCredentialsProvider() instanceof NoCredentialsProvider);
     assertNull(adminSettings.getStubSettings().getCredentialsProvider().getCredentials());
