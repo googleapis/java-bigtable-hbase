@@ -71,6 +71,8 @@ Cloud Bigtable client supports publishing client side metrics to Cloud Monitorin
 
 This feature is available once you upgrade to version 2.6.4 and above. Follow the guide on https://cloud.google.com/bigtable/docs/client-side-metrics-setup to enable.
 
+Note: Beam / Dataflow integration is currently not supported.
+
 ## OpenCensus Integration
 
 ### Tracing
