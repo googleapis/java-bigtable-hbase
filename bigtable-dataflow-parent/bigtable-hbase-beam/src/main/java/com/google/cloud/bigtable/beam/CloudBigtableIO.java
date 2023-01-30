@@ -477,7 +477,8 @@ public class CloudBigtableIO {
                   "Source keys not in order: [%s, %s]",
                   Bytes.toStringBinary(startRow), Bytes.toStringBinary(stopRow)));
         }
-        Preconditions.checkState(estimatedSize >= 0, "Source size cannot be negative", estimatedSize);
+        Preconditions.checkState(
+            estimatedSize >= 0, "Source size cannot be negative", estimatedSize);
       }
       this.estimatedSize = estimatedSize;
       SOURCE_LOG.debug("Source with split: {}.", this);
