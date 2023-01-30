@@ -429,6 +429,9 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       endpointOverride =
           Optional.of(hostOverride.or(defaultHostname) + ":" + portOverride.or(defaultPort));
     } else if (endpointKey.equals(BIGTABLE_HOST_KEY)
+        // only apply batch endpoint when the default endpoint hasnt changed (ie. when
+        // BIGTABLE_EMULATOR_HOST is set)
+        && defaultEndpoint.equals("bigtable.googleapis.com:443")
         && configuration.getBoolean(BIGTABLE_USE_BATCH, false)) {
       endpointOverride = Optional.of(BIGTABLE_BATCH_DATA_HOST_DEFAULT + ":443");
     }
