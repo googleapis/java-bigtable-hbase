@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.7.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.7.0...v2.7.1) (2023-01-30)
+
+
+### Bug Fixes
+
+* Fix compatibility of CloudBigtableIO with the emulator env var ([#3940](https://github.com/googleapis/java-bigtable-hbase/issues/3940)) ([76bb401](https://github.com/googleapis/java-bigtable-hbase/commit/76bb40119dc4b70f67ac5e892f440e84b92c7612))
+
+
+### Dependencies
+
+* Update dependency com.fasterxml.jackson.core:jackson-databind to v2.14.2 ([#3938](https://github.com/googleapis/java-bigtable-hbase/issues/3938)) ([714e147](https://github.com/googleapis/java-bigtable-hbase/commit/714e1472771695ba5287cdecb34ba7ac053c5e0f))
+
 ## [2.7.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.6.5...v2.7.0) (2023-01-25)
 
 
