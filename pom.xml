@@ -118,11 +118,11 @@ limitations under the License.
 
   <dependencyManagement>
   <dependencies>
-    <!--Overriding gRPC-->
+    <!--Overriding shared-dependencies-->
     <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-protobuf</artifactId>
-      <version>1.45.4</version>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-shared-dependencies</artifactId>
+      <version>2.10.3</version>
     </dependency>
   </dependencies>
   </dependencyManagement>
@@ -254,11 +254,11 @@ limitations under the License.
             </goals>
             <configuration>
               <rules>
-                <requireSameVersions>
+              <!--  <requireSameVersions>
                   <dependencies>
                     <dependency>io.grpc:*</dependency>
                   </dependencies>
-                </requireSameVersions>
+                </requireSameVersions>-->
                 <requireSameVersions>
                   <dependencies>
                     <dependency>com.google.cloud:google-cloud-bigtable</dependency>
