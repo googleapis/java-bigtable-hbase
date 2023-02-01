@@ -116,6 +116,17 @@ limitations under the License.
     <url>https://github.com/googleapis/java-bigtable-hbase/issues</url>
   </issueManagement>
 
+  <dependencyManagement>
+  <dependencies>
+    <!--Overriding gRPC-->
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-protobuf</artifactId>
+      <version>1.45.4</version>
+    </dependency>
+  </dependencies>
+  </dependencyManagement>
+
   <build>
     <testResources>
       <testResource>
