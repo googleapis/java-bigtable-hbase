@@ -254,11 +254,11 @@ limitations under the License.
             </goals>
             <configuration>
               <rules>
-              <!--  <requireSameVersions>
+                <requireSameVersions>
                   <dependencies>
                     <dependency>io.grpc:*</dependency>
                   </dependencies>
-                </requireSameVersions>-->
+                </requireSameVersions>
                 <requireSameVersions>
                   <dependencies>
                     <dependency>com.google.cloud:google-cloud-bigtable</dependency>
