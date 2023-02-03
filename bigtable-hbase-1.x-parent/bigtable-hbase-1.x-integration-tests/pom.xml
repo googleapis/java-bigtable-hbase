@@ -181,12 +181,7 @@ limitations under the License.
 
   <dependencies>
     <!-- Project Modules -->
-    <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-client-core</artifactId>
-      <version>${bigtable-client-core.version}</version>
-      <scope>test</scope>
-    </dependency>
+
 
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
@@ -262,6 +257,12 @@ limitations under the License.
       <artifactId>hbase-shaded-testing-util</artifactId>
       <version>${hbase1.version}</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
 
