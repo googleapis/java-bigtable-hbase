@@ -63,6 +63,7 @@ limitations under the License.
     <slf4j.version>1.7.25</slf4j.version>
     <commons-logging.version>1.2</commons-logging.version>
     <jsr305.version>3.0.2</jsr305.version>
+    <reload4j.version>1.2.24</reload4j.version>
 
     <!-- hbase dependency versions -->
     <hbase1.version>1.7.2</hbase1.version>
@@ -358,6 +359,7 @@ limitations under the License.
                     <exclude>org.apache.commons:commons-compress:[,1.20)</exclude>
                     <!-- ban all log4j 2.x deps with CVEs -->
                     <exclude>org.apache.logging.log4j:*:[2.0-alpha1,2.16.0]</exclude>
+                    <exclude>log4j:log4j:*</exclude>
                   </excludes>
                 </bannedDependencies>
               </rules>
