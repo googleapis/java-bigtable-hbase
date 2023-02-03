@@ -71,6 +71,18 @@ limitations under the License.
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-client</artifactId>
       <version>${hbase2.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.reload4j</groupId>
+      <artifactId>reload4j</artifactId>
+      <version>${reload4j.version}</version>
+      <scope>runtime</scope>
     </dependency>
 
     <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
@@ -218,6 +230,7 @@ limitations under the License.
                 httpclient requires a higher version than hbase, so for now,
                 we are using that version -->
                 <ignoredDependency>commons-logging:commons-logging</ignoredDependency>
+                <ignoredDependency>log4j:log4j</ignoredDependency>
               </ignoredDependencies>
             </configuration>
           </execution>
