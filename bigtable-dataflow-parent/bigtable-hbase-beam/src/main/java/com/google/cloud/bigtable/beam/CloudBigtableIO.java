@@ -22,7 +22,12 @@ import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTe
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.beam.sdk.annotations.Experimental;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
@@ -862,11 +867,9 @@ public class CloudBigtableIO {
     @ProcessElement
     public void processElement(ProcessContext context) throws Exception {
       KV<String, Iterable<Mutation>> element = context.element();
-      BufferedMutator mutator = getMutator(context, Objects.requireNonNull(element).getKey());
-      try {
-        for (Mutation mutation : Objects.requireNonNull(element.getValue())) {
+      try (BufferedMutator mutator = getMutator(context, element.getKey())) {
+        for (Mutation mutation : element.getValue()) {
           mutator.mutate(mutation);
-          mutator.close();
           mutationsCounter.inc();
         }
       } catch (RetriesExhaustedWithDetailsException exception) {
