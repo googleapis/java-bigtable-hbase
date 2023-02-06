@@ -45,6 +45,62 @@ limitations under the License.
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-netty</artifactId>
+        <version>1.45.4</version>
+      </dependency>
+
+      <!--
+
+Upgrade the following to match version 4.1.72.Final, which gets pulled from grpc-netty version 1.45.4 transient dependencies
+- io.netty:netty-handler:jar (dependency)
+- io.netty:netty-common:jar (dependency)
+- io.netty:netty-resolver:jar (dependency)
+- io.netty:netty-buffer:jar (dependency)
+- io.netty:netty-transport:jar (dependency)
+- io.netty:netty-codec:jar (dependency)
+
+-->
+
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-handler</artifactId>
+        <version>4.1.72.Final</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-common</artifactId>
+        <version>4.1.72.Final</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-resolver</artifactId>
+        <version>4.1.72.Final</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-buffer</artifactId>
+        <version>4.1.72.Final</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-transport</artifactId>
+        <version>4.1.72.Final</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-codec</artifactId>
+        <version>4.1.72.Final</version>
+      </dependency>
+
+
+
     </dependencies>
   </dependencyManagement>
 
