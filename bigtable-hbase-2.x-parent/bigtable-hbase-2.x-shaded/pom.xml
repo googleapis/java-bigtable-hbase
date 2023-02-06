@@ -97,6 +97,7 @@ limitations under the License.
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-census</artifactId>
+      <version>1.45.4</version>
     </dependency>
 
     <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
