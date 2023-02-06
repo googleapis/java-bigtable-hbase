@@ -115,7 +115,104 @@ limitations under the License.
     <system>GitHub Issues</system>
     <url>https://github.com/googleapis/java-bigtable-hbase/issues</url>
   </issueManagement>
+  <dependencyManagement>
+    <dependencies>
 
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-protobuf</artifactId>
+        <version>1.45.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-googleapis</artifactId>
+        <version>1.45.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-xds</artifactId>
+        <version>1.45.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-services</artifactId>
+        <version>1.45.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-alts</artifactId>
+        <version>1.45.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-auth</artifactId>
+        <version>1.45.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-grpclb</artifactId>
+        <version>1.45.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-netty-shaded</artifactId>
+        <version>1.45.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-protobuf-lite</artifactId>
+        <version>1.45.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-api</artifactId>
+        <version>1.45.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-context</artifactId>
+        <version>1.45.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-stub</artifactId>
+        <version>1.45.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-core</artifactId>
+        <version>1.45.4</version>
+      </dependency>
+
+    </dependencies>
+  </dependencyManagement>
+  <!-- Entries requiring same version 1.45.4
+- io.grpc:grpc-googleapis:jar (dependency)
+- io.grpc:grpc-protobuf:jar (dependency)
+- io.grpc:grpc-xds:jar (dependency)
+- io.grpc:grpc-services:jar (dependency)
+- io.grpc:grpc-alts:jar (dependency)
+- io.grpc:grpc-auth:jar (dependency)
+- io.grpc:grpc-grpclb:jar (dependency)
+- io.grpc:grpc-netty-shaded:jar (dependency)
+- io.grpc:grpc-protobuf-lite:jar (dependency)
+- io.grpc:grpc-api:jar (dependency)
+- io.grpc:grpc-context:jar (dependency)
+- io.grpc:grpc-stub:jar (dependency)
+- io.grpc:grpc-core:jar (dependency)
+-->
   <build>
     <testResources>
       <testResource>
