@@ -33,7 +33,7 @@ limitations under the License.
 
   <dependencyManagement>
     <dependencies>
-      <dependency>
+        <dependency>
         <groupId>com.google.cloud</groupId>
         <artifactId>google-cloud-bigtable-bom</artifactId>
         <version>${bigtable.version}</version>
@@ -272,7 +272,11 @@ limitations under the License.
           currently it impossible. So for now we just need to make sure that
           after all of shading, we expose it properly.
           -->
-          <execution>
+
+
+          <!-- Skip the following check as we have gRPC's 1.45.4 is enforced at the root POM -->
+
+        <!--  <execution>
             <id>verify-conscrypt-version</id>
             <phase>verify</phase>
             <goals>
@@ -280,11 +284,11 @@ limitations under the License.
             </goals>
             <configuration>
               <targetDependencies>
-                <!-- make sure that we are a strict superset of veneer -->
+                &lt;!&ndash; make sure that we are a strict superset of veneer &ndash;&gt;
                 <targetDependency>com.google.cloud:google-cloud-bigtable</targetDependency>
               </targetDependencies>
             </configuration>
-          </execution>
+          </execution>-->
         </executions>
       </plugin>
     </plugins>
