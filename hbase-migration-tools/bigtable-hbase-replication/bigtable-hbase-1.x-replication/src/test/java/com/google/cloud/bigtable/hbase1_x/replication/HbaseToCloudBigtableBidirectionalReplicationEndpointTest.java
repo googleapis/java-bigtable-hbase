@@ -87,7 +87,6 @@ public class HbaseToCloudBigtableBidirectionalReplicationEndpointTest {
 
   private static byte[] cbtQualifier = "customCbtQualifier".getBytes();
   private static byte[] hbaseQualifier = "customHbaseQualifier".getBytes();
-  public static final byte[] ROW_KEY_2 = "test-row-2".getBytes();
 
   @BeforeClass
   public static void setUpCluster() throws Exception {
@@ -172,9 +171,9 @@ public class HbaseToCloudBigtableBidirectionalReplicationEndpointTest {
       // Special delete mutation signifying this came from Bigtable replicator
       new Delete(TestUtils.ROW_KEY).addColumns(TestUtils.CF1, cbtQualifier, 0)
     );
-    RowMutations mutationToReplicate = new RowMutations(ROW_KEY_2);
+    RowMutations mutationToReplicate = new RowMutations(TestUtils.ROW_KEY_2);
     mutationToReplicate.add(
-        new Put(ROW_KEY_2).addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.VALUE)
+        new Put(TestUtils.ROW_KEY_2).addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.VALUE)
     );
 
     hbaseTable.mutateRow(mutationToDrop);
@@ -189,9 +188,9 @@ public class HbaseToCloudBigtableBidirectionalReplicationEndpointTest {
 
     // Hbase table should have both mutations
     Assert.assertTrue(hbaseTable.get(new Get(TestUtils.ROW_KEY)).size() == 1);
-    Assert.assertTrue(hbaseTable.get(new Get(ROW_KEY_2)).size() == 1);
+    Assert.assertTrue(hbaseTable.get(new Get(TestUtils.ROW_KEY_2)).size() == 1);
     // Cbt table should have only one mutation
     Assert.assertTrue(cbtTable.get(new Get(TestUtils.ROW_KEY)).isEmpty());
-    Assert.assertTrue(cbtTable.get(new Get(ROW_KEY_2)).size() == 1);
+    Assert.assertTrue(cbtTable.get(new Get(TestUtils.ROW_KEY_2)).size() == 1);
   }
 }
