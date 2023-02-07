@@ -80,7 +80,7 @@ public class HBaseToCloudBigtableReplicationConfiguration {
    * work.
    */
   public static final String ENABLE_BIDIRECTIONAL_REPLICATION_MODE_KEY =
-      "google.bigtable.replication.enable_two_way_replication";
+      "google.bigtable.replication.enable_bidirectional_replication";
 
   public static final String SOURCE_HBASE_QUALIFIER_KEY =
       "google.bigtable.replication.hbase_qualifier";
