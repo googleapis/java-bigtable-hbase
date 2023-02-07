@@ -79,14 +79,14 @@ public class HBaseToCloudBigtableReplicationConfiguration {
    * <p>CBT and HBase qualifiers must match those used in CBT replicator configs for this mode to
    * work.
    */
-  public static final String ENABLE_TWO_WAY_REPLICATION_MODE_KEY =
+  public static final String ENABLE_BIDIRECTIONAL_REPLICATION_MODE_KEY =
       "google.bigtable.replication.enable_two_way_replication";
 
   public static final String SOURCE_HBASE_QUALIFIER_KEY =
       "google.bigtable.replication.hbase_qualifier";
   public static final String SOURCE_CBT_QUALIFIER_KEY = "google.bigtable.replication.cbt_qualifier";
 
-  public static final boolean DEFAULT_TWO_WAY_REPLICATION_MODE = false;
-  public static final String DEFAULT_SOURCE_HBASE_QUALIFIER = "SOURCE_HBASE";
-  public static final String DEFAULT_SOURCE_CBT_QUALIFIER = "SOURCE_CBT";
+  public static final boolean DEFAULT_BIDIRECTIONAL_REPLICATION_MODE = false;
+  public static final String DEFAULT_SOURCE_HBASE_QUALIFIER = "CBT_REPL_SOURCE_HBASE";
+  public static final String DEFAULT_SOURCE_CBT_QUALIFIER = "CBT_REPL_SOURCE_CBT";
 }

@@ -36,8 +36,8 @@ public class HBaseToCloudBigtableReplicationMetrics {
       "bigtableIncompatibleTimestampOverflowMutation";
   public static final String PUTS_IN_FUTURE_METRIC_KEY = "bigtablePutsInFutureMutations";
 
-  // If two-way replication is enabled, this will be all row mutation batches sent out
-  public static final String SOURCE_HBASE_REPLICATED = "hbaseMutationsCreated";
-  // If two-way replication is enabled, this will be all cbt-replicated row mutation batches dropped
-  public static final String SOURCE_CBT_DROPPED = "cbtMutationsDropped";
+  // Mutations replicated from Hbase to Bigtable
+  public static final String SOURCE_HBASE_REPLICATED = "cbtReplicationMutationReplicatedFromHbase";
+  // Mutations from Bigtable to Hbase that were filtered by this replicator
+  public static final String SOURCE_CBT_DROPPED = "cbtReplicationMutationFilteredFromBigtable";
 }
