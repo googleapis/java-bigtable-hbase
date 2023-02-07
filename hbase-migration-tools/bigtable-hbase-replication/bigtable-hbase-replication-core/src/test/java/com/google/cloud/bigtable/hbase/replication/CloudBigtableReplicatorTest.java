@@ -561,7 +561,7 @@ public class CloudBigtableReplicatorTest {
     CloudBigtableReplicator replicator = new CloudBigtableReplicator();
     replicator.start(sharedResources, incompatibleMutationAdapter, 2000, false);
 
-    // Enable two-way replication manually.
+    // Enable bidirectional replication manually.
     Configuration replicationConf = new Configuration(false);
     replicationConf.setBoolean(ENABLE_BIDIRECTIONAL_REPLICATION_MODE_KEY, true);
     replicator.setBidirectionalReplicationConfigs(replicationConf, mockMetricExporter);
@@ -637,7 +637,7 @@ public class CloudBigtableReplicatorTest {
     CloudBigtableReplicator replicator = new CloudBigtableReplicator();
     replicator.start(sharedResources, incompatibleMutationAdapter, 2000, false);
 
-    // Enable two-way replication manually.
+    // Enable bidirectional replication manually.
     Configuration replicationConf = new Configuration(false);
     replicationConf.setBoolean(ENABLE_BIDIRECTIONAL_REPLICATION_MODE_KEY, true);
     // Set custom special column qualifiers
