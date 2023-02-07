@@ -457,12 +457,16 @@ public class CloudBigtableReplicatorTest {
   public void testBidirectionalReplicationAddsSpecialMutation() throws IOException {
     // Create object to test
     CloudBigtableReplicator replicator = new CloudBigtableReplicator();
-    replicator.start(sharedResources, incompatibleMutationAdapter, 2000, false);
-
     // Enable bidirectional replication
     Configuration replicationConf = new Configuration(false);
     replicationConf.setBoolean(ENABLE_BIDIRECTIONAL_REPLICATION_MODE_KEY, true);
-    replicator.setBidirectionalReplicationConfigs(replicationConf, mockMetricExporter);
+    replicator.start(sharedResources,
+        incompatibleMutationAdapter,
+        2000,
+        false,
+        replicationConf,
+        mockMetricExporter
+    );
 
     Cell cell = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
     // Special mutation with source-tagging
@@ -515,12 +519,16 @@ public class CloudBigtableReplicatorTest {
   public void testBidirectionalReplicationDropsReplicatedMutation() throws IOException {
     // Create object to test
     CloudBigtableReplicator replicator = new CloudBigtableReplicator();
-    replicator.start(sharedResources, incompatibleMutationAdapter, 2000, false);
-
     // Enable bidirectional replication
     Configuration replicationConf = new Configuration(false);
     replicationConf.setBoolean(ENABLE_BIDIRECTIONAL_REPLICATION_MODE_KEY, true);
-    replicator.setBidirectionalReplicationConfigs(replicationConf, mockMetricExporter);
+    replicator.start(sharedResources,
+        incompatibleMutationAdapter,
+        2000,
+        false,
+        replicationConf,
+        mockMetricExporter
+    );
 
     Cell cell = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
     // Special replicated mutation from CBT
@@ -559,12 +567,16 @@ public class CloudBigtableReplicatorTest {
   public void testBidirectionalReplicationDropsOneReplicatesOther() throws IOException {
     // Create object to test
     CloudBigtableReplicator replicator = new CloudBigtableReplicator();
-    replicator.start(sharedResources, incompatibleMutationAdapter, 2000, false);
-
     // Enable bidirectional replication manually.
     Configuration replicationConf = new Configuration(false);
     replicationConf.setBoolean(ENABLE_BIDIRECTIONAL_REPLICATION_MODE_KEY, true);
-    replicator.setBidirectionalReplicationConfigs(replicationConf, mockMetricExporter);
+    replicator.start(sharedResources,
+        incompatibleMutationAdapter,
+        2000,
+        false,
+        replicationConf,
+        mockMetricExporter
+    );
 
     Cell cellFromCbt = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
     // Special replicated mutation from CBT.
@@ -635,15 +647,19 @@ public class CloudBigtableReplicatorTest {
 
     // Create object to test
     CloudBigtableReplicator replicator = new CloudBigtableReplicator();
-    replicator.start(sharedResources, incompatibleMutationAdapter, 2000, false);
-
     // Enable bidirectional replication manually.
     Configuration replicationConf = new Configuration(false);
     replicationConf.setBoolean(ENABLE_BIDIRECTIONAL_REPLICATION_MODE_KEY, true);
     // Set custom special column qualifiers
     replicationConf.set(SOURCE_CBT_QUALIFIER_KEY, customSourceCBTQualifier);
     replicationConf.set(SOURCE_HBASE_QUALIFIER_KEY, customSourceHBaseQualifier);
-    replicator.setBidirectionalReplicationConfigs(replicationConf, mockMetricExporter);
+    replicator.start(sharedResources,
+        incompatibleMutationAdapter,
+        2000,
+        false,
+        replicationConf,
+        mockMetricExporter
+    );
 
     Cell cellFromCbt = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
     // Special replicated mutation from CBT.

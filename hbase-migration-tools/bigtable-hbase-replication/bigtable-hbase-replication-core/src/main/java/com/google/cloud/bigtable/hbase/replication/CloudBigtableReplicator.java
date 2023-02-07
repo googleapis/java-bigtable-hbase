@@ -194,6 +194,25 @@ public class CloudBigtableReplicator {
     // TODO: Validate that loggers are correctly configured.
   }
 
+  /**
+   * Overload start with bidirectional replication config params
+   */
+  @VisibleForTesting
+  synchronized void start(
+      SharedResources sharedResources,
+      IncompatibleMutationAdapter incompatibleMutationAdapter,
+      long batchSizeThresholdInBytes,
+      boolean isDryRun,
+      Configuration conf,
+      MetricsExporter metricsExporter
+  ) {
+    start(
+        sharedResources, incompatibleMutationAdapter, batchSizeThresholdInBytes, isDryRun
+    );
+    setBidirectionalReplicationConfigs(conf);
+    this.metricsExporter = metricsExporter;
+  }
+
   @VisibleForTesting
   synchronized void start(
       SharedResources sharedResources,
@@ -209,21 +228,6 @@ public class CloudBigtableReplicator {
       LOG.info(
           "Replicating to Cloud Bigtable in dry-run mode. No mutations will be applied to Cloud Bigtable.");
     }
-  }
-
-  /**
-   * Sets bidirectional replication configs for test environment,
-   * manually sets metric exporter, which is usually set in start(...)
-   * @param conf Hbase configuration
-   * @param metricsExporter
-   */
-  @VisibleForTesting
-  synchronized void setBidirectionalReplicationConfigs(
-      Configuration conf,
-      MetricsExporter metricsExporter
-  ) {
-    this.metricsExporter = metricsExporter;
-    setBidirectionalReplicationConfigs(conf);
   }
 
   public synchronized void start(Configuration configuration, MetricsExporter metricsExporter) {
@@ -462,7 +466,7 @@ public class CloudBigtableReplicator {
     if (metricsExporter != null) {
       metricsExporter.incCounters(metricName, delta);
     } else {
-      LOG.warn("Unable to increment metric " + metricName + ", metric exporter not set.");
+      LOG.trace("Unable to increment metric " + metricName + ", metric exporter not set.");
     }
   }
 
