@@ -23,7 +23,6 @@ import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.bigtable.repackaged.com.google.common.util.concurrent.AbstractService;
 import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicator;
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
-import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import com.google.cloud.bigtable.hbase2_x.replication.metrics.HBaseMetricsExporter;
 import java.io.IOException;
 import java.util.ArrayList;
