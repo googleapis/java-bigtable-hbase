@@ -14,25 +14,17 @@
  * limitations under the License.
  */
 
-package com.google.cloud.bigtable.hbase2_x.replication;
+package com.google.cloud.bigtable.hbase1_x.replication;
 
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.CF2;
-import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.FILTERED_ROW_KEY;
-import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.VALUE;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
-import com.google.cloud.bigtable.hbase2_x.replication.HbaseToCloudBigtableReplicationEndpointTest.TestReplicationEndpoint;
 import com.google.cloud.bigtable.test.helper.BigtableEmulatorRule;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -43,18 +35,10 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RowMutations;
-import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.replication.ReplicationAdmin;
-import org.apache.hadoop.hbase.replication.ChainWALEntryFilter;
 import org.apache.hadoop.hbase.replication.ReplicationEndpoint.ReplicateContext;
-import org.apache.hadoop.hbase.replication.ReplicationException;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
-import org.apache.hadoop.hbase.replication.WALEntryFilter;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.wal.WAL.Entry;
-import org.apache.hadoop.hbase.wal.WALEdit;
-import org.apache.hadoop.util.Time;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -101,9 +85,9 @@ public class HbaseToCloudBigtableBidirectionalReplicationEndpointTest {
   private Table hbaseTable;
   private Table cbtTable;
 
-  private static byte[] ROW_KEY_2 = "test-row-2".getBytes();
   private static byte[] cbtQualifier = "customCbtQualifier".getBytes();
   private static byte[] hbaseQualifier = "customHbaseQualifier".getBytes();
+  public static final byte[] ROW_KEY_2 = "test-row-2".getBytes();
 
   @BeforeClass
   public static void setUpCluster() throws Exception {
@@ -129,7 +113,7 @@ public class HbaseToCloudBigtableBidirectionalReplicationEndpointTest {
     // Setup Replication in HBase mini cluster
     ReplicationPeerConfig peerConfig = new ReplicationPeerConfig();
     peerConfig.setReplicationEndpointImpl(
-        HbaseToCloudBigtableBidirectionalReplicationEndpointTest.TestReplicationEndpoint.class.getTypeName());
+        TestReplicationEndpoint.class.getTypeName());
     // Cluster key is required, we don't really have a clusterKey for CBT.
     peerConfig.setClusterKey(hbaseTestingUtil.getClusterKey());
     replicationAdmin.addPeer("cbt", peerConfig);
@@ -156,7 +140,7 @@ public class HbaseToCloudBigtableBidirectionalReplicationEndpointTest {
     hbaseTable = hbaseConnection.getTable(table1);
 
     // Reset the entry counts for TestReplicationEndpoint
-    HbaseToCloudBigtableBidirectionalReplicationEndpointTest.TestReplicationEndpoint.replicatedEntries.set(0);
+    TestReplicationEndpoint.replicatedEntries.set(0);
   }
 
   private void createTables(TableName tableName, int cf1Scope, int cf2Scope) throws IOException {
@@ -175,7 +159,7 @@ public class HbaseToCloudBigtableBidirectionalReplicationEndpointTest {
     hbaseTestingUtil.getHBaseAdmin().createTable(htd);
     cbtConnection.getAdmin().createTable(htd);
   }
-
+  
   /**
    * Bidirectional replication should replicate source entry and drop cbt-replicated entry to
    * prevent loops from forming.
@@ -183,15 +167,14 @@ public class HbaseToCloudBigtableBidirectionalReplicationEndpointTest {
   @Test
   public void testDropsReplicatedEntry() throws IOException, InterruptedException {
     RowMutations mutationToDrop = new RowMutations(TestUtils.ROW_KEY);
-    mutationToDrop.add(Arrays.asList(
-      new Put(TestUtils.ROW_KEY).addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.VALUE),
+    mutationToDrop.add(new Put(TestUtils.ROW_KEY).addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.VALUE));
+    mutationToDrop.add(
       // Special delete mutation signifying this came from Bigtable replicator
       new Delete(TestUtils.ROW_KEY).addColumns(TestUtils.CF1, cbtQualifier, 0)
-    ));
+    );
     RowMutations mutationToReplicate = new RowMutations(ROW_KEY_2);
-    mutationToReplicate.add(Arrays.asList(
+    mutationToReplicate.add(
         new Put(ROW_KEY_2).addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.VALUE)
-        )
     );
 
     hbaseTable.mutateRow(mutationToDrop);
@@ -201,7 +184,7 @@ public class HbaseToCloudBigtableBidirectionalReplicationEndpointTest {
     TestUtils.waitForReplication(
         () -> {
           // Only one entry should've been replicated
-          return HbaseToCloudBigtableBidirectionalReplicationEndpointTest.TestReplicationEndpoint.replicatedEntries.get() >= 1;
+          return TestReplicationEndpoint.replicatedEntries.get() >= 1;
         });
 
     // Hbase table should have both mutations
