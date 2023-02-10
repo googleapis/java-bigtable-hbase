@@ -175,6 +175,13 @@ limitations under the License.
     </dependency>
 
     <dependency>
+    <groupId>ch.qos.reload4j</groupId>
+    <artifactId>reload4j</artifactId>
+    <version>${reload4j.version}</version>
+    <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
       <groupId>net.bytebuddy</groupId>
       <artifactId>byte-buddy</artifactId>
       <version>${byte.buddy.version}</version>
