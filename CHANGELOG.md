@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.6](https://github.com/googleapis/java-bigtable-hbase/compare/v2.6.5...v2.6.6) (2023-02-13)
+
+
+### Dependencies
+
+* Replace all transitive log4j deps with reload4j for 2.6.x ([#3945](https://github.com/googleapis/java-bigtable-hbase/issues/3945)) ([f5ad904](https://github.com/googleapis/java-bigtable-hbase/commit/f5ad904ae05a5b3b21f1e1bb43590338d3bacdb0))
+
 ## [2.6.5](https://github.com/googleapis/java-bigtable-hbase/compare/v2.6.4...v2.6.5) (2022-12-08)
 
 
