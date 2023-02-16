@@ -88,7 +88,13 @@
       // pin to bigtable version
       "packagePatterns": ["^grpc-conscrypt.version"],
       "enabled": false
-    }
+    },
+    {
+      "packagePatterns": [
+        "^org.apache.maven.plugins:maven-shade-plugin"
+      ],
+      // Exclude version 3.3.0 due to https://issues.apache.org/jira/projects/MSHADE/issues/MSHADE-419
+      "allowedVersions": "(,3.3.0),(3.3.0,)",
   ],
   "semanticCommits": true,
   "dependencyDashboard": true,
