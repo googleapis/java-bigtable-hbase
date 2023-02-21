@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.2](https://github.com/googleapis/java-bigtable-hbase/compare/v2.1.1...v2.1.2) (2023-02-21)
+
+
+### Dependencies
+
+* Protobuf-java upgrade to 3.19.6 ([#3818](https://github.com/googleapis/java-bigtable-hbase/issues/3818)) ([88f9b06](https://github.com/googleapis/java-bigtable-hbase/commit/88f9b06daede3d1018d355dd4618c47a836ca69d))
+* Replace all transitive log4j deps with reload4j for 2.1.x ([#3944](https://github.com/googleapis/java-bigtable-hbase/issues/3944)) ([a4b6f21](https://github.com/googleapis/java-bigtable-hbase/commit/a4b6f21d408e9d65166188d864b7792f32a737ff))
+
 ### [2.1.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.1.0...v2.1.1) (2022-04-20)
 
 
