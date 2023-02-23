@@ -284,7 +284,7 @@ limitations under the License.
                   <dependencies>
                     <dependency>io.netty:netty-all</dependency>
                     <dependency>io.netty:netty-codec*</dependency>
-                    <dependency>io.netty:netty-handler*</dependency>
+<!--                     <dependency>io.netty:netty-handler*</dependency> -->
                     <dependency>io.netty:netty-common</dependency>
                     <dependency>io.netty:netty-resolver</dependency>
                     <dependency>io.netty:netty-buffer</dependency>
