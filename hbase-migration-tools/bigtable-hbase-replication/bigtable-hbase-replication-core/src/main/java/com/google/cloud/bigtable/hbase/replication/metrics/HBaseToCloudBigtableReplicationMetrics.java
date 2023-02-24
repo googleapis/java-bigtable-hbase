@@ -36,8 +36,11 @@ public class HBaseToCloudBigtableReplicationMetrics {
       "bigtableIncompatibleTimestampOverflowMutation";
   public static final String PUTS_IN_FUTURE_METRIC_KEY = "bigtablePutsInFutureMutations";
 
-  // Mutations replicated from Hbase to Bigtable
-  public static final String SOURCE_HBASE_REPLICATED = "cbtReplicationMutationReplicatedFromHbase";
-  // Mutations from Bigtable to Hbase that were filtered by this replicator
-  public static final String SOURCE_CBT_DROPPED = "cbtReplicationMutationFilteredFromBigtable";
+
+  public static final String ONE_WAY_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY = "oneWayReplEligibleWALEntries";
+  public static final String ONE_WAY_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY = "oneWayReplEligibleMutations";
+  public static final String BIDIRECTIONAL_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY = "bidirectionalReplEligibleWALEntries";
+  public static final String BIDIRECTIONAL_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY = "bidirectionalReplEligibleMutations";
+  public static final String BIDIRECTIONAL_REPL_INELIGIBLE_WAL_ENTRY_METRIC_KEY = "bidirectionalReplIneligibleWALEntries";
+  public static final String BIDIRECTIONAL_REPL_INELIGIBLE_MUTATIONS_METRIC_KEY = "bidirectionalReplIneligibleMutations";
 }

@@ -20,14 +20,17 @@ import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToC
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.ENABLE_BIDIRECTIONAL_REPLICATION_MODE_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.SOURCE_CBT_QUALIFIER_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.SOURCE_HBASE_QUALIFIER_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.BIDIRECTIONAL_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.BIDIRECTIONAL_REPL_INELIGIBLE_MUTATIONS_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.PUTS_IN_FUTURE_METRIC_KEY;
-import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.SOURCE_CBT_DROPPED;
-import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.SOURCE_HBASE_REPLICATED;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.BIDIRECTIONAL_REPL_INELIGIBLE_WAL_ENTRY_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.BIDIRECTIONAL_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.CF1;
+import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.COL_QUALIFIER;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.ROW_KEY;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.TABLE_NAME_STRING;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.TABLE_NAME_STRING_2;
@@ -500,7 +503,10 @@ public class CloudBigtableReplicatorTest {
       verify(mockMetricExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
       verify(mockMetricExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
     // Metric reflects that one hbase row mutation was replicated
-    verify(mockMetricExporter).incCounters(SOURCE_HBASE_REPLICATED, 1);
+    verify(mockMetricExporter).incCounters(
+        BIDIRECTIONAL_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY, 1);
+    verify(mockMetricExporter).incCounters(
+        BIDIRECTIONAL_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY, 1);
 
     verify(mockExecutorService)
         .submit(
@@ -516,7 +522,7 @@ public class CloudBigtableReplicatorTest {
    * @throws IOException
    */
   @Test
-  public void testBidirectionalReplicationDropsReplicatedMutation() throws IOException {
+  public void testBidirectionalReplicationMultipleMutations() throws IOException {
     // Create object to test
     CloudBigtableReplicator replicator = new CloudBigtableReplicator();
     // Enable bidirectional replication
@@ -530,12 +536,13 @@ public class CloudBigtableReplicatorTest {
         mockMetricExporter
     );
 
-    Cell cell = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
-    // Special replicated mutation from CBT
-    Cell cbtSourceTaggedCell =
-        new KeyValue(
-            getRowKey(1), CF1, DEFAULT_SOURCE_CBT_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
+    Cell cell = new KeyValue(
+        getRowKey(1), CF1, COL_QUALIFIER, TIMESTAMP, getValue(1)
+    );
 
+    Cell cbtSourceTaggedCell =
+             new KeyValue(
+            getRowKey(1), CF1, DEFAULT_SOURCE_CBT_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
     BigtableWALEntry inputWAL =
         new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell, cbtSourceTaggedCell), TABLE_NAME_STRING);
     Map<String, List<BigtableWALEntry>> walsToReplicate = new HashMap<>();
@@ -551,8 +558,10 @@ public class CloudBigtableReplicatorTest {
     verify(mockMetricExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
     verify(mockMetricExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
     // Expect one dropped mutation
-    verify(mockMetricExporter).incCounters(SOURCE_CBT_DROPPED, 1);
-
+    verify(mockMetricExporter).incCounters(
+        BIDIRECTIONAL_REPL_INELIGIBLE_WAL_ENTRY_METRIC_KEY, 1);
+    verify(mockMetricExporter).incCounters(
+        BIDIRECTIONAL_REPL_INELIGIBLE_MUTATIONS_METRIC_KEY, 1);
     // Expect no executor interactions because the sole WAL entry was dropped
     verifyNoInteractions(mockExecutorService);
   }
@@ -621,8 +630,15 @@ public class CloudBigtableReplicatorTest {
     verify(mockMetricExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
     verify(mockMetricExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
     // Metrics reflect that one WAL entry is dropped and one passes through.
-    verify(mockMetricExporter).incCounters(SOURCE_CBT_DROPPED, 1);
-    verify(mockMetricExporter).incCounters(SOURCE_HBASE_REPLICATED, 1);
+    verify(mockMetricExporter).incCounters(
+        BIDIRECTIONAL_REPL_INELIGIBLE_WAL_ENTRY_METRIC_KEY, 1);
+    verify(mockMetricExporter).incCounters(
+        BIDIRECTIONAL_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY, 1);
+    // Verify one cell was replicated.
+    verify(mockMetricExporter).incCounters(
+        BIDIRECTIONAL_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY, 1);
+    verify(mockMetricExporter).incCounters(
+        BIDIRECTIONAL_REPL_INELIGIBLE_MUTATIONS_METRIC_KEY, 1);
 
     verify(mockExecutorService)
         .submit(
@@ -704,8 +720,16 @@ public class CloudBigtableReplicatorTest {
     verify(mockMetricExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
     verify(mockMetricExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
     // Metrics reflect that one WAL entry is dropped and one passes through.
-    verify(mockMetricExporter).incCounters(SOURCE_CBT_DROPPED, 1);
-    verify(mockMetricExporter).incCounters(SOURCE_HBASE_REPLICATED, 1);
+    verify(mockMetricExporter).incCounters(
+        BIDIRECTIONAL_REPL_INELIGIBLE_WAL_ENTRY_METRIC_KEY, 1);
+    verify(mockMetricExporter).incCounters(
+        BIDIRECTIONAL_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY, 1);
+    // Verify one cell was replicated.
+    verify(mockMetricExporter).incCounters(
+        BIDIRECTIONAL_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY, 1
+    );
+    verify(mockMetricExporter).incCounters(
+        BIDIRECTIONAL_REPL_INELIGIBLE_MUTATIONS_METRIC_KEY, 1);
 
     verify(mockExecutorService)
         .submit(
