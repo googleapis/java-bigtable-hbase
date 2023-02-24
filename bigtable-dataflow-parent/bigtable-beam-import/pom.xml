@@ -336,7 +336,8 @@ limitations under the License.
       </testResource>
     </testResources>
     <plugins>
-      <plugin>
+
+<!--      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
         <executions>
@@ -344,6 +345,23 @@ limitations under the License.
             <id>enforce</id>
             <configuration>
               <skip>true</skip>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>-->
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>enforce-version-consistency</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+              </rules>
             </configuration>
           </execution>
         </executions>
