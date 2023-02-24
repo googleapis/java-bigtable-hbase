@@ -283,12 +283,12 @@ limitations under the License.
                 <requireSameVersions>
                   <dependencies>
                     <dependency>io.netty:netty-all</dependency>
-                    <dependency>io.netty:netty-codec*</dependency>
-                    <dependency>io.netty:netty-handler*</dependency>
-                    <dependency>io.netty:netty-common</dependency>
-                    <dependency>io.netty:netty-resolver</dependency>
-                    <dependency>io.netty:netty-buffer</dependency>
-                    <dependency>io.netty:netty-transport</dependency>
+                     <dependency>io.netty:netty-codec*</dependency>
+                     <dependency>io.netty:netty-handler*</dependency>
+                     <dependency>io.netty:netty-common</dependency>
+                     <dependency>io.netty:netty-resolver</dependency>
+                     <dependency>io.netty:netty-buffer</dependency>
+                     <dependency>io.netty:netty-transport</dependency>
                     <!-- Everything but netty-tcnative-boringssl-static -->
                   </dependencies>
                 </requireSameVersions>
