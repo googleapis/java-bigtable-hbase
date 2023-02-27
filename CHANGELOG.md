@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.7.2](https://github.com/googleapis/java-bigtable-hbase/compare/v2.7.1...v2.7.2) (2023-02-27)
+
+
+### Bug Fixes
+
+* **deps:** Re-add reload4j as a dependency in bigtable-hbase-beam ([#3985](https://github.com/googleapis/java-bigtable-hbase/issues/3985)) ([03de7ff](https://github.com/googleapis/java-bigtable-hbase/commit/03de7fff770e4dd764ac1df8064397fd8cdb2c09))
+
+
+### Dependencies
+
+* Update dependency com.google.protobuf:protobuf-java to v3.22.0 ([#3964](https://github.com/googleapis/java-bigtable-hbase/issues/3964)) ([1b96824](https://github.com/googleapis/java-bigtable-hbase/commit/1b968244ef77b960d08942cd31d58e4abaf41313))
+* Update dependency net.bytebuddy:byte-buddy to v1.12.23 ([#3946](https://github.com/googleapis/java-bigtable-hbase/issues/3946)) ([3591813](https://github.com/googleapis/java-bigtable-hbase/commit/3591813e371e0d693e2f47be0a46c2b7d167d93c))
+* Update dependency net.bytebuddy:byte-buddy to v1.13.0 ([#3955](https://github.com/googleapis/java-bigtable-hbase/issues/3955)) ([e4b356a](https://github.com/googleapis/java-bigtable-hbase/commit/e4b356a24163a4f03b6f12dd4d101b3bd98b8ad8))
+* Update dependency net.bytebuddy:byte-buddy to v1.14.0 ([#3968](https://github.com/googleapis/java-bigtable-hbase/issues/3968)) ([c9217a9](https://github.com/googleapis/java-bigtable-hbase/commit/c9217a9776d06f146cc57da072517a2b5d45184b))
+* Update dependency org.apache.logging.log4j:log4j-api to v2.20.0 ([#3972](https://github.com/googleapis/java-bigtable-hbase/issues/3972)) ([bfc997b](https://github.com/googleapis/java-bigtable-hbase/commit/bfc997b07742eef50643014f7b8fa09c25abb617))
+* Update dependency org.apache.logging.log4j:log4j-core to v2.20.0 ([#3973](https://github.com/googleapis/java-bigtable-hbase/issues/3973)) ([c9f1997](https://github.com/googleapis/java-bigtable-hbase/commit/c9f19972836fbbc2ff0c500ba20b6a2132b0951c))
+* Update dependency org.apache.logging.log4j:log4j-slf4j-impl to v2.20.0 ([#3974](https://github.com/googleapis/java-bigtable-hbase/issues/3974)) ([e7440fa](https://github.com/googleapis/java-bigtable-hbase/commit/e7440faed078893f3878ed605a90c7685355a732))
+* Update google-cloud-bigtable dependencies ([#3950](https://github.com/googleapis/java-bigtable-hbase/issues/3950)) ([904ba2c](https://github.com/googleapis/java-bigtable-hbase/commit/904ba2cc86ddaae12ce98f3df8d38e3b6d09c157))
+* Update google-cloud-bigtable dependencies ([#3956](https://github.com/googleapis/java-bigtable-hbase/issues/3956)) ([8891330](https://github.com/googleapis/java-bigtable-hbase/commit/8891330e8d4914104b61d763d4ade08838b5694d))
+* Update google-cloud-bigtable dependencies (2.19.1) ([#3963](https://github.com/googleapis/java-bigtable-hbase/issues/3963)) ([69fccba](https://github.com/googleapis/java-bigtable-hbase/commit/69fccba9f7d8a4f2a3b38a8dc95d3016a56c54a0))
+* Update google-cloud-bigtable dependencies (2.19.2) ([#3976](https://github.com/googleapis/java-bigtable-hbase/issues/3976)) ([e4c946e](https://github.com/googleapis/java-bigtable-hbase/commit/e4c946eb17ea107ea5effac2df3714e69e57800e))
+
 ## [2.7.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.7.0...v2.7.1) (2023-01-30)
 
 
