@@ -45,6 +45,16 @@ limitations under the License.
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+
+      <!-- upgrade netty BOM to avoid version mismatch -->
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-bom</artifactId>
+        <version>4.1.79.Final</version>
+        <type>pom</type>
+      </dependency>
+
+
     </dependencies>
   </dependencyManagement>
 
