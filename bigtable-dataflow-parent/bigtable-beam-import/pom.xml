@@ -52,6 +52,7 @@ limitations under the License.
         <artifactId>netty-bom</artifactId>
         <version>4.1.79.Final</version>
         <type>pom</type>
+        <scope>import</scope>
       </dependency>
 
 
@@ -59,6 +60,37 @@ limitations under the License.
   </dependencyManagement>
 
   <dependencies>
+
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-handler</artifactId>
+    </dependency>
+
+  <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-common</artifactId>
+    </dependency>
+
+  <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-resolver</artifactId>
+    </dependency>
+
+  <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-buffer</artifactId>
+    </dependency>
+
+  <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-transport</artifactId>
+    </dependency>
+
+  <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-codec</artifactId>
+    </dependency>
+
     <!-- Beam Group: should come first since we will be running in the beam ecosystem -->
     <dependency>
       <groupId>org.apache.beam</groupId>
