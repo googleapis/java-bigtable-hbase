@@ -33,8 +33,4 @@ public class BigtableFixedProtoScan extends Scan {
   public ReadRowsRequest getRequest() {
     return request;
   }
-
-  public void setRequest(Query query) {
-    this.request = request;
-  }
 }

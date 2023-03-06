@@ -452,11 +452,11 @@ public class TestScanAdapter {
 
   @Test
   public void testFixedRequest() {
-    BigtableFixedProtoScan fixedRequestScan =
+    BigtableFixedProtoScan fixedProto =
         new BigtableFixedProtoScan(query.limit(10).toProto(requestContext));
 
     Query placeholder = Query.create("PLACEHOLDER");
-    Query newQuery = scanAdapter.adapt(fixedRequestScan, throwingReadHooks, placeholder);
+    Query newQuery = scanAdapter.adapt(fixedProto, throwingReadHooks, placeholder);
 
     Query expected = Query.create("tableId").limit(10);
 
