@@ -34,7 +34,7 @@ public class BigtableHBaseVersion {
   private static final AtomicBoolean wasInitialized = new AtomicBoolean(false);
 
   // {x-version-update-start:bigtable-client-parent:current}
-  public static final String VERSION = "2.6.7";
+  public static final String VERSION = "2.6.8-SNAPSHOT";
   // {x-version-update-end}
 
   /**
