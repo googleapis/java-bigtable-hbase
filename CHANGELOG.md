@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.3](https://github.com/googleapis/java-bigtable-hbase/compare/v2.1.2...v2.1.3) (2023-03-09)
+
+
+### Bug Fixes
+
+* **deps:** Re-add reload4j as a dependency in bigtable-hbase-beam on 2.1.x ([#3991](https://github.com/googleapis/java-bigtable-hbase/issues/3991)) ([3b7e986](https://github.com/googleapis/java-bigtable-hbase/commit/3b7e9865e7a5cc6f841e5b889964b5355cc87f2c))
+
 ## [2.1.2](https://github.com/googleapis/java-bigtable-hbase/compare/v2.1.1...v2.1.2) (2023-02-21)
 
 
