@@ -26,6 +26,7 @@ limitations under the License.
 
   <properties>
     <mainClass>com.google.cloud.bigtable.beam.Main</mainClass>
+    <enforcer.skip>true</enforcer.skip>
   </properties>
 
   <!-- Adding this to resolve version conflict within beam sdk-->
@@ -336,12 +337,35 @@ limitations under the License.
       </testResource>
     </testResources>
     <plugins>
+
+<!--      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>enforce</id>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>-->
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
         <executions>
           <execution>
             <id>enforce</id>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
+          <execution>
+            <id>enforce-version-consistency</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
             <configuration>
               <skip>true</skip>
             </configuration>

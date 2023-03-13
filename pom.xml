@@ -80,7 +80,7 @@ limitations under the License.
     <junit-vintage-engine.version>5.9.1</junit-vintage-engine.version>
     <hamcrest.version>1.3</hamcrest.version>
     <mockito.version>4.9.0</mockito.version>
-    <beam.version>2.43.0</beam.version>
+    <beam.version>2.44.0</beam.version>
     <!-- referred from bigtable-beam-import and bigtable-emulator -->
     <guava.version>31.1-jre</guava.version>
     <gcs-guava.version>29.0-jre</gcs-guava.version>
@@ -283,12 +283,12 @@ limitations under the License.
                 <requireSameVersions>
                   <dependencies>
                     <dependency>io.netty:netty-all</dependency>
-                    <dependency>io.netty:netty-codec*</dependency>
-                    <dependency>io.netty:netty-handler*</dependency>
-                    <dependency>io.netty:netty-common</dependency>
-                    <dependency>io.netty:netty-resolver</dependency>
-                    <dependency>io.netty:netty-buffer</dependency>
-                    <dependency>io.netty:netty-transport</dependency>
+                     <dependency>io.netty:netty-codec*</dependency>
+                     <dependency>io.netty:netty-handler*</dependency>
+                     <dependency>io.netty:netty-common</dependency>
+                     <dependency>io.netty:netty-resolver</dependency>
+                     <dependency>io.netty:netty-buffer</dependency>
+                     <dependency>io.netty:netty-transport</dependency>
                     <!-- Everything but netty-tcnative-boringssl-static -->
                   </dependencies>
                 </requireSameVersions>
