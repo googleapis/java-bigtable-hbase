@@ -61,6 +61,7 @@ import com.google.api.gax.batching.FlowControlSettings;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.ServerStreamingCallSettings;
 import com.google.api.gax.rpc.StatusCode;
@@ -714,6 +715,10 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
           .retrySettings()
           .setTotalTimeout(operationTimeouts.getOperationTimeout().get());
     }
+
+    // Keep the behavior consistent with 1.x versions, set watchdog default idleTimeout to 10 minutes
+    readRowsSettings
+            .setIdleTimeout(Duration.ofMinutes(10L));
   }
 
   private void configureRetryableCallSettings(
