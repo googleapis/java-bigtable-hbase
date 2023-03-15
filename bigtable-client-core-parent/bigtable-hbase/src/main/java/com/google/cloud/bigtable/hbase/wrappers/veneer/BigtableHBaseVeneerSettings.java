@@ -696,6 +696,9 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
           .retrySettings()
           .setMaxAttempts(
               configuration.getInt(MAX_SCAN_TIMEOUT_RETRIES, MAX_CONSECUTIVE_SCAN_ATTEMPTS));
+
+      // TODO: Temporarily bump the timeout to 15 minutes. This will be substituted with pagination in the future
+      readRowsSettings.setIdleTimeout(Duration.ofMinutes(15));
     }
 
     // Per response timeouts (note: gax maps rpcTimeouts to response timeouts for streaming rpcs)
