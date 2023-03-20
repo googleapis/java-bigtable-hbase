@@ -48,20 +48,44 @@ limitations under the License.
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+
+      <!-- Fix mismatched scopes: maven will pick the closest artifact version,
+      but apply the highest scope to it -->
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>${slf4j.version}</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-log4j12</artifactId>
-        <version>${slf4j.version}</version>
+        <groupId>commons-logging</groupId>
+        <artifactId>commons-logging</artifactId>
+        <scope>provided</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
 
   <dependencies>
+    <!-- Provided deps first -->
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-shaded-client</artifactId>
+      <version>${hbase1.version}</version>
+      <scope>provided</scope>
+      <exclusions>
+        <!-- Replace with reload4j -->
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.reload4j</groupId>
+      <artifactId>reload4j</artifactId>
+      <version>${reload4j.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- Internal dependencies that will be shaded along with their transitive dependencies.
      When adding new internal dependencies, make sure to exclude them from the reactor in direct dependents.
      See the *-hadoop/pom.xml and bigtable-hbase-beam/pom.xml for more details-->
@@ -155,29 +179,6 @@ limitations under the License.
 
     <!-- Manually promote public dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
     <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-client</artifactId>
-      <version>${hbase1.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>log4j</groupId>
-          <artifactId>log4j</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>ch.qos.reload4j</groupId>
-      <artifactId>reload4j</artifactId>
-      <version>${reload4j.version}</version>
-      <scope>runtime</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>${commons-logging.version}</version>
-    </dependency>
-    <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-core</artifactId>
       <version>${hbase1-metrics.version}</version>
@@ -263,18 +264,8 @@ limitations under the License.
                 <excludes>
                   <!-- exclude user visible deps -->
                   <exclude>io.dropwizard.metrics:metrics-core</exclude>
-                  <exclude>commons-logging:commons-logging</exclude>
-                  <exclude>ch.qos.reload4j:reload4j</exclude>
-                  <!-- exclude hbase-shaded-client & all of its dependencies -->
-                  <exclude>org.apache.hbase:hbase-shaded-client</exclude>
-                  <exclude>org.slf4j:slf4j-api</exclude>
-                  <exclude>org.slf4j:slf4j-log4j12</exclude>
-                  <exclude>log4j:log4j</exclude>
-                  <exclude>org.apache.htrace:htrace-core</exclude>
-                  <exclude>com.github.stephenc.findbugs:findbugs-annotations</exclude>
                   <!-- See notes in bigtable-client-core/bigtable-hbase/pom.xml#verify-conscrypt-version -->
                   <exclude>org.conscrypt:conscrypt-openjdk-uber</exclude>
-                  <exclude>org.apache.htrace:htrace-core4</exclude>
                   <exclude>org.bouncycastle:*</exclude>
                   <exclude>javax.annotation:*</exclude>
                   <exclude>org.checkerframework:*</exclude>
@@ -433,6 +424,13 @@ limitations under the License.
         <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
 
         <executions>
+          <execution>
+            <id>verify-provided</id>
+            <goals>
+              <goal>verify-provided-deps</goal>
+            </goals>
+          </execution>
+
           <execution>
             <id>verify-shaded-jar-entries</id>
             <phase>verify</phase>

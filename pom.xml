@@ -330,23 +330,6 @@ limitations under the License.
               </rules>
             </configuration>
           </execution>
-          <!-- extract slf4 consistency check to own execution so it can be
-          disabled for hbase-client 2.x -->
-          <execution>
-            <id>enforce-version-consistency-slf4j</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <configuration>
-              <rules>
-                <requireSameVersions>
-                  <dependencies>
-                    <dependency>org.slf4j:*</dependency>
-                  </dependencies>
-                </requireSameVersions>
-              </rules>
-            </configuration>
-          </execution>
           <execution>
             <id>enforce-banned-deps</id>
             <goals>
