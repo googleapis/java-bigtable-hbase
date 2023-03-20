@@ -574,6 +574,7 @@ public class CloudBigtableIO {
           new Scan()
               .withStartRow(source.getConfiguration().getZeroCopyStartRow())
               .withStopRow(source.getConfiguration().getZeroCopyStopRow())
+              .setFilter(source.getConfiguration().getRequest().getFilter())
               .setMaxVersions(Integer.MAX_VALUE);
       scanner =
           connection
