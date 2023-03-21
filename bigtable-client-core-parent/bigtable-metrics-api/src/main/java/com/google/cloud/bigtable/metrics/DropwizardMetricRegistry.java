@@ -63,6 +63,15 @@ public class DropwizardMetricRegistry implements MetricRegistry {
 
   private final com.codahale.metrics.MetricRegistry registry;
 
+  static boolean isAvailable() {
+    try {
+      Class.forName("com.codahale.metrics.MetricRegistry");
+      return true;
+    } catch (ClassNotFoundException e) {
+      return false;
+    }
+  }
+
   public DropwizardMetricRegistry() {
     this(new com.codahale.metrics.MetricRegistry());
   }
