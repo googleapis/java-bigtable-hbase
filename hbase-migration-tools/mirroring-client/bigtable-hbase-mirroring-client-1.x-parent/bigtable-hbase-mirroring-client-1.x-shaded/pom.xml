@@ -48,6 +48,7 @@ limitations under the License.
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
       <version>${hbase1.version}</version>
+      <scope>provided</scope>
       <exclusions>
         <exclusion>
           <groupId>log4j</groupId>
@@ -64,6 +65,7 @@ limitations under the License.
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
       <version>${commons-logging.version}</version>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 
@@ -241,6 +243,12 @@ limitations under the License.
                 <ignoredDependency>log4j:log4j</ignoredDependency>
               </ignoredDependencies>
             </configuration>
+          </execution>
+          <execution>
+            <id>verify-provided</id>
+            <goals>
+              <goal>verify-provided-deps</goal>
+            </goals>
           </execution>
         </executions>
       </plugin>

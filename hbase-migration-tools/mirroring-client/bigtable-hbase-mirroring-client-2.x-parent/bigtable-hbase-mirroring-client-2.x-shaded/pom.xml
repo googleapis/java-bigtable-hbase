@@ -34,19 +34,20 @@ limitations under the License.
   </description>
 
   <dependencies>
+    <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-shaded-client</artifactId>
+      <version>${hbase2.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- Internal dependencies that will be shaded along with their transitive dependencies. -->
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-mirroring-client-2.x</artifactId>
       <version>0.2.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
       <scope>compile</scope>
-    </dependency>
-
-    <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-client</artifactId>
-      <version>${hbase2.version}</version>
     </dependency>
 
     <dependency>
@@ -236,6 +237,12 @@ limitations under the License.
                 <targetDependency>org.apache.hbase:hbase-shaded-client</targetDependency>
               </targetDependencies>
             </configuration>
+          </execution>
+          <execution>
+            <id>verify-provided</id>
+            <goals>
+              <goal>verify-provided-deps</goal>
+            </goals>
           </execution>
         </executions>
       </plugin>

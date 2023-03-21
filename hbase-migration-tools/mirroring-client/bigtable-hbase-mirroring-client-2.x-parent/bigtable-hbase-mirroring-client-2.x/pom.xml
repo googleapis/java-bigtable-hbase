@@ -34,6 +34,13 @@ limitations under the License.
   </description>
 
   <dependencies>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-shaded-client</artifactId>
+      <version>${hbase2.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- external deps -->
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
@@ -51,12 +58,6 @@ limitations under the License.
           <artifactId>reload4j</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-client</artifactId>
-      <version>${hbase2.version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.google.api</groupId>
