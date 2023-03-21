@@ -182,6 +182,20 @@ limitations under the License.
   </profiles>
 
   <dependencies>
+    <!-- HBase testing tools -->
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-shaded-testing-util</artifactId>
+      <version>${hbase2.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-shaded-client</artifactId>
+      <version>${hbase2.version}</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <scope>provided</scope>
+    </dependency>
+
     <!-- Project Modules -->
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
@@ -196,22 +210,6 @@ limitations under the License.
       <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <scope>test</scope>
     </dependency>
-
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-client</artifactId>
-      <version>${hbase2.version}</version> <!-- {x-version-update:bigtable-client-parent:current} -->
-      <scope>test</scope>
-    </dependency>
-
-    <!-- HBase testing tools -->
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-testing-util</artifactId>
-      <version>${hbase2.version}</version>
-      <scope>test</scope>
-    </dependency>
-
 
     <!-- Internal testing utils -->
     <dependency>
@@ -444,6 +442,20 @@ limitations under the License.
             <configuration>
               <skip>true</skip>
             </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+
+        <executions>
+          <execution>
+            <id>verify-provided</id>
+            <goals>
+              <goal>verify-provided-deps</goal>
+            </goals>
           </execution>
         </executions>
       </plugin>

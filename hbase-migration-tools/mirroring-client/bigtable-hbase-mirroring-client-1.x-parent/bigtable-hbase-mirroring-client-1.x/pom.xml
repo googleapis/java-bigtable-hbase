@@ -41,10 +41,6 @@ limitations under the License.
     <scope>provided</scope>
     <exclusions>
       <exclusion>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-log4j12</artifactId>
-      </exclusion>
-      <exclusion>
         <groupId>log4j</groupId>
         <artifactId>log4j</artifactId>
       </exclusion>
@@ -55,7 +51,6 @@ limitations under the License.
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-mirroring-client-core</artifactId>
       <version>0.2.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
-      <scope>compile</scope>
     </dependency>
 
     <!-- Test deps -->
@@ -88,6 +83,20 @@ limitations under the License.
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+
+        <executions>
+          <execution>
+            <id>verify-provided</id>
+            <goals>
+              <goal>verify-provided-deps</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
