@@ -144,10 +144,9 @@ limitations under the License.
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
           <configuration>
-            <ignoredUsedUndeclaredDependencies>
+            <ignoredDependencies>
               <dependency>*</dependency>
-            </ignoredUsedUndeclaredDependencies>
-            <ignoreNonCompile>true</ignoreNonCompile>
+            </ignoredDependencies>
           </configuration>
         </plugin>
 
