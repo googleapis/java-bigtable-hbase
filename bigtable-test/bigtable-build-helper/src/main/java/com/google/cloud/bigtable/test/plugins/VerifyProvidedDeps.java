@@ -18,9 +18,7 @@ package com.google.cloud.bigtable.test.plugins;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.Stack;
 import java.util.TreeSet;
 import org.apache.maven.artifact.Artifact;
@@ -66,11 +64,12 @@ public class VerifyProvidedDeps extends AbstractMojo {
     final DependencyNode rootNode;
 
     try {
-      rootNode = dependencyCollectorBuilder.collectDependencyGraph(buildingRequest, new ScopeArtifactFilter(Artifact.SCOPE_COMPILE_PLUS_RUNTIME));
+      rootNode =
+          dependencyCollectorBuilder.collectDependencyGraph(
+              buildingRequest, new ScopeArtifactFilter(Artifact.SCOPE_COMPILE_PLUS_RUNTIME));
     } catch (DependencyCollectorBuilderException exception) {
       throw new MojoExecutionException("Cannot build project dependency graph", exception);
     }
-
 
     ProvidedDepsCollector collector = new ProvidedDepsCollector();
     rootNode.accept(collector);
@@ -114,7 +113,6 @@ public class VerifyProvidedDeps extends AbstractMojo {
       return true;
     }
 
-
     Set<String> getResults() {
       return deps;
     }
@@ -157,8 +155,8 @@ public class VerifyProvidedDeps extends AbstractMojo {
       }
 
       String topLevelKey = artifactKey(stack.get(1).getArtifact());
-      errors.add(String.format("%s imports %s, which is supposed to be provided", topLevelKey, key));
-
+      errors.add(
+          String.format("%s imports %s, which is supposed to be provided", topLevelKey, key));
 
       return true;
     }
@@ -175,11 +173,6 @@ public class VerifyProvidedDeps extends AbstractMojo {
   }
 
   static String artifactKey(Artifact a) {
-    return String.join(":",
-        a.getGroupId(),
-        a.getArtifactId(),
-        a.getType(),
-        a.getClassifier()
-    );
+    return String.join(":", a.getGroupId(), a.getArtifactId(), a.getType(), a.getClassifier());
   }
 }

@@ -147,6 +147,7 @@ limitations under the License.
             <ignoredUsedUndeclaredDependencies>
               <dependency>*</dependency>
             </ignoredUsedUndeclaredDependencies>
+            <ignoreNonCompile>true</ignoreNonCompile>
           </configuration>
         </plugin>
 
