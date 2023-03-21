@@ -48,20 +48,30 @@ limitations under the License.
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+
+      <!-- Fix mismatched scopes: maven will pick the closest artifact version,
+      but apply the highest scope to it -->
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>${beam-slf4j.version}</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-log4j12</artifactId>
-        <version>${beam-slf4j.version}</version>
+        <groupId>commons-logging</groupId>
+        <artifactId>commons-logging</artifactId>
+        <scope>provided</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
 
   <dependencies>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-shaded-client</artifactId>
+      <version>${hbase2.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- Internal dependencies that will be shaded along with their transitive dependencies.
      When adding new internal dependencies, make sure to exclude them from the reactor in direct dependents.
      See the *-hadoop/pom.xml and bigtable-hbase-beam/pom.xml for more details-->
@@ -82,6 +92,12 @@ limitations under the License.
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-metrics-api</artifactId>
       <version>${bigtable-client-core.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.api</groupId>
+          <artifactId>api-common</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <!-- Since opencensus-api is a transitive dep, we have to shade its impl as well.
     Otherwise the -api will be permanently severed from the impl and exporters -->
@@ -141,7 +157,6 @@ limitations under the License.
         </exclusion>
       </exclusions>
     </dependency>
-
     <!-- grpc-census needed alongside opencensus-exporter-stats-stackdriver for GRPC stats exports to work -->
     <dependency>
       <groupId>io.grpc</groupId>
@@ -149,17 +164,6 @@ limitations under the License.
     </dependency>
 
     <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-client</artifactId>
-      <version>${hbase2.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>${commons-logging.version}</version>
-    </dependency>
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-core</artifactId>
@@ -173,7 +177,7 @@ limitations under the License.
       <version>${grpc-conscrypt.version}</version>
       <scope>runtime</scope>
     </dependency>
-    <!--    needs to be declared as a dependency to be excluded from shading-->
+    <!--needs to be declared as a dependency to be excluded from shading-->
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
@@ -183,6 +187,21 @@ limitations under the License.
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+
+        <executions>
+          <execution>
+            <id>verify-provided</id>
+            <goals>
+              <goal>verify-provided-deps</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>license-maven-plugin</artifactId>
@@ -246,18 +265,6 @@ limitations under the License.
                 <excludes>
                   <!-- exclude user visible deps -->
                   <exclude>io.dropwizard.metrics:metrics-core</exclude>
-                  <exclude>commons-logging:commons-logging</exclude>
-                  <!-- exclude hbase-shaded-client & all of its dependencies -->
-                  <exclude>org.apache.hbase:hbase-shaded-client</exclude>
-                  <exclude>org.slf4j:slf4j-api</exclude>
-                  <exclude>org.slf4j:slf4j-log4j12</exclude>
-                  <exclude>log4j:log4j</exclude>
-                  <exclude>ch.qos.reload4j:reload4j</exclude>
-                  <exclude>org.apache.htrace:htrace-core4</exclude>
-                  <exclude>org.apache.yetus:audience-annotations</exclude>
-                  <exclude>
-                    com.github.stephenc.findbugs:findbugs-annotations
-                  </exclude>
                   <!-- See notes in bigtable-client-core/bigtable-hbase/pom.xml#verify-conscrypt-version -->
                   <exclude>org.conscrypt:conscrypt-openjdk-uber</exclude>
                   <exclude>org.bouncycastle:*</exclude>
@@ -297,7 +304,6 @@ limitations under the License.
                     com.google.bigtable.repackaged.com.twitter
                   </shadedPattern>
                 </relocation>
-
                 <!-- Take special care of grpc-netty-shaded, it uses the package
                      io.grpc.netty.shaded.io.grpc.netty, which will cause the
                      ServicesResourceTransformer to replace both occurrences of io.grpc
@@ -363,6 +369,7 @@ limitations under the License.
                     META-INF/native/com_google_bigtable_repackaged_io_grpc_netty_shaded_netty
                   </shadedPattern>
                 </relocation>
+
                 <relocation>
                   <pattern>org.joda</pattern>
                   <shadedPattern>
