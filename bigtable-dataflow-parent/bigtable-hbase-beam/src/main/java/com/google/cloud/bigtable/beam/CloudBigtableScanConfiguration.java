@@ -71,6 +71,8 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   public static class Builder extends CloudBigtableTableConfiguration.Builder {
     private ValueProvider<ReadRowsRequest> request;
 
+    private ValueProvider<Scan> scan;
+
     public Builder() {}
 
     /**
@@ -80,6 +82,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
      */
     public Builder withScan(Scan scan) {
+      this.scan = StaticValueProvider.of(scan);
       Preconditions.checkArgument(scan != null, "Scan cannot be null");
       Query query = Query.create(PLACEHOLDER_TABLE_ID);
       ReadHooks readHooks = new DefaultReadHooks();
@@ -242,11 +245,13 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
         withScan(new Scan());
       }
       return new CloudBigtableScanConfiguration(
-          projectId, instanceId, tableId, request, additionalConfiguration);
+          projectId, instanceId, tableId, request, additionalConfiguration, scan);
     }
   }
 
   private final ValueProvider<ReadRowsRequest> request;
+
+  private final ValueProvider<Scan> scan;
 
   /**
    * Provides an updated request by setting the table name in the existing request if the table name
@@ -306,20 +311,23 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * Creates a {@link CloudBigtableScanConfiguration} using the specified project ID, instance ID,
    * table ID, {@link Scan} and additional connection configuration.
    *
-   * @param projectId The project ID for the instance.
-   * @param instanceId The instance ID.
-   * @param tableId The table to connect to in the instance.
-   * @param request The {@link ReadRowsRequest} that will be used to filter the table.
+   * @param projectId               The project ID for the instance.
+   * @param instanceId              The instance ID.
+   * @param tableId                 The table to connect to in the instance.
+   * @param request                 The {@link ReadRowsRequest} that will be used to filter the table.
    * @param additionalConfiguration A {@link Map} with additional connection configuration.
+   * @param scan
    */
   protected CloudBigtableScanConfiguration(
       ValueProvider<String> projectId,
       ValueProvider<String> instanceId,
       ValueProvider<String> tableId,
       ValueProvider<ReadRowsRequest> request,
-      Map<String, ValueProvider<String>> additionalConfiguration) {
+      Map<String, ValueProvider<String>> additionalConfiguration,
+      ValueProvider<Scan> scan) {
     super(projectId, instanceId, tableId, additionalConfiguration);
     this.request = new RequestWithTableNameValueProvider(projectId, instanceId, tableId, request);
+    this.scan = scan;
   }
 
   /**
@@ -331,6 +339,11 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   public ReadRowsRequest getRequest() {
     return request.get();
   }
+
+  public Scan getScan() {
+    return scan.get();
+  }
+
 
   /** @return The start row for this configuration. */
   public byte[] getStartRow() {
