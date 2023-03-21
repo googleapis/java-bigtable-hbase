@@ -138,11 +138,15 @@ limitations under the License.
           <version>3.0.0-M2</version>
         </plugin>
 
-        <!-- Augment google-cloud-shared-config config to exclude non-compile deps -->
+        <!-- To ease maintenance burden, we only declare toplevel deps that
+         are provided by either HBase or java-bigtable-->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
           <configuration>
+            <ignoredUsedUndeclaredDependencies>
+              <dependency>*</dependency>
+            </ignoredUsedUndeclaredDependencies>
             <ignoreNonCompile>true</ignoreNonCompile>
           </configuration>
         </plugin>
@@ -327,23 +331,6 @@ limitations under the License.
                     <dependency>com.fasterxml.jackson:*</dependency>
                   </includes>
                 </bannedDependencies>
-              </rules>
-            </configuration>
-          </execution>
-          <!-- extract slf4 consistency check to own execution so it can be
-          disabled for hbase-client 2.x -->
-          <execution>
-            <id>enforce-version-consistency-slf4j</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <configuration>
-              <rules>
-                <requireSameVersions>
-                  <dependencies>
-                    <dependency>org.slf4j:*</dependency>
-                  </dependencies>
-                </requireSameVersions>
               </rules>
             </configuration>
           </execution>

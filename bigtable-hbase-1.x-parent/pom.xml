@@ -76,7 +76,6 @@ limitations under the License.
       </activation>
       <modules>
         <module>bigtable-hbase-1.x-shaded</module>
-        <module>bigtable-hbase-1.x-hadoop</module>
       </modules>
     </profile>
   </profiles>

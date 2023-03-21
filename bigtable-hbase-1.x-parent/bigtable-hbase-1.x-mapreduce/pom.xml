@@ -53,6 +53,23 @@ limitations under the License.
   the enduser can explcitly add their own version hbase-server.
   -->
 
+  <dependencyManagement>
+    <dependencies>
+      <!-- Fix mismatched scopes: maven will pick the closest artifact version,
+      but apply the highest scope to it -->
+      <!-- TODO: remove this when metrics-core is an optional dep -->
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-core</artifactId>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>jsr305</artifactId>
+        <scope>provided</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
     <!-- Primary Group -->
     <dependency>
@@ -60,26 +77,46 @@ limitations under the License.
       <artifactId>hbase-server</artifactId>
       <version>${hbase1.version}</version>
       <scope>provided</scope>
+      <exclusions>
+        <!-- Replace with reload4j -->
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.reload4j</groupId>
+      <artifactId>reload4j</artifactId>
+      <version>${reload4j.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
+      <artifactId>bigtable-hbase-1.x-shaded</artifactId>
       <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
-      <exclusions>
-        <!-- we need hbase-server instead of hbase-client -->
-        <exclusion>
-          <groupId>org.apache.hbase</groupId>
-          <artifactId>hbase-client</artifactId>
-        </exclusion>
 
-        <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
-        pom.xml files when invoking the build from a parent project. So we have to manually exclude
-        the dependencies. Note that this works in conjunction with the manually promoted dependencies
-        in bigtable-hbase-1.x-shaded/pom.xml -->
+      <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
+      pom.xml files when invoking the build from a parent project. So we have to manually exclude
+      the dependencies. Note that this works in conjunction with the manually promoted dependencies
+      in bigtable-hbase-1.x-shaded/pom.xml -->
+      <exclusions>
         <exclusion>
           <groupId>${project.groupId}</groupId>
-          <artifactId>bigtable-hbase-1.x-shaded</artifactId>
+          <artifactId>bigtable-hbase-1.x</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.google.cloud.bigtable</groupId>
+          <artifactId>bigtable-metrics-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.opencensus</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.grpc</groupId>
+          <artifactId>grpc-census</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -233,6 +270,12 @@ limitations under the License.
         <artifactId>bigtable-build-helper</artifactId>
         <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
         <executions>
+          <execution>
+            <id>verify-provided</id>
+            <goals>
+              <goal>verify-provided-deps</goal>
+            </goals>
+          </execution>
           <execution>
             <id>verify-mirror-deps</id>
             <phase>verify</phase>

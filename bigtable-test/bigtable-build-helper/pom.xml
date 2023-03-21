@@ -21,7 +21,7 @@
 
   <properties>
     <java.version>8</java.version>
-    <maven.version>3.6.3</maven.version>
+    <maven.version>3.9.1</maven.version>
     <maven-resolver-api.version>1.9.7</maven-resolver-api.version>
 
     <!-- treat maven-invoker-plugin tests like integration tests, allowing
@@ -65,7 +65,7 @@
     <dependency>
       <groupId>org.apache.maven.plugin-tools</groupId>
       <artifactId>maven-plugin-annotations</artifactId>
-      <version>3.7.1</version>
+      <version>3.8.1</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -81,11 +81,30 @@
       <groupId>org.apache.maven.resolver</groupId>
       <artifactId>maven-resolver-api</artifactId>
       <version>${maven-resolver-api.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.maven.resolver</groupId>
       <artifactId>maven-resolver-util</artifactId>
       <version>${maven-resolver-api.version}</version>
+    </dependency>
+
+    <!-- Dependency tree -->
+    <dependency>
+      <groupId>org.apache.maven.shared</groupId>
+      <artifactId>maven-dependency-tree</artifactId>
+      <version>3.2.1</version>
+      <exclusions>
+        <!-- Already imported as maven-resolver-api and maven-resolver-util -->
+        <exclusion>
+          <groupId>org.eclipse.aether</groupId>
+          <artifactId>aether-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.eclipse.aether</groupId>
+          <artifactId>aether-util</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 
