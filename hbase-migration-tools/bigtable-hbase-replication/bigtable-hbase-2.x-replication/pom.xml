@@ -31,20 +31,24 @@ limitations under the License.
     <name>bigtable-hbase-2.x-replication</name>
     <description>Library to enable one way replication from HBase to Cloud Bigtable. </description>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-bom</artifactId>
-                <version>9.3.30.v20211001</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>com.google.cloud.bigtable.test</groupId>
+                <artifactId>bigtable-build-helper</artifactId>
+                <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+
+                <executions>
+                    <execution>
+                        <id>verify-provided</id>
+                        <goals>
+                            <goal>verify-provided-deps</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
@@ -145,51 +149,65 @@ limitations under the License.
             </plugin>
         </plugins>
     </build>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- TODO: remove this when bigtable metrics api makes metrics-core optional -->
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-core</artifactId>
+                <scope>provided</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-server</artifactId>
+            <version>${hbase2.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>com.google.cloud.bigtable</groupId>
             <artifactId>bigtable-hbase-replication-core</artifactId>
             <version>1.6.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
             <exclusions>
-                <!-- HBase dependencies come from hbase-server below. Skip them here.-->
-                <exclusion>
-                    <groupId>org.apache.hbase</groupId>
-                    <artifactId>hbase-client</artifactId>
-                </exclusion>
                 <exclusion>
                     <groupId>com.google.cloud.bigtable</groupId>
-                    <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
+                    <artifactId>bigtable-hbase-1.x-shaded</artifactId>
                 </exclusion>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
             </exclusions>
         </dependency>
         <dependency>
             <groupId>com.google.cloud.bigtable</groupId>
-            <artifactId>bigtable-hbase-2.x-hadoop</artifactId>
+            <artifactId>bigtable-hbase-2.x-shaded</artifactId>
             <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+
+            <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
+            pom.xml files when invoking the build from a parent project. So we have to manually exclude
+            the dependencies. Note that this works in conjunction with the manually promoted dependencies
+            in bigtable-hbase-1.x-shaded/pom.xml -->
             <exclusions>
-                <!-- HBase dependencies come from hbase-server below. Skip them here.-->
                 <exclusion>
-                    <groupId>org.apache.hbase</groupId>
-                    <artifactId>hbase-client</artifactId>
+                    <groupId>${project.groupId}</groupId>
+                    <artifactId>bigtable-hbase-2.x</artifactId>
                 </exclusion>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
+                <exclusion>
+                    <groupId>com.google.cloud.bigtable</groupId>
+                    <artifactId>bigtable-metrics-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.opencensus</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.grpc</groupId>
+                    <artifactId>grpc-census</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-server</artifactId>
-            <version>${hbase2.version}</version>
-            <!--       The library is running on the HBase region server,-->
-            <!--       use the HBase server from the HBase environment-->
-            <scope>provided</scope>
-        </dependency>
+
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-testing-util</artifactId>
