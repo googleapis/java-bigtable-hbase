@@ -138,12 +138,15 @@ limitations under the License.
           <version>3.0.0-M2</version>
         </plugin>
 
-        <!-- Augment google-cloud-shared-config config to exclude non-compile deps -->
+        <!-- To ease maintenance burden, we only declare toplevel deps that
+         are provided by either HBase or java-bigtable-->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
           <configuration>
-            <ignoreNonCompile>true</ignoreNonCompile>
+            <ignoredUsedUndeclaredDependencies>
+              <dependency>*</dependency>
+            </ignoredUsedUndeclaredDependencies>
           </configuration>
         </plugin>
 
