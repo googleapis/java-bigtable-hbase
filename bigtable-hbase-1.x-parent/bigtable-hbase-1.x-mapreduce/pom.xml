@@ -70,6 +70,7 @@ limitations under the License.
       </dependency>
     </dependencies>
   </dependencyManagement>
+
   <dependencies>
     <!-- Primary Group -->
     <dependency>
@@ -169,19 +170,18 @@ limitations under the License.
 
   <build>
     <plugins>
-      <!-- This is basically a replacement for the mapreduce jobs in hbase-server,
-      but with the implementation replaced by bigtable-hbase-1.x-hadoop. This means
-      that all of our dependencies are dictated by hbase-server. hbase-server
-      has a fairly complex dependency tree with a lot of exclusions. Trying to
-      replicate it here to declare exact deps our job uses creates an undue burden.-->
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <ignoredDependencies>
-            <dependency>*</dependency>
-          </ignoredDependencies>
-        </configuration>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+        <executions>
+          <execution>
+            <id>verify-provided</id>
+            <goals>
+              <goal>verify-provided-deps</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
 
       <plugin>
@@ -194,14 +194,6 @@ limitations under the License.
             <goals>
               <goal>enforce</goal>
             </goals>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </execution>
-          <!-- We are not introducing any new deps here. We expect to be
-          running in hadoop's provided classpath -->
-          <execution>
-            <id>enforce-banned-deps</id>
             <configuration>
               <skip>true</skip>
             </configuration>
@@ -260,39 +252,6 @@ limitations under the License.
                 <descriptor>assembly/shaded-byo-hadoop.xml</descriptor>
                 <descriptor>assembly/shaded.xml</descriptor>
               </descriptors>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>com.google.cloud.bigtable.test</groupId>
-        <artifactId>bigtable-build-helper</artifactId>
-        <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
-        <executions>
-          <execution>
-            <id>verify-provided</id>
-            <goals>
-              <goal>verify-provided-deps</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>verify-mirror-deps</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>verify-mirror-deps</goal>
-            </goals>
-            <configuration>
-              <targetDependencies>
-                <targetDependency>org.apache.hbase:hbase-server:${hbase1.version}</targetDependency>
-              </targetDependencies>
-              <ignoredDependencies>
-                <!-- TODO: figure out why this diverges from hbase-client -->
-                <ignoredDependency>org.slf4j:slf4j-api</ignoredDependency>
-                <!-- For some reason, hbase-server pulls in test deps -->
-                <ignoredDependency>junit:junit</ignoredDependency>
-                <ignoredDependency>org.hamcrest:hamcrest-core</ignoredDependency>
-              </ignoredDependencies>
             </configuration>
           </execution>
         </executions>
