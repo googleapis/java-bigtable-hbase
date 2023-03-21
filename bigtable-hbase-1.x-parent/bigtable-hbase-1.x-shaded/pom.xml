@@ -191,12 +191,6 @@ limitations under the License.
       <version>${grpc-conscrypt.version}</version>
       <scope>runtime</scope>
     </dependency>
-    <!--needs to be declared as a dependency to be excluded from shading-->
-    <dependency>
-      <groupId>com.google.code.findbugs</groupId>
-      <artifactId>jsr305</artifactId>
-      <version>${jsr305.version}</version>
-    </dependency>
   </dependencies>
 
   <build>
@@ -454,21 +448,6 @@ limitations under the License.
             <goals>
               <goal>verify-shaded-exclusions</goal>
             </goals>
-          </execution>
-          <execution>
-            <id>verify-mirror-deps</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>verify-mirror-deps</goal>
-            </goals>
-            <configuration>
-              <targetDependencies>
-                <targetDependency>org.apache.hbase:hbase-shaded-client</targetDependency>
-              </targetDependencies>
-              <ignoredDependencies>
-                <ignoredDependency>log4j:log4j</ignoredDependency>
-              </ignoredDependencies>
-            </configuration>
           </execution>
         </executions>
       </plugin>
