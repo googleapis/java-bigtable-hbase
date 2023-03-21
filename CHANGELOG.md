@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.29.0](https://github.com/googleapis/java-bigtable-hbase/compare/v1.28.0...v1.29.0) (2023-03-21)
+
+
+### Features
+
+* Make dropwizard metrics-core optional ([#4012](https://github.com/googleapis/java-bigtable-hbase/issues/4012)) ([fca9cde](https://github.com/googleapis/java-bigtable-hbase/commit/fca9cde7f69338b4324032b3a5fbe14e045fc7f0))
+
 ## [1.28.0](https://github.com/googleapis/java-bigtable-hbase/compare/v1.27.1...v1.28.0) (2022-10-28)
 
 
