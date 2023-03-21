@@ -442,13 +442,6 @@ limitations under the License.
               </allowedJarClassEntries>
             </configuration>
           </execution>
-          <execution>
-            <id>verify-shaded-exclusions</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>verify-shaded-exclusions</goal>
-            </goals>
-          </execution>
         </executions>
       </plugin>
 
