@@ -341,6 +341,9 @@ limitations under the License.
             <configuration>
               <rules>
                 <bannedDependencies>
+                  <includes>
+                    <include>*:*:*:*:provided</include>
+                  </includes>
                   <excludes>
                     <exclude>commons-codec:commons-codec:[,1.15)</exclude>
                     <exclude>org.apache.commons:commons-compress:[,1.20)</exclude>
