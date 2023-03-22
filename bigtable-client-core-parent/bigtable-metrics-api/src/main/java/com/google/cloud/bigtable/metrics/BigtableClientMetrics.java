@@ -63,7 +63,7 @@ public final class BigtableClientMetrics {
   static {
     Logger logger = LoggerFactory.getLogger(BigtableClientMetrics.class);
     if (logger.isDebugEnabled()) {
-      if (!DropwizardMetricRegistry.isAvailable()) {
+      if (isDropwizardMetricsAvailable()) {
         logger.info(
             "Could not set up logging since metrics-core is not on the classpath. "
                 + "To use dropwizard metrics plese include io.dropwizard.metrics:metrics-core as peer"
@@ -93,6 +93,15 @@ public final class BigtableClientMetrics {
    */
   public static void setMetricRegistry(MetricRegistry registry) {
     BigtableClientMetrics.registry = registry;
+  }
+
+  private static boolean isDropwizardMetricsAvailable() {
+    try {
+      new DropwizardMetricRegistry();
+      return true;
+    } catch (NoClassDefFoundError e) {
+      return false;
+    }
   }
 
   public static MetricRegistry getMetricRegistry(MetricLevel level) {
