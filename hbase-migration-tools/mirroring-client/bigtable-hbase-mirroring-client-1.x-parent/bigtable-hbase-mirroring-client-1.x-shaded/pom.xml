@@ -48,6 +48,7 @@ limitations under the License.
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
       <version>${hbase1.version}</version>
+      <scope>provided</scope>
       <exclusions>
         <exclusion>
           <groupId>log4j</groupId>
@@ -59,11 +60,6 @@ limitations under the License.
       <groupId>ch.qos.reload4j</groupId>
       <artifactId>reload4j</artifactId>
       <version>${reload4j.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>${commons-logging.version}</version>
     </dependency>
   </dependencies>
 
@@ -103,22 +99,6 @@ limitations under the License.
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
               </transformers>
-              <artifactSet>
-                <excludes>
-                  <!-- exclude user visible deps -->
-                  <exclude>commons-logging:commons-logging</exclude>
-                  <!-- exclude hbase-shaded-client & all of its dependencies -->
-                  <exclude>org.apache.hbase:hbase-shaded-client</exclude>
-                  <exclude>org.slf4j:slf4j-api</exclude>
-                  <exclude>org.slf4j:slf4j-log4j12</exclude>
-                  <exclude>log4j:log4j</exclude>
-                  <exclude>ch.qos.reload4j:reload4j</exclude>
-                  <exclude>org.apache.htrace:htrace-core4</exclude>
-                  <exclude>org.apache.htrace:htrace-core</exclude>
-                  <exclude>com.github.stephenc.findbugs:findbugs-annotations</exclude>
-                  <exclude>log4j:log4j</exclude>
-                </excludes>
-              </artifactSet>
               <relocations>
                 <relocation>
                   <pattern>com.google</pattern>
@@ -241,6 +221,12 @@ limitations under the License.
                 <ignoredDependency>log4j:log4j</ignoredDependency>
               </ignoredDependencies>
             </configuration>
+          </execution>
+          <execution>
+            <id>verify-provided</id>
+            <goals>
+              <goal>verify-provided-deps</goal>
+            </goals>
           </execution>
         </executions>
       </plugin>

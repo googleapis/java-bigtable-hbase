@@ -158,7 +158,7 @@ limitations under the License.
                 </exclusion>
                 <exclusion>
                     <groupId>com.google.cloud.bigtable</groupId>
-                    <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
+                    <artifactId>bigtable-hbase-1.x-shaded</artifactId>
                 </exclusion>
         <exclusion>
           <groupId>org.slf4j</groupId>

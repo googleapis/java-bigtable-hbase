@@ -34,6 +34,13 @@ limitations under the License.
   </description>
 
   <dependencies>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-shaded-client</artifactId>
+      <version>${hbase2.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- external deps -->
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
@@ -53,12 +60,6 @@ limitations under the License.
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-client</artifactId>
-      <version>${hbase2.version}</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>com.google.api</groupId>
       <artifactId>api-common</artifactId>
       <version>1.10.6</version>
@@ -75,7 +76,6 @@ limitations under the License.
       <groupId>net.javacrumbs.future-converter</groupId>
       <artifactId>future-converter-java8-guava</artifactId>
       <version>1.2.0</version>
-      <scope>compile</scope>
     </dependency>
 
     <!-- Test dependencies-->
@@ -118,6 +118,20 @@ limitations under the License.
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+
+        <executions>
+          <execution>
+            <id>verify-provided</id>
+            <goals>
+              <goal>verify-provided-deps</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
