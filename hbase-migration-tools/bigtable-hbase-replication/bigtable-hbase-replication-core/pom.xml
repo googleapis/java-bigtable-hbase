@@ -132,7 +132,7 @@ limitations under the License.
 
     <!-- bigtable libs for org.apache.hadoop.hbase -->
     <dependency>
-      <groupId>${project.groupId}</groupId>
+      <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-1.x-shaded</artifactId>
       <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
 
