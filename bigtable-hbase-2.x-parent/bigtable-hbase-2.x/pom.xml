@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-2.x-parent</artifactId>
-    <version>1.29.0</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>1.29.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <properties>
@@ -70,7 +70,7 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase</artifactId>
-      <version>1.29.0</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>1.29.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>
 
     <dependency>
@@ -86,7 +86,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-metrics-api</artifactId>
-      <version>1.29.0</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>1.29.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>
 
     <dependency>
