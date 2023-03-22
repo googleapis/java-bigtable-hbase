@@ -34,8 +34,39 @@ limitations under the License.
     Bigtable.
   </description>
 
+  <dependencyManagement>
+    <dependencies>
+      <!-- Ensure that provided deps are respected -->
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <scope>provided</scope>
+      </dependency>
+      <!-- TODO: remove this when bigtable metrics api makes metrics-core optional -->
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-core</artifactId>
+        <scope>provided</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <build>
     <plugins>
+      <plugin>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+
+        <executions>
+          <execution>
+            <id>verify-provided</id>
+            <goals>
+              <goal>verify-provided-deps</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
@@ -77,13 +108,6 @@ limitations under the License.
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
         <version>3.3.0</version>
       </plugin>
@@ -91,12 +115,51 @@ limitations under the License.
   </build>
 
   <dependencies>
+    <!-- Provided deps first -->
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-server</artifactId>
+      <version>${hbase1.version}</version>
+      <scope>provided</scope>
+      <exclusions>
+        <!-- Replace with reload4j -->
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
     <!-- bigtable libs for org.apache.hadoop.hbase -->
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-1.x-shaded</artifactId>
       <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+
+      <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
+      pom.xml files when invoking the build from a parent project. So we have to manually exclude
+      the dependencies. Note that this works in conjunction with the manually promoted dependencies
+      in bigtable-hbase-1.x-shaded/pom.xml -->
+      <exclusions>
+        <exclusion>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>bigtable-hbase-1.x</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.google.cloud.bigtable</groupId>
+          <artifactId>bigtable-metrics-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.opencensus</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.grpc</groupId>
+          <artifactId>grpc-census</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
+
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
@@ -104,5 +167,4 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
   </dependencies>
-
 </project>

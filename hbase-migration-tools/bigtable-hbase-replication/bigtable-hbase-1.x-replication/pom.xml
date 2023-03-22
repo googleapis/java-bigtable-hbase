@@ -42,6 +42,21 @@ limitations under the License.
   <build>
     <plugins>
       <plugin>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+
+        <executions>
+          <execution>
+            <id>verify-provided</id>
+            <goals>
+              <goal>verify-provided-deps</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
         <executions>
@@ -80,13 +95,7 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
-      </plugin>
+
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <version>3.3.0</version>
@@ -130,42 +139,47 @@ limitations under the License.
       </plugin>
     </plugins>
   </build>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- TODO: remove this when bigtable metrics api makes metrics-core optional -->
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-core</artifactId>
+        <scope>provided</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
+    <!-- Provided deps first -->
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-server</artifactId>
+      <version>${hbase1.version}</version>
+      <scope>provided</scope>
+      <exclusions>
+        <!-- Replace with reload4j -->
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.reload4j</groupId>
+      <artifactId>reload4j</artifactId>
+      <version>${reload4j.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- bigtable libs for org.apache.hadoop.hbase -->
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-replication-core</artifactId>
       <version>1.6.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
-      <exclusions>
-        <!-- HBase dependencies come from hbase-server below. Skip them here.-->
-        <exclusion>
-          <groupId>org.apache.hbase</groupId>
-          <artifactId>hbase-client</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-server</artifactId>
-      <version>${hbase1.version}</version>
-      <!--       The library is running on the HBase region server,-->
-      <!--       use the HBase server from the HBase environment-->
-      <scope>provided</scope>
-    </dependency>
-    <!-- Versions conflict within HBase, enforce same versions but let
-     them come from hbase-server to avoid version conflicts-->
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${hbase1-hadoop-slf4j.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <version>${hbase1-hadoop-slf4j.version}</version>
-      <scope>provided</scope>
-    </dependency>
+
 
     <!-- test dependencies -->
     <dependency>
