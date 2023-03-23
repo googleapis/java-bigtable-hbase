@@ -522,7 +522,7 @@ public class CloudBigtableReplicatorTest {
    * @throws IOException
    */
   @Test
-  public void testBidirectionalReplicationMultipleMutations() throws IOException {
+  public void testBidirectionalReplicationDropsReplicatedMutation() throws IOException {
     // Create object to test
     CloudBigtableReplicator replicator = new CloudBigtableReplicator();
     // Enable bidirectional replication
@@ -738,4 +738,71 @@ public class CloudBigtableReplicatorTest {
     verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
     verifyNoInteractions(mockConnection);
   }
+
+  /**
+   * Test that multiple mutations are correctly processed in bidirectional replication.
+   * @throws IOException
+   */
+  @Test
+  public void testBidirectionalReplicationMultipleMutations() throws IOException {
+    // Create object to test
+    CloudBigtableReplicator replicator = new CloudBigtableReplicator();
+    // Enable bidirectional replication
+    Configuration replicationConf = new Configuration(false);
+    replicationConf.setBoolean(ENABLE_BIDIRECTIONAL_REPLICATION_MODE_KEY, true);
+    replicator.start(sharedResources,
+        incompatibleMutationAdapter,
+        2000,
+        false,
+        replicationConf,
+        mockMetricExporter
+    );
+
+    Cell cell = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
+    Cell cell2 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
+    Cell cell3 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
+    // Special mutation with source-tagging
+    Cell hbaseSourceTaggedCell =
+        new KeyValue(
+            getRowKey(1), CF1, DEFAULT_SOURCE_HBASE_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
+
+    BigtableWALEntry inputWAL =
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell,cell2,cell3), TABLE_NAME_STRING);
+    Map<String, List<BigtableWALEntry>> walsToReplicate = new HashMap<>();
+    walsToReplicate.put(TABLE_NAME_STRING, Arrays.asList(inputWAL));
+
+    BigtableWALEntry expectedWAL =
+        new BigtableWALEntry(
+            TIMESTAMP, Arrays.asList(cell,cell2,cell3, hbaseSourceTaggedCell), TABLE_NAME_STRING);
+    // The expected batch should include the special mutation
+    Map<ByteRange, List<Cell>> expectedBatchOfWal = new HashMap<>();
+    expectedBatchOfWal.put(new SimpleByteRange(getRowKey(1)), expectedWAL.getCells());
+
+    // Everything succeeds
+    when(mockExecutorService.submit((Callable<Object>) any()))
+        .thenReturn(CompletableFuture.completedFuture(true));
+
+    // Trigger replication
+    assertTrue(replicator.replicate(walsToReplicate));
+
+    // called during constructor
+    verify(mockMetricExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(mockMetricExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    verify(mockMetricExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
+    verify(mockMetricExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+    verify(mockMetricExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
+    // Metric reflects that one hbase row mutation was replicated
+    verify(mockMetricExporter).incCounters(
+        BIDIRECTIONAL_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY, 1);
+    verify(mockMetricExporter).incCounters(
+        BIDIRECTIONAL_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY, 3);
+
+    verify(mockExecutorService)
+        .submit(
+            new CloudBigtableReplicationTask(
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal));
+    verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
+    verifyNoInteractions(mockConnection);
+  }
+
 }
