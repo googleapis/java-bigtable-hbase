@@ -211,24 +211,37 @@ limitations under the License.
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.3.0</version>
+        <artifactId>maven-shade-plugin</artifactId>
         <executions>
           <execution>
-            <id>shaded</id>
+            <id>shade</id>
             <goals>
-              <goal>single</goal>
+              <goal>shade</goal>
             </goals>
-            <phase>package</phase>
             <configuration>
-              <archive>
-                <manifest>
-                  <mainClass>com.google.cloud.bigtable.mapreduce.Driver</mainClass>
-                </manifest>
-              </archive>
-              <descriptors>
-                <descriptor>assembly/shaded.xml</descriptor>
-              </descriptors>
+              <createDependencyReducedPom>true</createDependencyReducedPom>
+              <finalName>bigtable-hbase-1.x-tools-${project.version}-jar-with-dependencies</finalName>
+              <shadedArtifactAttached>true</shadedArtifactAttached>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                    <exclude>META-INF/DEPENDENCIES</exclude>
+                    <exclude>META-INF/versions/9/module-info.class</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+              <transformers>
+                <transformer
+                    implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
+                <transformer
+                    implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer"/>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+              </transformers>
             </configuration>
           </execution>
         </executions>
