@@ -152,6 +152,44 @@ limitations under the License.
 
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <executions>
+            <!-- Disable enforcer rules inherited from google-cloud-shared-config
+            and customize the rules so that they fit hbase deps -->
+            <execution>
+              <id>enforce</id>
+              <phase>none</phase>
+            </execution>
+            <execution>
+              <id>enforce-cbt</id>
+              <goals>
+                <goal>enforce</goal>
+              </goals>
+              <configuration>
+                <rules>
+                  <requireMavenVersion>
+                    <version>[3.0,)</version>
+                  </requireMavenVersion>
+                  <requireJavaVersion>
+                    <version>[1.8,)</version>
+                  </requireJavaVersion>
+                  <requireUpperBoundDeps/>
+                  <banDuplicateClasses>
+                    <scopes>
+                      <scope>compile</scope>
+                      <!-- override from google-cloud-shared-config to only check for compile deps -->
+                    </scopes>
+                    <findAllDuplicates>true</findAllDuplicates>
+                    <ignoreWhenIdentical>true</ignoreWhenIdentical>
+                  </banDuplicateClasses>
+                </rules>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>3.0.0</version>
           <configuration>
