@@ -177,7 +177,7 @@ limitations under the License.
                   <banDuplicateClasses>
                     <scopes>
                       <scope>compile</scope>
-                      <!-- remove provided scope from google-cloud-shared -->
+                      <!-- override from google-cloud-shared-config to only check for compile deps -->
                     </scopes>
                     <findAllDuplicates>true</findAllDuplicates>
                     <ignoreWhenIdentical>true</ignoreWhenIdentical>

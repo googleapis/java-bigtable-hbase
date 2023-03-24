@@ -220,7 +220,7 @@ limitations under the License.
             </goals>
             <configuration>
               <createDependencyReducedPom>true</createDependencyReducedPom>
-              <finalName>bigtable-hbase-1.x-tools-${project.version}-jar-with-dependencies</finalName>
+              <finalName>bigtable-hbase-1.x-mapreduce-${project.version}-jar-with-dependencies</finalName>
               <shadedArtifactAttached>true</shadedArtifactAttached>
               <filters>
                 <filter>
