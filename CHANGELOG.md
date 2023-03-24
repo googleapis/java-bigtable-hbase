@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.29.1](https://github.com/googleapis/java-bigtable-hbase/compare/v1.29.0...v1.29.1) (2023-03-24)
+
+
+### Bug Fixes
+
+* Fix dropwizard probing ([e2ff8fd](https://github.com/googleapis/java-bigtable-hbase/commit/e2ff8fd87f1d3efa531dde1eefbcf18fa3421fd5))
+
 ## [1.29.0](https://github.com/googleapis/java-bigtable-hbase/compare/v1.28.0...v1.29.0) (2023-03-21)
 
 
