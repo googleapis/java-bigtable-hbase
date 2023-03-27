@@ -55,14 +55,7 @@ limitations under the License.
 
   <dependencyManagement>
     <dependencies>
-      <!-- Fix mismatched scopes: maven will pick the closest artifact version,
-      but apply the highest scope to it -->
-      <!-- TODO: remove this when metrics-core is an optional dep -->
-      <dependency>
-        <groupId>io.dropwizard.metrics</groupId>
-        <artifactId>metrics-core</artifactId>
-        <scope>provided</scope>
-      </dependency>
+      <!-- Mark annotation jars are provided -->
       <dependency>
         <groupId>com.google.code.findbugs</groupId>
         <artifactId>jsr305</artifactId>
@@ -72,7 +65,7 @@ limitations under the License.
   </dependencyManagement>
 
   <dependencies>
-    <!-- Primary Group -->
+    <!-- Provided deps first -->
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-server</artifactId>
@@ -93,6 +86,7 @@ limitations under the License.
       <scope>provided</scope>
     </dependency>
 
+    <!-- Implementation jars -->
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-1.x-shaded</artifactId>
@@ -106,10 +100,6 @@ limitations under the License.
         <exclusion>
           <groupId>${project.groupId}</groupId>
           <artifactId>bigtable-hbase-1.x</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.google.cloud.bigtable</groupId>
-          <artifactId>bigtable-metrics-api</artifactId>
         </exclusion>
         <exclusion>
           <groupId>io.opencensus</groupId>
