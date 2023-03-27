@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-client-core-parent</artifactId>
-    <version>1.29.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>1.29.2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <artifactId>bigtable-client-core</artifactId>
@@ -63,7 +63,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-client-core-config</artifactId>
-      <version>1.29.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>1.29.2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>
     <!-- Bigtable Java Veneer client -->
     <dependency>
@@ -213,7 +213,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-metrics-api</artifactId>
-      <version>1.29.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>1.29.2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>
 
     <dependency>
