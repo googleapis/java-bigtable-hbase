@@ -15,9 +15,10 @@
  */
 package com.google.cloud.bigtable.beam.sequencefiles.testing;
 
-import com.google.common.collect.Sets;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -97,11 +98,11 @@ public class BigtableTableUtils implements AutoCloseable {
    * Returns the content of the table as a {@link Set} of {@link Cell}s. This is only suitable for
    * small tables.
    */
-  public Set<? extends Cell> readAllCellsFromTable() throws IOException {
+  public List<? extends Cell> readAllCellsFromTable() throws IOException {
     Table table = connection.getTable(tableName);
-    Scan scan = new Scan().setMaxVersions().setCacheBlocks(false);
+    Scan scan = new Scan().readAllVersions().setCacheBlocks(false);
     ResultScanner resultScanner = table.getScanner(scan);
-    Set<Cell> cells = Sets.newHashSet();
+    List<Cell> cells = new ArrayList<>();
     for (Result result : resultScanner) {
       cells.addAll(result.listCells());
     }
