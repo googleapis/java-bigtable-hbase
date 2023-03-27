@@ -84,20 +84,6 @@ limitations under the License.
     </dependency>
 
     <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-metrics-api</artifactId>
-      <version>${bigtable-client-core.version}</version>
-      <exclusions>
-        <!-- use version from google-cloud-bigtable -->
-        <exclusion>
-          <groupId>com.google.api</groupId>
-          <artifactId>api-common</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-
-    <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-stub</artifactId>
     </dependency>

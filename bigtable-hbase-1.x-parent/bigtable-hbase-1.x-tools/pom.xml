@@ -19,17 +19,6 @@
     This project contains tools for migrating to Cloud Bigtable from HBase 1.x.
   </description>
 
-  <dependencyManagement>
-    <dependencies>
-      <!-- TODO: remove this when metrics-core is dropped as a compile time dep -->
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
-        <scope>provided</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
   <dependencies>
     <!-- Provided deps first -->
     <dependency>
@@ -71,10 +60,6 @@
         <exclusion>
           <groupId>${project.groupId}</groupId>
           <artifactId>bigtable-hbase-1.x</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.google.cloud.bigtable</groupId>
-          <artifactId>bigtable-metrics-api</artifactId>
         </exclusion>
         <exclusion>
           <groupId>io.opencensus</groupId>

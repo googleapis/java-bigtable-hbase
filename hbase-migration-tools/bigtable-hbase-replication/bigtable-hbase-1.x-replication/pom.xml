@@ -140,17 +140,6 @@ limitations under the License.
     </plugins>
   </build>
 
-  <dependencyManagement>
-    <dependencies>
-      <!-- TODO: remove this when bigtable metrics api makes metrics-core optional -->
-      <dependency>
-        <groupId>io.dropwizard.metrics</groupId>
-        <artifactId>metrics-core</artifactId>
-        <scope>provided</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
   <dependencies>
     <!-- Provided deps first -->
     <dependency>

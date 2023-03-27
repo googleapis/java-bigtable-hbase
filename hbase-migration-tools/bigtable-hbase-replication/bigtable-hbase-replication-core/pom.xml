@@ -42,12 +42,6 @@ limitations under the License.
         <artifactId>slf4j-api</artifactId>
         <scope>provided</scope>
       </dependency>
-      <!-- TODO: remove this when bigtable metrics api makes metrics-core optional -->
-      <dependency>
-        <groupId>io.dropwizard.metrics</groupId>
-        <artifactId>metrics-core</artifactId>
-        <scope>provided</scope>
-      </dependency>
     </dependencies>
   </dependencyManagement>
   <build>

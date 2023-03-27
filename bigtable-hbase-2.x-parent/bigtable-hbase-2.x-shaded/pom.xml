@@ -88,17 +88,6 @@ limitations under the License.
         </exclusion>
       </exclusions>
     </dependency>
-    <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-metrics-api</artifactId>
-      <version>${bigtable-client-core.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.api</groupId>
-          <artifactId>api-common</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
     <!-- Since opencensus-api is a transitive dep, we have to shade its impl as well.
     Otherwise the -api will be permanently severed from the impl and exporters -->
     <dependency>
@@ -162,14 +151,6 @@ limitations under the License.
       <groupId>io.grpc</groupId>
       <artifactId>grpc-census</artifactId>
     </dependency>
-
-    <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-    <dependency>
-      <groupId>io.dropwizard.metrics</groupId>
-      <artifactId>metrics-core</artifactId>
-      <version>${hbase2-metrics.version}</version>
-    </dependency>
-
     <!-- See notes in bigtable-client-core/bigtable-hbase/pom.xml#verify-conscrypt-version -->
     <dependency>
       <groupId>org.conscrypt</groupId>
@@ -263,8 +244,6 @@ limitations under the License.
               </filters>
               <artifactSet>
                 <excludes>
-                  <!-- exclude user visible deps -->
-                  <exclude>io.dropwizard.metrics:metrics-core</exclude>
                   <!-- See notes in bigtable-client-core/bigtable-hbase/pom.xml#verify-conscrypt-version -->
                   <exclude>org.conscrypt:conscrypt-openjdk-uber</exclude>
                   <exclude>org.bouncycastle:*</exclude>
