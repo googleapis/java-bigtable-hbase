@@ -83,68 +83,6 @@ limitations under the License.
       <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>
 
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-stub</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-core</artifactId>
-      <scope>compile</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.api</groupId>
-      <artifactId>api-common</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.api.grpc</groupId>
-      <artifactId>proto-google-cloud-bigtable-admin-v2</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.api.grpc</groupId>
-      <artifactId>proto-google-cloud-bigtable-v2</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.cloud</groupId>
-      <artifactId>google-cloud-bigtable</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.cloud</groupId>
-      <artifactId>google-cloud-core</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.protobuf</groupId>
-      <artifactId>protobuf-java</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.opencensus</groupId>
-      <artifactId>opencensus-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.dropwizard.metrics</groupId>
-      <artifactId>metrics-core</artifactId>
-      <version>${hbase2-metrics.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.threeten</groupId>
-      <artifactId>threetenbp</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>net.bytebuddy</groupId>
-      <artifactId>byte-buddy</artifactId>
-      <version>${byte.buddy.version}</version>
-    </dependency>
-
     <!-- Test dependencies-->
     <dependency>
       <groupId>com.google.api.grpc</groupId>
@@ -193,18 +131,6 @@ limitations under the License.
         </executions>
       </plugin>
 
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.5.0</version>
-        <configuration>
-          <ignoredNonTestScopedDependencies>
-            <!-- Temporarily disable dependency plugin until we figure out why it thinks compile deps like google-cloud-bigtable are unused
-                  See bigtable-hbase-1.x pom.xml for more details-->
-            <ignoredNonTestScopedDependency>*</ignoredNonTestScopedDependency>
-          </ignoredNonTestScopedDependencies>
-        </configuration>
-      </plugin>
       <plugin>
         <!-- skip for bigtable-hbase to allow for upcoming refactoring-->
         <groupId>org.codehaus.mojo</groupId>
