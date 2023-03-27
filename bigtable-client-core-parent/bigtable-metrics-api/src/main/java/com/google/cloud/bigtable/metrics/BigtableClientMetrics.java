@@ -63,7 +63,7 @@ public final class BigtableClientMetrics {
   static {
     Logger logger = LoggerFactory.getLogger(BigtableClientMetrics.class);
     if (logger.isDebugEnabled()) {
-      if (isDropwizardMetricsAvailable()) {
+      if (!isDropwizardMetricsAvailable()) {
         logger.info(
             "Could not set up logging since metrics-core is not on the classpath. "
                 + "To use dropwizard metrics plese include io.dropwizard.metrics:metrics-core as peer"
