@@ -113,6 +113,23 @@ limitations under the License.
     </dependencies>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <!-- hbase-server dependencies are internally inconsistent, but somehow work in hbase. So as long as
+                    we don't touch them (by leaving the entire subtree provided), then we can skip this check -->
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <executions>
+                        <execution>
+                        <id>enforce-version-consistency</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
             <plugin>
                 <groupId>com.google.cloud.bigtable.test</groupId>
