@@ -41,7 +41,7 @@ limitations under the License.
   </properties>
 
   <dependencies>
-    <!-- external deps -->
+    <!-- Provided deps first -->
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
@@ -58,44 +58,35 @@ limitations under the License.
       <groupId>ch.qos.reload4j</groupId>
       <artifactId>reload4j</artifactId>
       <version>${reload4j.version}</version>
-      <scope>runtime</scope>
+      <scope>provided</scope>
     </dependency>
+
+    <!-- deps to be shaded -->
+    <!-- TODO: replace api-common with hbase annotations -->
     <dependency>
       <groupId>com.google.api</groupId>
       <artifactId>api-common</artifactId>
       <version>1.10.6</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>${guava.version}</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.checkerframework</groupId>
-      <artifactId>checker-compat-qual</artifactId>
-      <version>2.5.5</version>
-    </dependency>
-
-    <!-- deps to be shaded -->
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>2.14.2</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>protobuf-java-format-shaded</artifactId>
       <version>0.2.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
-      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>${guava.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.14.2</version>
     </dependency>
     <dependency>
       <groupId>io.opencensus</groupId>
       <artifactId>opencensus-api</artifactId>
       <version>${opencensus.version}</version>
-      <scope>compile</scope>
     </dependency>
 
     <!-- Test deps -->

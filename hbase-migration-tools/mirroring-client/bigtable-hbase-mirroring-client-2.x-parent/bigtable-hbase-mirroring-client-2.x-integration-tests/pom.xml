@@ -254,7 +254,11 @@ limitations under the License.
       <version>${commons-lang.version}</version>
       <scope>test</scope>
     </dependency>
-
+    <dependency>
+      <groupId>io.prometheus</groupId>
+      <artifactId>simpleclient_httpserver</artifactId>
+      <version>0.16.0</version>
+    </dependency>
     <dependency>
       <groupId>io.opencensus</groupId>
       <artifactId>opencensus-impl</artifactId>
@@ -270,11 +274,7 @@ limitations under the License.
       <artifactId>opencensus-exporter-stats-prometheus</artifactId>
       <version>${opencensus.version}</version>
     </dependency>
-    <dependency>
-      <groupId>io.prometheus</groupId>
-      <artifactId>simpleclient_httpserver</artifactId>
-      <version>0.16.0</version>
-    </dependency>
+
 
     <!-- Testing deps -->
     <dependency>
@@ -301,18 +301,6 @@ limitations under the License.
       <groupId>com.google.truth</groupId>
       <artifactId>truth</artifactId>
       <version>1.1.3</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-api</artifactId>
-      <version>2.20.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-core</artifactId>
-      <version>2.20.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>

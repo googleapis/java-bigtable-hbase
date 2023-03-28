@@ -59,19 +59,20 @@ limitations under the License.
         </exclusion>
       </exclusions>
     </dependency>
+
+    <!-- shaded deps -->
+    <!-- TODO: replace annotations with hbase -->
     <dependency>
       <groupId>com.google.api</groupId>
       <artifactId>api-common</artifactId>
       <version>1.10.6</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>${guava.version}</version>
-      <scope>compile</scope>
     </dependency>
-    <!-- shaded deps -->
+
     <dependency>
       <groupId>net.javacrumbs.future-converter</groupId>
       <artifactId>future-converter-java8-guava</artifactId>
@@ -117,6 +118,19 @@ limitations under the License.
   </dependencies>
 
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <!-- skip due to shaded jars added in during package phase (see below) -->
+          <artifactId>clirr-maven-plugin</artifactId>
+          <configuration>
+            <skip>true</skip>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
     <plugins>
       <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>
@@ -129,65 +143,6 @@ limitations under the License.
             <goals>
               <goal>verify-provided-deps</goal>
             </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>enforce</id>
-            <configuration>
-              <rules>
-                <requireUpperBoundDeps>
-                  <excludes>
-                    <exclude>com.google.guava:guava</exclude>
-                    <!--
-                    guava:30.1-android requires error_prone_annotations:2.3.4
-                    truth:1.1.2 requires error_prone_annotations:2.5.1
-                     -->
-                    <exclude>com.google.errorprone:error_prone_annotations</exclude>
-                  </excludes>
-                </requireUpperBoundDeps>
-              </rules>
-            </configuration>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <!-- skip due to shaded jars added in during package phase (see below) -->
-        <artifactId>clirr-maven-plugin</artifactId>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
-      </plugin>
-
-      <!-- copy protobuf-java-format-shaded and core into jar -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <shadedArtifactAttached>false</shadedArtifactAttached>
-              <createDependencyReducedPom>true</createDependencyReducedPom>
-              <artifactSet>
-                <includes>
-                  <include>com.google.cloud.bigtable:protobuf-java-format-shaded</include>
-                  <include>${project.groupId}:bigtable-hbase-mirroring-client-core</include>
-                </includes>
-              </artifactSet>
-            </configuration>
           </execution>
         </executions>
       </plugin>

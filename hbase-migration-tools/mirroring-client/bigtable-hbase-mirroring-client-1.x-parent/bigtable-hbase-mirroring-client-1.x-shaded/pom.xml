@@ -35,15 +35,7 @@ limitations under the License.
   </description>
 
   <dependencies>
-    <!-- Internal dependencies that will be shaded along with their transitive dependencies. -->
-    <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-hbase-mirroring-client-1.x</artifactId>
-      <version>0.2.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
-      <scope>compile</scope>
-    </dependency>
-
-    <!-- Manually promote public dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
+    <!-- Provided deps first -->
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
@@ -60,10 +52,32 @@ limitations under the License.
       <groupId>ch.qos.reload4j</groupId>
       <artifactId>reload4j</artifactId>
       <version>${reload4j.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Implementation deps -->
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-hbase-mirroring-client-1.x</artifactId>
+      <version>0.2.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
     </dependency>
   </dependencies>
 
   <build>
+    <pluginManagement>
+      <plugins>
+        <!-- skip for shaded jar-->
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>clirr-maven-plugin</artifactId>
+          <configuration>
+            <skip>true</skip>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
+
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -156,37 +170,20 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>enforce</id>
-            <configuration>
-              <rules>
-                <requireUpperBoundDeps>
-                  <excludes>
-                    <!--
-                    ${guava.version} == 30.1-android
-                    api-common:1.10.4 requires 30.1.1-android
-                     -->
-                    <exclude>com.google.guava:guava</exclude>
-                  </excludes>
-                </requireUpperBoundDeps>
-              </rules>
-            </configuration>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
+
       <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>
         <artifactId>bigtable-build-helper</artifactId>
         <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
 
         <executions>
+          <execution>
+            <id>verify-provided</id>
+            <goals>
+              <goal>verify-provided-deps</goal>
+            </goals>
+          </execution>
+
           <execution>
             <id>verify-shaded-jar-entries</id>
             <phase>verify</phase>
@@ -200,54 +197,7 @@ limitations under the License.
               </allowedJarClassEntries>
             </configuration>
           </execution>
-          <execution>
-            <id>verify-shaded-exclusions</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>verify-shaded-exclusions</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>verify-mirror-deps</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>verify-mirror-deps</goal>
-            </goals>
-            <configuration>
-              <targetDependencies>
-                <targetDependency>org.apache.hbase:hbase-shaded-client</targetDependency>
-              </targetDependencies>
-              <ignoredDependencies>
-                <ignoredDependency>log4j:log4j</ignoredDependency>
-              </ignoredDependencies>
-            </configuration>
-          </execution>
-          <execution>
-            <id>verify-provided</id>
-            <goals>
-              <goal>verify-provided-deps</goal>
-            </goals>
-          </execution>
         </executions>
-      </plugin>
-
-      <!-- skip for shaded jar-->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <ignoredDependencies>
-            <dependency>*</dependency>
-          </ignoredDependencies>
-        </configuration>
-      </plugin>
-      <!-- skip for shaded jar-->
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>clirr-maven-plugin</artifactId>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
       </plugin>
     </plugins>
   </build>
