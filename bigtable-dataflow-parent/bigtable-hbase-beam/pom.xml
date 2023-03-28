@@ -29,6 +29,13 @@ limitations under the License.
 
   <dependencyManagement>
     <dependencies>
+      <!-- Mitigate transitive CVEs -->
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-compress</artifactId>
+        <version>1.21</version>
+      </dependency>
+
       <!-- fix conflict beam internal between beam-sdks-java-core & beam-model-pipeline -->
       <dependency>
         <groupId>com.google.errorprone</groupId>
@@ -274,6 +281,7 @@ limitations under the License.
         </plugin>
       </plugins>
     </pluginManagement>
+
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -315,35 +323,12 @@ limitations under the License.
               <ignoredDependencies>
                 <!-- beam's dependency tree has an older version closer higher in the tree -->
                 <dependency>com.google.errorprone:error_prone_annotations</dependency>
+                <!-- beam depends on commons-compress via avro which has a CVE, we force upgrade it -->
+                <dependency>org.apache.commons:commons-compress</dependency>
               </ignoredDependencies>
             </configuration>
           </execution>
         </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <executions>
-          <!-- Silence checks for old version commons-compress. The the actual
-          issue is irrelevant, but fixing it will create real dependency issues
-          for end users -->
-          <execution>
-            <id>enforce-banned-deps</id>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <ignoredNonTestScopedDependencies>
-            <!-- required per verify-mirror-deps-->
-            <ignoredNonTestScopedDependency>com.google.code.findbugs:jsr305:*</ignoredNonTestScopedDependency>
-          </ignoredNonTestScopedDependencies>
-        </configuration>
       </plugin>
     </plugins>
   </build>
