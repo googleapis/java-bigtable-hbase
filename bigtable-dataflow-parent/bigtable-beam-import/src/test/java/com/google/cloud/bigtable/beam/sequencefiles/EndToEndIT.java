@@ -24,13 +24,14 @@ import com.google.cloud.bigtable.beam.test_env.TestProperties;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
+import com.google.common.truth.Correspondence;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import com.google.common.truth.Correspondence;import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
+import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.PipelineResult.State;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
 import org.apache.beam.sdk.extensions.gcp.util.GcsUtil;
@@ -38,12 +39,13 @@ import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.CellUtil;import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.checkerframework.checker.nullness.qual.Nullable;import org.junit.After;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,14 +54,15 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class EndToEndIT {
   /**
-   * Correspondence helper to ensure that the cell values match as well. Byt default
-   * KeyValue#equals only considers keys.
+   * Correspondence helper to ensure that the cell values match as well. Byt default KeyValue#equals
+   * only considers keys.
    */
   public static final Correspondence<Cell, Cell> CELL_EQUALITY =
       Correspondence.from(
           (Cell actual, Cell expected) ->
               CellUtil.equals(actual, expected) && CellUtil.matchingValue(actual, expected),
           "Cell equality");
+
   private static final String CF = "column_family";
 
   private TestProperties properties;
