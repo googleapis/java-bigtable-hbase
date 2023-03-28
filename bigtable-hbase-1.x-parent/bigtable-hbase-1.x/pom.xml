@@ -93,12 +93,6 @@ limitations under the License.
       <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>
 
-    <dependency>
-      <groupId>net.bytebuddy</groupId>
-      <artifactId>byte-buddy</artifactId>
-      <version>${byte.buddy.version}</version>
-    </dependency>
-
     <!-- Test dependencies-->
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
