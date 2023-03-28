@@ -73,8 +73,20 @@
       "groupName": "jackson dependencies"
     },
     {
-      // pin to beam deps
-      "packagePatterns": ["^beam-slf4j.version"],
+      // These are transitive deps that had to be specified to align versions between hbase & beam
+      // They should only be upgraded to satisfy their parent deps
+      "packagePatterns": [
+        "^org.checkerframework:checker-qual",
+        "^com.google.errorprone:error_prone_annotations",
+        "^org.codehaus.mojo:animal-sniffer-annotations",
+        "^io.netty:",
+        "^flogger.version",
+        "^org.slf4j:",
+        "^commons-logging:commons-logging",
+        "^org.threeten:threetenbp",
+        "^org.apache.httpcomponents:",
+        "^io.perfmark:perfmark-api"
+      ],
       "enabled": false
     },
     {

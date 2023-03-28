@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.beam.sequencefiles;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.cloud.bigtable.beam.sequencefiles.ExportJob.ExportOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.testing.BigtableTableUtils;
 import com.google.cloud.bigtable.beam.test_env.EnvSetup;
@@ -22,6 +24,7 @@ import com.google.cloud.bigtable.beam.test_env.TestProperties;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
+import com.google.common.truth.Correspondence;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,13 +39,13 @@ import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,7 +53,16 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class EndToEndIT {
-  // Column family name used in all test bigtables.
+  /**
+   * Correspondence helper to ensure that the cell values match as well. Byt default KeyValue#equals
+   * only considers keys.
+   */
+  public static final Correspondence<Cell, Cell> CELL_EQUALITY =
+      Correspondence.from(
+          (Cell actual, Cell expected) ->
+              CellUtil.equals(actual, expected) && CellUtil.matchingValue(actual, expected),
+          "Cell equality");
+
   private static final String CF = "column_family";
 
   private TestProperties properties;
@@ -139,7 +151,7 @@ public class EndToEndIT {
       exportOpts.setDestinationPath(StaticValueProvider.of(outputDir));
 
       State state = ExportJob.buildPipeline(exportOpts).run().waitUntilFinish();
-      Assert.assertEquals(State.DONE, state);
+      assertThat(state).isEqualTo(State.DONE);
     }
 
     // Import it back into a new table
@@ -174,10 +186,12 @@ public class EndToEndIT {
       importOpts.setBigtableAppProfileId(null);
       importOpts.setSourcePattern(StaticValueProvider.of(outputDir + "part-*"));
       State state = ImportJob.buildPipeline(importOpts).run().waitUntilFinish();
-      Assert.assertEquals(State.DONE, state);
+      assertThat(state).isEqualTo(State.DONE);
 
       // Now make sure that it correctly imported
-      Assert.assertEquals(flattenedTestData, destTable.readAllCellsFromTable());
+      assertThat(destTable.readAllCellsFromTable())
+          .comparingElementsUsing(CELL_EQUALITY)
+          .containsExactlyElementsIn(flattenedTestData);
     }
   }
 }
