@@ -56,7 +56,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.function.ThrowingRunnable;
@@ -280,7 +280,7 @@ public class TestMirroringResultScanner {
     return new FutureCallback<AsyncScannerVerificationPayload>() {
       @Override
       public void onSuccess(
-          @NullableDecl AsyncScannerVerificationPayload asyncScannerVerificationPayload) {
+          @Nullable AsyncScannerVerificationPayload asyncScannerVerificationPayload) {
         list.add(asyncScannerVerificationPayload.context);
       }
 

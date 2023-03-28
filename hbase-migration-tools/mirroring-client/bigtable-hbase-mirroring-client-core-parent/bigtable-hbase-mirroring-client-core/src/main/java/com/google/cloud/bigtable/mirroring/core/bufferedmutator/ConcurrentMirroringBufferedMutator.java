@@ -45,7 +45,7 @@ import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * {@link MirroringBufferedMutator} implementation that performs writes to primary and secondary
@@ -204,7 +204,7 @@ public class ConcurrentMirroringBufferedMutator
         this.mirroringTracer.spanFactory.wrapWithCurrentSpan(
             new FutureCallback<Void>() {
               @Override
-              public void onSuccess(@NullableDecl Void aVoid) {
+              public void onSuccess(@Nullable Void aVoid) {
                 flushFinished.run();
               }
 
@@ -225,7 +225,7 @@ public class ConcurrentMirroringBufferedMutator
         this.mirroringTracer.spanFactory.wrapWithCurrentSpan(
             new FutureCallback<Void>() {
               @Override
-              public void onSuccess(@NullableDecl Void aVoid) {
+              public void onSuccess(@Nullable Void aVoid) {
                 flushFinished.run();
               }
 

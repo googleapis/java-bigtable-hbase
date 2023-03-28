@@ -44,13 +44,12 @@ import java.io.InterruptedIOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.coprocessor.Batch.Callback;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Helper class that handles logic related to mirroring {@link Table#batch(List, Object[])}
@@ -310,7 +309,7 @@ public class Batcher {
     FutureCallback<Void> verificationCallback =
         new FutureCallback<Void>() {
           @Override
-          public void onSuccess(@NullableDecl Void aVoid) {
+          public void onSuccess(@org.checkerframework.checker.nullness.qual.Nullable Void aVoid) {
             verificationFuture.onSuccess(aVoid);
           }
 
@@ -426,7 +425,7 @@ public class Batcher {
     FutureCallback<Void> verification =
         new FutureCallback<Void>() {
           @Override
-          public void onSuccess(@NullableDecl Void result) {}
+          public void onSuccess(@Nullable Void result) {}
 
           @Override
           public void onFailure(Throwable throwable) {
@@ -438,9 +437,9 @@ public class Batcher {
     // handler.
     Function<Throwable, Void> flowControlReservationErrorConsumer =
         new Function<Throwable, Void>() {
-          @NullableDecl
+          @Nullable
           @Override
-          public Void apply(@NullableDecl Throwable throwable) {
+          public Void apply(@Nullable Throwable throwable) {
             flowControllerException[0] = throwable;
             return null;
           }
