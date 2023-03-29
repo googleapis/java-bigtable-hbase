@@ -28,8 +28,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import io.opencensus.common.Scope;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import java.util.concurrent.ExecutionException;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * Static helper methods used for scheduling secondary database requests and results verification.
@@ -101,7 +101,7 @@ public class RequestScheduling {
     return mirroringTracer.spanFactory.wrapWithCurrentSpan(
         new FutureCallback<T>() {
           @Override
-          public void onSuccess(@NullableDecl T t) {
+          public void onSuccess(@Nullable T t) {
             try {
               Log.trace("starting verification %s", t);
               callback.onSuccess(t);

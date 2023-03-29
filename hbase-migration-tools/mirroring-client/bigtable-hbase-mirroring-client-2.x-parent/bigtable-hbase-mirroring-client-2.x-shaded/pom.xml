@@ -34,7 +34,7 @@ limitations under the License.
   </description>
 
   <dependencies>
-    <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
+    <!-- Provided deps first -->
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>

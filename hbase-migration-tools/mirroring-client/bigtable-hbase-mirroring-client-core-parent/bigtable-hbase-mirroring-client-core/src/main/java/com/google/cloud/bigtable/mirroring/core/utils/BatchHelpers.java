@@ -42,7 +42,7 @@ import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class BatchHelpers {
   public static FutureCallback<Void> createBatchVerificationCallback(
@@ -55,7 +55,7 @@ public class BatchHelpers {
       final MirroringTracer mirroringTracer) {
     return new FutureCallback<Void>() {
       @Override
-      public void onSuccess(@NullableDecl Void t) {
+      public void onSuccess(@Nullable Void t) {
         // Batch is successful - all results are correct.
         List<? extends Row> secondaryOperations =
             failedAndSuccessfulPrimaryOperations.successfulOperations;

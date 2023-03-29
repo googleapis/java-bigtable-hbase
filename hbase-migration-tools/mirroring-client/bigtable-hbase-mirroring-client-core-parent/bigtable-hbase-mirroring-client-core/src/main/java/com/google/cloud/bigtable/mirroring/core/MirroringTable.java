@@ -80,7 +80,7 @@ import org.apache.hadoop.hbase.shaded.com.google.protobuf.Descriptors.MethodDesc
 import org.apache.hadoop.hbase.shaded.com.google.protobuf.Message;
 import org.apache.hadoop.hbase.shaded.com.google.protobuf.Service;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Table which mirrors every two mutations to two underlying tables.
@@ -96,7 +96,7 @@ public class MirroringTable implements Table {
   private static final Predicate<Object> resultIsFaultyPredicate =
       new Predicate<Object>() {
         @Override
-        public boolean apply(@NullableDecl Object o) {
+        public boolean apply(@Nullable Object o) {
           return o == null || o instanceof Throwable;
         }
       };
