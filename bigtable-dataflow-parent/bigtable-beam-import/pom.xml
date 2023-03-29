@@ -422,7 +422,6 @@ limitations under the License.
       </testResource>
     </testResources>
 
-
     <plugins>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
