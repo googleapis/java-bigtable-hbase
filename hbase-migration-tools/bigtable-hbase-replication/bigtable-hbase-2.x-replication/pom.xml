@@ -116,7 +116,7 @@ limitations under the License.
         <pluginManagement>
             <plugins>
                 <plugin>
-                    <!-- hbase-server dependencies are internally inconsistent, but somehow work in hbase. So as long as
+                    <!-- hbase-server dependencies are internally inconsistent, but works in hbase. So as long as
                     we don't touch them (by leaving the entire subtree provided), then we can skip this check -->
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
