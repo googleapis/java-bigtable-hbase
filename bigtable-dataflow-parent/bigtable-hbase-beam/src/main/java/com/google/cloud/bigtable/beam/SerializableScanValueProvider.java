@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.beam;
 
-import java.io.Serializable;
 import java.nio.charset.CharacterCodingException;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.hadoop.hbase.client.Scan;
@@ -25,14 +24,14 @@ import org.apache.hadoop.hbase.filter.ParseFilter;
  * A wrapper class to wrap the start key, stop key, maxVersion and filter of a HBase scan object
  * that can be serialized.
  */
-class SerializableScan extends Scan implements Serializable {
+class SerializableScanValueProvider implements ValueProvider<Scan> {
 
   private final ValueProvider<String> start;
   private final ValueProvider<String> stop;
   private final ValueProvider<Integer> maxVersion;
   private final ValueProvider<String> filter;
 
-  SerializableScan(
+  SerializableScanValueProvider(
       ValueProvider<String> start,
       ValueProvider<String> stop,
       ValueProvider<Integer> maxVersion,
@@ -44,7 +43,8 @@ class SerializableScan extends Scan implements Serializable {
     this.filter = filter;
   }
 
-  Scan toScan() {
+  @Override
+  public Scan get() {
     Scan scan = new Scan();
     // default scan version is 1. reset it to max
     scan.setMaxVersions(Integer.MAX_VALUE);
@@ -65,5 +65,13 @@ class SerializableScan extends Scan implements Serializable {
       }
     }
     return scan;
+  }
+
+  @Override
+  public boolean isAccessible() {
+    return start.isAccessible()
+        && stop.isAccessible()
+        && maxVersion.isAccessible()
+        && filter.isAccessible();
   }
 }

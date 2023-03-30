@@ -142,14 +142,13 @@ public class CloudBigtableIOTest {
       SourceWithKeys current = iter.next();
       Assert.assertTrue(
           Bytes.equals(
-              current.getConfiguration().getZeroCopyStartRow(),
-              last.getConfiguration().getZeroCopyStopRow()));
+              current.getConfiguration().getStartRow(), last.getConfiguration().getStopRow()));
       // The last source will have a stop key of empty.
       if (iter.hasNext()) {
         Assert.assertTrue(
             Bytes.compareTo(
-                    current.getConfiguration().getZeroCopyStartRow(),
-                    current.getConfiguration().getZeroCopyStopRow())
+                    current.getConfiguration().getStartRow(),
+                    current.getConfiguration().getStopRow())
                 < 0);
       }
       Assert.assertTrue(current.getEstimatedSize() >= tabletSize);

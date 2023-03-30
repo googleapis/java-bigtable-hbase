@@ -17,10 +17,9 @@ package com.google.cloud.bigtable.hbase;
 
 import com.google.api.core.InternalApi;
 import com.google.bigtable.v2.ReadRowsRequest;
-import com.google.cloud.bigtable.data.v2.models.Query;
 import org.apache.hadoop.hbase.client.Scan;
 
-/** A wrapper class that wraps a Bigtable {@link Query}. */
+/** A wrapper class that wraps a Bigtable {@link ReadRowsRequest}. */
 @InternalApi
 public class BigtableFixedProtoScan extends Scan {
 

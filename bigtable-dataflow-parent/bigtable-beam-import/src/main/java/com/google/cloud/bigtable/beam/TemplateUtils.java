@@ -88,7 +88,7 @@ public class TemplateUtils {
             .withConfiguration(
                 BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "SequenceFileExportJob")
             .withScan(
-                new SerializableScan(
+                new SerializableScanValueProvider(
                     options.getBigtableStartRow(),
                     options.getBigtableStopRow(),
                     options.getBigtableMaxVersions(),
