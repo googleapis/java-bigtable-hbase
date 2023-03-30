@@ -92,7 +92,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
    * @param configuration A map of all the configurations
    * @return
    */
-  public static CloudBigtableScanConfiguration fromConfig(
+  public static CloudBigtableScanConfiguration createConfig(
       ValueProvider<String> projectId,
       ValueProvider<String> instanceId,
       ValueProvider<String> tableId,
@@ -390,7 +390,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       return ((BigtableFixedProtoScan) scanValueProvider.get()).getRequest();
     } else {
       Scan hbaseScan = null;
-      if (scanValueProvider instanceof SerializableScanValueProvider) {
+      if (scanValueProvider instanceof ScanValueProvider) {
         hbaseScan = scanValueProvider.get();
       }
       ReadHooks readHooks = new DefaultReadHooks();
@@ -410,20 +410,12 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
   /** @return The start row for this configuration. */
   public byte[] getStartRow() {
-    return getStartRowByteString().toByteArray();
+    return getRowRange().getStartKeyClosed().toByteArray();
   }
 
   /** @return The stop row for this configuration. */
   public byte[] getStopRow() {
-    return getStopRowByteString().toByteArray();
-  }
-
-  ByteString getStartRowByteString() {
-    return getRowRange().getStartKeyClosed();
-  }
-
-  ByteString getStopRowByteString() {
-    return getRowRange().getEndKeyOpen();
+    return getRowRange().getEndKeyOpen().toByteArray();
   }
 
   RowRange getRowRange() {

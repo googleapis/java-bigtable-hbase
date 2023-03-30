@@ -24,14 +24,14 @@ import org.apache.hadoop.hbase.filter.ParseFilter;
  * A wrapper class to wrap the start key, stop key, maxVersion and filter of a HBase scan object
  * that can be serialized.
  */
-class SerializableScanValueProvider implements ValueProvider<Scan> {
+class ScanValueProvider implements ValueProvider<Scan> {
 
   private final ValueProvider<String> start;
   private final ValueProvider<String> stop;
   private final ValueProvider<Integer> maxVersion;
   private final ValueProvider<String> filter;
 
-  SerializableScanValueProvider(
+  ScanValueProvider(
       ValueProvider<String> start,
       ValueProvider<String> stop,
       ValueProvider<Integer> maxVersion,

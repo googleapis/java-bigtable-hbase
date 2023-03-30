@@ -131,8 +131,8 @@ public class CloudBigtableIOTest {
           @Override
           public int compare(SourceWithKeys o1, SourceWithKeys o2) {
             return ByteStringComparator.INSTANCE.compare(
-                o1.getConfiguration().getStartRowByteString(),
-                o2.getConfiguration().getStartRowByteString());
+                ByteString.copyFrom(o1.getConfiguration().getStartRow()),
+                ByteString.copyFrom(o2.getConfiguration().getStartRow()));
           }
         });
     Assert.assertTrue(splits.size() <= AbstractSource.COUNT_MAX_SPLIT_COUNT);

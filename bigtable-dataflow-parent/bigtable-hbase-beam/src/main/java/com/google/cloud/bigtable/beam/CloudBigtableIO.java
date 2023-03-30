@@ -474,7 +474,7 @@ public class CloudBigtableIO {
 
       Object readResolve() {
         CloudBigtableScanConfiguration conf =
-            CloudBigtableScanConfiguration.fromConfig(
+            CloudBigtableScanConfiguration.createConfig(
                 projectId, instanceId, tableId, scan, additionalConfiguration);
         return CloudBigtableIO.read(conf);
       }
