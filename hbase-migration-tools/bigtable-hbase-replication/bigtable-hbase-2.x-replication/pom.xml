@@ -115,6 +115,15 @@ limitations under the License.
     <build>
         <pluginManagement>
             <plugins>
+                <!-- TODO: temporary workaround until we resolve clirr errors-->
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>clirr-maven-plugin</artifactId>
+                    <configuration>
+                        <skip>true</skip>
+                    </configuration>
+                </plugin>
+
                 <plugin>
                     <!-- hbase-server dependencies are internally inconsistent, but works in hbase. So as long as
                     we don't touch them (by leaving the entire subtree provided), then we can skip this check -->
@@ -122,10 +131,10 @@ limitations under the License.
                     <artifactId>maven-enforcer-plugin</artifactId>
                     <executions>
                         <execution>
-                        <id>enforce-version-consistency</id>
-                        <phase>none</phase>
-                    </execution>
-                </executions>
+                            <id>enforce-version-consistency</id>
+                            <phase>none</phase>
+                        </execution>
+                    </executions>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -169,15 +178,6 @@ limitations under the License.
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-
-            <!-- TODO: temporary workaround until we resolve clirr errors-->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>clirr-maven-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
             </plugin>
         </plugins>
     </build>
