@@ -40,6 +40,7 @@ import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -84,6 +85,11 @@ public class TestBigtableConnection {
     configuration.set(
         BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + server.getPort());
     connection = new BigtableConnection(configuration);
+  }
+
+  @After
+  public void tearDown() throws IOException {
+    connection.close();
   }
 
   @Test
