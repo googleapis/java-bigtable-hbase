@@ -15,13 +15,22 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.ScanType;
+
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
+import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
+import com.google.bigtable.repackaged.com.google.common.collect.ImmutableMap;
 import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
+import com.google.cloud.bigtable.hbase.BigtableFixedProtoScan;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,6 +50,7 @@ import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Gauge;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptions;
+import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
@@ -65,6 +75,8 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
+import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -154,8 +166,8 @@ public class CloudBigtableIO {
               calculateEstimatedSizeBytes(null) / SIZED_BASED_MAX_SPLIT_COUNT,
               desiredBundleSizeBytes);
       CloudBigtableScanConfiguration conf = getConfiguration();
-      byte[] scanStartKey = conf.getZeroCopyStartRow();
-      byte[] scanEndKey = conf.getZeroCopyStopRow();
+      byte[] scanStartKey = conf.getStartRow();
+      byte[] scanEndKey = conf.getStopRow();
       List<SourceWithKeys> splits = new ArrayList<>();
       byte[] startKey = HConstants.EMPTY_START_ROW;
       long lastOffset = 0;
@@ -224,8 +236,8 @@ public class CloudBigtableIO {
         if (counter == numberToCombine) {
           reducedSplits.add(
               createSourceWithKeys(
-                  start.getConfiguration().getZeroCopyStartRow(),
-                  source.getConfiguration().getZeroCopyStopRow(),
+                  start.getConfiguration().getStartRow(),
+                  source.getConfiguration().getStopRow(),
                   size));
           counter = 0;
           size = 0;
@@ -235,8 +247,8 @@ public class CloudBigtableIO {
       if (start != null) {
         reducedSplits.add(
             createSourceWithKeys(
-                start.getConfiguration().getZeroCopyStartRow(),
-                lastSeen.getConfiguration().getZeroCopyStopRow(),
+                start.getConfiguration().getStartRow(),
+                lastSeen.getConfiguration().getStopRow(),
                 size));
       }
       return reducedSplits;
@@ -303,8 +315,8 @@ public class CloudBigtableIO {
     protected long calculateEstimatedSizeBytes(PipelineOptions options) throws IOException {
       long totalEstimatedSizeBytes = 0;
 
-      byte[] scanStartKey = getConfiguration().getZeroCopyStartRow();
-      byte[] scanStopKey = getConfiguration().getZeroCopyStopRow();
+      byte[] scanStartKey = getConfiguration().getStartRow();
+      byte[] scanStopKey = getConfiguration().getStopRow();
 
       byte[] startKey = HConstants.EMPTY_START_ROW;
       long lastOffset = 0;
@@ -396,6 +408,77 @@ public class CloudBigtableIO {
       super.populateDisplayData(builder);
       configuration.populateDisplayData(builder);
     }
+
+    /**
+     * The writeReplace method allows the developer to provide a replacement object that will be
+     * serialized instead of the original one. We use this to keep the enclosed class immutable. For
+     * more details on the technique see <a
+     * href="https://lingpipe-blog.com/2009/08/10/serializing-immutable-singletons-serialization-proxy/">this
+     * article</a>.
+     */
+    private Object writeReplace() {
+      return new SerializationProxy(getConfiguration());
+    }
+
+    static class SerializationProxy implements Serializable {
+      private ValueProvider<String> projectId;
+      private ValueProvider<String> instanceId;
+      private ValueProvider<String> tableId;
+      private Map<String, ValueProvider<String>> additionalConfiguration;
+      private transient ValueProvider<Scan> scan;
+
+      public SerializationProxy(CloudBigtableScanConfiguration configuration) {
+        this.projectId = configuration.getProjectIdValueProvider();
+        this.instanceId = configuration.getInstanceIdValueProvider();
+        this.tableId = configuration.getTableIdValueProvider();
+        this.scan = configuration.getScanValueProvider();
+        Map<String, ValueProvider<String>> map = new HashMap<>();
+        map.putAll(configuration.getConfiguration());
+        map.remove(BigtableOptionsFactory.PROJECT_ID_KEY);
+        map.remove(BigtableOptionsFactory.INSTANCE_ID_KEY);
+        this.additionalConfiguration =
+            new ImmutableMap.Builder<String, ValueProvider<String>>().putAll(map).build();
+      }
+
+      private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+        if (scan.isAccessible()) {
+          Scan scanValue = scan.get();
+          if (scanValue instanceof BigtableFixedProtoScan) {
+            out.writeObject(ScanType.FIXED);
+            out.writeObject(((BigtableFixedProtoScan) scanValue).getRequest());
+          } else {
+            out.writeObject(ScanType.HBASE);
+            ProtobufUtil.toScan(scanValue).writeDelimitedTo(out);
+          }
+        } else {
+          out.writeObject(ScanType.DEFER);
+          out.writeObject(scan);
+        }
+      }
+
+      private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        ScanType scanType = (ScanType) in.readObject();
+        if (scanType == ScanType.FIXED) {
+          ReadRowsRequest request = (ReadRowsRequest) in.readObject();
+          scan = ValueProvider.StaticValueProvider.of(new BigtableFixedProtoScan(request));
+        } else if (scanType == ScanType.DEFER) {
+          scan = (ValueProvider<Scan>) in.readObject();
+        } else {
+          scan =
+              ValueProvider.StaticValueProvider.of(
+                  ProtobufUtil.toScan(ClientProtos.Scan.parseDelimitedFrom(in)));
+        }
+      }
+
+      Object readResolve() {
+        CloudBigtableScanConfiguration conf =
+            CloudBigtableScanConfiguration.createConfig(
+                projectId, instanceId, tableId, scan, additionalConfiguration);
+        return CloudBigtableIO.read(conf);
+      }
+    }
   }
 
   /**
@@ -448,6 +531,10 @@ public class CloudBigtableIO {
     public Coder<Result> getOutputCoder() {
       return getResultCoder();
     }
+
+    private Object writeReplace() {
+      return new SerializationProxy(getConfiguration());
+    }
   }
 
   /**
@@ -468,9 +555,9 @@ public class CloudBigtableIO {
     protected SourceWithKeys(CloudBigtableScanConfiguration configuration, long estimatedSize) {
       super(configuration);
 
-      byte[] stopRow = configuration.getZeroCopyStopRow();
+      byte[] stopRow = configuration.getStopRow();
       if (stopRow.length > 0) {
-        byte[] startRow = configuration.getZeroCopyStartRow();
+        byte[] startRow = configuration.getStartRow();
         if (Bytes.compareTo(startRow, stopRow) >= 0) {
           throw new IllegalArgumentException(
               String.format(
@@ -511,11 +598,7 @@ public class CloudBigtableIO {
         long desiredBundleSizeBytes, PipelineOptions options) throws Exception {
       final CloudBigtableScanConfiguration conf = getConfiguration();
       List<? extends BoundedSource<Result>> newSplits =
-          split(
-              estimatedSize,
-              desiredBundleSizeBytes,
-              conf.getZeroCopyStartRow(),
-              conf.getZeroCopyStopRow());
+          split(estimatedSize, desiredBundleSizeBytes, conf.getStartRow(), conf.getStopRow());
       SOURCE_LOG.trace("Splitting split {} into {}", this, newSplits);
       return newSplits;
     }
@@ -529,9 +612,13 @@ public class CloudBigtableIO {
     public String toString() {
       return String.format(
           "Split start: '%s', end: '%s', size: %d.",
-          Bytes.toStringBinary(getConfiguration().getZeroCopyStartRow()),
-          Bytes.toStringBinary(getConfiguration().getZeroCopyStopRow()),
+          Bytes.toStringBinary(getConfiguration().getStartRow()),
+          Bytes.toStringBinary(getConfiguration().getStopRow()),
           estimatedSize);
+    }
+
+    private Object writeReplace() {
+      return new SerializationProxy(getConfiguration());
     }
   }
   /** Reads rows for a specific {@link Table}, usually filtered by a {@link Scan}. */
@@ -570,11 +657,7 @@ public class CloudBigtableIO {
       Configuration config = source.getConfiguration().toHBaseConfig();
 
       connection = ConnectionFactory.createConnection(config);
-      Scan scan =
-          new Scan()
-              .withStartRow(source.getConfiguration().getZeroCopyStartRow())
-              .withStopRow(source.getConfiguration().getZeroCopyStopRow())
-              .setMaxVersions(Integer.MAX_VALUE);
+      Scan scan = source.getConfiguration().getScanValueProvider().get();
       scanner =
           connection
               .getTable(TableName.valueOf(source.getConfiguration().getTableId()))

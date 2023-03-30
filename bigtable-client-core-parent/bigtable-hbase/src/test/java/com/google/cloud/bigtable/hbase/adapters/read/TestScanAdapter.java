@@ -25,6 +25,7 @@ import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
+import com.google.cloud.bigtable.hbase.BigtableFixedProtoScan;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
 import com.google.cloud.bigtable.hbase.util.ByteStringer;
@@ -447,5 +448,18 @@ public class TestScanAdapter {
             // user filter
             .filter(FILTERS.key().regex("blah\\C*"));
     Assert.assertEquals(expected.toProto(), query.toProto(requestContext).getFilter());
+  }
+
+  @Test
+  public void testFixedRequest() {
+    BigtableFixedProtoScan fixedProto =
+        new BigtableFixedProtoScan(query.limit(10).toProto(requestContext));
+
+    Query placeholder = Query.create("PLACEHOLDER");
+    Query newQuery = scanAdapter.adapt(fixedProto, throwingReadHooks, placeholder);
+
+    Query expected = Query.create("tableId").limit(10);
+
+    Assert.assertEquals(expected.toProto(requestContext), newQuery.toProto(requestContext));
   }
 }

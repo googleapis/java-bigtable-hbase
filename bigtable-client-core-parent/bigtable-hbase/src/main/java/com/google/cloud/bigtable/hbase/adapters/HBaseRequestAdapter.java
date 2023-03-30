@@ -152,7 +152,7 @@ public class HBaseRequestAdapter {
   public Query adapt(Get get) {
     ReadHooks readHooks = new DefaultReadHooks();
     Query query = Query.create(getTableId());
-    Adapters.GET_ADAPTER.adapt(get, readHooks, query);
+    query = Adapters.GET_ADAPTER.adapt(get, readHooks, query);
     readHooks.applyPreSendHook(query);
     return query;
   }
@@ -166,7 +166,7 @@ public class HBaseRequestAdapter {
   public Query adapt(Scan scan) {
     ReadHooks readHooks = new DefaultReadHooks();
     Query query = Query.create(getTableId());
-    Adapters.SCAN_ADAPTER.adapt(scan, readHooks, query);
+    query = Adapters.SCAN_ADAPTER.adapt(scan, readHooks, query);
     readHooks.applyPreSendHook(query);
     return query;
   }

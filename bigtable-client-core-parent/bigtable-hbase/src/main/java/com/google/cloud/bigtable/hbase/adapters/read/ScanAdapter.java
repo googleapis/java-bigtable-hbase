@@ -25,6 +25,7 @@ import com.google.cloud.bigtable.data.v2.models.Filters.InterleaveFilter;
 import com.google.cloud.bigtable.data.v2.models.Filters.TimestampRangeFilter;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.hbase.BigtableExtendedScan;
+import com.google.cloud.bigtable.hbase.BigtableFixedProtoScan;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapter;
 import com.google.cloud.bigtable.hbase.adapters.filters.FilterAdapterContext;
 import com.google.cloud.bigtable.hbase.util.RowKeyWrapper;
@@ -51,7 +52,6 @@ import org.apache.hadoop.hbase.io.TimeRange;
  */
 @InternalApi("For internal usage only")
 public class ScanAdapter implements ReadOperationAdapter<Scan> {
-
   private static final int UNSET_MAX_RESULTS_PER_COLUMN_FAMILY = -1;
   private static final boolean OPEN_CLOSED_AVAILABLE = isOpenClosedAvailable();
   private static final boolean LIMIT_AVAILABLE = isLimitAvailable();
@@ -156,14 +156,18 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
 
   /** {@inheritDoc} */
   @Override
-  public void adapt(Scan scan, ReadHooks readHooks, Query query) {
-    throwIfUnsupportedScan(scan);
+  public Query adapt(Scan scan, ReadHooks readHooks, Query query) {
+    if (scan instanceof BigtableFixedProtoScan) {
+      return Query.fromProto(((BigtableFixedProtoScan) scan).getRequest());
+    } else {
+      throwIfUnsupportedScan(scan);
+      toByteStringRange(scan, query);
+      query.filter(buildFilter(scan, readHooks));
 
-    toByteStringRange(scan, query);
-    query.filter(buildFilter(scan, readHooks));
-
-    if (LIMIT_AVAILABLE && scan.getLimit() > 0) {
-      query.limit(scan.getLimit());
+      if (LIMIT_AVAILABLE && scan.getLimit() > 0) {
+        query.limit(scan.getLimit());
+      }
+      return query;
     }
   }
 

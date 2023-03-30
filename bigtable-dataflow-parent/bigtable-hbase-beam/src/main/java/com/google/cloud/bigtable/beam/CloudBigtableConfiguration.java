@@ -189,8 +189,30 @@ public class CloudBigtableConfiguration implements Serializable {
     return configuration.get(BigtableOptionsFactory.INSTANCE_ID_KEY).get();
   }
 
+  /**
+   * Gets the value provider for project id.
+   *
+   * @return The value provider for project id.
+   */
+  ValueProvider<String> getProjectIdValueProvider() {
+    return configuration.get(BigtableOptionsFactory.PROJECT_ID_KEY);
+  }
+
+  /**
+   * Gets the value provider for instance id.
+   *
+   * @return The value provider for instance id.
+   */
+  ValueProvider<String> getInstanceIdValueProvider() {
+    return configuration.get(BigtableOptionsFactory.INSTANCE_ID_KEY);
+  }
+
   /** Get the Cloud Bigtable App Profile id. */
   public String getAppProfileId() {
+    if (configuration.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY) == null
+        || configuration.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY).get() == null) {
+      return "default";
+    }
     return configuration.get(BigtableOptionsFactory.APP_PROFILE_ID_KEY).get();
   }
 

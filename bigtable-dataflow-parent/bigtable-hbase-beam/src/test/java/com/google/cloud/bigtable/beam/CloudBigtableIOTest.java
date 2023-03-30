@@ -131,8 +131,8 @@ public class CloudBigtableIOTest {
           @Override
           public int compare(SourceWithKeys o1, SourceWithKeys o2) {
             return ByteStringComparator.INSTANCE.compare(
-                o1.getConfiguration().getStartRowByteString(),
-                o2.getConfiguration().getStartRowByteString());
+                ByteString.copyFrom(o1.getConfiguration().getStartRow()),
+                ByteString.copyFrom(o2.getConfiguration().getStartRow()));
           }
         });
     Assert.assertTrue(splits.size() <= AbstractSource.COUNT_MAX_SPLIT_COUNT);
@@ -142,14 +142,13 @@ public class CloudBigtableIOTest {
       SourceWithKeys current = iter.next();
       Assert.assertTrue(
           Bytes.equals(
-              current.getConfiguration().getZeroCopyStartRow(),
-              last.getConfiguration().getZeroCopyStopRow()));
+              current.getConfiguration().getStartRow(), last.getConfiguration().getStopRow()));
       // The last source will have a stop key of empty.
       if (iter.hasNext()) {
         Assert.assertTrue(
             Bytes.compareTo(
-                    current.getConfiguration().getZeroCopyStartRow(),
-                    current.getConfiguration().getZeroCopyStopRow())
+                    current.getConfiguration().getStartRow(),
+                    current.getConfiguration().getStopRow())
                 < 0);
       }
       Assert.assertTrue(current.getEstimatedSize() >= tabletSize);
