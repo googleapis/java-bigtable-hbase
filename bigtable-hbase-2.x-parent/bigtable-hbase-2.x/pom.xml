@@ -175,39 +175,6 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <configuration>
-          <excludes>
-            <!-- AsyncRegistry was an interface that existed in hbase 2.0-2.2. It's no longer shipped. To ensure
-            compatibility we vendored it in this project to compile against, but do not want to ship it our binary -->
-            <exclude>org/apache/hadoop/hbase/client/AsyncRegistry.class</exclude>
-          </excludes>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <!-- skip for bigtable-hbase to allow for upcoming refactoring-->
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
-        <version>3.3.0</version>
-        <executions>
-          <execution>
-            <id>add-source</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>add-source</goal>
-            </goals>
-            <configuration>
-              <sources>
-                <source>../../third_party/third_party_hbase_client_pre23/src/main/java</source>
-              </sources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
   </build>
 </project>
