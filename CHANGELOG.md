@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.7.3](https://github.com/googleapis/java-bigtable-hbase/compare/v2.7.2...v2.7.3) (2023-03-30)
+
+
+### Bug Fixes
+
+* Fix CloudBigtableIO scan to take version and filters ([#3901](https://github.com/googleapis/java-bigtable-hbase/issues/3901)) ([307874f](https://github.com/googleapis/java-bigtable-hbase/commit/307874f670c5ffc10d5db58d2ef1afce4b04d0e9))
+
+
+### Dependencies
+
+* Update dependency com.google.protobuf:protobuf-java to v3.22.1 ([#3995](https://github.com/googleapis/java-bigtable-hbase/issues/3995)) ([8cf46f1](https://github.com/googleapis/java-bigtable-hbase/commit/8cf46f16fb071a77ffa1462d1576051dc5aaab83))
+* Update dependency com.google.protobuf:protobuf-java to v3.22.2 ([#4001](https://github.com/googleapis/java-bigtable-hbase/issues/4001)) ([66962ef](https://github.com/googleapis/java-bigtable-hbase/commit/66962ef3ab61c90680eb51542943f94ec5416ecf))
+* Update dependency net.bytebuddy:byte-buddy to v1.14.1 ([#3993](https://github.com/googleapis/java-bigtable-hbase/issues/3993)) ([ced055e](https://github.com/googleapis/java-bigtable-hbase/commit/ced055e92df5bbeee6bc44796b3639da91525032))
+* Update dependency net.bytebuddy:byte-buddy to v1.14.2 ([#4004](https://github.com/googleapis/java-bigtable-hbase/issues/4004)) ([6327eb2](https://github.com/googleapis/java-bigtable-hbase/commit/6327eb213e0f88c94096386732bf3273fe9ea00f))
+* Update dependency org.codehaus.plexus:plexus-utils to v3.5.1 ([#3988](https://github.com/googleapis/java-bigtable-hbase/issues/3988)) ([8ee2d3c](https://github.com/googleapis/java-bigtable-hbase/commit/8ee2d3c12018f252feecb98635ff342d06d29aeb))
+* Update google-cloud-bigtable dependencies to 2.20.0 ([9b96f8b](https://github.com/googleapis/java-bigtable-hbase/commit/9b96f8b11e1d8f81b421abb7cf7a7ae39df6194a))
+
 ## [2.7.2](https://github.com/googleapis/java-bigtable-hbase/compare/v2.7.1...v2.7.2) (2023-02-27)
 
 
