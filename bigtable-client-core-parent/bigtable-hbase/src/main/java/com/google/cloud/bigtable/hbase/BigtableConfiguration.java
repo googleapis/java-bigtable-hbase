@@ -30,6 +30,11 @@ public class BigtableConfiguration {
   public static final String HBASE_CLIENT_CONNECTION_IMPL = "hbase.client.connection.impl";
 
   /** For internal use only - public for technical reasons. */
+  // The value of this field can implement 2 different interfaces depending on the HBase version
+  // For 2.0 - 2.2 the value must implement AsyncRegistry
+  // For 2.3 onwards the value must implement ConnectionRegistry
+  // bigable-hbase-2x contains implementations for both, this helper will use classpath probing to
+  // guess the correct impl.
   @InternalApi("For internal usage only")
   public static final String HBASE_CLIENT_ASYNC_CONNECTION_IMPL =
       "hbase.client.async.connection.impl";
@@ -124,8 +129,7 @@ public class BigtableConfiguration {
 
       Class<?> connectionRegistryClass = getConnectionRegistryClass();
       if (connectionRegistryClass != null) {
-        configuration.set(
-                HBASE_CLIENT_ASYNC_REGISTRY_IMPL, connectionRegistryClass.getName());
+        configuration.set(HBASE_CLIENT_ASYNC_REGISTRY_IMPL, connectionRegistryClass.getName());
       }
     } catch (ClassNotFoundException ignored) {
       // Skip if any of the async connection class doesn't exist
@@ -217,8 +221,7 @@ public class BigtableConfiguration {
     conf.set(HBASE_CLIENT_ASYNC_CONNECTION_IMPL, BIGTABLE_HBASE_CLIENT_ASYNC_CONNECTION_CLASS);
     Class<?> connectionRegistryClass = getConnectionRegistryClass();
     if (connectionRegistryClass != null) {
-      conf.set(
-              HBASE_CLIENT_ASYNC_REGISTRY_IMPL, connectionRegistryClass.getName());
+      conf.set(HBASE_CLIENT_ASYNC_REGISTRY_IMPL, connectionRegistryClass.getName());
     }
     return conf;
   }
