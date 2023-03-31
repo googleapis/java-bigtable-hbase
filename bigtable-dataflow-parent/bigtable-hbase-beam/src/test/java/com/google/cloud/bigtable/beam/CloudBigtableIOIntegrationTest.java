@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.util.Logger;
@@ -25,7 +27,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.BoundedSource.BoundedReader;
@@ -326,30 +328,38 @@ public class CloudBigtableIOIntegrationTest {
         final AtomicInteger count = new AtomicInteger();
         LOG.info("Reading Bundles in testEstimatedAndSplitForLargeTable()");
         ExecutorService es = Executors.newCachedThreadPool();
-        try {
-          for (final BoundedSource<Result> bundle : bundles) {
-            es.submit(
-                () -> {
-                  try (BoundedReader<Result> reader = bundle.createReader(null)) {
-                    reader.start();
-                    while (reader.getCurrent() != null) {
-                      count.incrementAndGet();
-                      reader.advance();
+        List<Future<?>> bundleFutures = new ArrayList<>();
+
+        for (final BoundedSource<Result> bundle : bundles) {
+          bundleFutures.add(
+              es.submit(
+                  () -> {
+                    try (BoundedReader<Result> reader = bundle.createReader(null)) {
+                      reader.start();
+                      while (reader.getCurrent() != null) {
+                        count.incrementAndGet();
+                        reader.advance();
+                      }
+                    } catch (IOException e) {
+                      throw new RuntimeException(
+                          String.format("Could not read bundle: %s", bundleFutures), e);
                     }
-                  } catch (IOException e) {
-                    LOG.warn("Could not read bundle: %s", e, bundle);
-                  }
-                });
-          }
-        } finally {
-          LOG.info("Shutting down executor in testEstimatedAndSplitForLargeTable()");
-          es.shutdown();
-          while (!es.isTerminated()) {
-            es.awaitTermination(1, TimeUnit.SECONDS);
-          }
+                  }));
         }
-        Assert.assertSame(sampleRowKeys, source.getSampleRowKeys());
-        Assert.assertEquals(rowCount, count.intValue());
+
+        try {
+          for (Future<?> future : bundleFutures) {
+            future.get();
+          }
+        } catch (Throwable e) {
+          throw e;
+        }
+
+        LOG.info("Shutting down executor in testEstimatedAndSplitForLargeTable()");
+        es.shutdown();
+
+        assertThat(source.getSampleRowKeys()).containsExactlyElementsIn(sampleRowKeys);
+        assertThat(count.intValue()).isEqualTo(rowCount);
       } finally {
         LOG.info("Deleting table in testEstimatedAndSplitForLargeTable()");
         admin.deleteTable(tableName);
