@@ -28,8 +28,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import io.opencensus.common.Scope;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import java.util.concurrent.ExecutionException;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Static helper methods used for scheduling secondary database requests and results verification.

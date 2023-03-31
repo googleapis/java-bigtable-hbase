@@ -36,6 +36,19 @@
   </dependencies>
 
   <build>
+    <pluginManagement>
+      <plugins>
+        <!-- this is an internal artifact, so we do not need to run clirr -->
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>clirr-maven-plugin</artifactId>
+          <configuration>
+            <skip>true</skip>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -71,23 +84,6 @@
             </configuration>
           </execution>
         </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>clirr-maven-plugin</artifactId>
-        <!-- this is an internal artifact, so we do not need to run clirr -->
-        <configuration>
-          <skip>true</skip>
-        </configuration>
       </plugin>
 
       <plugin>

@@ -272,6 +272,25 @@ limitations under the License.
   <build>
     <pluginManagement>
       <plugins>
+        <!-- Don't care about clirr for integration tests -->
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>clirr-maven-plugin</artifactId>
+          <configuration>
+            <skip>true</skip>
+          </configuration>
+        </plugin>
+
+        <!-- There are no unit tests, but the integration tests are not suffixed with IT, so
+        surefire will true to use them as unit tests -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <configuration>
+            <skip>true</skip>
+          </configuration>
+        </plugin>
+
         <!-- Start Skip publishing -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -316,13 +335,6 @@ limitations under the License.
             <skip>true</skip>
           </configuration>
         </plugin>
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>clirr-maven-plugin</artifactId>
-          <configuration>
-            <skip>true</skip>
-          </configuration>
-        </plugin>
         <!-- End Skip publishing -->
       </plugins>
     </pluginManagement>
@@ -338,25 +350,6 @@ limitations under the License.
             <goals>
               <goal>verify-provided-deps</goal>
             </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>default-test</id>
-            <phase>test</phase>
-            <goals>
-              <goal>test</goal>
-            </goals>
-            <configuration>
-              <trimStackTrace>false</trimStackTrace>
-              <excludes>
-                <exclude>**/*.java</exclude>
-              </excludes>
-            </configuration>
           </execution>
         </executions>
       </plugin>

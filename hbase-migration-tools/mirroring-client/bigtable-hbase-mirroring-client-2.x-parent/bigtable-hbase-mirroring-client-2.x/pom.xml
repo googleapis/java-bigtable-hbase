@@ -120,9 +120,9 @@ limitations under the License.
   <build>
     <pluginManagement>
       <plugins>
+        <!-- skip due to shaded jars added in during package phase (see below) -->
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
-          <!-- skip due to shaded jars added in during package phase (see below) -->
           <artifactId>clirr-maven-plugin</artifactId>
           <configuration>
             <skip>true</skip>

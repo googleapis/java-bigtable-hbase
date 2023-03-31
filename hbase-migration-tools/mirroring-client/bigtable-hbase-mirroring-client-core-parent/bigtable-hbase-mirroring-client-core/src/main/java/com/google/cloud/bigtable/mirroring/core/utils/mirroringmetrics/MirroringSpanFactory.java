@@ -37,10 +37,10 @@ import io.opencensus.stats.Measure.MeasureLong;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.SpanBuilder;
 import io.opencensus.trace.Tracer;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Used to create named spans for tracing (using {@link #tracer}) and recording metrics related to
