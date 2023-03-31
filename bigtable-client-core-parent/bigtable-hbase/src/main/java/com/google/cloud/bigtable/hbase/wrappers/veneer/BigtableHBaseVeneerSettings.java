@@ -20,6 +20,7 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.ALLOW_NO_TI
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.APP_PROFILE_ID_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_ENABLE_CPU_BASED_THROTTLING;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_MAX_MEMORY_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_AUTOFLUSH_MS_KEY;
@@ -639,6 +640,10 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
               BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT);
 
       builder.enableLatencyBasedThrottling(latencyMs);
+    }
+
+    if (Boolean.parseBoolean(configuration.get(BIGTABLE_BUFFERED_MUTATOR_ENABLE_CPU_BASED_THROTTLING))) {
+      builder.enableCPUBasedThrottling();
     }
   }
 

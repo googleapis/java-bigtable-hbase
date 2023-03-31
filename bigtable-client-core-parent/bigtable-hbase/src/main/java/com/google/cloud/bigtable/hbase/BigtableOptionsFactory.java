@@ -314,4 +314,11 @@ public class BigtableOptionsFactory {
   @BetaApi("This API is not yet stable and may change in the future")
   public static final String MANAGED_CONNECTION_WARNING =
       "google.bigtable.managed.connection.warning";
+
+  /**
+   * Turn on a feature that will reduce the likelihood of BufferedMutator overloading a Cloud
+   * Bigtable cluster based on Cloud Bigtable cluster CPU usage.
+   */
+  public static final String BIGTABLE_BUFFERED_MUTATOR_ENABLE_CPU_BASED_THROTTLING
+           = "google.bigtable.buffered.mutator.cpu.throttling.enable";
 }
