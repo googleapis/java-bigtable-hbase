@@ -18,9 +18,12 @@ package com.google.cloud.bigtable.hbase;
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.auth.Credentials;
+import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Connection;
+
+import java.io.IOException;
 
 /** This class provides a simplified mechanism of creating a programmatic Bigtable Connection. */
 @InternalExtensionOnly
@@ -235,5 +238,9 @@ public class BigtableConfiguration {
           "Could not find an appropriate constructor for " + CONNECTION_CLASS.getCanonicalName(),
           e);
     }
+  }
+
+  public static void enableBuiltinMetrics() throws IOException {
+    BigtableDataSettings.enableBuiltinMetrics();
   }
 }
