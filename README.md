@@ -42,7 +42,8 @@ There are 2 ways to install the bigtable-hbase adapter:
 1. Declare a dependency on bigtable-hbase:
    For applications using hbase-client or applications that want avoid dependency conflict please use the -shaded
    variants in addition to your existing hbase-client dependency:
-   [//]: # ({x-version-update-start:bigtable-client-parent:released})
+    <!-- {x-version-update-start:bigtable-client-parent:released} -->
+
     ```xml
     Maven:
       ```xml
@@ -50,12 +51,12 @@ There are 2 ways to install the bigtable-hbase adapter:
       <dependency>
         <groupId>org.apache.hbase</groupId> 
         <artifactId>hbase-client</artifactId>
-        <version>2.3.6</version>
+        <version>YOUR VERSION OF HBASE</version>
       </dependency>
       <!-- Added bigtable dependency -->
       <dependency>
         <groupId>com.google.cloud.bigtable</groupId>
-        <!-- Or bigtable-hbase-1.x-shaded for HBase 1.0-1.7.3 --> 
+        <!-- Or bigtable-hbase-1.x-shaded for HBase < 2.0 --> 
         <artifactId>bigtable-hbase-2.x-shaded</artifactId>
         <version>3.0.0</version>
       </dependency>
@@ -64,21 +65,21 @@ There are 2 ways to install the bigtable-hbase adapter:
     Gradle:
       ```Groovy
       // your existing HBase dependency
-      compile 'org.apache.hbase:hbase-client:2.3.6'
+      compile 'org.apache.hbase:hbase-client:YOUR VERSION OF HBASE'
       // Added Bigtable dependency
-      // Or bigtable-hbase-1.x-shaded for HBase 1.0-1.7.3
+      // Or bigtable-hbase-1.x-shaded for HBase < 2.0
       compile 'com.google.cloud.bigtable:bigtable-hbase-2.x-shaded:3.0.0'
       ```
     
     SBT:
     ```Scala
     // your existing HBase dependency
-    libraryDependencies += "org.apache.hbase" % "hbase-client" % "2.3.6"
+    libraryDependencies += "org.apache.hbase" % "hbase-client" % YOUR VERSION OF HBASE
     // Added Bigtable dependency
-    // Or bigtable-hbase-1.x-shaded for HBase 1.0-1.7.3
+    // Or bigtable-hbase-1.x-shaded for HBase < 2.0 
     libraryDependencies += "com.google.cloud.bigtable" % "bigtable-hbase-2.x" % "3.0.0"
     ```
-   [//]: # ({x-version-update-end})
+   <!-- {x-version-update-end} -->
 
 2. Change your application to create the HBase Connection to
     ```java
@@ -92,11 +93,13 @@ There are 2 ways to install the bigtable-hbase adapter:
 #### Option 2:
 
 1. Download the latest -shaded.jar from maven central for your HBase installation:
-  * [bigtable-hbase-1.x-shaded](https://repo1.maven.org/maven2/com/google/cloud/bigtable/bigtable-hbase-1.x-shaded/3.0.0/) for HBase 1.0.0 - 1.7.3
-  * [bigtable-hbase-2.x-shaded](https://repo1.maven.org/maven2/com/google/cloud/bigtable/bigtable-hbase-2.x-shaded/3.0.0/) for HBase 2.0.0 - 2.3.6
+   <!-- {x-version-start:bigtable-client-parent:released} -->
+  *  [bigtable-hbase-1.x-shaded](https://repo1.maven.org/maven2/com/google/cloud/bigtable/bigtable-hbase-1.x-shaded/3.0.0/) for HBase < 2.0
+  * [bigtable-hbase-2.x-shaded](https://repo1.maven.org/maven2/com/google/cloud/bigtable/bigtable-hbase-2.x-shaded/3.0.0/) for HBase < 2.4
+  <!-- {x-version-update-end} -->
 2. Copy the jar into your HBASE_CLASSPATH (ie. hbase-installation/lib)
 3. Update your hbase-site.xml:
-   For HBase 1.0.0-1.7.3:
+   For HBase < 2.0:
    ```xml
    <property>
         <name>google.bigtable.project.id</name>
@@ -112,7 +115,7 @@ There are 2 ways to install the bigtable-hbase adapter:
         <value>com.google.cloud.bigtable.hbase1_x.BigtableConnection</value>
    </property>
    ```
-   For HBase 2.0-2.2:
+   For HBase < 2.3:
    ```xml
    <property>
         <name>google.bigtable.project.id</name>
@@ -136,7 +139,7 @@ There are 2 ways to install the bigtable-hbase adapter:
      <value>org.apache.hadoop.hbase.client.BigtableAsyncRegistry</value>
    </property>
    ```
-   For HBase 2.3.x:
+   For HBase < 2.4:
    ```xml
    <property>
         <name>google.bigtable.project.id</name>
@@ -178,12 +181,13 @@ Note: Beam / Dataflow integration is currently not supported.
 
 ## Client Metrics
 
+To enable free built-in clientside metrics:
 
 ```java
 BigtableConfiguration.enableBuiltinMetrics();
 ```
 
-You can find a description of all of the metrics here:
+You can find a description of all the metrics here:
 https://cloud.google.com/bigtable/docs/client-side-metrics-descriptions
 
 
@@ -231,7 +235,6 @@ Java is a registered trademark of Oracle and/or its affiliates.
 [maven-hbase-client-maven-search]: http://search.maven.org/#search%7Cga%7C1%7Cg:com.google.cloud.bigtable
 [stackoverflow-shield]: https://img.shields.io/badge/stackoverflow-google--cloud--bigtable-blue.svg
 [stackoverflow-link]: http://stackoverflow.com/search?q=[google-cloud-bigtable]
-[maven-examples-repo]: https://github.com/GoogleCloudPlatform/cloud-bigtable-examples
 [google-cloud-bigtable-discuss]: https://groups.google.com/group/google-cloud-bigtable-discuss
 [google-cloud-bigtable-announce]: https://groups.google.com/group/google-cloud-bigtable-announce
 [google-cloud-bigtable-emulator]: https://github.com/googleapis/google-cloud-java/tree/main/google-cloud-testing/google-cloud-bigtable-emulator
