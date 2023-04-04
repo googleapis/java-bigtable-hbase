@@ -29,8 +29,7 @@ import org.apache.hadoop.hbase.shaded.com.google.protobuf.ServiceException;
 public class BigtableTableCore extends AbstractBigtableTable {
 
   public BigtableTableCore(
-      AbstractBigtableConnection bigtableConnection,
-      HBaseRequestAdapter hbaseAdapter) {
+      AbstractBigtableConnection bigtableConnection, HBaseRequestAdapter hbaseAdapter) {
     super(bigtableConnection, hbaseAdapter);
   }
 
