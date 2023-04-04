@@ -46,7 +46,7 @@ public class TestMirroringConnection {
 
   private Configuration createConfiguration() {
     Configuration configuration = new Configuration();
-    configuration.set("hbase.client.connection.impl", MirroringConnection.class.getCanonicalName());
+    configuration.set("hbase.client.connection.impl", MirroringConnectionCore.class.getCanonicalName());
     configuration.set(
         MIRRORING_PRIMARY_CONNECTION_CLASS_KEY, TestConnection.class.getCanonicalName());
     configuration.set(
