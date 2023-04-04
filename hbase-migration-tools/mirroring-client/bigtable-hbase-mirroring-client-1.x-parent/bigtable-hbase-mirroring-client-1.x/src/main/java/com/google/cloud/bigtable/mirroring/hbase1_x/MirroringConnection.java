@@ -16,10 +16,14 @@
 package com.google.cloud.bigtable.mirroring.hbase1_x;
 
 import com.google.cloud.bigtable.mirroring.core.MirroringConfiguration;
+import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringSpanConstants;
+import io.opencensus.common.Scope;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.security.User;
 
 public class MirroringConnection
@@ -40,5 +44,33 @@ public class MirroringConnection
   public MirroringConnection(MirroringConfiguration mirroringConfiguration, ExecutorService pool)
       throws IOException {
     super(mirroringConfiguration, pool);
+  }
+
+  public Table getTable(final TableName tableName, ExecutorService executorService)
+      throws IOException {
+    try (Scope scope =
+        this.mirroringTracer.spanFactory.operationScope(
+            MirroringSpanConstants.HBaseOperation.GET_TABLE)) {
+      Log.trace("getTable(%s, executorService)", tableName);
+      Table primaryTable =
+          this.mirroringTracer.spanFactory.wrapPrimaryOperation(
+              () -> MirroringConnection.this.primaryConnection.getTable(tableName),
+              MirroringSpanConstants.HBaseOperation.GET_TABLE);
+      Table secondaryTable = this.secondaryConnection.getTable(tableName);
+      return new MirroringTable(
+          primaryTable,
+          secondaryTable,
+          executorService,
+          this.mismatchDetector,
+          this.flowController,
+          this.secondaryWriteErrorConsumer,
+          this.readSampler,
+          this.timestamper,
+          this.performWritesConcurrently,
+          this.waitForSecondaryWrites,
+          this.mirroringTracer,
+          this.referenceCounter,
+          this.configuration.mirroringOptions.maxLoggedBinaryValueLength);
+    }
   }
 }

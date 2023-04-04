@@ -132,7 +132,7 @@ public class TestMirroringTable {
     this.mismatchDetector = spy(new DefaultMismatchDetector(this.mirroringTracer, 100));
     this.mirroringTable =
         spy(
-            new MirroringTable(
+            new MirroringTableCore(
                 primaryTable,
                 secondaryTable,
                 this.executorServiceRule.executorService,
@@ -1265,7 +1265,7 @@ public class TestMirroringTable {
     boolean waitForSecondaryWrites = true;
     this.mirroringTable =
         spy(
-            new MirroringTable(
+            new MirroringTableCore(
                 primaryTable,
                 secondaryTable,
                 this.executorServiceRule.executorService,
@@ -1355,7 +1355,7 @@ public class TestMirroringTable {
     boolean waitForSecondaryWrites = true;
     this.mirroringTable =
         spy(
-            new MirroringTable(
+            new MirroringTableCore(
                 primaryTable,
                 secondaryTable,
                 MoreExecutors.listeningDecorator(MoreExecutors.newDirectExecutorService()),
@@ -1488,7 +1488,7 @@ public class TestMirroringTable {
     boolean waitForSecondaryWrites = true;
     this.mirroringTable =
         spy(
-            new MirroringTable(
+            new MirroringTableCore(
                 primaryTable,
                 secondaryTable,
                 this.executorServiceRule.executorService,

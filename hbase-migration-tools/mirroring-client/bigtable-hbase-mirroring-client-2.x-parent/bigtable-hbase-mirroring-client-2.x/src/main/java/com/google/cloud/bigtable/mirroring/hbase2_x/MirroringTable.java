@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 
@@ -88,5 +89,10 @@ public class MirroringTable extends com.google.cloud.bigtable.mirroring.core.Mir
   public Result append(Append append) throws IOException {
     Result result = super.append(append);
     return result == null ? Result.create(new Cell[0]) : result;
+  }
+
+  @Override
+  public Result mutateRow(RowMutations rm) throws IOException {
+    return mutateRowBase(rm);
   }
 }

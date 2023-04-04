@@ -44,6 +44,7 @@ import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -56,11 +57,16 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.QualifierFilter;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
+import org.apache.hadoop.hbase.shaded.com.google.protobuf.Descriptors;
+import org.apache.hadoop.hbase.shaded.com.google.protobuf.Message;
+import org.apache.hadoop.hbase.shaded.com.google.protobuf.Service;
+import org.apache.hadoop.hbase.shaded.com.google.protobuf.ServiceException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Before;
@@ -117,7 +123,7 @@ public class TestBigtableTable {
     when(mockConnection.getBigtableSettings()).thenReturn(settings);
     when(mockBigtableApi.getDataClient()).thenReturn(mockBigtableDataClient);
     when(mockBigtableDataClient.readRows(isA(Query.class))).thenReturn(mockResultScanner);
-    table = new AbstractBigtableTable(mockConnection, hbaseAdapter) {};
+    table = new BigtableTableCore(mockConnection, hbaseAdapter);
   }
 
   @Test

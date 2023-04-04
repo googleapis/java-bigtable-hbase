@@ -65,6 +65,7 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -90,7 +91,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * asynchronously. Read operations are mirrored to verify that content of both databases matches.
  */
 @InternalApi("For internal usage only")
-public class MirroringTable implements Table {
+public abstract class MirroringTable implements Table {
 
   private static final Logger Log = new Logger(MirroringTable.class);
   private static final Predicate<Object> resultIsFaultyPredicate =
@@ -346,12 +347,21 @@ public class MirroringTable implements Table {
     }
   }
 
-  @Override
-  public void mutateRow(final RowMutations rowMutations) throws IOException {
+  public Result mutateRowBase(final RowMutations rowMutations) throws IOException {
+    for (Mutation mutation : rowMutations.getMutations()) {
+      Preconditions.checkArgument(
+          !(mutation instanceof Append),
+          "Append operations are not currently as part of RowMutations, please use append() instead");
+      Preconditions.checkArgument(
+          !(mutation instanceof Increment),
+          "Increment operations are not currently as part of RowMutations, please use increment() instead");
+    }
     try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.MUTATE_ROW)) {
       Log.trace("[%s] mutateRow(rowMutations=%s)", this.getName(), rowMutations);
       this.batcher.batchSingleWriteOperation(rowMutations);
     }
+    // Only Appends and Increments return a Result
+    return null;
   }
 
   @Override

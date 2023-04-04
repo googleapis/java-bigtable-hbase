@@ -93,6 +93,6 @@ public class TestMirroringConnection {
 
   @Test
   public void testConstructorTakingMirroringConfiguration() throws IOException {
-    new MirroringConnection(new MirroringConfiguration(createConfiguration()), null);
+    new MirroringConnectionCore(new MirroringConfiguration(createConfiguration()), null);
   }
 }

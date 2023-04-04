@@ -23,14 +23,21 @@ import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import com.google.cloud.bigtable.hbase.util.FutureUtil;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.matcher.ElementMatchers;
 import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RegionLocator;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.TableDescriptor;
@@ -41,7 +48,6 @@ import org.apache.hadoop.hbase.io.TimeRange;
 /** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
 public class BigtableTable extends AbstractBigtableTable {
-
   @SuppressWarnings("deprecation")
   public static final CompareOp toCompareOp(CompareOperator compareOp) {
     switch (compareOp) {
@@ -64,7 +70,22 @@ public class BigtableTable extends AbstractBigtableTable {
     }
   }
 
-  public BigtableTable(
+  public static BigtableTable create(
+      AbstractBigtableConnection bigtableConnection, HBaseRequestAdapter hbaseAdapter) {
+    try {
+      Class<? extends BigtableTable> cls = getSubclass();
+      Constructor<? extends BigtableTable> ctor =
+          cls.getConstructor(AbstractBigtableConnection.class, HBaseRequestAdapter.class);
+      return ctor.newInstance(bigtableConnection, hbaseAdapter);
+    } catch (NoSuchMethodException
+        | InstantiationException
+        | IllegalAccessException
+        | InvocationTargetException e) {
+      throw new IllegalStateException("Failed to construct BigtableTable", e);
+    }
+  }
+
+  protected BigtableTable(
       AbstractBigtableConnection bigtableConnection, HBaseRequestAdapter hbaseAdapter) {
     super(bigtableConnection, hbaseAdapter);
   }
@@ -248,5 +269,43 @@ public class BigtableTable extends AbstractBigtableTable {
       return;
     }
     super.batchCallback(actions, results, callback);
+  }
+
+  public void mutateRowVoid(RowMutations rm) throws IOException {
+    mutateRowBase(rm);
+  }
+
+  public Result mutateRowResult(RowMutations rowMutations) throws IOException {
+    return mutateRowBase(rowMutations);
+  }
+
+  private static Class<? extends BigtableTable> dynamicClass = null;
+
+  private static Class<? extends BigtableTable> getSubclass() throws NoSuchMethodException {
+    if (dynamicClass != null) {
+      return dynamicClass;
+    }
+    // default Result mutateRow(RowMutations rm) throws IOException {
+    dynamicClass =
+        new ByteBuddy()
+            .subclass(BigtableTable.class)
+            .method(
+                ElementMatchers.named("mutateRow")
+                    .and(ElementMatchers.returns(TypeDescription.VOID)))
+            .intercept(
+                MethodCall.invoke(
+                        BigtableTable.class.getDeclaredMethod("mutateRowVoid", RowMutations.class))
+                    .withAllArguments())
+            .method(ElementMatchers.named("mutateRow").and(ElementMatchers.returns(Result.class)))
+            .intercept(
+                MethodCall.invoke(
+                        BigtableTable.class.getDeclaredMethod(
+                            "mutateRowResult", RowMutations.class))
+                    .withAllArguments())
+            .make()
+            .load(BigtableTable.class.getClassLoader())
+            .getLoaded();
+
+    return dynamicClass;
   }
 }

@@ -108,7 +108,7 @@ public class TestMirroringMetrics {
     MirroringTracer tracer = new MirroringTracer(mirroringSpanFactory, mirroringMetricsRecorder);
     this.mirroringTable =
         spy(
-            new MirroringTable(
+            new MirroringTableCore(
                 primaryTable,
                 secondaryTable,
                 this.executorServiceRule.executorService,

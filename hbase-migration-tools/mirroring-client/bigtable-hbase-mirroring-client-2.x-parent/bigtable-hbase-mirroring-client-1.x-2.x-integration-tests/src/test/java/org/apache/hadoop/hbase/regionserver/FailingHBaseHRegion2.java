@@ -80,17 +80,9 @@ public class FailingHBaseHRegion2 extends HRegion {
   }
 
   @Override
-  public HRegion.RegionScannerImpl getScanner(Scan scan, List<KeyValueScanner> additionalScanners)
-      throws IOException {
-    // HBase 2.x implements Gets as Scans with start row == end row == requested row.
-    processRowThrow(scan.getStartRow());
-    return super.getScanner(scan, additionalScanners);
-  }
-
-  @Override
-  public void mutateRow(RowMutations rm) throws IOException {
+  public Result mutateRow(RowMutations rm) throws IOException {
     processRowThrow(rm.getRow());
-    super.mutateRow(rm);
+    return super.mutateRow(rm);
   }
 
   @Override
@@ -98,12 +90,6 @@ public class FailingHBaseHRegion2 extends HRegion {
       Mutation[] mutations, boolean atomic, long nonceGroup, long nonce) throws IOException {
     return batchMutateWithFailures(
         mutations, (m) -> super.batchMutate(m, atomic, nonceGroup, nonce));
-  }
-
-  @Override
-  public OperationStatus[] batchMutate(Mutation[] mutations, long nonceGroup, long nonce)
-      throws IOException {
-    return batchMutateWithFailures(mutations, (m) -> super.batchMutate(m, nonceGroup, nonce));
   }
 
   @Override
