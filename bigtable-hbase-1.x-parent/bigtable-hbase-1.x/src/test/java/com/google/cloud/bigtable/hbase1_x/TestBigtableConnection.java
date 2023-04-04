@@ -94,11 +94,12 @@ public class TestBigtableConnection {
 
   @Test
   public void testOverloadedConstructor() throws IOException {
-    Connection hbaseConnection =
-        new BigtableConnection(configuration, false, Executors.newSingleThreadExecutor(), null);
+    try (Connection hbaseConnection =
+        new BigtableConnection(configuration, false, Executors.newSingleThreadExecutor(), null)) {
 
-    assertTrue(hbaseConnection.getAdmin() instanceof BigtableAdmin);
-    assertTrue(hbaseConnection.getTable(TABLE_NAME) instanceof AbstractBigtableTable);
+      assertTrue(hbaseConnection.getAdmin() instanceof BigtableAdmin);
+      assertTrue(hbaseConnection.getTable(TABLE_NAME) instanceof AbstractBigtableTable);
+    }
   }
 
   @Test
