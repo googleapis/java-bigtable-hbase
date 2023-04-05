@@ -76,13 +76,7 @@ limitations under the License.
     <!-- Test deps -->
     <dependency>
       <groupId>com.google.cloud</groupId>
-      <artifactId>google-cloud-bigtable-emulator</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>*</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
+      <artifactId>google-cloud-bigtable-emulator-core</artifactId>
       <scope>test</scope>
     </dependency>
 

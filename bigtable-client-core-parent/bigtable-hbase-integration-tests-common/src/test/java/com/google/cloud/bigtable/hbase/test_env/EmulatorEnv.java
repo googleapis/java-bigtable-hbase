@@ -15,16 +15,20 @@
  */
 package com.google.cloud.bigtable.hbase.test_env;
 
-import com.google.cloud.bigtable.emulator.v2.Emulator;
+import com.google.cloud.bigtable.emulator.core.EmulatorController;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 
 public class EmulatorEnv extends SharedTestEnv {
-  private Emulator emulator;
+  private EmulatorController emulator;
 
   @Override
   protected void setup() throws Exception {
-    emulator = Emulator.createBundled();
+    try {
+      emulator = EmulatorController.createBundled();
+    } catch (Throwable t) {
+      throw t;
+    }
     emulator.start();
 
     configuration = HBaseConfiguration.create();
