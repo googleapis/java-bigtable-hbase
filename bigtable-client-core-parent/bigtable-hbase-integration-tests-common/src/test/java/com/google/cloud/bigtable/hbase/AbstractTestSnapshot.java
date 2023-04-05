@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -42,6 +43,7 @@ import org.junit.runners.JUnit4;
  */
 @SuppressWarnings("deprecation")
 @RunWith(JUnit4.class)
+@Category(KnownEmulatorGap.class)
 public abstract class AbstractTestSnapshot extends AbstractTest {
   protected final TableName tableName = sharedTestEnv.newTestTableName();
   protected Map<String, Long> values;

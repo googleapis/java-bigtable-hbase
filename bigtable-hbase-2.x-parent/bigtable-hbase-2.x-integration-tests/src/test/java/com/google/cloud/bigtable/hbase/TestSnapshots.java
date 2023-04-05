@@ -40,7 +40,12 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
+@RunWith(JUnit4.class)
+@Category(KnownEmulatorGap.class)
 public class TestSnapshots extends AbstractTestSnapshot {
 
   @Before
