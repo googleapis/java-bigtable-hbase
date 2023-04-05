@@ -19,7 +19,9 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.verify;
 
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
 import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.junit.Test;
@@ -28,6 +30,11 @@ import org.mockito.Mockito;
 public class TestBatch extends AbstractTestBatch {
   protected void appendAdd(Append append, byte[] columnFamily, byte[] qualifier, byte[] value) {
     append.addColumn(columnFamily, qualifier, value);
+  }
+
+  @Override
+  protected void mutateRow(Table table, RowMutations rowMutations) throws IOException {
+    table.mutateRow(rowMutations);
   }
 
   @Test
