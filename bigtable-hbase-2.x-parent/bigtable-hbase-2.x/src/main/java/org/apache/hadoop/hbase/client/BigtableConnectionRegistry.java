@@ -48,6 +48,11 @@ public class BigtableConnectionRegistry implements ConnectionRegistry {
   }
 
   @Override
+  public String getConnectionString() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public void close() {
     // noop
   }

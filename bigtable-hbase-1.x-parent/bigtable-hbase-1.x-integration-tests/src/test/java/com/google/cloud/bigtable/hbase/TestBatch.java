@@ -15,10 +15,18 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import java.io.IOException;
 import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.RowMutations;
+import org.apache.hadoop.hbase.client.Table;
 
 public class TestBatch extends AbstractTestBatch {
   protected void appendAdd(Append append, byte[] columnFamily, byte[] qualifier, byte[] value) {
     append.add(columnFamily, qualifier, value);
+  }
+
+  @Override
+  protected void mutateRow(Table table, RowMutations rowMutations) throws IOException {
+    table.mutateRow(rowMutations);
   }
 }

@@ -18,6 +18,8 @@ package com.google.cloud.bigtable.hbase2_x;
 import static com.google.cloud.bigtable.hbase2_x.ApiFutureUtils.toCompletableFuture;
 import static java.util.stream.Collectors.toList;
 
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.Filters;
@@ -32,6 +34,7 @@ import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.MoreExecutors;
 import io.grpc.stub.StreamObserver;
 import io.opencensus.common.Scope;
 import io.opencensus.trace.Span;
@@ -49,10 +52,13 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.AsyncTable;
 import org.apache.hadoop.hbase.client.AsyncTableRegionLocator;
+import org.apache.hadoop.hbase.client.CheckAndMutate;
+import org.apache.hadoop.hbase.client.CheckAndMutateResult;
 import org.apache.hadoop.hbase.client.CommonConnection;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -127,6 +133,20 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @Override
   public CheckAndMutateWithFilterBuilder checkAndMutate(byte[] bytes, Filter filter) {
     throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
+  public CompletableFuture<CheckAndMutateResult> checkAndMutate(CheckAndMutate checkAndMutate) {
+    // TODO: implement this
+    return ApiFutureUtils.failedFuture(new UnsupportedOperationException("not implemented"));
+  }
+
+  @Override
+  public List<CompletableFuture<CheckAndMutateResult>> checkAndMutate(List<CheckAndMutate> list) {
+    // TODO: implement this
+    CompletableFuture<CheckAndMutateResult> f =
+        ApiFutureUtils.failedFuture(new UnsupportedOperationException("not implemented"));
+    return list.stream().map((ignored) -> f).collect(toList());
   }
 
   static final class CheckAndMutateBuilderImpl implements CheckAndMutateBuilder {
@@ -318,8 +338,22 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
   /** {@inheritDoc} */
   @Override
-  public CompletableFuture<Void> mutateRow(RowMutations rowMutations) {
-    return toCompletableFuture(clientWrapper.mutateRowAsync(hbaseAdapter.adapt(rowMutations)));
+  public CompletableFuture<Result> mutateRow(RowMutations rowMutations) {
+    // HBase 2.4 introduced the ability to add Appends and Increments to RowMutations
+    // However Bigtable only supports individual Increments and Appends via ReadModifyWrite.
+    // So as a best effort support that usecase here. If there are more mutations that contain
+    // then the HbaseRqeuestAdapter will throw an error.
+    if (rowMutations.getMutations().size() == 1) {
+      Mutation onlyMutation = rowMutations.getMutations().get(0);
+      if (onlyMutation instanceof Append) {
+        return append((Append) onlyMutation);
+      } else if (onlyMutation instanceof Increment) {
+        return increment((Increment) onlyMutation);
+      }
+    }
+    ApiFuture<Void> f = clientWrapper.mutateRowAsync(hbaseAdapter.adapt(rowMutations));
+    return toCompletableFuture(
+        ApiFutures.transform(f, (ignored) -> null, MoreExecutors.directExecutor()));
   }
 
   /** {@inheritDoc} */

@@ -110,6 +110,18 @@ limitations under the License.
     </dependency>
   </dependencies>
   <build>
+    <pluginManagement>
+      <plugins>
+        <!-- Don't care about clirr, we are just implementing HBase apis -->
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>clirr-maven-plugin</artifactId>
+          <configuration>
+            <skip>true</skip>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
     <plugins>
       <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>

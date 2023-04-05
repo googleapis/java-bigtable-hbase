@@ -757,7 +757,7 @@ public class TestMirroringAsyncTable {
     when(primaryBuilder.thenMutate(mutations)).thenReturn(primaryFuture);
 
     IOException ioe = new IOException("expected");
-    CompletableFuture<Void> exceptionalFuture = new CompletableFuture<>();
+    CompletableFuture<Result> exceptionalFuture = new CompletableFuture<>();
     exceptionalFuture.completeExceptionally(ioe);
     when(secondaryTable.mutateRow(mutations)).thenReturn(exceptionalFuture);
 
@@ -841,12 +841,12 @@ public class TestMirroringAsyncTable {
   @Test
   public void testMutateRow() throws ExecutionException, InterruptedException {
     RowMutations mutations = new RowMutations("r1".getBytes());
-    CompletableFuture<Void> primaryFuture = new CompletableFuture<>();
-    CompletableFuture<Void> secondaryFuture = new CompletableFuture<>();
+    CompletableFuture<Result> primaryFuture = new CompletableFuture<>();
+    CompletableFuture<Result> secondaryFuture = new CompletableFuture<>();
     when(primaryTable.mutateRow(mutations)).thenReturn(primaryFuture);
     when(secondaryTable.mutateRow(mutations)).thenReturn(secondaryFuture);
 
-    CompletableFuture<Void> resultFuture = mirroringTable.mutateRow(mutations);
+    CompletableFuture<Result> resultFuture = mirroringTable.mutateRow(mutations);
     primaryFuture.complete(null);
     secondaryFuture.complete(null);
     resultFuture.get();

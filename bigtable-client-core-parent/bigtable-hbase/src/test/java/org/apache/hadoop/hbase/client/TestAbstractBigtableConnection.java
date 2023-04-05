@@ -30,9 +30,9 @@ import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.Version;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
-import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
 import com.google.cloud.bigtable.hbase.BigtableHBaseVersion;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.BigtableTableCore;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.test.helper.TestServerBuilder;
 import com.google.common.collect.ImmutableList;
@@ -262,7 +262,7 @@ public class TestAbstractBigtableConnection {
 
     @Override
     public Table getTable(TableName tableName, ExecutorService executorService) {
-      return new AbstractBigtableTable(this, createAdapter(tableName)) {};
+      return new BigtableTableCore(this, createAdapter(tableName));
     }
 
     @Override

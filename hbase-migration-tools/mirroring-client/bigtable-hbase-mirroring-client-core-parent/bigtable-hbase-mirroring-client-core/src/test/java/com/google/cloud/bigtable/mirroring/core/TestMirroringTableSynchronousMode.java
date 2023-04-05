@@ -83,7 +83,7 @@ public class TestMirroringTableSynchronousMode {
   private void setupTable(boolean concurrent) {
     this.mirroringTable =
         spy(
-            new MirroringTable(
+            new MirroringTableCore(
                 primaryTable,
                 secondaryTable,
                 executorServiceRule.executorService,

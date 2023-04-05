@@ -47,16 +47,7 @@ import org.junit.experimental.categories.Category;
 import org.junit.internal.ArrayComparisonFailure;
 
 public abstract class AbstractTestBatch extends AbstractTest {
-  /**
-   * Requirement 8.1 - Batch performs a collection of Deletes, Gets, Puts, Increments, and Appends
-   * on multiple rows, returning results in the same order as the requested actions.
-   *
-   * <p>Requirement 8.5 - A batch() should return an empty Result object for successful put/delete
-   * operations and get operations with no matching column.
-   *
-   * <p>Requirement 8.6 - Get operations with matching values should return populated Result object
-   * in a batch() operation.
-   */
+
   @Test
   public void testBatchPutGetAndDelete() throws IOException, InterruptedException {
     testGetPutDelete(5, false);
@@ -268,7 +259,7 @@ public abstract class AbstractTestBatch extends AbstractTest {
     RowMutations rm = new RowMutations(rowKey);
     rm.add(put0);
     rm.add(put1);
-    table.mutateRow(rm);
+    mutateRow(table, rm);
 
     // Check
     Result result = table.get(new Get(rowKey));
@@ -288,7 +279,7 @@ public abstract class AbstractTestBatch extends AbstractTest {
     rm = new RowMutations(rowKey);
     rm.add(delete);
     rm.add(put2);
-    table.mutateRow(rm);
+    mutateRow(table, rm);
 
     // Check
     result = table.get(new Get(rowKey));
@@ -448,7 +439,7 @@ public abstract class AbstractTestBatch extends AbstractTest {
     Table table = getDefaultTable();
     Exception actualError = null;
     try {
-      table.mutateRow(null);
+      mutateRow(table, null);
     } catch (Exception ex) {
       actualError = ex;
     }
@@ -456,7 +447,7 @@ public abstract class AbstractTestBatch extends AbstractTest {
     actualError = null;
 
     try {
-      table.mutateRow(new RowMutations(new byte[0]));
+      mutateRow(table, new RowMutations(new byte[0]));
     } catch (Exception ex) {
       actualError = ex;
     }
@@ -465,7 +456,7 @@ public abstract class AbstractTestBatch extends AbstractTest {
 
     try {
       // Table#mutateRow ignores requests without Mutations.
-      table.mutateRow(new RowMutations(new byte[1]));
+      mutateRow(table, new RowMutations(new byte[1]));
     } catch (Exception ex) {
       actualError = ex;
     }
@@ -476,7 +467,7 @@ public abstract class AbstractTestBatch extends AbstractTest {
       RowMutations rowMutations = new RowMutations(rowKeyForPut);
       rowMutations.add(new Put(rowKeyForPut));
 
-      table.mutateRow(rowMutations);
+      mutateRow(table, rowMutations);
     } catch (Exception ex) {
       actualError = ex;
     }
@@ -489,7 +480,7 @@ public abstract class AbstractTestBatch extends AbstractTest {
       rowMutations.add(new Put(rowKeyWithNullQual).addColumn(COLUMN_FAMILY, null, null));
 
       // Table#mutateRow should add a row with null qualifier.
-      table.mutateRow(rowMutations);
+      mutateRow(table, rowMutations);
 
       assertTrue(table.exists(new Get(rowKeyWithNullQual)));
     } catch (Exception ex) {
@@ -503,7 +494,7 @@ public abstract class AbstractTestBatch extends AbstractTest {
       rowMutations.add(new Put(rowKeyWithEmptyQual).addColumn(COLUMN_FAMILY, new byte[0], null));
 
       // Table#mutateRow should add a row with an empty qualifier.
-      table.mutateRow(rowMutations);
+      mutateRow(table, rowMutations);
 
       assertTrue(table.exists(new Get(rowKeyWithEmptyQual)));
     } catch (Exception ex) {
@@ -517,7 +508,7 @@ public abstract class AbstractTestBatch extends AbstractTest {
       rowMutations.add(new Put(rowKeyWithNullValue).addColumn(COLUMN_FAMILY, "q".getBytes(), null));
 
       // Table#mutateRow should add a row with null values.
-      table.mutateRow(rowMutations);
+      mutateRow(table, rowMutations);
 
       assertTrue(table.exists(new Get(rowKeyWithNullValue)));
     } catch (Exception ex) {
@@ -528,4 +519,6 @@ public abstract class AbstractTestBatch extends AbstractTest {
 
   protected abstract void appendAdd(
       Append append, byte[] columnFamily, byte[] qualifier, byte[] value);
+
+  protected abstract void mutateRow(Table table, RowMutations rowMutations) throws IOException;
 }

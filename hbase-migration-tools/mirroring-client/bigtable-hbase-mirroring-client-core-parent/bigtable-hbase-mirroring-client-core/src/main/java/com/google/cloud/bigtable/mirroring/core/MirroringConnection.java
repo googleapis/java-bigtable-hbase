@@ -51,8 +51,8 @@ import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.security.User;
 
-public class MirroringConnection implements Connection {
-  private static final com.google.cloud.bigtable.mirroring.core.utils.Logger Log =
+public abstract class MirroringConnection implements Connection {
+  protected static final com.google.cloud.bigtable.mirroring.core.utils.Logger Log =
       new com.google.cloud.bigtable.mirroring.core.utils.Logger(MirroringConnection.class);
   protected final FlowController flowController;
   protected final ExecutorService executorService;
@@ -69,8 +69,8 @@ public class MirroringConnection implements Connection {
   protected final ReadSampler readSampler;
   private final FailedMutationLogger failedMutationLogger;
   protected final MirroringConfiguration configuration;
-  private final Connection primaryConnection;
-  private final Connection secondaryConnection;
+  protected final Connection primaryConnection;
+  protected final Connection secondaryConnection;
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final AtomicBoolean aborted = new AtomicBoolean(false);
 
@@ -214,38 +214,6 @@ public class MirroringConnection implements Connection {
   public Table getTable(TableName tableName) throws IOException {
     Log.trace("getTable(%s)", tableName);
     return this.getTable(tableName, this.executorService);
-  }
-
-  @Override
-  public Table getTable(final TableName tableName, ExecutorService executorService)
-      throws IOException {
-    try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.GET_TABLE)) {
-      Log.trace("getTable(%s, executorService)", tableName);
-      Table primaryTable =
-          this.mirroringTracer.spanFactory.wrapPrimaryOperation(
-              new CallableThrowingIOException<Table>() {
-                @Override
-                public Table call() throws IOException {
-                  return MirroringConnection.this.primaryConnection.getTable(tableName);
-                }
-              },
-              HBaseOperation.GET_TABLE);
-      Table secondaryTable = this.secondaryConnection.getTable(tableName);
-      return new MirroringTable(
-          primaryTable,
-          secondaryTable,
-          executorService,
-          this.mismatchDetector,
-          this.flowController,
-          this.secondaryWriteErrorConsumer,
-          this.readSampler,
-          this.timestamper,
-          this.performWritesConcurrently,
-          this.waitForSecondaryWrites,
-          this.mirroringTracer,
-          this.referenceCounter,
-          this.configuration.mirroringOptions.maxLoggedBinaryValueLength);
-    }
   }
 
   @Override

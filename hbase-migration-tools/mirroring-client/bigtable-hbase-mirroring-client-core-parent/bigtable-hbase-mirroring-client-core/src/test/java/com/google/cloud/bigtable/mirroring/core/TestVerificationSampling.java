@@ -86,7 +86,7 @@ public class TestVerificationSampling {
     setupFlowControllerMock(flowController);
     this.mirroringTable =
         spy(
-            new MirroringTable(
+            new MirroringTableCore(
                 primaryTable,
                 secondaryTable,
                 this.executorServiceRule.executorService,
