@@ -30,9 +30,9 @@ import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.Version;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
-import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
 import com.google.cloud.bigtable.hbase.BigtableHBaseVersion;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.BigtableTableCore;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.test.helper.TestServerBuilder;
 import com.google.common.collect.ImmutableList;
@@ -49,7 +49,6 @@ import io.grpc.internal.GrpcUtil;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -60,12 +59,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.security.User;
-import org.apache.hadoop.hbase.shaded.com.google.protobuf.Descriptors;
-import org.apache.hadoop.hbase.shaded.com.google.protobuf.Message;
-import org.apache.hadoop.hbase.shaded.com.google.protobuf.Service;
-import org.apache.hadoop.hbase.shaded.com.google.protobuf.ServiceException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.VersionInfo;
 import org.junit.After;
@@ -268,53 +262,7 @@ public class TestAbstractBigtableConnection {
 
     @Override
     public Table getTable(TableName tableName, ExecutorService executorService) {
-      return new AbstractBigtableTable(this, createAdapter(tableName)) {
-        @Override
-        public void mutateRow(RowMutations rowMutations) throws IOException {
-          mutateRowBase(rowMutations);
-        }
-
-        @Override
-        public <T extends Service, R> Map<byte[], R> coprocessorService(
-            Class<T> aClass, byte[] bytes, byte[] bytes1, Batch.Call<T, R> call)
-            throws ServiceException, Throwable {
-          throw new UnsupportedOperationException("not implemented");
-        }
-
-        @Override
-        public <T extends Service, R> void coprocessorService(
-            Class<T> aClass,
-            byte[] bytes,
-            byte[] bytes1,
-            Batch.Call<T, R> call,
-            Batch.Callback<R> callback)
-            throws ServiceException, Throwable {
-          throw new UnsupportedOperationException("not implemented");
-        }
-
-        @Override
-        public <R extends Message> Map<byte[], R> batchCoprocessorService(
-            Descriptors.MethodDescriptor methodDescriptor,
-            Message message,
-            byte[] bytes,
-            byte[] bytes1,
-            R r)
-            throws ServiceException, Throwable {
-          throw new UnsupportedOperationException("not implemented");
-        }
-
-        @Override
-        public <R extends Message> void batchCoprocessorService(
-            Descriptors.MethodDescriptor methodDescriptor,
-            Message message,
-            byte[] bytes,
-            byte[] bytes1,
-            R r,
-            Batch.Callback<R> callback)
-            throws ServiceException, Throwable {
-          throw new UnsupportedOperationException("not implemented");
-        }
-      };
+      return new BigtableTableCore(this, createAdapter(tableName));
     }
 
     @Override

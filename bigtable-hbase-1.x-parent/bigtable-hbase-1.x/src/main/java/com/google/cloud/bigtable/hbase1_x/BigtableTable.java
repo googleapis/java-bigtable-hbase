@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase1_x;
 
+import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
 import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import java.io.IOException;
@@ -23,12 +24,17 @@ import net.bytebuddy.ByteBuddy;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.RowMutations;
 
+@InternalApi
 public abstract class BigtableTable extends AbstractBigtableTable {
   public BigtableTable(
       AbstractBigtableConnection bigtableConnection, HBaseRequestAdapter hbaseAdapter) {
     super(bigtableConnection, hbaseAdapter);
   }
 
+  // Implement HBase 1 specific methods (in addition to what is implemented in
+  // AbstractBigtableTable)
+  // All other methods are implemented via bytecode generation to throw an error.
+  // This allows the majority of to be supported across multiple hbase-client versions.
   @Override
   public void mutateRow(RowMutations rowMutations) throws IOException {
     mutateRowBase(rowMutations);

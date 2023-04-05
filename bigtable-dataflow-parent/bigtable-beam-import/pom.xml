@@ -59,7 +59,8 @@ limitations under the License.
       </dependency>
 
       <!-- Version alignment -->
-      <!-- annotations -->
+      <!-- Mark all annotations as provided. They don't affect the runtime of the pipeline so
+      there is no need to try to version align them -->
       <dependency>
         <groupId>org.checkerframework</groupId>
         <artifactId>checker-qual</artifactId>

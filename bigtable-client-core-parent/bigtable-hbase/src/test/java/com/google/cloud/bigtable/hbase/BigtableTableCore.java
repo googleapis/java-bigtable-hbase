@@ -33,11 +33,17 @@ public class BigtableTableCore extends AbstractBigtableTable {
     super(bigtableConnection, hbaseAdapter);
   }
 
+  // Methods implemented in the child bigtable-hbase-1x and -2x modules.
+  // These methods are binary incompatible between major versions so must be implemented there.
+  // However to run basic tests, they have to be implemented here as well.
   @Override
   public void mutateRow(RowMutations rowMutations) throws IOException {
     mutateRowBase(rowMutations);
   }
 
+  // These methods are implemented via runtime bytecode generation in the actual client.
+  // This is necessary because these methods change between hbase-client and hbase-shaded-client.
+  // However to run basic tests, they have to be implemented here as well.
   @Override
   public <T extends Service, R> Map<byte[], R> coprocessorService(
       Class<T> aClass, byte[] bytes, byte[] bytes1, Batch.Call<T, R> call)

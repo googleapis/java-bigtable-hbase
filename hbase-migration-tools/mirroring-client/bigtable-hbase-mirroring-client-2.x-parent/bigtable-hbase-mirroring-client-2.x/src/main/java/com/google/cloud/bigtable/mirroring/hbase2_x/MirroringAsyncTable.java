@@ -540,6 +540,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
 
   @Override
   public CompletableFuture<CheckAndMutateResult> checkAndMutate(CheckAndMutate checkAndMutate) {
+    // TODO: implement this
     CompletableFuture<CheckAndMutateResult> f = new CompletableFuture<>();
     f.completeExceptionally(new UnsupportedOperationException("Not implemented"));
     return f;
@@ -547,6 +548,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
 
   @Override
   public List<CompletableFuture<CheckAndMutateResult>> checkAndMutate(List<CheckAndMutate> list) {
+    // TODO: implement this
     CompletableFuture<CheckAndMutateResult> f = new CompletableFuture<>();
     f.completeExceptionally(new UnsupportedOperationException("Not implemented"));
     return list.stream().map((ignored) -> f).collect(Collectors.toList());

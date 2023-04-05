@@ -339,6 +339,10 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   /** {@inheritDoc} */
   @Override
   public CompletableFuture<Result> mutateRow(RowMutations rowMutations) {
+    // HBase 2.4 introduced the ability to add Appends and Increments to RowMutations
+    // However Bigtable only supports individual Increments and Appends via ReadModifyWrite.
+    // So as a best effort support that usecase here. If there are more mutations that contain
+    // then the HbaseRqeuestAdapter will throw an error.
     if (rowMutations.getMutations().size() == 1) {
       Mutation onlyMutation = rowMutations.getMutations().get(0);
       if (onlyMutation instanceof Append) {

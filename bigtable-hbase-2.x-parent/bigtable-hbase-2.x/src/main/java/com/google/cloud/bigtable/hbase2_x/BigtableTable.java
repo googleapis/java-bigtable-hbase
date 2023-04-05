@@ -285,7 +285,7 @@ public class BigtableTable extends AbstractBigtableTable {
     if (dynamicClass != null) {
       return dynamicClass;
     }
-    // default Result mutateRow(RowMutations rm) throws IOException {
+
     dynamicClass =
         new ByteBuddy()
             .subclass(BigtableTable.class)
