@@ -48,7 +48,7 @@ limitations under the License.
             <artifactId>maven-failsafe-plugin</artifactId>
             <executions>
               <execution>
-                <id>integration-tests</id>
+                <id>cloud-it</id>
                 <goals>
                   <goal>integration-test</goal>
                   <goal>verify</goal>
@@ -57,7 +57,7 @@ limitations under the License.
                   <includes>
                     <include>**/IntegrationTests.java</include>
                   </includes>
-                  <excludedGroups>KnownGap</excludedGroups>
+                  <excludedGroups>com.google.cloud.bigtable.hbase.KnownGap</excludedGroups>
 
                   <redirectTestOutputToFile>true</redirectTestOutputToFile>
 
@@ -95,7 +95,7 @@ limitations under the License.
             <artifactId>maven-failsafe-plugin</artifactId>
             <executions>
               <execution>
-                <id>local-hbase-cluster-test</id>
+                <id>minicluster-it</id>
                 <goals>
                   <goal>integration-test</goal>
                   <goal>verify</goal>
@@ -104,7 +104,7 @@ limitations under the License.
                   <includes>
                     <include>**/IntegrationTests.java</include>
                   </includes>
-                  <excludedGroups>KnownHBaseGap</excludedGroups>
+                  <excludedGroups>com.google.cloud.bigtable.hbase.KnownHBaseGap</excludedGroups>
                   <forkedProcessTimeoutInSeconds>${test.timeout}</forkedProcessTimeoutInSeconds>
                   <!-- Make sure to fail the build when the suite fails to initialize -->
                   <failIfNoTests>true</failIfNoTests>
@@ -131,7 +131,7 @@ limitations under the License.
             <artifactId>maven-failsafe-plugin</artifactId>
             <executions>
               <execution>
-                <id>emulator-integration-test</id>
+                <id>emulator-it</id>
                 <goals>
                   <goal>integration-test</goal>
                   <goal>verify</goal>
@@ -140,7 +140,7 @@ limitations under the License.
                   <includes>
                     <include>**/IntegrationTests.java</include>
                   </includes>
-                  <excludedGroups>KnownEmulatorGap,KnownGap</excludedGroups>
+                  <excludedGroups>com.google.cloud.bigtable.hbase.KnownGap,com.google.cloud.bigtable.hbase.KnownEmulatorGap</excludedGroups>
                   <systemPropertyVariables>
                     <google.bigtable.test_env>emulator</google.bigtable.test_env>
                   </systemPropertyVariables>
@@ -231,6 +231,11 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-bigtable</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-bigtable-emulator-core</artifactId>
       <scope>test</scope>
     </dependency>
 

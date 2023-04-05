@@ -268,6 +268,21 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+
+        <configuration>
+          <forkCount>1</forkCount>
+          <systemPropertyVariables>
+            <!-- Copy maven properties to system properties -->
+            <google.bigtable.project.id>${google.bigtable.project.id}</google.bigtable.project.id>
+            <google.bigtable.instance.id>${google.bigtable.instance.id}</google.bigtable.instance.id>
+            <google.dataflow.work>${google.dataflow.work}</google.dataflow.work>
+            <region>${region}</region>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
 
       <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>

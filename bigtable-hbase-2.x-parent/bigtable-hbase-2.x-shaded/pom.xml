@@ -174,21 +174,6 @@ limitations under the License.
 
     <plugins>
       <plugin>
-        <groupId>com.google.cloud.bigtable.test</groupId>
-        <artifactId>bigtable-build-helper</artifactId>
-        <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
-
-        <executions>
-          <execution>
-            <id>verify-provided</id>
-            <goals>
-              <goal>verify-provided-deps</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>license-maven-plugin</artifactId>
         <version>2.0.0</version>
@@ -395,6 +380,13 @@ limitations under the License.
         <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
 
         <executions>
+          <execution>
+            <id>verify-provided</id>
+            <goals>
+              <goal>verify-provided-deps</goal>
+            </goals>
+          </execution>
+
           <execution>
             <id>verify-shaded-jar-entries</id>
             <phase>verify</phase>

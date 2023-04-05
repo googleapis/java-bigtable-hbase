@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.bigtable.hbase.AbstractTestSnapshot;
+import com.google.cloud.bigtable.hbase.KnownEmulatorGap;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -46,10 +47,12 @@ import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
+@Category(KnownEmulatorGap.class)
 public class TestAsyncSnapshots extends AbstractTestSnapshot {
 
   @Before

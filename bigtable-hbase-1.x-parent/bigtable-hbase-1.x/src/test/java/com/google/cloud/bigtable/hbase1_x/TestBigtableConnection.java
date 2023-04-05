@@ -98,7 +98,7 @@ public class TestBigtableConnection {
         new BigtableConnection(configuration, false, Executors.newSingleThreadExecutor(), null)) {
 
       assertTrue(hbaseConnection.getAdmin() instanceof BigtableAdmin);
-      assertTrue(hbaseConnection.getTable(TABLE_NAME) instanceof BigtableTable);
+      assertTrue(hbaseConnection.getTable(TABLE_NAME) instanceof AbstractBigtableTable);
     }
   }
 

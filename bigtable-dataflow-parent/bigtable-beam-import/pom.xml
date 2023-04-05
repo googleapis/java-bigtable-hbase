@@ -579,6 +579,14 @@ limitations under the License.
                   <forkCount>1</forkCount>
                   <useSystemClassLoader>false</useSystemClassLoader>
 
+                  <systemPropertyVariables>
+                    <!-- Copy maven properties to system properties -->
+                    <google.bigtable.project.id>${google.bigtable.project.id}</google.bigtable.project.id>
+                    <google.bigtable.instance.id>${google.bigtable.instance.id}</google.bigtable.instance.id>
+                    <google.dataflow.work>${google.dataflow.work}</google.dataflow.work>
+                    <region>${region}</region>
+                  </systemPropertyVariables>
+
                   <!-- Run tests in parallel -->
                   <parallel>all</parallel>
                   <threadCount>10</threadCount>
