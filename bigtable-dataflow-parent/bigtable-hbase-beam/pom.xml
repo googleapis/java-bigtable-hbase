@@ -65,7 +65,7 @@ limitations under the License.
 
     <!-- Bigtable Group: ordering doesn't matter since everything is shaded -->
     <dependency>
-      <groupId>${project.groupId}</groupId>
+      <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-shaded</artifactId>
       <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <exclusions>
@@ -74,11 +74,11 @@ limitations under the License.
         the dependencies. Note that this works in conjunction with the manually promoted dependencies
         in bigtable-hbase-shaded/pom.xml -->
         <exclusion>
-          <groupId>${project.groupId}</groupId>
+          <groupId>com.google.cloud.bigtable</groupId>
           <artifactId>bigtable-hbase-1.x</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>${project.groupId}</groupId>
+          <groupId>com.google.cloud.bigtable</groupId>
           <artifactId>bigtable-hbase-2.x</artifactId>
         </exclusion>
         <exclusion>

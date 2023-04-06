@@ -67,11 +67,11 @@ limitations under the License.
       in bigtable-hbase-shaded/pom.xml -->
       <exclusions>
         <exclusion>
-          <groupId>${project.groupId}</groupId>
+          <groupId>com.google.cloud.bigtable</groupId>
           <artifactId>bigtable-hbase-1.x</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>${project.groupId}</groupId>
+          <groupId>com.google.cloud.bigtable</groupId>
           <artifactId>bigtable-hbase-2.x</artifactId>
         </exclusion>
         <exclusion>
