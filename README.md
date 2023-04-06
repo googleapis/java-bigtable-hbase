@@ -1,26 +1,31 @@
-# [Google Cloud Bigtable HBase client for Java](https://cloud.google.com/bigtable/docs/bigtable-and-hbase)
+# [Google Cloud Bigtable HBase adapter](https://cloud.google.com/bigtable/docs/bigtable-and-hbase)
 
 [![Maven][maven-hbase-shield]][maven-hbase-client-maven-search]
 [![Stack Overflow][stackoverflow-shield]][stackoverflow-link]
 
-[Google Cloud Bigtable](https://cloud.google.com/bigtable/) is Google's NoSQL
-Big Data database service. It's the same database that powers many core Google
-services, including Search, Analytics, Maps, and Gmail.
+Libraries and tools for interoperability between Apache HBase and Google Cloud Bigtable:
 
-Bigtable is designed to handle massive workloads at consistent low latency and
-high throughput, so it's a great choice for both operational and analytical
-applications, including IoT, user analytics, and financial data analysis.
+* client adapters: allow applications written for HBase to run against Cloud Bigtable with minimal changes
+* data migration pipelines: allow customers to use either Map/Reduce or Dataflow to migrate data from HBase to/from Cloud Bigtable
+* dual write libraries: allow customers to replicate data from HBase to Cloud Bigtable
 
-Bigtable provisions and scales to hundreds of petabytes automatically, and can
-smoothly handle millions of operations per second. Changes to the deployment
-configuration are immediate, so there is no downtime during reconfiguration.
+This project aims to support HBase version 1.0 - 2.3.6. Due to binary incompatibilities between major HBase versions,
+support for each major version is provided by a different artifact (ie HBase 1.0 - 1.7.2 is supported by bigtable-hbase-1.x).
+To avoid classpath conflicts, each artifact has a -shaded variant that bundles and relocates all  the dependencies in an uber jar.
+All HBase and Hadoop dependencies must be provided by the end user's application.
 
-Bigtable [integrates easily][integrations] with popular Big Data tools like
-Hadoop, as well as Google Cloud Platform products like Cloud Dataflow and
-Dataproc. Plus, Bigtable supports the open-source, industry-standard HBase API,
-which makes it easy for development teams to get started.
+## Summary of tools
 
-**Note**: These artifacts are meant to wrap HBase over the Bigtable API. If you are looking for a Java client to access Bigtable APIs directly, please use [google-cloud-bigtable][google-cloud-bigtable].
+* bigtable-hbase-1.x
+  * Bigtable adapter for HBase 1.0-1.7.3
+  * A mapreduce jobs for importing/exporting Sequence and HBase Snapshot files to/from Cloud Bigtable
+  * A tool to copy HBase schemas to be Cloud Bigtable
+* bigtable-hbase-2.x
+   * Bigtable adapter for HBase 2.0-2.3.6
+* hbase-migration-tools
+  * bigtable-hbase-replication - library to enable replication from HBase Region servers to Cloud Bigtable
+  * mirroring-client - a dual write client that writes to both HBase and Bigtable
+
 
 ## Project setup, installation, and configuration
 
@@ -29,37 +34,138 @@ which makes it easy for development teams to get started.
 * [Create a Cloud Bigtable instance](https://cloud.google.com/bigtable/docs/creating-instance)
 * **Recommended**: [Install the Google Cloud SDK for Cloud Bigtable](https://cloud.google.com/bigtable/docs/installing-cloud-sdk)
 
-### Using the Java client
+### Installation
 
-* Add the appropriate [Cloud Bigtable artifact dependencies](http://mvnrepository.com/artifact/com.google.cloud.bigtable) to your [Maven project](https://cloud.google.com/bigtable/docs/using-maven).
-  * `bigtable-hbase-1.x`: use for standalone applications where you are in control of your dependencies.
-  * `bigtable-hbase-1.x-hadoop`: use in hadoop environments.
-  * `bigtable-hbase-1.x-mapreduce`: use for map/reduce utilities.
-  * `bigtable-hbase-1.x-shaded`: use in environments (other than hadoop) that require older versions of protobuf, guava, etc.  
-  * `bigtable-hbase-2.x`: use for standalone applications where you are in control of your dependencies.  This includes an HBase async client.
-  * `bigtable-hbase-2.x-hadoop`: use in hadoop environments.
-  * `bigtable-hbase-2.x-shaded`: use in environments (other than hadoop) that require older versions of protobuf, guava, etc.  
+There are 2 ways to install the bigtable-hbase adapter:
 
-[//]: # ({x-version-update-start:bigtable-client-parent:released})
-  Maven:
-  ```xml
-  <dependency>
-    <groupId>com.google.cloud.bigtable</groupId>
-    <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>2.6.5</version>
-  </dependency>
-  ```
+#### Option 1:
+1. Declare a dependency on bigtable-hbase:
+   For applications using hbase-client or applications that want avoid dependency conflict please use the -shaded
+   variants in addition to your existing hbase-client dependency:
+    <!-- {x-version-update-start:bigtable-client-parent:released} -->
 
-  Gradle:
-  ```Groovy
-  compile 'com.google.cloud.bigtable:bigtable-hbase-1.x:2.6.5'
-  ```
+    ```xml
+    Maven:
+      ```xml
+      <!-- Existing HBase dependency -->
+      <dependency>
+        <groupId>org.apache.hbase</groupId> 
+        <artifactId>hbase-client</artifactId>
+        <version>YOUR VERSION OF HBASE</version>
+      </dependency>
+      <!-- Added bigtable dependency -->
+      <dependency>
+        <groupId>com.google.cloud.bigtable</groupId>
+        <!-- Or bigtable-hbase-1.x-shaded for HBase < 2.0 --> 
+        <artifactId>bigtable-hbase-2.x-shaded</artifactId>
+        <version>3.0.0</version>
+      </dependency>
+      ```
+    
+    Gradle:
+      ```Groovy
+      // your existing HBase dependency
+      compile 'org.apache.hbase:hbase-client:YOUR VERSION OF HBASE'
+      // Added Bigtable dependency
+      // Or bigtable-hbase-1.x-shaded for HBase < 2.0
+      compile 'com.google.cloud.bigtable:bigtable-hbase-2.x-shaded:3.0.0'
+      ```
+    
+    SBT:
+    ```Scala
+    // your existing HBase dependency
+    libraryDependencies += "org.apache.hbase" % "hbase-client" % YOUR VERSION OF HBASE
+    // Added Bigtable dependency
+    // Or bigtable-hbase-1.x-shaded for HBase < 2.0 
+    libraryDependencies += "com.google.cloud.bigtable" % "bigtable-hbase-2.x" % "3.0.0"
+    ```
+   <!-- {x-version-update-end} -->
 
-  SBT:
-  ```Scala
-  libraryDependencies += "com.google.cloud.bigtable" % "bigtable-hbase-1.x" % "2.6.5"
-  ```
-[//]: # ({x-version-update-end})
+2. Change your application to create the HBase Connection to
+    ```java
+    // Use Bigtable helper to update the HBase configuration object
+    Configuration conf = BigtableConfiguration.configure("YOUR PROJECT ID", "YOUR INSTANCE ID");
+    // Then create connections as normal using the COnfiguration
+    Connection newConnection = ConnectionFactory.createConnection(conf);
+    AsyncConnection newAsyncConnection = ConnectionFactory.createAsyncConnection(conf);
+    
+    ```
+#### Option 2:
+
+1. Download the latest -shaded.jar from maven central for your HBase installation:
+   <!-- {x-version-start:bigtable-client-parent:released} -->
+  *  [bigtable-hbase-1.x-shaded](https://repo1.maven.org/maven2/com/google/cloud/bigtable/bigtable-hbase-1.x-shaded/3.0.0/) for HBase < 2.0
+  * [bigtable-hbase-2.x-shaded](https://repo1.maven.org/maven2/com/google/cloud/bigtable/bigtable-hbase-2.x-shaded/3.0.0/) for HBase < 2.4
+  <!-- {x-version-update-end} -->
+2. Copy the jar into your HBASE_CLASSPATH (ie. hbase-installation/lib)
+3. Update your hbase-site.xml:
+   For HBase < 2.0:
+   ```xml
+   <property>
+        <name>google.bigtable.project.id</name>
+        <value>YOUR_GOOGLE_CLOUD_PROJECT_ID</value>
+    </property>
+    <property>
+        <name>google.bigtable.instance.id</name>
+        <value>YOUR_CLOUD_BIGTABLE_INSTANCE_ID</value>
+    </property>
+   
+    <property>
+        <name>hbase.client.connection.impl</name>
+        <value>com.google.cloud.bigtable.hbase1_x.BigtableConnection</value>
+   </property>
+   ```
+   For HBase < 2.3:
+   ```xml
+   <property>
+        <name>google.bigtable.project.id</name>
+        <value>YOUR_GOOGLE_CLOUD_PROJECT_ID</value>
+   </property>
+   <property>
+        <name>google.bigtable.instance.id</name>
+        <value>YOUR_CLOUD_BIGTABLE_INSTANCE_ID</value>
+   </property>
+
+   <property>
+     <name>hbase.client.connection.impl</name>
+     <value>com.google.cloud.bigtable.hbase2_x.BigtableConnection</value>
+   </property>
+   <property>
+     <name>hbase.client.async.connection.impl</name>
+     <value>org.apache.hadoop.hbase.client.BigtableAsyncConnection</value>
+   </property>
+   <property>
+     <name>hbase.client.registry.impl</name>
+     <value>org.apache.hadoop.hbase.client.BigtableAsyncRegistry</value>
+   </property>
+   ```
+   For HBase < 2.4:
+   ```xml
+   <property>
+        <name>google.bigtable.project.id</name>
+        <value>YOUR_GOOGLE_CLOUD_PROJECT_ID</value>
+   </property>
+   <property>
+        <name>google.bigtable.instance.id</name>
+        <value>YOUR_CLOUD_BIGTABLE_INSTANCE_ID</value>
+   </property>
+
+   <property>
+     <name>hbase.client.connection.impl</name>
+     <value>com.google.cloud.bigtable.hbase2_x.BigtableConnection</value>
+   </property>
+   <property>
+     <name>hbase.client.async.connection.impl</name>
+     <value>org.apache.hadoop.hbase.client.BigtableAsyncConnection</value>
+   </property>
+   <property>
+     <name>hbase.client.registry.impl</name>
+     <value>org.apache.hadoop.hbase.client.BigtableConnectionRegistry</value>
+   </property>
+   ```
+  
+
+
 
 * Refer to the [Connecting to Bigtable](https://cloud.google.com/bigtable/docs/hbase-connecting) documentation for detailed demonstrations of how to configure the properties to connect to Cloud Bigtable.
 
@@ -73,215 +179,16 @@ This feature is available once you upgrade to version 2.6.4 and above. Follow th
 
 Note: Beam / Dataflow integration is currently not supported.
 
-## OpenCensus Integration
+## Client Metrics
 
-### Tracing
-
-The code example below shows how to enable tracing. For more details, see [here](https://cloud.google.com/community/tutorials/bigtable-oc).
-
-##### Maven Setup
-
-If you are _not_ using the shaded Bigtable HBase Client artifact, you need to define the OpenCensus dependencies.
-
-[//]: # ({x-version-update-start:bigtable-client-parent:released})
-```xml
-<!-- OpenCensus dependencies -->
-<dependency>
-    <groupId>com.google.cloud.bigtable</groupId>
-    <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>2.6.5</version>
-</dependency>
-```
-[//]: # ({x-version-update-end})
-```xml
-<dependency>
-    <groupId>io.opencensus</groupId>
-    <artifactId>opencensus-impl</artifactId>
-    <version>0.31.1</version>
-    <scope>runtime</scope>
-</dependency>
-<dependency>
-    <groupId>io.opencensus</groupId>
-    <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
-    <version>0.31.1</version>
-    <exclusions>
-        <exclusion>
-            <groupId>io.grpc</groupId>
-            <artifactId>*</artifactId>
-        </exclusion>
-        <exclusion>
-            <groupId>com.google.auth</groupId>
-            <artifactId>*</artifactId>
-        </exclusion>
-    </exclusions>
-</dependency>
-```
-
-If you _are_ using the shaded Bigtable HBase Client artifact, then the OpenCensus dependencies are embedded in the
-shaded artifact; i.e. nothing additional for you to do.
-
-[//]: # ({x-version-update-start:bigtable-client-parent:released})
-```xml
-<!-- OpenCensus dependencies -->
-<dependency>
-    <groupId>com.google.cloud.bigtable</groupId>
-    <artifactId>bigtable-hbase-1.x-shaded</artifactId>
-    <version>2.6.5</version>
-</dependency>
-```
-[//]: # ({x-version-update-end})
-
-##### Java Example
+To enable free built-in clientside metrics:
 
 ```java
-// For the non-shaded client, remove the package prefix "com.google.bigtable.repackaged."
-import com.google.bigtable.repackaged.io.opencensus.exporter.trace.stackdriver.StackdriverTraceConfiguration;
-import com.google.bigtable.repackaged.io.opencensus.exporter.trace.stackdriver.StackdriverTraceExporter;
-import com.google.bigtable.repackaged.io.opencensus.trace.Tracing;
-import com.google.bigtable.repackaged.io.opencensus.trace.samplers.Samplers;
-
-import java.io.IOException;
-
-public class OpenCensusExample {
-    String projectId = "your-project-id";
-
-    void setupTracing() throws Exception {
-        // Setup tracing.
-        StackdriverTraceExporter.createAndRegister(
-                StackdriverTraceConfiguration.builder()
-                        .setProjectId(projectId)
-                        .build()
-        );
-        Tracing.getTraceConfig().updateActiveTraceParams(
-                Tracing.getTraceConfig().getActiveTraceParams().toBuilder()
-                        // Adjust the sampling rate as you see fit.
-                        .setSampler(Samplers.probabilitySampler(0.01))
-                        .build()
-        );
-    }
-}
+BigtableConfiguration.enableBuiltinMetrics();
 ```
 
-
-### Stats
-
----
-Note: We recommend enabling client side built-in metrics if you want to view your metrics on cloud monitoring.
-This integration is only for exporting the metrics to a third party dashboard.
----
-
-The code example below shows how to enable metrics. For more details, see the [gRPC Java Guide](https://opencensus.io/guides/grpc/java/).
-
-##### Maven Setup
-
-If you are _not_ using the shaded Bigtable HBase Client artifact, you need to define the OpenCensus dependencies.
-
-[//]: # ({x-version-update-start:bigtable-client-parent:released})
-```xml
-<!-- OpenCensus dependencies -->
-<dependency>
-    <groupId>com.google.cloud.bigtable</groupId>
-    <artifactId>bigtable-hbase-1.x</artifactId>
-    <version>2.6.5</version>
-</dependency>
-```
-[//]: # ({x-version-update-end})
-```xml
-<dependency>
-    <groupId>io.opencensus</groupId>
-    <artifactId>opencensus-impl</artifactId>
-    <version>0.31.1</version>
-    <scope>runtime</scope>
-</dependency>
-<dependency>
-    <groupId>io.opencensus</groupId>
-    <artifactId>opencensus-exporter-stats-stackdriver</artifactId>
-    <version>0.31.1</version>
-    <exclusions>
-        <exclusion>
-            <groupId>io.grpc</groupId>
-            <artifactId>*</artifactId>
-        </exclusion>
-        <exclusion>
-            <groupId>com.google.auth</groupId>
-            <artifactId>*</artifactId>
-        </exclusion>
-    </exclusions>
-</dependency>
-```
-
-If you _are_ using the shaded Bigtable HBase Client artifact, then the OpenCensus dependencies are embedded in the
-shaded artifact; i.e. nothing additional for you to do.
-
-```xml
-<!-- OpenCensus dependencies -->
-<dependency>
-    <groupId>com.google.cloud.bigtable</groupId>
-    <artifactId>bigtable-hbase-1.x-shaded</artifactId>
-    <version>2.6.5</version>
-</dependency>
-```
-[//]: # ({x-version-update-end})
-
-##### Java Example
-```java
-// For the non-shaded client, remove the package prefix "com.google.bigtable.repackaged."
-import com.google.bigtable.repackaged.io.opencensus.contrib.grpc.metrics.RpcViews;
-import com.google.bigtable.repackaged.io.opencensus.exporter.stats.stackdriver.StackdriverStatsConfiguration;
-import com.google.bigtable.repackaged.io.opencensus.exporter.stats.stackdriver.StackdriverStatsExporter;
-
-import java.io.IOException;
-
-public class OpenCensusExample {
-    String projectId = "your-project-id";
-
-    void setupStatsExport() throws Exception {
-        // Option 1: Automatic Configuration (from GCP Resources only):
-        // If you are running from a GCP Resource (e.g. a GCE VM), the Stackdriver metrics are automatically
-        // configured to upload to your resource.
-        // For examples of monitored resources, see here: https://cloud.google.com/monitoring/api/resources
-        StackdriverStatsExporter.createAndRegister();
-
-        // Then register your gRPC views in OpenCensus.
-        RpcViews.registerClientGrpcViews();
-
-
-        // Option 2: Manual Configuration
-        // If you are not running from a GCP Resource (e.g. if you are running on-prem), then you should
-        // configure the monitored resource yourself.
-        // Use the code snippet below as a starting example.
-        // For examples of monitored resources, see here: https://cloud.google.com/monitoring/api/resources
-        StackdriverStatsExporter.createAndRegister(
-                StackdriverStatsConfiguration.builder()
-                        .setProjectId(projectId)
-                        // This example uses generic_node as the MonitoredResource, with your host name as the node ID.
-                        .setMonitoredResource(MonitoredResource.newBuilder()
-                                .setType("generic_node")
-                                .putLabels("project_id", projectId)
-                                .putLabels("location", "us-west1-b")  // Specify the region in which your service is running (e.g. us-west1-b). 
-                                .putLabels("namespace", "anyNamespaceYouChoose")
-                                .putLabels("node_id", InetAddress.getLocalHost().getHostName())  // Specify any node you choose (e.g. the local hostname).
-                                .build())
-                        .build()
-        );
-        
-        // Then register your gRPC views in OpenCensus.
-        RpcViews.registerClientGrpcViews();
-    }
-}
-```
-
-##### Viewing Your Metrics in Google Cloud Console
-
-The above steps will expose Bigtable's gRPC metrics under the
-custom.googleapis.com/opencensus/grpc.io/client prefix.
-
-Follow [these instructions](https://opencensus.io/guides/grpc/java/) for viewing the metrics in
-Google Cloud Console.
-
-Be sure to choose your Resource Type as the one you defined in your Stackdriver configuration in
-the code.
-
+You can find a description of all the metrics here:
+https://cloud.google.com/bigtable/docs/client-side-metrics-descriptions
 
 
 ## Questions and discussions
@@ -328,8 +235,6 @@ Java is a registered trademark of Oracle and/or its affiliates.
 [maven-hbase-client-maven-search]: http://search.maven.org/#search%7Cga%7C1%7Cg:com.google.cloud.bigtable
 [stackoverflow-shield]: https://img.shields.io/badge/stackoverflow-google--cloud--bigtable-blue.svg
 [stackoverflow-link]: http://stackoverflow.com/search?q=[google-cloud-bigtable]
-[integrations]: https://cloud.google.com/bigtable/docs/integrations
-[maven-examples-repo]: https://github.com/GoogleCloudPlatform/cloud-bigtable-examples
 [google-cloud-bigtable-discuss]: https://groups.google.com/group/google-cloud-bigtable-discuss
 [google-cloud-bigtable-announce]: https://groups.google.com/group/google-cloud-bigtable-announce
 [google-cloud-bigtable-emulator]: https://github.com/googleapis/google-cloud-java/tree/main/google-cloud-testing/google-cloud-bigtable-emulator
