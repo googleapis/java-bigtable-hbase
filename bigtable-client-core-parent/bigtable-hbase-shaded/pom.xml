@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>bigtable-client-core-parent</artifactId>
+    <groupId>com.google.cloud.bigtable</groupId>
+    <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>bigtable-hbase-shaded</artifactId>
+
+  <properties>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.google.cloud</groupId>
+        <artifactId>google-cloud-bigtable-bom</artifactId>
+        <version>${bigtable.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.google.cloud</groupId>
+        <artifactId>google-cloud-bigtable-deps-bom</artifactId>
+        <version>${bigtable.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- Mark conscrypt as provided since it can't be relocated and is optional -->
+      <dependency>
+        <groupId>org.conscrypt</groupId>
+        <artifactId>conscrypt-openjdk-uber</artifactId>
+        <scope>provided</scope>
+      </dependency>
+
+      <!-- Annotation jars can be marked as provided -->
+      <dependency>
+        <groupId>org.checkerframework</groupId>
+        <artifactId>checker-qual</artifactId>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.google.errorprone</groupId>
+        <artifactId>error_prone_annotations</artifactId>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>javax.annotation</groupId>
+        <artifactId>javax.annotation-api</artifactId>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>jsr305</artifactId>
+        <scope>provided</scope>
+      </dependency>
+
+      <!-- Fix mismatched scopes: maven will pick the closest artifact version,
+      but apply the highest scope to it -->
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>commons-logging</groupId>
+        <artifactId>commons-logging</artifactId>
+        <scope>provided</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-hbase-1.x</artifactId>
+      <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-hbase-2.x</artifactId>
+      <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    </dependency>
+
+
+    <!-- Since opencensus-api is a transitive dep, we have to shade its impl as well.
+    Otherwise the -api will be permanently severed from the impl and exporters -->
+    <dependency>
+      <groupId>io.opencensus</groupId>
+      <artifactId>opencensus-impl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.opencensus</groupId>
+      <artifactId>opencensus-contrib-zpages</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.opencensus</groupId>
+      <artifactId>opencensus-exporter-stats-stackdriver</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.opencensus</groupId>
+      <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.opencensus</groupId>
+      <artifactId>opencensus-exporter-metrics-ocagent</artifactId>
+      <version>${opencensus.version}</version>
+      <exclusions>
+        <!-- we already use netty-shaded -->
+        <exclusion>
+          <groupId>io.grpc</groupId>
+          <artifactId>grpc-netty</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>io.opencensus</groupId>
+      <artifactId>opencensus-exporter-trace-ocagent</artifactId>
+      <version>${opencensus.version}</version>
+      <exclusions>
+        <!-- we already use netty-shaded -->
+        <exclusion>
+          <groupId>io.grpc</groupId>
+          <artifactId>grpc-netty</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <!-- grpc-census needed alongside opencensus-exporter-stats-stackdriver for GRPC stats exports to work -->
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-census</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <!-- skip for shaded jar-->
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>clirr-maven-plugin</artifactId>
+          <configuration>
+            <skip>true</skip>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <shadedArtifactAttached>false</shadedArtifactAttached>
+              <createDependencyReducedPom>true</createDependencyReducedPom>
+              <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                    <exclude>META-INF/DEPENDENCIES</exclude>
+                    <exclude>META-INF/versions/9/module-info.class</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+              <transformers>
+                <transformer
+                  implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
+                <transformer
+                  implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer"/>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+              </transformers>
+              <relocations>
+                <relocation>
+                  <pattern>com.google</pattern>
+                  <shadedPattern>
+                    com.google.bigtable.repackaged.com.google
+                  </shadedPattern>
+                  <excludes>
+                    <!-- don't shade our public hbase implementation. This includes com.google.cloud.bigtable.hbase.*
+                     and references to com.google.cloud.bigtable.hbase1_x in the version specific jars.
+                    -->
+                    <exclude>com.google.cloud.bigtable.hbase*.**</exclude>
+                    <exclude>com.google.cloud.bigtable.metrics.**</exclude>
+
+                    <!-- in case maven is called with overlapping goals (ie. mvn install verify),
+                    avoid double relocation -->
+                    <exclude>com.google.bigtable.repackaged.**</exclude>
+                  </excludes>
+                </relocation>
+
+                <relocation>
+                  <pattern>com.fasterxml</pattern>
+                  <shadedPattern>
+                    com.google.bigtable.repackaged.com.faster.xml
+                  </shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.twitter</pattern>
+                  <shadedPattern>
+                    com.google.bigtable.repackaged.com.twitter
+                  </shadedPattern>
+                </relocation>
+                <!-- Take special care of grpc-netty-shaded, it uses the package
+                     io.grpc.netty.shaded.io.grpc.netty, which will cause the
+                     ServicesResourceTransformer to replace both occurrences of io.grpc
+                 -->
+                <relocation>
+                  <pattern>io.grpc.netty.shaded.io.grpc.netty</pattern>
+                  <shadedPattern>
+                    com.google.bigtable.repackaged.io.grpc.netty
+                  </shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>io.grpc</pattern>
+                  <shadedPattern>
+                    com.google.bigtable.repackaged.io.grpc
+                  </shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>io.perfmark</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.io.perfmark</shadedPattern>
+                </relocation>
+
+
+                <!-- Opencensus related shading -->
+                <relocation>
+                  <pattern>io.opencensus</pattern>
+                  <shadedPattern>
+                    com.google.bigtable.repackaged.io.opencensus
+                  </shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>google.monitoring</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.google.monitoring</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.json</pattern>
+                  <shadedPattern>
+                    com.google.bigtable.repackaged.org.json
+                  </shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.lmax</pattern>
+                  <shadedPattern>
+                    com.google.bigtable.repackaged.com.lmax
+                  </shadedPattern>
+                </relocation>
+
+                <!-- Relocate netty, taking care to keep the prefix consistent for native tcnative
+                  libs. For details see:
+                    https://github.com/netty/netty/pull/6995
+                    https://github.com/grpc/grpc-java/pull/2485
+                -->
+                <relocation>
+                  <pattern>
+                    META-INF/native/libio_grpc_netty_shaded_netty
+                  </pattern>
+                  <shadedPattern>
+                    META-INF/native/libcom_google_bigtable_repackaged_io_grpc_netty_shaded_netty
+                  </shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>META-INF/native/io_grpc_netty_shaded_netty</pattern>
+                  <shadedPattern>
+                    META-INF/native/com_google_bigtable_repackaged_io_grpc_netty_shaded_netty
+                  </shadedPattern>
+                </relocation>
+
+                <relocation>
+                  <pattern>org.joda</pattern>
+                  <shadedPattern>
+                    com.google.bigtable.repackaged.org.joda
+                  </shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.apache.http</pattern>
+                  <shadedPattern>
+                    com.google.bigtable.repackaged.org.apache.http
+                  </shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.apache.commons.codec</pattern>
+                  <shadedPattern>
+                    com.google.bigtable.repackaged.org.apache.commons.codec
+                  </shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.apache.commons.lang3</pattern>
+                  <shadedPattern>
+                    com.google.bigtable.repackaged.org.apache.commons.lang3
+                  </shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.threeten</pattern>
+                  <shadedPattern>
+                    com.google.bigtable.repackaged.org.threeten
+                  </shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.codehaus</pattern>
+                  <shadedPattern>
+                    com.google.bigtable.repackaged.org.codehaus
+                  </shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>android.annotation</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.android.annotation</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>net.bytebuddy</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.net.bytebuddy</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>autovalue</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.autovalue</shadedPattern>
+                </relocation>
+              </relocations>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
