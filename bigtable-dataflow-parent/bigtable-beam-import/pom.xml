@@ -305,46 +305,7 @@ limitations under the License.
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-beam</artifactId>
       <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.cloud.bigtable</groupId>
-          <artifactId>bigtable-hbase-1.x-shaded</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
-
-    <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <!-- Using the shaded variant to avoid conflicting with beam runner's gRPC deps.
-      The versions of gRPC in bigtable and beam will never align here because beam depends on
-      bigtable and this module depends on beam. To break the cycle, we use the shaded variant here.-->
-      <artifactId>bigtable-hbase-2.x-shaded</artifactId>
-      <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
-      <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
-      pom.xml files when invoking the build from a parent project. So we have to manually exclude
-      the dependencies. Note that this works in conjunction with the manually promoted dependencies
-      in bigtable-hbase-1.x-shaded/pom.xml -->
-      <exclusions>
-        <exclusion>
-          <groupId>${project.groupId}</groupId>
-          <artifactId>bigtable-hbase-2.x</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>io.opencensus</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>io.grpc</groupId>
-          <artifactId>grpc-census</artifactId>
-        </exclusion>
-
-        <exclusion>
-          <groupId>org.apache.hbase</groupId>
-          <artifactId>hbase-shaded-client</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
 
     <!-- Test Group -->
     <dependency>

@@ -18,9 +18,9 @@ package com.google.cloud.bigtable.hbase;
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.auth.Credentials;
-import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.util.VersionInfo;
 
 /** This class provides a simplified mechanism of creating a programmatic Bigtable Connection. */
 @InternalExtensionOnly
@@ -43,54 +43,54 @@ public class BigtableConfiguration {
   @InternalApi("For internal usage only")
   public static final String HBASE_CLIENT_ASYNC_REGISTRY_IMPL = "hbase.client.registry.impl";
 
-  private static final String[] CONNECTION_CLASS_NAMES = {
-    "com.google.cloud.bigtable.hbase1_x.BigtableConnection",
-    "com.google.cloud.bigtable.hbase2_x.BigtableConnection",
-  };
-
-  private static final Class<? extends Connection> CONNECTION_CLASS = chooseConnectionClass();
-
-  @SuppressWarnings("unchecked")
-  private static Class<? extends Connection> chooseConnectionClass() {
-    for (String className : CONNECTION_CLASS_NAMES) {
-      try {
-        return (Class<? extends Connection>) Class.forName(className);
-      } catch (ClassNotFoundException ignored) {
-        // This class is not on the classpath, so move on to the next className.
-      }
-    }
-    return null;
-  }
-
   /**
    * For internal use only - public for technical reasons.
    *
    * @return the default bigtable {@link Connection} implementation class found in the classpath.
    */
+  @SuppressWarnings("unchecked")
   @InternalApi("For internal usage only")
   public static Class<? extends Connection> getConnectionClass() {
-    Preconditions.checkState(
-        CONNECTION_CLASS != null,
-        "Could not load a concrete implementation of BigtableTableConnection: "
-            + "failed to find bigtable-hbase-1.x on the classpath.");
-    return CONNECTION_CLASS;
+    String hbaseVersion = VersionInfo.getVersion();
+
+    final String connectionClassName;
+
+    if (VersionInfo.compareVersion(hbaseVersion, "2.0") >= 0) {
+      connectionClassName = "com.google.cloud.bigtable.hbase2_x.BigtableConnection";
+    } else {
+      connectionClassName = "com.google.cloud.bigtable.hbase1_x.BigtableConnection";
+    }
+    try {
+      return (Class<? extends Connection>) Class.forName(connectionClassName);
+    } catch (Throwable t) {
+      throw new IllegalStateException(
+          "Failed to load Bigtable connection adapter for HBase version " + hbaseVersion, t);
+    }
   }
 
   private static Class<?> getConnectionRegistryClass() {
-    try {
-      Class.forName("org.apache.hadoop.hbase.client.ConnectionRegistry");
-      return Class.forName("org.apache.hadoop.hbase.client.BigtableConnectionRegistry");
-    } catch (ClassNotFoundException e) {
-      // noop
+    String hbaseVersion = VersionInfo.getVersion();
+
+    final String registryClassName;
+
+    if (VersionInfo.compareVersion(hbaseVersion, "2.3") >= 0) {
+      registryClassName = "org.apache.hadoop.hbase.client.BigtableConnectionRegistry";
+    } else if (VersionInfo.compareVersion(hbaseVersion, "2.0") >= 0) {
+      registryClassName = "org.apache.hadoop.hbase.client.BigtableAsyncRegistry";
+    } else {
+      registryClassName = null;
     }
 
-    try {
-      Class.forName("org.apache.hadoop.hbase.client.AsyncRegistry");
-      return Class.forName("org.apache.hadoop.hbase.client.BigtableAsyncRegistry");
-    } catch (ClassNotFoundException e) {
-      // noop
+    if (registryClassName != null) {
+      try {
+        return Class.forName(registryClassName);
+      } catch (Throwable e) {
+        throw new IllegalStateException(
+            "Failed to load the Bigtable Async/ConnectionRegistry adapter for Hbase version "
+                + hbaseVersion,
+            e);
+      }
     }
-
     return null;
   }
 
@@ -232,7 +232,8 @@ public class BigtableConfiguration {
       return connectionClass.getConstructor(Configuration.class).newInstance(conf);
     } catch (Exception e) {
       throw new IllegalStateException(
-          "Could not find an appropriate constructor for " + CONNECTION_CLASS.getCanonicalName(),
+          "Could not find an appropriate constructor for "
+              + getConnectionClass().getCanonicalName(),
           e);
     }
   }

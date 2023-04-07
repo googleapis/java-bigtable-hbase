@@ -27,6 +27,10 @@ limitations under the License.
     and writers in Google Cloud Dataflow.
   </description>
 
+  <properties>
+    <hbase.version>${hbase2.version}</hbase.version>
+  </properties>
+
   <dependencyManagement>
     <dependencies>
       <!-- Mitigate transitive CVEs -->
@@ -61,21 +65,21 @@ limitations under the License.
 
     <!-- Bigtable Group: ordering doesn't matter since everything is shaded -->
     <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>bigtable-hbase-1.x-shaded</artifactId>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-hbase-shaded</artifactId>
       <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <exclusions>
         <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
         pom.xml files when invoking the build from a parent project. So we have to manually exclude
         the dependencies. Note that this works in conjunction with the manually promoted dependencies
-        in bigtable-hbase-1.x-shaded/pom.xml -->
+        in bigtable-hbase-shaded/pom.xml -->
         <exclusion>
-          <groupId>${project.groupId}</groupId>
+          <groupId>com.google.cloud.bigtable</groupId>
           <artifactId>bigtable-hbase-1.x</artifactId>
         </exclusion>
         <exclusion>
           <groupId>com.google.cloud.bigtable</groupId>
-          <artifactId>bigtable-metrics-api</artifactId>
+          <artifactId>bigtable-hbase-2.x</artifactId>
         </exclusion>
         <exclusion>
           <groupId>io.opencensus</groupId>
@@ -92,7 +96,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
-      <version>${hbase1.version}</version>
+      <version>${hbase.version}</version>
       <scope>provided</scope>
       <exclusions>
         <!-- Replace with reload4j -->
@@ -192,11 +196,6 @@ limitations under the License.
                     <include>**/CloudBigtableIOIntegrationTest.java</include>
                   </includes>
                   <reportNameSuffix>bigtable-server</reportNameSuffix>
-                  <systemPropertyVariables>
-                    <bigtable.test.extra.resources>
-                      bigtable-test.xml
-                    </bigtable.test.extra.resources>
-                  </systemPropertyVariables>
                 </configuration>
               </execution>
             </executions>

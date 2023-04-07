@@ -89,7 +89,7 @@ limitations under the License.
     <!-- Implementation jars -->
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>bigtable-hbase-1.x-shaded</artifactId>
+      <artifactId>bigtable-hbase-shaded</artifactId>
       <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
 
       <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
@@ -100,6 +100,10 @@ limitations under the License.
         <exclusion>
           <groupId>${project.groupId}</groupId>
           <artifactId>bigtable-hbase-1.x</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>bigtable-hbase-2.x</artifactId>
         </exclusion>
         <exclusion>
           <groupId>io.opencensus</groupId>
