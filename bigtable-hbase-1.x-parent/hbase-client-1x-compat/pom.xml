@@ -9,7 +9,6 @@ updated transitive versions -->
         <artifactId>bigtable-hbase-1.x-parent</artifactId>
         <groupId>com.google.cloud.bigtable</groupId>
         <version>2.7.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
-        <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
