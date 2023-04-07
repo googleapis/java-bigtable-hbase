@@ -8,7 +8,7 @@ updated transitive versions -->
     <parent>
         <artifactId>bigtable-hbase-1.x-parent</artifactId>
         <groupId>com.google.cloud.bigtable</groupId>
-        <version>2.7.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+        <version>2.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
