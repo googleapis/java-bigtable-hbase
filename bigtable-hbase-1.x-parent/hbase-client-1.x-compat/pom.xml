@@ -12,7 +12,7 @@ updated transitive versions -->
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>hbase-client-1x-compat</artifactId>
+    <artifactId>hbase-client-1.x-compat</artifactId>
     <description>
         A repackaged version hbase-shaded-client 1.7.3.
         This artifact upgrades the shaded contents of hbase-shaded-client to avoid security
