@@ -60,7 +60,7 @@ updated transitive versions -->
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-client</artifactId>
-            <version>1.7.2</version>
+            <version>${hbase1.version}</version>
 
             <!-- Exclude transitive deps that we definitely don't use. -->
             <exclusions>
