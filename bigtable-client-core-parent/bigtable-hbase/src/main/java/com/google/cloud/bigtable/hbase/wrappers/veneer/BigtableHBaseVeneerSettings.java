@@ -340,10 +340,16 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     return dataBuilder.build();
   }
 
-  private void configureMetricsBridge(Builder settings) {
+  private void configureMetricsBridge(Builder settings) throws IOException {
     MetricsApiTracerAdapterFactory metricsApiTracerAdapterFactory =
         new MetricsApiTracerAdapterFactory();
     settings.stubSettings().setTracerFactory(metricsApiTracerAdapterFactory);
+
+    if (configuration.getBoolean(
+        BigtableOptionsFactory.BIGTABLE_ENABLE_CLIENT_SIDE_METRICS, false)) {
+      LOG.info("Client side metrics is enabled");
+      BigtableDataSettings.enableBuiltinMetrics();
+    }
   }
 
   private BigtableTableAdminSettings buildBigtableTableAdminSettings() throws IOException {
