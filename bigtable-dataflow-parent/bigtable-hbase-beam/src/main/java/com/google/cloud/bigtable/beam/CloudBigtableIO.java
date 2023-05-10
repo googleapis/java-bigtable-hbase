@@ -774,6 +774,10 @@ public class CloudBigtableIO {
         scanner.close();
         scanner = null;
       }
+      if (connection != null) {
+        connection.close();
+        connection = null;
+      }
       long totalOps = getRowsReadCount();
       long elapsedTimeMs = System.currentTimeMillis() - workStart;
       long operationsPerSecond = elapsedTimeMs == 0 ? 0 : (totalOps * 1000 / elapsedTimeMs);
