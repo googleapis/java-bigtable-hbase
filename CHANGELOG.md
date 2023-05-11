@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.8.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.7.4...v2.8.0) (2023-05-10)
+
+
+### Features
+
+* Optimize dataflow job start by making sample row keys lighter ([#4075](https://github.com/googleapis/java-bigtable-hbase/issues/4075)) ([f0f453d](https://github.com/googleapis/java-bigtable-hbase/commit/f0f453d64f2e1f1c1560a6bc63edfc7320d17f90))
+
+
+### Bug Fixes
+
+* Prevent connections from leaking for reads ([#4073](https://github.com/googleapis/java-bigtable-hbase/issues/4073)) ([56d32bd](https://github.com/googleapis/java-bigtable-hbase/commit/56d32bd09cb24bc84f1df85df7ad066275b26d9d))
+
 ## [2.7.4](https://github.com/googleapis/java-bigtable-hbase/compare/v2.7.3...v2.7.4) (2023-04-04)
 
 
