@@ -409,25 +409,16 @@ public class CloudBigtableIO {
       configuration.populateDisplayData(builder);
     }
 
-    /**
-     * The writeReplace method allows the developer to provide a replacement object that will be
-     * serialized instead of the original one. We use this to keep the enclosed class immutable. For
-     * more details on the technique see <a
-     * href="https://lingpipe-blog.com/2009/08/10/serializing-immutable-singletons-serialization-proxy/">this
-     * article</a>.
-     */
-    private Object writeReplace() {
-      return new SerializationProxy(getConfiguration());
-    }
 
-    static class SerializationProxy implements Serializable {
-      private ValueProvider<String> projectId;
-      private ValueProvider<String> instanceId;
-      private ValueProvider<String> tableId;
-      private Map<String, ValueProvider<String>> additionalConfiguration;
-      private transient ValueProvider<Scan> scan;
+    static abstract class AbstractSerializationProxy implements Serializable {
 
-      public SerializationProxy(CloudBigtableScanConfiguration configuration) {
+      protected ValueProvider<String> projectId;
+      protected ValueProvider<String> instanceId;
+      protected ValueProvider<String> tableId;
+      protected Map<String, ValueProvider<String>> additionalConfiguration;
+      protected transient ValueProvider<Scan> scan;
+
+      public AbstractSerializationProxy(CloudBigtableScanConfiguration configuration) {
         this.projectId = configuration.getProjectIdValueProvider();
         this.instanceId = configuration.getInstanceIdValueProvider();
         this.tableId = configuration.getTableIdValueProvider();
@@ -468,16 +459,11 @@ public class CloudBigtableIO {
         } else {
           scan =
               ValueProvider.StaticValueProvider.of(
-                  ProtobufUtil.toScan(ClientProtos.Scan.parseDelimitedFrom(in)));
+                      ProtobufUtil.toScan(ClientProtos.Scan.parseDelimitedFrom(in)));
         }
       }
 
-      Object readResolve() {
-        CloudBigtableScanConfiguration conf =
-            CloudBigtableScanConfiguration.createConfig(
-                projectId, instanceId, tableId, scan, additionalConfiguration);
-        return CloudBigtableIO.read(conf);
-      }
+      abstract Object readResolve();
     }
   }
 
@@ -532,9 +518,30 @@ public class CloudBigtableIO {
       return getResultCoder();
     }
 
+    /**
+     * The writeReplace method allows the developer to provide a replacement object that will be
+     * serialized instead of the original one. We use this to keep the enclosed class immutable. For
+     * more details on the technique see <a
+     * href="https://lingpipe-blog.com/2009/08/10/serializing-immutable-singletons-serialization-proxy/">this
+     * article</a>.
+     */
     private Object writeReplace() {
-      return new SerializationProxy(getConfiguration());
+      return new SourceSerializationProxy(getConfiguration());
     }
+
+     static class SourceSerializationProxy extends AbstractSerializationProxy {
+       public SourceSerializationProxy(CloudBigtableScanConfiguration configuration) {
+         super(configuration);
+       }
+
+       @Override
+       Object readResolve() {
+         CloudBigtableScanConfiguration conf =
+            CloudBigtableScanConfiguration.createConfig(
+                projectId, instanceId, tableId, scan, additionalConfiguration);
+        return new Source(conf);
+       }
+     }
   }
 
   /**
@@ -554,7 +561,6 @@ public class CloudBigtableIO {
 
     protected SourceWithKeys(CloudBigtableScanConfiguration configuration, long estimatedSize) {
       super(configuration);
-
       byte[] stopRow = configuration.getStopRow();
       if (stopRow.length > 0) {
         byte[] startRow = configuration.getStartRow();
@@ -618,7 +624,24 @@ public class CloudBigtableIO {
     }
 
     private Object writeReplace() {
-      return new SerializationProxy(getConfiguration());
+      return new SourceWithKeysSerializationProxy(getConfiguration(), estimatedSize);
+    }
+
+    static class SourceWithKeysSerializationProxy extends AbstractSerializationProxy {
+
+      private long estimatedSize;
+
+      public SourceWithKeysSerializationProxy(CloudBigtableScanConfiguration configuration, long estimatedSize) {
+        super(configuration);
+        this.estimatedSize = estimatedSize;
+      }
+
+      Object readResolve() {
+        CloudBigtableScanConfiguration conf =
+            CloudBigtableScanConfiguration.createConfig(
+                projectId, instanceId, tableId, scan, additionalConfiguration);
+        return new SourceWithKeys(conf, estimatedSize);
+      }
     }
   }
   /** Reads rows for a specific {@link Table}, usually filtered by a {@link Scan}. */
