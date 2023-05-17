@@ -459,7 +459,7 @@ public class CloudBigtableIO {
         } else {
           scan =
               ValueProvider.StaticValueProvider.of(
-                      ProtobufUtil.toScan(ClientProtos.Scan.parseDelimitedFrom(in)));
+                  ProtobufUtil.toScan(ClientProtos.Scan.parseDelimitedFrom(in)));
         }
       }
 
