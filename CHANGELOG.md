@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.8.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.8.0...v2.8.1) (2023-05-17)
+
+
+### Bug Fixes
+
+* Deserialize Source and SourceWithKeys correctly so SampleRowKeys only get called once ([#4078](https://github.com/googleapis/java-bigtable-hbase/issues/4078)) ([de7bdac](https://github.com/googleapis/java-bigtable-hbase/commit/de7bdac2c8f9630ca61f1b536912fb9bfd9c4a5c))
+
 ## [2.8.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.7.4...v2.8.0) (2023-05-10)
 
 
