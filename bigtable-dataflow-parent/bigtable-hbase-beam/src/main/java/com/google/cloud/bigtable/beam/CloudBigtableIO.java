@@ -409,14 +409,13 @@ public class CloudBigtableIO {
       configuration.populateDisplayData(builder);
     }
 
+    abstract static class AbstractSerializationProxy implements Serializable {
 
-    static abstract class AbstractSerializationProxy implements Serializable {
-
-      protected ValueProvider<String> projectId;
-      protected ValueProvider<String> instanceId;
-      protected ValueProvider<String> tableId;
-      protected Map<String, ValueProvider<String>> additionalConfiguration;
-      protected transient ValueProvider<Scan> scan;
+      private ValueProvider<String> projectId;
+      private ValueProvider<String> instanceId;
+      private ValueProvider<String> tableId;
+      private Map<String, ValueProvider<String>> additionalConfiguration;
+      private transient ValueProvider<Scan> scan;
 
       public AbstractSerializationProxy(CloudBigtableScanConfiguration configuration) {
         this.projectId = configuration.getProjectIdValueProvider();
@@ -464,6 +463,13 @@ public class CloudBigtableIO {
       }
 
       abstract Object readResolve();
+
+      protected CloudBigtableScanConfiguration buildScanConfig() {
+        CloudBigtableScanConfiguration conf =
+            CloudBigtableScanConfiguration.createConfig(
+                projectId, instanceId, tableId, scan, additionalConfiguration);
+        return conf;
+      }
     }
   }
 
@@ -529,19 +535,16 @@ public class CloudBigtableIO {
       return new SourceSerializationProxy(getConfiguration());
     }
 
-     static class SourceSerializationProxy extends AbstractSerializationProxy {
-       public SourceSerializationProxy(CloudBigtableScanConfiguration configuration) {
-         super(configuration);
-       }
+    static class SourceSerializationProxy extends AbstractSerializationProxy {
+      public SourceSerializationProxy(CloudBigtableScanConfiguration configuration) {
+        super(configuration);
+      }
 
-       @Override
-       Object readResolve() {
-         CloudBigtableScanConfiguration conf =
-            CloudBigtableScanConfiguration.createConfig(
-                projectId, instanceId, tableId, scan, additionalConfiguration);
-        return new Source(conf);
-       }
-     }
+      @Override
+      Object readResolve() {
+        return new Source(buildScanConfig());
+      }
+    }
   }
 
   /**
@@ -631,15 +634,14 @@ public class CloudBigtableIO {
 
       private long estimatedSize;
 
-      public SourceWithKeysSerializationProxy(CloudBigtableScanConfiguration configuration, long estimatedSize) {
+      public SourceWithKeysSerializationProxy(
+          CloudBigtableScanConfiguration configuration, long estimatedSize) {
         super(configuration);
         this.estimatedSize = estimatedSize;
       }
 
       Object readResolve() {
-        CloudBigtableScanConfiguration conf =
-            CloudBigtableScanConfiguration.createConfig(
-                projectId, instanceId, tableId, scan, additionalConfiguration);
+        CloudBigtableScanConfiguration conf = buildScanConfig();
         return new SourceWithKeys(conf, estimatedSize);
       }
     }
