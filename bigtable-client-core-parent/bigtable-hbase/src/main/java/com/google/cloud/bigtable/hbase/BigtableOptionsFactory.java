@@ -314,4 +314,7 @@ public class BigtableOptionsFactory {
   @BetaApi("This API is not yet stable and may change in the future")
   public static final String MANAGED_CONNECTION_WARNING =
       "google.bigtable.managed.connection.warning";
+
+  public static final String BIGTABLE_ENABLE_CLIENT_SIDE_METRICS =
+      "google.bigtable.enable.client.side.metrics";
 }
