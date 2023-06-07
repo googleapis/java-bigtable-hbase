@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.8.1...v2.9.0) (2023-06-06)
+
+
+### Features
+
+* Enable batch write flow control ([#4077](https://github.com/googleapis/java-bigtable-hbase/issues/4077)) ([4f7f79c](https://github.com/googleapis/java-bigtable-hbase/commit/4f7f79c2673083ce32e1b028bd5f6e0a8d70f8c9))
+
 ## [2.8.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.8.0...v2.8.1) (2023-05-17)
 
 
