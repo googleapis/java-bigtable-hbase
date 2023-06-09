@@ -171,8 +171,7 @@ public abstract class IncompatibleMutationAdapter {
         }
         continue;
       }
-
-      // TODO: is this a code stub?
+      
       // Replication should only produce PUT and Delete mutation. Appends/Increments are converted
       // to PUTs. Log the unexpected mutation and drop it as we don't know what CBT client will do.
       LOG.warn("Dropping unexpected type of mutation: " + cell);

@@ -15,11 +15,11 @@
  */
 package com.google.cloud.bigtable.hbase.replication;
 
-import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_SOURCE_CBT_QUALIFIER;
-import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_SOURCE_HBASE_QUALIFIER;
-import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.ENABLE_BIDIRECTIONAL_REPLICATION_MODE_KEY;
-import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.SOURCE_CBT_QUALIFIER_KEY;
-import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.SOURCE_HBASE_QUALIFIER_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.CBT_REPL_CBT_QUALIFIER;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.CBT_REPL_HBASE_QUALIFIER;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.CBT_REPL_BIDIRECTIONAL_REPLICATION_MODE_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.CBT_REPL_CBT_QUALIFIER_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.CBT_REPL_HBASE_QUALIFIER_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.BIDIRECTIONAL_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.BIDIRECTIONAL_REPL_INELIGIBLE_MUTATIONS_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY;
@@ -105,7 +105,7 @@ public class CloudBigtableReplicatorTest {
   public void testReplicateDryRun() {
     // Create object to test
     CloudBigtableReplicator replicator = new CloudBigtableReplicator();
-    replicator.start(sharedResources, incompatibleMutationAdapter, 100, true);
+    replicator.start(sharedResources, incompatibleMutationAdapter, 100, true, null, null);
 
     // Create WALs to replicate
     Cell cell = new KeyValue(ROW_KEY, CF1, null, TIMESTAMP, DeleteFamilyVersion);
@@ -140,7 +140,7 @@ public class CloudBigtableReplicatorTest {
   public void testReplicateDoesNotSplitInBatches() throws IOException {
     // Create object to test
     CloudBigtableReplicator replicator = new CloudBigtableReplicator();
-    replicator.start(sharedResources, incompatibleMutationAdapter, 2000, false);
+    replicator.start(sharedResources, incompatibleMutationAdapter, 2000, false, null, null);
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
@@ -189,7 +189,7 @@ public class CloudBigtableReplicatorTest {
     // Create object to test
     CloudBigtableReplicator replicator = new CloudBigtableReplicator();
     replicator.start(
-        sharedResources, incompatibleMutationAdapter, 1 /*split into 1 byte batches*/, false);
+        sharedResources, incompatibleMutationAdapter, 1 /*split into 1 byte batches*/, false, null, null);
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
@@ -244,7 +244,7 @@ public class CloudBigtableReplicatorTest {
     // Create object to test
     CloudBigtableReplicator replicator = new CloudBigtableReplicator();
     replicator.start(
-        sharedResources, incompatibleMutationAdapter, 1 /*split into 1 byte batches*/, false);
+        sharedResources, incompatibleMutationAdapter, 1 /*split into 1 byte batches*/, false, null, null);
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
@@ -300,7 +300,7 @@ public class CloudBigtableReplicatorTest {
     // Create object to test
     CloudBigtableReplicator replicator = new CloudBigtableReplicator();
     replicator.start(
-        sharedResources, incompatibleMutationAdapter, 01 /*split into 1 byte batches*/, false);
+        sharedResources, incompatibleMutationAdapter, 01 /*split into 1 byte batches*/, false, null, null);
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
@@ -352,7 +352,7 @@ public class CloudBigtableReplicatorTest {
     // Create object to test
     CloudBigtableReplicator replicator = new CloudBigtableReplicator();
     replicator.start(
-        sharedResources, incompatibleMutationAdapter, 01 /*split into 1 byte batches*/, false);
+        sharedResources, incompatibleMutationAdapter, 01 /*split into 1 byte batches*/, false, null, null);
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
@@ -403,7 +403,7 @@ public class CloudBigtableReplicatorTest {
   public void testReplicateFailsToSubmitTask() throws IOException {
     // Create object to test
     CloudBigtableReplicator replicator = new CloudBigtableReplicator();
-    replicator.start(sharedResources, incompatibleMutationAdapter, 2, false);
+    replicator.start(sharedResources, incompatibleMutationAdapter, 2, false, null, null);
 
     // Create WALs to replicate
     Cell cell11 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
@@ -462,7 +462,7 @@ public class CloudBigtableReplicatorTest {
     CloudBigtableReplicator replicator = new CloudBigtableReplicator();
     // Enable bidirectional replication
     Configuration replicationConf = new Configuration(false);
-    replicationConf.setBoolean(ENABLE_BIDIRECTIONAL_REPLICATION_MODE_KEY, true);
+    replicationConf.setBoolean(CBT_REPL_BIDIRECTIONAL_REPLICATION_MODE_KEY, true);
     replicator.start(sharedResources,
         incompatibleMutationAdapter,
         2000,
@@ -475,7 +475,7 @@ public class CloudBigtableReplicatorTest {
     // Special mutation with source-tagging
     Cell hbaseSourceTaggedCell =
         new KeyValue(
-            getRowKey(1), CF1, DEFAULT_SOURCE_HBASE_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
+            getRowKey(1), CF1, CBT_REPL_HBASE_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
 
     BigtableWALEntry inputWAL =
         new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell), TABLE_NAME_STRING);
@@ -527,7 +527,7 @@ public class CloudBigtableReplicatorTest {
     CloudBigtableReplicator replicator = new CloudBigtableReplicator();
     // Enable bidirectional replication
     Configuration replicationConf = new Configuration(false);
-    replicationConf.setBoolean(ENABLE_BIDIRECTIONAL_REPLICATION_MODE_KEY, true);
+    replicationConf.setBoolean(CBT_REPL_BIDIRECTIONAL_REPLICATION_MODE_KEY, true);
     replicator.start(sharedResources,
         incompatibleMutationAdapter,
         2000,
@@ -542,7 +542,7 @@ public class CloudBigtableReplicatorTest {
 
     Cell cbtSourceTaggedCell =
              new KeyValue(
-            getRowKey(1), CF1, DEFAULT_SOURCE_CBT_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
+            getRowKey(1), CF1, CBT_REPL_CBT_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
     BigtableWALEntry inputWAL =
         new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell, cbtSourceTaggedCell), TABLE_NAME_STRING);
     Map<String, List<BigtableWALEntry>> walsToReplicate = new HashMap<>();
@@ -578,7 +578,7 @@ public class CloudBigtableReplicatorTest {
     CloudBigtableReplicator replicator = new CloudBigtableReplicator();
     // Enable bidirectional replication manually.
     Configuration replicationConf = new Configuration(false);
-    replicationConf.setBoolean(ENABLE_BIDIRECTIONAL_REPLICATION_MODE_KEY, true);
+    replicationConf.setBoolean(CBT_REPL_BIDIRECTIONAL_REPLICATION_MODE_KEY, true);
     replicator.start(sharedResources,
         incompatibleMutationAdapter,
         2000,
@@ -591,12 +591,12 @@ public class CloudBigtableReplicatorTest {
     // Special replicated mutation from CBT.
     Cell cbtSourceTaggedCell =
         new KeyValue(
-            getRowKey(1), CF1, DEFAULT_SOURCE_CBT_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
+            getRowKey(1), CF1, CBT_REPL_CBT_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
 
     Cell cellFromHbase = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(1));
     Cell hbaseSourceTaggedCell =
         new KeyValue(
-            getRowKey(2), CF1, DEFAULT_SOURCE_HBASE_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
+            getRowKey(2), CF1, CBT_REPL_HBASE_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
 
     // Create respective WAL entries.
     // Entry 1 will be filtered out.
@@ -665,10 +665,10 @@ public class CloudBigtableReplicatorTest {
     CloudBigtableReplicator replicator = new CloudBigtableReplicator();
     // Enable bidirectional replication manually.
     Configuration replicationConf = new Configuration(false);
-    replicationConf.setBoolean(ENABLE_BIDIRECTIONAL_REPLICATION_MODE_KEY, true);
+    replicationConf.setBoolean(CBT_REPL_BIDIRECTIONAL_REPLICATION_MODE_KEY, true);
     // Set custom special column qualifiers
-    replicationConf.set(SOURCE_CBT_QUALIFIER_KEY, customSourceCBTQualifier);
-    replicationConf.set(SOURCE_HBASE_QUALIFIER_KEY, customSourceHBaseQualifier);
+    replicationConf.set(CBT_REPL_CBT_QUALIFIER_KEY, customSourceCBTQualifier);
+    replicationConf.set(CBT_REPL_HBASE_QUALIFIER_KEY, customSourceHBaseQualifier);
     replicator.start(sharedResources,
         incompatibleMutationAdapter,
         2000,
@@ -749,7 +749,7 @@ public class CloudBigtableReplicatorTest {
     CloudBigtableReplicator replicator = new CloudBigtableReplicator();
     // Enable bidirectional replication
     Configuration replicationConf = new Configuration(false);
-    replicationConf.setBoolean(ENABLE_BIDIRECTIONAL_REPLICATION_MODE_KEY, true);
+    replicationConf.setBoolean(CBT_REPL_BIDIRECTIONAL_REPLICATION_MODE_KEY, true);
     replicator.start(sharedResources,
         incompatibleMutationAdapter,
         2000,
@@ -764,7 +764,7 @@ public class CloudBigtableReplicatorTest {
     // Special mutation with source-tagging
     Cell hbaseSourceTaggedCell =
         new KeyValue(
-            getRowKey(1), CF1, DEFAULT_SOURCE_HBASE_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
+            getRowKey(1), CF1, CBT_REPL_HBASE_QUALIFIER.getBytes(), 0l, KeyValue.Type.Delete);
 
     BigtableWALEntry inputWAL =
         new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell,cell2,cell3), TABLE_NAME_STRING);

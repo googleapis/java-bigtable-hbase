@@ -39,6 +39,7 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.replication.ReplicationAdmin;
 import org.apache.hadoop.hbase.replication.ReplicationEndpoint.ReplicateContext;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -116,8 +117,6 @@ public class HbaseToCloudBigtableBidirectionalReplicationEndpointTest {
     // Cluster key is required, we don't really have a clusterKey for CBT.
     peerConfig.setClusterKey(hbaseTestingUtil.getClusterKey());
     replicationAdmin.addPeer("cbt", peerConfig);
-
-    LOG.info("#################### SETUP COMPLETE ##############################");
   }
 
   @AfterClass
@@ -126,6 +125,12 @@ public class HbaseToCloudBigtableBidirectionalReplicationEndpointTest {
     hbaseConnection.close();
     replicationAdmin.close();
     hbaseTestingUtil.shutdownMiniCluster();
+  }
+
+  @After
+  public void tearDownTable() throws IOException {
+    cbtTable.close();
+    hbaseTable.close();
   }
 
   @Before
