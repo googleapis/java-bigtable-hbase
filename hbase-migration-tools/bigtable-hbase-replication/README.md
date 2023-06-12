@@ -143,6 +143,30 @@ Please refer
 to [HBaseToCloudBigtableReplicationConfiguration](bigtable-hbase-replication-core/src/main/java/com/google/cloud/bigtable/hbase/replication/configuration/HBaseToCloudBigtableReplicationConfiguration.java)
 for other properties that can be set.
 
+### Bidirectional Replication with Cloud Bigtable
+
+To enable bidirectional replication support with Cloud Bigtable, add the following property to `hbase-site.xml`.
+```
+<property>
+    <name>google.bigtable.replication.enable_bidirectional_replication</name>
+    <value>true</value>
+</property>
+```
+
+This feature filters out mutations replicated to Hbase from Cloud Bigtable change streams with the [Bigtable-Hbase replicator](https://github.com/GoogleCloudPlatform/DataflowTemplates/pull/780) to prevent replication loops. 
+
+Optional parameters like the filtering keyword can be set with the following properties in `hbase-site.xml`.
+```
+<property>
+    <name>google.bigtable.replication.hbase_qualifier</name>
+    <value>some_magic_string</value>
+</property>
+<property>
+    <name>google.bigtable.replication.cbt_qualifier</name>
+    <value>some_other_magic_string</value>
+</property>
+```
+
 ## Deployment
 
 Use the replication library version corresponding to your HBase version. For
