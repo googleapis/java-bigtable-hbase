@@ -131,8 +131,14 @@ public class CloudBigtableReplicator {
 
         String projectId = configurationCopy.get(PROJECT_KEY);
         String instanceId = configurationCopy.get(INSTANCE_KEY);
-        // Set user agent.
-        configurationCopy.set(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "HBaseReplication");
+        
+        // Set user agent tag depending on if bidirectional replication was enabled.
+        if (configurationCopy.getBoolean(CBT_REPL_BIDIRECTIONAL_REPLICATION_MODE_KEY, false)) {
+          configurationCopy.set(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "HBaseReplicationBidirectional");
+        } else {
+          configurationCopy.set(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "HBaseReplication");
+        }
+
         // If an App profile is provided, it will be picked automatically by the connection.
         Connection connection = BigtableConfiguration.connect(configurationCopy);
         LOG.info(
