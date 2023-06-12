@@ -36,11 +36,16 @@ public class HBaseToCloudBigtableReplicationMetrics {
       "bigtableIncompatibleTimestampOverflowMutation";
   public static final String PUTS_IN_FUTURE_METRIC_KEY = "bigtablePutsInFutureMutations";
 
-
-  public static final String ONE_WAY_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY = "oneWayReplEligibleWALEntries";
-  public static final String ONE_WAY_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY = "oneWayReplEligibleMutations";
-  public static final String BIDIRECTIONAL_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY = "bidirectionalReplEligibleWALEntries";
-  public static final String BIDIRECTIONAL_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY = "bidirectionalReplEligibleMutations";
-  public static final String BIDIRECTIONAL_REPL_INELIGIBLE_WAL_ENTRY_METRIC_KEY = "bidirectionalReplIneligibleWALEntries";
-  public static final String BIDIRECTIONAL_REPL_INELIGIBLE_MUTATIONS_METRIC_KEY = "bidirectionalReplIneligibleMutations";
+  public static final String ONE_WAY_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY =
+      "oneWayReplEligibleWALEntries";
+  public static final String ONE_WAY_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY =
+      "oneWayReplEligibleMutations";
+  public static final String BIDIRECTIONAL_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY =
+      "bidirectionalReplEligibleWALEntries";
+  public static final String BIDIRECTIONAL_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY =
+      "bidirectionalReplEligibleMutations";
+  public static final String BIDIRECTIONAL_REPL_INELIGIBLE_WAL_ENTRY_METRIC_KEY =
+      "bidirectionalReplIneligibleWALEntries";
+  public static final String BIDIRECTIONAL_REPL_INELIGIBLE_MUTATIONS_METRIC_KEY =
+      "bidirectionalReplIneligibleMutations";
 }

@@ -52,9 +52,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Test bidirectional replication.
- * This test is separate from the other endpoint tests because it requires spinning up a
- * cluster with additional config settings.
+ * Test bidirectional replication. This test is separate from the other endpoint tests because it
+ * requires spinning up a cluster with additional config settings.
  */
 @RunWith(JUnit4.class)
 public class HbaseToCloudBigtableBidirectionalReplicationEndpointTest {
@@ -77,8 +76,7 @@ public class HbaseToCloudBigtableBidirectionalReplicationEndpointTest {
   private static HBaseTestingUtility hbaseTestingUtil;
   private static ReplicationAdmin replicationAdmin;
 
-  @ClassRule
-  public static final BigtableEmulatorRule bigtableEmulator = new BigtableEmulatorRule();
+  @ClassRule public static final BigtableEmulatorRule bigtableEmulator = new BigtableEmulatorRule();
 
   private static Connection cbtConnection;
   private static Connection hbaseConnection;
@@ -112,8 +110,7 @@ public class HbaseToCloudBigtableBidirectionalReplicationEndpointTest {
 
     // Setup Replication in HBase mini cluster
     ReplicationPeerConfig peerConfig = new ReplicationPeerConfig();
-    peerConfig.setReplicationEndpointImpl(
-        TestReplicationEndpoint.class.getTypeName());
+    peerConfig.setReplicationEndpointImpl(TestReplicationEndpoint.class.getTypeName());
     // Cluster key is required, we don't really have a clusterKey for CBT.
     peerConfig.setClusterKey(hbaseTestingUtil.getClusterKey());
     replicationAdmin.addPeer("cbt", peerConfig);
@@ -163,7 +160,7 @@ public class HbaseToCloudBigtableBidirectionalReplicationEndpointTest {
     hbaseTestingUtil.getHBaseAdmin().createTable(htd);
     cbtConnection.getAdmin().createTable(htd);
   }
-  
+
   /**
    * Bidirectional replication should replicate source entry and drop cbt-replicated entry to
    * prevent loops from forming.
@@ -171,15 +168,16 @@ public class HbaseToCloudBigtableBidirectionalReplicationEndpointTest {
   @Test
   public void testDropsReplicatedEntry() throws IOException, InterruptedException {
     RowMutations mutationToDrop = new RowMutations(TestUtils.ROW_KEY);
-    mutationToDrop.add(new Put(TestUtils.ROW_KEY).addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.VALUE));
     mutationToDrop.add(
-      // Special delete mutation signifying this came from Bigtable replicator
-      new Delete(TestUtils.ROW_KEY).addColumns(TestUtils.CF1, cbtQualifier, 0)
-    );
+        new Put(TestUtils.ROW_KEY)
+            .addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.VALUE));
+    mutationToDrop.add(
+        // Special delete mutation signifying this came from Bigtable replicator
+        new Delete(TestUtils.ROW_KEY).addColumns(TestUtils.CF1, cbtQualifier, 0));
     RowMutations mutationToReplicate = new RowMutations(TestUtils.ROW_KEY_2);
     mutationToReplicate.add(
-        new Put(TestUtils.ROW_KEY_2).addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.VALUE)
-    );
+        new Put(TestUtils.ROW_KEY_2)
+            .addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.VALUE));
 
     hbaseTable.mutateRow(mutationToDrop);
     hbaseTable.mutateRow(mutationToReplicate);

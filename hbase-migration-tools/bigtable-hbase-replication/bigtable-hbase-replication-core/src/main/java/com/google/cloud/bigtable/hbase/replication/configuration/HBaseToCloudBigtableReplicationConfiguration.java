@@ -84,7 +84,8 @@ public class HBaseToCloudBigtableReplicationConfiguration {
 
   public static final String CBT_REPL_HBASE_QUALIFIER_KEY =
       "google.bigtable.replication.hbase_qualifier";
-  public static final String CBT_REPL_CBT_QUALIFIER_KEY = "google.bigtable.replication.cbt_qualifier";
+  public static final String CBT_REPL_CBT_QUALIFIER_KEY =
+      "google.bigtable.replication.cbt_qualifier";
 
   public static final boolean CBT_REPL_BIDIRECTIONAL_REPLICATION_MODE = false;
   public static final String CBT_REPL_HBASE_QUALIFIER = "SOURCE_HBASE";
