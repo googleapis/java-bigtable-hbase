@@ -155,15 +155,19 @@ To enable bidirectional replication support with Cloud Bigtable, add the followi
 
 This feature filters out mutations replicated to Hbase from Cloud Bigtable change streams with the [Bigtable-Hbase replicator](https://github.com/GoogleCloudPlatform/DataflowTemplates/pull/780) to prevent replication loops. 
 
-Optional parameters like the filtering keyword can be set with the following properties in `hbase-site.xml`.
+More technically, the feature's logic checks if the last mutation of every outgoing RowMutation contains a Delete mutation on a column qualifier that matches the `cbt_qualifier` property value. If it does, that RowMutation is filtered out and not replicated.  
+
+Every replicated mutation it sends out is tagged with a Delete mutation on a qualifier set with the `hbase_qualifier` property value. The Bigtable-Hbase replicator has the same logic to filter out `hbase_qualifier` Delete mutations. 
+
+The default qualifier values are already set in [HBaseToCloudBigtableReplicationConfiguration](bigtable-hbase-replication-core/src/main/java/com/google/cloud/bigtable/hbase/replication/configuration/HBaseToCloudBigtableReplicationConfiguration.java), but can also be manually set in `hbase-site.xml`.
 ```
 <property>
     <name>google.bigtable.replication.hbase_qualifier</name>
-    <value>some_magic_string</value>
+    <value>REPLICATED_FROM_HBASE</value>
 </property>
 <property>
     <name>google.bigtable.replication.cbt_qualifier</name>
-    <value>some_other_magic_string</value>
+    <value>REPLICATED_FROM_CLOUD_BIGTABLE</value>
 </property>
 ```
 
