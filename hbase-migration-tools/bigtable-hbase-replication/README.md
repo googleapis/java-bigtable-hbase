@@ -171,6 +171,10 @@ The default qualifier values are already set in [HBaseToCloudBigtableReplication
 </property>
 ```
 
+#### Notes
+
+Divergence can occur if simultaneous writes occur on Hbase and Bigtable and both are replicated at the same time. To minimize this risk, it is recommended to write to one database at a time when doing bidirectional replication.
+
 ## Deployment
 
 Use the replication library version corresponding to your HBase version. For
