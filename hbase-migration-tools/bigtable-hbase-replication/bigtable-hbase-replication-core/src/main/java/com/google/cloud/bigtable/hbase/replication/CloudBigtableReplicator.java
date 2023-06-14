@@ -97,7 +97,10 @@ public class CloudBigtableReplicator {
      */
     private final Connection connection;
 
-    /** Reference count for this instance. */
+    /**
+     * Reference count for this instance. Used to determine if shared resources should be cleaned
+     * up.
+     */
     private static int numReferences = 0;
 
     @VisibleForTesting
@@ -140,9 +143,7 @@ public class CloudBigtableReplicator {
 
         // If an App profile is provided, it will be picked automatically by the connection.
         Connection connection = BigtableConfiguration.connect(configurationCopy);
-        LOG.info(
-            String.format(
-                "Created a connection to CBT. projects/%s/instances/%s", projectId, instanceId));
+        LOG.info("Created a connection to CBT. projects/{}/instances/{}", projectId, instanceId);
 
         INSTANCE = new SharedResources(connection, executorService);
       }
@@ -235,11 +236,9 @@ public class CloudBigtableReplicator {
             configuration.get(CBT_REPL_CBT_QUALIFIER_KEY, CBT_REPL_CBT_QUALIFIER).getBytes();
 
         LOG.info(
-            String.format(
-                "Bidirectional direction enabled.\nCbt qualifier: %s\nHbase qualifier: %s",
-                this.bidirectionalReplicationEnabled,
-                Bytes.toStringBinary(sourceCbtQualifier),
-                Bytes.toStringBinary(sourceHbaseQualifier)));
+            "Bidirectional direction enabled. \nCbt qualifier: {}\nHbase qualifier: {}",
+            Bytes.toStringBinary(sourceCbtQualifier),
+            Bytes.toStringBinary(sourceHbaseQualifier));
       }
     }
 
