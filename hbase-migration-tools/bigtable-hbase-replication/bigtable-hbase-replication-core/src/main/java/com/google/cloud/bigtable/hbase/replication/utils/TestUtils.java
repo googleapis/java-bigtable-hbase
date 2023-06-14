@@ -51,6 +51,7 @@ public class TestUtils {
 
   public static final String ROW_KEY_PREFIX = "test-row-";
   public static final byte[] ROW_KEY = "test-row".getBytes();
+  public static final byte[] ROW_KEY_2 = "test-row-2".getBytes();
   public static final byte[] FILTERED_ROW_KEY = "filtered-row".getBytes();
   public static final byte[] CF1 = "cf1".getBytes();
   public static final byte[] CF2 = "cf2".getBytes();

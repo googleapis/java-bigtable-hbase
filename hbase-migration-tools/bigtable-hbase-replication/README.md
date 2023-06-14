@@ -143,6 +143,53 @@ Please refer
 to [HBaseToCloudBigtableReplicationConfiguration](bigtable-hbase-replication-core/src/main/java/com/google/cloud/bigtable/hbase/replication/configuration/HBaseToCloudBigtableReplicationConfiguration.java)
 for other properties that can be set.
 
+### Bidirectional Replication with Cloud Bigtable
+
+The bidirectional replication feature filters out mutations replicated to Hbase from Cloud Bigtable change streams with the [Bigtable-Hbase replicator](https://github.com/GoogleCloudPlatform/DataflowTemplates/tree/main/v2/bigtable-cdc-to-hbase) to prevent replication loops. 
+
+More technically, the feature's logic checks if the last mutation of every outgoing RowMutation contains a Delete mutation on a column qualifier that matches the `cbt_qualifier` property value. If it does, that RowMutation is filtered out and not replicated.  
+
+Every replicated mutation it sends out is tagged with a Delete mutation on a qualifier set with the `hbase_qualifier` property value. The Bigtable-Hbase replicator has the same logic to filter out `hbase_qualifier` Delete mutations. 
+
+To enable bidirectional replication support with Cloud Bigtable, add the following property to `hbase-site.xml`.
+```
+<property>
+    <name>google.bigtable.replication.enable_bidirectional_replication</name>
+    <value>true</value>
+</property>
+```
+
+The default qualifier values are already set in [HBaseToCloudBigtableReplicationConfiguration](bigtable-hbase-replication-core/src/main/java/com/google/cloud/bigtable/hbase/replication/configuration/HBaseToCloudBigtableReplicationConfiguration.java) and work out of the box with the [Bigtable-Hbase replicator](https://github.com/GoogleCloudPlatform/DataflowTemplates/tree/main/v2/bigtable-cdc-to-hbase). The values can also be manually set in `hbase-site.xml`.
+```
+<property>
+    <name>google.bigtable.replication.hbase_qualifier</name>
+    <value>REPLICATED_FROM_HBASE</value>
+</property>
+<property>
+    <name>google.bigtable.replication.cbt_qualifier</name>
+    <value>REPLICATED_FROM_CLOUD_BIGTABLE</value>
+</property>
+```
+
+#### Bidirectional Replication Metrics
+
+Refer to [HBaseToCloudBigtableReplicationMetrics](bigtable-hbase-replication-core/src/main/java/com/google/cloud/bigtable/hbase/replication/metrics/HBaseToCloudBigtableReplicationMetrics.java).
+
+Metrics are in the following format:
+
+`oneWayRepl/bidirectionalRepl` - `Eligible/Ineligible` - `WALEntries/Mutations`
+
+If bidirectional replication is not enabled, WAL entry/mutation export count will be prepended with `oneWayRepl`, e.g. `oneWayReplEligibleWALEntries`.
+Note that no filtering logic is present in one way replication, so there are no 
+`oneWayReplIneligible*` metrics.
+
+If bidirectional replication is enabled, WAL entry/mutation export count will be prepended with `bidirectionalRepl`, e.g. `bidirectionalReplEligibleWALEntries`.
+WAL entries/mutations dropped during bidirectional replication filtering will be prepended with `bidirectionalReplIneligible`. 
+
+#### Notes
+
+Divergence can occur if simultaneous writes occur on Hbase and Bigtable and both are replicated at the same time. To minimize this risk, it is recommended to write to one database at a time when doing bidirectional replication.
+
 ## Deployment
 
 Use the replication library version corresponding to your HBase version. For
@@ -160,29 +207,29 @@ to configure HBase to Cloud Bigtable replication:
    Specifically, `google.bigtable.project.id`
    , `google.bigtable.instance.id` and `google.bigtable.auth.json.keyfile` must
    be set.
-4. Restart all the HBase master nodes by
+3. Restart all the HBase master nodes by
    running `sudo systemctl restart hbase-master`, this allows the masters to
    load the replication jar and be aware of the classes in it. Users should
    follow their operational playbooks to perform a rolling restart of the HBase
    masters.
-5. Restart all the region servers by
+4. Restart all the region servers by
    running: `sudo systemctl restart hbase-regionserver`on each region server.
    Users should follow their operational playbooks to perform a rolling restart
    of the HBase cluster.
-6. HBase's replication can be enabled at a cluster level/table level or column
+5. HBase's replication can be enabled at a cluster level/table level or column
    family level. `TABLE_CFS` is used to specify column families that should be
    replicated. Enable replication to CBT by running this command in hbase shell:
    `add_peer '<PEER_ID>', ENDPOINT_CLASSNAME => '
    com.google.cloud.bigtable.hbase.HbaseReplicationEndpoint, TABLE_CFS => { "
    table1" => [], "table2" => ["cf1"], "table3" => ["cf1", "cf2"] }`
-7. All the replicated tables/column families must be present in the target Cloud
+6. All the replicated tables/column families must be present in the target Cloud
    Bigtable instance. When you enable HBase replication, changes from the
    beginning of the current WAL log will be replicated. Meaning, you will see
    changes from before the replication was enabled in Cloud Bigtable. This
    behavior is consistent with enabling replication with an HBase cluster.
-8. Use your operational playbooks to monitor replication metrics. CBT HBase
+7. Use your operational playbooks to monitor replication metrics. CBT HBase
    replication library will emit standard HBase replication peer metrics.
-9. Users can also monitor replication status by running `status 'replication'`
+8. Users can also monitor replication status by running `status 'replication'`
    in HBase shell. The metrics for CBT replication will be under the “peer_id”
    used in the previous step.
 

@@ -178,6 +178,7 @@ public abstract class IncompatibleMutationAdapter {
       incrementIncompatibleMutations();
       incrementDroppedIncompatibleMutations();
     }
+    // Increment compatible mutation if all checks pass
     return returnedCells;
   }
 

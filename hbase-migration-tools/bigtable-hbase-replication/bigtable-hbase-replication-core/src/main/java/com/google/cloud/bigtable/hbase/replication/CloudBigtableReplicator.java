@@ -16,6 +16,12 @@
 package com.google.cloud.bigtable.hbase.replication;
 
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.BATCH_SIZE_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.CBT_REPL_BIDIRECTIONAL_REPLICATION_MODE;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.CBT_REPL_BIDIRECTIONAL_REPLICATION_MODE_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.CBT_REPL_CBT_QUALIFIER;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.CBT_REPL_CBT_QUALIFIER_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.CBT_REPL_HBASE_QUALIFIER;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.CBT_REPL_HBASE_QUALIFIER_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_BATCH_SIZE_IN_BYTES;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_DRY_RUN_MODE;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_THREAD_COUNT;
@@ -23,6 +29,12 @@ import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToC
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.INSTANCE_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.NUM_REPLICATION_SINK_THREADS_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.PROJECT_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.BIDIRECTIONAL_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.BIDIRECTIONAL_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.BIDIRECTIONAL_REPL_INELIGIBLE_MUTATIONS_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.BIDIRECTIONAL_REPL_INELIGIBLE_WAL_ENTRY_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.ONE_WAY_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.ONE_WAY_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY;
 import static java.util.stream.Collectors.groupingBy;
 
 import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
@@ -48,8 +60,10 @@ import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.util.ByteRange;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.SimpleByteRange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,7 +97,10 @@ public class CloudBigtableReplicator {
      */
     private final Connection connection;
 
-    /** Reference count for this instance. */
+    /**
+     * Reference count for this instance. Used to determine if shared resources should be cleaned
+     * up.
+     */
     private static int numReferences = 0;
 
     @VisibleForTesting
@@ -115,13 +132,18 @@ public class CloudBigtableReplicator {
 
         String projectId = configurationCopy.get(PROJECT_KEY);
         String instanceId = configurationCopy.get(INSTANCE_KEY);
-        // Set user agent.
-        configurationCopy.set(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "HBaseReplication");
+
+        // Set user agent tag depending on if bidirectional replication was enabled.
+        if (configurationCopy.getBoolean(CBT_REPL_BIDIRECTIONAL_REPLICATION_MODE_KEY, false)) {
+          configurationCopy.set(
+              BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "HBaseReplicationBidirectional");
+        } else {
+          configurationCopy.set(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "HBaseReplication");
+        }
+
         // If an App profile is provided, it will be picked automatically by the connection.
         Connection connection = BigtableConfiguration.connect(configurationCopy);
-        LOG.info(
-            String.format(
-                "Created a connection to CBT. projects/%s/instances/%s", projectId, instanceId));
+        LOG.info("Created a connection to CBT. projects/{}/instances/{}", projectId, instanceId);
 
         INSTANCE = new SharedResources(connection, executorService);
       }
@@ -165,6 +187,13 @@ public class CloudBigtableReplicator {
 
   private boolean isDryRun;
 
+  /** Bidirectional replication variables if the mode is enabled. */
+  private boolean bidirectionalReplicationEnabled;
+
+  private byte[] sourceHbaseQualifier;
+  private byte[] sourceCbtQualifier;
+  private MetricsExporter metricsExporter;
+
   /**
    * Shared resources that are not tied to an object of this class. Lifecycle of resources in this
    * object is usually tied to the lifecycle of JVM.
@@ -181,11 +210,37 @@ public class CloudBigtableReplicator {
       SharedResources sharedResources,
       IncompatibleMutationAdapter incompatibleMutationAdapter,
       long batchSizeThresholdInBytes,
-      boolean isDryRun) {
+      boolean isDryRun,
+      Configuration configuration,
+      MetricsExporter metricsExporter) {
     this.sharedResources = sharedResources;
     this.incompatibleMutationAdapter = incompatibleMutationAdapter;
     this.batchSizeThresholdInBytes = batchSizeThresholdInBytes;
     this.isDryRun = isDryRun;
+
+    this.metricsExporter = metricsExporter;
+    if (metricsExporter == null) {
+      LOG.trace("Error, metrics exporter is not configured. No metrics logging.");
+    }
+
+    // Get bidirectional replication configs if configuration enabled it.
+    if (configuration != null) {
+      this.bidirectionalReplicationEnabled =
+          configuration.getBoolean(
+              CBT_REPL_BIDIRECTIONAL_REPLICATION_MODE_KEY, CBT_REPL_BIDIRECTIONAL_REPLICATION_MODE);
+      // If enabled, gets source qualifiers from configs.
+      if (this.bidirectionalReplicationEnabled) {
+        this.sourceHbaseQualifier =
+            configuration.get(CBT_REPL_HBASE_QUALIFIER_KEY, CBT_REPL_HBASE_QUALIFIER).getBytes();
+        this.sourceCbtQualifier =
+            configuration.get(CBT_REPL_CBT_QUALIFIER_KEY, CBT_REPL_CBT_QUALIFIER).getBytes();
+
+        LOG.info(
+            "Bidirectional direction enabled. \nCbt qualifier: {}\nHbase qualifier: {}",
+            Bytes.toStringBinary(sourceCbtQualifier),
+            Bytes.toStringBinary(sourceHbaseQualifier));
+      }
+    }
 
     if (isDryRun) {
       LOG.info(
@@ -206,7 +261,9 @@ public class CloudBigtableReplicator {
         sharedResources,
         incompatibleMutationAdapter,
         configuration.getLong(BATCH_SIZE_KEY, DEFAULT_BATCH_SIZE_IN_BYTES),
-        configuration.getBoolean(ENABLE_DRY_RUN_MODE_KEY, DEFAULT_DRY_RUN_MODE));
+        configuration.getBoolean(ENABLE_DRY_RUN_MODE_KEY, DEFAULT_DRY_RUN_MODE),
+        configuration,
+        metricsExporter);
   }
 
   public void stop() {
@@ -230,7 +287,6 @@ public class CloudBigtableReplicator {
    * @param walEntriesByTable Map of WALEntries keyed by table name.
    */
   public boolean replicate(Map<String, List<BigtableWALEntry>> walEntriesByTable) {
-
     long startTime = System.currentTimeMillis();
     boolean succeeded = true;
 
@@ -246,7 +302,7 @@ public class CloudBigtableReplicator {
       for (Future<Boolean> future : futures) {
         // replicate method should succeed only when all the entries are successfully replicated.
         // TODO Add to readme about setting some timeouts on CBT writes. MutateRow should not
-        // wait forever, as long as rpc completes, this future will make progress.
+        //  wait forever, as long as rpc completes, this future will make progress.
         succeeded = future.get() && succeeded;
       }
     } catch (Exception e) {
@@ -270,9 +326,15 @@ public class CloudBigtableReplicator {
     int batchSizeInBytes = 0;
 
     for (BigtableWALEntry walEntry : walEntries) {
+      // To prevent loops in bidirectional replication,
+      // skip entry if it entry is not eligible for replication.
+      if (!isEligibleForReplication(walEntry)) {
+        continue;
+      }
 
       // Translate the incompatible mutations.
       List<Cell> compatibleCells = incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry);
+
       cellsToReplicateForTable.addAll(compatibleCells);
     }
 
@@ -302,8 +364,14 @@ public class CloudBigtableReplicator {
     int numCellsInBatch = 0;
     for (Map.Entry<ByteRange, List<Cell>> rowCells : cellsToReplicateByRow.entrySet()) {
 
+      // If bidirectional replication is enabled, tag row cells with source info
+      // so Bigtable replicator skips this batch and does not replicate batch back to HBase.
+      if (bidirectionalReplicationEnabled) {
+        appendSourceTagToCells(rowCells);
+      }
+
       // TODO handle the case where a single row has >100K mutations (very rare, but should not
-      // fail)
+      //  fail)
       numCellsInBatch += rowCells.getValue().size();
       batchSizeInBytes += getRowSize(rowCells);
       batchToReplicate.put(rowCells.getKey(), rowCells.getValue());
@@ -355,5 +423,86 @@ public class CloudBigtableReplicator {
       LOG.error("Failed to submit a batch for table: " + tableName, ex);
       return CompletableFuture.completedFuture(false);
     }
+  }
+
+  /**
+   * Checks if WAL entry is eligible for replication. If the following are both true, then entry is
+   * NOT eligible for replication: 1. Bidirectional replication is enabled, AND 2. Last mutation in
+   * WAL entry is a special mutation matching SOURCE_CBT qualifier
+   *
+   * @param walEntry from HBase replication WAL log.
+   * @return true if walEntry is from Bigtable.
+   */
+  private boolean isEligibleForReplication(BigtableWALEntry walEntry) {
+    // Always return eligible if bidirectional replication was not enabled
+    int mutationCount = walEntry.getCells().size();
+    if (!bidirectionalReplicationEnabled) {
+      incrementMetric(ONE_WAY_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY, 1);
+      incrementMetric(ONE_WAY_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY, mutationCount);
+      return true;
+    }
+
+    Cell lastCell = walEntry.getCells().get(walEntry.getCells().size() - 1);
+
+    if (Arrays.equals(CellUtil.cloneQualifier(lastCell), sourceCbtQualifier)) {
+      // Wrap in statement so row is not needlessly converted.
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(
+            "Dropping WAL entry as it came from CBT , Row key: "
+                + Bytes.toStringBinary(
+                    lastCell.getRowArray(), lastCell.getRowOffset(), lastCell.getRowLength()));
+      }
+      incrementMetric(BIDIRECTIONAL_REPL_INELIGIBLE_WAL_ENTRY_METRIC_KEY, 1);
+      // We decrement one because the last mutation would've been the special mutation from CBT.
+      incrementMetric(BIDIRECTIONAL_REPL_INELIGIBLE_MUTATIONS_METRIC_KEY, mutationCount - 1);
+      return false;
+    } else {
+      // Wrap in statement so row is not needlessly converted.
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(
+            "Replicating WAL entry as it originated on HBase , Row key: "
+                + Bytes.toStringBinary(
+                    lastCell.getRowArray(), lastCell.getRowOffset(), lastCell.getRowLength()));
+      }
+      incrementMetric(BIDIRECTIONAL_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY, 1);
+      incrementMetric(BIDIRECTIONAL_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY, mutationCount);
+      return true;
+    }
+  }
+
+  private void incrementMetric(String metricName, int delta) {
+    if (metricsExporter == null) {
+      return;
+    }
+    metricsExporter.incCounters(metricName, delta);
+  }
+
+  /**
+   * Tag source info to row cells by appending cells with a special delete mutation with
+   * SOURCE_HBASE qualifier.
+   *
+   * <p>The delete-mutation will not be user-visible nor cause a change on Bigtable because it's
+   * trying to delete a non-existent special qualifier column at timestamp 0. The mutation will be
+   * picked up by Bigtable change data capture along with other mutations of the batch and allow the
+   * Bigtable-HBase replicator to recognize that the mutation batch came from Hbase based on the
+   * special qualifier column name.
+   *
+   * @param rowCells map of <RowKey, [Cell]> mutations.
+   */
+  private void appendSourceTagToCells(Map.Entry<ByteRange, List<Cell>> rowCells) {
+    Cell lastCell = rowCells.getValue().get(rowCells.getValue().size() - 1);
+
+    Cell sourceHbaseMarker =
+        CellUtil.createCell(
+            CellUtil.cloneRow(lastCell),
+            CellUtil.cloneFamily(lastCell),
+            sourceHbaseQualifier,
+            0L,
+            KeyValue.Type.Delete.getCode(),
+            null);
+
+    rowCells.getValue().add(sourceHbaseMarker);
+
+    return;
   }
 }
