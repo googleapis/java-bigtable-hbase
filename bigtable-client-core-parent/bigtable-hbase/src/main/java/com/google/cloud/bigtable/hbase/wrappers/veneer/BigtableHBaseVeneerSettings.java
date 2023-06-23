@@ -26,6 +26,7 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BU
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_MAX_REQUEST_SIZE_BYTES;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_MAX_ROW_KEY_COUNT;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_BULK_THROTTLE_TARGET_MS_DEFAULT;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_CUSTOM_CREDENTIALS_CLASS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_ENABLE_BULK_MUTATION_FLOW_CONTROL;
@@ -83,6 +84,7 @@ import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableExtendedConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableHBaseVersion;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.util.CustomCredentialsProvider;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.metrics.MetricsApiTracerAdapterFactory;
 import com.google.common.base.Joiner;
@@ -548,6 +550,12 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       stubSettings.setCredentialsProvider(
           FixedCredentialsProvider.create(
               buildCredentialFromPrivateKey(serviceAccount, keyFileLocation)));
+    } else if (!Strings.isNullOrEmpty(configuration.get(BIGTABLE_CUSTOM_CREDENTIALS_CLASS_KEY))) {
+      String customAuthClassName = configuration.get(BIGTABLE_CUSTOM_CREDENTIALS_CLASS_KEY);
+      Credentials credentials = CustomCredentialsProvider.getCustomCredentials(customAuthClassName,
+          configuration);
+
+      stubSettings.setCredentialsProvider(FixedCredentialsProvider.create(credentials));
     }
   }
 

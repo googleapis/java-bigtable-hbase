@@ -89,6 +89,14 @@ public class BigtableOptionsFactory {
       "google.bigtable.auth.service.account.email";
 
   /**
+   * Key to set custom Credentials class. This class must extend {@link com.google.auth.Credentials}
+   * class and must provide a public constructor which takes
+   * {@link org.apache.hadoop.conf.Configuration} argument.
+   */
+  public static final String BIGTABLE_CUSTOM_CREDENTIALS_CLASS_KEY =
+      "google.bigtable.auth.custom.credentials.class";
+
+  /**
    * Key to set to a location where a P12 keyfile can be found that corresponds to the provided
    * service account email address.
    */
