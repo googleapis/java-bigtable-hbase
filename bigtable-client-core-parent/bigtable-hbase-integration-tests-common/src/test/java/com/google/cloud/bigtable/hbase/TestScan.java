@@ -40,6 +40,7 @@ import org.apache.hadoop.hbase.filter.MultiRowRangeFilter;
 import org.apache.hadoop.hbase.filter.MultiRowRangeFilter.RowRange;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 public class TestScan extends AbstractTest {
 
@@ -310,6 +311,7 @@ public class TestScan extends AbstractTest {
   }
 
   @Test
+  @Category(KnownEmulatorGap.class)
   public void testBasicReverseScan() throws IOException {
     String prefix = "reverse_basic";
     int rowsToWrite = 10;
@@ -354,6 +356,7 @@ public class TestScan extends AbstractTest {
   }
 
   @Test
+  @Category(KnownEmulatorGap.class)
   public void testReverseScanWithFilter() throws IOException {
     String prefix = "reverse_filter";
     int rowsToWrite = 10;
@@ -395,15 +398,13 @@ public class TestScan extends AbstractTest {
             .collect(Collectors.toList());
 
     List<String> expectedRowKeys =
-        ImmutableList.of(
-            new String(rowKeys[7]),
-            new String(rowKeys[6]),
-            new String(rowKeys[4]));
+        ImmutableList.of(new String(rowKeys[7]), new String(rowKeys[6]), new String(rowKeys[4]));
 
     assertThat(actualRowKeys).containsExactlyElementsIn(expectedRowKeys).inOrder();
   }
 
   @Test
+  @Category(KnownEmulatorGap.class)
   public void testReverseScanWithFilterAndRange() throws IOException {
     String prefix = "reverse_filter";
     int rowsToWrite = 10;
