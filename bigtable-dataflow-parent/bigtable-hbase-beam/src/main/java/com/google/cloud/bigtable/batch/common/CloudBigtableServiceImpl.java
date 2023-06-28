@@ -16,7 +16,10 @@
 package com.google.cloud.bigtable.batch.common;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
+import com.google.bigtable.repackaged.com.google.api.gax.grpc.ChannelPoolSettings;
+import com.google.bigtable.repackaged.com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.BigtableDataClient;
+import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings;
@@ -32,8 +35,26 @@ public class CloudBigtableServiceImpl implements CloudBigtableService {
 
     // TODO: figure out how to stick to HBase api here
     BigtableHBaseVeneerSettings settings =
-        (BigtableHBaseVeneerSettings) BigtableHBaseVeneerSettings.create(config.toHBaseConfig());
-    try (BigtableDataClient client = BigtableDataClient.create(settings.getDataSettings())) {
+        BigtableHBaseVeneerSettings.create(config.toHBaseConfig());
+
+    // Lighten the client instance since it's only used for a single RPC
+    BigtableDataSettings.Builder builder = settings.getDataSettings().toBuilder();
+    InstantiatingGrpcChannelProvider oldTransportProvider =
+        (InstantiatingGrpcChannelProvider)
+            settings.getDataSettings().getStubSettings().getTransportChannelProvider();
+
+    builder
+        .stubSettings()
+        .setTransportChannelProvider(
+            oldTransportProvider
+                .toBuilder()
+                .setChannelPoolSettings(
+                    ChannelPoolSettings.staticallySized(1)
+                        .toBuilder()
+                        .setPreemptiveRefreshEnabled(false)
+                        .build())
+                .build());
+    try (BigtableDataClient client = BigtableDataClient.create(builder.build())) {
       return client.sampleRowKeys(config.getTableId());
     }
   }

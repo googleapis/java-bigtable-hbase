@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.beam;
 
+import static org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
@@ -28,6 +29,7 @@ import com.google.cloud.bigtable.beam.CloudBigtableIO.SourceWithKeys;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import org.apache.beam.sdk.Pipeline;
@@ -35,11 +37,14 @@ import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.CoderRegistry;
 import org.apache.beam.sdk.io.BoundedSource;
+import org.apache.beam.sdk.util.SerializableUtils;
 import org.apache.beam.sdk.values.TypeDescriptor;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Before;
@@ -216,5 +221,74 @@ public class CloudBigtableIOTest {
     } catch (IllegalArgumentException e) {
       Assert.assertTrue(e.getMessage().contains("A instanceId must be set"));
     }
+  }
+
+  @Test
+  public void testSerializeSource() {
+    String projectId = "my-project";
+    String instanceId = "my-instance";
+    String tableId = "my-table";
+    Scan scan = new Scan().setFilter(new KeyOnlyFilter()).setMaxVersions(2);
+    CloudBigtableScanConfiguration configuration =
+        CloudBigtableScanConfiguration.createConfig(
+            StaticValueProvider.of(projectId),
+            StaticValueProvider.of(instanceId),
+            StaticValueProvider.of(tableId),
+            StaticValueProvider.of(scan),
+            new HashMap<>());
+
+    Source source = new Source(configuration);
+
+    Source deserialized = SerializableUtils.ensureSerializable(source);
+
+    assertEquals(projectId, deserialized.getConfiguration().getProjectId());
+    assertEquals(instanceId, deserialized.getConfiguration().getInstanceId());
+    assertEquals(tableId, deserialized.getConfiguration().getTableId());
+    assertEquals(
+        scan.getFilter(), deserialized.getConfiguration().getScanValueProvider().get().getFilter());
+    assertEquals(2, scan.getMaxVersions());
+  }
+
+  @Test
+  public void testSerializeSourceWithKeys() {
+    String projectId = "my-project";
+    String instanceId = "my-instance";
+    String tableId = "my-table";
+    String startKey = "aaa1";
+    String endKey = "bbb3";
+
+    Scan scan =
+        new Scan()
+            .withStartRow(ByteString.copyFromUtf8(startKey).toByteArray())
+            .withStopRow(ByteString.copyFromUtf8(endKey).toByteArray())
+            .setFilter(new KeyOnlyFilter());
+
+    CloudBigtableScanConfiguration sourceWithKeysConfiguration =
+        CloudBigtableScanConfiguration.createConfig(
+            StaticValueProvider.of(projectId),
+            StaticValueProvider.of(instanceId),
+            StaticValueProvider.of(tableId),
+            StaticValueProvider.of(scan),
+            new HashMap<>());
+
+    long estimatedSize = 123456;
+    SourceWithKeys sourceWithKeys = new SourceWithKeys(sourceWithKeysConfiguration, estimatedSize);
+
+    SourceWithKeys deserialized = SerializableUtils.ensureSerializable(sourceWithKeys);
+
+    assertEquals(projectId, deserialized.getConfiguration().getProjectId());
+    assertEquals(instanceId, deserialized.getConfiguration().getInstanceId());
+    assertEquals(tableId, deserialized.getConfiguration().getTableId());
+    assertEquals(
+        startKey,
+        ByteString.copyFrom(
+                deserialized.getConfiguration().getScanValueProvider().get().getStartRow())
+            .toStringUtf8());
+    assertEquals(
+        endKey,
+        ByteString.copyFrom(
+                deserialized.getConfiguration().getScanValueProvider().get().getStopRow())
+            .toStringUtf8());
+    assertEquals(estimatedSize, deserialized.getEstimatedSize());
   }
 }

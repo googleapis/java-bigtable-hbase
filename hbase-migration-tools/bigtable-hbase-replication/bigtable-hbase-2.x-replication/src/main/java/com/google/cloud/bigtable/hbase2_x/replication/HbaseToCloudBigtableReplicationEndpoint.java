@@ -181,5 +181,4 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService
   @Override
   public void peerConfigUpdated(ReplicationPeerConfig replicationPeerConfig) {}
   // TODO(we can implement this to enable/disable dry-run mode without deleting the peer)
-
 }

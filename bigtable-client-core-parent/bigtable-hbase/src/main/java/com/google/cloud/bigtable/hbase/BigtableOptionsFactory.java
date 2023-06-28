@@ -314,4 +314,14 @@ public class BigtableOptionsFactory {
   @BetaApi("This API is not yet stable and may change in the future")
   public static final String MANAGED_CONNECTION_WARNING =
       "google.bigtable.managed.connection.warning";
+
+  /**
+   * Option to enable flow control. When enabled, traffic to Bigtable is automatically rate-limited
+   * based on the current Bigtable usage to prevent overloading Bigtable clusters while keeping
+   * enough load to trigger Bigtable Autoscaling (if enabled) to provision more nodes as needed. It
+   * is different from the flow control set by {@link #BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING},
+   * which limits the number of outstanding requests to Bigtable.
+   */
+  public static final String BIGTABLE_ENABLE_BULK_MUTATION_FLOW_CONTROL =
+      "google.bigtable.enable.bulk.mutation.flow.control";
 }

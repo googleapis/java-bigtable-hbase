@@ -1,5 +1,31 @@
 # Changelog
 
+## [2.9.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.8.1...v2.9.0) (2023-06-06)
+
+
+### Features
+
+* Enable batch write flow control ([#4077](https://github.com/googleapis/java-bigtable-hbase/issues/4077)) ([4f7f79c](https://github.com/googleapis/java-bigtable-hbase/commit/4f7f79c2673083ce32e1b028bd5f6e0a8d70f8c9))
+
+## [2.8.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.8.0...v2.8.1) (2023-05-17)
+
+
+### Bug Fixes
+
+* Deserialize Source and SourceWithKeys correctly so SampleRowKeys only get called once ([#4078](https://github.com/googleapis/java-bigtable-hbase/issues/4078)) ([de7bdac](https://github.com/googleapis/java-bigtable-hbase/commit/de7bdac2c8f9630ca61f1b536912fb9bfd9c4a5c))
+
+## [2.8.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.7.4...v2.8.0) (2023-05-10)
+
+
+### Features
+
+* Optimize dataflow job start by making sample row keys lighter ([#4075](https://github.com/googleapis/java-bigtable-hbase/issues/4075)) ([f0f453d](https://github.com/googleapis/java-bigtable-hbase/commit/f0f453d64f2e1f1c1560a6bc63edfc7320d17f90))
+
+
+### Bug Fixes
+
+* Prevent connections from leaking for reads ([#4073](https://github.com/googleapis/java-bigtable-hbase/issues/4073)) ([56d32bd](https://github.com/googleapis/java-bigtable-hbase/commit/56d32bd09cb24bc84f1df85df7ad066275b26d9d))
+
 ## [2.7.4](https://github.com/googleapis/java-bigtable-hbase/compare/v2.7.3...v2.7.4) (2023-04-04)
 
 

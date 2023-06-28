@@ -409,25 +409,15 @@ public class CloudBigtableIO {
       configuration.populateDisplayData(builder);
     }
 
-    /**
-     * The writeReplace method allows the developer to provide a replacement object that will be
-     * serialized instead of the original one. We use this to keep the enclosed class immutable. For
-     * more details on the technique see <a
-     * href="https://lingpipe-blog.com/2009/08/10/serializing-immutable-singletons-serialization-proxy/">this
-     * article</a>.
-     */
-    private Object writeReplace() {
-      return new SerializationProxy(getConfiguration());
-    }
+    abstract static class AbstractSerializationProxy implements Serializable {
 
-    static class SerializationProxy implements Serializable {
       private ValueProvider<String> projectId;
       private ValueProvider<String> instanceId;
       private ValueProvider<String> tableId;
       private Map<String, ValueProvider<String>> additionalConfiguration;
       private transient ValueProvider<Scan> scan;
 
-      public SerializationProxy(CloudBigtableScanConfiguration configuration) {
+      public AbstractSerializationProxy(CloudBigtableScanConfiguration configuration) {
         this.projectId = configuration.getProjectIdValueProvider();
         this.instanceId = configuration.getInstanceIdValueProvider();
         this.tableId = configuration.getTableIdValueProvider();
@@ -472,11 +462,13 @@ public class CloudBigtableIO {
         }
       }
 
-      Object readResolve() {
+      abstract Object readResolve();
+
+      protected CloudBigtableScanConfiguration buildScanConfig() {
         CloudBigtableScanConfiguration conf =
             CloudBigtableScanConfiguration.createConfig(
                 projectId, instanceId, tableId, scan, additionalConfiguration);
-        return CloudBigtableIO.read(conf);
+        return conf;
       }
     }
   }
@@ -532,8 +524,26 @@ public class CloudBigtableIO {
       return getResultCoder();
     }
 
+    /**
+     * The writeReplace method allows the developer to provide a replacement object that will be
+     * serialized instead of the original one. We use this to keep the enclosed class immutable. For
+     * more details on the technique see <a
+     * href="https://lingpipe-blog.com/2009/08/10/serializing-immutable-singletons-serialization-proxy/">this
+     * article</a>.
+     */
     private Object writeReplace() {
-      return new SerializationProxy(getConfiguration());
+      return new SourceSerializationProxy(getConfiguration());
+    }
+
+    static class SourceSerializationProxy extends AbstractSerializationProxy {
+      public SourceSerializationProxy(CloudBigtableScanConfiguration configuration) {
+        super(configuration);
+      }
+
+      @Override
+      Object readResolve() {
+        return new Source(buildScanConfig());
+      }
     }
   }
 
@@ -554,7 +564,6 @@ public class CloudBigtableIO {
 
     protected SourceWithKeys(CloudBigtableScanConfiguration configuration, long estimatedSize) {
       super(configuration);
-
       byte[] stopRow = configuration.getStopRow();
       if (stopRow.length > 0) {
         byte[] startRow = configuration.getStartRow();
@@ -618,7 +627,23 @@ public class CloudBigtableIO {
     }
 
     private Object writeReplace() {
-      return new SerializationProxy(getConfiguration());
+      return new SourceWithKeysSerializationProxy(getConfiguration(), estimatedSize);
+    }
+
+    static class SourceWithKeysSerializationProxy extends AbstractSerializationProxy {
+
+      private long estimatedSize;
+
+      public SourceWithKeysSerializationProxy(
+          CloudBigtableScanConfiguration configuration, long estimatedSize) {
+        super(configuration);
+        this.estimatedSize = estimatedSize;
+      }
+
+      Object readResolve() {
+        CloudBigtableScanConfiguration conf = buildScanConfig();
+        return new SourceWithKeys(conf, estimatedSize);
+      }
     }
   }
   /** Reads rows for a specific {@link Table}, usually filtered by a {@link Scan}. */
@@ -773,6 +798,10 @@ public class CloudBigtableIO {
       if (scanner != null) {
         scanner.close();
         scanner = null;
+      }
+      if (connection != null) {
+        connection.close();
+        connection = null;
       }
       long totalOps = getRowsReadCount();
       long elapsedTimeMs = System.currentTimeMillis() - workStart;

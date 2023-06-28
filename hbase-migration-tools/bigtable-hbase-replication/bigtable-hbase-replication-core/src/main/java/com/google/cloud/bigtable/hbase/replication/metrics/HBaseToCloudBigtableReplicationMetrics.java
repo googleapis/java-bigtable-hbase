@@ -35,4 +35,30 @@ public class HBaseToCloudBigtableReplicationMetrics {
   public static final String INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY =
       "bigtableIncompatibleTimestampOverflowMutation";
   public static final String PUTS_IN_FUTURE_METRIC_KEY = "bigtablePutsInFutureMutations";
+
+  /**
+   * WAL entries/mutations exported if bidirectional replication is not enabled. Note that no
+   * filtering logic is present in one way replication, so there are no oneWayReplIneligible*
+   * metrics.
+   */
+  public static final String ONE_WAY_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY =
+      "oneWayReplEligibleWALEntries";
+
+  public static final String ONE_WAY_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY =
+      "oneWayReplEligibleMutations";
+  /** WAL entries/mutations exported if bidirectional replication is enabled. */
+  public static final String BIDIRECTIONAL_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY =
+      "bidirectionalReplEligibleWALEntries";
+
+  public static final String BIDIRECTIONAL_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY =
+      "bidirectionalReplEligibleMutations";
+  /**
+   * WAL entries/mutations not eligible for replication if bidirectional replication is enabled,
+   * i.e. they come from a Bigtable-Hbase replicator.
+   */
+  public static final String BIDIRECTIONAL_REPL_INELIGIBLE_WAL_ENTRY_METRIC_KEY =
+      "bidirectionalReplIneligibleWALEntries";
+
+  public static final String BIDIRECTIONAL_REPL_INELIGIBLE_MUTATIONS_METRIC_KEY =
+      "bidirectionalReplIneligibleMutations";
 }
