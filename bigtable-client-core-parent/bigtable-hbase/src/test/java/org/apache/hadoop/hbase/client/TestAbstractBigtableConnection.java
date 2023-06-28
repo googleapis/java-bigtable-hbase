@@ -35,6 +35,7 @@ import com.google.cloud.bigtable.hbase.BigtableHBaseVersion;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.cloud.bigtable.test.helper.TestServerBuilder;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Queues;
 import com.google.common.truth.Truth;
@@ -212,9 +213,14 @@ public class TestAbstractBigtableConnection {
       Truth.assertThat(requestParams)
           .contains(
               "table_name="
-                  + String.format(
-                      "projects/%s/instances/%s/tables/%s",
-                      PROJECT_ID, INSTANCE_ID, TABLE_NAME.getNameAsString()));
+                  + Joiner.on("%2F")
+                      .join(
+                          "projects",
+                          PROJECT_ID,
+                          "instances",
+                          INSTANCE_ID,
+                          "tables",
+                          TABLE_NAME.getNameAsString()));
       Truth.assertThat(resourcePath).isNull();
     } else {
       Truth.assertThat(resourcePath)
