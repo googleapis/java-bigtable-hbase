@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.10.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.9.0...v2.10.0) (2023-06-29)
+
+
+### Features
+
+* Add experimental support for reverse scans public preview ([#4060](https://github.com/googleapis/java-bigtable-hbase/issues/4060)) ([518a388](https://github.com/googleapis/java-bigtable-hbase/commit/518a388420305771d460d59483c8652bd5b65f5b))
+* Two-way replication for Hbase-Bigtable replication  ([#3920](https://github.com/googleapis/java-bigtable-hbase/issues/3920)) ([0d75465](https://github.com/googleapis/java-bigtable-hbase/commit/0d754650398b30e7f47963478ad601319daaf5b9))
+
 ## [2.9.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.8.1...v2.9.0) (2023-06-06)
 
 
