@@ -55,6 +55,7 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   private static final int UNSET_MAX_RESULTS_PER_COLUMN_FAMILY = -1;
   private static final boolean OPEN_CLOSED_AVAILABLE = isOpenClosedAvailable();
   private static final boolean LIMIT_AVAILABLE = isLimitAvailable();
+  private static final boolean REVERSED_AVAILABLE = isReversedAvailable();
 
   /**
    * HBase supports include(Stop|Start)Row only at 1.4.0+, so check to make sure that the HBase
@@ -72,6 +73,15 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
   private static boolean isLimitAvailable() {
     try {
       new Scan().setLimit(1);
+      return true;
+    } catch (NoSuchMethodError e) {
+      return false;
+    }
+  }
+
+  private static boolean isReversedAvailable() {
+    try {
+      new Scan().setReversed(true);
       return true;
     } catch (NoSuchMethodError e) {
       return false;
@@ -161,6 +171,8 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
       return Query.fromProto(((BigtableFixedProtoScan) scan).getRequest());
     } else {
       throwIfUnsupportedScan(scan);
+
+      query.reversed(scan.isReversed());
       toByteStringRange(scan, query);
       query.filter(buildFilter(scan, readHooks));
 
@@ -182,19 +194,41 @@ public class ScanAdapter implements ReadOperationAdapter<Scan> {
       return rowRangeAdapter.rowSetToRangeSet(rowSet);
     } else {
       RangeSet<RowKeyWrapper> rangeSet = TreeRangeSet.create();
-      final ByteString startRow = ByteString.copyFrom(scan.getStartRow());
-      final ByteString stopRow = ByteString.copyFrom(scan.getStopRow());
 
       if (scan.isGetScan()) {
-        rangeSet.add(Range.singleton(new RowKeyWrapper(startRow)));
-      } else {
-        final BoundType startBound =
-            (!OPEN_CLOSED_AVAILABLE || scan.includeStartRow()) ? BoundType.CLOSED : BoundType.OPEN;
-        final BoundType endBound =
+        rangeSet.add(Range.singleton(new RowKeyWrapper(ByteString.copyFrom(scan.getStartRow()))));
+        return rangeSet;
+      }
+
+      ByteString startRow;
+      BoundType startBound;
+      ByteString stopRow;
+      BoundType stopBound;
+
+      // For reverse scans, HBase wants the lexicographically greater key to be the start. But
+      // java-bigtable keeps the bounds the same as forward scans. So this will flip the ranges for
+      // reverse scans. Please note that prior to hbase 1.4 the only range bound that was available
+      // was [start, stop).
+      if (REVERSED_AVAILABLE && scan.isReversed()) {
+        startRow = ByteString.copyFrom(scan.getStopRow());
+        startBound =
             (!OPEN_CLOSED_AVAILABLE || !scan.includeStopRow()) ? BoundType.OPEN : BoundType.CLOSED;
 
-        rangeSet.add(rowRangeAdapter.boundedRange(startBound, startRow, endBound, stopRow));
+        stopRow = ByteString.copyFrom(scan.getStartRow());
+        stopBound =
+            (!OPEN_CLOSED_AVAILABLE || scan.includeStartRow()) ? BoundType.CLOSED : BoundType.OPEN;
+      } else {
+
+        startRow = ByteString.copyFrom(scan.getStartRow());
+        startBound =
+            (!OPEN_CLOSED_AVAILABLE || scan.includeStartRow()) ? BoundType.CLOSED : BoundType.OPEN;
+
+        stopRow = ByteString.copyFrom(scan.getStopRow());
+        stopBound =
+            (!OPEN_CLOSED_AVAILABLE || !scan.includeStopRow()) ? BoundType.OPEN : BoundType.CLOSED;
       }
+
+      rangeSet.add(rowRangeAdapter.boundedRange(startBound, startRow, stopBound, stopRow));
       return rangeSet;
     }
   }

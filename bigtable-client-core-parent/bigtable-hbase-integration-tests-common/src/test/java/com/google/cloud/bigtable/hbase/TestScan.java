@@ -17,11 +17,16 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
+import static com.google.common.truth.Truth.*;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.TableName;
@@ -31,8 +36,11 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.filter.MultiRowRangeFilter;
+import org.apache.hadoop.hbase.filter.MultiRowRangeFilter.RowRange;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 public class TestScan extends AbstractTest {
 
@@ -300,6 +308,149 @@ public class TestScan extends AbstractTest {
       Cell cell = result.getColumnCells(COLUMN_FAMILY, qualifier).get(0);
       Assert.assertArrayEquals(value, CellUtil.cloneValue(cell));
     }
+  }
+
+  @Test
+  @Category(KnownEmulatorGap.class)
+  public void testBasicReverseScan() throws IOException {
+    String prefix = "reverse_basic";
+    int rowsToWrite = 10;
+
+    // Initialize variables
+    Table table = getDefaultTable();
+
+    byte[][] rowKeys = new byte[rowsToWrite][];
+    rowKeys[0] = dataHelper.randomData(prefix);
+    for (int i = 1; i < rowsToWrite; i++) {
+      rowKeys[i] = rowFollowingSameLength(rowKeys[i - 1]);
+    }
+
+    byte[] qualifier = dataHelper.randomData("qual-");
+    byte[] value = dataHelper.randomData("value-");
+
+    ArrayList<Put> puts = new ArrayList<>(rowsToWrite);
+
+    // Insert some columns
+    for (int rowIndex = 0; rowIndex < rowsToWrite; rowIndex++) {
+      Put put = new Put(rowKeys[rowIndex]).addColumn(COLUMN_FAMILY, qualifier, value);
+      puts.add(put);
+    }
+    table.put(puts);
+
+    Scan scan = new Scan().setReversed(true).withStartRow(rowKeys[6]).withStopRow(rowKeys[2]);
+
+    List<String> actualRowKeys =
+        StreamSupport.stream(table.getScanner(scan).spliterator(), false)
+            .map(Result::getRow)
+            .map(String::new)
+            .collect(Collectors.toList());
+
+    List<String> expectedRowKeys =
+        ImmutableList.of(
+            new String(rowKeys[6]),
+            new String(rowKeys[5]),
+            new String(rowKeys[4]),
+            new String(rowKeys[3]));
+
+    assertThat(actualRowKeys).containsExactlyElementsIn(expectedRowKeys).inOrder();
+  }
+
+  @Test
+  @Category(KnownEmulatorGap.class)
+  public void testReverseScanWithFilter() throws IOException {
+    String prefix = "reverse_filter";
+    int rowsToWrite = 10;
+
+    // Initialize variables
+    Table table = getDefaultTable();
+
+    byte[][] rowKeys = new byte[rowsToWrite][];
+    rowKeys[0] = dataHelper.randomData(prefix);
+    for (int i = 1; i < rowsToWrite; i++) {
+      rowKeys[i] = rowFollowingSameLength(rowKeys[i - 1]);
+    }
+
+    byte[] qualifier = dataHelper.randomData("qual-");
+    byte[] value = dataHelper.randomData("value-");
+
+    ArrayList<Put> puts = new ArrayList<>(rowsToWrite);
+
+    // Insert some columns
+    for (int rowIndex = 0; rowIndex < rowsToWrite; rowIndex++) {
+      Put put = new Put(rowKeys[rowIndex]).addColumn(COLUMN_FAMILY, qualifier, value);
+      puts.add(put);
+    }
+    table.put(puts);
+
+    Scan scan =
+        new Scan()
+            .setReversed(true)
+            .setFilter(
+                new MultiRowRangeFilter(
+                    Lists.newArrayList(
+                        new RowRange(rowKeys[3], false, rowKeys[4], true),
+                        new RowRange(rowKeys[6], true, rowKeys[8], false))));
+
+    List<String> actualRowKeys =
+        StreamSupport.stream(table.getScanner(scan).spliterator(), false)
+            .map(Result::getRow)
+            .map(String::new)
+            .collect(Collectors.toList());
+
+    List<String> expectedRowKeys =
+        ImmutableList.of(new String(rowKeys[7]), new String(rowKeys[6]), new String(rowKeys[4]));
+
+    assertThat(actualRowKeys).containsExactlyElementsIn(expectedRowKeys).inOrder();
+  }
+
+  @Test
+  @Category(KnownEmulatorGap.class)
+  public void testReverseScanWithFilterAndRange() throws IOException {
+    String prefix = "reverse_filter";
+    int rowsToWrite = 10;
+
+    // Initialize variables
+    Table table = getDefaultTable();
+
+    byte[][] rowKeys = new byte[rowsToWrite][];
+    rowKeys[0] = dataHelper.randomData(prefix);
+    for (int i = 1; i < rowsToWrite; i++) {
+      rowKeys[i] = rowFollowingSameLength(rowKeys[i - 1]);
+    }
+
+    byte[] qualifier = dataHelper.randomData("qual-");
+    byte[] value = dataHelper.randomData("value-");
+
+    ArrayList<Put> puts = new ArrayList<>(rowsToWrite);
+
+    // Insert some columns
+    for (int rowIndex = 0; rowIndex < rowsToWrite; rowIndex++) {
+      Put put = new Put(rowKeys[rowIndex]).addColumn(COLUMN_FAMILY, qualifier, value);
+      puts.add(put);
+    }
+    table.put(puts);
+
+    Scan scan =
+        new Scan()
+            .setReversed(true)
+            .withStartRow(rowKeys[6])
+            .withStopRow(rowKeys[1])
+            .setFilter(
+                new MultiRowRangeFilter(
+                    Lists.newArrayList(
+                        new RowRange(rowKeys[3], true, rowKeys[4], true),
+                        new RowRange(rowKeys[6], true, rowKeys[8], false))));
+
+    List<String> actualRowKeys =
+        StreamSupport.stream(table.getScanner(scan).spliterator(), false)
+            .map(Result::getRow)
+            .map(String::new)
+            .collect(Collectors.toList());
+
+    List<String> expectedRowKeys =
+        ImmutableList.of(new String(rowKeys[6]), new String(rowKeys[4]), new String(rowKeys[3]));
+
+    assertThat(actualRowKeys).containsExactlyElementsIn(expectedRowKeys).inOrder();
   }
 
   @Test
