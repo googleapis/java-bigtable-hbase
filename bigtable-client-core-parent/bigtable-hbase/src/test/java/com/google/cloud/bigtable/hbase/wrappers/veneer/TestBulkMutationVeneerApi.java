@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -26,10 +27,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.api.core.SettableApiFuture;
+import com.google.api.gax.batching.BatchResource;
 import com.google.api.gax.batching.Batcher;
 import com.google.api.gax.batching.BatcherImpl;
 import com.google.api.gax.batching.BatchingDescriptor;
+import com.google.api.gax.batching.BatchingRequestBuilder;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.FlowControlSettings;
 import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
@@ -122,11 +126,21 @@ public class TestBulkMutationVeneerApi {
             .build();
     when(batchingSettings.getFlowControlSettings()).thenReturn(flowControlSettings);
 
+    BatchingDescriptor mockBatchingDescriptor = mock(BatchingDescriptor.class);
+
+    when(mockBatchingDescriptor.createEmptyResource()).thenReturn(new FakeResource());
+    when(mockBatchingDescriptor.newRequestBuilder(any()))
+        .thenReturn(mock(BatchingRequestBuilder.class));
+
+    UnaryCallable unaryCallable = mock(UnaryCallable.class);
+    when(unaryCallable.futureCall(any(), any()))
+        .thenReturn(ApiFutures.immediateFuture(new Object()));
+
     @SuppressWarnings("unchecked")
     Batcher<RowMutationEntry, Void> actualBatcher =
         new BatcherImpl(
-            mock(BatchingDescriptor.class),
-            mock(UnaryCallable.class),
+            mockBatchingDescriptor,
+            unaryCallable,
             new Object(),
             batchingSettings,
             mock(ScheduledExecutorService.class));
@@ -141,5 +155,28 @@ public class TestBulkMutationVeneerApi {
       actualEx = e;
     }
     assertTrue(actualEx instanceof IllegalStateException);
+  }
+
+  private class FakeResource implements BatchResource {
+
+    @Override
+    public BatchResource add(BatchResource resource) {
+      return new FakeResource();
+    }
+
+    @Override
+    public long getElementCount() {
+      return 1;
+    }
+
+    @Override
+    public long getByteCount() {
+      return 1;
+    }
+
+    @Override
+    public boolean shouldFlush(long maxElementThreshold, long maxBytesThreshold) {
+      return false;
+    }
   }
 }
