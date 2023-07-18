@@ -20,13 +20,13 @@ limitations under the License.
   <parent>
     <artifactId>bigtable-hbase-replication</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>1.9.0</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+    <version>1.9.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.google.cloud.bigtable</groupId>
   <artifactId>bigtable-hbase-1.x-replication</artifactId>
-  <version>1.9.0</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+  <version>1.9.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
 
   <packaging>jar</packaging>
   <name>bigtable-hbase-1.x-replication</name>
@@ -135,7 +135,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-replication-core</artifactId>
-      <version>1.9.0</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+      <version>1.9.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
       <exclusions>
         <!-- HBase dependencies come from hbase-server below. Skip them here.-->
         <exclusion>
@@ -189,7 +189,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-internal-test-helper</artifactId>
-      <version>2.10.0</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.10.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <scope>test</scope>
     </dependency>
   </dependencies>
