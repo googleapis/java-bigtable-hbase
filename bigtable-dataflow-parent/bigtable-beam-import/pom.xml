@@ -99,6 +99,10 @@ limitations under the License.
           <groupId>com.google.auto.value</groupId>
           <artifactId>auto-value</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>io.grpc</groupId>
+          <artifactId>grpc-netty</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>

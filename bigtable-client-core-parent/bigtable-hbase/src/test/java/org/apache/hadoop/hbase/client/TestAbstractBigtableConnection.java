@@ -211,17 +211,22 @@ public class TestAbstractBigtableConnection {
     if (requestParams != null) {
       Truth.assertThat(requestParams)
           .contains(
-              "table_name="
-                  + String.format(
-                      "projects/%s/instances/%s/tables/%s",
-                      PROJECT_ID, INSTANCE_ID, TABLE_NAME.getNameAsString()));
+              "table_name=projects%2F"
+                  + PROJECT_ID
+                  + "%2Finstances%2F"
+                  + INSTANCE_ID
+                  + "%2Ftables%2F"
+                  + TABLE_NAME.getNameAsString());
       Truth.assertThat(resourcePath).isNull();
     } else {
       Truth.assertThat(resourcePath)
           .isEqualTo(
-              String.format(
-                  "projects/%s/instances/%s/tables/%s",
-                  PROJECT_ID, INSTANCE_ID, TABLE_NAME.getNameAsString()));
+              "table_name=projects%2F"
+                  + PROJECT_ID
+                  + "%2Finstances%2F"
+                  + INSTANCE_ID
+                  + "%2Ftables%2F"
+                  + TABLE_NAME.getNameAsString());
     }
   }
 
