@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.10.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.10.0...v2.10.1) (2023-07-18)
+
+
+### Dependencies
+
+* Update bigtable dependency to fix mutation limit ([#4122](https://github.com/googleapis/java-bigtable-hbase/issues/4122)) ([ccea847](https://github.com/googleapis/java-bigtable-hbase/commit/ccea847a60b9dc024081c146fc4c062e76802b4a))
+
 ## [2.10.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.9.0...v2.10.0) (2023-06-29)
 
 
