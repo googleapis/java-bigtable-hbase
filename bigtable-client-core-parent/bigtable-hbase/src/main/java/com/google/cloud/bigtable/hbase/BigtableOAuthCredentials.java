@@ -1,3 +1,18 @@
+/*
+ * Copyright 2023 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.google.cloud.bigtable.hbase;
 
 import java.io.IOException;
@@ -13,7 +28,7 @@ import org.apache.hadoop.conf.Configuration;
  * com.google.auth.Credentials} implementation for auth purposes. Clients can't directly override
  * the {@link com.google.auth.Credentials} class as it is shaded by Cloud Bigtable client.
  *
- * Hence, customers should implement this class, which will be used for authentication. The
+ * <p>Hence, customers should implement this class, which will be used for authentication. The
  * authentication should be based on OAuth and must work by just including request metadata with
  * each request at transport layer.
  */
@@ -42,12 +57,10 @@ public abstract class BigtableOAuthCredentials {
    *
    * @param uri URI of the entry point for the request.
    */
-  public abstract CompletableFuture<Map<String, List<String>>> getRequestMetadata(URI uri,
-      Executor executor) throws IOException;
+  public abstract CompletableFuture<Map<String, List<String>>> getRequestMetadata(
+      URI uri, Executor executor) throws IOException;
 
-  /**
-   * Returns the HBase configuration used to create this object.
-   */
+  /** Returns the HBase configuration used to create this object. */
   public Configuration getConfiguration() {
     return configuration;
   }

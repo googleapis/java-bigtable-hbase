@@ -1,3 +1,18 @@
+/*
+ * Copyright 2023 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.google.cloud.bigtable.hbase.wrappers.veneer;
 
 import com.google.auth.Credentials;
@@ -11,17 +26,17 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 
 /**
- * A wrapper that implements @{@link Credentials} interface and delegates calls to  the underlying
- * @{@link BigtableCredentials} object. This is required to decouple the users of shaded bigtable
- * from the @{@link Credentials} class.
+ * A wrapper that implements @{@link Credentials} interface and delegates calls to the
+ * underlying @{@link BigtableOAuthCredentials} object. This is required to decouple the users of
+ * shaded bigtable from the @{@link Credentials} class.
  */
-public class BigtableCredentialsWrapper extends Credentials {
+public final class BigtableCredentialsWrapper extends Credentials {
 
   public BigtableCredentialsWrapper(BigtableOAuthCredentials btCredentials) {
     this.bigtableCredentials = btCredentials;
   }
 
-  private BigtableOAuthCredentials bigtableCredentials;
+  private final BigtableOAuthCredentials bigtableCredentials;
 
   @Override
   public String getAuthenticationType() {
@@ -37,12 +52,9 @@ public class BigtableCredentialsWrapper extends Credentials {
     }
   }
 
-  public void getRequestMetadata(final URI uri, Executor executor, final RequestMetadataCallback callback) {
-    executor.execute(new Runnable() {
-      public void run() {
-        blockingGetToCallback(uri, callback);
-      }
-    });
+  public void getRequestMetadata(
+      final URI uri, Executor executor, final RequestMetadataCallback callback) {
+    executor.execute(() -> blockingGetToCallback(uri, callback));
   }
 
   @Override

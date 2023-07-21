@@ -90,8 +90,8 @@ public class BigtableOptionsFactory {
 
   /**
    * Key to set custom Credentials class. This class must extend {@link com.google.auth.Credentials}
-   * class and must provide a public constructor which takes
-   * {@link org.apache.hadoop.conf.Configuration} argument.
+   * class and must provide a public constructor which takes {@link
+   * org.apache.hadoop.conf.Configuration} argument.
    */
   public static final String BIGTABLE_CUSTOM_CREDENTIALS_CLASS_KEY =
       "google.bigtable.auth.custom.credentials.class";

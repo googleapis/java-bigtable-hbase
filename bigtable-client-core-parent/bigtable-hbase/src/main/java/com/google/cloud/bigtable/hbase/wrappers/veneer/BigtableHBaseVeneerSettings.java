@@ -552,8 +552,8 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
               buildCredentialFromPrivateKey(serviceAccount, keyFileLocation)));
     } else if (!Strings.isNullOrEmpty(configuration.get(BIGTABLE_CUSTOM_CREDENTIALS_CLASS_KEY))) {
       String customAuthClassName = configuration.get(BIGTABLE_CUSTOM_CREDENTIALS_CLASS_KEY);
-      Credentials credentials = CustomCredentialsProvider.getCustomCredentials(customAuthClassName,
-          configuration);
+      Credentials credentials =
+          CustomCredentialsProvider.getCustomCredentials(customAuthClassName, configuration);
 
       stubSettings.setCredentialsProvider(FixedCredentialsProvider.create(credentials));
     }
