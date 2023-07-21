@@ -1,7 +1,7 @@
 package com.google.cloud.bigtable.hbase.util;
 
 import com.google.auth.Credentials;
-import com.google.cloud.bigtable.hbase.BigtableCredentials;
+import com.google.cloud.bigtable.hbase.BigtableOAuthCredentials;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableCredentialsWrapper;
 import java.lang.reflect.Constructor;
 import org.apache.hadoop.conf.Configuration;
@@ -22,10 +22,10 @@ public class CustomCredentialsProvider {
           "Can not find custom credentials class: " + customAuthClassName, e);
     }
 
-    if (!BigtableCredentials.class.isAssignableFrom(authClass)) {
+    if (!BigtableOAuthCredentials.class.isAssignableFrom(authClass)) {
       throw new IllegalArgumentException(
           "Custom credentials class [" + customAuthClassName + "] must be a child of "
-              + BigtableCredentials.class.getName() + ".");
+              + BigtableOAuthCredentials.class.getName() + ".");
     }
 
     Constructor<?> constructor = null;
@@ -38,7 +38,7 @@ public class CustomCredentialsProvider {
     }
 
     try {
-      return new BigtableCredentialsWrapper( (BigtableCredentials) constructor.newInstance(conf));
+      return new BigtableCredentialsWrapper( (BigtableOAuthCredentials) constructor.newInstance(conf));
     } catch (Exception e) {
       throw new IllegalArgumentException(
           "Failed to create object of custom Credentials class [" + customAuthClassName + "].", e);

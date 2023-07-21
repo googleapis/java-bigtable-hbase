@@ -2,7 +2,8 @@ package com.google.cloud.bigtable.hbase.wrappers.veneer;
 
 import com.google.auth.Credentials;
 import com.google.auth.RequestMetadataCallback;
-import com.google.cloud.bigtable.hbase.BigtableCredentials;
+import com.google.cloud.bigtable.hbase.BigtableOAuthCredentials;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
@@ -16,20 +17,24 @@ import java.util.concurrent.Executor;
  */
 public class BigtableCredentialsWrapper extends Credentials {
 
-  public BigtableCredentialsWrapper(BigtableCredentials btCredentials) {
+  public BigtableCredentialsWrapper(BigtableOAuthCredentials btCredentials) {
     this.bigtableCredentials = btCredentials;
   }
 
-  private BigtableCredentials bigtableCredentials;
+  private BigtableOAuthCredentials bigtableCredentials;
 
   @Override
   public String getAuthenticationType() {
-    throw new UnsupportedOperationException("This method is not supported yet.");
+    return "OAuth2";
   }
 
   @Override
   public Map<String, List<String>> getRequestMetadata(URI uri) throws IOException {
-    return bigtableCredentials.getRequestMetadata(uri);
+    try {
+      return bigtableCredentials.getRequestMetadata(uri, MoreExecutors.directExecutor()).get();
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to fetch credentials.", e);
+    }
   }
 
   public void getRequestMetadata(final URI uri, Executor executor, final RequestMetadataCallback callback) {
@@ -42,12 +47,12 @@ public class BigtableCredentialsWrapper extends Credentials {
 
   @Override
   public boolean hasRequestMetadata() {
-    throw new UnsupportedOperationException("This method is not supported yet.");
+    return true;
   }
 
   @Override
   public boolean hasRequestMetadataOnly() {
-    throw new UnsupportedOperationException("This method is not supported yet.");
+    return true;
   }
 
   @Override
@@ -55,7 +60,7 @@ public class BigtableCredentialsWrapper extends Credentials {
     // No-op. btCredentials should refresh internally as required.
   }
 
-  public BigtableCredentials getBigtableCredentials() {
+  public BigtableOAuthCredentials getBigtableCredentials() {
     return bigtableCredentials;
   }
 }
