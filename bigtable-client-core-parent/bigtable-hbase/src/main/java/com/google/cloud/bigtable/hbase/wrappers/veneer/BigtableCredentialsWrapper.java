@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.wrappers.veneer;
 
+import com.google.api.core.InternalApi;
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.hbase.BigtableOAuth2Credentials;
 import java.io.IOException;
@@ -27,13 +28,14 @@ import java.util.Map;
  * underlying @{@link BigtableOAuth2Credentials} object. This is required to decouple the users of
  * shaded bigtable from the @{@link Credentials} class.
  */
+@InternalApi("For internal usage only")
 public final class BigtableCredentialsWrapper extends Credentials {
+
+  private final BigtableOAuth2Credentials bigtableCredentials;
 
   public BigtableCredentialsWrapper(BigtableOAuth2Credentials btCredentials) {
     this.bigtableCredentials = btCredentials;
   }
-
-  private final BigtableOAuth2Credentials bigtableCredentials;
 
   @Override
   public String getAuthenticationType() {
@@ -63,9 +65,5 @@ public final class BigtableCredentialsWrapper extends Credentials {
   @Override
   public void refresh() throws IOException {
     // No-op. btCredentials should refresh internally as required.
-  }
-
-  public BigtableOAuth2Credentials getBigtableCredentials() {
-    return bigtableCredentials;
   }
 }

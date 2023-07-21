@@ -62,20 +62,13 @@ public class TestCustomCredentialsProvider {
   }
 
   @Test
-  public void testCreation() {
-    Assert.assertTrue(credentials instanceof BigtableCredentialsWrapper);
-    BigtableCredentialsWrapper wrapper = (BigtableCredentialsWrapper) credentials;
-    Assert.assertTrue(wrapper.getBigtableCredentials() instanceof TestCredentials);
-    Assert.assertEquals(configuration, wrapper.getBigtableCredentials().getConfiguration());
-  }
-
-  @Test
   public void testGetMetadataSync() throws IOException {
 
     Map<String, List<String>> requestMetadata = new HashMap<>();
     requestMetadata.put("request", Arrays.asList("metadata"));
     TestCredentials.setMockMetadata(URI.create("test-uri"), requestMetadata);
 
+    Assert.assertTrue(credentials instanceof BigtableCredentialsWrapper);
     Assert.assertEquals(requestMetadata, credentials.getRequestMetadata(URI.create("test-uri")));
   }
 

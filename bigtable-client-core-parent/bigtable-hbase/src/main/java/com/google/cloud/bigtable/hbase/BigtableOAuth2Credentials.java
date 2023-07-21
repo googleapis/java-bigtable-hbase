@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.api.core.InternalApi;
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableCredentialsWrapper;
 import java.io.IOException;
@@ -41,18 +42,13 @@ public abstract class BigtableOAuth2Credentials {
    *
    * @param configuration The HBase configuration
    */
-  public BigtableOAuth2Credentials(Configuration configuration) {
-    this.configuration = configuration;
-  }
+  public BigtableOAuth2Credentials(Configuration configuration) {}
 
   /**
    * Get the current request metadata.
    *
    * <p>This should be called by the transport layer on each request, and the data should be
    * populated in headers or other context.
-   *
-   * <p>The convention for handling binary data is for the key in the returned map to end with
-   * {@code "-bin"} and for the corresponding values to be base64 encoded.
    *
    * <p>This class should handle caching and refreshing of the metadata associated with the request.
    * Ideally, caching and refreshing of credentials should happen in an asynchronous non-blocking
@@ -62,11 +58,6 @@ public abstract class BigtableOAuth2Credentials {
    */
   public abstract Map<String, List<String>> getRequestMetadata(URI uri) throws IOException;
 
-  /** Returns the HBase configuration used to create this object. */
-  public Configuration getConfiguration() {
-    return configuration;
-  }
-
   /**
    * Creates a new instance of a child of @{@link BigtableOAuth2Credentials}.
    *
@@ -74,6 +65,7 @@ public abstract class BigtableOAuth2Credentials {
    * @param conf HBase configuration required to configure the @bigtableAuthClass
    * @return a new instance of @bigtableAuthClass
    */
+  @InternalApi("For internal usage only")
   public static Credentials newInstance(
       Class<? extends BigtableOAuth2Credentials> bigtableAuthClass, Configuration conf) {
 
@@ -101,6 +93,4 @@ public abstract class BigtableOAuth2Credentials {
           e);
     }
   }
-
-  protected Configuration configuration;
 }
