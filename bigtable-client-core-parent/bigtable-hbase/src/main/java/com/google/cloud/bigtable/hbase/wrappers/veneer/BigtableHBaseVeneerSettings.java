@@ -83,8 +83,8 @@ import com.google.cloud.bigtable.data.v2.stub.BigtableBulkReadRowsCallSettings;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableExtendedConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableHBaseVersion;
+import com.google.cloud.bigtable.hbase.BigtableOAuth2Credentials;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
-import com.google.cloud.bigtable.hbase.util.CustomCredentialsProvider;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.metrics.MetricsApiTracerAdapterFactory;
 import com.google.common.base.Joiner;
@@ -551,9 +551,12 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
           FixedCredentialsProvider.create(
               buildCredentialFromPrivateKey(serviceAccount, keyFileLocation)));
     } else if (!Strings.isNullOrEmpty(configuration.get(BIGTABLE_CUSTOM_CREDENTIALS_CLASS_KEY))) {
-      String customAuthClassName = configuration.get(BIGTABLE_CUSTOM_CREDENTIALS_CLASS_KEY);
+      // Default value will never be used as we already checked that the config value exists.
+      Class bigtableCredentialsClass =
+          configuration.getClass(
+              BIGTABLE_CUSTOM_CREDENTIALS_CLASS_KEY, null, BigtableOAuth2Credentials.class);
       Credentials credentials =
-          CustomCredentialsProvider.getCustomCredentials(customAuthClassName, configuration);
+          BigtableOAuth2Credentials.newInstance(bigtableCredentialsClass, configuration);
 
       stubSettings.setCredentialsProvider(FixedCredentialsProvider.create(credentials));
     }
@@ -873,6 +876,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   }
 
   static class ClientOperationTimeouts {
+
     static final ClientOperationTimeouts EMPTY =
         new ClientOperationTimeouts(
             OperationTimeouts.EMPTY, OperationTimeouts.EMPTY, OperationTimeouts.EMPTY);
@@ -904,6 +908,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   }
 
   static class OperationTimeouts {
+
     static final OperationTimeouts EMPTY =
         new OperationTimeouts(
             Optional.<Duration>absent(), Optional.<Duration>absent(), Optional.<Duration>absent());

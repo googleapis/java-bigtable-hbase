@@ -15,12 +15,13 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.auth.Credentials;
+import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableCredentialsWrapper;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import org.apache.hadoop.conf.Configuration;
 
 /**
@@ -29,10 +30,10 @@ import org.apache.hadoop.conf.Configuration;
  * the {@link com.google.auth.Credentials} class as it is shaded by Cloud Bigtable client.
  *
  * <p>Hence, customers should implement this class, which will be used for authentication. The
- * authentication should be based on OAuth and must work by just including request metadata with
+ * authentication should be based on OAuth2 and must work by just including request metadata with
  * each request at transport layer.
  */
-public abstract class BigtableOAuthCredentials {
+public abstract class BigtableOAuth2Credentials {
 
   /**
    * All subclasses must implement this constructor and populate the @configuration. The
@@ -40,7 +41,7 @@ public abstract class BigtableOAuthCredentials {
    *
    * @param configuration The HBase configuration
    */
-  public BigtableOAuthCredentials(Configuration configuration) {
+  public BigtableOAuth2Credentials(Configuration configuration) {
     this.configuration = configuration;
   }
 
@@ -53,16 +54,52 @@ public abstract class BigtableOAuthCredentials {
    * <p>The convention for handling binary data is for the key in the returned map to end with
    * {@code "-bin"} and for the corresponding values to be base64 encoded.
    *
-   * <p>This class should handle caching and refeshing of the metadata associated with the request.
+   * <p>This class should handle caching and refreshing of the metadata associated with the request.
+   * Ideally, caching and refreshing of credentials should happen in an asynchronous non-blocking
+   * way.
    *
    * @param uri URI of the entry point for the request.
    */
-  public abstract CompletableFuture<Map<String, List<String>>> getRequestMetadata(
-      URI uri, Executor executor) throws IOException;
+  public abstract Map<String, List<String>> getRequestMetadata(URI uri) throws IOException;
 
   /** Returns the HBase configuration used to create this object. */
   public Configuration getConfiguration() {
     return configuration;
+  }
+
+  /**
+   * Creates a new instance of a child of @{@link BigtableOAuth2Credentials}.
+   *
+   * @param bigtableAuthClass the child class to be instantiated
+   * @param conf HBase configuration required to configure the @bigtableAuthClass
+   * @return a new instance of @bigtableAuthClass
+   */
+  public static Credentials newInstance(
+      Class<? extends BigtableOAuth2Credentials> bigtableAuthClass, Configuration conf) {
+
+    Constructor<?> constructor = null;
+    try {
+      constructor = bigtableAuthClass.getConstructor(Configuration.class);
+    } catch (NoSuchMethodException e) {
+      throw new IllegalArgumentException(
+          "Custom credentials class ["
+              + bigtableAuthClass
+              + "] must implement a constructor with single argument of type "
+              + Configuration.class.getName()
+              + ".",
+          e);
+    }
+
+    try {
+      return new BigtableCredentialsWrapper(
+          (BigtableOAuth2Credentials) constructor.newInstance(conf));
+    } catch (Exception e) {
+      throw new IllegalArgumentException(
+          "Failed to create object of custom Credentials class ["
+              + bigtableAuthClass.getName()
+              + "].",
+          e);
+    }
   }
 
   protected Configuration configuration;

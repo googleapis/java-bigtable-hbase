@@ -16,45 +16,38 @@
 package com.google.cloud.bigtable.hbase.wrappers.veneer;
 
 import com.google.auth.Credentials;
-import com.google.auth.RequestMetadataCallback;
-import com.google.cloud.bigtable.hbase.BigtableOAuthCredentials;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.google.cloud.bigtable.hbase.BigtableOAuth2Credentials;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executor;
 
 /**
  * A wrapper that implements @{@link Credentials} interface and delegates calls to the
- * underlying @{@link BigtableOAuthCredentials} object. This is required to decouple the users of
+ * underlying @{@link BigtableOAuth2Credentials} object. This is required to decouple the users of
  * shaded bigtable from the @{@link Credentials} class.
  */
 public final class BigtableCredentialsWrapper extends Credentials {
 
-  public BigtableCredentialsWrapper(BigtableOAuthCredentials btCredentials) {
+  public BigtableCredentialsWrapper(BigtableOAuth2Credentials btCredentials) {
     this.bigtableCredentials = btCredentials;
   }
 
-  private final BigtableOAuthCredentials bigtableCredentials;
+  private final BigtableOAuth2Credentials bigtableCredentials;
 
   @Override
   public String getAuthenticationType() {
+    // Taken from com.google.auth.oauth2.OAuth2Credentials
     return "OAuth2";
   }
 
   @Override
   public Map<String, List<String>> getRequestMetadata(URI uri) throws IOException {
     try {
-      return bigtableCredentials.getRequestMetadata(uri, MoreExecutors.directExecutor()).get();
+      return bigtableCredentials.getRequestMetadata(uri);
     } catch (Exception e) {
       throw new RuntimeException("Failed to fetch credentials.", e);
     }
-  }
-
-  public void getRequestMetadata(
-      final URI uri, Executor executor, final RequestMetadataCallback callback) {
-    executor.execute(() -> blockingGetToCallback(uri, callback));
   }
 
   @Override
@@ -72,7 +65,7 @@ public final class BigtableCredentialsWrapper extends Credentials {
     // No-op. btCredentials should refresh internally as required.
   }
 
-  public BigtableOAuthCredentials getBigtableCredentials() {
+  public BigtableOAuth2Credentials getBigtableCredentials() {
     return bigtableCredentials;
   }
 }
