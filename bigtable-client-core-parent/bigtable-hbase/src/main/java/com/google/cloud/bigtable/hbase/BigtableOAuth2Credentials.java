@@ -50,6 +50,9 @@ public abstract class BigtableOAuth2Credentials {
    * <p>This should be called by the transport layer on each request, and the data should be
    * populated in headers or other context.
    *
+   * <p>This method should provide all the headers that @{@link
+   * com.google.auth.oauth2.OAuth2Credentials} provides.
+   *
    * <p>This class should handle caching and refreshing of the metadata associated with the request.
    * Ideally, caching and refreshing of credentials should happen in an asynchronous non-blocking
    * way.
