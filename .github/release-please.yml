@@ -47,3 +47,12 @@ branches:
         bigtable-client-core-parent/bigtable-hbase/src/main/java/com/google/cloud/bigtable/hbase/BigtableHBaseVersion.java
     handleGHRelease: true
     branch: 2.6.x
+  - releaseType: java-backport
+    bumpMinorPreMajor: true
+    extraFiles:
+      - >-
+        bigtable-client-core-parent/bigtable-client-core/src/main/java/com/google/cloud/bigtable/config/BigtableVersionInfo.java
+      - >-
+        bigtable-client-core-parent/bigtable-hbase/src/main/java/com/google/cloud/bigtable/hbase/BigtableHBaseVersion.java
+    handleGHRelease: true
+    branch: 2.9.x
