@@ -99,6 +99,10 @@ limitations under the License.
           <groupId>com.google.auto.value</groupId>
           <artifactId>auto-value</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>io.grpc</groupId>
+          <artifactId>grpc-netty</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -321,6 +325,11 @@ limitations under the License.
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <version>${mockito.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-sdks-java-harness</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
