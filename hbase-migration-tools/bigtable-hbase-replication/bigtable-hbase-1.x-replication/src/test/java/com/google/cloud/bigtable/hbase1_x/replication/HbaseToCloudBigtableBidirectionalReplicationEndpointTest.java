@@ -37,7 +37,6 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.replication.ReplicationAdmin;
-import org.apache.hadoop.hbase.replication.ReplicationEndpoint.ReplicateContext;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.junit.After;
 import org.junit.AfterClass;
