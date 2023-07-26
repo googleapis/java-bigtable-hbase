@@ -18,7 +18,7 @@ again.
 ## Developing and testing
 
 1. Run `mvn clean install` to build and install Cloud Bigtable client artifacts to your local repository, and then run the unit tests.
-2. There is also a suite of integration tests that connect to a cluster you have access to, via the authentication credentials that were loaded during the Google Cloud SDK configuration step (see above).
+2. There is also a suite of integration tests that connect to a cluster you have access to, via the authentication credentials that were loaded during the Google Cloud SDK configuration step (see [here](https://github.com/googleapis/google-cloud-java#authentication)).
 
    Use the following command to run the Cloud Bigtable integration tests for HBase 1:
 
