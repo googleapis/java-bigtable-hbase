@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.replication.ReplicationAdmin;
+import org.apache.hadoop.hbase.replication.ReplicationEndpoint.ReplicateContext;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -59,12 +60,12 @@ public class HbaseToCloudBigtableBidirectionalReplicationEndpointTest {
 
   public static class TestReplicationEndpoint extends HbaseToCloudBigtableReplicationEndpoint {
 
-    static AtomicInteger replicatingEntries = new AtomicInteger();
+    static AtomicInteger replicatedEntries = new AtomicInteger();
 
     @Override
     public boolean replicate(ReplicateContext replicateContext) {
       boolean result = super.replicate(replicateContext);
-      replicatingEntries.getAndAdd(replicateContext.getEntries().size());
+      replicatedEntries.getAndAdd(replicateContext.getEntries().size());
       return result;
     }
   }
@@ -140,7 +141,7 @@ public class HbaseToCloudBigtableBidirectionalReplicationEndpointTest {
     hbaseTable = hbaseConnection.getTable(table1);
 
     // Reset the entry counts for TestReplicationEndpoint
-    TestReplicationEndpoint.replicatingEntries.set(0);
+    TestReplicationEndpoint.replicatedEntries.set(0);
   }
 
   private void createTables(TableName tableName, int cf1Scope, int cf2Scope) throws IOException {
@@ -184,16 +185,15 @@ public class HbaseToCloudBigtableBidirectionalReplicationEndpointTest {
     // Wait for replication
     TestUtils.waitForReplication(
         () -> {
-          // Both entries should've gone through the replication process
-          // However, one would've been filtered out during this process
-          return TestReplicationEndpoint.replicatingEntries.get() >= 2;
+          // Only one entry should've been replicated
+          return TestReplicationEndpoint.replicatedEntries.get() >= 1;
         });
 
     // Hbase table should have both mutations
-    Assert.assertEquals(1, hbaseTable.get(new Get(TestUtils.ROW_KEY)).size());
-    Assert.assertEquals(1, hbaseTable.get(new Get(TestUtils.ROW_KEY_2)).size());
+    Assert.assertTrue(hbaseTable.get(new Get(TestUtils.ROW_KEY)).size() == 1);
+    Assert.assertTrue(hbaseTable.get(new Get(TestUtils.ROW_KEY_2)).size() == 1);
     // Cbt table should have only one mutation
     Assert.assertTrue(cbtTable.get(new Get(TestUtils.ROW_KEY)).isEmpty());
-    Assert.assertEquals(1, cbtTable.get(new Get(TestUtils.ROW_KEY_2)).size());
+    Assert.assertTrue(cbtTable.get(new Get(TestUtils.ROW_KEY_2)).size() == 1);
   }
 }
