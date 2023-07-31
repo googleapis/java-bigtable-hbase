@@ -20,6 +20,7 @@ import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.common.collect.ImmutableMap;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -217,7 +218,8 @@ public class CloudBigtableConfiguration implements Serializable {
   }
 
   /**
-   * Converts the {@link CloudBigtableConfiguration} to an HBase {@link Configuration}.
+   * Converts the {@link CloudBigtableConfiguration} to an HBase {@link Configuration}. This should
+   * be called only in runtime so that we can call get() from ValueProvider.
    *
    * @return The {@link Configuration}.
    */
@@ -247,6 +249,16 @@ public class CloudBigtableConfiguration implements Serializable {
       }
     }
     setUserAgent(config);
+
+    ValueProvider<String> timeout =
+        configuration.get(BigtableHBaseSettings.BULK_MUTATION_CLOSE_TIMEOUT_MILLISECONDS);
+
+    if (timeout == null) {
+      config.set(BigtableHBaseSettings.BULK_MUTATION_CLOSE_TIMEOUT_MILLISECONDS, "600000");
+    } else {
+      config.set(BigtableHBaseSettings.BULK_MUTATION_CLOSE_TIMEOUT_MILLISECONDS, timeout.get());
+    }
+
     return config;
   }
 

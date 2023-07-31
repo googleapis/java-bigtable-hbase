@@ -148,7 +148,6 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   private final long batchingMaxMemory;
   private final boolean isChannelPoolCachingEnabled;
   private final boolean allowRetriesWithoutTimestamp;
-
   private final ClientOperationTimeouts clientTimeouts;
 
   public static BigtableHBaseVeneerSettings create(Configuration configuration) throws IOException {

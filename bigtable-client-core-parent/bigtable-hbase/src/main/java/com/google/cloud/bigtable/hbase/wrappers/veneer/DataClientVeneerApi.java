@@ -72,7 +72,13 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
   @Override
   public BulkMutationWrapper createBulkMutation(String tableId) {
-    return new BulkMutationVeneerApi(delegate.newBulkMutationBatcher(tableId));
+    return new BulkMutationVeneerApi(delegate.newBulkMutationBatcher(tableId), 0);
+  }
+
+  @Override
+  public BulkMutationWrapper createBulkMutation(String tableId, long closeTimeoutMilliseconds) {
+    return new BulkMutationVeneerApi(
+        delegate.newBulkMutationBatcher(tableId), closeTimeoutMilliseconds);
   }
 
   @Override

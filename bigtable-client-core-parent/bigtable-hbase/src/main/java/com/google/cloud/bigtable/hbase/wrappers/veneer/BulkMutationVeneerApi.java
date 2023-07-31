@@ -25,6 +25,9 @@ import com.google.cloud.bigtable.metrics.BigtableClientMetrics.MetricLevel;
 import com.google.cloud.bigtable.metrics.Meter;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
@@ -34,8 +37,14 @@ public class BulkMutationVeneerApi implements BulkMutationWrapper {
       BigtableClientMetrics.meter(MetricLevel.Info, "bulk-mutator.mutations.added");
   private final Batcher<RowMutationEntry, Void> bulkMutateBatcher;
 
-  BulkMutationVeneerApi(Batcher<RowMutationEntry, Void> bulkMutateBatcher) {
+  // If set to 0, timeout is disabled. Negative value is not accepted.
+  private final long closeTimeoutMilliseconds;
+
+  BulkMutationVeneerApi(
+      Batcher<RowMutationEntry, Void> bulkMutateBatcher, long closeTimeoutMilliseconds) {
     this.bulkMutateBatcher = bulkMutateBatcher;
+    Preconditions.checkArgument(closeTimeoutMilliseconds >= 0);
+    this.closeTimeoutMilliseconds = closeTimeoutMilliseconds;
   }
 
   /** {@inheritDoc} */
@@ -65,9 +74,16 @@ public class BulkMutationVeneerApi implements BulkMutationWrapper {
   @Override
   public synchronized void close() throws IOException {
     try {
-      bulkMutateBatcher.close();
-    } catch (InterruptedException e) {
+      ApiFuture future = bulkMutateBatcher.closeAsync();
+      if (closeTimeoutMilliseconds > 0) {
+        future.get(closeTimeoutMilliseconds, TimeUnit.MILLISECONDS);
+      } else {
+        future.get();
+      }
+    } catch (InterruptedException | ExecutionException e) {
       throw new IOException("Could not close the bulk mutation Batcher", e);
+    } catch (TimeoutException e) {
+      throw new IOException("Cloud not close the bulk mutation Batcher, timed out in close()", e);
     }
   }
 }

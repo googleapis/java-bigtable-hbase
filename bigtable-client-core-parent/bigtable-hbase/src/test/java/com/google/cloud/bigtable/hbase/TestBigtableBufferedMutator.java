@@ -80,6 +80,8 @@ public class TestBigtableBufferedMutator {
   public void setUp() {
     when(mockBigtableApi.getDataClient()).thenReturn(mockDataClient);
     when(mockDataClient.createBulkMutation(Mockito.anyString())).thenReturn(mockBulkMutation);
+    when(mockDataClient.createBulkMutation(Mockito.anyString(), Mockito.anyLong()))
+        .thenReturn(mockBulkMutation);
   }
 
   @After
