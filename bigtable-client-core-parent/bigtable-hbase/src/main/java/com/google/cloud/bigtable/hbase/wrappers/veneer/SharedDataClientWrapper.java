@@ -53,6 +53,11 @@ class SharedDataClientWrapper implements DataClientWrapper {
   }
 
   @Override
+  public BulkMutationWrapper createBulkMutation(String tableId, long closeTimeoutMilliseconds) {
+    return delegate.createBulkMutation(tableId, closeTimeoutMilliseconds);
+  }
+
+  @Override
   public BulkReadWrapper createBulkRead(String tableId) {
     return delegate.createBulkRead(tableId);
   }

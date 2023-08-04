@@ -42,6 +42,8 @@ public interface DataClientWrapper extends AutoCloseable {
   /** Creates instance of bulkMutation with specified table ID. */
   BulkMutationWrapper createBulkMutation(String tableId);
 
+  BulkMutationWrapper createBulkMutation(String tableId, long closeTimeoutMilliseconds);
+
   /**
    * Creates {@link BulkReadWrapper} with specified table ID.
    *

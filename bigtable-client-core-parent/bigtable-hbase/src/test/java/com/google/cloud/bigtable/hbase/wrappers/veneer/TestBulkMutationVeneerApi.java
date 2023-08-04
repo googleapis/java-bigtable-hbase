@@ -42,11 +42,11 @@ import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
 import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
 import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnit;
@@ -60,9 +60,14 @@ public class TestBulkMutationVeneerApi {
 
   @Mock private Batcher<RowMutationEntry, Void> batcher;
 
-  @InjectMocks private BulkMutationVeneerApi bulkMutationWrapper;
+  private BulkMutationVeneerApi bulkMutationWrapper;
 
   private RowMutationEntry rowMutation = RowMutationEntry.create("fake-key");
+
+  @Before
+  public void setup() {
+    bulkMutationWrapper = new BulkMutationVeneerApi(batcher, 0);
+  }
 
   @Test
   public void testAdd() {
@@ -144,7 +149,7 @@ public class TestBulkMutationVeneerApi {
             new Object(),
             batchingSettings,
             mock(ScheduledExecutorService.class));
-    BulkMutationWrapper underTest = new BulkMutationVeneerApi(actualBatcher);
+    BulkMutationWrapper underTest = new BulkMutationVeneerApi(actualBatcher, 0);
     underTest.close();
 
     Exception actualEx = null;

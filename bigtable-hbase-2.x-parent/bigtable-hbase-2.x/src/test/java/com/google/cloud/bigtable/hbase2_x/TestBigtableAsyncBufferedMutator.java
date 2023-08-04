@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase2_x;
 
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -40,6 +41,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
@@ -67,7 +69,8 @@ public class TestBigtableAsyncBufferedMutator {
   public void setUp() {
     when(mockBigtableApi.getDataClient()).thenReturn(mockDataClient);
     when(mockRequestAdapter.getTableId()).thenReturn(TABLE_ID);
-    when(mockDataClient.createBulkMutation(TABLE_ID)).thenReturn(mockBulkMutation);
+    when(mockDataClient.createBulkMutation(eq(TABLE_ID), ArgumentMatchers.anyLong()))
+        .thenReturn(mockBulkMutation);
     asyncBufferedMutator =
         new BigtableAsyncBufferedMutator(mockBigtableApi, mockBigtableSettings, mockRequestAdapter);
   }
@@ -86,7 +89,6 @@ public class TestBigtableAsyncBufferedMutator {
     asyncBufferedMutator.close();
 
     verify(mockBulkMutation).sendUnsent();
-    verify(mockBulkMutation).flush();
     verify(mockBulkMutation).close();
   }
 

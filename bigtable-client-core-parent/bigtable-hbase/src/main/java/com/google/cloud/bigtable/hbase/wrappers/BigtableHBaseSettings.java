@@ -23,6 +23,7 @@ import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.Map;
@@ -39,6 +40,15 @@ public abstract class BigtableHBaseSettings {
   private final String instanceId;
   private final int ttlSecondsForBackup;
 
+  @VisibleForTesting
+  // This is used to override the default closing timeout of 10 minutes in the test so the test can
+  // run faster
+  public static final String BULK_MUTATION_CLOSE_TIMEOUT_MILLISECONDS =
+      "bulk.mutation.close.timeout.milliseconds";
+
+  // Must be non-negative. Set to 0 to disable timeout.
+  private final long bulkMutationCloseTimeoutMilliseconds;
+
   public static BigtableHBaseSettings create(Configuration configuration) throws IOException {
     return BigtableHBaseVeneerSettings.create(configuration);
   }
@@ -51,6 +61,10 @@ public abstract class BigtableHBaseSettings {
         configuration.getInt(
             BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY,
             BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_VALUE);
+
+    this.bulkMutationCloseTimeoutMilliseconds =
+        configuration.getLong(BigtableHBaseSettings.BULK_MUTATION_CLOSE_TIMEOUT_MILLISECONDS, 0);
+    Preconditions.checkArgument(this.bulkMutationCloseTimeoutMilliseconds >= 0);
   }
 
   public Configuration getConfiguration() {
@@ -81,6 +95,10 @@ public abstract class BigtableHBaseSettings {
 
   // This is equivalent to allow server-side timestamp.
   public abstract boolean isRetriesWithoutTimestampAllowed();
+
+  public long getBulkMutationCloseTimeoutMilliseconds() {
+    return bulkMutationCloseTimeoutMilliseconds;
+  }
 
   protected String getRequiredValue(String key, String displayName) {
     String value = configuration.get(key);

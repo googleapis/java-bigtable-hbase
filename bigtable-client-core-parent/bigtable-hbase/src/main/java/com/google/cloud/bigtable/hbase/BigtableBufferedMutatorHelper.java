@@ -80,14 +80,15 @@ public class BigtableBufferedMutatorHelper {
     this.adapter = adapter;
     this.settings = settings;
     this.dataClient = bigtableApi.getDataClient();
-    this.bulkMutation = dataClient.createBulkMutation(this.adapter.getTableId());
+    this.bulkMutation =
+        dataClient.createBulkMutation(
+            this.adapter.getTableId(), settings.getBulkMutationCloseTimeoutMilliseconds());
     this.operationAccountant = new OperationAccountant();
   }
 
   public void close() throws IOException {
     closedWriteLock.lock();
     try {
-      flush();
       bulkMutation.close();
       closed = true;
     } finally {
