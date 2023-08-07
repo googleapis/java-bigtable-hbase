@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.11.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.10.1...v2.11.0) (2023-08-04)
+
+
+### Features
+
+* Add a new configuration key to inject custom credentials class for authentication  ([#4100](https://github.com/googleapis/java-bigtable-hbase/issues/4100)) ([998b5e5](https://github.com/googleapis/java-bigtable-hbase/commit/998b5e50dcad5c802ad2cd6a162ef7301a4602f6))
+
+
+### Bug Fixes
+
+* Add timeout to bulkMutation's close() ([#4140](https://github.com/googleapis/java-bigtable-hbase/issues/4140)) ([79eb7c7](https://github.com/googleapis/java-bigtable-hbase/commit/79eb7c728165fdbaf04448331e1047d84c6c201d))
+* Bidirectional replication flakey test ([#4130](https://github.com/googleapis/java-bigtable-hbase/issues/4130)) ([3e1de74](https://github.com/googleapis/java-bigtable-hbase/commit/3e1de74748caa193695612c2938d003aedd013e0))
+
 ## [2.10.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.10.0...v2.10.1) (2023-07-18)
 
 
