@@ -69,7 +69,7 @@ limitations under the License.
     <!-- hbase dependency versions -->
     <hbase1.version>1.7.2</hbase1.version>
     <hbase1-metrics.version>3.1.2</hbase1-metrics.version>
-    <hbase2.version>2.3.6</hbase2.version>
+    <hbase2.version>2.5.5-hadoop3</hbase2.version>
     <hbase2-metrics.version>3.2.6</hbase2-metrics.version>
 
     <!-- bytebuddy dependency version for resolving hbase backward incompatible changes -->
