@@ -85,7 +85,7 @@ limitations under the License.
     <!-- referred from bigtable-beam-import and bigtable-emulator -->
     <guava.version>31.1-jre</guava.version>
     <gcs-guava.version>29.0-jre</gcs-guava.version>
-    <beam-slf4j.version>1.7.30</beam-slf4j.version>
+    <beam-slf4j.version>1.7.36</beam-slf4j.version>
     <opencensus.version>0.31.1</opencensus.version>
 
     <!-- Benchmarks related dependencies -->
