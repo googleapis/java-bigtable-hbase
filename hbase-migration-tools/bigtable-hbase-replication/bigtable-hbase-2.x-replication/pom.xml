@@ -36,7 +36,7 @@ limitations under the License.
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-bom</artifactId>
-                <version>9.3.30.v20211001</version>
+                <version>9.4.52.v20230823</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
