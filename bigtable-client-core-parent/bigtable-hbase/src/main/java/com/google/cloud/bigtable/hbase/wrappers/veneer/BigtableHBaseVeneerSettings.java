@@ -85,6 +85,7 @@ import com.google.cloud.bigtable.hbase.BigtableExtendedConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableHBaseVersion;
 import com.google.cloud.bigtable.hbase.BigtableOAuth2Credentials;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.metrics.MetricsApiTracerAdapterFactory;
 import com.google.common.base.Joiner;
@@ -92,8 +93,15 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.ClientInterceptor;
+import io.grpc.ForwardingClientCall;
+import io.grpc.ForwardingClientCallListener;
 import io.grpc.ManagedChannelBuilder;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
@@ -108,6 +116,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
+import io.grpc.Status;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.VersionInfo;
 import org.threeten.bp.Duration;
@@ -462,6 +475,16 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
               return channelBuilder.usePlaintext();
             }
           });
+    }
+
+    Duration interval = Duration.ofMinutes(
+            configuration.getInt(
+            "google.bigtable.debug.log.outstanding.rpc.interval", 0)
+    );
+    if (!interval.isZero()) {
+      OutstandingRpcLogger interceptor = new OutstandingRpcLogger();
+      interceptor.startLoging(interval);
+      channelProvider.setInterceptorProvider(() -> ImmutableList.of(interceptor));
     }
 
     if (endpointKey.equals(BIGTABLE_HOST_KEY)) {
@@ -938,6 +961,56 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
     public Optional<Duration> getOperationTimeout() {
       return operationTimeout;
+    }
+  }
+
+  private static class OutstandingRpcLogger implements ClientInterceptor {
+    private final static Logger LOG = new Logger(OutstandingRpcLogger.class);
+    private final AtomicInteger interceptedRpcs = new AtomicInteger();
+    private final AtomicInteger startedRpcs = new AtomicInteger();
+
+    void startLoging(Duration interval) {
+      Thread thread =
+              new Thread(() -> {
+                while (true) {
+                  try {
+                    Thread.sleep(interval.toMillis());
+                  } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                  }
+
+                  LOG.info("grpc Outstanding intercepted RPCs: " + interceptedRpcs.get());
+                  LOG.info("grpc Outstanding started RPCs: " + startedRpcs.get());
+                }
+              }, "grpc-outstanding RPC counter thread");
+      thread.setDaemon(true);
+      thread.start();
+    }
+
+
+    @Override
+    public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+            MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions, Channel channel) {
+      interceptedRpcs.incrementAndGet();
+      return new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(
+              channel.newCall(methodDescriptor, callOptions)) {
+        @Override
+        public void start(Listener<RespT> responseListener, Metadata headers) {
+          startedRpcs.incrementAndGet();
+          Listener<RespT> instrumentedListener =
+                  new ForwardingClientCallListener.SimpleForwardingClientCallListener<RespT>(
+                          responseListener) {
+                    @Override
+                    public void onClose(Status status, Metadata trailers) {
+                      interceptedRpcs.decrementAndGet();
+                      startedRpcs.decrementAndGet();
+
+                      super.onClose(status, trailers);
+                    }
+                  };
+          super.start(instrumentedListener, headers);
+        }
+      };
     }
   }
 }
