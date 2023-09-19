@@ -5,7 +5,7 @@
 
 ### Dependencies
 
-* Update google-cloud-bigtable to 1.27.2 ([#4160](https://github.com/googleapis/java-bigtable-hbase/issues/4160)) ([2a15804](https://github.com/googleapis/java-bigtable-hbase/commit/2a1580468e676c0ac622ab6ae80c6120e2b1cc84))
+* Update google-cloud-bigtable to 2.27.2 ([#4160](https://github.com/googleapis/java-bigtable-hbase/issues/4160)) ([2a15804](https://github.com/googleapis/java-bigtable-hbase/commit/2a1580468e676c0ac622ab6ae80c6120e2b1cc84))
 
 ## [2.11.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.10.1...v2.11.0) (2023-08-04)
 
