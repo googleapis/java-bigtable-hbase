@@ -47,8 +47,10 @@ import com.google.protobuf.ByteString;
 import io.grpc.CallOptions;
 import io.grpc.Deadline;
 import io.grpc.stub.StreamObserver;
+import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
@@ -263,7 +265,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
       this.paginator = paginator;
       this.wrapper = wrapper;
       this.buffer = new ArrayDeque<>();
-      this.refillSegmentWaterMark = PAGE_SIZE * WATERMARK_PERCENTAGE;
+      this.refillSegmentWaterMark = (int)(PAGE_SIZE * WATERMARK_PERCENTAGE);
       this.serverStream = this.wrapper.func(this.paginator);
       waitReadRowsFuture();
     }
@@ -299,7 +301,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
     private void waitReadRowsFuture() {
       for (Result result : this.serverStream) {          
         this.buffer.add(result);
-        this.lastSeenRowKey = RESULT_ADAPTER.getKey(result)
+        this.lastSeenRowKey = RESULT_ADAPTER.getKey(result);
       }
       this.serverStream = null;
     }
