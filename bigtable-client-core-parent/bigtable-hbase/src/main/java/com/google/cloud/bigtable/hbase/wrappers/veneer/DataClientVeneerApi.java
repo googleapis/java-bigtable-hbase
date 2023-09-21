@@ -60,6 +60,7 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 public class DataClientVeneerApi implements DataClientWrapper {
 
   private static final RowResultAdapter RESULT_ADAPTER = new RowResultAdapter();
+  private static final int PAGE_SIZE = 100;
 
   private final BigtableDataClient delegate;
   private final ClientOperationTimeouts clientOperationTimeouts;
@@ -68,6 +69,10 @@ public class DataClientVeneerApi implements DataClientWrapper {
       BigtableDataClient delegate, ClientOperationTimeouts clientOperationTimeouts) {
     this.delegate = delegate;
     this.clientOperationTimeouts = clientOperationTimeouts;
+  }
+
+  interface paginatorFunction {
+    public ServerStream<Result> func(Query.QueryPaginator paginator);
   }
 
   @Override
@@ -136,8 +141,11 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
   @Override
   public ResultScanner readRows(Query request) {
-    return new RowResultScanner(
-        delegate.readRowsCallable(RESULT_ADAPTER).call(request, createScanCallContext()));
+    Query.QueryPaginator paginator = request.createPaginator(PAGE_SIZE);
+    return new RowResultScanner(paginator, (p) -> {
+      return delegate.readRowsCallable(RESULT_ADAPTER).call(p.getNextQuery(),
+          createScanCallContext());
+    });
   }
 
   @Override
@@ -155,7 +163,8 @@ public class DataClientVeneerApi implements DataClientWrapper {
         .call(request, new StreamObserverAdapter<>(observer), createScanCallContext());
   }
 
-  // Point reads are implemented using a streaming ReadRows RPC. So timeouts need to be managed
+  // Point reads are implemented using a streaming ReadRows RPC. So timeouts need
+  // to be managed
   // similar to scans below.
   private ApiCallContext createReadRowCallContext() {
     GrpcCallContext ctx = GrpcCallContext.createDefault();
@@ -168,30 +177,30 @@ public class DataClientVeneerApi implements DataClientWrapper {
     // If the attempt timeout was overridden, it disables overall timeout limiting
     // Fix it by settings the underlying grpc deadline
     if (callSettings.getOperationTimeout().isPresent()) {
-      ctx =
-          ctx.withCallOptions(
-              CallOptions.DEFAULT.withDeadline(
-                  Deadline.after(
-                      callSettings.getOperationTimeout().get().toMillis(), TimeUnit.MILLISECONDS)));
+      ctx = ctx.withCallOptions(
+          CallOptions.DEFAULT.withDeadline(
+              Deadline.after(
+                  callSettings.getOperationTimeout().get().toMillis(), TimeUnit.MILLISECONDS)));
     }
 
     return ctx;
   }
 
   // Support 2 bigtable-hbase features not directly available in veneer:
-  // - per attempt deadlines - vener doesn't implement deadlines for attempts. To workaround this,
-  //   the timeouts are set per call in the ApiCallContext. However this creates a separate issue of
-  //   over running the operation deadline, so gRPC deadline is also set.
+  // - per attempt deadlines - vener doesn't implement deadlines for attempts. To
+  // workaround this,
+  // the timeouts are set per call in the ApiCallContext. However this creates a
+  // separate issue of
+  // over running the operation deadline, so gRPC deadline is also set.
   private GrpcCallContext createScanCallContext() {
     GrpcCallContext ctx = GrpcCallContext.createDefault();
     OperationTimeouts callSettings = clientOperationTimeouts.getScanTimeouts();
 
     if (callSettings.getOperationTimeout().isPresent()) {
-      ctx =
-          ctx.withCallOptions(
-              CallOptions.DEFAULT.withDeadline(
-                  Deadline.after(
-                      callSettings.getOperationTimeout().get().toMillis(), TimeUnit.MILLISECONDS)));
+      ctx = ctx.withCallOptions(
+          CallOptions.DEFAULT.withDeadline(
+              Deadline.after(
+                  callSettings.getOperationTimeout().get().toMillis(), TimeUnit.MILLISECONDS)));
     }
     if (callSettings.getAttemptTimeout().isPresent()) {
       ctx = ctx.withTimeout(callSettings.getAttemptTimeout().get());
@@ -205,7 +214,10 @@ public class DataClientVeneerApi implements DataClientWrapper {
     delegate.close();
   }
 
-  /** wraps {@link StreamObserver} onto GCJ {@link com.google.api.gax.rpc.ResponseObserver}. */
+  /**
+   * wraps {@link StreamObserver} onto GCJ
+   * {@link com.google.api.gax.rpc.ResponseObserver}.
+   */
   private static class StreamObserverAdapter<T> extends StateCheckingResponseObserver<T> {
     private final StreamObserver<T> delegate;
 
@@ -213,7 +225,8 @@ public class DataClientVeneerApi implements DataClientWrapper {
       this.delegate = delegate;
     }
 
-    protected void onStartImpl(StreamController controller) {}
+    protected void onStartImpl(StreamController controller) {
+    }
 
     protected void onResponseImpl(T response) {
       this.delegate.onNext(response);
@@ -230,41 +243,65 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
   /** wraps {@link ServerStream} onto HBase {@link ResultScanner}. */
   private static class RowResultScanner extends AbstractClientScanner {
+    // Percentage of max number of rows allowed in the buffer
+    private static final double WATERMARK_PERCENTAGE = .1;
+    private static final RowResultAdapter RESULT_ADAPTER = new RowResultAdapter();
 
-    private final Meter scannerResultMeter =
-        BigtableClientMetrics.meter(BigtableClientMetrics.MetricLevel.Info, "scanner.results");
-    private final Timer scannerResultTimer =
-        BigtableClientMetrics.timer(
-            BigtableClientMetrics.MetricLevel.Debug, "scanner.results.latency");
+    private final Meter scannerResultMeter = BigtableClientMetrics.meter(BigtableClientMetrics.MetricLevel.Info,
+        "scanner.results");
+    private final Timer scannerResultTimer = BigtableClientMetrics.timer(
+        BigtableClientMetrics.MetricLevel.Debug, "scanner.results.latency");
 
-    private final ServerStream<Result> serverStream;
-    private final Iterator<Result> iterator;
+    private ServerStream<Result> serverStream;
+    private ByteString lastSeenRowKey = ByteString.EMPTY;
+    private final Queue<Result> buffer;
+    private final Query.QueryPaginator paginator;
+    private final paginatorFunction wrapper;
+    private final int refillSegmentWaterMark;
 
-    RowResultScanner(ServerStream<Result> serverStream) {
-      this.serverStream = serverStream;
-      this.iterator = serverStream.iterator();
+    RowResultScanner(Query.QueryPaginator paginator, paginatorFunction wrapper) {
+      this.paginator = paginator;
+      this.wrapper = wrapper;
+      this.buffer = new ArrayDeque<>();
+      this.refillSegmentWaterMark = PAGE_SIZE * WATERMARK_PERCENTAGE;
+      this.serverStream = this.wrapper.func(this.paginator);
+      waitReadRowsFuture();
     }
 
     @Override
     public Result next() {
       try (Context ignored = scannerResultTimer.time()) {
-        if (!iterator.hasNext()) {
-          // null signals EOF
-          return null;
+        if (this.buffer.size() < this.refillSegmentWaterMark && this.serverStream == null) {
+          if (!this.paginator.advance(this.lastSeenRowKey)) {
+            // null signals EOF
+            return null;
+          }
+          this.serverStream = this.wrapper.func(this.paginator);
         }
-
-        scannerResultMeter.mark();
-        return iterator.next();
+        if (this.buffer.isEmpty() && this.serverStream != null) {
+          this.waitReadRowsFuture();
+        }
+        return this.buffer.poll();
       }
     }
 
     @Override
     public void close() {
-      serverStream.cancel();
+      if (this.serverStream != null){
+        this.serverStream.cancel();
+      }      
     }
 
     public boolean renewLease() {
       throw new UnsupportedOperationException("renewLease");
+    }
+
+    private void waitReadRowsFuture() {
+      for (Result result : this.serverStream) {          
+        this.buffer.add(result);
+        this.lastSeenRowKey = RESULT_ADAPTER.getKey(result)
+      }
+      this.serverStream = null;
     }
   }
 }
