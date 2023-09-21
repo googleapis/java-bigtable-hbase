@@ -472,7 +472,11 @@ public class TestMetrics {
     @Override
     public void mutateRows(
         MutateRowsRequest request, StreamObserver<MutateRowsResponse> responseObserver) {
-      responseObserver.onNext(MutateRowsResponse.newBuilder().build());
+      MutateRowsResponse.Builder response = MutateRowsResponse.newBuilder();
+      for (int i = 0; i < request.getEntriesCount(); i++) {
+        response.addEntries(MutateRowsResponse.Entry.newBuilder().setIndex(i).build());
+      }
+      responseObserver.onNext(response.build());
       responseObserver.onCompleted();
     }
   }
