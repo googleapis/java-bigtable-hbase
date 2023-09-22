@@ -144,10 +144,13 @@ public class DataClientVeneerApi implements DataClientWrapper {
   @Override
   public ResultScanner readRows(Query request) {
     Query.QueryPaginator paginator = request.createPaginator(PAGE_SIZE);
-    return new RowResultScanner(paginator, (p) -> {
-      return delegate.readRowsCallable(RESULT_ADAPTER).call(p.getNextQuery(),
-          createScanCallContext());
-    });
+    return new RowResultScanner(
+        paginator,
+        (p) -> {
+          return delegate
+              .readRowsCallable(RESULT_ADAPTER)
+              .call(p.getNextQuery(), createScanCallContext());
+        });
   }
 
   @Override
@@ -179,10 +182,11 @@ public class DataClientVeneerApi implements DataClientWrapper {
     // If the attempt timeout was overridden, it disables overall timeout limiting
     // Fix it by settings the underlying grpc deadline
     if (callSettings.getOperationTimeout().isPresent()) {
-      ctx = ctx.withCallOptions(
-          CallOptions.DEFAULT.withDeadline(
-              Deadline.after(
-                  callSettings.getOperationTimeout().get().toMillis(), TimeUnit.MILLISECONDS)));
+      ctx =
+          ctx.withCallOptions(
+              CallOptions.DEFAULT.withDeadline(
+                  Deadline.after(
+                      callSettings.getOperationTimeout().get().toMillis(), TimeUnit.MILLISECONDS)));
     }
 
     return ctx;
@@ -199,10 +203,11 @@ public class DataClientVeneerApi implements DataClientWrapper {
     OperationTimeouts callSettings = clientOperationTimeouts.getScanTimeouts();
 
     if (callSettings.getOperationTimeout().isPresent()) {
-      ctx = ctx.withCallOptions(
-          CallOptions.DEFAULT.withDeadline(
-              Deadline.after(
-                  callSettings.getOperationTimeout().get().toMillis(), TimeUnit.MILLISECONDS)));
+      ctx =
+          ctx.withCallOptions(
+              CallOptions.DEFAULT.withDeadline(
+                  Deadline.after(
+                      callSettings.getOperationTimeout().get().toMillis(), TimeUnit.MILLISECONDS)));
     }
     if (callSettings.getAttemptTimeout().isPresent()) {
       ctx = ctx.withTimeout(callSettings.getAttemptTimeout().get());
@@ -216,10 +221,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
     delegate.close();
   }
 
-  /**
-   * wraps {@link StreamObserver} onto GCJ
-   * {@link com.google.api.gax.rpc.ResponseObserver}.
-   */
+  /** wraps {@link StreamObserver} onto GCJ {@link com.google.api.gax.rpc.ResponseObserver}. */
   private static class StreamObserverAdapter<T> extends StateCheckingResponseObserver<T> {
     private final StreamObserver<T> delegate;
 
@@ -227,8 +229,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
       this.delegate = delegate;
     }
 
-    protected void onStartImpl(StreamController controller) {
-    }
+    protected void onStartImpl(StreamController controller) {}
 
     protected void onResponseImpl(T response) {
       this.delegate.onNext(response);
@@ -249,10 +250,11 @@ public class DataClientVeneerApi implements DataClientWrapper {
     private static final double WATERMARK_PERCENTAGE = .1;
     private static final RowResultAdapter RESULT_ADAPTER = new RowResultAdapter();
 
-    private final Meter scannerResultMeter = BigtableClientMetrics.meter(BigtableClientMetrics.MetricLevel.Info,
-        "scanner.results");
-    private final Timer scannerResultTimer = BigtableClientMetrics.timer(
-        BigtableClientMetrics.MetricLevel.Debug, "scanner.results.latency");
+    private final Meter scannerResultMeter =
+        BigtableClientMetrics.meter(BigtableClientMetrics.MetricLevel.Info, "scanner.results");
+    private final Timer scannerResultTimer =
+        BigtableClientMetrics.timer(
+            BigtableClientMetrics.MetricLevel.Debug, "scanner.results.latency");
 
     private ServerStream<Result> serverStream;
     private ByteString lastSeenRowKey = ByteString.EMPTY;
