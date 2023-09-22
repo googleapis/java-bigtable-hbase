@@ -277,6 +277,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
         if (this.buffer.isEmpty() && this.serverStream != null) {
           this.waitReadRowsFuture();
         }
+        scannerResultMeter.mark();
         return this.buffer.poll();
       }
     }
