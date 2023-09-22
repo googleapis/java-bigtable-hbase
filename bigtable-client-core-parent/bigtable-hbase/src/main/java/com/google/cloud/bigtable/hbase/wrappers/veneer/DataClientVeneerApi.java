@@ -300,6 +300,9 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
     private void waitReadRowsFuture() {
       for (Result result : this.serverStream) {          
+        if (result == null){
+          continue;
+        }
         this.buffer.add(result);
         this.lastSeenRowKey = RESULT_ADAPTER.getKey(result);
       }

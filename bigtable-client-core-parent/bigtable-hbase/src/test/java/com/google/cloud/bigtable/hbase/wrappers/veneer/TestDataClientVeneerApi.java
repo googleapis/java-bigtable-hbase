@@ -227,13 +227,12 @@ public class TestDataClientVeneerApi {
 
   @Test
   public void testReadRowsCancel() throws IOException {
-
     Query query = Query.create(TABLE_ID).rowKey(ROW_KEY);
     when(mockDataClient.readRowsCallable(Mockito.<RowResultAdapter>any()))
         .thenReturn(mockStreamingCallable)
         .thenReturn(mockStreamingCallable);
 
-    when(mockStreamingCallable.call(Mockito.eq(query), Mockito.any(GrpcCallContext.class)))
+    when(mockStreamingCallable.call(Mockito.eq(query.createPaginator(100).getNextQuery()), Mockito.any(GrpcCallContext.class)))
         .thenReturn(serverStream);
 
     Iterator<Result> mockIter = Mockito.mock(Iterator.class);
