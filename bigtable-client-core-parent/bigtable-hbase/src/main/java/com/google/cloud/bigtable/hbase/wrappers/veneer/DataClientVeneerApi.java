@@ -265,19 +265,13 @@ public class DataClientVeneerApi implements DataClientWrapper {
       this.paginator = paginator;
       this.wrapper = wrapper;
       this.buffer = new ArrayDeque<>();
-      this.refillSegmentWaterMark = (int)(PAGE_SIZE * WATERMARK_PERCENTAGE);
-      this.serverStream = this.wrapper.func(this.paginator);
-      waitReadRowsFuture();
+      this.refillSegmentWaterMark = (int) (PAGE_SIZE * WATERMARK_PERCENTAGE);
     }
 
     @Override
     public Result next() {
       try (Context ignored = scannerResultTimer.time()) {
         if (this.buffer.size() < this.refillSegmentWaterMark && this.serverStream == null) {
-          if (!this.paginator.advance(this.lastSeenRowKey)) {
-            // null signals EOF
-            return null;
-          }
           this.serverStream = this.wrapper.func(this.paginator);
         }
         if (this.buffer.isEmpty() && this.serverStream != null) {
@@ -289,9 +283,9 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
     @Override
     public void close() {
-      if (this.serverStream != null){
+      if (this.serverStream != null) {
         this.serverStream.cancel();
-      }      
+      }
     }
 
     public boolean renewLease() {
@@ -299,13 +293,16 @@ public class DataClientVeneerApi implements DataClientWrapper {
     }
 
     private void waitReadRowsFuture() {
-      for (Result result : this.serverStream) {          
-        if (result == null){
+      Iterator<Result> iterator = this.serverStream.iterator();
+      while (iterator.hasNext()) {
+        Result result = iterator.next();
+        this.buffer.add(result);
+        if (result == null || result.rawCells() == null) {
           continue;
         }
-        this.buffer.add(result);
         this.lastSeenRowKey = RESULT_ADAPTER.getKey(result);
       }
+      this.paginator.advance(lastSeenRowKey);
       this.serverStream = null;
     }
   }

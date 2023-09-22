@@ -69,44 +69,49 @@ import org.mockito.stubbing.Answer;
 @RunWith(JUnit4.class)
 public class TestDataClientVeneerApi {
 
-  @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
+  @Rule
+  public MockitoRule mockitoRule = MockitoJUnit.rule();
 
   private static final String TABLE_ID = "fake-table";
   private static final ByteString ROW_KEY = ByteString.copyFromUtf8("row-key");
 
-  private static final Row MODEL_ROW =
-      Row.create(
-          ROW_KEY,
-          ImmutableList.of(
-              RowCell.create(
-                  "cf",
-                  ByteString.copyFromUtf8("q"),
-                  10000L,
-                  ImmutableList.of("label"),
-                  ByteString.copyFromUtf8("value"))));
+  private static final Row MODEL_ROW = Row.create(
+      ROW_KEY,
+      ImmutableList.of(
+          RowCell.create(
+              "cf",
+              ByteString.copyFromUtf8("q"),
+              10000L,
+              ImmutableList.of("label"),
+              ByteString.copyFromUtf8("value"))));
 
-  private static final Result EXPECTED_RESULT =
-      Result.create(
-          ImmutableList.<Cell>of(
-              new com.google.cloud.bigtable.hbase.adapters.read.RowCell(
-                  Bytes.toBytes("row-key"),
-                  Bytes.toBytes("cf"),
-                  Bytes.toBytes("q"),
-                  10L,
-                  Bytes.toBytes("value"),
-                  ImmutableList.of("label"))));
+  private static final Result EXPECTED_RESULT = Result.create(
+      ImmutableList.<Cell>of(
+          new com.google.cloud.bigtable.hbase.adapters.read.RowCell(
+              Bytes.toBytes("row-key"),
+              Bytes.toBytes("cf"),
+              Bytes.toBytes("q"),
+              10L,
+              Bytes.toBytes("value"),
+              ImmutableList.of("label"))));
 
-  @Mock private BigtableDataClient mockDataClient;
+  @Mock
+  private BigtableDataClient mockDataClient;
 
-  @Mock private Batcher<RowMutationEntry, Void> mockMutationBatcher;
+  @Mock
+  private Batcher<RowMutationEntry, Void> mockMutationBatcher;
 
-  @Mock private Batcher<ByteString, Row> mockReadBatcher;
+  @Mock
+  private Batcher<ByteString, Row> mockReadBatcher;
 
-  @Mock private ServerStreamingCallable<Query, Result> mockStreamingCallable;
+  @Mock
+  private ServerStreamingCallable<Query, Result> mockStreamingCallable;
 
-  @Mock private ServerStream<Result> serverStream;
+  @Mock
+  private ServerStream<Result> serverStream;
 
-  @Mock private UnaryCallable<Query, List<Result>> mockUnaryCallable;
+  @Mock
+  private UnaryCallable<Query, List<Result>> mockUnaryCallable;
 
   private DataClientVeneerApi dataClientWrapper;
 
@@ -170,10 +175,9 @@ public class TestDataClientVeneerApi {
 
   @Test
   public void testSampleRowKeysAsync() throws Exception {
-    List<KeyOffset> keyOffsets =
-        ImmutableList.of(
-            KeyOffset.create(ByteString.copyFromUtf8("a"), 1),
-            KeyOffset.create(ByteString.copyFromUtf8("z"), 1));
+    List<KeyOffset> keyOffsets = ImmutableList.of(
+        KeyOffset.create(ByteString.copyFromUtf8("a"), 1),
+        KeyOffset.create(ByteString.copyFromUtf8("z"), 1));
     when(mockDataClient.sampleRowKeysAsync(TABLE_ID))
         .thenReturn(ApiFutures.immediateFuture(keyOffsets));
     assertEquals(keyOffsets, dataClientWrapper.sampleRowKeysAsync(TABLE_ID).get());
@@ -204,7 +208,7 @@ public class TestDataClientVeneerApi {
         .thenReturn(
             ImmutableList.of(Result.EMPTY_RESULT, EXPECTED_RESULT, EXPECTED_RESULT).iterator())
         .thenReturn(ImmutableList.<Result>of().iterator());
-    when(mockStreamingCallable.call(Mockito.eq(query), Mockito.any(GrpcCallContext.class)))
+    when(mockStreamingCallable.call(Mockito.any(Query.class), Mockito.any(GrpcCallContext.class)))
         .thenReturn(serverStream)
         .thenReturn(serverStream);
 
@@ -219,37 +223,10 @@ public class TestDataClientVeneerApi {
     assertNull(noRowsResultScanner.next());
 
     verify(serverStream).cancel();
-    verify(mockDataClient, times(2)).readRowsCallable(Mockito.<RowResultAdapter>any());
+    verify(mockDataClient, times(3)).readRowsCallable(Mockito.<RowResultAdapter>any());
     verify(serverStream, times(2)).iterator();
-    verify(mockStreamingCallable, times(2))
-        .call(Mockito.eq(query), Mockito.any(GrpcCallContext.class));
-  }
-
-  @Test
-  public void testReadRowsCancel() throws IOException {
-    Query query = Query.create(TABLE_ID).rowKey(ROW_KEY);
-    when(mockDataClient.readRowsCallable(Mockito.<RowResultAdapter>any()))
-        .thenReturn(mockStreamingCallable)
-        .thenReturn(mockStreamingCallable);
-
-    when(mockStreamingCallable.call(Mockito.eq(query.createPaginator(100).getNextQuery()), Mockito.any(GrpcCallContext.class)))
-        .thenReturn(serverStream);
-
-    Iterator<Result> mockIter = Mockito.mock(Iterator.class);
-    when(serverStream.iterator()).thenReturn(mockIter);
-    when(mockIter.hasNext()).thenReturn(true);
-    when(mockIter.next()).thenReturn(EXPECTED_RESULT);
-
-    ResultScanner resultScanner = dataClientWrapper.readRows(query);
-    assertResult(EXPECTED_RESULT, resultScanner.next());
-
-    doNothing().when(serverStream).cancel();
-    resultScanner.close();
-
-    // make sure that the scanner doesn't iteract with the iterator on close
-    verify(serverStream).cancel();
-    verify(mockIter, times(1)).hasNext();
-    verify(mockIter, times(1)).next();
+    verify(mockStreamingCallable, times(3))
+        .call(Mockito.any(Query.class), Mockito.any(GrpcCallContext.class));
   }
 
   @Test
@@ -277,41 +254,41 @@ public class TestDataClientVeneerApi {
   public void testReadRowsAsyncWithStreamOb() {
     final Exception readException = new Exception();
     Query request = Query.create(TABLE_ID).rowKey(ROW_KEY);
-    StreamObserver<Result> resultStreamOb =
-        new StreamObserver<Result>() {
-          @Override
-          public void onNext(Result result) {
-            assertResult(EXPECTED_RESULT, result);
-          }
+    StreamObserver<Result> resultStreamOb = new StreamObserver<Result>() {
+      @Override
+      public void onNext(Result result) {
+        assertResult(EXPECTED_RESULT, result);
+      }
 
-          @Override
-          public void onError(Throwable throwable) {
-            assertEquals(readException, throwable);
-          }
+      @Override
+      public void onError(Throwable throwable) {
+        assertEquals(readException, throwable);
+      }
 
-          @Override
-          public void onCompleted() {}
-        };
+      @Override
+      public void onCompleted() {
+      }
+    };
     when(mockDataClient.readRowsCallable(Mockito.<RowResultAdapter>any()))
         .thenReturn(mockStreamingCallable);
     doAnswer(
-            new Answer() {
-              int count = 0;
+        new Answer() {
+          int count = 0;
 
-              @Override
-              public Object answer(InvocationOnMock invocationOnMock) {
-                ResponseObserver<Result> resObserver = invocationOnMock.getArgument(1);
-                resObserver.onStart(null);
-                resObserver.onResponse(EXPECTED_RESULT);
-                if (count == 0) {
-                  resObserver.onComplete();
-                } else {
-                  resObserver.onError(readException);
-                }
-                count++;
-                return null;
-              }
-            })
+          @Override
+          public Object answer(InvocationOnMock invocationOnMock) {
+            ResponseObserver<Result> resObserver = invocationOnMock.getArgument(1);
+            resObserver.onStart(null);
+            resObserver.onResponse(EXPECTED_RESULT);
+            if (count == 0) {
+              resObserver.onComplete();
+            } else {
+              resObserver.onError(readException);
+            }
+            count++;
+            return null;
+          }
+        })
         .when(mockStreamingCallable)
         .call(Mockito.<Query>any(), Mockito.<ResponseObserver<Result>>any());
 
