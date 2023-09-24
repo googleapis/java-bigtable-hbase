@@ -169,7 +169,7 @@ limitations under the License.
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
           <!-- MSHADE-419: 3.3.0 Shade plugin causes pom to be created without compile dependencies -->
-          <version>3.2.4</version>
+          <version>3.5.1</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
