@@ -52,7 +52,7 @@ import org.junit.runners.Suite;
   TestDurability.class,
   TestFilters.class,
   TestSingleColumnValueFilter.class,
-  // TestGet.class,
+  TestGet.class,
   TestGetTable.class,
   TestScan.class,
   TestSnapshots.class,
