@@ -22,7 +22,7 @@
   <properties>
     <java.version>8</java.version>
     <maven.version>3.6.3</maven.version>
-    <maven-resolver-api.version>1.9.7</maven-resolver-api.version>
+    <maven-resolver-api.version>1.9.16</maven-resolver-api.version>
 
     <!-- treat maven-invoker-plugin tests like integration tests, allowing
     them to be disabled via skipTests & skipITs -->
