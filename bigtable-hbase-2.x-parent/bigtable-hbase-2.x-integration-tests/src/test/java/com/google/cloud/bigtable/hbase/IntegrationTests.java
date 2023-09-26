@@ -26,7 +26,7 @@ package com.google.cloud.bigtable.hbase;
 // import com.google.cloud.bigtable.hbase.async.TestAsyncSnapshots;
 // import com.google.cloud.bigtable.hbase.async.TestAsyncTruncateTable;
 // import com.google.cloud.bigtable.hbase.async.TestBasicAsyncOps;
-// import com.google.cloud.bigtable.hbase.async.TestModifyTableAsync;
+import com.google.cloud.bigtable.hbase.async.TestModifyTableAsync;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
