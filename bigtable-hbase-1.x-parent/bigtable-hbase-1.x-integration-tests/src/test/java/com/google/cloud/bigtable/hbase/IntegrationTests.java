@@ -27,9 +27,9 @@ import org.junit.runners.Suite;
   TestAuth.class,
   // TestBasicOps.class,
   // TestBatch.class,
-  // TestBufferedMutator.class,
+  TestBufferedMutator.class,
   // TestCheckAndMutate.class,
-  // TestColumnFamilyAdmin.class,
+  TestColumnFamilyAdmin.class,
   // TestCreateTable.class,
   // TestDisableTable.class,
   TestDelete.class,
@@ -41,11 +41,11 @@ import org.junit.runners.Suite;
   // TestScan.class,
   // TestSnapshots.class,
   TestIncrement.class,
-  // TestListTables.class,
+  TestListTables.class,
   // TestPut.class,
   // TestTimestamp.class,
   // TestTruncateTable.class,
-  // TestModifyTable.class,
+  TestModifyTable.class,
 })
 public class IntegrationTests {
   @ClassRule public static SharedTestEnvRule sharedTestEnvRule = SharedTestEnvRule.getInstance();
