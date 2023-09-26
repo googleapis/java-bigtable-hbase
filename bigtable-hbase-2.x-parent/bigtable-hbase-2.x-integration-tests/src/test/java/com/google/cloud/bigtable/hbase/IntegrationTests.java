@@ -15,18 +15,18 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.cloud.bigtable.hbase.async.TestAsyncAdmin;
-import com.google.cloud.bigtable.hbase.async.TestAsyncBatch;
-import com.google.cloud.bigtable.hbase.async.TestAsyncBufferedMutator;
-import com.google.cloud.bigtable.hbase.async.TestAsyncCheckAndMutate;
-import com.google.cloud.bigtable.hbase.async.TestAsyncColumnFamily;
-import com.google.cloud.bigtable.hbase.async.TestAsyncConnection;
-import com.google.cloud.bigtable.hbase.async.TestAsyncCreateTable;
-import com.google.cloud.bigtable.hbase.async.TestAsyncScan;
-import com.google.cloud.bigtable.hbase.async.TestAsyncSnapshots;
-import com.google.cloud.bigtable.hbase.async.TestAsyncTruncateTable;
-import com.google.cloud.bigtable.hbase.async.TestBasicAsyncOps;
-import com.google.cloud.bigtable.hbase.async.TestModifyTableAsync;
+// import com.google.cloud.bigtable.hbase.async.TestAsyncAdmin;
+// import com.google.cloud.bigtable.hbase.async.TestAsyncBatch;
+// import com.google.cloud.bigtable.hbase.async.TestAsyncBufferedMutator;
+// import com.google.cloud.bigtable.hbase.async.TestAsyncCheckAndMutate;
+// import com.google.cloud.bigtable.hbase.async.TestAsyncColumnFamily;
+// import com.google.cloud.bigtable.hbase.async.TestAsyncConnection;
+// import com.google.cloud.bigtable.hbase.async.TestAsyncCreateTable;
+// import com.google.cloud.bigtable.hbase.async.TestAsyncScan;
+// import com.google.cloud.bigtable.hbase.async.TestAsyncSnapshots;
+// import com.google.cloud.bigtable.hbase.async.TestAsyncTruncateTable;
+// import com.google.cloud.bigtable.hbase.async.TestBasicAsyncOps;
+// import com.google.cloud.bigtable.hbase.async.TestModifyTableAsync;
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
