@@ -22,16 +22,16 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-  // TestAdminOps.class,
+  TestAdminOps.class,
   TestAppend.class,
   TestAuth.class,
   // TestBasicOps.class,
-  // TestBatch.class,
+  TestBatch.class,
   TestBufferedMutator.class,
-  // TestCheckAndMutate.class,
+  TestCheckAndMutate.class,
   TestColumnFamilyAdmin.class,
-  // TestCreateTable.class,
-  // TestDisableTable.class,
+  TestCreateTable.class,
+  TestDisableTable.class,
   TestDelete.class,
   TestDurability.class,
   // TestFilters.class,
@@ -39,12 +39,12 @@ import org.junit.runners.Suite;
   // TestGet.class,
   TestGetTable.class,
   // TestScan.class,
-  // TestSnapshots.class,
+  TestSnapshots.class,
   TestIncrement.class,
   TestListTables.class,
-  // TestPut.class,
-  // TestTimestamp.class,
-  // TestTruncateTable.class,
+  TestPut.class,
+  TestTimestamp.class,
+  TestTruncateTable.class,
   TestModifyTable.class,
 })
 public class IntegrationTests {
