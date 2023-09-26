@@ -39,9 +39,9 @@ import org.junit.runners.Suite;
   // TestBasicOps.class,
   TestBatch.class,
   TestBufferedMutator.class,
-  // TestCheckAndMutate.class,
-  // TestCheckAndMutateHBase2.class,
-  // TestCheckAndMutateHBase2Builder.class,
+  TestCheckAndMutate.class,
+  TestCheckAndMutateHBase2.class,
+  TestCheckAndMutateHBase2Builder.class,
   TestColumnFamilyAdmin.class,
   TestColumnFamilyAdminHBase2.class,
   TestColumnFamilyAdminAsync.class,
@@ -59,9 +59,9 @@ import org.junit.runners.Suite;
   TestIncrement.class,
   TestListTables.class,
   TestListTablesHBase2.class,
-  // TestPut.class,
-  // TestTimestamp.class,
-  // TestTruncateTable.class,
+  TestPut.class,
+  TestTimestamp.class,
+  TestTruncateTable.class,
   // TestAsyncAdmin.class,
   // TestAsyncBatch.class,
   // TestAsyncBufferedMutator.class,
@@ -73,8 +73,8 @@ import org.junit.runners.Suite;
   // TestAsyncTruncateTable.class,
   // TestAsyncSnapshots.class,
   // TestAsyncColumnFamily.class,
-  // TestModifyTable.class,
-  // TestModifyTableAsync.class
+  TestModifyTable.class,
+  TestModifyTableAsync.class
 })
 public class IntegrationTests {
   @ClassRule public static SharedTestEnvRule sharedTestEnvRule = SharedTestEnvRule.getInstance();
