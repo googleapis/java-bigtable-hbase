@@ -34,7 +34,7 @@ import org.junit.runners.Suite;
   TestDisableTable.class,
   TestDelete.class,
   TestDurability.class,
-  // TestFilters.class,
+  TestFilters.class,
   TestSingleColumnValueFilter.class,
   // TestGet.class,
   TestGetTable.class,
