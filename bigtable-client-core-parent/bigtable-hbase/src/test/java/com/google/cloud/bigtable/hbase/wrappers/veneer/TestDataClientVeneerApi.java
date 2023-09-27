@@ -219,7 +219,7 @@ public class TestDataClientVeneerApi {
 
     verify(serverStream).cancel();
     verify(mockDataClient, times(3)).readRowsCallable(Mockito.<RowResultAdapter>any());
-    verify(serverStream, times(2)).iterator();
+    verify(serverStream, times(3)).iterator();
     verify(mockStreamingCallable, times(3))
         .call(Mockito.any(Query.class), Mockito.any(GrpcCallContext.class));
   }

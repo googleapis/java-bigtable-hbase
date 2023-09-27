@@ -257,6 +257,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
             BigtableClientMetrics.MetricLevel.Debug, "scanner.results.latency");
 
     private ServerStream<Result> serverStream;
+    private Iterator<Result> iterator;
     private ByteString lastSeenRowKey = ByteString.EMPTY;
     private final Queue<Result> buffer;
     private final Query.QueryPaginator paginator;
@@ -275,6 +276,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
       try (Context ignored = scannerResultTimer.time()) {
         if (this.buffer.size() < this.refillSegmentWaterMark && this.serverStream == null) {
           this.serverStream = this.wrapper.func(this.paginator);
+          this.iterator = this.serverStream.iterator();
         }
         if (this.buffer.isEmpty() && this.serverStream != null) {
           this.waitReadRowsFuture();
@@ -296,16 +298,18 @@ public class DataClientVeneerApi implements DataClientWrapper {
     }
 
     private void waitReadRowsFuture() {
-      Iterator<Result> iterator = this.serverStream.iterator();
-      while (iterator.hasNext()) {
-        Result result = iterator.next();
+      if (this.serverStream == null){
+        return;
+      }
+      while (this.iterator.hasNext()) {
+        Result result = this.iterator.next();
         this.buffer.add(result);
         if (result == null || result.rawCells() == null) {
           continue;
         }
         this.lastSeenRowKey = RESULT_ADAPTER.getKey(result);
       }
-      this.paginator.advance(lastSeenRowKey);
+      this.paginator.advance(this.lastSeenRowKey);
       this.serverStream = null;
     }
   }
