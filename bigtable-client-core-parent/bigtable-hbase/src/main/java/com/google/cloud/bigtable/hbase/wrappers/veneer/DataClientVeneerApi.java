@@ -298,7 +298,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
     }
 
     private void waitReadRowsFuture() {
-      if (this.serverStream == null){
+      if (this.serverStream == null) {
         return;
       }
       while (this.iterator.hasNext()) {
