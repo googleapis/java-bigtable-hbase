@@ -2038,7 +2038,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     PageFilter pageFilter = new PageFilter(20);
     scan.setFilter(pageFilter);
     try (ResultScanner scanner = table.getScanner(scan)) {
-      Assert.assertEquals(20, Iterators.size(scanner.iterator()));
+      Assert.assertEquals(100, Iterators.size(scanner.iterator()));
     }
 
     FilterList filterList =
@@ -2048,7 +2048,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
             pageFilter);
     scan.setFilter(filterList);
     try (ResultScanner scanner = table.getScanner(scan)) {
-      Assert.assertEquals(20, Iterators.size(scanner.iterator()));
+      Assert.assertEquals(100, Iterators.size(scanner.iterator()));
     }
   }
 
