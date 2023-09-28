@@ -217,10 +217,9 @@ public class TestDataClientVeneerApi {
     ResultScanner noRowsResultScanner = dataClientWrapper.readRows(query);
     assertNull(noRowsResultScanner.next());
 
-    verify(serverStream).cancel();
-    verify(mockDataClient, times(3)).readRowsCallable(Mockito.<RowResultAdapter>any());
-    verify(serverStream, times(3)).iterator();
-    verify(mockStreamingCallable, times(3))
+    verify(mockDataClient, times(2)).readRowsCallable(Mockito.<RowResultAdapter>any());
+    verify(serverStream, times(2)).iterator();
+    verify(mockStreamingCallable, times(2))
         .call(Mockito.any(Query.class), Mockito.any(GrpcCallContext.class));
   }
 

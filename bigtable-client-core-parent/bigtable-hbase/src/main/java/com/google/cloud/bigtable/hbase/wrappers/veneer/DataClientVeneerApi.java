@@ -259,6 +259,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
     private ServerStream<Result> serverStream;
     private Iterator<Result> iterator;
     private ByteString lastSeenRowKey = ByteString.EMPTY;
+    private Boolean hasMore = true;
     private final Queue<Result> buffer;
     private final Query.QueryPaginator paginator;
     private final paginatorFunction wrapper;
@@ -274,7 +275,9 @@ public class DataClientVeneerApi implements DataClientWrapper {
     @Override
     public Result next() {
       try (Context ignored = scannerResultTimer.time()) {
-        if (this.buffer.size() < this.refillSegmentWaterMark && this.serverStream == null) {
+        if (this.buffer.size() < this.refillSegmentWaterMark
+            && this.serverStream == null
+            && hasMore) {
           this.serverStream = this.wrapper.func(this.paginator);
           this.iterator = this.serverStream.iterator();
         }
@@ -309,7 +312,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
         }
         this.lastSeenRowKey = RESULT_ADAPTER.getKey(result);
       }
-      this.paginator.advance(this.lastSeenRowKey);
+      this.hasMore = this.paginator.advance(this.lastSeenRowKey);
       this.serverStream = null;
     }
   }
