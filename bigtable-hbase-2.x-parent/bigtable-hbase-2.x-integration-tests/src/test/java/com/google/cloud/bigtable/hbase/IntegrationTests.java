@@ -22,7 +22,7 @@ import com.google.cloud.bigtable.hbase.async.TestAsyncCheckAndMutate;
 import com.google.cloud.bigtable.hbase.async.TestAsyncColumnFamily;
 import com.google.cloud.bigtable.hbase.async.TestAsyncConnection;
 import com.google.cloud.bigtable.hbase.async.TestAsyncCreateTable;
-// import com.google.cloud.bigtable.hbase.async.TestAsyncScan;
+import com.google.cloud.bigtable.hbase.async.TestAsyncScan;
 import com.google.cloud.bigtable.hbase.async.TestAsyncSnapshots;
 import com.google.cloud.bigtable.hbase.async.TestAsyncTruncateTable;
 import com.google.cloud.bigtable.hbase.async.TestBasicAsyncOps;
@@ -36,7 +36,7 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
   TestAdminOps.class,
   TestAppend.class,
-  // TestBasicOps.class,
+  TestBasicOps.class,
   TestBatch.class,
   TestBufferedMutator.class,
   TestCheckAndMutate.class,
@@ -52,9 +52,9 @@ import org.junit.runners.Suite;
   TestDurability.class,
   TestFilters.class,
   TestSingleColumnValueFilter.class,
-  // TestGet.class,
+  TestGet.class,
   TestGetTable.class,
-  // TestScan.class,
+  TestScan.class,
   TestSnapshots.class,
   TestIncrement.class,
   TestListTables.class,
@@ -68,7 +68,7 @@ import org.junit.runners.Suite;
   TestAsyncCheckAndMutate.class,
   TestAsyncCreateTable.class,
   TestAsyncConnection.class,
-  // TestAsyncScan.class,
+  TestAsyncScan.class,
   TestBasicAsyncOps.class,
   TestAsyncTruncateTable.class,
   TestAsyncSnapshots.class,
