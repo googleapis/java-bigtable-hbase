@@ -232,9 +232,14 @@ public class TestDataClientVeneerApi {
         .thenReturn(mockStreamingCallable)
         .thenReturn(mockStreamingCallable);
     Iterator result =
-        IntStream.range(0, 100).mapToObj(x->EXPECTED_RESULT).collect(Collectors.toList()).iterator();
+        IntStream.range(0, 100)
+            .mapToObj(x -> EXPECTED_RESULT)
+            .collect(Collectors.toList())
+            .iterator();
 
-    when(serverStream.iterator()).thenReturn(result).thenReturn(ImmutableList.<Result>of().iterator());
+    when(serverStream.iterator())
+        .thenReturn(result)
+        .thenReturn(ImmutableList.<Result>of().iterator());
     when(mockStreamingCallable.call(Mockito.any(Query.class), Mockito.any(GrpcCallContext.class)))
         .thenReturn(serverStream)
         .thenReturn(serverStream);
