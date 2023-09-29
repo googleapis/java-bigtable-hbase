@@ -181,7 +181,7 @@ public class TestScan extends AbstractTest {
   @Test
   public void test100ResultsInScanner() throws IOException {
     String prefix = "scan_row_";
-    int rowsToWrite = 100;
+    int rowsToWrite = 99;
 
     // Initialize variables
     Table table = getDefaultTable();
@@ -248,7 +248,7 @@ public class TestScan extends AbstractTest {
    */
   public void testScanDelete() throws IOException {
     String prefix = "scan_delete_";
-    int rowsToWrite = 100;
+    int rowsToWrite = 101;
 
     // Initialize variables
     Table table = getDefaultTable();
