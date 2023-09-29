@@ -281,7 +281,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
           this.serverStream = this.wrapper.func(this.paginator);
           this.iterator = this.serverStream.iterator();
         }
-        if (this.buffer.isEmpty() && this.serverStream != null && hasMore) {
+        if (this.buffer.isEmpty() && this.serverStream != null) {
           this.waitReadRowsFuture();
         }
         scannerResultMeter.mark();

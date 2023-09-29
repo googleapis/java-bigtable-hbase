@@ -48,7 +48,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -211,7 +214,36 @@ public class TestDataClientVeneerApi {
     assertResult(Result.EMPTY_RESULT, resultScanner.next());
     assertResult(EXPECTED_RESULT, resultScanner.next());
 
-    doNothing().when(serverStream).cancel();
+    resultScanner.close();
+
+    ResultScanner noRowsResultScanner = dataClientWrapper.readRows(query);
+    assertNull(noRowsResultScanner.next());
+
+    verify(mockDataClient, times(2)).readRowsCallable(Mockito.<RowResultAdapter>any());
+    verify(serverStream, times(2)).iterator();
+    verify(mockStreamingCallable, times(2))
+        .call(Mockito.any(Query.class), Mockito.any(GrpcCallContext.class));
+  }
+
+  @Test
+  public void testRead100Rows() throws IOException {
+    Query query = Query.create(TABLE_ID).rowKey(ROW_KEY);
+    when(mockDataClient.readRowsCallable(Mockito.<RowResultAdapter>any()))
+        .thenReturn(mockStreamingCallable)
+        .thenReturn(mockStreamingCallable);
+    Iterator result =
+        IntStream.range(0, 100).mapToObj(x->EXPECTED_RESULT).collect(Collectors.toList()).iterator();
+
+    when(serverStream.iterator()).thenReturn(result).thenReturn(ImmutableList.<Result>of().iterator());
+    when(mockStreamingCallable.call(Mockito.any(Query.class), Mockito.any(GrpcCallContext.class)))
+        .thenReturn(serverStream)
+        .thenReturn(serverStream);
+
+    ResultScanner resultScanner = dataClientWrapper.readRows(query);
+    for (int i = 0; i < 100; i++) {
+      assertResult(EXPECTED_RESULT, resultScanner.next());
+    }
+
     resultScanner.close();
 
     ResultScanner noRowsResultScanner = dataClientWrapper.readRows(query);
