@@ -21,12 +21,12 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-mirroring-client-core-parent</artifactId>
-    <version>0.6.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+    <version>0.6.2</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-mirroring-client-core</artifactId>
   <packaging>jar</packaging>
-  <version>0.6.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+  <version>0.6.2</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
 
   <name>${project.groupId}:${project.artifactId}</name>
   <description>
@@ -91,7 +91,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>protobuf-java-format-shaded</artifactId>
-      <version>0.6.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+      <version>0.6.2</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
       <scope>compile</scope>
     </dependency>
     <dependency>

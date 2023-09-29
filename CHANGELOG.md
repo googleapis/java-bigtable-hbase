@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.11.2](https://github.com/googleapis/java-bigtable-hbase/compare/v2.11.1...v2.11.2) (2023-09-29)
+
+
+### Dependencies
+
+* Update bigtable to 2.27.3 ([#4167](https://github.com/googleapis/java-bigtable-hbase/issues/4167)) ([1562992](https://github.com/googleapis/java-bigtable-hbase/commit/156299252d09804aac8f62f4f3df24a301ee9cc6))
+
 ## [2.11.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.11.0...v2.11.1) (2023-09-15)
 
 
