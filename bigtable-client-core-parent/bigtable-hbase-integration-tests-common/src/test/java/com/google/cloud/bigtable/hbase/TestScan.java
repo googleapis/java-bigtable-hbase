@@ -210,7 +210,7 @@ public class TestScan extends AbstractTest {
 
     Scan scan = new Scan();
     scan.withStartRow(rowKeys[0])
-        .withStopRow(rowFollowing(rowKeys[rowsToWrite - 1]))
+        .withStopRow(rowFollowingSameLength(rowKeys[rowsToWrite - 1]))
         .addFamily(COLUMN_FAMILY);
 
     try (ResultScanner resultScanner = table.getScanner(scan)) {
@@ -277,7 +277,7 @@ public class TestScan extends AbstractTest {
 
     Scan scan = new Scan();
     scan.withStartRow(rowKeys[0])
-        .withStopRow(rowFollowing(rowKeys[rowsToWrite - 1]))
+        .withStopRow(rowFollowingSameLength(rowKeys[rowsToWrite - 1]))
         .addFamily(COLUMN_FAMILY);
     int deleteCount = 0;
     try (ResultScanner resultScanner = table.getScanner(scan)) {
