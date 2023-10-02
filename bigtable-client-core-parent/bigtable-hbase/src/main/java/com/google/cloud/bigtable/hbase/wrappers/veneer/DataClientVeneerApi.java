@@ -293,6 +293,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
     public void close() {
       if (this.serverStream != null) {
         this.serverStream.cancel();
+        this.serverStream = null;
       }
     }
 
@@ -314,6 +315,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
       }
       this.hasMore = this.paginator.advance(this.lastSeenRowKey);
       this.serverStream = null;
+      this.iterator = null;
     }
   }
 }
