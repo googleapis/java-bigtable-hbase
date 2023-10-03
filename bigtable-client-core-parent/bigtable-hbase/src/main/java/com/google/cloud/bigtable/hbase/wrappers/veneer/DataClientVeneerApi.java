@@ -25,6 +25,7 @@ import com.google.api.gax.rpc.ServerStream;
 import com.google.api.gax.rpc.StateCheckingResponseObserver;
 import com.google.api.gax.rpc.StreamController;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
@@ -143,9 +144,17 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
   @Override
   public ResultScanner readRows(Query request) {
-    Query.QueryPaginator paginator = request.createPaginator(PAGE_SIZE);
+    final RequestContext requestContext =
+        RequestContext.create("ProjectId", "InstanceId", "AppProfile");
+    int requestedPageSize = (int) request.toProto(requestContext).getRowsLimit();
+    if (requestedPageSize == 0) {
+      requestedPageSize = PAGE_SIZE;
+    }
+
+    Query.QueryPaginator paginator = request.createPaginator(requestedPageSize);
     return new RowResultScanner(
         paginator,
+        requestedPageSize,
         (p) -> {
           return delegate
               .readRowsCallable(RESULT_ADAPTER)
@@ -265,11 +274,13 @@ public class DataClientVeneerApi implements DataClientWrapper {
     private final paginatorFunction wrapper;
     private final int refillSegmentWaterMark;
 
-    RowResultScanner(Query.QueryPaginator paginator, paginatorFunction wrapper) {
+    RowResultScanner(Query.QueryPaginator paginator, int pageSize, paginatorFunction wrapper) {
       this.paginator = paginator;
       this.wrapper = wrapper;
       this.buffer = new ArrayDeque<>();
-      this.refillSegmentWaterMark = (int) (PAGE_SIZE * WATERMARK_PERCENTAGE);
+      this.refillSegmentWaterMark = (int) Math.max(1, pageSize * WATERMARK_PERCENTAGE);
+      this.serverStream = this.wrapper.func(this.paginator);
+      this.iterator = this.serverStream.iterator();
     }
 
     @Override

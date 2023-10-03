@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.wrappers.veneer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
@@ -223,6 +224,42 @@ public class TestDataClientVeneerApi {
     verify(serverStream, times(2)).iterator();
     verify(mockStreamingCallable, times(2))
         .call(Mockito.any(Query.class), Mockito.any(GrpcCallContext.class));
+  }
+
+  @Test
+  public void testReadRowsCancel() throws IOException {
+
+    Query query = Query.create(TABLE_ID).rowKey(ROW_KEY);
+    when(mockDataClient.readRowsCallable(Mockito.<RowResultAdapter>any()))
+        .thenReturn(mockStreamingCallable)
+        .thenReturn(mockStreamingCallable);
+
+    when(mockStreamingCallable.call(Mockito.eq(query), Mockito.any(GrpcCallContext.class)))
+        .thenReturn(serverStream);
+
+    Iterator<Result> mockIter = Mockito.mock(Iterator.class);
+    when(serverStream.iterator()).thenReturn(mockIter);
+    when(mockIter.hasNext()).thenReturn(true);
+    when(mockIter.next()).thenReturn(EXPECTED_RESULT);
+
+    ResultScanner resultScanner = dataClientWrapper.readRows(query);
+    new Thread(
+            () -> {
+              try {
+                assertResult(EXPECTED_RESULT, resultScanner.next());
+              } catch (IOException e) {
+                fail(String.valueOf(e));
+              }
+            })
+        .start();
+
+    doNothing().when(serverStream).cancel();
+    resultScanner.close();
+
+    // make sure that the scanner doesn't interact with the iterator on close
+    verify(serverStream).cancel();
+    verify(mockIter, times(1)).hasNext();
+    verify(mockIter, times(1)).next();
   }
 
   @Test
