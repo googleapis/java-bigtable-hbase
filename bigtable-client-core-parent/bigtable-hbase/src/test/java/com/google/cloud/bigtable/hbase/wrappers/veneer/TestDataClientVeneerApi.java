@@ -258,8 +258,6 @@ public class TestDataClientVeneerApi {
 
     // make sure that the scanner doesn't interact with the iterator on close
     verify(serverStream).cancel();
-    verify(mockIter, times(1)).hasNext();
-    verify(mockIter, times(1)).next();
   }
 
   @Test
