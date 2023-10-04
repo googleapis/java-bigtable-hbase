@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x-parent</artifactId>
-    <version>2.11.2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.11.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-1.x-integration-tests</artifactId>
@@ -184,7 +184,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase</artifactId>
-      <version>2.11.2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.11.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <scope>test</scope>
       <exclusions>
         <!-- included in hbase-shaded-testing-util -->
@@ -198,7 +198,7 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-1.x</artifactId>
-      <version>2.11.2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.11.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <scope>test</scope>
       <exclusions>
         <!-- included in hbase-shaded-testing-util -->
@@ -212,7 +212,7 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-integration-tests-common</artifactId>
-      <version>2.11.2</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.11.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <type>test-jar</type>
       <scope>test</scope>
       <exclusions>
