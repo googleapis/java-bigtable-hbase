@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
-import static com.google.common.truth.Truth.*;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -179,9 +179,22 @@ public class TestScan extends AbstractTest {
   }
 
   @Test
-  public void test100ResultsInScanner() throws IOException {
+  public void testManyResultsInScanner_lessThanPageSize() throws IOException {
+    testManyResultsInScanner(95);
+  }
+
+  @Test
+  public void testManyResultsInScanner_equalToPageSize() throws IOException {
+    testManyResultsInScanner(100);
+  }
+
+  @Test
+  public void testManyResultsInScanner_greaterThanPageSize() throws IOException {
+    testManyResultsInScanner(105);
+  }
+
+  private void testManyResultsInScanner(int rowsToWrite) throws IOException {
     String prefix = "scan_row_";
-    int rowsToWrite = 100;
 
     // Initialize variables
     Table table = getDefaultTable();
