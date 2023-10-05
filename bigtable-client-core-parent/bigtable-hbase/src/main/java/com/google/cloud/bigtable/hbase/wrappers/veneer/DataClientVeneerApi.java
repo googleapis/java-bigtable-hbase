@@ -313,7 +313,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
       if (this.serverStream == null) {
         return;
       }
-      Iterator<Result> iterator = this.serverStream.iterator()
+      Iterator<Result> iterator = this.serverStream.iterator();
       while (iterator.hasNext()) {
         Result result = iterator.next();
         this.buffer.add(result);
