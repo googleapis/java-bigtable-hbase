@@ -266,7 +266,6 @@ public class DataClientVeneerApi implements DataClientWrapper {
             BigtableClientMetrics.MetricLevel.Debug, "scanner.results.latency");
 
     private ServerStream<Result> serverStream;
-    private Iterator<Result> iterator;
     private ByteString lastSeenRowKey = ByteString.EMPTY;
     private Boolean hasMore = true;
     private final Queue<Result> buffer;
@@ -280,7 +279,6 @@ public class DataClientVeneerApi implements DataClientWrapper {
       this.buffer = new ArrayDeque<>();
       this.refillSegmentWaterMark = (int) Math.max(1, pageSize * WATERMARK_PERCENTAGE);
       this.serverStream = this.wrapper.func(this.paginator);
-      this.iterator = this.serverStream.iterator();
     }
 
     @Override
@@ -290,7 +288,6 @@ public class DataClientVeneerApi implements DataClientWrapper {
             && this.serverStream == null
             && hasMore) {
           this.serverStream = this.wrapper.func(this.paginator);
-          this.iterator = this.serverStream.iterator();
         }
         if (this.buffer.isEmpty() && this.serverStream != null) {
           this.waitReadRowsFuture();
@@ -316,8 +313,9 @@ public class DataClientVeneerApi implements DataClientWrapper {
       if (this.serverStream == null) {
         return;
       }
-      while (this.iterator.hasNext()) {
-        Result result = this.iterator.next();
+      Iterator<Result> iterator = this.serverStream.iterator()
+      while (iterator.hasNext()) {
+        Result result = iterator.next();
         this.buffer.add(result);
         if (result == null || result.rawCells() == null) {
           continue;
@@ -326,7 +324,6 @@ public class DataClientVeneerApi implements DataClientWrapper {
       }
       this.hasMore = this.paginator.advance(this.lastSeenRowKey);
       this.serverStream = null;
-      this.iterator = null;
     }
   }
 }

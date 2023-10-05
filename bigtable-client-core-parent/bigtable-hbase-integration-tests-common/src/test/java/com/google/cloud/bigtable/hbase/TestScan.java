@@ -17,7 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
-import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.*;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
