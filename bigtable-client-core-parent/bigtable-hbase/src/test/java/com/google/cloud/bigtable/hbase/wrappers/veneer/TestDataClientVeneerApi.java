@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase.wrappers.veneer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doAnswer;
@@ -195,6 +196,29 @@ public class TestDataClientVeneerApi {
     assertResult(EXPECTED_RESULT, actualResult);
     verify(mockCallable)
         .futureCall(Mockito.eq(expectedRequest), Mockito.any(GrpcCallContext.class));
+  }
+
+  @Test
+  public void testReadRows_Errors() throws IOException {
+    Query query = Query.create(TABLE_ID).rowKey(ROW_KEY);
+    when(mockDataClient.readRowsCallable(Mockito.<RowResultAdapter>any()))
+        .thenThrow(new RuntimeException())
+        .thenReturn(mockStreamingCallable);
+    when(serverStream.iterator())
+        .thenReturn(ImmutableList.<Result>of().iterator());
+    when(mockStreamingCallable.call(Mockito.any(Query.class), Mockito.any(GrpcCallContext.class)))
+        .thenReturn(serverStream);
+
+    assertThrows(RuntimeException.class, ()->dataClientWrapper.readRows(query));
+
+    ResultScanner noRowsResultScanner = dataClientWrapper.readRows(query);
+    assertNull(noRowsResultScanner.next());
+    noRowsResultScanner.close();
+
+    verify(mockDataClient, times(2)).readRowsCallable(Mockito.<RowResultAdapter>any());
+    verify(serverStream, times(1)).iterator();
+    verify(mockStreamingCallable, times(1))
+        .call(Mockito.any(Query.class), Mockito.any(GrpcCallContext.class));
   }
 
   @Test
