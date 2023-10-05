@@ -204,12 +204,11 @@ public class TestDataClientVeneerApi {
     when(mockDataClient.readRowsCallable(Mockito.<RowResultAdapter>any()))
         .thenThrow(new RuntimeException())
         .thenReturn(mockStreamingCallable);
-    when(serverStream.iterator())
-        .thenReturn(ImmutableList.<Result>of().iterator());
+    when(serverStream.iterator()).thenReturn(ImmutableList.<Result>of().iterator());
     when(mockStreamingCallable.call(Mockito.any(Query.class), Mockito.any(GrpcCallContext.class)))
         .thenReturn(serverStream);
 
-    assertThrows(RuntimeException.class, ()->dataClientWrapper.readRows(query));
+    assertThrows(RuntimeException.class, () -> dataClientWrapper.readRows(query));
 
     ResultScanner noRowsResultScanner = dataClientWrapper.readRows(query);
     assertNull(noRowsResultScanner.next());
