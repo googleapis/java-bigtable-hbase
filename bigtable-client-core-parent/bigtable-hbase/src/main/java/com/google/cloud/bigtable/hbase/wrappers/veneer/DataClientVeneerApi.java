@@ -257,6 +257,8 @@ public class DataClientVeneerApi implements DataClientWrapper {
   private static class RowResultScanner extends AbstractClientScanner {
     // Percentage of max number of rows allowed in the buffer
     private static final double WATERMARK_PERCENTAGE = .1;
+    private static final int MIN_BYTE_BUFFER_SIZE = 100 * 1024 * 1024;
+    private static final double DEFAULT_BYTE_LIMIT_PERCENTAGE = .1;
     private static final RowResultAdapter RESULT_ADAPTER = new RowResultAdapter();
 
     private final Meter scannerResultMeter =
@@ -272,6 +274,13 @@ public class DataClientVeneerApi implements DataClientWrapper {
     private final Query.QueryPaginator paginator;
     private final paginatorFunction wrapper;
     private final int refillSegmentWaterMark;
+
+    private static final long maxSegmentByteSize =
+        (long)
+            Math.max(
+                MIN_BYTE_BUFFER_SIZE,
+                (Runtime.getRuntime().totalMemory() * DEFAULT_BYTE_LIMIT_PERCENTAGE));
+    private long currentByteSize = 0;
 
     RowResultScanner(Query.QueryPaginator paginator, int pageSize, paginatorFunction wrapper) {
       this.paginator = paginator;
@@ -293,7 +302,9 @@ public class DataClientVeneerApi implements DataClientWrapper {
           this.waitReadRowsFuture();
         }
         scannerResultMeter.mark();
-        return this.buffer.poll();
+        Result result = this.buffer.poll();
+        currentByteSize -= result.size();
+        return result;
       }
     }
 
@@ -321,6 +332,10 @@ public class DataClientVeneerApi implements DataClientWrapper {
           continue;
         }
         this.lastSeenRowKey = RESULT_ADAPTER.getKey(result);
+        this.currentByteSize += result.size();
+        if (this.currentByteSize >= maxSegmentByteSize) {
+          break;
+        }
       }
       this.hasMore = this.paginator.advance(this.lastSeenRowKey);
       this.serverStream = null;
