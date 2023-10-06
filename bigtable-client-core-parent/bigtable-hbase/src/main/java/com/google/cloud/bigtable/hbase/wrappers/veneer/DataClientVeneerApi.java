@@ -303,7 +303,9 @@ public class DataClientVeneerApi implements DataClientWrapper {
         }
         scannerResultMeter.mark();
         Result result = this.buffer.poll();
-        currentByteSize -= result.size();
+        if (result != null) {
+          currentByteSize -= Result.getTotalSizeOfCells(result);
+        }
         return result;
       }
     }
@@ -332,7 +334,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
           continue;
         }
         this.lastSeenRowKey = RESULT_ADAPTER.getKey(result);
-        this.currentByteSize += result.size();
+        this.currentByteSize += Result.getTotalSizeOfCells(result);
         if (this.currentByteSize >= maxSegmentByteSize) {
           break;
         }
