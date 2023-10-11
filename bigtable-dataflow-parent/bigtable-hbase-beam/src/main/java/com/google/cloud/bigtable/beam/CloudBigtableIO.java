@@ -1003,15 +1003,18 @@ public class CloudBigtableIO {
 
     @FinishBundle
     public void finishBundle(FinishBundleContext c) throws Exception {
-      for (BufferedMutator bufferedMutator : mutators.values()) {
-        try {
-          bufferedMutator.close();
-        } catch (RetriesExhaustedWithDetailsException exception) {
-          logExceptions(c, exception);
-          rethrowException(exception);
+      try {
+        for (BufferedMutator bufferedMutator : mutators.values()) {
+          try {
+            bufferedMutator.close();
+          } catch (RetriesExhaustedWithDetailsException exception) {
+            logExceptions(c, exception);
+            rethrowException(exception);
+          }
         }
+      } finally {
+        mutators.clear();
       }
-      mutators.clear();
     }
   }
 
