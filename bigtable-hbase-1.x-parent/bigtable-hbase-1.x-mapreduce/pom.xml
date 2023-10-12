@@ -36,7 +36,7 @@ limitations under the License.
 
   <properties>
     <mrunit.version>1.1.0</mrunit.version>
-    <google-cloud-bigtable-emulator.version>0.157.3</google-cloud-bigtable-emulator.version>
+    <google-cloud-bigtable-emulator.version>0.165.0</google-cloud-bigtable-emulator.version>
   </properties>
 
   <!-- NOTE: this artifact is designed to be used alongside hbase-server via
