@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.11.3](https://github.com/googleapis/java-bigtable-hbase/compare/v2.11.2...v2.11.3) (2023-10-13)
+
+
+### Bug Fixes
+
+* Close batcher for writeToMultipleTables ([#4182](https://github.com/googleapis/java-bigtable-hbase/issues/4182)) ([b88107a](https://github.com/googleapis/java-bigtable-hbase/commit/b88107a23a29cdb43833039ed471e72c14afdbc5))
+
+
+### Dependencies
+
+* Update google-cloud-bigtable 2.28.0 ([#4185](https://github.com/googleapis/java-bigtable-hbase/issues/4185)) ([09f3588](https://github.com/googleapis/java-bigtable-hbase/commit/09f3588f2555e619752d7a673420570d031f17a3))
+
 ## [2.11.2](https://github.com/googleapis/java-bigtable-hbase/compare/v2.11.1...v2.11.2) (2023-09-29)
 
 
