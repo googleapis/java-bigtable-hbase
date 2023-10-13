@@ -104,10 +104,6 @@ limitations under the License.
       <artifactId>grpc-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-context</artifactId>
-    </dependency>
-    <dependency>
       <!-- See notes in verify-conscrypt-version execution below -->
       <groupId>org.conscrypt</groupId>
       <artifactId>conscrypt-openjdk-uber</artifactId>
