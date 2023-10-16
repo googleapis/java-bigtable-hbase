@@ -221,6 +221,9 @@ limitations under the License.
                   See bigtable-hbase-1.x pom.xml for more details-->
             <ignoredNonTestScopedDependency>*</ignoredNonTestScopedDependency>
           </ignoredNonTestScopedDependencies>
+          <ignoredDependencies>
+            <dependency>*</dependency>
+          </ignoredDependencies>
         </configuration>
       </plugin>
       <plugin>
