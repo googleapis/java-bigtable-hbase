@@ -176,12 +176,6 @@ limitations under the License.
       <scope>runtime</scope>
     </dependency>
 
-    <dependency>
-      <groupId>net.bytebuddy</groupId>
-      <artifactId>byte-buddy</artifactId>
-      <version>${byte.buddy.version}</version>
-    </dependency>
-
     <!-- Test -->
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>

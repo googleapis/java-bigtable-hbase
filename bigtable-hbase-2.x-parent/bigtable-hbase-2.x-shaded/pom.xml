@@ -431,8 +431,10 @@ limitations under the License.
                 <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableAdmin</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableConnection</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/BigtableAsyncConnection</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/BigtableConnectionRegistry</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/BigtableAsyncRegistry</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/CommonConnection</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/BigtableConnectionRegistry</classEntry>
               </allowedJarClassEntries>
             </configuration>
           </execution>

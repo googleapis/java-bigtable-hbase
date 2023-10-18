@@ -1,0 +1,19 @@
+name: "hbase client"
+description:
+    "Subset of HBase client that changed starting from version 2.3."
+    "To enable customers to migrate older applications, Cloud Bigtable "
+    "vendors some interfaces to be able to implement them."
+
+third_party {
+  url {
+    type: HOMEPAGE
+    value: "https://hbase.apache.org/"
+  }
+  url {
+    type: GIT
+    value: "https://github.com/apache/hbase"
+  }
+  version: "2.2.7"
+  last_upgrade_date { year: 2021 month: 4 day: 11 }
+  license_type: NOTICE
+}
