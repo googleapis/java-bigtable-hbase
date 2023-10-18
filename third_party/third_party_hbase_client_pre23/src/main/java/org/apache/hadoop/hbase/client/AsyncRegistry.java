@@ -30,26 +30,20 @@ import org.apache.yetus.audience.InterfaceAudience;
 @InterfaceAudience.Private
 interface AsyncRegistry extends Closeable {
 
-    /**
-     * Get the location of meta region.
-     */
-    CompletableFuture<RegionLocations> getMetaRegionLocation();
+  /** Get the location of meta region. */
+  CompletableFuture<RegionLocations> getMetaRegionLocation();
 
-    /**
-     * Should only be called once.
-     * <p>
-     * The upper layer should store this value somewhere as it will not be change any more.
-     */
-    CompletableFuture<String> getClusterId();
+  /**
+   * Should only be called once.
+   *
+   * <p>The upper layer should store this value somewhere as it will not be change any more.
+   */
+  CompletableFuture<String> getClusterId();
 
-    /**
-     * Get the address of HMaster.
-     */
-    CompletableFuture<ServerName> getMasterAddress();
+  /** Get the address of HMaster. */
+  CompletableFuture<ServerName> getMasterAddress();
 
-    /**
-     * Closes this instance and releases any system resources associated with it
-     */
-    @Override
-    void close();
+  /** Closes this instance and releases any system resources associated with it */
+  @Override
+  void close();
 }
