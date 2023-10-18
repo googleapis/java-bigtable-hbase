@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.12.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.11.3...v2.12.0) (2023-10-18)
+
+
+### Features
+
+* Use concrete classes for hbase.client.registry.impl ([#4043](https://github.com/googleapis/java-bigtable-hbase/issues/4043)) ([#4188](https://github.com/googleapis/java-bigtable-hbase/issues/4188)) ([cc22f2f](https://github.com/googleapis/java-bigtable-hbase/commit/cc22f2f577d32c31417c2cc525eac9649281589f))
+
 ## [2.11.3](https://github.com/googleapis/java-bigtable-hbase/compare/v2.11.2...v2.11.3) (2023-10-13)
 
 
