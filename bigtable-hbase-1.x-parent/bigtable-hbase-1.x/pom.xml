@@ -210,26 +210,4 @@ limitations under the License.
     </dependency>
   </dependencies>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.5.0</version>
-        <configuration>
-          <ignoredNonTestScopedDependencies>
-            <!-- Temporarily disable dependency plugin until we figure out why it thinks compile deps like google-cloud-bigtable are unused
-                For example:
-                [WARNING] Non-test scoped test only dependencies found:
-                [WARNING]    com.google.cloud:google-cloud-bigtable:jar:2.16.0:compile
-                ...
-
-                Same problem exists in bigtable-hbase-2.x
-            -->
-            <ignoredNonTestScopedDependency>*</ignoredNonTestScopedDependency>
-          </ignoredNonTestScopedDependencies>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
 </project>

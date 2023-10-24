@@ -138,12 +138,26 @@ limitations under the License.
           <version>3.0.0-M2</version>
         </plugin>
 
-        <!-- Augment google-cloud-shared-config config to exclude non-compile deps -->
+        <!-- Disable google-cloud-shared-config's enforcement of enumerating transitive deps.
+          This project predominantly lives in the HBase classpath, and trying to mirror the
+          classpath is extremely difficult without much benefit.
+         -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
           <configuration>
-            <ignoreNonCompile>true</ignoreNonCompile>
+            <ignoredDependencies>
+              <dependency>*</dependency>
+            </ignoredDependencies>
+          </configuration>
+        </plugin>
+        <!-- Disable google-cloud-shared-config's clirr checks. This project simply implements
+        HBase apis, so tracking removal of apis doesnt make sense. -->
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>clirr-maven-plugin</artifactId>
+          <configuration>
+            <skip>true</skip>
           </configuration>
         </plugin>
 

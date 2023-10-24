@@ -212,30 +212,6 @@ limitations under the License.
 
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.5.0</version>
-        <configuration>
-          <ignoredNonTestScopedDependencies>
-            <!-- Temporarily disable dependency plugin until we figure out why it thinks compile deps like google-cloud-bigtable are unused
-                  See bigtable-hbase-1.x pom.xml for more details-->
-            <ignoredNonTestScopedDependency>*</ignoredNonTestScopedDependency>
-          </ignoredNonTestScopedDependencies>
-          <ignoredDependencies>
-            <dependency>*</dependency>
-          </ignoredDependencies>
-        </configuration>
-      </plugin>
-      <plugin>
-        <!-- skip for bigtable-hbase to allow for upcoming refactoring-->
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>clirr-maven-plugin</artifactId>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
-      </plugin>
-
-      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
         <executions>

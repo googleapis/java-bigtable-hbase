@@ -97,15 +97,6 @@ limitations under the License.
         </executions>
       </plugin>
 
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <!-- skip due to shaded jars added in during package phase (see below) -->
-        <artifactId>clirr-maven-plugin</artifactId>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
-      </plugin>
-
       <!-- copy protobuf-java-format-shaded and core into jar -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

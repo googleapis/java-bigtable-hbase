@@ -132,21 +132,6 @@ limitations under the License.
 
   <build>
     <plugins>
-      <!-- This is basically a replacement for the mapreduce jobs in hbase-server,
-      but with the implementation replaced by bigtable-hbase-1.x-hadoop. This means
-      that all of our dependencies are dictated by hbase-server. hbase-server
-      has a fairly complex dependency tree with a lot of exclusions. Trying to
-      replicate it here to declare exact deps our job uses creates an undue burden.-->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <ignoredDependencies>
-            <dependency>*</dependency>
-          </ignoredDependencies>
-        </configuration>
-      </plugin>
-
       <plugin>
         <!-- skip UpperBound enforcement for hadoop jars -->
         <groupId>org.apache.maven.plugins</groupId>
