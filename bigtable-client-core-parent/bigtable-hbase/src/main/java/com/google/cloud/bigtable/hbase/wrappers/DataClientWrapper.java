@@ -91,4 +91,6 @@ public interface DataClientWrapper extends AutoCloseable {
 
   @Override
   void close() throws IOException;
+
+  void setCaching(int caching);
 }
