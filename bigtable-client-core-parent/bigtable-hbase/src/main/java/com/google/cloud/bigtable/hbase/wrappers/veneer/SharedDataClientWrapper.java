@@ -110,7 +110,8 @@ class SharedDataClientWrapper implements DataClientWrapper {
   }
 
   @Override
-  public void setCaching(int caching) {
+  public ResultScanner readRows(Query.QueryPaginator paginator, int requestedPageSize) {
     // unimplemented.
+    return null;
   }
 }
