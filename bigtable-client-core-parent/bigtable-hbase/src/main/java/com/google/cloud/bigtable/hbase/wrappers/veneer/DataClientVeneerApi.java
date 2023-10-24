@@ -374,7 +374,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
           // null signals EOF
           return null;
         }
-        
+
         scannerResultMeter.mark();
         return iterator.next();
       }
