@@ -113,12 +113,6 @@ limitations under the License.
       <artifactId>slf4j-api</artifactId>
       <version>${hbase1-hadoop-slf4j.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.conscrypt</groupId>
-      <artifactId>conscrypt-openjdk-uber</artifactId>
-      <version>${grpc-conscrypt.version}</version>
-      <scope>runtime</scope>
-    </dependency>
 
     <!-- Test deps -->
     <dependency>
