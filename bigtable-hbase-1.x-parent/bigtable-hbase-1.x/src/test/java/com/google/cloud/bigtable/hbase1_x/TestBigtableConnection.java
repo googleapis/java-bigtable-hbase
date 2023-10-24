@@ -40,6 +40,7 @@ import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -86,13 +87,20 @@ public class TestBigtableConnection {
     connection = new BigtableConnection(configuration);
   }
 
+  @After
+  public void tearDown() throws Exception {
+    if (connection != null) {
+      connection.close();
+    }
+  }
+
   @Test
   public void testOverloadedConstructor() throws IOException {
-    Connection hbaseConnection =
-        new BigtableConnection(configuration, false, Executors.newSingleThreadExecutor(), null);
-
-    assertTrue(hbaseConnection.getAdmin() instanceof BigtableAdmin);
-    assertTrue(hbaseConnection.getTable(TABLE_NAME) instanceof AbstractBigtableTable);
+    try (Connection hbaseConnection =
+        new BigtableConnection(configuration, false, Executors.newSingleThreadExecutor(), null)) {
+      assertTrue(hbaseConnection.getAdmin() instanceof BigtableAdmin);
+      assertTrue(hbaseConnection.getTable(TABLE_NAME) instanceof AbstractBigtableTable);
+    }
   }
 
   @Test
