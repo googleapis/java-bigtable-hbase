@@ -16,8 +16,10 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.Filters;
+import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
@@ -298,13 +300,30 @@ public abstract class AbstractBigtableTable implements Table {
     LOG.trace("getScanner(Scan)");
     Span span = TRACER.spanBuilder("BigtableTable.scan").startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-      clientWrapper.setCaching(scan.getCaching());
-      final ResultScanner scanner = clientWrapper.readRows(hbaseAdapter.adapt(scan));
-      if (hasWhileMatchFilter(scan.getFilter())) {
-        return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner, span);
+      if (scan.getCaching() == -1) {
+        final ResultScanner scanner = clientWrapper.readRows(hbaseAdapter.adapt(scan));
+        if (hasWhileMatchFilter(scan.getFilter())) {
+          return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner, span);
+        }
+        // TODO: need to end the span when stream ends
+        return scanner;
+      } else {
+        final Query request = hbaseAdapter.adapt(scan);
+        final RequestContext requestContext =
+            RequestContext.create("ProjectId", "InstanceId", "AppProfile");
+        int requestedPageSize = (int) request.toProto(requestContext).getRowsLimit();
+        if (requestedPageSize > scan.getCaching()) {
+          requestedPageSize = scan.getCaching();
+        }
+
+        Query.QueryPaginator paginator = request.createPaginator(requestedPageSize);
+        final ResultScanner scanner = clientWrapper.readRows(paginator, requestedPageSize);
+        if (hasWhileMatchFilter(scan.getFilter())) {
+          return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner, span);
+        }
+        // TODO: need to end the span when stream ends
+        return scanner;
       }
-      // TODO: need to end the span when stream ends
-      return scanner;
     } catch (Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
       span.setStatus(Status.UNKNOWN);

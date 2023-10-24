@@ -25,7 +25,6 @@ import com.google.api.gax.rpc.ServerStream;
 import com.google.api.gax.rpc.StateCheckingResponseObserver;
 import com.google.api.gax.rpc.StreamController;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
-import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
@@ -66,7 +65,6 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
   private final BigtableDataClient delegate;
   private final ClientOperationTimeouts clientOperationTimeouts;
-  private int caching = -1;
 
   DataClientVeneerApi(
       BigtableDataClient delegate, ClientOperationTimeouts clientOperationTimeouts) {
@@ -143,19 +141,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
   }
 
   @Override
-  public ResultScanner readRows(Query request) {
-    if (caching == -1) {
-      return new RowResultScanner(
-          delegate.readRowsCallable(RESULT_ADAPTER).call(request, createScanCallContext()));
-    }
-    final RequestContext requestContext =
-        RequestContext.create("ProjectId", "InstanceId", "AppProfile");
-    int requestedPageSize = (int) request.toProto(requestContext).getRowsLimit();
-    if (requestedPageSize == 0) {
-      requestedPageSize = caching;
-    }
-
-    Query.QueryPaginator paginator = request.createPaginator(requestedPageSize);
+  public ResultScanner readRows(Query.QueryPaginator paginator, int requestedPageSize) {
     return new PaginatedRowResultScanner(
         paginator,
         requestedPageSize,
@@ -164,6 +150,12 @@ public class DataClientVeneerApi implements DataClientWrapper {
               .readRowsCallable(RESULT_ADAPTER)
               .call(p.getNextQuery(), createScanCallContext());
         });
+  }
+
+  @Override
+  public ResultScanner readRows(Query request) {
+    return new RowResultScanner(
+        delegate.readRowsCallable(RESULT_ADAPTER).call(request, createScanCallContext()));
   }
 
   @Override
@@ -232,11 +224,6 @@ public class DataClientVeneerApi implements DataClientWrapper {
   @Override
   public void close() {
     delegate.close();
-  }
-
-  @Override
-  public void setCaching(int caching) {
-    this.caching = caching;
   }
 
   /** wraps {@link StreamObserver} onto GCJ {@link com.google.api.gax.rpc.ResponseObserver}. */
