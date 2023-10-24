@@ -92,6 +92,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 @InternalApi("For internal usage only")
 @SuppressWarnings("deprecation")
 public abstract class AbstractBigtableTable implements Table {
+  // Page size in case requested page size is not positive.
+  private final int PAGE_SIZE = 100;
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(AbstractBigtableTable.class);
 
@@ -314,6 +316,9 @@ public abstract class AbstractBigtableTable implements Table {
         int requestedPageSize = (int) request.toProto(requestContext).getRowsLimit();
         if (requestedPageSize > scan.getCaching()) {
           requestedPageSize = scan.getCaching();
+        }
+        if (requestedPageSize <= 0) {
+          requestedPageSize = PAGE_SIZE;
         }
 
         Query.QueryPaginator paginator = request.createPaginator(requestedPageSize);
