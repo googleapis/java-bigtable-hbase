@@ -108,4 +108,9 @@ class SharedDataClientWrapper implements DataClientWrapper {
     delegate.close();
     owner.release(key);
   }
+
+  @Override
+  public void setCaching(int caching) {
+    // unimplemented.
+  }
 }

@@ -63,10 +63,10 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 public class DataClientVeneerApi implements DataClientWrapper {
 
   private static final RowResultAdapter RESULT_ADAPTER = new RowResultAdapter();
-  private static final int PAGE_SIZE = 100;
 
   private final BigtableDataClient delegate;
   private final ClientOperationTimeouts clientOperationTimeouts;
+  private int caching = -1;
 
   DataClientVeneerApi(
       BigtableDataClient delegate, ClientOperationTimeouts clientOperationTimeouts) {
@@ -144,15 +144,19 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
   @Override
   public ResultScanner readRows(Query request) {
+    if (caching == -1) {
+      return new RowResultScanner(
+          delegate.readRowsCallable(RESULT_ADAPTER).call(request, createScanCallContext()));
+    }
     final RequestContext requestContext =
         RequestContext.create("ProjectId", "InstanceId", "AppProfile");
     int requestedPageSize = (int) request.toProto(requestContext).getRowsLimit();
     if (requestedPageSize == 0) {
-      requestedPageSize = PAGE_SIZE;
+      requestedPageSize = caching;
     }
 
     Query.QueryPaginator paginator = request.createPaginator(requestedPageSize);
-    return new RowResultScanner(
+    return new PaginatedRowResultScanner(
         paginator,
         requestedPageSize,
         (p) -> {
@@ -230,6 +234,11 @@ public class DataClientVeneerApi implements DataClientWrapper {
     delegate.close();
   }
 
+  @Override
+  public void setCaching(int caching) {
+    this.caching = caching;
+  }
+
   /** wraps {@link StreamObserver} onto GCJ {@link com.google.api.gax.rpc.ResponseObserver}. */
   private static class StreamObserverAdapter<T> extends StateCheckingResponseObserver<T> {
     private final StreamObserver<T> delegate;
@@ -254,7 +263,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
   }
 
   /** wraps {@link ServerStream} onto HBase {@link ResultScanner}. */
-  private static class RowResultScanner extends AbstractClientScanner {
+  private static class PaginatedRowResultScanner extends AbstractClientScanner {
     // Percentage of max number of rows allowed in the buffer
     private static final double WATERMARK_PERCENTAGE = .1;
     private static final int MIN_BYTE_BUFFER_SIZE = 100 * 1024 * 1024;
@@ -282,7 +291,8 @@ public class DataClientVeneerApi implements DataClientWrapper {
                 (Runtime.getRuntime().totalMemory() * DEFAULT_BYTE_LIMIT_PERCENTAGE));
     private long currentByteSize = 0;
 
-    RowResultScanner(Query.QueryPaginator paginator, int pageSize, paginatorFunction wrapper) {
+    PaginatedRowResultScanner(
+        Query.QueryPaginator paginator, int pageSize, paginatorFunction wrapper) {
       this.paginator = paginator;
       this.wrapper = wrapper;
       this.buffer = new ArrayDeque<>();
@@ -338,6 +348,44 @@ public class DataClientVeneerApi implements DataClientWrapper {
       }
       this.hasMore = this.paginator.advance(this.lastSeenRowKey);
       this.serverStream = null;
+    }
+  }
+
+  /** wraps {@link ServerStream} onto HBase {@link ResultScanner}. */
+  private static class RowResultScanner extends AbstractClientScanner {
+    private final Meter scannerResultMeter =
+        BigtableClientMetrics.meter(BigtableClientMetrics.MetricLevel.Info, "scanner.results");
+    private final Timer scannerResultTimer =
+        BigtableClientMetrics.timer(
+            BigtableClientMetrics.MetricLevel.Debug, "scanner.results.latency");
+
+    private final ServerStream<Result> serverStream;
+    private final Iterator<Result> iterator;
+
+    RowResultScanner(ServerStream<Result> serverStream) {
+      this.serverStream = serverStream;
+      this.iterator = serverStream.iterator();
+    }
+
+    @Override
+    public Result next() {
+      try (Context ignored = scannerResultTimer.time()) {
+        if (!iterator.hasNext()) {
+          // null signals EOF
+          return null;
+        }
+        scannerResultMeter.mark();
+        return iterator.next();
+      }
+    }
+
+    @Override
+    public void close() {
+      this.serverStream.cancel();
+    }
+
+    public boolean renewLease() {
+      throw new UnsupportedOperationException("renewLease");
     }
   }
 }
