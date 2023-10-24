@@ -94,12 +94,6 @@ limitations under the License.
           <artifactId>slf4j-log4j12</artifactId>
         </exclusion>
 
-        <!-- google-cloud-bigtable pulls in a newer version of this, but we want to match beam's version-->
-        <exclusion>
-          <groupId>org.conscrypt</groupId>
-          <artifactId>conscrypt-openjdk-uber</artifactId>
-        </exclusion>
-
         <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
         pom.xml files when invoking the build from a parent project. So we have to manually exclude
         the dependencies. Note that this works in conjunction with the manually promoted dependencies

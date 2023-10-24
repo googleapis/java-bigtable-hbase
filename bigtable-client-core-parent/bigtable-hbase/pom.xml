@@ -104,13 +104,6 @@ limitations under the License.
       <artifactId>grpc-api</artifactId>
     </dependency>
     <dependency>
-      <!-- See notes in verify-conscrypt-version execution below -->
-      <groupId>org.conscrypt</groupId>
-      <artifactId>conscrypt-openjdk-uber</artifactId>
-      <version>${grpc-conscrypt.version}</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-stub</artifactId>
     </dependency>
@@ -255,21 +248,8 @@ limitations under the License.
         <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
 
         <executions>
-          <!-- TODO: Remove this once we can properly shade conscrypt:
-            https://github.com/google/conscrypt/issues/811 -->
-
-          <!-- This module doesn't actually need to declare a dependency on
-          conscrypt, it already has it transitively via bigtable-client-core.
-          However, the child -shaded artifacts need a version number to manually
-          promote it. So this module declares the dependency solely to verify
-          the version in grpc-conscrypt.version is correct.
-
-          Ideally we would just shade conscrypt in the -shaded artifacts, but
-          currently it impossible. So for now we just need to make sure that
-          after all of shading, we expose it properly.
-          -->
           <execution>
-            <id>verify-conscrypt-version</id>
+            <id>verify-mirror-deps-cbt</id>
             <phase>verify</phase>
             <goals>
               <goal>verify-mirror-deps</goal>
