@@ -498,23 +498,6 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <ignoredUnusedDeclaredDependencies>
-            <ignoredUnusedDeclaredDependency>com.google.cloud.bigdataoss:gcs-connector:*:*</ignoredUnusedDeclaredDependency>
-            <!-- seems to be a bug in the dependency analyzer, removing this dep reports the reverse problem
-            See: https://issues.apache.org/jira/browse/MDEP-679 -->
-            <ignoredUnusedDeclaredDependency> commons-logging:commons-logging:*:*</ignoredUnusedDeclaredDependency>
-          </ignoredUnusedDeclaredDependencies>
-          <ignoredUsedUndeclaredDependencies>
-            <!-- seems to be a bug in the dependency analyzer, adding this dep reports the reverse problem
-            See: https://issues.apache.org/jira/browse/MDEP-679 -->
-            <ignoredUsedUndeclaredDependency>org.springframework:spring-jcl:*:*</ignoredUsedUndeclaredDependency>
-          </ignoredUsedUndeclaredDependencies>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
 
