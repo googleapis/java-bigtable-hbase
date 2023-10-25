@@ -48,6 +48,20 @@ limitations under the License.
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+
+      <!-- Conscrypt can't be shaded, and since we are trying to make this connector a single jar drop in, mark it as provided.
+      End users can always add it themselves
+      -->
+      <dependency>
+        <groupId>org.conscrypt</groupId>
+        <artifactId>conscrypt-openjdk-uber</artifactId>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.conscrypt</groupId>
+        <artifactId>conscrypt-openjdk</artifactId>
+        <scope>provided</scope>
+      </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
@@ -166,13 +180,6 @@ limitations under the License.
       <version>${hbase2-metrics.version}</version>
     </dependency>
 
-    <!-- See notes in bigtable-client-core/bigtable-hbase/pom.xml#verify-conscrypt-version -->
-    <dependency>
-      <groupId>org.conscrypt</groupId>
-      <artifactId>conscrypt-openjdk-uber</artifactId>
-      <version>${grpc-conscrypt.version}</version>
-      <scope>runtime</scope>
-    </dependency>
     <!--    needs to be declared as a dependency to be excluded from shading-->
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
@@ -197,8 +204,8 @@ limitations under the License.
             <configuration>
               <excludedScopes>test,provided,system</excludedScopes>
               <!--Should match the exclusions of shade plugin-->
-              <excludedArtifacts>metrics-core|commons-logging|hbase-shaded-client|slf4j-api|slf4j-log4j12|log4j|htrace-core4|audience-annotations|findbugs-annotations|conscrypt-openjdk-uber|jsr305</excludedArtifacts>
-              <excludedGroups>org.bouncycastle|javax.annotation|org.checkerframework</excludedGroups>
+              <excludedArtifacts>metrics-core|commons-logging|hbase-shaded-client|slf4j-api|slf4j-log4j12|log4j|htrace-core4|audience-annotations|findbugs-annotations|jsr305</excludedArtifacts>
+              <excludedGroups>javax.annotation|org.checkerframework</excludedGroups>
               <generateBundle>true</generateBundle>
             </configuration>
           </execution>
@@ -258,9 +265,6 @@ limitations under the License.
                   <exclude>
                     com.github.stephenc.findbugs:findbugs-annotations
                   </exclude>
-                  <!-- See notes in bigtable-client-core/bigtable-hbase/pom.xml#verify-conscrypt-version -->
-                  <exclude>org.conscrypt:conscrypt-openjdk-uber</exclude>
-                  <exclude>org.bouncycastle:*</exclude>
                   <exclude>javax.annotation:*</exclude>
                   <exclude>org.checkerframework:*</exclude>
                   <exclude>com.google.code.findbugs:jsr305</exclude>
