@@ -302,13 +302,9 @@ public abstract class AbstractBigtableTable implements Table {
     LOG.trace("getScanner(Scan)");
     Span span = TRACER.spanBuilder("BigtableTable.scan").startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
+      ResultScanner scanner;
       if (scan.getCaching() == -1) {
-        final ResultScanner scanner = clientWrapper.readRows(hbaseAdapter.adapt(scan));
-        if (hasWhileMatchFilter(scan.getFilter())) {
-          return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner, span);
-        }
-        // TODO: need to end the span when stream ends
-        return scanner;
+        scanner = clientWrapper.readRows(hbaseAdapter.adapt(scan));
       } else {
         final Query request = hbaseAdapter.adapt(scan);
         final RequestContext requestContext =
@@ -322,13 +318,13 @@ public abstract class AbstractBigtableTable implements Table {
         }
 
         Query.QueryPaginator paginator = request.createPaginator(requestedPageSize);
-        final ResultScanner scanner = clientWrapper.readRows(paginator, requestedPageSize);
-        if (hasWhileMatchFilter(scan.getFilter())) {
-          return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner, span);
-        }
-        // TODO: need to end the span when stream ends
-        return scanner;
+        scanner = clientWrapper.readRows(paginator, requestedPageSize);
       }
+      if (hasWhileMatchFilter(scan.getFilter())) {
+        return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner, span);
+      }
+      // TODO: need to end the span when stream ends
+      return scanner;
     } catch (Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
       span.setStatus(Status.UNKNOWN);
