@@ -87,13 +87,15 @@ public class TemplateUtils {
             .withAppProfileId(options.getBigtableAppProfileId())
             .withConfiguration(
                 BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "SequenceFileExportJob")
+            .withConfiguration(
+                "google.cloud.bigtable.retry.idle.timeout",
+                String.valueOf(options.getRetryIdleTimeout()))
             .withScan(
                 new ScanValueProvider(
                     options.getBigtableStartRow(),
                     options.getBigtableStopRow(),
                     options.getBigtableMaxVersions(),
                     options.getBigtableFilter()));
-
     return configBuilder.build();
   }
 }

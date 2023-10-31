@@ -43,6 +43,7 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_SE
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_TEST_IDLE_TIMEOUT_MS;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_BATCH;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_PLAINTEXT_NEGOTIATION;
@@ -727,6 +728,11 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       readRowsSettings
           .retrySettings()
           .setTotalTimeout(operationTimeouts.getOperationTimeout().get());
+    }
+
+    String idleTimeout = configuration.get(BIGTABLE_TEST_IDLE_TIMEOUT_MS);
+    if (idleTimeout != null) {
+      readRowsSettings.setIdleTimeout(Duration.ofMillis(Long.parseLong(idleTimeout)));
     }
   }
 

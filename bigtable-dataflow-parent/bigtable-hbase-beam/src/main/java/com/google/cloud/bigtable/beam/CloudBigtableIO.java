@@ -19,6 +19,7 @@ import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.Scan
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
+import com.google.bigtable.repackaged.com.google.api.gax.rpc.WatchdogTimeoutException;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
@@ -37,6 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.beam.sdk.annotations.Experimental;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
@@ -659,6 +661,9 @@ public class CloudBigtableIO {
     protected long workStart;
     private final AtomicLong rowsRead = new AtomicLong();
     private final ByteKeyRangeTracker rangeTracker;
+    private transient Result lastScannedRow;
+
+    private final AtomicInteger attempt = new AtomicInteger(3);
 
     @VisibleForTesting
     Reader(CloudBigtableIO.AbstractSource source) {
@@ -692,7 +697,34 @@ public class CloudBigtableIO {
     /** Calls {@link ResultScanner#next()}. */
     @Override
     public boolean advance() throws IOException {
+      try {
+        return tryAdvance();
+      } catch (Throwable e) {
+        if (!source
+            .getConfiguration()
+            .toHBaseConfig()
+            .getBoolean("google.cloud.bigtable.retry.idle.timeout", true)) {
+          throw e;
+        }
+        Throwable exception = e;
+        while (exception != null && !(exception instanceof WatchdogTimeoutException)) {
+          exception = exception.getCause();
+        }
+        if (exception != null) {
+          if (attempt.decrementAndGet() >= 0
+              && exception.getMessage() != null
+              && exception.getMessage().contains("idle")) {
+            resetScanner();
+            return tryAdvance();
+          }
+        }
+        throw new IOException(e);
+      }
+    }
+
+    private boolean tryAdvance() throws IOException {
       Result row = scanner.next();
+      lastScannedRow = row;
       if (row != null && rangeTracker.tryReturnRecordAt(true, ByteKey.copyFrom(row.getRow()))) {
         current = row;
         rowsRead.addAndGet(1l);
@@ -701,6 +733,34 @@ public class CloudBigtableIO {
         current = null;
         rangeTracker.markDone();
         return false;
+      }
+    }
+
+    private void resetScanner() throws IOException {
+      CloudBigtableScanConfiguration scanConfiguration = source.getConfiguration();
+      Scan scan;
+      if (lastScannedRow != null) {
+        scan =
+            scanConfiguration
+                .toBuilder()
+                .withKeys(lastScannedRow.getRow(), scanConfiguration.getStopRow())
+                .build()
+                .getScanValueProvider()
+                .get();
+      } else {
+        scan = scanConfiguration.getScanValueProvider().get();
+        READER_LOG.info("last scanned row key is null, haven't read any row yet");
+      }
+
+      scanner =
+          connection
+              .getTable(TableName.valueOf(source.getConfiguration().getTableId()))
+              .getScanner(scan);
+
+      if (lastScannedRow != null) {
+        // skip the row that we already read. ScanConfiguration always expect
+        // start key to be inclusive and end key to be exclusive.
+        scanner.next();
       }
     }
 
