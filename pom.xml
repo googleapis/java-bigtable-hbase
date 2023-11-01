@@ -58,7 +58,8 @@ limitations under the License.
     <!-- core dependency versions -->
     <bigtable.version>2.28.0</bigtable.version>
     <google-cloud-bigtable-emulator.version>0.165.0</google-cloud-bigtable-emulator.version>
-    <bigtable-client-core.version>1.29.2</bigtable-client-core.version>
+    <bigtable-metrics-api.version>1.29.2</bigtable-metrics-api.version>
+
     <!--  keeping at this version to align with hbase-->
     <slf4j.version>1.7.25</slf4j.version>
     <commons-logging.version>1.2</commons-logging.version>
@@ -83,12 +84,8 @@ limitations under the License.
     <beam.version>2.43.0</beam.version>
     <!-- referred from bigtable-beam-import and bigtable-emulator -->
     <guava.version>31.1-jre</guava.version>
-    <gcs-guava.version>29.0-jre</gcs-guava.version>
     <beam-slf4j.version>1.7.30</beam-slf4j.version>
     <opencensus.version>0.31.1</opencensus.version>
-
-    <!-- Benchmarks related dependencies -->
-    <jmh.version>1.36</jmh.version>
 
     <!-- Enable the ability to skip unit tests and only run integration tests,
          while still respecting global skipTests override. -->
@@ -369,6 +366,7 @@ limitations under the License.
               <rules>
                 <bannedDependencies>
                   <excludes>
+                    <!-- Ban all known dependencies with CVEs -->
                     <exclude>commons-codec:commons-codec:[,1.15)</exclude>
                     <exclude>org.apache.commons:commons-compress:[,1.20)</exclude>
                     <!-- ban all log4j 2.x deps with CVEs -->
