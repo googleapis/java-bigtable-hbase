@@ -141,10 +141,9 @@ public class DataClientVeneerApi implements DataClientWrapper {
   }
 
   @Override
-  public ResultScanner readRows(Query.QueryPaginator paginator, int requestedPageSize) {
+  public ResultScanner readRows(Query.QueryPaginator paginator) {
     return new PaginatedRowResultScanner(
         paginator,
-        requestedPageSize,
         (p) -> {
           return delegate
               .readRowsCallable(RESULT_ADAPTER)
@@ -279,11 +278,11 @@ public class DataClientVeneerApi implements DataClientWrapper {
     private long currentByteSize = 0;
 
     PaginatedRowResultScanner(
-        Query.QueryPaginator paginator, int pageSize, paginatorFunction wrapper) {
+        Query.QueryPaginator paginator, paginatorFunction wrapper) {
       this.paginator = paginator;
       this.wrapper = wrapper;
       this.buffer = new ArrayDeque<>();
-      this.refillSegmentWaterMark = (int) Math.max(1, pageSize * WATERMARK_PERCENTAGE);
+      this.refillSegmentWaterMark = (int) Math.max(1, paginator.getPageSize() * WATERMARK_PERCENTAGE);
       this.serverStream = this.wrapper.func(this.paginator);
     }
 

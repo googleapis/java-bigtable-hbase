@@ -110,7 +110,7 @@ class SharedDataClientWrapper implements DataClientWrapper {
   }
 
   @Override
-  public ResultScanner readRows(Query.QueryPaginator paginator, int requestedPageSize) {
-    return delegate.readRows(paginator, requestedPageSize);
+  public ResultScanner readRows(Query.QueryPaginator paginator) {
+    return delegate.readRows(paginator);
   }
 }
