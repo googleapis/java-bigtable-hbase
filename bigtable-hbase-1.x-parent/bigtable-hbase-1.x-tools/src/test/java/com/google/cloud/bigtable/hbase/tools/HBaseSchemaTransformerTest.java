@@ -89,7 +89,7 @@ public class HBaseSchemaTransformerTest {
     // Validate
     Map<String, String> expectedTableMapping = new HashMap<>();
     expectedTableMapping.put("old-table", "new-table");
-    expectedTableMapping.put( "old-table-2", "random-table-2");
+    expectedTableMapping.put("old-table-2", "random-table-2");
     assertEquals(expectedTableMapping, schemaTransformer.tableNameMappings);
   }
 
