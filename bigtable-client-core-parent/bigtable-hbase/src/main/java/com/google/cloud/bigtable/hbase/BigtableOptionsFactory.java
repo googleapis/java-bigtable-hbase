@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Define {@link org.apache.hadoop.conf.Configuration} names for setting {@link
@@ -324,4 +325,8 @@ public class BigtableOptionsFactory {
    */
   public static final String BIGTABLE_ENABLE_BULK_MUTATION_FLOW_CONTROL =
       "google.bigtable.enable.bulk.mutation.flow.control";
+
+  /** Override idle timeout, for testing only. */
+  @VisibleForTesting
+  public static final String BIGTABLE_TEST_IDLE_TIMEOUT_MS = "google.bigtable.idle.timeout.ms";
 }

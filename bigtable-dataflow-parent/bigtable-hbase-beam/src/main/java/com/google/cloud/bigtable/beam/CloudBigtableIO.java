@@ -19,6 +19,7 @@ import static com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.Scan
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
+import com.google.bigtable.repackaged.com.google.api.gax.rpc.WatchdogTimeoutException;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
@@ -32,11 +33,13 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -647,6 +650,8 @@ public class CloudBigtableIO {
   /** Reads rows for a specific {@link Table}, usually filtered by a {@link Scan}. */
   @VisibleForTesting
   static class Reader extends BoundedReader<Result> {
+    static final String RETRY_IDLE_TIMEOUT = "google.cloud.bigtable.retry.idle.timeout";
+
     private static final Logger READER_LOG = LoggerFactory.getLogger(Reader.class);
 
     private CloudBigtableIO.AbstractSource source;
@@ -657,6 +662,9 @@ public class CloudBigtableIO {
     protected long workStart;
     private final AtomicLong rowsRead = new AtomicLong();
     private final ByteKeyRangeTracker rangeTracker;
+    private transient Result lastScannedRow;
+
+    private final AtomicInteger attempt = new AtomicInteger(3);
 
     @VisibleForTesting
     Reader(CloudBigtableIO.AbstractSource source) {
@@ -690,7 +698,37 @@ public class CloudBigtableIO {
     /** Calls {@link ResultScanner#next()}. */
     @Override
     public boolean advance() throws IOException {
+      try {
+        boolean hasMore = tryAdvance();
+        // reset attempt after a success read
+        attempt.set(3);
+        return hasMore;
+      } catch (Throwable e) {
+        // if retry idle timeout is disabled, throw the exception
+        if (!source.getConfiguration().toHBaseConfig().getBoolean(RETRY_IDLE_TIMEOUT, true)) {
+          throw e;
+        }
+        // Exception is not idle timeout, throw it
+        Throwable exception = findCause(e, WatchdogTimeoutException.class);
+        if (exception == null) {
+          throw e;
+        }
+        if (exception.getMessage() == null || !exception.getMessage().contains("idle")) {
+          throw e;
+        }
+        // Run out ot retry attempt, throw the exception
+        if (attempt.decrementAndGet() <= 0) {
+          throw e;
+        }
+        READER_LOG.warn("got idle timeout exception, will try to reset the scanner and retry", e);
+        resetScanner();
+        return tryAdvance();
+      }
+    }
+
+    private boolean tryAdvance() throws IOException {
       Result row = scanner.next();
+      lastScannedRow = row;
       if (row != null && rangeTracker.tryReturnRecordAt(true, ByteKey.copyFrom(row.getRow()))) {
         current = row;
         rowsRead.addAndGet(1l);
@@ -700,6 +738,40 @@ public class CloudBigtableIO {
         rangeTracker.markDone();
         return false;
       }
+    }
+
+    private void resetScanner() throws IOException {
+      CloudBigtableScanConfiguration scanConfiguration = source.getConfiguration();
+      Scan scan;
+      if (lastScannedRow != null) {
+        byte[] rowKey = lastScannedRow.getRow();
+        // ScanConfiguration always gets start key and end key from the RowRange, and it expects
+        // start key to be inclusive and end key to be exclusive.
+        byte[] newStartKey = Arrays.copyOf(rowKey, rowKey.length + 1);
+        scan =
+            scanConfiguration
+                .toBuilder()
+                .withKeys(newStartKey, scanConfiguration.getStopRow())
+                .build()
+                .getScanValueProvider()
+                .get();
+      } else {
+        scan = scanConfiguration.getScanValueProvider().get();
+        READER_LOG.info("last scanned row key is null, haven't read any row yet");
+      }
+
+      scanner =
+          connection
+              .getTable(TableName.valueOf(source.getConfiguration().getTableId()))
+              .getScanner(scan);
+    }
+
+    static Throwable findCause(Throwable e, Class<? extends Throwable> cls) {
+      Throwable throwable = e;
+      while (throwable != null && !cls.isAssignableFrom(e.getClass())) {
+        throwable = throwable.getCause();
+      }
+      return throwable;
     }
 
     @Override
