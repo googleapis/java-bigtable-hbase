@@ -277,12 +277,12 @@ public class DataClientVeneerApi implements DataClientWrapper {
                 (Runtime.getRuntime().totalMemory() * DEFAULT_BYTE_LIMIT_PERCENTAGE));
     private long currentByteSize = 0;
 
-    PaginatedRowResultScanner(
-        Query.QueryPaginator paginator, paginatorFunction wrapper) {
+    PaginatedRowResultScanner(Query.QueryPaginator paginator, paginatorFunction wrapper) {
       this.paginator = paginator;
       this.wrapper = wrapper;
       this.buffer = new ArrayDeque<>();
-      this.refillSegmentWaterMark = (int) Math.max(1, paginator.getPageSize() * WATERMARK_PERCENTAGE);
+      this.refillSegmentWaterMark =
+          (int) Math.max(1, paginator.getPageSize() * WATERMARK_PERCENTAGE);
       this.serverStream = this.wrapper.func(this.paginator);
     }
 
