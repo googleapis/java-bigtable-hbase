@@ -174,11 +174,6 @@ limitations under the License.
       <artifactId>commons-logging</artifactId>
       <version>${commons-logging.version}</version>
     </dependency>
-    <dependency>
-      <groupId>io.dropwizard.metrics</groupId>
-      <artifactId>metrics-core</artifactId>
-      <version>${hbase2-metrics.version}</version>
-    </dependency>
 
     <!--    needs to be declared as a dependency to be excluded from shading-->
     <dependency>
@@ -204,7 +199,7 @@ limitations under the License.
             <configuration>
               <excludedScopes>test,provided,system</excludedScopes>
               <!--Should match the exclusions of shade plugin-->
-              <excludedArtifacts>metrics-core|commons-logging|hbase-shaded-client|slf4j-api|slf4j-log4j12|log4j|htrace-core4|audience-annotations|findbugs-annotations|jsr305</excludedArtifacts>
+              <excludedArtifacts>commons-logging|hbase-shaded-client|slf4j-api|slf4j-log4j12|log4j|htrace-core4|audience-annotations|findbugs-annotations|jsr305</excludedArtifacts>
               <excludedGroups>javax.annotation|org.checkerframework</excludedGroups>
               <generateBundle>true</generateBundle>
             </configuration>
@@ -252,7 +247,6 @@ limitations under the License.
               <artifactSet>
                 <excludes>
                   <!-- exclude user visible deps -->
-                  <exclude>io.dropwizard.metrics:metrics-core</exclude>
                   <exclude>commons-logging:commons-logging</exclude>
                   <!-- exclude hbase-shaded-client & all of its dependencies -->
                   <exclude>org.apache.hbase:hbase-shaded-client</exclude>

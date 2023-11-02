@@ -168,6 +168,13 @@ public class ExportJob {
 
     @SuppressWarnings("unused")
     void setWait(boolean wait);
+
+    @Description("Get if idle timeout is retried.")
+    @Default.Boolean(true)
+    boolean getRetryIdleTimeout();
+
+    @SuppressWarnings("unused")
+    void setRetryIdleTimeout(boolean retryIdleTimeout);
   }
 
   public static void main(String[] args) {
