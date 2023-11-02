@@ -51,106 +51,7 @@ limitations under the License.
   </dependencyManagement>
 
   <dependencies>
-    <!-- List implementation deps first -->
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>bigtable-metrics-api</artifactId>
-      <version>${bigtable-metrics-api.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.api</groupId>
-          <artifactId>api-common</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.protobuf</groupId>
-      <artifactId>protobuf-java</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.cloud</groupId>
-      <artifactId>google-cloud-bigtable</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.api.grpc</groupId>
-      <artifactId>proto-google-cloud-bigtable-v2</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.api.grpc</groupId>
-      <artifactId>proto-google-cloud-bigtable-admin-v2</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.api.grpc</groupId>
-      <artifactId>grpc-google-cloud-bigtable-v2</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.api.grpc</groupId>
-      <artifactId>grpc-google-cloud-bigtable-admin-v2</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.auth</groupId>
-      <artifactId>google-auth-library-credentials</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-stub</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.api</groupId>
-      <artifactId>gax</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.opencensus</groupId>
-      <artifactId>opencensus-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.threeten</groupId>
-      <artifactId>threetenbp</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.code.findbugs</groupId>
-      <artifactId>jsr305</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.api</groupId>
-      <artifactId>api-common</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>${commons-logging.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.api.grpc</groupId>
-      <artifactId>proto-google-common-protos</artifactId>
-    </dependency>
-
-    <!-- For veneer client settings configurations -->
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.api</groupId>
-      <artifactId>gax-grpc</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.auth</groupId>
-      <artifactId>google-auth-library-oauth2-http</artifactId>
-    </dependency>
-
+    <!-- Api/HBase deps first -->
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
@@ -166,7 +67,18 @@ limitations under the License.
       <groupId>ch.qos.reload4j</groupId>
       <artifactId>reload4j</artifactId>
       <version>${reload4j.version}</version>
-      <scope>runtime</scope>
+    </dependency>
+
+    <!-- Implementation deps -->
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-bigtable</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>bigtable-metrics-api</artifactId>
+      <version>${bigtable-metrics-api.version}</version>
     </dependency>
 
     <!-- Test -->
@@ -182,6 +94,11 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>com.google.api.grpc</groupId>
+      <artifactId>grpc-google-cloud-bigtable-admin-v2</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>commons-lang</groupId>
       <artifactId>commons-lang</artifactId>
       <version>${commons-lang.version}</version>
@@ -191,12 +108,6 @@ limitations under the License.
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <version>${mockito.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-core</artifactId>
-      <version>${hamcrest.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -234,6 +145,7 @@ limitations under the License.
           </systemProperties>
         </configuration>
       </plugin>
+
       <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>
         <artifactId>bigtable-build-helper</artifactId>
@@ -251,6 +163,23 @@ limitations under the License.
                 <!-- make sure that we are a strict superset of veneer -->
                 <targetDependency>com.google.cloud:google-cloud-bigtable</targetDependency>
               </targetDependencies>
+            </configuration>
+          </execution>
+          <execution>
+            <id>verify-mirror-deps-hbase</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-mirror-deps</goal>
+            </goals>
+            <configuration>
+              <targetDependencies>
+                <!-- make sure that we are a strict superset of hbase -->
+                <targetDependency>org.apache.hbase:hbase-shaded-client</targetDependency>
+              </targetDependencies>
+              <ignoredDependencies>
+                <!-- forcefully replaced with reload4j -->
+                <dependency>log4j:log4j</dependency>
+              </ignoredDependencies>
             </configuration>
           </execution>
         </executions>
