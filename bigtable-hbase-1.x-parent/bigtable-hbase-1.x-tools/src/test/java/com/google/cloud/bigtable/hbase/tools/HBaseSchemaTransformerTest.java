@@ -22,7 +22,6 @@ import com.google.bigtable.repackaged.com.google.gson.Gson;
 import com.google.bigtable.repackaged.com.google.gson.JsonObject;
 import com.google.cloud.bigtable.hbase.tools.ClusterSchemaDefinition.TableSchemaDefinition;
 import com.google.cloud.bigtable.hbase.tools.HBaseSchemaTranslator.JsonBasedSchemaTransformer;
-import com.google.common.collect.ImmutableMap;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
@@ -88,8 +87,9 @@ public class HBaseSchemaTransformerTest {
     schemaTransformer = JsonBasedSchemaTransformer.newSchemaTransformerFromJsonFile(schemaFilePath);
 
     // Validate
-    Map<String, String> expectedTableMapping =
-        ImmutableMap.of("old-table", "new-table", "old-table-2", "random-table-2");
+    Map<String, String> expectedTableMapping = new HashMap<>();
+    expectedTableMapping.put("old-table", "new-table");
+    expectedTableMapping.put( "old-table-2", "random-table-2");
     assertEquals(expectedTableMapping, schemaTransformer.tableNameMappings);
   }
 
