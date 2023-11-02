@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.beam;
 
 import static org.mockito.Mockito.when;
 
+import com.google.bigtable.repackaged.com.google.api.gax.rpc.WatchdogTimeoutException;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.BigtableGrpc;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsRequest;
 import com.google.bigtable.repackaged.com.google.bigtable.v2.ReadRowsResponse;
@@ -320,6 +321,69 @@ public class CloudBigtableIOReaderTest {
         actual.stream()
             .map(result -> ByteString.copyFrom(result.getRow()))
             .collect(Collectors.toList()));
+  }
+
+  @Test
+  public void testDisableRetryIdleTimeout() throws Exception {
+    byte[] startKey = "A".getBytes();
+    byte[] endKey = "B".getBytes();
+
+    List<ReadRowsResponse> responses = generateResponses(fakeService, "A", "B", true, 10);
+
+    responses.remove(responses.size() - 1);
+
+    ReadRowsRequest request =
+        ReadRowsRequest.newBuilder()
+            .setTableName("projects/project/instances/instance/tables/table")
+            .setRows(
+                RowSet.newBuilder()
+                    .addRowRanges(
+                        RowRange.newBuilder()
+                            .setStartKeyClosed(ByteString.copyFrom(startKey))
+                            .setEndKeyOpen(ByteString.copyFrom(endKey))
+                            .build())
+                    .build())
+            .build();
+
+    CloudBigtableScanConfiguration config =
+        new CloudBigtableScanConfiguration.Builder()
+            .withProjectId("project")
+            .withInstanceId("instsance")
+            .withTableId("table")
+            .withRequest(request)
+            .withConfiguration(
+                BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + port)
+            .withConfiguration(BigtableOptionsFactory.BIGTABLE_TEST_IDLE_TIMEOUT_MS, "15000")
+            .withConfiguration(CloudBigtableIO.Reader.RETRY_IDLE_TIMEOUT, "false")
+            .build();
+
+    CloudBigtableIO.Source source = (CloudBigtableIO.Source) CloudBigtableIO.read(config);
+    CloudBigtableIO.Reader reader = (CloudBigtableIO.Reader) source.createReader(null);
+
+    // Reader.start() will read the first row
+    reader.start();
+
+    boolean sleep = false;
+    try {
+      while (reader.advance()) {
+        if (!sleep) {
+          Thread.sleep(20 * 1000);
+          sleep = true;
+        }
+      }
+      Assert.fail("Should throw idle timeout exception");
+    } catch (Throwable e) {
+      Throwable throwable = e;
+      while (throwable != null && !(throwable instanceof WatchdogTimeoutException)) {
+        throwable = throwable.getCause();
+      }
+
+      if (throwable == null) {
+        Assert.fail("Exception is not idle timeout");
+      }
+
+      Assert.assertTrue(throwable.getMessage().contains("idle"));
+    }
   }
 
   private List<ReadRowsResponse> generateResponses(

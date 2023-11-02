@@ -651,6 +651,8 @@ public class CloudBigtableIO {
   /** Reads rows for a specific {@link Table}, usually filtered by a {@link Scan}. */
   @VisibleForTesting
   static class Reader extends BoundedReader<Result> {
+    static final String RETRY_IDLE_TIMEOUT = "google.cloud.bigtable.retry.idle.timeout";
+
     private static final Logger READER_LOG = LoggerFactory.getLogger(Reader.class);
 
     private CloudBigtableIO.AbstractSource source;
@@ -700,10 +702,8 @@ public class CloudBigtableIO {
       try {
         return tryAdvance();
       } catch (Throwable e) {
-        if (!source
-            .getConfiguration()
-            .toHBaseConfig()
-            .getBoolean("google.cloud.bigtable.retry.idle.timeout", true)) {
+        // if retry idle timeout is disabled, throw the exception
+        if (!source.getConfiguration().toHBaseConfig().getBoolean(RETRY_IDLE_TIMEOUT, true)) {
           throw e;
         }
         Throwable exception = e;
@@ -711,6 +711,7 @@ public class CloudBigtableIO {
           exception = exception.getCause();
         }
         if (exception != null) {
+          READER_LOG.warn("got idle timeout exception, try resetting the scanner", e);
           if (attempt.decrementAndGet() >= 0
               && exception.getMessage() != null
               && exception.getMessage().contains("idle")) {
@@ -718,7 +719,8 @@ public class CloudBigtableIO {
             return tryAdvance();
           }
         }
-        throw new IOException(e);
+        // Exception is not idle timeout, throw it
+        throw e;
       }
     }
 
@@ -758,8 +760,9 @@ public class CloudBigtableIO {
               .getScanner(scan);
 
       if (lastScannedRow != null) {
-        // skip the row that we already read. ScanConfiguration always expect
-        // start key to be inclusive and end key to be exclusive.
+        // skip the row that we already read. ScanConfiguration always gets start key
+        // and end key from the RowRange, and it expects start key to be inclusive and
+        // end key to be exclusive.
         scanner.next();
       }
     }

@@ -173,6 +173,7 @@ public class ExportJob {
     @Default.Boolean(true)
     boolean getRetryIdleTimeout();
 
+    @SuppressWarnings("unused")
     void setRetryIdleTimeout(boolean retryIdleTimeout);
   }
 

@@ -88,7 +88,7 @@ public class TemplateUtils {
             .withConfiguration(
                 BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "SequenceFileExportJob")
             .withConfiguration(
-                "google.cloud.bigtable.retry.idle.timeout",
+                CloudBigtableIO.Reader.RETRY_IDLE_TIMEOUT,
                 String.valueOf(options.getRetryIdleTimeout()))
             .withScan(
                 new ScanValueProvider(
