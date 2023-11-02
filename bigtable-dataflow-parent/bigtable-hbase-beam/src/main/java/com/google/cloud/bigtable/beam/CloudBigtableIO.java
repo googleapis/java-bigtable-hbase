@@ -770,7 +770,7 @@ public class CloudBigtableIO {
 
     static Throwable findCause(Throwable e, Class<? extends Throwable> cls) {
       Throwable throwable = e;
-      while (throwable != null && throwable.getClass() != cls) {
+      while (throwable != null && !cls.isAssignableFrom(e.getClass())) {
         throwable = throwable.getCause();
       }
       return throwable;
