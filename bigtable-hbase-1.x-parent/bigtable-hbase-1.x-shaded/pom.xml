@@ -191,11 +191,7 @@ limitations under the License.
       <artifactId>commons-logging</artifactId>
       <version>${commons-logging.version}</version>
     </dependency>
-    <dependency>
-      <groupId>io.dropwizard.metrics</groupId>
-      <artifactId>metrics-core</artifactId>
-      <version>${hbase1-metrics.version}</version>
-    </dependency>
+
     <!--needs to be declared as a dependency to be excluded from shading-->
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
@@ -220,7 +216,7 @@ limitations under the License.
             <configuration>
               <excludedScopes>test,provided,system</excludedScopes>
               <!-- Should mirror the shade plugin exclusions-->
-              <excludedArtifacts>metrics-core|commons-logging|hbase-shaded-client|slf4j-api|slf4j-log4j12|log4j|htrace-core|findbugs-annotations|htrace-core4|jsr305</excludedArtifacts>
+              <excludedArtifacts>commons-logging|hbase-shaded-client|slf4j-api|slf4j-log4j12|log4j|htrace-core|findbugs-annotations|htrace-core4|jsr305</excludedArtifacts>
               <excludedGroups>javax.annotation|org.checkerframework</excludedGroups>
               <generateBundle>true</generateBundle>
             </configuration>
@@ -268,7 +264,6 @@ limitations under the License.
               <artifactSet>
                 <excludes>
                   <!-- exclude user visible deps -->
-                  <exclude>io.dropwizard.metrics:metrics-core</exclude>
                   <exclude>commons-logging:commons-logging</exclude>
                   <exclude>ch.qos.reload4j:reload4j</exclude>
                   <!-- exclude hbase-shaded-client & all of its dependencies -->
