@@ -329,6 +329,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
         this.lastSeenRowKey = RESULT_ADAPTER.getKey(result);
         this.currentByteSize += Result.getTotalSizeOfCells(result);
         if (this.currentByteSize >= maxSegmentByteSize) {
+          this.serverStream.cancel();
           break;
         }
       }
