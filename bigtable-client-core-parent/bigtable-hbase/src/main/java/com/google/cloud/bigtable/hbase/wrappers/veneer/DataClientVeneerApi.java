@@ -249,7 +249,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
   }
 
   /** wraps {@link ServerStream} onto HBase {@link ResultScanner}. */
-  private static class PaginatedRowResultScanner extends AbstractClientScanner {
+  static class PaginatedRowResultScanner extends AbstractClientScanner {
     // Percentage of max number of rows allowed in the buffer
     private static final double WATERMARK_PERCENTAGE = .1;
     private static final int MIN_BYTE_BUFFER_SIZE = 100 * 1024 * 1024;
@@ -270,7 +270,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
     private final paginatorFunction wrapper;
     private final int refillSegmentWaterMark;
 
-    private static final long maxSegmentByteSize =
+    static long maxSegmentByteSize =
         (long)
             Math.max(
                 MIN_BYTE_BUFFER_SIZE,
