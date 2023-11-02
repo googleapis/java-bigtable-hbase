@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.Query;
@@ -304,7 +303,8 @@ public abstract class AbstractBigtableTable implements Table {
       if (scan.getCaching() == -1) {
         scanner = clientWrapper.readRows(hbaseAdapter.adapt(scan));
       } else {
-        Query.QueryPaginator paginator = hbaseAdapter.adapt(scan).createPaginator(scan.getCaching());
+        Query.QueryPaginator paginator =
+            hbaseAdapter.adapt(scan).createPaginator(scan.getCaching());
         scanner = clientWrapper.readRows(paginator);
       }
       if (hasWhileMatchFilter(scan.getFilter())) {
