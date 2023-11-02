@@ -373,15 +373,8 @@ public class CloudBigtableIOReaderTest {
       }
       Assert.fail("Should throw idle timeout exception");
     } catch (Throwable e) {
-      Throwable throwable = e;
-      while (throwable != null && !(throwable instanceof WatchdogTimeoutException)) {
-        throwable = throwable.getCause();
-      }
-
-      if (throwable == null) {
-        Assert.fail("Exception is not idle timeout");
-      }
-
+      Throwable throwable = CloudBigtableIO.Reader.findCause(e, WatchdogTimeoutException.class);
+      Assert.assertNotNull(throwable);
       Assert.assertTrue(throwable.getMessage().contains("idle"));
     }
   }

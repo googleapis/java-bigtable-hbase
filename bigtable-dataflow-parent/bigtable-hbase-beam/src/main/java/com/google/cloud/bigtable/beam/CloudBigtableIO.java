@@ -33,6 +33,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -700,27 +701,30 @@ public class CloudBigtableIO {
     @Override
     public boolean advance() throws IOException {
       try {
-        return tryAdvance();
+        boolean hasMore = tryAdvance();
+        // reset attempt after a success read
+        attempt.set(3);
+        return hasMore;
       } catch (Throwable e) {
         // if retry idle timeout is disabled, throw the exception
         if (!source.getConfiguration().toHBaseConfig().getBoolean(RETRY_IDLE_TIMEOUT, true)) {
           throw e;
         }
-        Throwable exception = e;
-        while (exception != null && !(exception instanceof WatchdogTimeoutException)) {
-          exception = exception.getCause();
-        }
-        if (exception != null) {
-          READER_LOG.warn("got idle timeout exception, try resetting the scanner", e);
-          if (attempt.decrementAndGet() >= 0
-              && exception.getMessage() != null
-              && exception.getMessage().contains("idle")) {
-            resetScanner();
-            return tryAdvance();
-          }
-        }
         // Exception is not idle timeout, throw it
-        throw e;
+        Throwable exception = findCause(e, WatchdogTimeoutException.class);
+        if (exception == null) {
+          throw e;
+        }
+        if (exception.getMessage() == null || !exception.getMessage().contains("idle")) {
+          throw e;
+        }
+        // Run out ot retry attempt, throw the exception
+        if (attempt.decrementAndGet() <= 0) {
+          throw e;
+        }
+        READER_LOG.warn("got idle timeout exception, will try to reset the scanner and retry", e);
+        resetScanner();
+        return tryAdvance();
       }
     }
 
@@ -742,10 +746,14 @@ public class CloudBigtableIO {
       CloudBigtableScanConfiguration scanConfiguration = source.getConfiguration();
       Scan scan;
       if (lastScannedRow != null) {
+        byte[] rowKey = lastScannedRow.getRow();
+        // ScanConfiguration always gets start key and end key from the RowRange, and it expects
+        // start key to be inclusive and end key to be exclusive.
+        byte[] newStartKey = Arrays.copyOf(rowKey, rowKey.length + 1);
         scan =
             scanConfiguration
                 .toBuilder()
-                .withKeys(lastScannedRow.getRow(), scanConfiguration.getStopRow())
+                .withKeys(newStartKey, scanConfiguration.getStopRow())
                 .build()
                 .getScanValueProvider()
                 .get();
@@ -758,13 +766,14 @@ public class CloudBigtableIO {
           connection
               .getTable(TableName.valueOf(source.getConfiguration().getTableId()))
               .getScanner(scan);
+    }
 
-      if (lastScannedRow != null) {
-        // skip the row that we already read. ScanConfiguration always gets start key
-        // and end key from the RowRange, and it expects start key to be inclusive and
-        // end key to be exclusive.
-        scanner.next();
+    static Throwable findCause(Throwable e, Class<? extends Throwable> cls) {
+      Throwable throwable = e;
+      while (throwable != null && throwable.getClass() != cls) {
+        throwable = throwable.getCause();
       }
+      return throwable;
     }
 
     @Override
