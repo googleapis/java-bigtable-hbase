@@ -46,6 +46,7 @@ import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
 import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.BulkReadWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings.ClientOperationTimeouts;
+import com.google.cloud.bigtable.hbase.wrappers.veneer.DataClientVeneerApi.PaginatedRowResultScanner;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
@@ -250,8 +251,66 @@ public class TestDataClientVeneerApi {
   }
 
   @Test
-  public void testReadRowsCancel() throws IOException {
+  public void testReadPaginatedRows() throws IOException {
+    Query query = Query.create(TABLE_ID).rowKey(ROW_KEY);
+    when(mockDataClient.readRowsCallable(Mockito.<RowResultAdapter>any()))
+        .thenReturn(mockStreamingCallable)
+        .thenReturn(mockStreamingCallable);
+    when(serverStream.iterator())
+        .thenReturn(
+            ImmutableList.of(Result.EMPTY_RESULT, EXPECTED_RESULT, EXPECTED_RESULT).iterator())
+        .thenReturn(ImmutableList.<Result>of().iterator());
+    when(mockStreamingCallable.call(Mockito.any(Query.class), Mockito.any(GrpcCallContext.class)))
+        .thenReturn(serverStream)
+        .thenReturn(serverStream);
 
+    ResultScanner resultScanner = dataClientWrapper.readRows(query.createPaginator(100));
+    assertResult(Result.EMPTY_RESULT, resultScanner.next());
+    assertResult(EXPECTED_RESULT, resultScanner.next());
+
+    resultScanner.close();
+
+    ResultScanner noRowsResultScanner = dataClientWrapper.readRows(query.createPaginator(100));
+    assertNull(noRowsResultScanner.next());
+
+    verify(mockDataClient, times(2)).readRowsCallable(Mockito.<RowResultAdapter>any());
+    verify(serverStream, times(2)).iterator();
+    verify(mockStreamingCallable, times(2))
+        .call(Mockito.any(Query.class), Mockito.any(GrpcCallContext.class));
+  }
+
+  @Test
+  public void testReadRowsLowMemory() throws IOException {
+    Query query = Query.create(TABLE_ID).rowKey(ROW_KEY);
+    when(mockDataClient.readRowsCallable(Mockito.<RowResultAdapter>any()))
+        .thenReturn(mockStreamingCallable)
+        .thenReturn(mockStreamingCallable);
+    when(serverStream.iterator())
+        .thenReturn(
+            ImmutableList.of(Result.EMPTY_RESULT, EXPECTED_RESULT).iterator())
+        .thenReturn(
+            ImmutableList.of(Result.EMPTY_RESULT, EXPECTED_RESULT).iterator());
+    when(mockStreamingCallable.call(Mockito.any(Query.class), Mockito.any(GrpcCallContext.class)))
+        .thenReturn(serverStream)
+        .thenReturn(serverStream);
+    PaginatedRowResultScanner.maxSegmentByteSize = 3;
+
+    ResultScanner resultScanner = dataClientWrapper.readRows(query.createPaginator(100));
+    assertResult(Result.EMPTY_RESULT, resultScanner.next());
+    assertResult(EXPECTED_RESULT, resultScanner.next());
+
+    resultScanner = dataClientWrapper.readRows(query.createPaginator(100));
+    assertResult(Result.EMPTY_RESULT, resultScanner.next());
+    assertResult(EXPECTED_RESULT, resultScanner.next());
+
+    verify(mockDataClient, times(2)).readRowsCallable(Mockito.<RowResultAdapter>any());
+    verify(serverStream, times(2)).iterator();
+    verify(mockStreamingCallable, times(2))
+        .call(Mockito.any(Query.class), Mockito.any(GrpcCallContext.class));
+  }
+
+  @Test
+  public void testReadRowsCancel() throws IOException {
     Query query = Query.create(TABLE_ID).rowKey(ROW_KEY);
     when(mockDataClient.readRowsCallable(Mockito.<RowResultAdapter>any()))
         .thenReturn(mockStreamingCallable)
