@@ -304,13 +304,8 @@ public abstract class AbstractBigtableTable implements Table {
       if (scan.getCaching() == -1) {
         scanner = clientWrapper.readRows(hbaseAdapter.adapt(scan));
       } else {
-        final Query request = hbaseAdapter.adapt(scan);
-        final RequestContext requestContext =
-            RequestContext.create("ProjectId", "InstanceId", "AppProfile");
-        int requestedPageSize = scan.getCaching();
-
-        Query.QueryPaginator paginator = request.createPaginator(requestedPageSize);
-        scanner = clientWrapper.readRows(paginator, requestedPageSize);
+        Query.QueryPaginator paginator = hbaseAdapter.adapt(scan).createPaginator(scan.getCaching());
+        scanner = clientWrapper.readRows(paginator);
       }
       if (hasWhileMatchFilter(scan.getFilter())) {
         return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner, span);
