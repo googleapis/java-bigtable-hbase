@@ -178,7 +178,6 @@ class SequenceFileSink<K, V> extends FileBasedSink<KV<K, V>, Void, KV<K, V>> {
     @Override
     public void write(KV<K, V> value) throws Exception {
       counter.incrementAndGet();
-      Thread.sleep(5 * 60 * 1000 + 1000);
       sequenceFile.append(value.getKey(), value.getValue());
     }
   }
