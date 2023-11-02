@@ -18,7 +18,7 @@ limitations under the License.
   <parent>
     <artifactId>bigtable-hbase-2.x-parent</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>2.11.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -48,6 +48,20 @@ limitations under the License.
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+
+      <!-- Conscrypt can't be shaded, and since we are trying to make this connector a single jar drop in, mark it as provided.
+      End users can always add it themselves
+      -->
+      <dependency>
+        <groupId>org.conscrypt</groupId>
+        <artifactId>conscrypt-openjdk-uber</artifactId>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.conscrypt</groupId>
+        <artifactId>conscrypt-openjdk</artifactId>
+        <scope>provided</scope>
+      </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
@@ -68,7 +82,7 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-2.x</artifactId>
-      <version>2.11.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <exclusions>
         <!-- api-common recently declared dependency on autovalue during migration to gradle. We don't
             have a use of it so we're excluding it from the shaded jar. -->
@@ -81,7 +95,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-metrics-api</artifactId>
-      <version>${bigtable-client-core.version}</version>
+      <version>${bigtable-metrics-api.version}</version>
     </dependency>
     <!-- Since opencensus-api is a transitive dep, we have to shade its impl as well.
     Otherwise the -api will be permanently severed from the impl and exporters -->
@@ -166,13 +180,6 @@ limitations under the License.
       <version>${hbase2-metrics.version}</version>
     </dependency>
 
-    <!-- See notes in bigtable-client-core/bigtable-hbase/pom.xml#verify-conscrypt-version -->
-    <dependency>
-      <groupId>org.conscrypt</groupId>
-      <artifactId>conscrypt-openjdk-uber</artifactId>
-      <version>${grpc-conscrypt.version}</version>
-      <scope>runtime</scope>
-    </dependency>
     <!--    needs to be declared as a dependency to be excluded from shading-->
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
@@ -197,8 +204,8 @@ limitations under the License.
             <configuration>
               <excludedScopes>test,provided,system</excludedScopes>
               <!--Should match the exclusions of shade plugin-->
-              <excludedArtifacts>metrics-core|commons-logging|hbase-shaded-client|slf4j-api|slf4j-log4j12|log4j|htrace-core4|audience-annotations|findbugs-annotations|conscrypt-openjdk-uber|jsr305</excludedArtifacts>
-              <excludedGroups>org.bouncycastle|javax.annotation|org.checkerframework</excludedGroups>
+              <excludedArtifacts>metrics-core|commons-logging|hbase-shaded-client|slf4j-api|slf4j-log4j12|log4j|htrace-core4|audience-annotations|findbugs-annotations|jsr305</excludedArtifacts>
+              <excludedGroups>javax.annotation|org.checkerframework</excludedGroups>
               <generateBundle>true</generateBundle>
             </configuration>
           </execution>
@@ -258,9 +265,6 @@ limitations under the License.
                   <exclude>
                     com.github.stephenc.findbugs:findbugs-annotations
                   </exclude>
-                  <!-- See notes in bigtable-client-core/bigtable-hbase/pom.xml#verify-conscrypt-version -->
-                  <exclude>org.conscrypt:conscrypt-openjdk-uber</exclude>
-                  <exclude>org.bouncycastle:*</exclude>
                   <exclude>javax.annotation:*</exclude>
                   <exclude>org.checkerframework:*</exclude>
                   <exclude>com.google.code.findbugs:jsr305</exclude>
@@ -415,7 +419,7 @@ limitations under the License.
       <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>
         <artifactId>bigtable-build-helper</artifactId>
-        <version>2.11.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+        <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
 
         <executions>
           <execution>
@@ -431,8 +435,10 @@ limitations under the License.
                 <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableAdmin</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableConnection</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/BigtableAsyncConnection</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/BigtableConnectionRegistry</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/BigtableAsyncRegistry</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/CommonConnection</classEntry>
+                <classEntry>org/apache/hadoop/hbase/client/BigtableConnectionRegistry</classEntry>
               </allowedJarClassEntries>
             </configuration>
           </execution>
@@ -456,25 +462,6 @@ limitations under the License.
             </configuration>
           </execution>
         </executions>
-      </plugin>
-
-      <!-- skip for shaded jar-->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <ignoredDependencies>
-            <dependency>*</dependency>
-          </ignoredDependencies>
-        </configuration>
-      </plugin>
-      <!-- skip for shaded jar-->
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>clirr-maven-plugin</artifactId>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
       </plugin>
     </plugins>
   </build>

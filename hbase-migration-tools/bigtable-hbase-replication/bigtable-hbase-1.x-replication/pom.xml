@@ -20,13 +20,13 @@ limitations under the License.
   <parent>
     <artifactId>bigtable-hbase-replication</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>1.10.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+    <version>1.11.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.google.cloud.bigtable</groupId>
   <artifactId>bigtable-hbase-1.x-replication</artifactId>
-  <version>1.10.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+  <version>1.11.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
 
   <packaging>jar</packaging>
   <name>bigtable-hbase-1.x-replication</name>
@@ -81,13 +81,6 @@ limitations under the License.
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
-      </plugin>
-      <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <version>3.3.0</version>
         <executions>
@@ -120,14 +113,6 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
-      <!-- TODO: temporary workaround until we resolve clirr errors-->
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>clirr-maven-plugin</artifactId>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
   <dependencies>
@@ -135,7 +120,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-replication-core</artifactId>
-      <version>1.10.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+      <version>1.11.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
       <exclusions>
         <!-- HBase dependencies come from hbase-server below. Skip them here.-->
         <exclusion>
@@ -189,7 +174,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-internal-test-helper</artifactId>
-      <version>2.11.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <scope>test</scope>
     </dependency>
   </dependencies>

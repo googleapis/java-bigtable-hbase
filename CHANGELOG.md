@@ -1,5 +1,31 @@
 # Changelog
 
+## [2.12.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.11.3...v2.12.0) (2023-10-18)
+
+
+### Features
+
+* Use concrete classes for hbase.client.registry.impl ([#4043](https://github.com/googleapis/java-bigtable-hbase/issues/4043)) ([#4188](https://github.com/googleapis/java-bigtable-hbase/issues/4188)) ([cc22f2f](https://github.com/googleapis/java-bigtable-hbase/commit/cc22f2f577d32c31417c2cc525eac9649281589f))
+
+## [2.11.3](https://github.com/googleapis/java-bigtable-hbase/compare/v2.11.2...v2.11.3) (2023-10-13)
+
+
+### Bug Fixes
+
+* Close batcher for writeToMultipleTables ([#4182](https://github.com/googleapis/java-bigtable-hbase/issues/4182)) ([b88107a](https://github.com/googleapis/java-bigtable-hbase/commit/b88107a23a29cdb43833039ed471e72c14afdbc5))
+
+
+### Dependencies
+
+* Update google-cloud-bigtable 2.28.0 ([#4185](https://github.com/googleapis/java-bigtable-hbase/issues/4185)) ([09f3588](https://github.com/googleapis/java-bigtable-hbase/commit/09f3588f2555e619752d7a673420570d031f17a3))
+
+## [2.11.2](https://github.com/googleapis/java-bigtable-hbase/compare/v2.11.1...v2.11.2) (2023-09-29)
+
+
+### Dependencies
+
+* Update bigtable to 2.27.3 ([#4167](https://github.com/googleapis/java-bigtable-hbase/issues/4167)) ([1562992](https://github.com/googleapis/java-bigtable-hbase/commit/156299252d09804aac8f62f4f3df24a301ee9cc6))
+
 ## [2.11.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.11.0...v2.11.1) (2023-09-15)
 
 

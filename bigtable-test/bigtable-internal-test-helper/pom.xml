@@ -5,7 +5,7 @@
     <parent>
         <artifactId>bigtable-test</artifactId>
         <groupId>com.google.cloud.bigtable</groupId>
-        <version>2.11.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+        <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -93,13 +93,6 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-gpg-plugin</artifactId>
-                    <configuration>
-                        <skip>true</skip>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>clirr-maven-plugin</artifactId>
                     <configuration>
                         <skip>true</skip>
                     </configuration>

@@ -5,25 +5,12 @@
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>hbase-migration-tools</artifactId>
-    <version>2.11.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <artifactId>mirroring-client</artifactId>
   <packaging>pom</packaging>
-  <version>0.6.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
-
+  <version>0.7.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
 
   <properties>
     <shading-prefix>com.google.bigtable.hbase.mirroring.shaded</shading-prefix>
