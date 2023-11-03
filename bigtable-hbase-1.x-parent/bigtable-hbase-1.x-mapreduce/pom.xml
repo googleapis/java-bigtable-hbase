@@ -146,6 +146,12 @@ limitations under the License.
               <skip>true</skip>
             </configuration>
           </execution>
+          <execution>
+            <id>enforce-version-consistency-slf4j</id>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
           <!-- We are not introducing any new deps here. We expect to be
           running in hadoop's provided classpath -->
           <execution>
@@ -229,8 +235,6 @@ limitations under the License.
                 <targetDependency>org.apache.hbase:hbase-server:${hbase1.version}</targetDependency>
               </targetDependencies>
               <ignoredDependencies>
-                <!-- TODO: figure out why this diverges from hbase-client -->
-                <ignoredDependency>org.slf4j:slf4j-api</ignoredDependency>
                 <!-- For some reason, hbase-server pulls in test deps -->
                 <ignoredDependency>junit:junit</ignoredDependency>
                 <ignoredDependency>org.hamcrest:hamcrest-core</ignoredDependency>
