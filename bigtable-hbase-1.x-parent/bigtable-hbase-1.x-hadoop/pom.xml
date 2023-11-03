@@ -191,10 +191,10 @@ limitations under the License.
             </goals>
           </execution>
           <execution>
-            <id>verify-mirror-deps</id>
+            <id>verify-mirror-deps-hbase</id>
             <phase>verify</phase>
             <goals>
-              <goal>verify-mirror-deps-hbase</goal>
+              <goal>verify-mirror-deps</goal>
             </goals>
             <configuration>
               <targetDependencies>
