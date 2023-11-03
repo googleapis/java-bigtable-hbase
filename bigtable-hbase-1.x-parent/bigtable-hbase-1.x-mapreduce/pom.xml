@@ -110,13 +110,8 @@ limitations under the License.
       <version>${hbase1.version}</version>
       <scope>test</scope>
       <exclusions>
-        <!-- exclusion to avoid version conflict with existing artifact  -->
         <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-        <!-- exclusion to avoid version conflict with existing artifact  -->
-        <exclusion>
+          <!-- Exclude conflict with hbase-server -->
           <groupId>org.slf4j</groupId>
           <artifactId>slf4j-log4j12</artifactId>
         </exclusion>
@@ -131,37 +126,46 @@ limitations under the License.
   </dependencies>
 
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <!-- skip UpperBound enforcement for hadoop jars -->
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>enforce</id>
+              <goals>
+                <goal>enforce</goal>
+              </goals>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+            <execution>
+              <id>enforce-version-consistency-slf4j</id>
+              <goals>
+                <goal>enforce</goal>
+              </goals>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+            <!-- We are not introducing any new deps here. We expect to be
+            running in hadoop's provided classpath -->
+            <execution>
+              <id>enforce-banned-deps</id>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
+
     <plugins>
-      <plugin>
-        <!-- skip UpperBound enforcement for hadoop jars -->
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>enforce</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </execution>
-          <execution>
-            <id>enforce-version-consistency-slf4j</id>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </execution>
-          <!-- We are not introducing any new deps here. We expect to be
-          running in hadoop's provided classpath -->
-          <execution>
-            <id>enforce-banned-deps</id>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
@@ -225,19 +229,20 @@ limitations under the License.
         <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
         <executions>
           <execution>
-            <id>verify-mirror-deps</id>
+            <id>verify-mirror-deps-hbase</id>
             <phase>verify</phase>
             <goals>
               <goal>verify-mirror-deps</goal>
             </goals>
             <configuration>
               <targetDependencies>
-                <targetDependency>org.apache.hbase:hbase-server:${hbase1.version}</targetDependency>
+                <targetDependency>org.apache.hbase:hbase-server</targetDependency>
               </targetDependencies>
               <ignoredDependencies>
-                <!-- For some reason, hbase-server pulls in test deps -->
-                <ignoredDependency>junit:junit</ignoredDependency>
-                <ignoredDependency>org.hamcrest:hamcrest-core</ignoredDependency>
+
+                <!-- hbase-common pulls in test deps via hbase-annotations, exclude them from mirror check -->
+                <dependency>junit:junit</dependency>
+                <dependency>org.hamcrest:hamcrest-core</dependency>
               </ignoredDependencies>
             </configuration>
           </execution>
