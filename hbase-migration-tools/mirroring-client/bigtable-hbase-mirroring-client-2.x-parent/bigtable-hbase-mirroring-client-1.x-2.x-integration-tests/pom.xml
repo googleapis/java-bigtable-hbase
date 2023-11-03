@@ -334,14 +334,6 @@ limitations under the License.
       <version>1.7.30</version>
       <scope>test</scope>
     </dependency>
-
-    <!-- Pinned to prevent Enforcer errors -->
-    <dependency>
-      <groupId>io.dropwizard.metrics</groupId>
-      <artifactId>metrics-core</artifactId>
-      <version>3.2.6</version>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
   <build>
