@@ -62,20 +62,35 @@ limitations under the License.
         <artifactId>conscrypt-openjdk</artifactId>
         <scope>provided</scope>
       </dependency>
+
+      <!-- Annotation jars that should not be relocated, but are also not required during runtime -->
       <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
-        <version>${beam-slf4j.version}</version>
+        <groupId>javax.annotation</groupId>
+        <artifactId>javax.annotation-api</artifactId>
+        <scope>provided</scope>
       </dependency>
       <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-log4j12</artifactId>
-        <version>${beam-slf4j.version}</version>
+        <groupId>org.checkerframework</groupId>
+        <artifactId>checker-qual</artifactId>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>jsr305</artifactId>
+        <scope>provided</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
 
   <dependencies>
+    <!-- HBase public deps -->
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-shaded-client</artifactId>
+      <version>${hbase2.version}</version>
+    </dependency>
+
+
     <!-- Internal dependencies that will be shaded along with their transitive dependencies.
      When adding new internal dependencies, make sure to exclude them from the reactor in direct dependents.
      See the *-hadoop/pom.xml and bigtable-hbase-beam/pom.xml for more details-->
@@ -83,20 +98,8 @@ limitations under the License.
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-2.x</artifactId>
       <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
-      <exclusions>
-        <!-- api-common recently declared dependency on autovalue during migration to gradle. We don't
-            have a use of it so we're excluding it from the shaded jar. -->
-        <exclusion>
-          <groupId>com.google.auto.value</groupId>
-          <artifactId>auto-value</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
-    <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-metrics-api</artifactId>
-      <version>${bigtable-metrics-api.version}</version>
-    </dependency>
+
     <!-- Since opencensus-api is a transitive dep, we have to shade its impl as well.
     Otherwise the -api will be permanently severed from the impl and exporters -->
     <dependency>
@@ -110,26 +113,10 @@ limitations under the License.
     <dependency>
       <groupId>io.opencensus</groupId>
       <artifactId>opencensus-exporter-stats-stackdriver</artifactId>
-      <exclusions>
-        <!-- api-common recently declared dependency on autovalue during migration to gradle. We don't
-            have a use of it so we're excluding it from the shaded jar. -->
-        <exclusion>
-          <groupId>com.google.auto.value</groupId>
-          <artifactId>auto-value</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.opencensus</groupId>
       <artifactId>opencensus-exporter-trace-stackdriver</artifactId>
-      <exclusions>
-        <!-- api-common recently declared dependency on autovalue during migration to gradle. We don't
-            have a use of it so we're excluding it from the shaded jar. -->
-        <exclusion>
-          <groupId>com.google.auto.value</groupId>
-          <artifactId>auto-value</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.opencensus</groupId>
@@ -161,26 +148,6 @@ limitations under the License.
       <groupId>io.grpc</groupId>
       <artifactId>grpc-census</artifactId>
     </dependency>
-
-    <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-client</artifactId>
-      <version>${hbase2.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>${commons-logging.version}</version>
-    </dependency>
-
-    <!--    needs to be declared as a dependency to be excluded from shading-->
-    <dependency>
-      <groupId>com.google.code.findbugs</groupId>
-      <artifactId>jsr305</artifactId>
-      <version>${jsr305.version}</version>
-    </dependency>
   </dependencies>
 
   <build>
@@ -198,9 +165,8 @@ limitations under the License.
             </goals>
             <configuration>
               <excludedScopes>test,provided,system</excludedScopes>
-              <!--Should match the exclusions of shade plugin-->
-              <excludedArtifacts>commons-logging|hbase-shaded-client|slf4j-api|slf4j-log4j12|log4j|htrace-core4|audience-annotations|findbugs-annotations|jsr305</excludedArtifacts>
-              <excludedGroups>javax.annotation|org.checkerframework</excludedGroups>
+              <!-- Should mirror the shade plugin exclusions-->
+              <excludedArtifacts>hbase-shaded-client|commons-logging|slf4j-api|htrace-core4|slf4j-log4j12</excludedArtifacts>
               <generateBundle>true</generateBundle>
             </configuration>
           </execution>
@@ -221,14 +187,10 @@ limitations under the License.
               <!-- Need to manually promote to dependencies to keep the structure of hbase-shade-client.
                Also, this is needed to workaround maven reactor not using dependency-reduced-pom.xml
                files. See note in bigtable-2.x-hadoop .-->
-              <promoteTransitiveDependencies>
-                false
-              </promoteTransitiveDependencies>
+              <promoteTransitiveDependencies>false</promoteTransitiveDependencies>
               <transformers>
-                <transformer
-                    implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
-                <transformer
-                    implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer"/>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer"/>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
               </transformers>
               <filters>
@@ -246,22 +208,12 @@ limitations under the License.
               </filters>
               <artifactSet>
                 <excludes>
-                  <!-- exclude user visible deps -->
-                  <exclude>commons-logging:commons-logging</exclude>
                   <!-- exclude hbase-shaded-client & all of its dependencies -->
                   <exclude>org.apache.hbase:hbase-shaded-client</exclude>
                   <exclude>org.slf4j:slf4j-api</exclude>
-                  <exclude>org.slf4j:slf4j-log4j12</exclude>
-                  <exclude>log4j:log4j</exclude>
-                  <exclude>ch.qos.reload4j:reload4j</exclude>
                   <exclude>org.apache.htrace:htrace-core4</exclude>
+                  <exclude>commons-logging:commons-logging</exclude>
                   <exclude>org.apache.yetus:audience-annotations</exclude>
-                  <exclude>
-                    com.github.stephenc.findbugs:findbugs-annotations
-                  </exclude>
-                  <exclude>javax.annotation:*</exclude>
-                  <exclude>org.checkerframework:*</exclude>
-                  <exclude>com.google.code.findbugs:jsr305</exclude>
                 </excludes>
               </artifactSet>
               <relocations>
@@ -285,32 +237,23 @@ limitations under the License.
 
                 <relocation>
                   <pattern>com.fasterxml</pattern>
-                  <shadedPattern>
-                    com.google.bigtable.repackaged.com.faster.xml
-                  </shadedPattern>
+                  <shadedPattern>com.google.bigtable.repackaged.com.faster.xml</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>com.twitter</pattern>
-                  <shadedPattern>
-                    com.google.bigtable.repackaged.com.twitter
-                  </shadedPattern>
+                  <shadedPattern>com.google.bigtable.repackaged.com.twitter</shadedPattern>
                 </relocation>
-
                 <!-- Take special care of grpc-netty-shaded, it uses the package
                      io.grpc.netty.shaded.io.grpc.netty, which will cause the
                      ServicesResourceTransformer to replace both occurrences of io.grpc
                  -->
                 <relocation>
                   <pattern>io.grpc.netty.shaded.io.grpc.netty</pattern>
-                  <shadedPattern>
-                    com.google.bigtable.repackaged.io.grpc.netty
-                  </shadedPattern>
+                  <shadedPattern>com.google.bigtable.repackaged.io.grpc.netty</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>io.grpc</pattern>
-                  <shadedPattern>
-                    com.google.bigtable.repackaged.io.grpc
-                  </shadedPattern>
+                  <shadedPattern>com.google.bigtable.repackaged.io.grpc</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>io.perfmark</pattern>
@@ -321,9 +264,7 @@ limitations under the License.
                 <!-- Opencensus related shading -->
                 <relocation>
                   <pattern>io.opencensus</pattern>
-                  <shadedPattern>
-                    com.google.bigtable.repackaged.io.opencensus
-                  </shadedPattern>
+                  <shadedPattern>com.google.bigtable.repackaged.io.opencensus</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>google.monitoring</pattern>
@@ -331,15 +272,11 @@ limitations under the License.
                 </relocation>
                 <relocation>
                   <pattern>org.json</pattern>
-                  <shadedPattern>
-                    com.google.bigtable.repackaged.org.json
-                  </shadedPattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.json</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>com.lmax</pattern>
-                  <shadedPattern>
-                    com.google.bigtable.repackaged.com.lmax
-                  </shadedPattern>
+                  <shadedPattern>com.google.bigtable.repackaged.com.lmax</shadedPattern>
                 </relocation>
 
                 <!-- Relocate netty, taking care to keep the prefix consistent for native tcnative
@@ -348,54 +285,36 @@ limitations under the License.
                     https://github.com/grpc/grpc-java/pull/2485
                 -->
                 <relocation>
-                  <pattern>
-                    META-INF/native/libio_grpc_netty_shaded_netty
-                  </pattern>
-                  <shadedPattern>
-                    META-INF/native/libcom_google_bigtable_repackaged_io_grpc_netty_shaded_netty
-                  </shadedPattern>
+                  <pattern>META-INF/native/libio_grpc_netty_shaded_netty</pattern>
+                  <shadedPattern>META-INF/native/libcom_google_bigtable_repackaged_io_grpc_netty_shaded_netty</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>META-INF/native/io_grpc_netty_shaded_netty</pattern>
-                  <shadedPattern>
-                    META-INF/native/com_google_bigtable_repackaged_io_grpc_netty_shaded_netty
-                  </shadedPattern>
+                  <shadedPattern>META-INF/native/com_google_bigtable_repackaged_io_grpc_netty_shaded_netty</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>org.joda</pattern>
-                  <shadedPattern>
-                    com.google.bigtable.repackaged.org.joda
-                  </shadedPattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.joda</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>org.apache.http</pattern>
-                  <shadedPattern>
-                    com.google.bigtable.repackaged.org.apache.http
-                  </shadedPattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.apache.http</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>org.apache.commons.codec</pattern>
-                  <shadedPattern>
-                    com.google.bigtable.repackaged.org.apache.commons.codec
-                  </shadedPattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.apache.commons.codec</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>org.apache.commons.lang3</pattern>
-                  <shadedPattern>
-                    com.google.bigtable.repackaged.org.apache.commons.lang3
-                  </shadedPattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.apache.commons.lang3</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>org.threeten</pattern>
-                  <shadedPattern>
-                    com.google.bigtable.repackaged.org.threeten
-                  </shadedPattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.threeten</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>org.codehaus</pattern>
-                  <shadedPattern>
-                    com.google.bigtable.repackaged.org.codehaus
-                  </shadedPattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.codehaus</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>android.annotation</pattern>
@@ -444,7 +363,7 @@ limitations under the License.
             </goals>
           </execution>
           <execution>
-            <id>verify-mirror-deps</id>
+            <id>verify-mirror-deps-hbase</id>
             <phase>verify</phase>
             <goals>
               <goal>verify-mirror-deps</goal>
@@ -452,6 +371,18 @@ limitations under the License.
             <configuration>
               <targetDependencies>
                 <targetDependency>org.apache.hbase:hbase-shaded-client</targetDependency>
+              </targetDependencies>
+            </configuration>
+          </execution>
+          <execution>
+            <id>verify-mirror-deps-hbase-cbt</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-mirror-deps</goal>
+            </goals>
+            <configuration>
+              <targetDependencies>
+                <targetDependency>com.google.cloud:google-cloud-bigtable</targetDependency>
               </targetDependencies>
             </configuration>
           </execution>
