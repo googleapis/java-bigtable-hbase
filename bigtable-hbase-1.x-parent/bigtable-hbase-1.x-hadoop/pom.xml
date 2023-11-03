@@ -30,11 +30,6 @@ limitations under the License.
     bigtable-hbase-1.x.
   </description>
 
-  <properties>
-    <!-- define a property that can be ignored by renovate -->
-    <hbase1-hadoop-slf4j.version>1.6.1</hbase1-hadoop-slf4j.version>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
@@ -47,8 +42,8 @@ limitations under the License.
           <artifactId>hbase-shaded-client</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>com.google.code.findbugs</groupId>
-          <artifactId>jsr305</artifactId>
+          <groupId>ch.qos.reload4j</groupId>
+          <artifactId>reload4j</artifactId>
         </exclusion>
 
         <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
@@ -73,33 +68,22 @@ limitations under the License.
         </exclusion>
       </exclusions>
     </dependency>
+
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-client</artifactId>
       <version>${hbase1.version}</version>
-    </dependency>
-
-    <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>${commons-logging.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>ch.qos.reload4j</groupId>
       <artifactId>reload4j</artifactId>
       <version>${reload4j.version}</version>
-      <scope>runtime</scope>
-    </dependency>
-
-    <!-- unlike hbase-shaded-client, hbase-client depends on slf4j 1.6.1.
-      Which is older than the version requested by metrics-core. However,
-      metrics-core will work fine with the older version and we want to stay
-      compatible with hbase-client deps -->
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${hbase1-hadoop-slf4j.version}</version>
     </dependency>
 
     <!-- Test deps -->
@@ -112,34 +96,31 @@ limitations under the License.
   </dependencies>
 
   <build>
-    <plugins>
-      <!-- disable google-cloud-shared-config enforcement checks because
-      hbase-client's dependency subtree doesn't follow the same rules and is
-      unable to be fixed here -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>enforce</id>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </execution>
-          <!-- This must be a drop in replacement for hbase-client, so can't
-            manage hbase's deps -->
-          <execution>
-            <id>enforce-banned-deps</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>enforce</id>
+              <!-- requireUpperBoundDeps, banDuplicateClasses -->
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+            <execution>
+              <id>enforce-banned-deps</id>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
 
+    <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
@@ -153,9 +134,12 @@ limitations under the License.
               <shadedArtifactAttached>false</shadedArtifactAttached>
               <createDependencyReducedPom>true</createDependencyReducedPom>
               <!-- Need to manually promote to dependencies to keep the structure of hbase-shade-client -->
-              <promoteTransitiveDependencies>
-                false
-              </promoteTransitiveDependencies>
+              <promoteTransitiveDependencies>false</promoteTransitiveDependencies>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer"/>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+              </transformers>
               <filters>
                 <filter>
                   <artifact>*:*</artifact>
@@ -166,29 +150,11 @@ limitations under the License.
                   </excludes>
                 </filter>
               </filters>
-              <transformers>
-                <transformer
-                    implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
-                <transformer
-                    implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer"/>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-              </transformers>
               <artifactSet>
                 <includes>
-                  <include>
-                    com.google.cloud.bigtable:bigtable-hbase-1.x-shaded
-                  </include>
+                  <include>com.google.cloud.bigtable:bigtable-hbase-1.x-shaded</include>
                 </includes>
               </artifactSet>
-              <relocations>
-                <!-- Undo the relocation that hbase-shaded-client did to make it compatible with the regular hbase-client -->
-                <relocation>
-                  <pattern>
-                    org.apache.hadoop.hbase.shaded.com.google.protobuf
-                  </pattern>
-                  <shadedPattern>com.google.protobuf</shadedPattern>
-                </relocation>
-              </relocations>
             </configuration>
           </execution>
         </executions>
@@ -225,7 +191,7 @@ limitations under the License.
             </goals>
           </execution>
           <execution>
-            <id>verify-mirror-deps</id>
+            <id>verify-mirror-deps-hbase</id>
             <phase>verify</phase>
             <goals>
               <goal>verify-mirror-deps</goal>
@@ -235,11 +201,7 @@ limitations under the License.
                 <targetDependency>org.apache.hbase:hbase-client</targetDependency>
               </targetDependencies>
               <ignoredDependencies>
-                <!-- Unfortunately we can't use hadoop's version of slf4j
-                because dropwizard metrics slf4j logger requires a higher version
-                we can't shade it either -->
-                <dependency>org.slf4j:slf4j-api</dependency>
-
+                <dependency>log4j:log4j</dependency>
                 <!-- for some reason hbase-client exposes testing deps as a compile dep, just ignore them -->
                 <dependency>junit:junit</dependency>
                 <dependency>org.hamcrest:hamcrest-core</dependency>
