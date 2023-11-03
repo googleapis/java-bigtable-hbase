@@ -196,9 +196,6 @@ limitations under the License.
               </targetDependencies>
               <ignoredDependencies>
                 <dependency>log4j:log4j</dependency>
-                <!-- for some reason hbase-client exposes testing deps as a compile dep, just ignore them -->
-                <dependency>junit:junit</dependency>
-                <dependency>org.hamcrest:hamcrest-core</dependency>
               </ignoredDependencies>
             </configuration>
           </execution>
