@@ -286,10 +286,8 @@ public class TestDataClientVeneerApi {
         .thenReturn(mockStreamingCallable)
         .thenReturn(mockStreamingCallable);
     when(serverStream.iterator())
-        .thenReturn(
-            ImmutableList.of(Result.EMPTY_RESULT, EXPECTED_RESULT).iterator())
-        .thenReturn(
-            ImmutableList.of(Result.EMPTY_RESULT, EXPECTED_RESULT).iterator());
+        .thenReturn(ImmutableList.of(Result.EMPTY_RESULT, EXPECTED_RESULT).iterator())
+        .thenReturn(ImmutableList.of(Result.EMPTY_RESULT, EXPECTED_RESULT).iterator());
     when(mockStreamingCallable.call(Mockito.any(Query.class), Mockito.any(GrpcCallContext.class)))
         .thenReturn(serverStream)
         .thenReturn(serverStream);
