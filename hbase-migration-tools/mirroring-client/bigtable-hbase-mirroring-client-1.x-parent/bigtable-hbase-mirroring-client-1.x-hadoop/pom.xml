@@ -79,21 +79,6 @@ limitations under the License.
         </exclusion>
       </exclusions>
     </dependency>
-
-    <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>${commons-logging.version}</version>
-    </dependency>
-
-    <!-- for compatibility with bigtable-hbase-client-1.x-hadoop -->
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${hbase1-hadoop-slf4j.version}</version>
-    </dependency>
-
     <dependency>
       <groupId>ch.qos.reload4j</groupId>
       <artifactId>reload4j</artifactId>
@@ -103,33 +88,38 @@ limitations under the License.
   </dependencies>
 
   <build>
+    <pluginManagement>
+      <plugins>
+        <!-- disable google-cloud-shared-config enforcement checks because
+        hbase-client's dependency subtree doesn't follow the same rules and is
+        unable to be fixed here -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>enforce</id>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+            <!-- This must be a drop in replacement for hbase-client, so can't
+              manage hbase's deps -->
+            <execution>
+              <id>enforce-banned-deps</id>
+              <goals>
+                <goal>enforce</goal>
+              </goals>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
     <plugins>
-      <!-- disable google-cloud-shared-config enforcement checks because
-      hbase-client's dependency subtree doesn't follow the same rules and is
-      unable to be fixed here -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>enforce</id>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </execution>
-          <!-- This must be a drop in replacement for hbase-client, so can't
-            manage hbase's deps -->
-          <execution>
-            <id>enforce-banned-deps</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
