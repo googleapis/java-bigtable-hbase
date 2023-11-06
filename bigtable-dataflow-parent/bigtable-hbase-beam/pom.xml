@@ -44,12 +44,6 @@ limitations under the License.
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-core</artifactId>
       <version>${beam.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.hamcrest</groupId>
-          <artifactId>hamcrest</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
@@ -58,25 +52,6 @@ limitations under the License.
       <version>${beam.version}</version>
       <!-- HBaseCoderProviderRegistrar discovered during runtime -->
       <scope>runtime</scope>
-      <!-- Let the beam pipeline choose the appropriate slf4j impl.
-              Since this is the beam universe, we don't have be a drop in replacement
-              for hbase-shaded-client, so we can exclude parts of it that are
-              inappropriate for beam-->
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.hamcrest</groupId>
-          <artifactId>hamcrest</artifactId>
-        </exclusion>
-        <!-- we set our own version of hadoop, excluding to avoid dependency conflicts-->
-        <exclusion>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <!-- Bigtable Group: ordering doesn't matter since everything is shaded -->
@@ -85,15 +60,6 @@ limitations under the License.
       <artifactId>bigtable-hbase-1.x-shaded</artifactId>
       <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <exclusions>
-        <!-- Let the beam pipeline choose the appropriate slf4j impl.
-              Since this is the beam universe, we don't have be a drop in replacement
-              for hbase-shaded-client, so we can exclude parts of it that are
-              inappropriate for beam-->
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-
         <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
         pom.xml files when invoking the build from a parent project. So we have to manually exclude
         the dependencies. Note that this works in conjunction with the manually promoted dependencies
@@ -101,10 +67,6 @@ limitations under the License.
         <exclusion>
           <groupId>${project.groupId}</groupId>
           <artifactId>bigtable-hbase-1.x</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.google.cloud.bigtable</groupId>
-          <artifactId>bigtable-metrics-api</artifactId>
         </exclusion>
         <exclusion>
           <groupId>io.opencensus</groupId>
@@ -115,40 +77,6 @@ limitations under the License.
           <artifactId>grpc-census</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-
-    <!-- HBase Group: contains interfaces bigtable-hbase implement -->
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-client</artifactId>
-      <version>${hbase1.version}</version>
-      <exclusions>
-        <!-- Let the beam pipeline choose the appropriate slf4j impl.
-        Since this is the beam universe, we don't have be a drop in replacement
-        for hbase-shaded-client, so we can exclude parts of it that are
-        inappropriate for beam-->
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>log4j</groupId>
-          <artifactId>log4j</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <!-- Misc Group -->
-    <dependency>
-      <groupId>com.google.code.findbugs</groupId>
-      <artifactId>jsr305</artifactId>
-      <version>${jsr305.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${beam-slf4j.version}</version>
     </dependency>
 
     <!-- Test Group -->
@@ -173,12 +101,6 @@ limitations under the License.
     <dependency>
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest-library</artifactId>
-      <version>${hamcrest.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-core</artifactId>
       <version>${hamcrest.version}</version>
       <scope>test</scope>
     </dependency>
@@ -239,6 +161,28 @@ limitations under the License.
       <plugins>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <executions>
+            <!-- Silence checks for old version commons-compress. The the actual
+            issue is irrelevant, but fixing it will create real dependency issues
+            for end users -->
+            <execution>
+              <id>enforce-banned-deps</id>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+            <execution>
+              <id>enforce-version-consistency-slf4j</id>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
           <configuration>
             <windowtitle>
@@ -274,6 +218,7 @@ limitations under the License.
         </plugin>
       </plugins>
     </pluginManagement>
+
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -303,7 +248,7 @@ limitations under the License.
         <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
         <executions>
           <execution>
-            <id>verify-mirror-deps</id>
+            <id>verify-mirror-deps-beam</id>
             <phase>verify</phase>
             <goals>
               <goal>verify-mirror-deps</goal>
@@ -320,17 +265,26 @@ limitations under the License.
           </execution>
         </executions>
       </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
         <executions>
-          <!-- Silence checks for old version commons-compress. The the actual
-          issue is irrelevant, but fixing it will create real dependency issues
-          for end users -->
           <execution>
-            <id>enforce-banned-deps</id>
+            <!-- For conflicts that need to be ignored for dependency mirroring, we need to make sure that
+            we pick a newer version -->
+            <id>enforce-conflict-upper-bounds</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
             <configuration>
-              <skip>true</skip>
+              <rules>
+                <requireUpperBoundDeps>
+                  <includes>
+                    <include>com.google.errorprone:error_prone_annotations</include>
+                  </includes>
+                </requireUpperBoundDeps>
+              </rules>
             </configuration>
           </execution>
         </executions>

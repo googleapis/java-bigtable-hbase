@@ -28,16 +28,8 @@ limitations under the License.
     <mainClass>com.google.cloud.bigtable.beam.Main</mainClass>
   </properties>
 
-  <!-- Adding this to resolve version conflict within beam sdk-->
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>org.apache.beam</groupId>
-        <artifactId>beam-sdks-java-bom</artifactId>
-        <version>${beam.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
       <dependency>
         <groupId>org.apache.beam</groupId>
         <artifactId>beam-sdks-java-google-cloud-platform-bom</artifactId>
@@ -46,6 +38,7 @@ limitations under the License.
         <scope>import</scope>
       </dependency>
 
+      <!-- force update transitive deps to exclude CVEs -->
       <dependency>
         <groupId>commons-codec</groupId>
         <artifactId>commons-codec</artifactId>
@@ -54,7 +47,7 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-compress</artifactId>
-        <version>1.20</version>
+        <version>1.21</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -66,95 +59,26 @@ limitations under the License.
       <artifactId>beam-sdks-java-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.google.cloud.bigdataoss</groupId>
-      <artifactId>gcs-connector</artifactId>
-      <version>hadoop2-2.2.16</version>
-      <classifier>shaded</classifier>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
       <groupId>org.apache.beam</groupId>
-      <artifactId>
-        beam-sdks-java-extensions-google-cloud-platform-core
-      </artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.hamcrest</groupId>
-          <artifactId>hamcrest</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
-      <exclusions>
-        <!-- Exclude BigtableIO deps, we don't need them since we are using CloudBigtableIO -->
-        <exclusion>
-          <groupId>com.google.cloud.bigtable</groupId>
-          <artifactId>bigtable-client-core</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.google.api.grpc</groupId>
-          <artifactId>grpc-google-cloud-bigtable-v2</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.hamcrest</groupId>
-          <artifactId>hamcrest</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.hamcrest</groupId>
-          <artifactId>hamcrest</artifactId>
-        </exclusion>
-        <exclusion>
-          <!-- transitively brought in by bigquery dependency, use the bigtable version of autovalue instead-->
-          <groupId>com.google.auto.value</groupId>
-          <artifactId>auto-value</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>beam-sdks-java-io-hadoop-common</artifactId>
-      <!-- used at runtime via WritableCoderProviderRegistrar service -->
-      <scope>runtime</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.hamcrest</groupId>
-          <artifactId>hamcrest</artifactId>
-        </exclusion>
-      </exclusions>
+      <artifactId>beam-sdks-java-io-google-cloud-platform</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-io-hadoop-format</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.hamcrest</groupId>
-          <artifactId>hamcrest</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <!-- Used transitively by beam, and directly in tests -->
-    <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>beam-runners-core-construction-java</artifactId>
-      <scope>runtime</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.hamcrest</groupId>
-          <artifactId>hamcrest</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.beam</groupId>
-      <artifactId>beam-vendor-guava-26_0-jre</artifactId>
-      <version>0.1</version>
-      <scope>runtime</scope>
+      <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
     </dependency>
 
-    <!-- Bigtable Group: ordering doesn't matter since everything is shaded -->
+    <dependency>
+      <groupId>com.google.cloud.bigdataoss</groupId>
+      <artifactId>gcs-connector</artifactId>
+      <version>hadoop2-2.2.16</version>
+    </dependency>
+
+
+    <!-- Bigtable w/ client patches to HBase -->
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-beam</artifactId>
@@ -168,42 +92,6 @@ limitations under the License.
     </dependency>
 
     <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-hbase-1.x-shaded</artifactId>
-      <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
-      <exclusions>
-        <!-- exclude hbase-shaded-client since we are using hbase-shaded-server -->
-        <exclusion>
-          <groupId>org.apache.hbase</groupId>
-          <artifactId>hbase-shaded-client</artifactId>
-        </exclusion>
-
-        <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
-        pom.xml files when invoking the build from a parent project. So we have to manually exclude
-        the dependencies. Note that this works in conjunction with the manually promoted dependencies
-        in bigtable-hbase-1.x-shaded/pom.xml -->
-        <exclusion>
-          <groupId>${project.groupId}</groupId>
-          <artifactId>bigtable-hbase-1.x</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.google.cloud.bigtable</groupId>
-          <artifactId>bigtable-metrics-api</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>io.opencensus</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>io.grpc</groupId>
-          <artifactId>grpc-census</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-
-    <!-- HBase Group: contains interfaces bigtable-hbase implement + serializers -->
-    <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-server</artifactId>
       <version>${hbase1.version}</version>
@@ -214,60 +102,13 @@ limitations under the License.
         </exclusion>
       </exclusions>
     </dependency>
-
-
-    <!-- Misc Group -->
-    <dependency>
-      <groupId>com.google.apis</groupId>
-      <artifactId>google-api-services-storage</artifactId>
-      <version>v1-rev20220705-2.0.0</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.code.findbugs</groupId>
-      <artifactId>jsr305</artifactId>
-      <version>${jsr305.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>31.1-jre</version>
-    </dependency>
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>${commons-logging.version}</version>
-    </dependency>
     <dependency>
       <groupId>ch.qos.reload4j</groupId>
       <artifactId>reload4j</artifactId>
       <version>${reload4j.version}</version>
       <scope>runtime</scope>
     </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${beam-slf4j.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <version>${beam-slf4j.version}</version>
-      <scope>runtime</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>log4j</groupId>
-          <artifactId>log4j</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
 
-    <!-- CVE Group: force update transitive deps to exclude CVEs -->
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-compress</artifactId>
-      <version>1.22</version>
-      <scope>runtime</scope>
-    </dependency>
 
     <!-- Test Group -->
     <dependency>
@@ -275,17 +116,7 @@ limitations under the License.
       <artifactId>beam-runners-direct-java</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>com.google.cloud</groupId>
-      <artifactId>google-cloud-bigtable-emulator-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-internal-test-helper</artifactId>
-      <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
-      <scope>test</scope>
-    </dependency>
+
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-testing-util</artifactId>
@@ -298,28 +129,41 @@ limitations under the License.
         </exclusion>
       </exclusions>
     </dependency>
+
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-bigtable-emulator-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-internal-test-helper</artifactId>
+      <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <scope>test</scope>
+    </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>${junit.version}</version>
       <scope>test</scope>
+      <exclusions>
+        <!-- Avoid conflict with beam-sdks-java-core's transitive dep on hamcrest 2.1
+          JUnit has a transitive dep on hamcrest-core 1.x, beam has a dep on hamcrest 2.1.
+          The artifact were renamed at version 2.0 and hamcrest-core was pulled into hamcrest.
+          We only care for this for tests, so its safe to exclude it here....tests will break if beam drops it.
+         -->
+        <exclusion>
+          <groupId>org.hamcrest</groupId>
+          <artifactId>hamcrest-core</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
+
     <dependency>
       <groupId>com.google.truth</groupId>
       <artifactId>truth</artifactId>
       <version>1.1.3</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-library</artifactId>
-      <version>${hamcrest.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-core</artifactId>
-      <version>${hamcrest.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -338,20 +182,37 @@ limitations under the License.
         <filtering>false</filtering>
       </testResource>
     </testResources>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>enforce</id>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
 
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>enforce</id>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+            <execution>
+              <id>enforce-version-consistency</id>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+            <execution>
+              <id>enforce-version-consistency-slf4j</id>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
+    <plugins>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>
@@ -475,19 +336,45 @@ limitations under the License.
         <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
         <executions>
           <execution>
-            <id>verify-mirror-deps</id>
+            <id>verify-mirror-deps-hbase</id>
             <phase>verify</phase>
             <goals>
               <goal>verify-mirror-deps</goal>
             </goals>
             <configuration>
               <targetDependencies>
-                <targetDependency>org.apache.beam:beam-sdks-java-core:${beam.version}</targetDependency>
+                <targetDependency>org.apache.hbase:hbase-shaded-server:${hbase1.version}</targetDependency>
               </targetDependencies>
               <ignoredDependencies>
-                <!-- beam's dependency tree has an older version closer higher in the tree -->
-                <dependency>org.apache.commons:commons-compress</dependency>
+                <dependency>log4j:log4j</dependency>
+                <!-- Use Beam's version of slf4j-api -->
+                <dependency>org.slf4j:slf4j-api</dependency>
               </ignoredDependencies>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <!-- For conflicts that need to be ignored for dependency mirroring, we need to make sure that
+            we pick a newer version -->
+            <id>enforce-conflict-upper-bounds</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireUpperBoundDeps>
+                  <includes>
+                    <include>org.slf4j:slf4j-api</include>
+                    <include>org.apache.commons:commons-compress</include>
+                  </includes>
+                </requireUpperBoundDeps>
+              </rules>
             </configuration>
           </execution>
         </executions>
