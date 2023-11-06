@@ -16,7 +16,6 @@
 
 package com.google.cloud.bigtable.test.emulator;
 
-import com.google.common.base.Preconditions;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -97,8 +96,12 @@ class EmulatorController {
     }
 
     EmulatorController build() {
-      Preconditions.checkNotNull(emulatorPath, "emulatorPath can't be null");
-      Preconditions.checkNotNull(logFile, "logFile can't be null");
+      if (emulatorPath == null) {
+        throw new NullPointerException("emulatorPath can't be null");
+      }
+      if (logFile == null) {
+        throw new NullPointerException("logFile can't be null");
+      }
 
       return new EmulatorController(emulatorPath, logFile);
     }
