@@ -71,6 +71,12 @@ limitations under the License.
       <scope>provided</scope>
     </dependency>
 
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
+      <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    </dependency>
+
 
     <dependency>
       <groupId>org.mockito</groupId>

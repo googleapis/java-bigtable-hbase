@@ -117,14 +117,17 @@ limitations under the License.
                 <exclusion>
                     <groupId>org.apache.hbase</groupId>
                     <artifactId>hbase-client</artifactId>
-                    </exclusion>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.cloud.bigtable</groupId>
+                    <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
+                </exclusion>
                 </exclusions>
         </dependency>
         <dependency>
             <groupId>com.google.cloud.bigtable</groupId>
             <artifactId>bigtable-hbase-2.x-hadoop</artifactId>
             <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
-            <scope>runtime</scope>
             <exclusions>
                 <!-- HBase dependencies come from hbase-server below. Skip them here.-->
                 <exclusion>
