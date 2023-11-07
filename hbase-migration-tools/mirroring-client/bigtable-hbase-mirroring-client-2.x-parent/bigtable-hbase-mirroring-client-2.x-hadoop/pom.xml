@@ -84,20 +84,6 @@ limitations under the License.
       <version>${reload4j.version}</version>
       <scope>runtime</scope>
     </dependency>
-
-    <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>${commons-logging.version}</version>
-    </dependency>
-
-    <!-- for compatibility with bigtable-hbase-client-1.x-hadoop -->
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${hbase2-hadoop-slf4j.version}</version>
-    </dependency>
   </dependencies>
 
   <build>

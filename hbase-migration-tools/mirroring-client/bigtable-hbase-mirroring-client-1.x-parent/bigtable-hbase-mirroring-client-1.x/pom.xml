@@ -72,27 +72,27 @@ limitations under the License.
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+
         <executions>
           <execution>
-            <id>enforce</id>
-            <configuration>
-              <rules>
-                <requireUpperBoundDeps>
-                  <excludes>
-                    <!--
-                    bigtable-hbase-mirroring-client-core requires 30.1-android (${guava.version})
-                    api-common:1.10.4 requires 30.1.1-android
-                     -->
-                    <exclude>com.google.guava:guava</exclude>
-                  </excludes>
-                </requireUpperBoundDeps>
-              </rules>
-            </configuration>
+            <id>verify-mirror-deps-hbase</id>
+            <phase>verify</phase>
             <goals>
-              <goal>enforce</goal>
+              <goal>verify-mirror-deps</goal>
             </goals>
+            <configuration>
+              <targetDependencies>
+                <!-- make sure that we are a strict superset of hbase -->
+                <targetDependency>org.apache.hbase:hbase-shaded-client</targetDependency>
+              </targetDependencies>
+              <ignoredDependencies>
+                <!-- forcefully replaced with reload4j -->
+                <dependency>log4j:log4j</dependency>
+              </ignoredDependencies>
+            </configuration>
           </execution>
         </executions>
       </plugin>
@@ -113,7 +113,7 @@ limitations under the License.
               <artifactSet>
                 <includes>
                   <include>com.google.cloud.bigtable:protobuf-java-format-shaded</include>
-                  <include>${project.groupId}:bigtable-hbase-mirroring-client-core</include>
+                  <include>com.google.cloud.bigtable}:bigtable-hbase-mirroring-client-core</include>
                 </includes>
               </artifactSet>
             </configuration>

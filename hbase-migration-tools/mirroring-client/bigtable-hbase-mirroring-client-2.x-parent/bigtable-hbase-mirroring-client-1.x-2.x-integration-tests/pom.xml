@@ -231,13 +231,6 @@ limitations under the License.
 
     <!-- Misc -->
     <dependency>
-      <groupId>com.google.code.findbugs</groupId>
-      <artifactId>jsr305</artifactId>
-      <version>${jsr305.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>31.0.1-jre</version>
@@ -332,6 +325,14 @@ limitations under the License.
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
       <version>1.7.30</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Pinned to prevent Enforcer errors -->
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+      <version>3.2.6</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
