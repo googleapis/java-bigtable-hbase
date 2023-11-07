@@ -37,7 +37,6 @@ import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBi
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.ONE_WAY_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY;
 import static java.util.stream.Collectors.groupingBy;
 
-import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
@@ -77,7 +76,7 @@ public class CloudBigtableReplicator {
    * the objects of CloudBigtableReplicator and should be managed by this class (using reference
    * counting).
    */
-  @VisibleForTesting
+
   static class SharedResources {
 
     // The singleton Object for this class. This object is lazily created when first
@@ -103,7 +102,6 @@ public class CloudBigtableReplicator {
      */
     private static int numReferences = 0;
 
-    @VisibleForTesting
     SharedResources(Connection connection, ExecutorService executorService) {
       this.connection = connection;
       this.executorService = executorService;
@@ -205,7 +203,6 @@ public class CloudBigtableReplicator {
     // TODO: Validate that loggers are correctly configured.
   }
 
-  @VisibleForTesting
   synchronized void start(
       SharedResources sharedResources,
       IncompatibleMutationAdapter incompatibleMutationAdapter,

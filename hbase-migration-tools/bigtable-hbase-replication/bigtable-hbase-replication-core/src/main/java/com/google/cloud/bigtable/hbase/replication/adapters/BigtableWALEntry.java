@@ -16,15 +16,15 @@
 
 package com.google.cloud.bigtable.hbase.replication.adapters;
 
-import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import java.util.List;
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.classification.InterfaceAudience;
 
 /**
  * BigtableWALEntry abstracts minimal functionality from WAL.Entry required for this replication
  * library.
  */
-@InternalApi
+@InterfaceAudience.Private
 public class BigtableWALEntry {
   private final long walWriteTimestamp;
   private final List<Cell> cells;

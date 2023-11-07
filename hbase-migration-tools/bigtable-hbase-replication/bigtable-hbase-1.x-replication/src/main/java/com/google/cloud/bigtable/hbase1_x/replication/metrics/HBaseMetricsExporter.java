@@ -16,23 +16,23 @@
 
 package com.google.cloud.bigtable.hbase1_x.replication.metrics;
 
-import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
-import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
+
 import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import java.lang.reflect.Method;
+
+import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.replication.ReplicationEndpoint.Context;
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** HBaseMetricsExporter implements MetricExporter which bridges with MetricsSource. */
-@InternalApi
+@InterfaceAudience.Private
 public class HBaseMetricsExporter implements MetricsExporter {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseMetricsExporter.class);
 
   // Force the use of static factory method to create instances.
-  @InternalExtensionOnly
   protected HBaseMetricsExporter() {}
 
   // same pattern as used by HbaseInterClusterRepl

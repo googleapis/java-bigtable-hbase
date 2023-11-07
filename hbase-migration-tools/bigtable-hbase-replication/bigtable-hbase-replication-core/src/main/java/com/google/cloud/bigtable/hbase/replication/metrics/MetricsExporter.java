@@ -16,13 +16,14 @@
 
 package com.google.cloud.bigtable.hbase.replication.metrics;
 
-import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
+
+import org.apache.hadoop.hbase.classification.InterfaceAudience;
 
 /**
  * MetricsExporter is exposed as an interface to remove dependency on MetricsSource which is in
  * hbase-server.
  */
-@InternalApi
+@InterfaceAudience.Private
 public interface MetricsExporter {
   void incCounters(String counterName, long delta);
 }
