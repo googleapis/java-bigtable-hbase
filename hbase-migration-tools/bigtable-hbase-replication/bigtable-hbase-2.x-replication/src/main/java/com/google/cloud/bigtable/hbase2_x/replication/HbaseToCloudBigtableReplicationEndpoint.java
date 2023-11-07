@@ -43,7 +43,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @InterfaceAudience.Private
-public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService implements ReplicationEndpoint {
+public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService
+    implements ReplicationEndpoint {
 
   private final CloudBigtableReplicator cloudBigtableReplicator;
   private final HBaseMetricsExporter metricsExporter;

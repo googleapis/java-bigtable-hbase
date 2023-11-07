@@ -76,7 +76,6 @@ public class CloudBigtableReplicator {
    * the objects of CloudBigtableReplicator and should be managed by this class (using reference
    * counting).
    */
-
   static class SharedResources {
 
     // The singleton Object for this class. This object is lazily created when first

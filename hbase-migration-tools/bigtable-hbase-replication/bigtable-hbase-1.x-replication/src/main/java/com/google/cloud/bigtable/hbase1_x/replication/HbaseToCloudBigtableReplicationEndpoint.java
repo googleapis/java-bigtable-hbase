@@ -24,14 +24,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
 import org.apache.hadoop.hbase.wal.WAL;
 
 /**
  * Basic endpoint that listens to CDC from HBase 1.x and replicates to Cloud Bigtable.
  *
- * This class is only public for instantiation, and should not be subclassed.
+ * <p>This class is only public for instantiation, and should not be subclassed.
  */
 public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndpoint {
 

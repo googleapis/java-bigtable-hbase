@@ -16,7 +16,6 @@
 
 package com.google.cloud.bigtable.hbase.replication.metrics;
 
-
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 
 /**

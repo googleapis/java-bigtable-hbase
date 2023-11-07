@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
-
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue;
@@ -62,7 +61,7 @@ class CloudBigtableReplicationTask implements Callable<Boolean> {
     public boolean canAcceptMutation(Cell cell) {
       if (closed) {
         throw new IllegalStateException("Can't add mutations to a closed builder");
-      };
+      }
       return cell.getTypeByte() == KeyValue.Type.Put.getCode();
     }
 
@@ -102,9 +101,9 @@ class CloudBigtableReplicationTask implements Callable<Boolean> {
 
     @Override
     public void addMutation(Cell cell) throws IOException {
-      if(closed) {
+      if (closed) {
         throw new IllegalStateException("Can't add mutations to a closed builder");
-      };
+      }
       numDeletes++;
       delete.addDeleteMarker(cell);
     }

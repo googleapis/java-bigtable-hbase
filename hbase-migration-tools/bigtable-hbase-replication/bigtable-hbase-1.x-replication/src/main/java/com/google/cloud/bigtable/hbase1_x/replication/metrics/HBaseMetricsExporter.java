@@ -16,10 +16,8 @@
 
 package com.google.cloud.bigtable.hbase1_x.replication.metrics;
 
-
 import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import java.lang.reflect.Method;
-
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.replication.ReplicationEndpoint.Context;
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
