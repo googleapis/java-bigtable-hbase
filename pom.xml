@@ -56,8 +56,8 @@ limitations under the License.
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- core dependency versions -->
-    <bigtable.version>2.23.3</bigtable.version>
-    <google-cloud-bigtable-emulator.version>0.160.3</google-cloud-bigtable-emulator.version>
+    <bigtable.version>2.23.4</bigtable.version>
+    <google-cloud-bigtable-emulator.version>0.160.4</google-cloud-bigtable-emulator.version>
     <bigtable-client-core.version>1.28.0</bigtable-client-core.version>
     <grpc-conscrypt.version>2.5.2</grpc-conscrypt.version>
     <!--  keeping at this version to align with hbase-->
