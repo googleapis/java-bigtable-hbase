@@ -34,53 +34,68 @@ limitations under the License.
     Bigtable.
   </description>
 
-  <properties>
-    <!-- define a property that can be ignored by renovate -->
-    <hbase1-hadoop-slf4j.version>1.6.1</hbase1-hadoop-slf4j.version>
-  </properties>
-
   <build>
+    <pluginManagement>
+      <plugins>
+        <!-- disable google-cloud-shared-config enforcement checks because
+            hbase-client's dependency subtree doesn't follow the same rules and is
+            unable to be fixed here -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>enforce</id>
+              <!-- requireUpperBoundDeps, banDuplicateClasses -->
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+
+            <!-- This must be a drop in replacement for hbase-client, so can't
+                          manage hbase's deps -->
+            <execution>
+              <id>enforce-banned-deps</id>
+              <goals>
+                <goal>enforce</goal>
+              </goals>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+            <execution>
+              <id>enforce-version-consistency-slf4j</id>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
         <executions>
-          <!-- disable google-cloud-shared-config enforcement checks because
-          hbase-client's dependency subtree doesn't follow the same rules and is
-           unable to be fixed here -->
           <execution>
-            <id>enforce</id>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </execution>
-          <!-- This must be a drop in replacement for hbase-client, so can't
-            manage hbase's deps -->
-          <execution>
-            <id>enforce-banned-deps</id>
+            <id>verify-mirror-deps-hbase</id>
+            <phase>verify</phase>
             <goals>
-              <goal>enforce</goal>
+              <goal>verify-mirror-deps</goal>
             </goals>
             <configuration>
-              <skip>true</skip>
-            </configuration>
-          </execution>
-          <execution>
-            <id>enforce-java</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <configuration>
-              <rules>
-                <requireJavaVersion>
-                  <version>[1.8,)</version>
-                </requireJavaVersion>
-              </rules>
+              <targetDependencies>
+                <targetDependency>org.apache.hbase:hbase-server</targetDependency>
+              </targetDependencies>
             </configuration>
           </execution>
         </executions>
       </plugin>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
         <version>3.3.0</version>
         <executions>
@@ -109,26 +124,19 @@ limitations under the License.
             </goals>
             <configuration>
               <shadedArtifactAttached>false</shadedArtifactAttached>
+                <transformers>
+                  <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
+                  <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer"/>
+                  <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                </transformers>
             </configuration>
           </execution>
         </executions>
       </plugin>
     </plugins>
   </build>
+
   <dependencies>
-    <!-- bigtable libs for org.apache.hadoop.hbase -->
-    <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-hbase-replication-core</artifactId>
-      <version>1.11.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
-      <exclusions>
-        <!-- HBase dependencies come from hbase-server below. Skip them here.-->
-        <exclusion>
-          <groupId>org.apache.hbase</groupId>
-          <artifactId>hbase-client</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-server</artifactId>
@@ -137,27 +145,44 @@ limitations under the License.
       <!--       use the HBase server from the HBase environment-->
       <scope>provided</scope>
     </dependency>
-    <!-- Versions conflict within HBase, enforce same versions but let
-     them come from hbase-server to avoid version conflicts-->
+
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${hbase1-hadoop-slf4j.version}</version>
-      <scope>provided</scope>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-hbase-replication-core</artifactId>
+      <version>1.11.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-client</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <version>${hbase1-hadoop-slf4j.version}</version>
-      <scope>provided</scope>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
+      <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <exclusions>
+        <!-- HBase dependencies come from hbase-server below. Skip them here.-->
+        <exclusion>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-client</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
-    <!-- test dependencies -->
+    <!--Test dependencies-->
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-testing-util</artifactId>
       <version>${hbase1.version}</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <!-- Prevent test util from overriding the version from hbase-server -->
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.google.cloud</groupId>

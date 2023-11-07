@@ -31,134 +31,88 @@ limitations under the License.
     <name>bigtable-hbase-2.x-replication</name>
     <description>Library to enable one way replication from HBase to Cloud Bigtable. </description>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-bom</artifactId>
-                <version>9.3.30.v20211001</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <build>
+        <pluginManagement>
+            <plugins>
+                <!-- disable google-cloud-shared-config enforcement checks because
+                    hbase-client's dependency subtree doesn't follow the same rules and is
+                    unable to be fixed here -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>enforce</id>
+                            <!-- requireUpperBoundDeps, banDuplicateClasses -->
+                            <configuration>
+                                <skip>true</skip>
+                            </configuration>
+                        </execution>
+                        <!-- This must be a drop in replacement for hbase-client, so can't
+                          manage hbase's deps -->
+                        <execution>
+                            <id>enforce-banned-deps</id>
+                            <goals>
+                                <goal>enforce</goal>
+                            </goals>
+                            <configuration>
+                                <skip>true</skip>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>enforce-version-consistency-slf4j</id>
+                            <configuration>
+                                <skip>true</skip>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <executions>
-                <!-- disable google-cloud-shared-config enforcement checks because
- hbase-client's dependency subtree doesn't follow the same rules and is
- unable to be fixed here -->
-                    <execution>
-                        <id>enforce</id>
-                        <configuration>
-                            <skip>true</skip>
-                        </configuration>
-                    </execution>
-                    <!-- This must be a drop in replacement for hbase-client, so can't
-                      manage hbase's deps -->
-                    <execution>
-                        <id>enforce-banned-deps</id>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
-                        <configuration>
-                            <skip>true</skip>
-                        </configuration>
-                    </execution>
-                    <!-- HBase server and hadoop can't agree on version for netty and
-                    jackson. We are punting it, as they are provided.-->
-                    <execution>
-                        <id>enforce-version-consistency</id>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
-                        <configuration>
-                            <skip>true</skip>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>enforce-version-consistency-slf4j</id>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
-                        <configuration>
-                            <skip>true</skip>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>enforce-java</id>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
-                        <configuration>
-                            <rules>
-                                <requireJavaVersion>
-                                    <version>[1.8,)</version>
-                                </requireJavaVersion>
-                            </rules>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.3.0</version>
+                <artifactId>maven-shade-plugin</artifactId>
                 <executions>
                     <execution>
                         <phase>package</phase>
                         <goals>
-                            <goal>single</goal>
+                            <goal>shade</goal>
                         </goals>
+                        <configuration>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                            </transformers>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                </configuration>
             </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>3.3.0</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <shadedArtifactAttached>false</shadedArtifactAttached>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
         </plugins>
     </build>
     <dependencies>
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-server</artifactId>
+            <version>${hbase2.version}</version>
+            <!--       The library is running on the HBase region server,-->
+            <!--       use the HBase server from the HBase environment-->
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>com.google.cloud.bigtable</groupId>
             <artifactId>bigtable-hbase-replication-core</artifactId>
             <version>1.11.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
             <exclusions>
-                <!-- HBase dependencies come from hbase-server below. Skip them here.-->
                 <exclusion>
                     <groupId>org.apache.hbase</groupId>
                     <artifactId>hbase-client</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.google.cloud.bigtable</groupId>
-                    <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
-                </exclusion>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-            </exclusions>
+                    </exclusion>
+                </exclusions>
         </dependency>
         <dependency>
             <groupId>com.google.cloud.bigtable</groupId>
@@ -170,20 +124,10 @@ limitations under the License.
                     <groupId>org.apache.hbase</groupId>
                     <artifactId>hbase-client</artifactId>
                 </exclusion>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-server</artifactId>
-            <version>${hbase2.version}</version>
-            <!--       The library is running on the HBase region server,-->
-            <!--       use the HBase server from the HBase environment-->
-            <scope>provided</scope>
-        </dependency>
+
+        <!--Test dependencies-->
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-testing-util</artifactId>
@@ -196,7 +140,6 @@ limitations under the License.
             <version>${google-cloud-bigtable-emulator.version}</version>
             <scope>test</scope>
         </dependency>
-        <!--Test dependencies-->
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
