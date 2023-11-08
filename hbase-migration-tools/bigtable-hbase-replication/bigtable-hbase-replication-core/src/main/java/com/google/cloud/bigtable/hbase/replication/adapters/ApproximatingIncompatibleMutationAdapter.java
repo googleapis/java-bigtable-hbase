@@ -20,7 +20,6 @@ import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToC
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DELETE_FAMILY_WRITE_THRESHOLD_KEY;
 import static org.apache.hadoop.hbase.HConstants.LATEST_TIMESTAMP;
 
-import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import java.util.Arrays;
 import java.util.List;
@@ -28,6 +27,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.client.Connection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  * Practically, converts DeleteFamilyBeforeTimestamp to DeleteFamily when delete is requested before
  * "now".
  */
-@InternalApi
+@InterfaceAudience.Private
 public class ApproximatingIncompatibleMutationAdapter extends IncompatibleMutationAdapter {
 
   private static final Logger LOG =

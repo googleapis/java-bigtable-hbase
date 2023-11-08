@@ -16,7 +16,6 @@
 // TODO reverse the package names for 1.x and 2.x to com.google.cloud.bigtable.replication.hbase1_x
 package com.google.cloud.bigtable.hbase1_x.replication;
 
-import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
 import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicator;
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
 import com.google.cloud.bigtable.hbase1_x.replication.metrics.HBaseMetricsExporter;
@@ -28,8 +27,11 @@ import java.util.UUID;
 import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
 import org.apache.hadoop.hbase.wal.WAL;
 
-/** Basic endpoint that listens to CDC from HBase 1.x and replicates to Cloud Bigtable. */
-@InternalExtensionOnly
+/**
+ * Basic endpoint that listens to CDC from HBase 1.x and replicates to Cloud Bigtable.
+ *
+ * <p>This class is only public for instantiation, and should not be subclassed.
+ */
 public class HbaseToCloudBigtableReplicationEndpoint extends BaseReplicationEndpoint {
 
   private final CloudBigtableReplicator cloudBigtableReplicator;

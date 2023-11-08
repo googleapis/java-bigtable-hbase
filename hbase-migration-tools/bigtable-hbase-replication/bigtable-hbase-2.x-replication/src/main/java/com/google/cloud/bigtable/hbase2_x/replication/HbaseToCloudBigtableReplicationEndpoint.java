@@ -19,8 +19,6 @@ package com.google.cloud.bigtable.hbase2_x.replication;
 
 import static org.apache.hadoop.hbase.replication.BaseReplicationEndpoint.REPLICATION_WALENTRYFILTER_CONFIG_KEY;
 
-import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
-import com.google.bigtable.repackaged.com.google.common.util.concurrent.AbstractService;
 import com.google.cloud.bigtable.hbase.replication.CloudBigtableReplicator;
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
 import com.google.cloud.bigtable.hbase2_x.replication.metrics.HBaseMetricsExporter;
@@ -39,10 +37,12 @@ import org.apache.hadoop.hbase.replication.ScopeWALEntryFilter;
 import org.apache.hadoop.hbase.replication.WALEntryFilter;
 import org.apache.hadoop.hbase.wal.WAL;
 import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
+import org.apache.hbase.thirdparty.com.google.common.util.concurrent.AbstractService;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@InternalExtensionOnly
+@InterfaceAudience.Private
 public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService
     implements ReplicationEndpoint {
 

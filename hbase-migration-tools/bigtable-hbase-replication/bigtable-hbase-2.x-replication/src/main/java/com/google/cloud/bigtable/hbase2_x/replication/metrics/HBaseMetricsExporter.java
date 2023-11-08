@@ -16,12 +16,12 @@
 
 package com.google.cloud.bigtable.hbase2_x.replication.metrics;
 
-import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import org.apache.hadoop.hbase.replication.regionserver.MetricsSource;
+import org.apache.yetus.audience.InterfaceAudience;
 
 /** HBaseMetricsExporter implements MetricExporter which bridges with MetricsSource. */
-@InternalApi
+@InterfaceAudience.Private
 public class HBaseMetricsExporter implements MetricsExporter {
   private MetricsSource metricsSource;
 

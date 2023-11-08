@@ -16,12 +16,12 @@
 
 package com.google.cloud.bigtable.hbase.replication.adapters;
 
-import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.client.Connection;
 
-@InternalApi
+@InterfaceAudience.Private
 public class IncompatibleMutationAdapterFactory {
 
   private final Configuration conf;
