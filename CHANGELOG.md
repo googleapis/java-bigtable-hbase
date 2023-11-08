@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.2](https://github.com/googleapis/java-bigtable-hbase/compare/v2.9.1...v2.9.2) (2023-11-08)
+
+
+### Bug Fixes
+
+* Backport retry idle timeout to 2.9.x and rare race condition fix ([#4234](https://github.com/googleapis/java-bigtable-hbase/issues/4234)) ([3adf4c0](https://github.com/googleapis/java-bigtable-hbase/commit/3adf4c03f1839361c04055eebde2528034052466))
+
 ## [2.9.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.9.0...v2.9.1) (2023-07-26)
 
 
