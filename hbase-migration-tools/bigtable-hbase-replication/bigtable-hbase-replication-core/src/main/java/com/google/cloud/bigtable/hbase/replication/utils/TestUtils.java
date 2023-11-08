@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.hbase.replication.utils;
 
 import static org.junit.Assert.assertTrue;
 
-import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
@@ -30,6 +29,7 @@ import java.util.function.BooleanSupplier;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 /** Utility class containing various helpers for tests. */
 // TODO: move it to test folder and mark replication-core as test dependency for replication 1.x and
 // 2.x
-@InternalApi
+@InterfaceAudience.Private
 public class TestUtils {
 
   private static final Logger LOG = LoggerFactory.getLogger(TestUtils.class);

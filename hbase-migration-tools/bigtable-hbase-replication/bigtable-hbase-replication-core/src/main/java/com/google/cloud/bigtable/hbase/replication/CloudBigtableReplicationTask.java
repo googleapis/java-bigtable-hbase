@@ -16,14 +16,11 @@
 
 package com.google.cloud.bigtable.hbase.replication;
 
-import com.google.bigtable.repackaged.com.google.api.client.util.Preconditions;
-import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
-import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
-import com.google.bigtable.repackaged.com.google.common.base.Objects;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -40,10 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Replicates the WAL entries to CBT. Never throws any exceptions to the caller. */
-@InternalApi
-public class CloudBigtableReplicationTask implements Callable<Boolean> {
+class CloudBigtableReplicationTask implements Callable<Boolean> {
 
-  @VisibleForTesting
   interface MutationBuilder {
 
     boolean canAcceptMutation(Cell mutation);
@@ -53,7 +48,6 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
     void buildAndUpdateRowMutations(RowMutations rowMutations) throws IOException;
   }
 
-  @VisibleForTesting
   static class PutMutationBuilder implements MutationBuilder {
 
     private final Put put;
@@ -65,13 +59,17 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
 
     @Override
     public boolean canAcceptMutation(Cell cell) {
-      Preconditions.checkState(!closed, "Can't add mutations to a closed builder");
+      if (closed) {
+        throw new IllegalStateException("Can't add mutations to a closed builder");
+      }
       return cell.getTypeByte() == KeyValue.Type.Put.getCode();
     }
 
     @Override
     public void addMutation(Cell cell) throws IOException {
-      Preconditions.checkState(!closed, "Can't add mutations to a closed builder");
+      if (closed) {
+        throw new IllegalStateException("Can't add mutations to a closed builder");
+      }
       put.add(cell);
     }
 
@@ -82,7 +80,6 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
     }
   }
 
-  @VisibleForTesting
   static class DeleteMutationBuilder implements MutationBuilder {
 
     private final Delete delete;
@@ -96,13 +93,17 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
 
     @Override
     public boolean canAcceptMutation(Cell cell) {
-      Preconditions.checkState(!closed, "Can't add mutations to a closed builder");
+      if (closed) {
+        throw new IllegalStateException("Can't add mutations to a closed builder");
+      }
       return CellUtil.isDelete(cell);
     }
 
     @Override
     public void addMutation(Cell cell) throws IOException {
-      Preconditions.checkState(!closed, "Can't add mutations to a closed builder");
+      if (closed) {
+        throw new IllegalStateException("Can't add mutations to a closed builder");
+      }
       numDeletes++;
       delete.addDeleteMarker(cell);
     }
@@ -122,7 +123,6 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
     }
   }
 
-  @VisibleForTesting
   static class MutationBuilderFactory {
 
     static MutationBuilder getMutationBuilder(Cell cell) {
@@ -204,7 +204,6 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
     return succeeded;
   }
 
-  @VisibleForTesting
   static RowMutations buildRowMutations(byte[] rowKey, List<Cell> cellList) throws IOException {
     RowMutations rowMutationBuffer = new RowMutations(rowKey);
     // TODO Make sure that there are < 100K cells per row Mutation
@@ -231,13 +230,13 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
       return false;
     }
     CloudBigtableReplicationTask that = (CloudBigtableReplicationTask) o;
-    return Objects.equal(tableName, that.tableName)
-        && Objects.equal(cellsToReplicateByRow, that.cellsToReplicateByRow);
+    return Objects.equals(tableName, that.tableName)
+        && Objects.equals(cellsToReplicateByRow, that.cellsToReplicateByRow);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(tableName, cellsToReplicateByRow);
+    return Objects.hash(tableName, cellsToReplicateByRow);
   }
 
   @Override
