@@ -87,13 +87,15 @@ public class TemplateUtils {
             .withAppProfileId(options.getBigtableAppProfileId())
             .withConfiguration(
                 BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "SequenceFileExportJob")
+            .withConfiguration(
+                CloudBigtableIO.Reader.RETRY_IDLE_TIMEOUT,
+                String.valueOf(options.getRetryIdleTimeout()))
             .withScan(
                 new ScanValueProvider(
                     options.getBigtableStartRow(),
                     options.getBigtableStopRow(),
                     options.getBigtableMaxVersions(),
                     options.getBigtableFilter()));
-
     return configBuilder.build();
   }
 }
