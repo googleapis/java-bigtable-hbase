@@ -48,10 +48,6 @@ limitations under the License.
       <version>${hbase1.version}</version>
       <exclusions>
         <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-        <exclusion>
           <groupId>log4j</groupId>
           <artifactId>log4j</artifactId>
         </exclusion>
@@ -63,6 +59,7 @@ limitations under the License.
       <version>${reload4j.version}</version>
       <scope>runtime</scope>
     </dependency>
+
     <dependency>
       <groupId>com.google.api</groupId>
       <artifactId>api-common</artifactId>
@@ -75,10 +72,12 @@ limitations under the License.
       <version>${guava.version}</version>
       <scope>compile</scope>
     </dependency>
+
     <dependency>
       <groupId>org.checkerframework</groupId>
       <artifactId>checker-compat-qual</artifactId>
       <version>2.5.5</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- deps to be shaded -->
@@ -121,4 +120,34 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+
+        <executions>
+          <execution>
+            <id>verify-mirror-deps-hbase</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-mirror-deps</goal>
+            </goals>
+            <configuration>
+              <targetDependencies>
+                <!-- make sure that we are a strict superset of hbase -->
+                <targetDependency>org.apache.hbase:hbase-shaded-client</targetDependency>
+              </targetDependencies>
+              <ignoredDependencies>
+                <!-- forcefully replaced with reload4j -->
+                <dependency>log4j:log4j</dependency>
+              </ignoredDependencies>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>
