@@ -56,7 +56,6 @@ limitations under the License.
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
       <version>${hbase2.version}</version>
-      <scope>${hbase.scope}</scope>
     </dependency>
     <dependency>
       <groupId>com.google.api</groupId>
