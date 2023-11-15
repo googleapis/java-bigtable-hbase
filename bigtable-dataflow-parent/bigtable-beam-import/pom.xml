@@ -37,18 +37,6 @@ limitations under the License.
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-
-      <!-- force update transitive deps to exclude CVEs -->
-      <dependency>
-        <groupId>commons-codec</groupId>
-        <artifactId>commons-codec</artifactId>
-        <version>1.15</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.commons</groupId>
-        <artifactId>commons-compress</artifactId>
-        <version>1.21</version>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -69,12 +57,27 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
+      <exclusions>
+        <exclusion>
+          <!-- Avoid conflicts with commons-logging: beam-sdks-java-io-kafka pulls in spring-core which hijacks commons-logging -->
+          <groupId>org.springframework</groupId>
+          <artifactId>spring-jcl</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
       <groupId>com.google.cloud.bigdataoss</groupId>
       <artifactId>gcs-connector</artifactId>
       <version>hadoop2-2.2.16</version>
+      <classifier>shaded</classifier>
+      <exclusions>
+        <!-- shaded variant doesn't have deps -->
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
 
@@ -189,20 +192,9 @@ limitations under the License.
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-enforcer-plugin</artifactId>
           <executions>
+            <!-- TODO: figure out how to deal with beam enforcement errors -->
             <execution>
               <id>enforce</id>
-              <configuration>
-                <skip>true</skip>
-              </configuration>
-            </execution>
-            <execution>
-              <id>enforce-version-consistency</id>
-              <configuration>
-                <skip>true</skip>
-              </configuration>
-            </execution>
-            <execution>
-              <id>enforce-version-consistency-slf4j</id>
               <configuration>
                 <skip>true</skip>
               </configuration>
@@ -211,6 +203,7 @@ limitations under the License.
         </plugin>
       </plugins>
     </pluginManagement>
+
 
     <plugins>
       <plugin>
@@ -335,6 +328,7 @@ limitations under the License.
         <artifactId>bigtable-build-helper</artifactId>
         <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
         <executions>
+          <!-- We are using beam's bom, so no need to check if the beam deps are mirrored -->
           <execution>
             <id>verify-mirror-deps-hbase</id>
             <phase>verify</phase>
@@ -350,31 +344,6 @@ limitations under the License.
                 <!-- Use Beam's version of slf4j-api -->
                 <dependency>org.slf4j:slf4j-api</dependency>
               </ignoredDependencies>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <executions>
-          <execution>
-            <!-- For conflicts that need to be ignored for dependency mirroring, we need to make sure that
-            we pick a newer version -->
-            <id>enforce-conflict-upper-bounds</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <configuration>
-              <rules>
-                <requireUpperBoundDeps>
-                  <includes>
-                    <include>org.slf4j:slf4j-api</include>
-                    <include>org.apache.commons:commons-compress</include>
-                  </includes>
-                </requireUpperBoundDeps>
-              </rules>
             </configuration>
           </execution>
         </executions>

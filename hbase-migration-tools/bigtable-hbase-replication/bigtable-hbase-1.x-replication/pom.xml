@@ -35,45 +35,6 @@ limitations under the License.
   </description>
 
   <build>
-    <pluginManagement>
-      <plugins>
-        <!-- disable google-cloud-shared-config enforcement checks because
-            hbase-client's dependency subtree doesn't follow the same rules and is
-            unable to be fixed here -->
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-enforcer-plugin</artifactId>
-          <executions>
-            <execution>
-              <id>enforce</id>
-              <!-- requireUpperBoundDeps, banDuplicateClasses -->
-              <configuration>
-                <skip>true</skip>
-              </configuration>
-            </execution>
-
-            <!-- This must be a drop in replacement for hbase-client, so can't
-                          manage hbase's deps -->
-            <execution>
-              <id>enforce-banned-deps</id>
-              <goals>
-                <goal>enforce</goal>
-              </goals>
-              <configuration>
-                <skip>true</skip>
-              </configuration>
-            </execution>
-            <execution>
-              <id>enforce-version-consistency-slf4j</id>
-              <configuration>
-                <skip>true</skip>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-
     <plugins>
       <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>

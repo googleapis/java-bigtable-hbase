@@ -34,35 +34,6 @@ limitations under the License.
     Bigtable.
   </description>
 
-  <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-enforcer-plugin</artifactId>
-          <executions>
-            <execution>
-              <id>enforce</id>
-              <!-- disable banDuplicateClasses
-                    hbase-server has overlapping classes from commons-beanutils-core & commons-beanutils, since the
-                    classpath is provided by HBase, there is nothing we can do
-              -->
-              <configuration>
-                <skip>true</skip>
-              </configuration>
-            </execution>
-            <execution>
-              <id>enforce-banned-deps</id>
-              <configuration>
-                <skip>true</skip>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-  </build>
-
   <dependencies>
     <dependency>
       <groupId>org.apache.hbase</groupId>

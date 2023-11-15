@@ -161,28 +161,6 @@ limitations under the License.
       <plugins>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-enforcer-plugin</artifactId>
-          <executions>
-            <!-- Silence checks for old version commons-compress. The the actual
-            issue is irrelevant, but fixing it will create real dependency issues
-            for end users -->
-            <execution>
-              <id>enforce-banned-deps</id>
-              <configuration>
-                <skip>true</skip>
-              </configuration>
-            </execution>
-            <execution>
-              <id>enforce-version-consistency-slf4j</id>
-              <configuration>
-                <skip>true</skip>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
           <configuration>
             <windowtitle>
@@ -261,30 +239,6 @@ limitations under the License.
                 <!-- beam's dependency tree has an older version closer higher in the tree -->
                 <dependency>com.google.errorprone:error_prone_annotations</dependency>
               </ignoredDependencies>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <executions>
-          <execution>
-            <!-- For conflicts that need to be ignored for dependency mirroring, we need to make sure that
-            we pick a newer version -->
-            <id>enforce-conflict-upper-bounds</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <configuration>
-              <rules>
-                <requireUpperBoundDeps>
-                  <includes>
-                    <include>com.google.errorprone:error_prone_annotations</include>
-                  </includes>
-                </requireUpperBoundDeps>
-              </rules>
             </configuration>
           </execution>
         </executions>
