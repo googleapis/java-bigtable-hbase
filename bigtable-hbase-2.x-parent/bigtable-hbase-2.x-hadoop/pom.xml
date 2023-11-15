@@ -50,11 +50,6 @@ limitations under the License.
           <groupId>${project.groupId}</groupId>
           <artifactId>bigtable-hbase-2.x</artifactId>
         </exclusion>
-        <!-- TODO: remove this exclusion -->
-        <exclusion>
-          <groupId>com.google.cloud.bigtable</groupId>
-          <artifactId>bigtable-metrics-api</artifactId>
-        </exclusion>
         <exclusion>
           <groupId>io.opencensus</groupId>
           <artifactId>*</artifactId>
