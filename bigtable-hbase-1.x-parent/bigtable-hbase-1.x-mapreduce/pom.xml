@@ -125,45 +125,6 @@ limitations under the License.
   </dependencies>
 
   <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <!-- skip UpperBound enforcement for hadoop jars -->
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-enforcer-plugin</artifactId>
-          <executions>
-            <execution>
-              <id>enforce</id>
-              <goals>
-                <goal>enforce</goal>
-              </goals>
-              <configuration>
-                <skip>true</skip>
-              </configuration>
-            </execution>
-            <execution>
-              <id>enforce-version-consistency-slf4j</id>
-              <goals>
-                <goal>enforce</goal>
-              </goals>
-              <configuration>
-                <skip>true</skip>
-              </configuration>
-            </execution>
-            <!-- We are not introducing any new deps here. We expect to be
-            running in hadoop's provided classpath -->
-            <execution>
-              <id>enforce-banned-deps</id>
-              <configuration>
-                <skip>true</skip>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-
-
     <plugins>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>

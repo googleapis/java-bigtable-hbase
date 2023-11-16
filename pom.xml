@@ -250,106 +250,18 @@ limitations under the License.
         <artifactId>maven-enforcer-plugin</artifactId>
         <executions>
           <execution>
-            <id>enforce-version-consistency</id>
+            <id>enforce</id>
             <goals>
               <goal>enforce</goal>
             </goals>
             <configuration>
               <rules>
-                <requireSameVersions>
-                  <dependencies>
-                    <dependency>io.grpc:*</dependency>
-                  </dependencies>
-                </requireSameVersions>
-                <requireSameVersions>
-                  <dependencies>
-                    <dependency>com.google.cloud:google-cloud-bigtable</dependency>
-                    <dependency>com.google.api.grpc:proto-google-cloud-bigtable-v2</dependency>
-                    <dependency>com.google.api.grpc:grpc-google-cloud-bigtable-v2</dependency>
-                    <dependency>com.google.api.grpc:proto-google-cloud-bigtable-admin-v2</dependency>
-                    <dependency>com.google.api.grpc:grpc-google-cloud-bigtable-admin-v2</dependency>
-                  </dependencies>
-                </requireSameVersions>
-                <requireSameVersions>
-                  <dependencies>
-                    <dependency>com.google.auth:*</dependency>
-                  </dependencies>
-                </requireSameVersions>
-                <requireSameVersions>
-                  <dependencies>
-                    <dependency>com.google.api:gax</dependency>
-                    <dependency>com.google.api:gax-grpc</dependency>
-                  </dependencies>
-                </requireSameVersions>
-                <requireSameVersions>
-                  <dependencies>
-                    <dependency>org.apache.beam:beam-sdks-*</dependency>
-                    <dependency>org.apache.beam:beam-model-*</dependency>
-                  </dependencies>
-                </requireSameVersions>
-                <requireSameVersions>
-                  <dependencies>
-                    <dependency>io.netty:netty-all</dependency>
-                    <dependency>io.netty:netty-codec*</dependency>
-                    <dependency>io.netty:netty-handler*</dependency>
-                    <dependency>io.netty:netty-common</dependency>
-                    <dependency>io.netty:netty-resolver</dependency>
-                    <dependency>io.netty:netty-buffer</dependency>
-                    <dependency>io.netty:netty-transport</dependency>
-                    <!-- Everything but netty-tcnative-boringssl-static -->
-                  </dependencies>
-                </requireSameVersions>
-                <requireSameVersions>
-                  <dependencies>
-                    <dependency>com.google.auto.value</dependency>
-                  </dependencies>
-                </requireSameVersions>
-                <requireSameVersions>
-                  <dependencies>
-                    <dependency>org.hamcrest:*</dependency>
-                  </dependencies>
-                </requireSameVersions>
-                <requireSameVersions>
-                  <dependencies>
-                    <dependency>com.google.protobuf:*</dependency>
-                  </dependencies>
-                </requireSameVersions>
-                <requireSameVersions>
-                  <dependencies>
-                    <dependency>com.google.http-client:*</dependency>
-                  </dependencies>
-                </requireSameVersions>
-                <bannedDependencies>
-                  <includes>
-                    <!-- gax-grpc transitvely brings in opencensus-proto, which the latest version is 0.2.0-->
-                    <!-- Only allow 0.2.0 for opencensus-proto and then the latest version (currently 0.31.1) for all other modules-->
-                    <!-- this will need to be updated whenever the opencensus version gets updated -->
-                    <dependency>io.opencensus:*:[${opencensus.version}]</dependency>
-                    <dependency>io.opencensus:opencensus-proto:[0.2.0]</dependency>
-                    <!-- todo: revert this once we have a unified version -->
-                    <!-- jackson-databind's latest version is 2.13.4.2, while other jackson deps' latest version is 2.13.4 -->
-                    <dependency>com.fasterxml.jackson.core:jackson-databind:[2.13.4.2]</dependency>
-                    <dependency>com.fasterxml.jackson.core:[2.13.4]</dependency>
-                    <dependency>com.fasterxml.jackson:*</dependency>
-                  </includes>
-                </bannedDependencies>
-              </rules>
-            </configuration>
-          </execution>
-          <!-- extract slf4 consistency check to own execution so it can be
-          disabled for hbase-client 2.x -->
-          <execution>
-            <id>enforce-version-consistency-slf4j</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <configuration>
-              <rules>
-                <requireSameVersions>
-                  <dependencies>
-                    <dependency>org.slf4j:*</dependency>
-                  </dependencies>
-                </requireSameVersions>
+                <!-- All hbase deps are provided and we have no hope of enforcing rules on them -->
+                <banDuplicateClasses>
+                  <scopes combine.children="override">
+                    <scope>compile</scope>
+                  </scopes>
+                </banDuplicateClasses>
               </rules>
             </configuration>
           </execution>
@@ -361,10 +273,11 @@ limitations under the License.
             <configuration>
               <rules>
                 <bannedDependencies>
+                  <includes>
+                    <include>*:*:*:*:provided</include>
+                    <include>*:*:*:*:test</include>
+                  </includes>
                   <excludes>
-                    <!-- Ban all known dependencies with CVEs -->
-                    <exclude>commons-codec:commons-codec:[,1.15)</exclude>
-                    <exclude>org.apache.commons:commons-compress:[,1.20)</exclude>
                     <!-- ban all log4j 2.x deps with CVEs -->
                     <exclude>org.apache.logging.log4j:*:[2.0-alpha1,2.16.0]</exclude>
                     <!-- ban all log4j -->

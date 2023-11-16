@@ -98,13 +98,16 @@ limitations under the License.
   <build>
     <pluginManagement>
       <plugins>
+        <!-- The only dep that has changed in this module is hbase-shaded-client to hbase-client. hbase-client
+        does not adhere to our enforcement rules and we dont have any way to influence it. So just disable enforcement.
+        TODO: remove this once hbase deps become provided
+        -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-enforcer-plugin</artifactId>
           <executions>
             <execution>
               <id>enforce</id>
-              <!-- requireUpperBoundDeps, banDuplicateClasses -->
               <configuration>
                 <skip>true</skip>
               </configuration>
@@ -119,7 +122,6 @@ limitations under the License.
         </plugin>
       </plugins>
     </pluginManagement>
-
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

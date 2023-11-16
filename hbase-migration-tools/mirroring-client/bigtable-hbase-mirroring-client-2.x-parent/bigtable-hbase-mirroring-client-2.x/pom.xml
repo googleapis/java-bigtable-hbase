@@ -56,7 +56,6 @@ limitations under the License.
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
       <version>${hbase2.version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.google.api</groupId>
@@ -118,33 +117,6 @@ limitations under the License.
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>enforce</id>
-            <configuration>
-              <rules>
-                <requireUpperBoundDeps>
-                  <excludes>
-                    <exclude>com.google.guava:guava</exclude>
-                    <!--
-                    guava:30.1-android requires error_prone_annotations:2.3.4
-                    truth:1.1.2 requires error_prone_annotations:2.5.1
-                     -->
-                    <exclude>com.google.errorprone:error_prone_annotations</exclude>
-                  </excludes>
-                </requireUpperBoundDeps>
-              </rules>
-            </configuration>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
       <!-- copy protobuf-java-format-shaded and core into jar -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
