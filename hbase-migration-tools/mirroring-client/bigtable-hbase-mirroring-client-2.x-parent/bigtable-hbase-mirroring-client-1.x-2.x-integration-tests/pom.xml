@@ -262,7 +262,8 @@ limitations under the License.
     <dependency>
       <groupId>io.prometheus</groupId>
       <artifactId>simpleclient_httpserver</artifactId>
-      <version>0.16.0</version>
+      <!-- Should match prometheus version used by opencensus-exporter-stats-prometheus -->
+      <version>0.6.0</version>
     </dependency>
 
     <!-- Testing deps -->
@@ -403,32 +404,6 @@ limitations under the License.
               <excludes>
                 <exclude>**/*.java</exclude>
               </excludes>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>enforce-version-consistency</id>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </execution>
-          <execution>
-            <id>enforce</id>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </execution>
-          <execution>
-            <id>enforce-banned-deps</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <configuration>
-              <skip>true</skip>
             </configuration>
           </execution>
         </executions>
