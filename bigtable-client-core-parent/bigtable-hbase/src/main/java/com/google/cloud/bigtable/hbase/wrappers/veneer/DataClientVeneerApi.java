@@ -52,6 +52,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
 import org.apache.hadoop.hbase.client.Result;
@@ -70,10 +71,6 @@ public class DataClientVeneerApi implements DataClientWrapper {
       BigtableDataClient delegate, ClientOperationTimeouts clientOperationTimeouts) {
     this.delegate = delegate;
     this.clientOperationTimeouts = clientOperationTimeouts;
-  }
-
-  interface paginatorFunction {
-    public ServerStream<Result> func(Query.QueryPaginator paginator);
   }
 
   @Override
@@ -144,11 +141,10 @@ public class DataClientVeneerApi implements DataClientWrapper {
   public ResultScanner readRows(Query.QueryPaginator paginator) {
     return new PaginatedRowResultScanner(
         paginator,
-        (p) -> {
-          return delegate
-              .readRowsCallable(RESULT_ADAPTER)
-              .call(p.getNextQuery(), createScanCallContext());
-        });
+        p ->
+            delegate
+                .readRowsCallable(RESULT_ADAPTER)
+                .call(p.getNextQuery(), createScanCallContext()));
   }
 
   @Override
@@ -267,7 +263,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
     private Boolean hasMore = true;
     private final Queue<Result> buffer;
     private final Query.QueryPaginator paginator;
-    private final paginatorFunction wrapper;
+    private final Function<Query.QueryPaginator, ServerStream<Result>> streamSegmentFactory;
     private final int refillSegmentWaterMark;
 
     static long maxSegmentByteSize =
@@ -277,13 +273,15 @@ public class DataClientVeneerApi implements DataClientWrapper {
                 (Runtime.getRuntime().totalMemory() * DEFAULT_BYTE_LIMIT_PERCENTAGE));
     private long currentByteSize = 0;
 
-    PaginatedRowResultScanner(Query.QueryPaginator paginator, paginatorFunction wrapper) {
+    PaginatedRowResultScanner(
+        Query.QueryPaginator paginator,
+        Function<Query.QueryPaginator, ServerStream<Result>> streamSegmentFactory) {
       this.paginator = paginator;
-      this.wrapper = wrapper;
+      this.streamSegmentFactory = streamSegmentFactory;
       this.buffer = new ArrayDeque<>();
       this.refillSegmentWaterMark =
           (int) Math.max(1, paginator.getPageSize() * WATERMARK_PERCENTAGE);
-      this.serverStream = this.wrapper.func(this.paginator);
+      this.serverStream = this.streamSegmentFactory.apply(this.paginator);
     }
 
     @Override
@@ -292,7 +290,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
         if (this.buffer.size() < this.refillSegmentWaterMark
             && this.serverStream == null
             && hasMore) {
-          this.serverStream = this.wrapper.func(this.paginator);
+          this.serverStream = this.streamSegmentFactory.apply(this.paginator);
         }
         if (this.buffer.isEmpty() && this.serverStream != null) {
           this.waitReadRowsFuture();
@@ -315,7 +313,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
     }
 
     public boolean renewLease() {
-      throw new UnsupportedOperationException("renewLease");
+      return true;
     }
 
     private void waitReadRowsFuture() {
@@ -373,7 +371,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
     }
 
     public boolean renewLease() {
-      throw new UnsupportedOperationException("renewLease");
+      return true;
     }
   }
 }
