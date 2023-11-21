@@ -51,6 +51,10 @@ limitations under the License.
           <artifactId>bigtable-hbase-2.x</artifactId>
         </exclusion>
         <exclusion>
+          <groupId>com.google.cloud</groupId>
+          <artifactId>google-cloud-bigtable</artifactId>
+        </exclusion>
+        <exclusion>
           <groupId>io.opencensus</groupId>
           <artifactId>*</artifactId>
         </exclusion>
