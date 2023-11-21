@@ -90,6 +90,14 @@ limitations under the License.
       <version>${hbase2.version}</version>
     </dependency>
 
+    <!-- This isnt strictly necessary as it will be pulled in by bigtable-hbase-1.x. However, it helps to resolve
+    RequireUpperBoundDeps issues introduced by the opencensus exporters -->
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-bigtable</artifactId>
+      <version>${bigtable.version}</version>
+    </dependency>
+
 
     <!-- Internal dependencies that will be shaded along with their transitive dependencies.
      When adding new internal dependencies, make sure to exclude them from the reactor in direct dependents.
@@ -105,10 +113,6 @@ limitations under the License.
     <dependency>
       <groupId>io.opencensus</groupId>
       <artifactId>opencensus-impl</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.opencensus</groupId>
-      <artifactId>opencensus-contrib-zpages</artifactId>
     </dependency>
     <dependency>
       <groupId>io.opencensus</groupId>

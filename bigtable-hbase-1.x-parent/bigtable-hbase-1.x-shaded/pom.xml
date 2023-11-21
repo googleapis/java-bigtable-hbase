@@ -105,9 +105,16 @@ limitations under the License.
      When adding new internal dependencies, make sure to exclude them from the reactor in direct dependents.
      See the *-hadoop/pom.xml and bigtable-hbase-beam/pom.xml for more details-->
     <dependency>
-      <groupId>${project.groupId}</groupId>
+      <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-1.x</artifactId>
       <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    </dependency>
+
+    <!-- This isnt strictly necessary as it will be pulled in by bigtable-hbase-1.x. However, it helps to resolve
+    RequireUpperBoundDeps issues introduced by the opencensus exporters -->
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-bigtable</artifactId>
     </dependency>
 
     <!-- Since opencensus-api is a transitive dep, we have to shade its impl as well.
@@ -115,10 +122,6 @@ limitations under the License.
     <dependency>
       <groupId>io.opencensus</groupId>
       <artifactId>opencensus-impl</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.opencensus</groupId>
-      <artifactId>opencensus-contrib-zpages</artifactId>
     </dependency>
     <dependency>
       <groupId>io.opencensus</groupId>

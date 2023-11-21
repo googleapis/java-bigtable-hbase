@@ -34,6 +34,10 @@
           <artifactId>bigtable-hbase-1.x</artifactId>
         </exclusion>
         <exclusion>
+          <groupId>com.google.cloud</groupId>
+          <artifactId>google-cloud-bigtable</artifactId>
+        </exclusion>
+        <exclusion>
           <groupId>com.google.cloud.bigtable</groupId>
           <artifactId>bigtable-metrics-api</artifactId>
         </exclusion>
