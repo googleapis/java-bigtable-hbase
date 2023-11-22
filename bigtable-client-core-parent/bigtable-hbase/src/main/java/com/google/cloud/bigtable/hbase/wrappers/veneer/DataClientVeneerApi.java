@@ -245,7 +245,14 @@ public class DataClientVeneerApi implements DataClientWrapper {
     }
   }
 
-  /** wraps {@link ServerStream} onto HBase {@link ResultScanner}. */
+  /**
+   * wraps {@link ServerStream} onto HBase {@link ResultScanner}. {@link PaginatedRowResultScanner}
+   * gets a paginator and a {@link Query.QueryPaginator} used to get a {@link ServerStream}<{@link
+   * Result}> using said paginator to iterate over pages of rows. The {@link Query.QueryPaginator}
+   * pageSize property indicates the size of each page in every API call. A cache of a maximum size
+   * of 1.1*pageSize and a minimum of 0.1*pageSize is held at all times. In order to avoid OOM
+   * exceptions, there is a limit for the total byte size held in cache.
+   */
   static class PaginatedRowResultScanner extends AbstractClientScanner {
     // Percentage of max number of rows allowed in the buffer
     private static final double WATERMARK_PERCENTAGE = .1;
