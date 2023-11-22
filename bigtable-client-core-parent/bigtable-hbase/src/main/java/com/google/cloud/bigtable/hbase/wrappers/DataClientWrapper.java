@@ -92,5 +92,5 @@ public interface DataClientWrapper extends AutoCloseable {
   @Override
   void close() throws IOException;
 
-  ResultScanner readRows(Query.QueryPaginator paginator);
+  ResultScanner readRows(Query.QueryPaginator paginator, long maxSegmentByteSize);
 }

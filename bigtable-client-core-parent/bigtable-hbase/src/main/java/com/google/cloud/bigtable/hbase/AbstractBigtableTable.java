@@ -305,7 +305,7 @@ public abstract class AbstractBigtableTable implements Table {
       } else {
         Query.QueryPaginator paginator =
             hbaseAdapter.adapt(scan).createPaginator(scan.getCaching());
-        scanner = clientWrapper.readRows(paginator);
+        scanner = clientWrapper.readRows(paginator, -1);
       }
       if (hasWhileMatchFilter(scan.getFilter())) {
         return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner, span);

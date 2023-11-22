@@ -138,13 +138,14 @@ public class DataClientVeneerApi implements DataClientWrapper {
   }
 
   @Override
-  public ResultScanner readRows(Query.QueryPaginator paginator) {
+  public ResultScanner readRows(Query.QueryPaginator paginator, long maxSegmentByteSize) {
     return new PaginatedRowResultScanner(
         paginator,
         p ->
             delegate
                 .readRowsCallable(RESULT_ADAPTER)
-                .call(p.getNextQuery(), createScanCallContext()));
+                .call(p.getNextQuery(), createScanCallContext()),
+        maxSegmentByteSize);
   }
 
   @Override
@@ -266,22 +267,36 @@ public class DataClientVeneerApi implements DataClientWrapper {
     private final Function<Query.QueryPaginator, ServerStream<Result>> streamSegmentFactory;
     private final int refillSegmentWaterMark;
 
-    static long maxSegmentByteSize =
+    private static final long DEFAULT_MAX_SEGMENT_SIZE =
         (long)
             Math.max(
                 MIN_BYTE_BUFFER_SIZE,
                 (Runtime.getRuntime().totalMemory() * DEFAULT_BYTE_LIMIT_PERCENTAGE));
+    private final long maxSegmentByteSize;
+
     private long currentByteSize = 0;
 
     PaginatedRowResultScanner(
         Query.QueryPaginator paginator,
-        Function<Query.QueryPaginator, ServerStream<Result>> streamSegmentFactory) {
+        Function<Query.QueryPaginator, ServerStream<Result>> streamSegmentFactory,
+        long maxSegmentByteSize) {
+      if (maxSegmentByteSize < 0) {
+        maxSegmentByteSize = DEFAULT_MAX_SEGMENT_SIZE;
+      }
+      this.maxSegmentByteSize = maxSegmentByteSize;
+
       this.paginator = paginator;
       this.streamSegmentFactory = streamSegmentFactory;
       this.buffer = new ArrayDeque<>();
       this.refillSegmentWaterMark =
           (int) Math.max(1, paginator.getPageSize() * WATERMARK_PERCENTAGE);
       this.serverStream = this.streamSegmentFactory.apply(this.paginator);
+    }
+
+    PaginatedRowResultScanner(
+        Query.QueryPaginator paginator,
+        Function<Query.QueryPaginator, ServerStream<Result>> streamSegmentFactory) {
+      this(paginator, streamSegmentFactory, DEFAULT_MAX_SEGMENT_SIZE);
     }
 
     @Override
