@@ -129,7 +129,6 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-deploy-plugin</artifactId>
-          <version>3.0.0-M2</version>
         </plugin>
 
         <!-- Disable google-cloud-shared-config's enforcement of enumerating transitive deps.
@@ -158,7 +157,6 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.0.0</version>
           <configuration>
             <trimStackTrace>false</trimStackTrace>
             <!-- enable the ability to skip unit tests, while running integration tests -->
@@ -168,7 +166,6 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-failsafe-plugin</artifactId>
-          <version>3.0.0</version>
           <configuration>
             <trimStackTrace>false</trimStackTrace>
           </configuration>
@@ -182,7 +179,6 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.5.0</version>
           <configuration>
             <doclint>none</doclint>
             <windowtitle>
