@@ -21,6 +21,7 @@ import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.grpc.GrpcCallContext;
 import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStream;
 import com.google.api.gax.rpc.StateCheckingResponseObserver;
 import com.google.api.gax.rpc.StreamController;
@@ -43,16 +44,21 @@ import com.google.cloud.bigtable.metrics.Meter;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.cloud.bigtable.metrics.Timer.Context;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import io.grpc.CallOptions;
 import io.grpc.Deadline;
 import io.grpc.stub.StreamObserver;
+import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
 import org.apache.hadoop.hbase.client.Result;
@@ -140,12 +146,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
   @Override
   public ResultScanner readRows(Query.QueryPaginator paginator, long maxSegmentByteSize) {
     return new PaginatedRowResultScanner(
-        paginator,
-        p ->
-            delegate
-                .readRowsCallable(RESULT_ADAPTER)
-                .call(p.getNextQuery(), createScanCallContext()),
-        maxSegmentByteSize);
+        paginator, delegate, maxSegmentByteSize, () -> this.createScanCallContext());
   }
 
   @Override
@@ -266,13 +267,13 @@ public class DataClientVeneerApi implements DataClientWrapper {
         BigtableClientMetrics.timer(
             BigtableClientMetrics.MetricLevel.Debug, "scanner.results.latency");
 
-    private ServerStream<Result> serverStream;
     private ByteString lastSeenRowKey = ByteString.EMPTY;
     private Boolean hasMore = true;
     private final Queue<Result> buffer;
     private final Query.QueryPaginator paginator;
-    private final Function<Query.QueryPaginator, ServerStream<Result>> streamSegmentFactory;
     private final int refillSegmentWaterMark;
+
+    private final BigtableDataClient dataClient;
 
     private static final long DEFAULT_MAX_SEGMENT_SIZE =
         (long)
@@ -283,39 +284,40 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
     private long currentByteSize = 0;
 
+    private @Nullable Future<List<Result>> future;
+    private Supplier<GrpcCallContext> createScanCallContext;
+
     PaginatedRowResultScanner(
         Query.QueryPaginator paginator,
-        Function<Query.QueryPaginator, ServerStream<Result>> streamSegmentFactory,
-        long maxSegmentByteSize) {
+        BigtableDataClient dataClient,
+        long maxSegmentByteSize,
+        Supplier<GrpcCallContext> createScanCallContext) {
       if (maxSegmentByteSize < 0) {
         maxSegmentByteSize = DEFAULT_MAX_SEGMENT_SIZE;
       }
       this.maxSegmentByteSize = maxSegmentByteSize;
 
       this.paginator = paginator;
-      this.streamSegmentFactory = streamSegmentFactory;
+      this.dataClient = dataClient;
       this.buffer = new ArrayDeque<>();
       this.refillSegmentWaterMark =
           (int) Math.max(1, paginator.getPageSize() * WATERMARK_PERCENTAGE);
-      this.serverStream = this.streamSegmentFactory.apply(this.paginator);
-    }
-
-    PaginatedRowResultScanner(
-        Query.QueryPaginator paginator,
-        Function<Query.QueryPaginator, ServerStream<Result>> streamSegmentFactory) {
-      this(paginator, streamSegmentFactory, DEFAULT_MAX_SEGMENT_SIZE);
+      this.createScanCallContext = createScanCallContext;
+      this.future = fetchNextSegment();
     }
 
     @Override
     public Result next() {
       try (Context ignored = scannerResultTimer.time()) {
-        if (this.buffer.size() < this.refillSegmentWaterMark
-            && this.serverStream == null
-            && hasMore) {
-          this.serverStream = this.streamSegmentFactory.apply(this.paginator);
+        if (this.buffer.size() < this.refillSegmentWaterMark && this.future == null && hasMore) {
+          future = fetchNextSegment();
         }
-        if (this.buffer.isEmpty() && this.serverStream != null) {
-          this.waitReadRowsFuture();
+        if (this.buffer.isEmpty() && this.future != null) {
+          try {
+            this.waitReadRowsFuture();
+          } catch (IOException e) {
+            return null;
+          }
         }
         scannerResultMeter.mark();
         Result result = this.buffer.poll();
@@ -328,9 +330,8 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
     @Override
     public void close() {
-      if (this.serverStream != null) {
-        this.serverStream.cancel();
-        this.serverStream = null;
+      if (this.future != null) {
+        this.future.cancel(true);
       }
     }
 
@@ -338,23 +339,69 @@ public class DataClientVeneerApi implements DataClientWrapper {
       return true;
     }
 
-    private void waitReadRowsFuture() {
-      Iterator<Result> iterator = this.serverStream.iterator();
-      while (iterator.hasNext()) {
-        Result result = iterator.next();
-        this.buffer.add(result);
-        if (result == null || result.rawCells() == null) {
-          continue;
-        }
-        this.lastSeenRowKey = RESULT_ADAPTER.getKey(result);
-        this.currentByteSize += Result.getTotalSizeOfCells(result);
-        if (this.currentByteSize >= maxSegmentByteSize) {
-          this.serverStream.cancel();
-          break;
-        }
+    private Future<List<Result>> fetchNextSegment() {
+      SettableFuture<List<Result>> resultsFuture = SettableFuture.create();
+
+      dataClient
+          .readRowsCallable(RESULT_ADAPTER)
+          .call(
+              paginator.getNextQuery(),
+              new ResponseObserver<Result>() {
+                private StreamController controller;
+                List<Result> results = new ArrayList();
+
+                long currentByteSize = 0;
+                boolean byteLimitReached = false;
+
+                @Override
+                public void onStart(StreamController controller) {
+                  this.controller = controller;
+                }
+
+                @Override
+                public void onResponse(Result result) {
+                  // calculate size of the response
+                  currentByteSize += Result.getTotalSizeOfCells(result);
+                  results.add(result);
+                  if (result != null && result.rawCells() != null) {
+                    lastSeenRowKey = RESULT_ADAPTER.getKey(result);
+                  }
+
+                  if (currentByteSize > maxSegmentByteSize) {
+                    byteLimitReached = true;
+                    controller.cancel();
+                    return;
+                  }
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                  resultsFuture.setException(t);
+                }
+
+                @Override
+                public void onComplete() {
+                  hasMore = paginator.advance(lastSeenRowKey);
+                  resultsFuture.set(results);
+                }
+              },
+              this.createScanCallContext.get());
+      return resultsFuture;
+    }
+
+    private void waitReadRowsFuture() throws IOException {
+      try {
+        List<Result> results = future.get();
+        this.buffer.addAll(results);
+        this.hasMore = this.paginator.advance(this.lastSeenRowKey);
+        this.future = null;
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IOException(e);
+      } catch (ExecutionException e) {
+        Throwable cause = e.getCause();
+        throw new IOException(cause);
       }
-      this.hasMore = this.paginator.advance(this.lastSeenRowKey);
-      this.serverStream = null;
     }
   }
 
