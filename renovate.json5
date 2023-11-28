@@ -55,7 +55,11 @@
         "^junit:junit",
         "^com.google.truth:truth",
         "^org.mockito:mockito-core",
-        "^org.objenesis:objenesis"
+        "^org.objenesis:objenesis",
+        "^truth.version",
+        "^junit.version",
+        "^hamcrest.version",
+        "^mockito.version"
       ],
       "semanticCommitType": "test",
       "semanticCommitScope": "deps"
