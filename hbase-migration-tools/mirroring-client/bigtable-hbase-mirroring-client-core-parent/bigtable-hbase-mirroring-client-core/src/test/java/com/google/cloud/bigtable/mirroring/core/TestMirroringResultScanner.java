@@ -278,8 +278,7 @@ public class TestMirroringResultScanner {
       final List<ScannerRequestContext> list) {
     return new FutureCallback<AsyncScannerVerificationPayload>() {
       @Override
-      public void onSuccess(
-          AsyncScannerVerificationPayload asyncScannerVerificationPayload) {
+      public void onSuccess(AsyncScannerVerificationPayload asyncScannerVerificationPayload) {
         list.add(asyncScannerVerificationPayload.context);
       }
 
