@@ -34,7 +34,14 @@ limitations under the License.
   </description>
 
   <dependencies>
-    <!-- external deps -->
+    <!-- Environment deps first -->
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-shaded-client</artifactId>
+      <version>${hbase2.version}</version>
+    </dependency>
+
+    <!-- Project deps -->
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-mirroring-client-core</artifactId>
@@ -42,6 +49,7 @@ limitations under the License.
       <scope>compile</scope>
 
       <exclusions>
+        <!-- Exclude the environment deps, as they are declared explicitly above -->
         <exclusion>
           <groupId>org.apache.hbase</groupId>
           <artifactId>hbase-shaded-client</artifactId>
@@ -52,24 +60,7 @@ limitations under the License.
         </exclusion>
       </exclusions>
     </dependency>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-client</artifactId>
-      <version>${hbase2.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.api</groupId>
-      <artifactId>api-common</artifactId>
-      <version>1.10.6</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>${guava.version}</version>
-      <scope>compile</scope>
-    </dependency>
-    <!-- shaded deps -->
+
     <dependency>
       <groupId>net.javacrumbs.future-converter</groupId>
       <artifactId>future-converter-java8-guava</artifactId>
@@ -103,13 +94,10 @@ limitations under the License.
       <type>test-jar</type>
       <scope>test</scope>
       <exclusions>
+        <!-- We only want the test helpers -->
         <exclusion>
-          <artifactId>org.apache.hbase</artifactId>
           <groupId>*</groupId>
-        </exclusion>
-        <exclusion>
-          <groupId>ch.qos.reload4j</groupId>
-          <artifactId>reload4j</artifactId>
+          <artifactId>*</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -117,25 +105,25 @@ limitations under the License.
 
   <build>
     <plugins>
-      <!-- copy protobuf-java-format-shaded and core into jar -->
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+
         <executions>
           <execution>
-            <phase>package</phase>
+            <id>verify-mirror-deps-hbase</id>
+            <phase>verify</phase>
             <goals>
-              <goal>shade</goal>
+              <goal>verify-mirror-deps</goal>
             </goals>
             <configuration>
-              <shadedArtifactAttached>false</shadedArtifactAttached>
-              <createDependencyReducedPom>true</createDependencyReducedPom>
-              <artifactSet>
-                <includes>
-                  <include>com.google.cloud.bigtable:protobuf-java-format-shaded</include>
-                  <include>${project.groupId}:bigtable-hbase-mirroring-client-core</include>
-                </includes>
-              </artifactSet>
+              <targetDependencies>
+                <!-- make sure that we are a strict superset of hbase -->
+                <targetDependency>org.apache.hbase:hbase-shaded-client</targetDependency>
+              </targetDependencies>
+              <ignoredDependencies>
+              </ignoredDependencies>
             </configuration>
           </execution>
         </executions>

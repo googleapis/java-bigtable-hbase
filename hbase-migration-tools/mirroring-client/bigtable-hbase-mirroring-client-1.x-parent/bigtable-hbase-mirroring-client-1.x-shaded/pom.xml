@@ -35,15 +35,7 @@ limitations under the License.
   </description>
 
   <dependencies>
-    <!-- Internal dependencies that will be shaded along with their transitive dependencies. -->
-    <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-hbase-mirroring-client-1.x</artifactId>
-      <version>0.7.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
-      <scope>compile</scope>
-    </dependency>
-
-    <!-- Manually promote public dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
+    <!-- Environment deps first -->
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
@@ -59,6 +51,14 @@ limitations under the License.
       <groupId>ch.qos.reload4j</groupId>
       <artifactId>reload4j</artifactId>
       <version>${reload4j.version}</version>
+    </dependency>
+
+    <!-- Internal dependencies that will be shaded along with their transitive dependencies. -->
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-hbase-mirroring-client-1.x</artifactId>
+      <version>0.7.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+      <scope>compile</scope>
     </dependency>
   </dependencies>
 
@@ -100,18 +100,17 @@ limitations under the License.
               </transformers>
               <artifactSet>
                 <excludes>
-                  <!-- exclude user visible deps -->
-                  <exclude>commons-logging:commons-logging</exclude>
                   <!-- exclude hbase-shaded-client & all of its dependencies -->
                   <exclude>org.apache.hbase:hbase-shaded-client</exclude>
+                  <exclude>commons-logging:commons-logging</exclude>
                   <exclude>org.slf4j:slf4j-api</exclude>
-                  <exclude>org.slf4j:slf4j-log4j12</exclude>
-                  <exclude>log4j:log4j</exclude>
-                  <exclude>ch.qos.reload4j:reload4j</exclude>
-                  <exclude>org.apache.htrace:htrace-core4</exclude>
-                  <exclude>org.apache.htrace:htrace-core</exclude>
                   <exclude>com.github.stephenc.findbugs:findbugs-annotations</exclude>
+                  <exclude>org.apache.htrace:htrace-core4</exclude>
                   <exclude>log4j:log4j</exclude>
+                  <exclude>org.apache.htrace:htrace-core</exclude>
+                  <exclude>org.slf4j:slf4j-log4j12</exclude>
+                  <!-- Exclude reload4j -->
+                  <exclude>ch.qos.reload4j:reload4j</exclude>
                 </excludes>
               </artifactSet>
               <relocations>

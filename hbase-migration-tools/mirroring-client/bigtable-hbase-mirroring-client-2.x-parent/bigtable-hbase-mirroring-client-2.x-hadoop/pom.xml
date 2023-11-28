@@ -40,6 +40,24 @@ limitations under the License.
 
   <dependencies>
     <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-client</artifactId>
+      <version>${hbase2.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.reload4j</groupId>
+      <artifactId>reload4j</artifactId>
+      <version>${reload4j.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-mirroring-client-2.x-shaded</artifactId>
       <version>0.7.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
@@ -59,31 +77,9 @@ limitations under the License.
           <groupId>${project.groupId}</groupId>
           <artifactId>bigtable-hbase-mirroring-client-2.x</artifactId>
         </exclusion>
-        <exclusion>
-          <groupId>io.opencensus</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
       </exclusions>
     </dependency>
 
-    <!-- Manually promote public dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-client</artifactId>
-      <version>${hbase2.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>log4j</groupId>
-          <artifactId>log4j</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>ch.qos.reload4j</groupId>
-      <artifactId>reload4j</artifactId>
-      <version>${reload4j.version}</version>
-      <scope>runtime</scope>
-    </dependency>
   </dependencies>
 
   <build>
