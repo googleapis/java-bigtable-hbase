@@ -70,7 +70,7 @@ limitations under the License.
     <hbase2.version>2.3.6</hbase2.version>
 
     <!-- bytebuddy dependency version for resolving hbase backward incompatible changes -->
-    <byte.buddy.version>1.14.2</byte.buddy.version>
+    <byte.buddy.version>1.14.10</byte.buddy.version>
 
     <license-maven-plugin.version>2.0.0</license-maven-plugin.version>
     <!-- testing dependency versions -->
