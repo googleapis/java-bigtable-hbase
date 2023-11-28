@@ -40,7 +40,6 @@ import io.opencensus.trace.Tracer;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * Used to create named spans for tracing (using {@link #tracer}) and recording metrics related to
@@ -74,7 +73,7 @@ public class MirroringSpanFactory {
     final Span span = getCurrentSpan();
     return new FutureCallback<T>() {
       @Override
-      public void onSuccess(@NullableDecl T t) {
+      public void onSuccess(T t) {
         try (Scope scope = spanAsScope(span)) {
           callback.onSuccess(t);
         }
@@ -152,7 +151,7 @@ public class MirroringSpanFactory {
   public <T> FutureCallback<T> wrapReadVerificationCallback(final FutureCallback<T> callback) {
     return new FutureCallback<T>() {
       @Override
-      public void onSuccess(@NullableDecl T t) {
+      public void onSuccess(T t) {
         try (Scope scope = MirroringSpanFactory.this.verificationScope()) {
           callback.onSuccess(t);
         }
@@ -175,7 +174,7 @@ public class MirroringSpanFactory {
     // it.
     return new FutureCallback<T>() {
       @Override
-      public void onSuccess(@NullableDecl T t) {
+      public void onSuccess(T t) {
         mirroringTracer.metricsRecorder.recordSecondaryWriteErrors(operation, 0);
       }
 
