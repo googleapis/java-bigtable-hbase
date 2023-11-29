@@ -305,15 +305,14 @@ public class DataClientVeneerApi implements DataClientWrapper {
     @Override
     public Result next() {
       try (Context ignored = scannerResultTimer.time()) {
+        if (this.future != null && this.future.isDone()){
+          this.consumeReadRowsFuture();
+        }
         if (this.buffer.size() < this.refillSegmentWaterMark && this.future == null && hasMore) {
           future = fetchNextSegment();
         }
         if (this.buffer.isEmpty() && this.future != null) {
-          try {
-            this.waitReadRowsFuture();
-          } catch (IOException e) {
-            return null;
-          }
+          this.consumeReadRowsFuture();
         }
         Result result = this.buffer.poll();
         if (result != null) {
@@ -346,9 +345,6 @@ public class DataClientVeneerApi implements DataClientWrapper {
                 private StreamController controller;
                 List<Result> results = new ArrayList();
 
-                long currentByteSize = 0;
-                boolean byteLimitReached = false;
-
                 @Override
                 public void onStart(StreamController controller) {
                   this.controller = controller;
@@ -364,7 +360,6 @@ public class DataClientVeneerApi implements DataClientWrapper {
                   }
 
                   if (currentByteSize > maxSegmentByteSize) {
-                    byteLimitReached = true;
                     controller.cancel();
                     return;
                   }
@@ -385,18 +380,16 @@ public class DataClientVeneerApi implements DataClientWrapper {
       return resultsFuture;
     }
 
-    private void waitReadRowsFuture() throws IOException {
+    private void consumeReadRowsFuture()  {
       try {
-        List<Result> results = future.get();
+        List<Result> results = this.future.get();
         this.buffer.addAll(results);
         this.hasMore = this.paginator.advance(this.lastSeenRowKey);
         this.future = null;
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
-        throw new IOException(e);
       } catch (ExecutionException e) {
-        Throwable cause = e.getCause();
-        throw new IOException(cause);
+        // Do nothing.
       }
     }
   }
