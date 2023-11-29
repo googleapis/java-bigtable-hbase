@@ -39,6 +39,25 @@ limitations under the License.
   </properties>
 
   <dependencies>
+    <!-- Environment deps first -->
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-client</artifactId>
+      <version>${hbase1.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.reload4j</groupId>
+      <artifactId>reload4j</artifactId>
+      <version>${reload4j.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+
     <!-- Internal dependencies that will be shaded along with their transitive dependencies. -->
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
@@ -60,30 +79,7 @@ limitations under the License.
           <groupId>${project.groupId}</groupId>
           <artifactId>bigtable-hbase-mirroring-client-1.x</artifactId>
         </exclusion>
-        <exclusion>
-          <groupId>io.opencensus</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
       </exclusions>
-    </dependency>
-
-    <!-- Manually promote public dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-client</artifactId>
-      <version>${hbase1.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>log4j</groupId>
-          <artifactId>log4j</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>ch.qos.reload4j</groupId>
-      <artifactId>reload4j</artifactId>
-      <version>${reload4j.version}</version>
-      <scope>runtime</scope>
     </dependency>
   </dependencies>
 
@@ -146,9 +142,6 @@ limitations under the License.
                 <includes>
                   <include>
                     com.google.cloud.bigtable:bigtable-hbase-mirroring-client-1.x-shaded
-                  </include>
-                  <include>
-                    com.google.cloud.bigtable:bigtable-hbase-mirroring-client-1.x
                   </include>
                 </includes>
               </artifactSet>
