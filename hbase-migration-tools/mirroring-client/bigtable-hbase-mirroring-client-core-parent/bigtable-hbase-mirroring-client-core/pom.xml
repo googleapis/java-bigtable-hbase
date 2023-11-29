@@ -83,6 +83,7 @@ limitations under the License.
       <groupId>com.google.api</groupId>
       <artifactId>api-common</artifactId>
       <version>1.10.6</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -90,13 +91,7 @@ limitations under the License.
       <version>${guava.version}</version>
     </dependency>
 
-    <dependency>
-      <groupId>org.checkerframework</groupId>
-      <artifactId>checker-compat-qual</artifactId>
-      <version>2.5.5</version>
-      <scope>provided</scope>
-    </dependency>
-
+    <!-- deps to be shaded -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>

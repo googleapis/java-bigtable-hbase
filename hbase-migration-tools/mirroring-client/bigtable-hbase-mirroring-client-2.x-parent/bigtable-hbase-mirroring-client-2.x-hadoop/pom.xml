@@ -33,11 +33,6 @@ limitations under the License.
     Bigtable/HBase Mirroring Client conforming to HBase API 2.x. Uses hbase-client and shades all dependencies.
   </description>
 
-  <properties>
-    <!-- define a property that can be ignored by renovate -->
-    <hbase2-hadoop-slf4j.version>1.7.30</hbase2-hadoop-slf4j.version>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.apache.hbase</groupId>
