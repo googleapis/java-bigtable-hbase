@@ -195,8 +195,8 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
   // Support 2 bigtable-hbase features not directly available in veneer:
   // - per attempt deadlines - vener doesn't implement deadlines for attempts. To workaround this,
-  // the timeouts are set per call in the ApiCallContext. However this creates a separate issue of
-  // over running the operation deadline, so gRPC deadline is also set.
+  //   the timeouts are set per call in the ApiCallContext. However this creates a separate issue of
+  //   over running the operation deadline, so gRPC deadline is also set.
   private GrpcCallContext createScanCallContext() {
     GrpcCallContext ctx = GrpcCallContext.createDefault();
     OperationTimeouts callSettings = clientOperationTimeouts.getScanTimeouts();
