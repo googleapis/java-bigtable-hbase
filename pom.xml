@@ -60,7 +60,7 @@ limitations under the License.
     <google-cloud-bigtable-emulator.version>0.165.0</google-cloud-bigtable-emulator.version>
     <bigtable-metrics-api.version>1.29.2</bigtable-metrics-api.version>
     <!-- Optional dep for bigtable-metrics-api used for tests -->
-    <dropwizard-metrics.version>4.2.21</dropwizard-metrics.version>
+    <dropwizard-metrics.version>4.2.22</dropwizard-metrics.version>
 
     <!--  keeping at this version to align with hbase-->
     <reload4j.version>1.2.24</reload4j.version>
@@ -70,9 +70,9 @@ limitations under the License.
     <hbase2.version>2.3.6</hbase2.version>
 
     <!-- bytebuddy dependency version for resolving hbase backward incompatible changes -->
-    <byte.buddy.version>1.14.2</byte.buddy.version>
+    <byte.buddy.version>1.14.10</byte.buddy.version>
 
-    <license-maven-plugin.version>2.0.0</license-maven-plugin.version>
+    <license-maven-plugin.version>2.3.0</license-maven-plugin.version>
     <!-- testing dependency versions -->
     <commons-lang.version>2.6</commons-lang.version>
     <junit.version>4.13.2</junit.version>

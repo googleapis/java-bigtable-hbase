@@ -34,10 +34,6 @@ limitations under the License.
     in order to work with Bigtable.
   </description>
 
-  <properties>
-    <mrunit.version>1.1.0</mrunit.version>
-  </properties>
-
   <!-- NOTE: this artifact is designed to be used alongside hbase-server via
   the bin/hbase script. Its primary intention is to produce a single jar that can
   be added to hbase's classpath to kick off mapreduce jobs targeted at bigtable.
@@ -91,10 +87,15 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.mrunit</groupId>
-      <artifactId>mrunit</artifactId>
-      <version>${mrunit.version}</version>
-      <classifier>hadoop2</classifier>
+      <groupId>com.google.truth</groupId>
+      <artifactId>truth</artifactId>
+      <version>${truth.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
