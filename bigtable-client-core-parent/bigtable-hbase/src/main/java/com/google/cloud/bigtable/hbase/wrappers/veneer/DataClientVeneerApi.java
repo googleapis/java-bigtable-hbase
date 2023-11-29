@@ -315,9 +315,9 @@ public class DataClientVeneerApi implements DataClientWrapper {
             return null;
           }
         }
-        scannerResultMeter.mark();
         Result result = this.buffer.poll();
         if (result != null) {
+          scannerResultMeter.mark();
           currentByteSize -= Result.getTotalSizeOfCells(result);
         }
         return result;
