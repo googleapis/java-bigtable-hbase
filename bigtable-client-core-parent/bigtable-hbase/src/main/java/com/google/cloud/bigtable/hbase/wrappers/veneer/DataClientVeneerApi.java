@@ -146,7 +146,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
   @Override
   public ResultScanner readRows(Query.QueryPaginator paginator, long maxSegmentByteSize) {
     return new PaginatedRowResultScanner(
-        paginator, delegate, maxSegmentByteSize, () -> this.createScanCallContext());
+        paginator, delegate, maxSegmentByteSize, this.createScanCallContext());
   }
 
   @Override
@@ -170,8 +170,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
         .call(request, new StreamObserverAdapter<>(observer), createScanCallContext());
   }
 
-  // Point reads are implemented using a streaming ReadRows RPC. So timeouts need
-  // to be managed
+  // Point reads are implemented using a streaming ReadRows RPC. So timeouts need to be managed
   // similar to scans below.
   private ApiCallContext createReadRowCallContext() {
     GrpcCallContext ctx = GrpcCallContext.createDefault();
@@ -195,10 +194,8 @@ public class DataClientVeneerApi implements DataClientWrapper {
   }
 
   // Support 2 bigtable-hbase features not directly available in veneer:
-  // - per attempt deadlines - vener doesn't implement deadlines for attempts. To
-  // workaround this,
-  // the timeouts are set per call in the ApiCallContext. However this creates a
-  // separate issue of
+  // - per attempt deadlines - vener doesn't implement deadlines for attempts. To workaround this,
+  // the timeouts are set per call in the ApiCallContext. However this creates a separate issue of
   // over running the operation deadline, so gRPC deadline is also set.
   private GrpcCallContext createScanCallContext() {
     GrpcCallContext ctx = GrpcCallContext.createDefault();
@@ -285,13 +282,13 @@ public class DataClientVeneerApi implements DataClientWrapper {
     private long currentByteSize = 0;
 
     private @Nullable Future<List<Result>> future;
-    private Supplier<GrpcCallContext> createScanCallContext;
+    private GrpcCallContext scanCallContext;
 
     PaginatedRowResultScanner(
         Query.QueryPaginator paginator,
         BigtableDataClient dataClient,
         long maxSegmentByteSize,
-        Supplier<GrpcCallContext> createScanCallContext) {
+        GrpcCallContext scanCallContext) {
       if (maxSegmentByteSize < 0) {
         maxSegmentByteSize = DEFAULT_MAX_SEGMENT_SIZE;
       }
@@ -302,7 +299,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
       this.buffer = new ArrayDeque<>();
       this.refillSegmentWaterMark =
           (int) Math.max(1, paginator.getPageSize() * WATERMARK_PERCENTAGE);
-      this.createScanCallContext = createScanCallContext;
+      this.scanCallContext = scanCallContext;
       this.future = fetchNextSegment();
     }
 
@@ -385,7 +382,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
                   resultsFuture.set(results);
                 }
               },
-              this.createScanCallContext.get());
+              this.scanCallContext);
       return resultsFuture;
     }
 

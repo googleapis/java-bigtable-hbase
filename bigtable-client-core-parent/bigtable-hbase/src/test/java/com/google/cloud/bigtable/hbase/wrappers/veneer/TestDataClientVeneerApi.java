@@ -80,7 +80,7 @@ public class TestDataClientVeneerApi {
   private static final String TABLE_ID = "fake-table";
   private static final ByteString ROW_KEY = ByteString.copyFromUtf8("row-key");
 
-  private static AtomicBoolean cancelled = new AtomicBoolean(false);
+  private AtomicBoolean cancelled = new AtomicBoolean(false);
 
   private static final Row MODEL_ROW =
       Row.create(
