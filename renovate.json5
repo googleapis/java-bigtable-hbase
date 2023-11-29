@@ -55,7 +55,11 @@
         "^junit:junit",
         "^com.google.truth:truth",
         "^org.mockito:mockito-core",
-        "^org.objenesis:objenesis"
+        "^org.objenesis:objenesis",
+        "^truth.version",
+        "^junit.version",
+        "^hamcrest.version",
+        "^mockito.version"
       ],
       "semanticCommitType": "test",
       "semanticCommitScope": "deps"
@@ -71,24 +75,6 @@
         "^com.fasterxml.jackson.core"
       ],
       "groupName": "jackson dependencies"
-    },
-    {
-      // pin to beam deps
-      "packagePatterns": ["^beam-slf4j.version"],
-      "enabled": false
-    },
-    {
-      // pin to hbase deps
-      "packagePatterns": [
-        "^hbase.-hadoop-slf4j.version",
-        "^hbase.-mapreduce-slfj.version"
-      ],
-      "enabled": false
-    },
-    {
-      // pin to bigtable version
-      "packagePatterns": ["^grpc-conscrypt.version"],
-      "enabled": false
     },
     {
       // pinned to avoid internal deps conflict between beam-sdks-java-core & beam-model-pipeline
@@ -107,6 +93,7 @@
         "^com.google.cloud:google-cloud-bigtable",
         "^com.google.cloud:google-cloud-bigtable-emulator-core",
         "^com.google.cloud:google-cloud-bigtable-emulator",
+        "^com.google.cloud:google-cloud-shared-config",
       ],
       "groupName": "google-cloud-bigtable dependencies"
     }

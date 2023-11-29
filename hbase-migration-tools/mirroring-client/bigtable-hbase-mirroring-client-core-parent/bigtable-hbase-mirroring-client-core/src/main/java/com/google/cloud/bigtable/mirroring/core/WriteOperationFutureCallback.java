@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.mirroring.core;
 
 import com.google.common.util.concurrent.FutureCallback;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * Write operations do not perform verification, only report failed writes. For this reason callback
@@ -26,7 +25,7 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 public abstract class WriteOperationFutureCallback<T> implements FutureCallback<T> {
 
   @Override
-  public final void onSuccess(@NullableDecl T t) {}
+  public final void onSuccess(T t) {}
 
   public abstract void onFailure(Throwable throwable);
 }

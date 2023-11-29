@@ -178,29 +178,13 @@ limitations under the License.
   </profiles>
 
   <dependencies>
-    <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-hbase-mirroring-client-1.x</artifactId>
-      <version>0.7.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
-      <scope>test</scope>
-    </dependency>
-
+    <!-- Environment deps first -->
     <dependency>
       <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-client</artifactId>
+      <artifactId>hbase-shaded-testing-util</artifactId>
       <version>${hbase1.version}</version>
       <scope>test</scope>
       <exclusions>
-        <!-- exclusion to avoid version conflict with existing artifact  -->
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-        <!-- exclusion to avoid version conflict with existing artifact  -->
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
         <exclusion>
           <groupId>log4j</groupId>
           <artifactId>log4j</artifactId>
@@ -211,48 +195,64 @@ limitations under the License.
       <groupId>ch.qos.reload4j</groupId>
       <artifactId>reload4j</artifactId>
       <version>${reload4j.version}</version>
-      <scope>runtime</scope>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Project Modules -->
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-hbase-mirroring-client-1.x</artifactId>
+      <version>0.7.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-shaded-client</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
+      <artifactId>bigtable-hbase-1.x</artifactId>
       <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <scope>test</scope>
+      <exclusions>
+        <!-- already included in the hbase-shaded-testing-util -->
+        <exclusion>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-shaded-client</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <!-- This gets pulled in by bigtable-hbase-1.x.
+    Add ths to resolve conflict with the guava version that opencensus-exporter-trace-zipkin pulls in -->
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-bigtable</artifactId>
+      <version>${bigtable.version}</version>
       <scope>test</scope>
     </dependency>
 
-    <!-- HBase testing tools -->
+
+    <!-- Internal testing utils -->
     <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-testing-util</artifactId>
-      <version>${hbase1.version}</version>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-hbase-mirroring-client-core</artifactId>
+      <version>0.7.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+      <type>test-jar</type>
       <scope>test</scope>
       <exclusions>
-        <!-- exclusion to avoid version conflict with existing artifact  -->
+        <!-- Only want test helpers -->
         <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-        <!-- exclusion to avoid version conflict with existing artifact  -->
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>log4j</groupId>
-          <artifactId>log4j</artifactId>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
 
     <!-- Misc -->
-    <dependency>
-      <groupId>com.google.protobuf</groupId>
-      <artifactId>protobuf-java</artifactId>
-      <version>3.22.2</version>
-      <scope>test</scope>
-    </dependency>
-
     <dependency>
       <groupId>commons-lang</groupId>
       <artifactId>commons-lang</artifactId>
@@ -264,22 +264,26 @@ limitations under the License.
       <groupId>io.opencensus</groupId>
       <artifactId>opencensus-impl</artifactId>
       <version>${opencensus.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.opencensus</groupId>
       <artifactId>opencensus-exporter-trace-zipkin</artifactId>
       <version>${opencensus.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.opencensus</groupId>
       <artifactId>opencensus-exporter-stats-prometheus</artifactId>
       <version>${opencensus.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.prometheus</groupId>
       <artifactId>simpleclient_httpserver</artifactId>
       <!-- Should match prometheus version used by opencensus-exporter-stats-prometheus -->
       <version>0.6.0</version>
+      <scope>test</scope>
     </dependency>
 
     <!-- Testing deps -->
@@ -291,47 +295,15 @@ limitations under the License.
     </dependency>
 
     <dependency>
-      <groupId>org.junit.platform</groupId>
-      <artifactId>junit-platform-launcher</artifactId>
-      <version>1.9.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.vintage</groupId>
-      <artifactId>junit-vintage-engine</artifactId>
-      <version>${junit-vintage-engine.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
       <groupId>com.google.truth</groupId>
       <artifactId>truth</artifactId>
-      <version>1.1.3</version>
+      <version>${truth.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <version>${mockito.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-api</artifactId>
-      <version>2.20.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-core</artifactId>
-      <version>2.20.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-hbase-mirroring-client-core</artifactId>
-      <version>0.7.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
-      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -343,7 +315,6 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-deploy-plugin</artifactId>
-          <version>3.0.0-M1</version>
           <configuration>
             <skip>true</skip>
           </configuration>

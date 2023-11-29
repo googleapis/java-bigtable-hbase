@@ -34,19 +34,19 @@ limitations under the License.
   </description>
 
   <dependencies>
-    <!-- Internal dependencies that will be shaded along with their transitive dependencies. -->
-    <dependency>
-      <groupId>com.google.cloud.bigtable</groupId>
-      <artifactId>bigtable-hbase-mirroring-client-2.x</artifactId>
-      <version>0.7.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
-      <scope>compile</scope>
-    </dependency>
-
-    <!-- Manually promote dependencies: This is necessary to avoid flattening hbase-shaded-client's dependency tree -->
+    <!-- HBase public deps -->
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-client</artifactId>
       <version>${hbase2.version}</version>
+    </dependency>
+
+    <!-- Internal dependencies that will be shaded along with their transitive dependencies.
+     When adding new internal dependencies, make sure to exclude them from the reactor in direct dependents.-->
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-hbase-mirroring-client-2.x</artifactId>
+      <version>0.7.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
     </dependency>
   </dependencies>
 

@@ -60,7 +60,7 @@ limitations under the License.
     <google-cloud-bigtable-emulator.version>0.165.0</google-cloud-bigtable-emulator.version>
     <bigtable-metrics-api.version>1.29.2</bigtable-metrics-api.version>
     <!-- Optional dep for bigtable-metrics-api used for tests -->
-    <dropwizard-metrics.version>4.2.21</dropwizard-metrics.version>
+    <dropwizard-metrics.version>4.2.22</dropwizard-metrics.version>
 
     <!--  keeping at this version to align with hbase-->
     <reload4j.version>1.2.24</reload4j.version>
@@ -70,12 +70,14 @@ limitations under the License.
     <hbase2.version>2.3.6</hbase2.version>
 
     <!-- bytebuddy dependency version for resolving hbase backward incompatible changes -->
-    <byte.buddy.version>1.14.2</byte.buddy.version>
+    <byte.buddy.version>1.14.10</byte.buddy.version>
 
+    <license-maven-plugin.version>2.3.0</license-maven-plugin.version>
     <!-- testing dependency versions -->
     <commons-lang.version>2.6</commons-lang.version>
     <junit.version>4.13.2</junit.version>
     <junit-vintage-engine.version>5.9.2</junit-vintage-engine.version>
+    <truth.version>1.1.5</truth.version>
     <hamcrest.version>1.3</hamcrest.version>
     <mockito.version>4.11.0</mockito.version>
     <beam.version>2.51.0</beam.version>
@@ -127,7 +129,6 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-deploy-plugin</artifactId>
-          <version>3.0.0-M2</version>
         </plugin>
 
         <!-- Disable google-cloud-shared-config's enforcement of enumerating transitive deps.
@@ -156,7 +157,6 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.0.0</version>
           <configuration>
             <trimStackTrace>false</trimStackTrace>
             <!-- enable the ability to skip unit tests, while running integration tests -->
@@ -166,7 +166,6 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-failsafe-plugin</artifactId>
-          <version>3.0.0</version>
           <configuration>
             <trimStackTrace>false</trimStackTrace>
           </configuration>
@@ -180,7 +179,6 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.5.0</version>
           <configuration>
             <doclint>none</doclint>
             <windowtitle>
