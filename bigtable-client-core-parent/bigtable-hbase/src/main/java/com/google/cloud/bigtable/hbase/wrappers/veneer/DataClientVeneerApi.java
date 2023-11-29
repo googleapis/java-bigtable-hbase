@@ -49,7 +49,6 @@ import com.google.protobuf.ByteString;
 import io.grpc.CallOptions;
 import io.grpc.Deadline;
 import io.grpc.stub.StreamObserver;
-import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -305,7 +304,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
     @Override
     public Result next() {
       try (Context ignored = scannerResultTimer.time()) {
-        if (this.future != null && this.future.isDone()){
+        if (this.future != null && this.future.isDone()) {
           this.consumeReadRowsFuture();
         }
         if (this.buffer.size() < this.refillSegmentWaterMark && this.future == null && hasMore) {
@@ -380,7 +379,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
       return resultsFuture;
     }
 
-    private void consumeReadRowsFuture()  {
+    private void consumeReadRowsFuture() {
       try {
         List<Result> results = this.future.get();
         this.buffer.addAll(results);
