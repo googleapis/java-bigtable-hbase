@@ -69,7 +69,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigdataoss</groupId>
       <artifactId>gcs-connector</artifactId>
-      <version>hadoop2-2.2.16</version>
+      <version>3.0.0</version>
       <classifier>shaded</classifier>
       <exclusions>
         <!-- shaded variant doesn't have deps -->
