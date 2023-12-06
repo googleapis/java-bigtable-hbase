@@ -15,11 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase.test_env;
 
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hadoop.conf.Configuration;
 
 /**
@@ -65,18 +64,23 @@ abstract class SharedTestEnv {
   private synchronized void retain() throws Exception {
     refCount++;
     if (refCount == 1) {
+      AtomicInteger threadIndex = new AtomicInteger();
       executor =
           Executors.newCachedThreadPool(
-              new ThreadFactoryBuilder()
-                  .setDaemon(true)
-                  .setNameFormat("shared-test-env-rule")
-                  .build());
+              r -> {
+                Thread thread = new Thread(r);
+                thread.setDaemon(true);
+                thread.setName("shared-test-env-rule-" + threadIndex.getAndIncrement());
+                return null;
+              });
       setup();
     }
   }
 
   synchronized void release() throws IOException {
-    Preconditions.checkArgument(refCount > 0, "Too many releases");
+    if (refCount < 1) {
+      throw new IllegalStateException("Too many releases");
+    }
     refCount--;
     if (refCount == 0) {
       teardown();

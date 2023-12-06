@@ -15,14 +15,10 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.HRegionLocation;
@@ -68,7 +64,7 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
   }
 
   /** Requirement 1.8 - Table names must match [_a-zA-Z0-9][-_.a-zA-Z0-9]* */
-  @Test(timeout = 1000l * 60 * 4)
+  @Test(timeout = 1000L * 60 * 4)
   public void testTableNames() throws Exception {
     String shouldTest = System.getProperty("bigtable.test.create.table", "true");
     if (!"true".equals(shouldTest) || testTableNames_Counter.incrementAndGet() > 1) {
@@ -103,23 +99,26 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
       "jklmnopqrstuvwxyz1234567890_-."
     };
     final TableName[] tableNames = getConnection().getAdmin().listTableNames();
-    List<ListenableFuture<Void>> futures = new ArrayList<>();
-    ListeningExecutorService es = MoreExecutors.listeningDecorator(sharedTestEnv.getExecutor());
+    List<CompletableFuture<Void>> futures = new ArrayList<>();
+    ExecutorService es = sharedTestEnv.getExecutor();
+
     for (final String goodName : goodNames) {
       futures.add(
-          es.submit(
-              new Callable<Void>() {
-                @Override
-                public Void call() throws Exception {
+          CompletableFuture.runAsync(
+              () -> {
+                try {
                   createTable(goodName, tableNames);
-                  return null;
+                } catch (Exception e) {
+                  throw new RuntimeException(e);
                 }
-              }));
+              },
+              es));
     }
+
     try {
-      Futures.allAsList(futures).get(3, TimeUnit.MINUTES);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+      futures.stream().forEach(CompletableFuture::join);
+    } finally {
+      es.shutdown();
     }
   }
 

@@ -17,19 +17,16 @@ package com.google.cloud.bigtable.hbase.test_env;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.Logger;
-import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
@@ -41,14 +38,15 @@ class CloudEnv extends SharedTestEnv {
   private final Logger LOG = new Logger(getClass());
 
   private static final Set<String> KEYS =
-      Sets.newHashSet(
-          "google.bigtable.endpoint.port",
-          "google.bigtable.endpoint.host",
-          "google.bigtable.admin.endpoint.host",
-          "google.bigtable.emulator.endpoint.host",
-          "google.bigtable.use.bulk.api",
-          "google.bigtable.use.plaintext.negotiation",
-          "google.bigtable.snapshot.cluster.id");
+      new HashSet<>(
+          Arrays.asList(
+              "google.bigtable.endpoint.port",
+              "google.bigtable.endpoint.host",
+              "google.bigtable.admin.endpoint.host",
+              "google.bigtable.emulator.endpoint.host",
+              "google.bigtable.use.bulk.api",
+              "google.bigtable.use.plaintext.negotiation",
+              "google.bigtable.snapshot.cluster.id"));
 
   @Override
   protected void setup() throws IOException {
@@ -70,10 +68,10 @@ class CloudEnv extends SharedTestEnv {
         String.valueOf(TimeUnit.HOURS.toSeconds(6) + 1));
 
     // Garbage collect tables that previous runs failed to clean up
-    ListeningExecutorService executor = MoreExecutors.listeningDecorator(getExecutor());
+    Executor executor = getExecutor();
     try (Connection connection = ConnectionFactory.createConnection(configuration);
         Admin admin = connection.getAdmin()) {
-      List<ListenableFuture<?>> futures = new ArrayList<>();
+      List<CompletableFuture<?>> futures = new ArrayList<>();
 
       String stalePrefix =
           SharedTestEnvRule.newTimePrefix(
@@ -89,26 +87,23 @@ class CloudEnv extends SharedTestEnv {
         }
 
         futures.add(
-            executor.submit(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    try {
-                      admin.deleteTable(tableName);
-                      LOG.info("Test-setup deleting table: %s", tableName.getNameAsString());
-                    } catch (IOException e) {
-                      e.printStackTrace();
-                    }
+            CompletableFuture.runAsync(
+                () -> {
+                  try {
+                    admin.deleteTable(tableName);
+                    LOG.info("Test-setup deleting table: %s", tableName.getNameAsString());
+                  } catch (IOException e) {
+                    e.printStackTrace();
                   }
-                }));
+                },
+                executor));
       }
 
-      Futures.allAsList(futures).get(2, TimeUnit.MINUTES);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new IOException("Interrupted while deleting tables", e);
-    } catch (ExecutionException | TimeoutException e) {
-      throw new IOException("Exception while deleting tables", e);
+      try {
+        futures.stream().forEach(CompletableFuture::join);
+      } catch (Exception e) {
+        throw new IOException("Exception while deleting tables", e);
+      }
     }
   }
 

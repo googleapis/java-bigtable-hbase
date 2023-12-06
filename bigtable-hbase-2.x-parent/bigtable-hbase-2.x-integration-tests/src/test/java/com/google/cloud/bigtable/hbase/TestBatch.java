@@ -18,7 +18,7 @@ package com.google.cloud.bigtable.hbase;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.verify;
 
-import com.google.common.collect.ImmutableList;
+import java.util.Collections;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
@@ -38,7 +38,7 @@ public class TestBatch extends AbstractTestBatch {
     Batch.Callback mockCallBack = Mockito.mock(Batch.Callback.class);
     try {
       // This is accepted behaviour in HBase 2 API, It ignores the `new Object[1]` param.
-      table.batchCallback(ImmutableList.of(), new Object[1], mockCallBack);
+      table.batchCallback(Collections.emptyList(), new Object[1], mockCallBack);
     } catch (Exception ex) {
       actualError = ex;
     }
