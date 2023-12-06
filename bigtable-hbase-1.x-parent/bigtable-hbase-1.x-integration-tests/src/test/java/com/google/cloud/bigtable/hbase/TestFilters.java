@@ -34,9 +34,11 @@ import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 public class TestFilters extends AbstractTestFilters {
-
+  // This test can't run against the minicluster because its a Bigtable extension
+  @Category(KnownHBaseGap.class)
   @Test
   public void testTimestampRangeFilter() throws IOException {
     // Initialize
@@ -66,6 +68,8 @@ public class TestFilters extends AbstractTestFilters {
     table.close();
   }
 
+  // This test can't run against the minicluster because its a Bigtable extension
+  @Category(KnownHBaseGap.class)
   @Test
   public void testBigtableFilter() throws IOException {
     if (!sharedTestEnv.isBigtable()) {
@@ -99,6 +103,8 @@ public class TestFilters extends AbstractTestFilters {
    *
    * @throws IOException
    */
+  // This test can't run against the minicluster because its a Bigtable extension
+  @Category(KnownHBaseGap.class)
   @Test
   public void testTimestampRangeFilterWithMaxVal() throws IOException {
     // Initialize
