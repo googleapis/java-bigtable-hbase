@@ -44,7 +44,7 @@ class Controller {
     try {
       miniHBaseCluster = helper.startMiniCluster();
     } catch (Exception e) {
-
+      throw new MojoExecutionException("Failed to start mini cluster", e);
     }
 
     int port =
