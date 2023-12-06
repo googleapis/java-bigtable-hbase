@@ -225,14 +225,6 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
 
-    <!-- java-bigtable Modules -->
-    <dependency>
-      <groupId>com.google.api.grpc</groupId>
-      <artifactId>grpc-google-cloud-bigtable-v2</artifactId>
-      <version>${bigtable.version}</version>
-      <scope>test</scope>
-    </dependency>
-
     <!-- Misc -->
     <dependency>
       <groupId>commons-lang</groupId>
