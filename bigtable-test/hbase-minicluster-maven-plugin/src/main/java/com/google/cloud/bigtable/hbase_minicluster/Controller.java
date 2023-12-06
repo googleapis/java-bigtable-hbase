@@ -15,58 +15,57 @@
  */
 package com.google.cloud.bigtable.hbase_minicluster;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.maven.plugin.MojoExecutionException;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-/**
- * Simple wrapper around HBase's HBaseTestingUtility.
- * It extends it to configure logging levels.
- */
+/** Simple wrapper around HBase's HBaseTestingUtility. It extends it to configure logging levels. */
 class Controller {
-    private static final String SIMPLE_LOGGER_LOG_PREFIX = "org.slf4j.simpleLogger.log";
-    private static final List<String> NOISY_LOG_HBASE_LOGGERS = Collections.unmodifiableList(
-            Arrays.asList("org.apache.hadoop","SecurityLogger.org.apache.hadoop","BlockStateChange"));
+  private static final String SIMPLE_LOGGER_LOG_PREFIX = "org.slf4j.simpleLogger.log";
+  private static final List<String> NOISY_LOG_HBASE_LOGGERS =
+      Collections.unmodifiableList(
+          Arrays.asList(
+              "org.apache.hadoop", "SecurityLogger.org.apache.hadoop", "BlockStateChange"));
 
-    private HBaseTestingUtility helper;
-    private MiniHBaseCluster miniHBaseCluster;
+  private HBaseTestingUtility helper;
+  private MiniHBaseCluster miniHBaseCluster;
 
-
-    int start() throws MojoExecutionException {
-        // This terribly ugly as it globally changes logging configuration for the entire maven run
-        // TODO: fork the jvm with a proper logging config
-        for (String logger : NOISY_LOG_HBASE_LOGGERS) {
-            System.setProperty(SIMPLE_LOGGER_LOG_PREFIX + "." + logger, "error");
-        }
-
-        helper = HBaseTestingUtility.createLocalHTU();
-        try {
-            miniHBaseCluster = helper.startMiniCluster();
-        } catch (Exception e) {
-
-        }
-
-        int port = miniHBaseCluster.getConfiguration().getInt("hbase.zookeeper.property.clientPort", -1);
-
-        if (port <= 0) {
-            stop();
-            throw new MojoExecutionException("Minicluster had invalid port: " + port);
-        }
-        return port;
+  int start() throws MojoExecutionException {
+    // This terribly ugly as it globally changes logging configuration for the entire maven run
+    // TODO: fork the jvm with a proper logging config
+    for (String logger : NOISY_LOG_HBASE_LOGGERS) {
+      System.setProperty(SIMPLE_LOGGER_LOG_PREFIX + "." + logger, "error");
     }
-    void stop() throws MojoExecutionException {
-        if (helper != null) {
-            try {
-                helper.shutdownMiniCluster();
-            } catch (Exception e) {
-                throw new MojoExecutionException("Failed to cleanly shutdown minicluster", e);
-            }
-        }
 
-        helper = null;
+    helper = HBaseTestingUtility.createLocalHTU();
+    try {
+      miniHBaseCluster = helper.startMiniCluster();
+    } catch (Exception e) {
+
     }
+
+    int port =
+        miniHBaseCluster.getConfiguration().getInt("hbase.zookeeper.property.clientPort", -1);
+
+    if (port <= 0) {
+      stop();
+      throw new MojoExecutionException("Minicluster had invalid port: " + port);
+    }
+    return port;
+  }
+
+  void stop() throws MojoExecutionException {
+    if (helper != null) {
+      try {
+        helper.shutdownMiniCluster();
+      } catch (Exception e) {
+        throw new MojoExecutionException("Failed to cleanly shutdown minicluster", e);
+      }
+    }
+
+    helper = null;
+  }
 }

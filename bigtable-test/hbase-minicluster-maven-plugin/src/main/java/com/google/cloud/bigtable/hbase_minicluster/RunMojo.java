@@ -20,41 +20,38 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
 
 /**
- * A goal to help developers to run integration tests from within an IDE.
- * The workflow is:
+ * A goal to help developers to run integration tests from within an IDE. The workflow is:
+ *
  * <ul>
- *   <li>Start the minicluster:
- *      {@code mvn  -pl bigtable-hbase-1.x-integration-tests hbase-minicluster-maven-plugin:run}
- *      or
- *      {@code mvn  -pl bigtable-hbase-2.x-integration-tests hbase-minicluster-maven-plugin:run}
- *  <li>Grab the {@code hbase.zookeeper.property.clientPort} from the output
- *  <li>Pass it as a system property to the test {@code hbase.zookeeper.property.clientPort=1234}
- *  <li>kill the minicluster by interrupting it with ctrl-c
+ *   <li>Start the minicluster: {@code mvn -pl bigtable-hbase-1.x-integration-tests
+ *       hbase-minicluster-maven-plugin:run} or {@code mvn -pl bigtable-hbase-2.x-integration-tests
+ *       hbase-minicluster-maven-plugin:run}
+ *   <li>Grab the {@code hbase.zookeeper.property.clientPort} from the output
+ *   <li>Pass it as a system property to the test {@code hbase.zookeeper.property.clientPort=1234}
+ *   <li>kill the minicluster by interrupting it with ctrl-c
  */
 @Mojo(name = "run")
 public class RunMojo extends AbstractMojo {
-    @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
-        getLog().info("Starting hbase minicluster");
+  @Override
+  public void execute() throws MojoExecutionException, MojoFailureException {
+    getLog().info("Starting hbase minicluster");
 
+    Controller controller = new Controller();
+    int port = controller.start();
 
-        Controller controller = new Controller();
-        int port = controller.start();
+    getLog().info(String.format("%s=%d", HConstants.ZOOKEEPER_CLIENT_PORT, port));
+    getLog().info("Running until interrupted");
 
-        getLog().info(String.format("%s=%d", HConstants.ZOOKEEPER_CLIENT_PORT, port));
-        getLog().info("Running until interrupted");
-
-        try {
-            while (!Thread.interrupted()) {
-                Thread.sleep(Integer.MAX_VALUE);
-            }
-        } catch (InterruptedException e) {
-        } finally {
-            getLog().info("Shutting down minicluster");
-            controller.stop();
-        }
+    try {
+      while (!Thread.interrupted()) {
+        Thread.sleep(Integer.MAX_VALUE);
+      }
+    } catch (InterruptedException e) {
+    } finally {
+      getLog().info("Shutting down minicluster");
+      controller.stop();
     }
+  }
 }

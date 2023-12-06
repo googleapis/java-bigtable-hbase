@@ -15,19 +15,15 @@
  */
 package com.google.cloud.bigtable.hbase.test_env;
 
+import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 
-import java.io.IOException;
-
-/**
- *
- */
 class MiniClusterEnv extends SharedTestEnv {
   private static final String PORT_KEY = "hbase.zookeeper.property.clientPort";
   private static final Log LOG = LogFactory.getLog(MiniClusterEnv.class);
-  
+
   @Override
   protected void setup() throws Exception {
     configuration = HBaseConfiguration.create();
@@ -38,6 +34,5 @@ class MiniClusterEnv extends SharedTestEnv {
   }
 
   @Override
-  protected void teardown() throws IOException {
-  }
+  protected void teardown() throws IOException {}
 }

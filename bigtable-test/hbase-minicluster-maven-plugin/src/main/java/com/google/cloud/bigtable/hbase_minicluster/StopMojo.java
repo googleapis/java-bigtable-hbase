@@ -17,18 +17,15 @@ package com.google.cloud.bigtable.hbase_minicluster;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 
-/**
- * CLeanly shuts down the minicluster that was started in {@link StartMojo}.
- */
+/** CLeanly shuts down the minicluster that was started in {@link StartMojo}. */
 @Mojo(name = "stop", defaultPhase = LifecyclePhase.POST_INTEGRATION_TEST)
 public class StopMojo extends AbstractMojo {
-    @Override
-    public void execute() throws MojoExecutionException {
-        Controller controller = (Controller) getPluginContext().get(Controller.class);
-        controller.stop();
-    }
+  @Override
+  public void execute() throws MojoExecutionException {
+    Controller controller = (Controller) getPluginContext().get(Controller.class);
+    controller.stop();
+  }
 }

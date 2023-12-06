@@ -25,30 +25,29 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
 /**
- * Starts an HBase minicluster in the background an stashes it in the plugin context.
- * It expects that the desired {@code hbase-shaded-testing-util} is injected via
- * {@literal <plugin><dependencies>} at the invocation site.
+ * Starts an HBase minicluster in the background an stashes it in the plugin context. It expects
+ * that the desired {@code hbase-shaded-testing-util} is injected via {@literal
+ * <plugin><dependencies>} at the invocation site.
  */
 @Mojo(name = "start", defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST)
 public class StartMojo extends AbstractMojo {
-    @Parameter(defaultValue = "${project}", readonly = true, required = true)
-    private MavenProject project;
+  @Parameter(defaultValue = "${project}", readonly = true, required = true)
+  private MavenProject project;
 
-    @Parameter(defaultValue = "error")
-    private String logLevel;
+  @Parameter(defaultValue = "error")
+  private String logLevel;
 
-    @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
-        getLog().info("Starting hbase minicluster");
+  @Override
+  public void execute() throws MojoExecutionException, MojoFailureException {
+    getLog().info("Starting hbase minicluster");
 
-        Controller controller = new Controller();
-        int port = controller.start();
+    Controller controller = new Controller();
+    int port = controller.start();
 
-        project.getProperties().setProperty(HConstants.ZOOKEEPER_CLIENT_PORT, Integer.toString(port));
+    project.getProperties().setProperty(HConstants.ZOOKEEPER_CLIENT_PORT, Integer.toString(port));
 
-        getPluginContext().put(Controller.class, controller);
+    getPluginContext().put(Controller.class, controller);
 
-        getLog().info("minicluster successfully started");
-
-    }
+    getLog().info("minicluster successfully started");
+  }
 }
