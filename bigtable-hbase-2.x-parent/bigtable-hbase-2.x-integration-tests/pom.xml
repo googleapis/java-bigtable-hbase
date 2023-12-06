@@ -94,7 +94,7 @@ limitations under the License.
           <plugin>
             <groupId>com.google.cloud.bigtable</groupId>
             <artifactId>hbase-minicluster-maven-plugin</artifactId>
-            <version>2.12.1-SNAPSHOT</version>
+            <version>2.12.1-SNAPSHOT</version>  <!-- {x-version-update:bigtable-client-parent:current} -->
 
             <executions>
               <execution>
