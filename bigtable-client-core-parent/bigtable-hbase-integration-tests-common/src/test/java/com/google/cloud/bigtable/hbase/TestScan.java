@@ -224,6 +224,7 @@ public class TestScan extends AbstractTest {
     Scan scan = new Scan();
     scan.withStartRow(rowKeys[0])
         .withStopRow(rowFollowingSameLength(rowKeys[rowsToWrite - 1]))
+        .setCaching(100)
         .addFamily(COLUMN_FAMILY);
 
     try (ResultScanner resultScanner = table.getScanner(scan)) {
