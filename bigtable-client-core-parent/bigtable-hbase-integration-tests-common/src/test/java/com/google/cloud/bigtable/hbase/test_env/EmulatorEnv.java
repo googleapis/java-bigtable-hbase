@@ -19,7 +19,7 @@ import com.google.cloud.bigtable.emulator.core.EmulatorController;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 
-public class EmulatorEnv extends SharedTestEnv {
+class EmulatorEnv extends SharedTestEnv {
   private EmulatorController emulator;
 
   @Override
