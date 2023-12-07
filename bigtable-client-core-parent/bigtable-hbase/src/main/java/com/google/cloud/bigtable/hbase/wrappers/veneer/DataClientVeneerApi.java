@@ -395,6 +395,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
   /** wraps {@link ServerStream} onto HBase {@link ResultScanner}. */
   private static class RowResultScanner extends AbstractClientScanner {
+
     private final Meter scannerResultMeter =
         BigtableClientMetrics.meter(BigtableClientMetrics.MetricLevel.Info, "scanner.results");
     private final Timer scannerResultTimer =
@@ -424,7 +425,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
     @Override
     public void close() {
-      this.serverStream.cancel();
+      serverStream.cancel();
     }
 
     public boolean renewLease() {
