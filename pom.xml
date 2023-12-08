@@ -33,7 +33,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud</groupId>
     <artifactId>google-cloud-shared-config</artifactId>
-    <version>1.6.0</version>
+    <version>1.7.1</version>
   </parent>
 
   <licenses>
@@ -56,8 +56,8 @@ limitations under the License.
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- core dependency versions -->
-    <bigtable.version>2.29.1</bigtable.version>
-    <google-cloud-bigtable-emulator.version>0.165.0</google-cloud-bigtable-emulator.version>
+    <bigtable.version>2.30.0</bigtable.version>
+    <google-cloud-bigtable-emulator.version>0.167.0</google-cloud-bigtable-emulator.version>
     <bigtable-metrics-api.version>1.29.2</bigtable-metrics-api.version>
     <!-- Optional dep for bigtable-metrics-api used for tests -->
     <dropwizard-metrics.version>4.2.22</dropwizard-metrics.version>
