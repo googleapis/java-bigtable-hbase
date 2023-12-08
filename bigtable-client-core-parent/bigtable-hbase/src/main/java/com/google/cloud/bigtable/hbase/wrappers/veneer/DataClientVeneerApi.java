@@ -371,7 +371,6 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
                 @Override
                 public void onComplete() {
-                  hasMore = paginator.advance(lastSeenRowKey);
                   resultsFuture.set(results);
                 }
               },
