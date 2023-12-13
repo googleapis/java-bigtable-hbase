@@ -354,6 +354,7 @@ public class TestDataClientVeneerApi {
             Mockito.any(Query.class),
             Mockito.any(ResponseObserver.class),
             Mockito.any(GrpcCallContext.class));
+    assertTrue(cancelled.get());
   }
 
   @Test
