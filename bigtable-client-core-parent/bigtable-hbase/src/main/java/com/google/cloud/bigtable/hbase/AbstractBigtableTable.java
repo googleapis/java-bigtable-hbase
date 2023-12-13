@@ -96,6 +96,8 @@ public abstract class AbstractBigtableTable implements Table {
 
   private static final Tracer TRACER = Tracing.getTracer();
 
+  private static final int MIN_BYTE_BUFFER_SIZE = 100 * 1024 * 1024;
+  private static final double DEFAULT_BYTE_LIMIT_PERCENTAGE = .1;
   private static final long DEFAULT_MAX_SEGMENT_SIZE =
       (long)
           Math.max(
