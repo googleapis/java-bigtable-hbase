@@ -276,7 +276,7 @@ public class TestDataClientVeneerApi {
             Mockito.any(ResponseObserver.class),
             Mockito.any(GrpcCallContext.class));
 
-    ResultScanner resultScanner = dataClientWrapper.readRows(query.createPaginator(100), -1);
+    ResultScanner resultScanner = dataClientWrapper.readRows(query.createPaginator(2), 1000);
     assertResult(Result.EMPTY_RESULT, resultScanner.next());
     assertResult(EXPECTED_RESULT, resultScanner.next());
     assertResult(EXPECTED_RESULT, resultScanner.next());
@@ -297,7 +297,7 @@ public class TestDataClientVeneerApi {
 
     resultScanner.close();
 
-    ResultScanner noRowsResultScanner = dataClientWrapper.readRows(query.createPaginator(100), -1);
+    ResultScanner noRowsResultScanner = dataClientWrapper.readRows(query.createPaginator(2), 1000);
     assertNull(noRowsResultScanner.next());
 
     verify(mockDataClient, times(2)).readRowsCallable(Mockito.<RowResultAdapter>any());
@@ -407,7 +407,7 @@ public class TestDataClientVeneerApi {
             Mockito.any(ResponseObserver.class),
             Mockito.any(GrpcCallContext.class));
 
-    ResultScanner resultScanner = dataClientWrapper.readRows(query.createPaginator(100), -1);
+    ResultScanner resultScanner = dataClientWrapper.readRows(query.createPaginator(100), 1000000);
     for (int i = 0; i < 100; i++) {
       assertResult(EXPECTED_RESULT, resultScanner.next());
     }

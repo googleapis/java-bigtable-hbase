@@ -251,9 +251,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
    */
   static class PaginatedRowResultScanner extends AbstractClientScanner {
     // Percentage of max number of rows allowed in the buffer
-    private static final double WATERMARK_PERCENTAGE = .1;
-    private static final int MIN_BYTE_BUFFER_SIZE = 100 * 1024 * 1024;
-    private static final double DEFAULT_BYTE_LIMIT_PERCENTAGE = .1;
+    private static final double WATERMARK_PERCENTAGE = .1;    
     private static final RowResultAdapter RESULT_ADAPTER = new RowResultAdapter();
 
     private final Meter scannerResultMeter =
