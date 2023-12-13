@@ -28,6 +28,8 @@ import static org.mockito.Mockito.when;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.batching.Batcher;
 import com.google.api.gax.grpc.GrpcCallContext;
+import com.google.api.gax.grpc.GrpcStatusCode;
+import com.google.api.gax.rpc.InternalException;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStream;
 import com.google.api.gax.rpc.ServerStreamingCallable;
@@ -47,7 +49,9 @@ import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.BulkReadWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings.ClientOperationTimeouts;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
+import io.grpc.Status.Code;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.Iterator;
@@ -202,22 +206,35 @@ public class TestDataClientVeneerApi {
   @Test
   public void testReadRows_Errors() throws IOException {
     Query query = Query.create(TABLE_ID).rowKey(ROW_KEY);
-    when(mockDataClient.readRowsCallable(Mockito.<RowResultAdapter>any()))
-        .thenThrow(new RuntimeException())
+    when(mockDataClient.readRowsCallable(Mockito.any(RowResultAdapter.class)))
         .thenReturn(mockStreamingCallable);
-    when(serverStream.iterator()).thenReturn(ImmutableList.<Result>of().iterator());
     when(mockStreamingCallable.call(Mockito.any(Query.class), Mockito.any(GrpcCallContext.class)))
         .thenReturn(serverStream);
+    when(serverStream.iterator())
+        .thenReturn(
+            new Iterator<Result>() {
+              @Override
+              public boolean hasNext() {
+                return true;
+              }
 
-    assertThrows(RuntimeException.class, () -> dataClientWrapper.readRows(query));
+              @Override
+              public Result next() {
+                throw new InternalException(
+                    "fake error", null, GrpcStatusCode.of(Code.INTERNAL), false);
+              }
+            })
+        .thenReturn(ImmutableList.<Result>of().iterator());
+
+    assertThrows(Exception.class, () -> dataClientWrapper.readRows(query).next());
 
     ResultScanner noRowsResultScanner = dataClientWrapper.readRows(query);
     assertNull(noRowsResultScanner.next());
     noRowsResultScanner.close();
 
     verify(mockDataClient, times(2)).readRowsCallable(Mockito.<RowResultAdapter>any());
-    verify(serverStream, times(1)).iterator();
-    verify(mockStreamingCallable, times(1))
+    verify(serverStream, times(2)).iterator();
+    verify(mockStreamingCallable, times(2))
         .call(Mockito.any(Query.class), Mockito.any(GrpcCallContext.class));
   }
 
@@ -310,50 +327,50 @@ public class TestDataClientVeneerApi {
 
   @Test
   public void testReadRowsLowMemory() throws IOException {
-    Query query = Query.create(TABLE_ID).rowKey(ROW_KEY);
-    when(mockDataClient.readRowsCallable(Mockito.<RowResultAdapter>any()))
-        .thenReturn(mockStreamingCallable)
+    Query query = Query.create(TABLE_ID);
+    when(mockDataClient.readRowsCallable(Mockito.any(RowResultAdapter.class)))
         .thenReturn(mockStreamingCallable);
 
     StreamController mockController = Mockito.mock(StreamController.class);
     doAnswer(
-            new Answer<Void>() {
-              @Override
-              public Void answer(InvocationOnMock invocation) throws Throwable {
-                cancelled.set(true);
-                return null;
-              }
+            invocation -> {
+              cancelled.set(true);
+              return null;
             })
         .when(mockController)
         .cancel();
 
+    // Generate
     doAnswer(
-            new Answer<Void>() {
-              @Override
-              public Void answer(InvocationOnMock invocation) throws Throwable {
-                ((ResponseObserver) invocation.getArgument(1)).onStart(mockController);
+            (Answer<Void>)
+                invocation -> {
+                  ResponseObserver<Result> observer = invocation.getArgument(1);
+                  observer.onStart(mockController);
 
-                ((ResponseObserver) invocation.getArgument(1)).onResponse(EXPECTED_RESULT);
-                ((ResponseObserver) invocation.getArgument(1)).onResponse(EXPECTED_RESULT);
-                ((ResponseObserver) invocation.getArgument(1)).onResponse(EXPECTED_RESULT);
-                ((ResponseObserver) invocation.getArgument(1)).onResponse(EXPECTED_RESULT);
-
-                ((ResponseObserver) invocation.getArgument(1)).onComplete();
-                return null;
-              }
-            })
+                  for (int i = 0; i < 1000 && !cancelled.get(); i++) {
+                    observer.onResponse(EXPECTED_RESULT);
+                    Thread.sleep(10);
+                  }
+                  observer.onComplete();
+                  return null;
+                })
+        .doAnswer(
+            (Answer<Void>)
+                invocation -> {
+                  ResponseObserver<Result> observer = invocation.getArgument(1);
+                  observer.onComplete();
+                  return null;
+                })
         .when(mockStreamingCallable)
         .call(
-            Mockito.any(com.google.cloud.bigtable.data.v2.models.Query.class),
+            Mockito.any(Query.class),
             Mockito.any(ResponseObserver.class),
             Mockito.any(GrpcCallContext.class));
-    ResultScanner resultScanner = dataClientWrapper.readRows(query.createPaginator(2), 3);
-    assertResult(EXPECTED_RESULT, resultScanner.next());
-    assertResult(EXPECTED_RESULT, resultScanner.next());
-    assertResult(EXPECTED_RESULT, resultScanner.next());
-    assertResult(EXPECTED_RESULT, resultScanner.next());
 
-    verify(mockDataClient, times(2)).readRowsCallable(Mockito.<RowResultAdapter>any());
+    ResultScanner resultScanner = dataClientWrapper.readRows(query.createPaginator(100), 3);
+    // Consume the stream
+    Lists.newArrayList(resultScanner);
+
     verify(mockStreamingCallable, times(2))
         .call(
             Mockito.any(Query.class),
