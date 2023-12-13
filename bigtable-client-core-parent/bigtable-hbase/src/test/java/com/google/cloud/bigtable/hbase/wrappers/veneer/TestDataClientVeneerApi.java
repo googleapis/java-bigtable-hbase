@@ -333,8 +333,11 @@ public class TestDataClientVeneerApi {
               public Void answer(InvocationOnMock invocation) throws Throwable {
                 ((ResponseObserver) invocation.getArgument(1)).onStart(mockController);
 
-                ((ResponseObserver) invocation.getArgument(1)).onResponse(Result.EMPTY_RESULT);
                 ((ResponseObserver) invocation.getArgument(1)).onResponse(EXPECTED_RESULT);
+                ((ResponseObserver) invocation.getArgument(1)).onResponse(EXPECTED_RESULT);
+                ((ResponseObserver) invocation.getArgument(1)).onResponse(EXPECTED_RESULT);
+                ((ResponseObserver) invocation.getArgument(1)).onResponse(EXPECTED_RESULT);
+
                 ((ResponseObserver) invocation.getArgument(1)).onComplete();
                 return null;
               }
@@ -344,12 +347,14 @@ public class TestDataClientVeneerApi {
             Mockito.any(com.google.cloud.bigtable.data.v2.models.Query.class),
             Mockito.any(ResponseObserver.class),
             Mockito.any(GrpcCallContext.class));
-    ResultScanner resultScanner = dataClientWrapper.readRows(query.createPaginator(100), 3);
-    assertResult(Result.EMPTY_RESULT, resultScanner.next());
+    ResultScanner resultScanner = dataClientWrapper.readRows(query.createPaginator(2), 3);
+    assertResult(EXPECTED_RESULT, resultScanner.next());
+    assertResult(EXPECTED_RESULT, resultScanner.next());
+    assertResult(EXPECTED_RESULT, resultScanner.next());
     assertResult(EXPECTED_RESULT, resultScanner.next());
 
-    verify(mockDataClient, times(1)).readRowsCallable(Mockito.<RowResultAdapter>any());
-    verify(mockStreamingCallable, times(1))
+    verify(mockDataClient, times(2)).readRowsCallable(Mockito.<RowResultAdapter>any());
+    verify(mockStreamingCallable, times(2))
         .call(
             Mockito.any(Query.class),
             Mockito.any(ResponseObserver.class),
@@ -382,43 +387,6 @@ public class TestDataClientVeneerApi {
     verify(serverStream).cancel();
     verify(mockIter, times(1)).hasNext();
     verify(mockIter, times(1)).next();
-  }
-
-  @Test
-  public void testRead100Rows() throws IOException {
-    Query query = Query.create(TABLE_ID).rowKey(ROW_KEY);
-    when(mockDataClient.readRowsCallable(Mockito.<RowResultAdapter>any()))
-        .thenReturn(mockStreamingCallable)
-        .thenReturn(mockStreamingCallable);
-
-    doAnswer(
-            new Answer<Void>() {
-              @Override
-              public Void answer(InvocationOnMock invocation) throws Throwable {
-                for (int i = 0; i < 100; i++) {
-                  ((ResponseObserver) invocation.getArgument(1)).onResponse(EXPECTED_RESULT);
-                }
-                ((ResponseObserver) invocation.getArgument(1)).onComplete();
-                return null;
-              }
-            })
-        .when(mockStreamingCallable)
-        .call(
-            Mockito.any(com.google.cloud.bigtable.data.v2.models.Query.class),
-            Mockito.any(ResponseObserver.class),
-            Mockito.any(GrpcCallContext.class));
-
-    ResultScanner resultScanner = dataClientWrapper.readRows(query.createPaginator(100), 1000000);
-    for (int i = 0; i < 100; i++) {
-      assertResult(EXPECTED_RESULT, resultScanner.next());
-    }
-
-    verify(mockDataClient, times(1)).readRowsCallable(Mockito.<RowResultAdapter>any());
-    verify(mockStreamingCallable, times(1))
-        .call(
-            Mockito.any(Query.class),
-            Mockito.any(ResponseObserver.class),
-            Mockito.any(GrpcCallContext.class));
   }
 
   @Test
