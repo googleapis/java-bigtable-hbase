@@ -270,11 +270,6 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
     private final BigtableDataClient dataClient;
 
-    private static final long DEFAULT_MAX_SEGMENT_SIZE =
-        (long)
-            Math.max(
-                MIN_BYTE_BUFFER_SIZE,
-                (Runtime.getRuntime().totalMemory() * DEFAULT_BYTE_LIMIT_PERCENTAGE));
     private final long maxSegmentByteSize;
 
     private long currentByteSize = 0;
@@ -287,9 +282,6 @@ public class DataClientVeneerApi implements DataClientWrapper {
         BigtableDataClient dataClient,
         long maxSegmentByteSize,
         GrpcCallContext scanCallContext) {
-      if (maxSegmentByteSize < 0) {
-        maxSegmentByteSize = DEFAULT_MAX_SEGMENT_SIZE;
-      }
       this.maxSegmentByteSize = maxSegmentByteSize;
 
       this.paginator = paginator;
