@@ -180,20 +180,31 @@ public class TestScan extends AbstractTest {
 
   @Test
   public void testManyResultsInScanner_lessThanPageSize() throws IOException {
-    testManyResultsInScanner(95);
+    testManyResultsInScanner(95, true);
   }
 
   @Test
   public void testManyResultsInScanner_equalToPageSize() throws IOException {
-    testManyResultsInScanner(100);
+    testManyResultsInScanner(100, true);
   }
 
   @Test
   public void testManyResultsInScanner_greaterThanPageSize() throws IOException {
-    testManyResultsInScanner(105);
+    testManyResultsInScanner(105, true);
   }
 
-  private void testManyResultsInScanner(int rowsToWrite) throws IOException {
+  @Test
+  public void testManyResultsInScanner_greaterThanTwoPageSizes() throws IOException {
+    testManyResultsInScanner(205, true);
+  }
+
+  @Test
+  public void testManyResultsInScanner_onePageSizeNoPagination() throws IOException {
+    testManyResultsInScanner(100, false);
+  }
+
+  private void testManyResultsInScanner(int rowsToWrite, boolean withPagination)
+      throws IOException {
     String prefix = "scan_row_";
 
     // Initialize variables
@@ -224,8 +235,11 @@ public class TestScan extends AbstractTest {
     Scan scan = new Scan();
     scan.withStartRow(rowKeys[0])
         .withStopRow(rowFollowingSameLength(rowKeys[rowsToWrite - 1]))
-        .setCaching(100)
         .addFamily(COLUMN_FAMILY);
+
+    if (withPagination) {
+      scan = scan.setCaching(100);
+    }
 
     try (ResultScanner resultScanner = table.getScanner(scan)) {
       for (int rowIndex = 0; rowIndex < rowsToWrite; rowIndex++) {

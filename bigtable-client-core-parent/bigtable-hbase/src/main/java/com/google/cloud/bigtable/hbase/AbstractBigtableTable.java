@@ -96,6 +96,12 @@ public abstract class AbstractBigtableTable implements Table {
 
   private static final Tracer TRACER = Tracing.getTracer();
 
+  private static final long DEFAULT_MAX_SEGMENT_SIZE =
+      (long)
+          Math.max(
+              MIN_BYTE_BUFFER_SIZE,
+              (Runtime.getRuntime().totalMemory() * DEFAULT_BYTE_LIMIT_PERCENTAGE));
+
   private static class TableMetrics {
     Timer putTimer = BigtableClientMetrics.timer(MetricLevel.Info, "table.put.latency");
     Timer getTimer = BigtableClientMetrics.timer(MetricLevel.Info, "table.get.latency");
@@ -305,7 +311,7 @@ public abstract class AbstractBigtableTable implements Table {
       } else {
         Query.QueryPaginator paginator =
             hbaseAdapter.adapt(scan).createPaginator(scan.getCaching());
-        scanner = clientWrapper.readRows(paginator, -1);
+        scanner = clientWrapper.readRows(paginator, DEFAULT_MAX_SEGMENT_SIZE);
       }
       if (hasWhileMatchFilter(scan.getFilter())) {
         return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner, span);
