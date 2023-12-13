@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.test_env;
 
 import java.io.IOException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -57,7 +58,7 @@ abstract class SharedTestEnv {
     }
   }
 
-  public ExecutorService getExecutor() {
+  public Executor getExecutor() {
     return executor;
   }
 
@@ -67,11 +68,11 @@ abstract class SharedTestEnv {
       AtomicInteger threadIndex = new AtomicInteger();
       executor =
           Executors.newCachedThreadPool(
-              r -> {
-                Thread thread = new Thread(r);
-                thread.setDaemon(true);
-                thread.setName("shared-test-env-rule-" + threadIndex.getAndIncrement());
-                return null;
+              (r) -> {
+                Thread t = new Thread(r);
+                t.setName("shared-test-env-rule-" + threadIndex.getAndIncrement());
+                t.setDaemon(true);
+                return t;
               });
       setup();
     }

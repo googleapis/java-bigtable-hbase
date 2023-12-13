@@ -115,11 +115,7 @@ public abstract class AbstractTestCreateTable extends AbstractTest {
               es));
     }
 
-    try {
-      futures.stream().forEach(CompletableFuture::join);
-    } finally {
-      es.shutdown();
-    }
+    futures.stream().forEach(CompletableFuture::join);
   }
 
   private void createTable(String goodName, TableName[] tableNames) throws Exception {
