@@ -58,7 +58,7 @@ abstract class SharedTestEnv {
     }
   }
 
-  public Executor getExecutor() {
+  public ExecutorService getExecutor() {
     return executor;
   }
 
