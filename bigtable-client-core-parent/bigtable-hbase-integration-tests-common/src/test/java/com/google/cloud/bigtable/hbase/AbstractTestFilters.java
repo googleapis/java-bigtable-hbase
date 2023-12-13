@@ -17,14 +17,13 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterators;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1474,7 +1473,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     table.put(put);
 
     // Filter for results
-    Filter filter = new TimestampsFilter(ImmutableList.<Long>of(0L, 1L));
+    Filter filter = new TimestampsFilter(Arrays.asList(0L, 1L));
 
     Get get = new Get(rowKey).setFilter(filter);
     Result result = table.get(get);
@@ -2038,7 +2037,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     PageFilter pageFilter = new PageFilter(20);
     scan.setFilter(pageFilter);
     try (ResultScanner scanner = table.getScanner(scan)) {
-      Assert.assertEquals(20, Iterators.size(scanner.iterator()));
+      assertThat(scanner).hasSize(20);
     }
 
     FilterList filterList =
@@ -2048,7 +2047,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
             pageFilter);
     scan.setFilter(filterList);
     try (ResultScanner scanner = table.getScanner(scan)) {
-      Assert.assertEquals(20, Iterators.size(scanner.iterator()));
+      assertThat(scanner).hasSize(20);
     }
   }
 
@@ -2172,7 +2171,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     Pair<byte[], byte[]> fuzzyData =
         Pair.newPair(createKey(1, 0, 0, 4), createFuzzyMask(0, 1, 1, 0));
 
-    Scan scan = new Scan().setFilter(new FuzzyRowFilter(ImmutableList.of(fuzzyData)));
+    Scan scan = new Scan().setFilter(new FuzzyRowFilter(Collections.singletonList(fuzzyData)));
 
     // only the first and second keys should be matched
     try (ResultScanner scanner = table.getScanner(scan)) {
@@ -2209,7 +2208,7 @@ public abstract class AbstractTestFilters extends AbstractTest {
     // match keys with 5 in the first position and 126/127/128/129 in the 3rd position
     FuzzyRowFilter filter =
         new FuzzyRowFilter(
-            ImmutableList.of(
+            Arrays.asList(
                 Pair.newPair(createKey(5, 0, 126, 0), createFuzzyMask(0, 1, 0, 1)),
                 Pair.newPair(createKey(5, 0, 127, 0), createFuzzyMask(0, 1, 0, 1)),
                 Pair.newPair(createKey(5, 0, 128, 0), createFuzzyMask(0, 1, 0, 1)),

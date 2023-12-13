@@ -18,10 +18,10 @@ package com.google.cloud.bigtable.hbase.async;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
-import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.AsyncTable;
@@ -104,7 +104,7 @@ public class TestAsyncScan extends AbstractAsyncTest {
     Scan scan = new Scan();
     scan.setRowPrefixFilter(Bytes.toBytes(prefix));
 
-    SettableFuture<Integer> lock = SettableFuture.create();
+    CompletableFuture<Integer> lock = new CompletableFuture<>();
     getDefaultAsyncTable()
         .scan(
             scan,
@@ -118,19 +118,20 @@ public class TestAsyncScan extends AbstractAsyncTest {
                   count++;
                   return true;
                 } catch (Exception e) {
-                  lock.setException(e);
+                  lock.completeExceptionally(e);
                   return false;
                 }
               }
 
               @Override
               public void onError(Throwable e) {
-                lock.setException(e);
+                lock.completeExceptionally(e);
+                ;
               }
 
               @Override
               public void onComplete() {
-                lock.set(count);
+                lock.complete(count);
               }
             });
 

@@ -17,10 +17,8 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
-import static com.google.common.truth.Truth.*;
+import static com.google.common.truth.Truth.assertThat;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -346,7 +344,7 @@ public class TestScan extends AbstractTest {
             .collect(Collectors.toList());
 
     List<String> expectedRowKeys =
-        ImmutableList.of(
+        Arrays.asList(
             new String(rowKeys[6]),
             new String(rowKeys[5]),
             new String(rowKeys[4]),
@@ -387,7 +385,7 @@ public class TestScan extends AbstractTest {
             .setReversed(true)
             .setFilter(
                 new MultiRowRangeFilter(
-                    Lists.newArrayList(
+                    Arrays.asList(
                         new RowRange(rowKeys[3], false, rowKeys[4], true),
                         new RowRange(rowKeys[6], true, rowKeys[8], false))));
 
@@ -398,7 +396,7 @@ public class TestScan extends AbstractTest {
             .collect(Collectors.toList());
 
     List<String> expectedRowKeys =
-        ImmutableList.of(new String(rowKeys[7]), new String(rowKeys[6]), new String(rowKeys[4]));
+        Arrays.asList(new String(rowKeys[7]), new String(rowKeys[6]), new String(rowKeys[4]));
 
     assertThat(actualRowKeys).containsExactlyElementsIn(expectedRowKeys).inOrder();
   }
@@ -437,7 +435,7 @@ public class TestScan extends AbstractTest {
             .withStopRow(rowKeys[1])
             .setFilter(
                 new MultiRowRangeFilter(
-                    Lists.newArrayList(
+                    Arrays.asList(
                         new RowRange(rowKeys[3], true, rowKeys[4], true),
                         new RowRange(rowKeys[6], true, rowKeys[8], false))));
 
@@ -448,7 +446,7 @@ public class TestScan extends AbstractTest {
             .collect(Collectors.toList());
 
     List<String> expectedRowKeys =
-        ImmutableList.of(new String(rowKeys[6]), new String(rowKeys[4]), new String(rowKeys[3]));
+        Arrays.asList(new String(rowKeys[6]), new String(rowKeys[4]), new String(rowKeys[3]));
 
     assertThat(actualRowKeys).containsExactlyElementsIn(expectedRowKeys).inOrder();
   }

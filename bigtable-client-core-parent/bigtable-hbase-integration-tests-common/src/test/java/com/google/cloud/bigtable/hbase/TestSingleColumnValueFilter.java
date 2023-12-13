@@ -19,10 +19,10 @@ package com.google.cloud.bigtable.hbase;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
-import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -57,10 +57,10 @@ public class TestSingleColumnValueFilter extends AbstractTest {
     table = SharedTestEnvRule.getInstance().getDefaultTable();
 
     List<Put> puts = new ArrayList<>();
-    ImmutableSet.Builder<String> keyBuilder = ImmutableSet.builder();
+    keys = new HashSet<>();
     for (long i = 0; i < count; i++) {
       byte[] row = dataHelper.randomData(PREFIX);
-      keyBuilder.add(Bytes.toString(row));
+      keys.add(Bytes.toString(row));
       int randomValue = (int) Math.floor(count * Math.random());
       puts.add(
           new Put(row)
@@ -72,7 +72,6 @@ public class TestSingleColumnValueFilter extends AbstractTest {
     byte[] stringVal = Bytes.toBytes("Not a number");
     puts.add(new Put(otheRow).addColumn(COLUMN_FAMILY, OTHER_QUALIFIER, stringVal));
 
-    keys = keyBuilder.build();
     table.put(puts);
   }
 

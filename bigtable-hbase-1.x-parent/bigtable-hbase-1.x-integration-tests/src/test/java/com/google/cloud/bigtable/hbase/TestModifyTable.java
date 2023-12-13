@@ -15,8 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase;
 
-import com.google.common.base.Function;
 import java.io.IOException;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.Admin;
