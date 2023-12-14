@@ -40,6 +40,7 @@ import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.data.v2.models.Query;
+import com.google.cloud.bigtable.data.v2.models.Range.ByteStringRange;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowCell;
@@ -269,60 +270,98 @@ public class TestDataClientVeneerApi {
         .call(Mockito.eq(query), Mockito.any(GrpcCallContext.class));
   }
 
+  private static Result createRow(String key) {
+    return Result.create(
+        ImmutableList.<Cell>of(
+            new com.google.cloud.bigtable.hbase.adapters.read.RowCell(
+                Bytes.toBytes(key),
+                Bytes.toBytes("cf"),
+                Bytes.toBytes("q"),
+                10L,
+                Bytes.toBytes("value"),
+                ImmutableList.of("label"))));
+  }
+
   @Test
   public void testReadPaginatedRows() throws IOException {
-    Query query = Query.create(TABLE_ID).rowKey(ROW_KEY);
+    Query query = Query.create(TABLE_ID).range("a", "z");
     when(mockDataClient.readRowsCallable(Mockito.<RowResultAdapter>any()))
-        .thenReturn(mockStreamingCallable)
         .thenReturn(mockStreamingCallable);
 
+    // First Page
     doAnswer(
-            new Answer<Void>() {
-              @Override
-              public Void answer(InvocationOnMock invocation) throws Throwable {
-                ((ResponseObserver) invocation.getArgument(1)).onResponse(Result.EMPTY_RESULT);
-                ((ResponseObserver) invocation.getArgument(1)).onResponse(EXPECTED_RESULT);
-                ((ResponseObserver) invocation.getArgument(1)).onResponse(EXPECTED_RESULT);
-                ((ResponseObserver) invocation.getArgument(1)).onComplete();
-                return null;
-              }
+            (args) -> {
+              ResponseObserver<Result> observer = args.getArgument(1);
+              observer.onResponse(createRow("a"));
+              observer.onResponse(createRow("b"));
+              observer.onComplete();
+              return null;
             })
         .when(mockStreamingCallable)
         .call(
-            Mockito.any(com.google.cloud.bigtable.data.v2.models.Query.class),
-            Mockito.any(ResponseObserver.class),
-            Mockito.any(GrpcCallContext.class));
+            Mockito.eq(Query.create(TABLE_ID).range("a", "z").limit(2)),
+            Mockito.any(),
+            Mockito.any());
+
+    // 2nd Page
+    doAnswer(
+            (args) -> {
+              ResponseObserver<Result> observer = args.getArgument(1);
+              observer.onResponse(createRow("c"));
+              observer.onResponse(createRow("d"));
+              observer.onComplete();
+              return null;
+            })
+        .when(mockStreamingCallable)
+        .call(
+            Mockito.eq(
+                Query.create(TABLE_ID)
+                    .range(ByteStringRange.unbounded().startOpen("b").endOpen("z"))
+                    .limit(2)),
+            Mockito.any(),
+            Mockito.any());
+
+    // 3rd Page
+    doAnswer(
+            (args) -> {
+              ResponseObserver<Result> observer = args.getArgument(1);
+              observer.onResponse(createRow("e"));
+              observer.onComplete();
+              return null;
+            })
+        .when(mockStreamingCallable)
+        .call(
+            Mockito.eq(
+                Query.create(TABLE_ID)
+                    .range(ByteStringRange.unbounded().startOpen("d").endOpen("z"))
+                    .limit(2)),
+            Mockito.any(),
+            Mockito.any());
+
+    // 3rd Page
+    doAnswer(
+            (args) -> {
+              ResponseObserver<Result> observer = args.getArgument(1);
+              observer.onComplete();
+              return null;
+            })
+        .when(mockStreamingCallable)
+        .call(
+            Mockito.eq(
+                Query.create(TABLE_ID)
+                    .range(ByteStringRange.unbounded().startOpen("e").endOpen("z"))
+                    .limit(2)),
+            Mockito.any(),
+            Mockito.any());
 
     ResultScanner resultScanner = dataClientWrapper.readRows(query.createPaginator(2), 1000);
-    assertResult(Result.EMPTY_RESULT, resultScanner.next());
-    assertResult(EXPECTED_RESULT, resultScanner.next());
-    assertResult(EXPECTED_RESULT, resultScanner.next());
 
-    doAnswer(
-            new Answer<Void>() {
-              @Override
-              public Void answer(InvocationOnMock invocation) throws Throwable {
-                ((ResponseObserver) invocation.getArgument(1)).onComplete();
-                return null;
-              }
-            })
-        .when(mockStreamingCallable)
-        .call(
-            Mockito.any(com.google.cloud.bigtable.data.v2.models.Query.class),
-            Mockito.any(ResponseObserver.class),
-            Mockito.any(GrpcCallContext.class));
-
-    resultScanner.close();
-
-    ResultScanner noRowsResultScanner = dataClientWrapper.readRows(query.createPaginator(2), 1000);
-    assertNull(noRowsResultScanner.next());
-
-    verify(mockDataClient, times(2)).readRowsCallable(Mockito.<RowResultAdapter>any());
-    verify(mockStreamingCallable, times(2))
-        .call(
-            Mockito.any(Query.class),
-            Mockito.any(ResponseObserver.class),
-            Mockito.any(GrpcCallContext.class));
+    assertResult(createRow("a"), resultScanner.next());
+    assertResult(createRow("b"), resultScanner.next());
+    assertResult(createRow("c"), resultScanner.next());
+    assertResult(createRow("d"), resultScanner.next());
+    assertResult(createRow("e"), resultScanner.next());
+    assertNull(resultScanner.next());
   }
 
   @Test
@@ -348,7 +387,7 @@ public class TestDataClientVeneerApi {
                   observer.onStart(mockController);
 
                   for (int i = 0; i < 1000 && !cancelled.get(); i++) {
-                    observer.onResponse(EXPECTED_RESULT);
+                    observer.onResponse(createRow(String.format("row%010d", i)));
                     Thread.sleep(10);
                   }
                   observer.onComplete();
