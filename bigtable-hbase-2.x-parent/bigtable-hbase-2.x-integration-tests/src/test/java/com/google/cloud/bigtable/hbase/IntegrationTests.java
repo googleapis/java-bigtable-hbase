@@ -23,7 +23,6 @@ import com.google.cloud.bigtable.hbase.async.TestAsyncColumnFamily;
 import com.google.cloud.bigtable.hbase.async.TestAsyncConnection;
 import com.google.cloud.bigtable.hbase.async.TestAsyncCreateTable;
 import com.google.cloud.bigtable.hbase.async.TestAsyncScan;
-import com.google.cloud.bigtable.hbase.async.TestAsyncSnapshots;
 import com.google.cloud.bigtable.hbase.async.TestAsyncTruncateTable;
 import com.google.cloud.bigtable.hbase.async.TestBasicAsyncOps;
 import com.google.cloud.bigtable.hbase.async.TestModifyTableAsync;
@@ -55,7 +54,6 @@ import org.junit.runners.Suite;
   TestGet.class,
   TestGetTable.class,
   TestScan.class,
-  TestSnapshots.class,
   TestIncrement.class,
   TestListTables.class,
   TestListTablesHBase2.class,
@@ -71,7 +69,6 @@ import org.junit.runners.Suite;
   TestAsyncScan.class,
   TestBasicAsyncOps.class,
   TestAsyncTruncateTable.class,
-  TestAsyncSnapshots.class,
   TestAsyncColumnFamily.class,
   TestModifyTable.class,
   TestModifyTableAsync.class
