@@ -295,7 +295,6 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
         -1);
   }
 
-
   private static Class<? extends BigtableAdmin> adminClass = null;
 
   /**
