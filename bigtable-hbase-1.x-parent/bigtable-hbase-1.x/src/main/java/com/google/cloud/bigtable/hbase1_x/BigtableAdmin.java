@@ -26,6 +26,7 @@ import net.bytebuddy.implementation.InvocationHandlerAdapter;
 import net.bytebuddy.matcher.ElementMatchers;
 import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.CommonConnection;
