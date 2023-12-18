@@ -20,8 +20,6 @@ import com.google.cloud.bigtable.hbase.util.FutureUtil;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
 import com.google.cloud.bigtable.hbase2_x.adapters.admin.TableAdapter2x;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -29,15 +27,12 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.InvocationHandlerAdapter;
-import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.matcher.ElementMatchers;
 import org.apache.hadoop.hbase.ClusterMetrics;
 import org.apache.hadoop.hbase.ClusterMetrics.Option;
@@ -49,10 +44,7 @@ import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.RegionInfo;
-import org.apache.hadoop.hbase.client.SnapshotDescription;
-import org.apache.hadoop.hbase.client.SnapshotType;
 import org.apache.hadoop.hbase.client.TableDescriptor;
-import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
@@ -99,40 +91,6 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
   public Future<Void> createTableAsync(TableDescriptor desc, byte[][] splitKeys)
       throws IOException {
     return asyncAdmin.createTable(desc, splitKeys);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public List<SnapshotDescription> listSnapshots(String regex) throws IOException {
-    return listSnapshots(Pattern.compile(regex));
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public List<SnapshotDescription> listSnapshots(Pattern pattern) throws IOException {
-    if (pattern == null || pattern.matcher("").matches()) {
-      return ImmutableList.of();
-    }
-
-    List<SnapshotDescription> response = new ArrayList<>();
-    for (SnapshotDescription description : listSnapshots()) {
-      if (pattern.matcher(description.getName()).matches()) {
-        response.add(description);
-      }
-    }
-    return response;
-  }
-
-  @Override
-  public List<SnapshotDescription> listSnapshots() throws IOException {
-    List<String> backups =
-        Futures.getChecked(
-            adminClientWrapper.listBackupsAsync(getBackupClusterId()), IOException.class);
-    List<SnapshotDescription> response = new ArrayList<>();
-    for (String backup : backups) {
-      response.add(new SnapshotDescription(backup));
-    }
-    return response;
   }
 
   /**
@@ -193,21 +151,6 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
   @Override
   public TableDescriptor getDescriptor(TableName tableName) throws IOException {
     return getTableDescriptor(tableName);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void snapshot(SnapshotDescription snapshot)
-      throws IOException, SnapshotCreationException, IllegalArgumentException {
-    Objects.requireNonNull(snapshot);
-    snapshot(snapshot.getName(), snapshot.getTableName());
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void snapshot(String snapshotId, TableName tableName, SnapshotType ignored)
-      throws IOException, SnapshotCreationException, IllegalArgumentException {
-    snapshot(snapshotId, tableName);
   }
 
   @Override
@@ -352,31 +295,6 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
         -1);
   }
 
-  /**
-   * HBase 2.x has different return type for snapshotAsync method in different versions. {@link
-   * #getSubclass} will generate the code to call the correct snapshotAsync method based on the
-   * hbase version.
-   */
-  protected void snapshotAsyncVoid(SnapshotDescription snapshot)
-      throws IOException, SnapshotCreationException {
-    asyncAdmin.snapshot(snapshot);
-    LOG.warn(
-        "isSnapshotFinished() is not currently supported by BigtableAdmin.\n"
-            + "You may poll for existence of the snapshot with listSnapshots(snapshotName)");
-  }
-
-  /**
-   * HBase 2.x has different return type for snapshotAsync method in different versions. {@link
-   * #getSubclass} will generate the code to call the correct snapshotAsync method based on the
-   * hbase version.
-   */
-  protected Future<Void> snapshotAsyncFuture(SnapshotDescription snapshot)
-      throws IOException, SnapshotCreationException {
-    LOG.warn(
-        "isSnapshotFinished() is not currently supported by BigtableAdmin.\n"
-            + "You may poll for existence of the snapshot with listSnapshots(snapshotName)");
-    return asyncAdmin.snapshot(snapshot);
-  }
 
   private static Class<? extends BigtableAdmin> adminClass = null;
 
@@ -396,21 +314,6 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
               .intercept(
                   InvocationHandlerAdapter.of(
                       new AbstractBigtableAdmin.UnsupportedOperationsHandler()))
-              .method(
-                  ElementMatchers.named("snapshotAsync")
-                      .and(ElementMatchers.returns(TypeDescription.VOID)))
-              .intercept(
-                  MethodCall.invoke(
-                          BigtableAdmin.class.getDeclaredMethod(
-                              "snapshotAsyncVoid", SnapshotDescription.class))
-                      .withAllArguments())
-              .method(
-                  ElementMatchers.named("snapshotAsync").and(ElementMatchers.returns(Future.class)))
-              .intercept(
-                  MethodCall.invoke(
-                          BigtableAdmin.class.getDeclaredMethod(
-                              "snapshotAsyncFuture", SnapshotDescription.class))
-                      .withAllArguments())
               .make()
               .load(BigtableAdmin.class.getClassLoader())
               .getLoaded();
