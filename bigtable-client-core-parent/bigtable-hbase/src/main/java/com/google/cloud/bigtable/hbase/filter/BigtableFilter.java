@@ -29,12 +29,10 @@ import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.filter.FilterList;
 
 /**
- * An HBase {@link Filter} that wraps a Cloud Bigtable {@link Filters.Filter}. Generally, users
- * should opt for a pure HBase {@link Filter}. There are complex cases where a Cloud Bigtable {@link
- * Filters.Filter} can express a more robust expression than the HBase semantics, or can be used to
- * express an expression that's more performant than a translation of a complex HBase {@link
- * FilterList}.
+ * @deprecated This is a Bigtable extension will be removed in the future. bigtable-hbase is meant
+ * to be a compatibility layer from HBase to Bigtable. Adding extensions is out of scope.
  */
+@Deprecated
 @InternalExtensionOnly
 public class BigtableFilter extends FilterBase implements Serializable {
 

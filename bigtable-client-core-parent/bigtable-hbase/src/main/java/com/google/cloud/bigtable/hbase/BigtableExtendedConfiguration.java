@@ -20,12 +20,10 @@ import com.google.auth.Credentials;
 import org.apache.hadoop.conf.Configuration;
 
 /**
- * Allows users to set an explicit {@link Credentials} object.
- *
- * <p>For internal use only - public for technical reasons.
- *
- * @see BigtableConfiguration#withCredentials(Configuration, Credentials).
+ * @deprecated bigtable-hbase is primarily a compatibility layer for HBase, adding Bigtable
+ * extensions is out of scope
  */
+@Deprecated
 @InternalApi("For internal usage only")
 public class BigtableExtendedConfiguration extends Configuration {
   private Credentials credentials;

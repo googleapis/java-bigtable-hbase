@@ -28,8 +28,8 @@ import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.filter.FilterBase;
 
 /**
- * Defines a filter that only returns cells whose version matches a start and end (both are
- * inclusive)
+ * @deprecated This is a Bigtable extension will be removed in the future. bigtable-hbase is meant
+ * to be a compatibility layer from HBase to Bigtable. Adding extensions is out of scope.
  */
 @InternalExtensionOnly
 public class TimestampRangeFilter extends FilterBase implements Serializable {
