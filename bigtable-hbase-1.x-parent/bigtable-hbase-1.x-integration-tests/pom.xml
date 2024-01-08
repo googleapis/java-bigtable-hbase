@@ -48,6 +48,7 @@ limitations under the License.
   </properties>
 
   <profiles>
+    <!-- NOTE: this profile is controlled via `int-test-1x-deps.mode` property -->
     <profile>
       <id>cbt-unshaded-hbase-shaded-deps</id>
       <activation>
@@ -89,6 +90,7 @@ limitations under the License.
       </dependencies>
     </profile>
 
+    <!-- NOTE: this profile is controlled via `int-test-1x-deps.mode` property -->
     <profile>
       <id>cbt-shaded-hbase-unshaded-deps</id>
 
@@ -126,6 +128,7 @@ limitations under the License.
       </dependencies>
     </profile>
 
+    <!-- NOTE: this profile is controlled via `int-test-1x-deps.mode` property -->
     <profile>
       <id>cbt-shaded-hbase-minimal-unshaded-deps</id>
 
@@ -315,8 +318,8 @@ limitations under the License.
           </exclusions>
         </dependency>
       </dependencies>
-
     </profile>
+
 
     <profile>
       <id>bigtableIntegrationTest</id>
