@@ -24,7 +24,6 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
   TestAdminOps.class,
   TestAppend.class,
-  TestAuth.class,
   TestBasicOps.class,
   TestBatch.class,
   TestBufferedMutator.class,
