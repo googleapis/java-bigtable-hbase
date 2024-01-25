@@ -21,7 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 
 /**
  * @deprecated bigtable-hbase is primarily a compatibility layer for HBase, adding Bigtable
- * extensions is out of scope
+ *     extensions is out of scope
  */
 @Deprecated
 @InternalApi("For internal usage only")

@@ -24,13 +24,11 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.Serializable;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
-import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterBase;
-import org.apache.hadoop.hbase.filter.FilterList;
 
 /**
  * @deprecated This is a Bigtable extension will be removed in the future. bigtable-hbase is meant
- * to be a compatibility layer from HBase to Bigtable. Adding extensions is out of scope.
+ *     to be a compatibility layer from HBase to Bigtable. Adding extensions is out of scope.
  */
 @Deprecated
 @InternalExtensionOnly

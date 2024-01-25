@@ -29,7 +29,7 @@ import org.apache.hadoop.hbase.filter.FilterBase;
 
 /**
  * @deprecated This is a Bigtable extension will be removed in the future. bigtable-hbase is meant
- * to be a compatibility layer from HBase to Bigtable. Adding extensions is out of scope.
+ *     to be a compatibility layer from HBase to Bigtable. Adding extensions is out of scope.
  */
 @InternalExtensionOnly
 public class TimestampRangeFilter extends FilterBase implements Serializable {
