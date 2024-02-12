@@ -21,7 +21,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.client.BufferedMutator;
@@ -120,7 +121,7 @@ public class TestBufferedMutator extends AbstractTest {
       actualError = null;
 
       try {
-        bm.mutate(ImmutableList.<Mutation>of());
+        bm.mutate(Collections.emptyList());
       } catch (Exception ex) {
         actualError = ex;
       }
@@ -176,13 +177,12 @@ public class TestBufferedMutator extends AbstractTest {
             getConnection().getBufferedMutator(sharedTestEnv.getDefaultTableName());
         Table tableForRead = getConnection().getTable(sharedTestEnv.getDefaultTableName())) {
 
-      ImmutableList.Builder<Put> builder = ImmutableList.builder();
+      List<Put> mutations = new ArrayList<>();
       for (int i = 0; i < 10; i++) {
-        builder.add(
+        mutations.add(
             new Put(Bytes.toBytes(rowKeyPrefix + i))
                 .addColumn(COLUMN_FAMILY, qualifier, 10_001L, value));
       }
-      List<Put> mutations = builder.build();
 
       mutator.mutate(mutations);
       // force bufferedMutator to apply mutation

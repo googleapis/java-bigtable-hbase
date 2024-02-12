@@ -15,10 +15,12 @@
  */
 package com.google.cloud.bigtable.hbase.async;
 
-import com.google.common.util.concurrent.MoreExecutors;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -33,15 +35,24 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class TestAsyncConnection extends AbstractAsyncTest {
 
-  private static final ExecutorService directExecutorService =
-      MoreExecutors.newDirectExecutorService();
+  private ExecutorService executorService;
 
   @Rule public ExpectedException thrown = ExpectedException.none();
+
+  @Before
+  public void setUp() throws Exception {
+    executorService = Executors.newCachedThreadPool();
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    executorService.shutdown();
+  }
 
   @Test
   public void testAdmin() throws InterruptedException, ExecutionException {
     Assert.assertNotNull(getAsyncConnection().getAdmin());
-    Assert.assertNotNull(getAsyncConnection().getAdmin(directExecutorService));
+    Assert.assertNotNull(getAsyncConnection().getAdmin(executorService));
   }
 
   @Test
@@ -53,10 +64,10 @@ public class TestAsyncConnection extends AbstractAsyncTest {
   @Test
   public void testTable() throws InterruptedException, ExecutionException {
     Assert.assertNotNull(
-        getAsyncConnection().getTable(sharedTestEnv.getDefaultTableName(), directExecutorService));
+        getAsyncConnection().getTable(sharedTestEnv.getDefaultTableName(), executorService));
     Assert.assertNotNull(
         getAsyncConnection()
-            .getTableBuilder(sharedTestEnv.getDefaultTableName(), directExecutorService)
+            .getTableBuilder(sharedTestEnv.getDefaultTableName(), executorService)
             .build());
   }
 
@@ -70,7 +81,7 @@ public class TestAsyncConnection extends AbstractAsyncTest {
             .build());
     Assert.assertNotNull(
         getAsyncConnection()
-            .getBufferedMutatorBuilder(sharedTestEnv.getDefaultTableName(), directExecutorService)
+            .getBufferedMutatorBuilder(sharedTestEnv.getDefaultTableName(), executorService)
             .build());
   }
 

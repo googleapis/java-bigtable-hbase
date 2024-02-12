@@ -19,50 +19,20 @@ import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.ipc.HBaseRpcController;
 
 class MiniClusterEnv extends SharedTestEnv {
+  private static final String PORT_KEY = "hbase.zookeeper.property.clientPort";
   private static final Log LOG = LogFactory.getLog(MiniClusterEnv.class);
-
-  static {
-    try {
-      HBaseRpcController.class.getName();
-    } catch (Throwable t) {
-      t.printStackTrace();
-    }
-  }
-
-  private HBaseTestingUtility helper;
 
   @Override
   protected void setup() throws Exception {
-    LOG.info("Starting hbase minicluster");
-
-    System.setProperty(
-        "org.apache.hadoop.hbase.shaded.io.netty.packagePrefix", "org.apache.hadoop.hbase.shaded.");
-
-    helper = HBaseTestingUtility.createLocalHTU();
-    helper.startMiniCluster();
-
-    // Need to create a separate config for the client to avoid
-    // leaking hadoop configs, which messes up local mapreduce jobs
     configuration = HBaseConfiguration.create();
 
-    String[] keys = new String[] {"hbase.zookeeper.quorum", "hbase.zookeeper.property.clientPort"};
-    for (String key : keys) {
-      configuration.set(key, helper.getConfiguration().get(key));
-    }
-    LOG.info("Test dir: " + helper.getDataTestDir());
+    int miniClusterPort = Integer.getInteger(PORT_KEY);
+    LOG.info("MiniCluster port: " + miniClusterPort);
+    configuration.setInt(PORT_KEY, miniClusterPort);
   }
 
   @Override
-  protected void teardown() throws IOException {
-    helper.shutdownMiniHBaseCluster();
-    System.out.println("Cleaning up testDir: " + helper.getDataTestDir());
-    if (!helper.cleanupTestDir()) {
-      LOG.warn("Failed to clean up testDir");
-    }
-    helper = null;
-  }
+  protected void teardown() throws IOException {}
 }

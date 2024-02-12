@@ -17,14 +17,10 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
-import com.google.cloud.bigtable.data.v2.models.Filters;
-import com.google.cloud.bigtable.hbase.filter.BigtableFilter;
 import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
-import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.Arrays;
 import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -34,9 +30,11 @@ import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 public class TestFilters extends AbstractTestFilters {
-
+  // This test can't run against the minicluster because its a Bigtable extension
+  @Category(KnownHBaseGap.class)
   @Test
   public void testTimestampRangeFilter() throws IOException {
     // Initialize
@@ -66,39 +64,13 @@ public class TestFilters extends AbstractTestFilters {
     table.close();
   }
 
-  @Test
-  public void testBigtableFilter() throws IOException {
-    if (!sharedTestEnv.isBigtable()) {
-      return;
-    }
-
-    byte[] rowKey = dataHelper.randomData("cbt-filter-");
-    byte[] qualA = Bytes.toBytes("a");
-    byte[] qualB = Bytes.toBytes("b");
-    byte[] valA = dataHelper.randomData("a");
-    byte[] valB = dataHelper.randomData("b");
-
-    try (Table table = getDefaultTable()) {
-      table.put(
-          new Put(rowKey)
-              .addColumn(COLUMN_FAMILY, qualA, valA)
-              .addColumn(COLUMN_FAMILY, qualB, valB));
-
-      Filters.Filter qualAFilter =
-          Filters.FILTERS.qualifier().exactMatch(ByteString.copyFrom(qualA));
-      BigtableFilter bigtableFilter = new BigtableFilter(qualAFilter);
-      Result result = table.get(new Get(rowKey).setFilter(bigtableFilter));
-
-      Assert.assertEquals(1, result.size());
-      Assert.assertTrue(CellUtil.matchingValue(result.rawCells()[0], valA));
-    }
-  }
-
   /**
    * This test case is used to validate TimestampRangeFilter with Integer.MAX_VALUE #1552
    *
    * @throws IOException
    */
+  // This test can't run against the minicluster because its a Bigtable extension
+  @Category(KnownHBaseGap.class)
   @Test
   public void testTimestampRangeFilterWithMaxVal() throws IOException {
     // Initialize

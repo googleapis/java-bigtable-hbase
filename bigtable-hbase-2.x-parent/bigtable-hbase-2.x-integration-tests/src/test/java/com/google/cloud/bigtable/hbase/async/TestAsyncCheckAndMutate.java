@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase.async;
 
 import com.google.cloud.bigtable.hbase.AbstractTestCheckAndMutate;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -42,12 +41,7 @@ public class TestAsyncCheckAndMutate extends AbstractTestCheckAndMutate {
 
   @BeforeClass
   public static void setup() {
-    executor =
-        Executors.newCachedThreadPool(
-            new ThreadFactoryBuilder()
-                .setDaemon(true)
-                .setNameFormat("TestAsyncCheckAndMutate")
-                .build());
+    executor = Executors.newCachedThreadPool();
   }
 
   @AfterClass

@@ -90,6 +90,22 @@ limitations under the License.
       <id>hbaseLocalMiniClusterTestH2</id>
       <build>
         <plugins>
+          <!-- start & stop the minicluster around the integration tests -->
+          <plugin>
+            <groupId>com.google.cloud.bigtable</groupId>
+            <artifactId>hbase-minicluster-maven-plugin</artifactId>
+            <version>2.12.1-SNAPSHOT</version>  <!-- {x-version-update:bigtable-client-parent:current} -->
+
+            <executions>
+              <execution>
+                <goals>
+                  <goal>start</goal>
+                  <goal>stop</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-failsafe-plugin</artifactId>
@@ -114,6 +130,8 @@ limitations under the License.
                   <reportsDirectory>${project.build.directory}/failsafe-reports/minicluster-tests</reportsDirectory>
                   <systemPropertyVariables>
                     <google.bigtable.test_env>minicluster</google.bigtable.test_env>
+                    <!-- populated by hbase-minicluster-maven-plugin -->
+                    <hbase.zookeeper.property.clientPort>${hbase.zookeeper.property.clientPort}</hbase.zookeeper.property.clientPort>
                   </systemPropertyVariables>
                 </configuration>
               </execution>
@@ -181,32 +199,18 @@ limitations under the License.
   </dependencyManagement>
 
   <dependencies>
-    <!-- HBase testing tools -->
     <dependency>
       <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-testing-util</artifactId>
+      <artifactId>hbase-shaded-client</artifactId>
       <version>${hbase2.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>ch.qos.reload4j</groupId>
-      <artifactId>reload4j</artifactId>
-      <version>${reload4j.version}</version>
-      <scope>runtime</scope>
     </dependency>
 
+    <!-- Project Modules -->
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-2.x</artifactId>
       <version>2.12.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <scope>test</scope>
-      <exclusions>
-        <!-- included in hbase-shaded-testing-util -->
-        <exclusion>
-          <groupId>org.apache.hbase</groupId>
-          <artifactId>hbase-shaded-client</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
@@ -324,7 +328,43 @@ limitations under the License.
         <!-- End Skip publishing -->
       </plugins>
     </pluginManagement>
+
     <plugins>
+      <plugin>
+        <groupId>com.google.cloud.bigtable</groupId>
+        <artifactId>hbase-minicluster-maven-plugin</artifactId>
+        <version>2.12.1-SNAPSHOT</version>
+
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-shaded-testing-util</artifactId>
+            <version>${hbase2.version}</version>
+          </dependency>
+
+          <!-- Force upgrade commons-logging to 1.3.0 so that it re-routes over slf4j which maven uses -->
+          <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+            <version>1.3.0</version>
+          </dependency>
+
+          <!-- minicluster has a hard undeclared  dependency on log4j 1 via hadoop, reroute it to slf4j -->
+          <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
+            <version>2.0.9</version>
+          </dependency>
+          <!-- TODO: Figure out why this is necessary -->
+          <!-- minicluster has a hard undeclared dependency on junit? -->
+          <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>

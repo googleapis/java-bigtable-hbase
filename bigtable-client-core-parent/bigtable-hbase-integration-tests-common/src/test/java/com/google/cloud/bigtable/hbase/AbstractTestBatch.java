@@ -20,10 +20,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import org.apache.commons.lang.ArrayUtils;
@@ -429,14 +429,14 @@ public abstract class AbstractTestBatch extends AbstractTest {
     actualError = null;
 
     try {
-      table.batch(ImmutableList.<Row>of(), new Object[0]);
+      table.batch(Collections.emptyList(), new Object[0]);
     } catch (Exception ex) {
       actualError = ex;
     }
     assertNull(actualError);
 
     try {
-      table.batch(ImmutableList.<Row>of(null), new Object[0]);
+      table.batch(Collections.singletonList(null), new Object[0]);
     } catch (Exception ex) {
       actualError = ex;
     }

@@ -19,9 +19,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import org.apache.hadoop.hbase.TableName;
+import java.util.Collections;
 import org.apache.hadoop.hbase.client.Admin;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -88,7 +87,7 @@ public class TestAdminOps extends AbstractTest {
     try (Admin admin = getConnection().getAdmin()) {
       assertTrue(admin.getTableDescriptorsByTableName(null).length > 0);
 
-      assertTrue(admin.getTableDescriptorsByTableName(ImmutableList.<TableName>of()).length > 0);
+      assertTrue(admin.getTableDescriptorsByTableName(Collections.emptyList()).length > 0);
     }
   }
 
@@ -104,7 +103,7 @@ public class TestAdminOps extends AbstractTest {
       assertNotNull(actualError);
       assertTrue(actualError instanceof NullPointerException);
 
-      assertTrue(admin.getTableDescriptors(ImmutableList.<String>of()).length > 0);
+      assertTrue(admin.getTableDescriptors(Collections.emptyList()).length > 0);
     }
   }
 }

@@ -34,5 +34,6 @@ limitations under the License.
     <module>bigtable-emulator-maven-plugin</module>
     <module>bigtable-build-helper</module>
     <module>bigtable-internal-test-helper</module>
+      <module>hbase-minicluster-maven-plugin</module>
   </modules>
 </project>
