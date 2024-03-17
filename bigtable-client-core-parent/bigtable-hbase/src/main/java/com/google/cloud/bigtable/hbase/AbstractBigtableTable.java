@@ -36,6 +36,7 @@ import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.protobuf.ByteString;
 import io.opencensus.common.Scope;
 import io.opencensus.trace.AttributeValue;
 import io.opencensus.trace.Span;
@@ -500,9 +501,9 @@ public abstract class AbstractBigtableTable implements Table {
     }
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public void mutateRow(RowMutations rowMutations) throws IOException {
+  // Invoked via ByteBuddy
+  // Implements Result mutateRow(RowMutations) for HBase prior 2.4
+  public void mutateRowVoid(RowMutations rowMutations) throws IOException {
     LOG.trace("mutateRow(RowMutation)");
     if (rowMutations.getMutations().isEmpty()) {
       return;
@@ -516,6 +517,48 @@ public abstract class AbstractBigtableTable implements Table {
     } finally {
       span.end();
     }
+  }
+
+  // Invoked via ByteBuddy
+  // Implements Result mutateRow(RowMutations) for HBase >= 2.4
+  public Result mutateRowResult(RowMutations rowMutations) throws IOException {
+    LOG.trace("mutateRow(RowMutation)");
+    if (rowMutations.getMutations().isEmpty()) {
+      return null;
+    }
+    Span span = TRACER.spanBuilder("BigtableTable.mutateRow").startSpan();
+
+    try (Scope scope = TRACER.withSpan(span)) {
+      Mutation firstMutation = rowMutations.getMutations().get(0);
+      if (firstMutation instanceof Append || firstMutation instanceof Increment) {
+        return mutateRowRMW(rowMutations);
+      } else {
+        FutureUtil.unwrap(clientWrapper.mutateRowAsync(hbaseAdapter.adapt(rowMutations)));
+        return Result.EMPTY_RESULT;
+      }
+    } catch (Throwable t) {
+      span.setStatus(Status.UNKNOWN);
+      throw logAndCreateIOException("mutateRow", rowMutations.getRow(), t);
+    } finally {
+      span.end();
+    }
+  }
+
+  private Result mutateRowRMW(RowMutations rowMutations) throws IOException {
+    ReadModifyWriteRow rmw =
+        ReadModifyWriteRow.create(
+            tableName.getNameAsString(), ByteString.copyFrom(rowMutations.getRow()));
+    for (Mutation mutation : rowMutations.getMutations()) {
+      if (mutation instanceof Append) {
+        Adapters.APPEND_ADAPTER.adapt((Append) mutation, rmw);
+      } else if (mutation instanceof Increment) {
+        Adapters.INCREMENT_ADAPTER.adapt((Increment) mutation, rmw);
+      } else {
+        throw new UnsupportedOperationException(
+            "Bigtable can't mix Increment/Append with " + mutation.getClass());
+      }
+    }
+    return FutureUtil.unwrap(clientWrapper.readModifyWriteRowAsync(rmw));
   }
 
   /** {@inheritDoc} */

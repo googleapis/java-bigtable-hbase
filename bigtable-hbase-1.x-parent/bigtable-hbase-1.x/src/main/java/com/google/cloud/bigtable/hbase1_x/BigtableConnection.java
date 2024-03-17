@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.hbase1_x;
 
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
 import com.google.cloud.bigtable.hbase.adapters.SampledRowKeysAdapter;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -79,7 +78,7 @@ public class BigtableConnection extends AbstractBigtableConnection {
 
   @Override
   public Table getTable(TableName tableName, ExecutorService ignored) throws IOException {
-    return new AbstractBigtableTable(this, createAdapter(tableName)) {};
+    return new BigtableTable(this, createAdapter(tableName));
   }
 
   @Override

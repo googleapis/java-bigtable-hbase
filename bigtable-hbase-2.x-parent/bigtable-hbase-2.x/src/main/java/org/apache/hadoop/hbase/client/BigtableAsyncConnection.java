@@ -166,6 +166,11 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
       }
 
       @Override
+      public AsyncAdminBuilder setRetryPauseForServerOverloaded(long l, TimeUnit timeUnit) {
+        return this;
+      }
+
+      @Override
       public AsyncAdmin build() {
         try {
           return BigtableAsyncAdmin.createInstance(BigtableAsyncConnection.this);
@@ -294,6 +299,12 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
       }
 
       @Override
+      public AsyncTableBuilder<AdvancedScanResultConsumer> setRetryPauseForServerOverloaded(
+          long l, TimeUnit timeUnit) {
+        return this;
+      }
+
+      @Override
       public AsyncTable build() {
         return new BigtableAsyncTable(BigtableAsyncConnection.this, createAdapter(tableName));
       }
@@ -362,6 +373,12 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
 
       @Override
       public AsyncTableBuilder<ScanResultConsumer> setWriteRpcTimeout(long arg0, TimeUnit arg1) {
+        return this;
+      }
+
+      @Override
+      public AsyncTableBuilder<ScanResultConsumer> setRetryPauseForServerOverloaded(
+          long l, TimeUnit timeUnit) {
         return this;
       }
     };

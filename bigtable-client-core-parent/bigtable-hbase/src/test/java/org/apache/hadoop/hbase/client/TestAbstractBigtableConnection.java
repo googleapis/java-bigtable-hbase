@@ -268,7 +268,12 @@ public class TestAbstractBigtableConnection {
 
     @Override
     public Table getTable(TableName tableName, ExecutorService executorService) {
-      return new AbstractBigtableTable(this, createAdapter(tableName)) {};
+      return new AbstractBigtableTable(this, createAdapter(tableName)) {
+        @Override
+        public void mutateRow(RowMutations rowMutations) throws IOException {
+          mutateRowVoid(rowMutations);
+        }
+      };
     }
 
     @Override

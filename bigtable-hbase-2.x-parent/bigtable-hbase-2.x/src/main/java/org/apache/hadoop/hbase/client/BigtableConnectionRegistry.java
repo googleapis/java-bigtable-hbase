@@ -48,6 +48,11 @@ public class BigtableConnectionRegistry implements ConnectionRegistry {
   }
 
   @Override
+  public String getConnectionString() {
+    return "fake";
+  }
+
+  @Override
   public void close() {
     // noop
   }

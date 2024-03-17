@@ -218,6 +218,8 @@ limitations under the License.
                   <exclude>org.apache.htrace:htrace-core4</exclude>
                   <exclude>commons-logging:commons-logging</exclude>
                   <exclude>org.apache.yetus:audience-annotations</exclude>
+                  <exclude>io.opentelemetry:*</exclude>
+                  <exclude>org.apache.yetus:audience-annotations</exclude>
                 </excludes>
               </artifactSet>
               <relocations>

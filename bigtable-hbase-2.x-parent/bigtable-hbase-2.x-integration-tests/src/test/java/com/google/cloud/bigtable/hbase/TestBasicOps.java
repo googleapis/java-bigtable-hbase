@@ -16,23 +16,36 @@
 package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+import static com.google.cloud.bigtable.hbase.test_helpers.ResultSubject.assertThat;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.TruthJUnit.assume;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
+@RunWith(JUnit4.class)
 public class TestBasicOps extends AbstractTest {
   /** Happy path for a single value. */
   @Test
@@ -228,6 +241,116 @@ public class TestBasicOps extends AbstractTest {
     table.close();
 
     stopwatch.print("close took %d ms");
+  }
+
+  /**
+   * Test the behavior of mutateRow that's common before and after 2.4. At version 2.4, mutateRow
+   * started accepting Increment & Append and the return type changed from void to Result. When
+   * invoked with non-increment & append it will return an empty result.
+   */
+  @Test
+  public void testMutateRowCommon() throws IOException {
+    Table table = getDefaultTable();
+    byte[] testRowKey = dataHelper.randomData("testMutateRow23-");
+
+    // pre 2.4, the method's return type was void, so the return value for reflectively invoking
+    // the method will return the value null. For newer versions it will be EMPTY_RESULT.
+    Result expectedReturn = mutateRowHasResult() ? Result.EMPTY_RESULT : null;
+
+    // Test multiple Puts
+    Result result =
+        mutateRow(
+            table,
+            new RowMutations(testRowKey)
+                .add(
+                    (Mutation)
+                        new Put(testRowKey)
+                            .addColumn(COLUMN_FAMILY, "q".getBytes(), "v1".getBytes()))
+                .add(
+                    (Mutation)
+                        new Put(testRowKey)
+                            .addColumn(COLUMN_FAMILY, "q2".getBytes(), "v2".getBytes())));
+
+    assertThat(result).isEqualTo(expectedReturn);
+
+    Result rowResult = table.get(new Get(testRowKey));
+    assertThat(rowResult).latestCellHasValue(COLUMN_FAMILY, "q".getBytes(), "v1".getBytes());
+    assertThat(rowResult).latestCellHasValue(COLUMN_FAMILY, "q2".getBytes(), "v2".getBytes());
+
+    // Test Delete
+    Result result2 =
+        mutateRow(
+            table,
+            new RowMutations(testRowKey)
+                .add((Mutation) new Delete(testRowKey).addColumn(COLUMN_FAMILY, "q".getBytes()))
+                .add(
+                    (Mutation)
+                        new Put(testRowKey)
+                            .addColumn(COLUMN_FAMILY, "q2".getBytes(), "v2b".getBytes())));
+
+    assertThat(result2).isEqualTo(expectedReturn);
+
+    Result rowResult2 = table.get(new Get(testRowKey));
+    assertThat(rowResult2).doesNotHaveCell(COLUMN_FAMILY, "q".getBytes());
+    assertThat(rowResult2).latestCellHasValue(COLUMN_FAMILY, "q2".getBytes(), "v2b".getBytes());
+  }
+
+  @Test
+  public void testMutateRow24() throws IOException {
+    assume()
+        .withMessage("Using HBase version that returns a Result for mutateRow")
+        .that(mutateRowHasResult())
+        .isTrue();
+
+    Table table = getDefaultTable();
+    byte[] testRowKey1 = dataHelper.randomData("testMutateRow24-");
+
+    Result result =
+        mutateRow(
+            table,
+            new RowMutations(testRowKey1)
+                .add(new Increment(testRowKey1).addColumn(COLUMN_FAMILY, "q".getBytes(), 3))
+                .add(
+                    new Append(testRowKey1)
+                        .addColumn(COLUMN_FAMILY, "q2".getBytes(), "moo".getBytes()))
+                .add(
+                    (Mutation)
+                        new Put(testRowKey1)
+                            .addColumn(COLUMN_FAMILY, "q3".getBytes(), "something".getBytes()))
+                .add((Mutation) new Delete(testRowKey1).addColumn(COLUMN_FAMILY, "q4".getBytes())));
+
+    assertThat(result).latestCellHasValue(COLUMN_FAMILY, "q".getBytes(), Bytes.toBytes(3L));
+    assertThat(result).latestCellHasValue(COLUMN_FAMILY, "q2".getBytes(), "moo".getBytes());
+    // Only has info about incremented & appended cells
+    assertThat(result.rawCells()).hasLength(2);
+
+    Result rowResult2 = table.get(new Get(testRowKey1));
+    assertThat(rowResult2.rawCells()).hasLength(3);
+  }
+
+  /** Wrapper to deal with method signature change of mutateRow that happened in hbase 2.4 */
+  private static @Nullable Result mutateRow(Table table, RowMutations m) {
+    try {
+      Method mutateRow = Table.class.getDeclaredMethod("mutateRow", RowMutations.class);
+      return (Result) mutateRow.invoke(table, m);
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+      throw new RuntimeException("Unexpected error trying to invoke mutateRow", e);
+    }
+  }
+
+  private static boolean mutateRowHasResult() {
+    Method mutateRow = null;
+    try {
+      mutateRow = Table.class.getDeclaredMethod("mutateRow", RowMutations.class);
+      Class<?> returnType = mutateRow.getReturnType();
+      if (returnType == Void.TYPE) {
+        return false;
+      }
+      assertThat(returnType).isAssignableTo(Result.class);
+      return true;
+    } catch (NoSuchMethodException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private class Stopwatch {

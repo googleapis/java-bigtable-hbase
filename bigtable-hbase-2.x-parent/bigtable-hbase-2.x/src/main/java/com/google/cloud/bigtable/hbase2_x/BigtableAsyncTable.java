@@ -22,6 +22,7 @@ import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.Query;
+import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.hbase.AbstractBigtableTable;
 import com.google.cloud.bigtable.hbase.BatchExecutor;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
@@ -32,6 +33,7 @@ import com.google.cloud.bigtable.hbase.util.ByteStringer;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import com.google.common.base.Preconditions;
+import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 import io.opencensus.common.Scope;
 import io.opencensus.trace.Span;
@@ -39,6 +41,9 @@ import io.opencensus.trace.Status;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -49,10 +54,13 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.AsyncTable;
 import org.apache.hadoop.hbase.client.AsyncTableRegionLocator;
+import org.apache.hadoop.hbase.client.CheckAndMutate;
+import org.apache.hadoop.hbase.client.CheckAndMutateResult;
 import org.apache.hadoop.hbase.client.CommonConnection;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -61,6 +69,7 @@ import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.ScanResultConsumer;
 import org.apache.hadoop.hbase.client.ServiceCaller;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
 import org.apache.hadoop.hbase.filter.Filter;
@@ -86,6 +95,26 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   private final HBaseRequestAdapter hbaseAdapter;
   private final TableName tableName;
   private BatchExecutor batchExecutor;
+
+  private static final Boolean MUTATE_ROW_RETURNS_RESULT;
+
+  static {
+    Type wrappedReturnType = null;
+    try {
+      Method mutateRow = Table.class.getDeclaredMethod("mutateRow", RowMutations.class);
+      ParameterizedType returnType = (ParameterizedType) mutateRow.getGenericReturnType();
+      wrappedReturnType = returnType.getActualTypeArguments()[0];
+    } catch (NoSuchMethodException e) {
+    }
+
+    if (wrappedReturnType == Void.class) {
+      MUTATE_ROW_RETURNS_RESULT = false;
+    } else if (wrappedReturnType == Result.class) {
+      MUTATE_ROW_RETURNS_RESULT = true;
+    } else {
+      MUTATE_ROW_RETURNS_RESULT = null;
+    }
+  }
 
   public BigtableAsyncTable(CommonConnection connection, HBaseRequestAdapter hbaseAdapter) {
     this.connection = connection;
@@ -126,6 +155,16 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
   @Override
   public CheckAndMutateWithFilterBuilder checkAndMutate(byte[] bytes, Filter filter) {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
+  public CompletableFuture<CheckAndMutateResult> checkAndMutate(CheckAndMutate checkAndMutate) {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
+  public List<CompletableFuture<CheckAndMutateResult>> checkAndMutate(List<CheckAndMutate> list) {
     throw new UnsupportedOperationException("not implemented");
   }
 
@@ -316,10 +355,48 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
         clientWrapper.readModifyWriteRowAsync(hbaseAdapter.adapt(increment)));
   }
 
+  // NOTE: At HBase 2.4, the return type changed from CompletableFuture<Void> to
+  // CompletableFuture<Result>. The behavior also changed: the parameter can now accept
+  // Increments and Appends and will return the result of the Increment/Appends. When increment
+  // or Append is not present, the return value is now Result.EMPTY
   /** {@inheritDoc} */
   @Override
-  public CompletableFuture<Void> mutateRow(RowMutations rowMutations) {
-    return toCompletableFuture(clientWrapper.mutateRowAsync(hbaseAdapter.adapt(rowMutations)));
+  public CompletableFuture /*<Void|Result>*/ mutateRow(RowMutations rowMutations) {
+    Object emptyReturn = MUTATE_ROW_RETURNS_RESULT ? Result.EMPTY_RESULT : null;
+
+    if (rowMutations.getMutations().isEmpty()) {
+      return CompletableFuture.completedFuture(emptyReturn);
+    }
+
+    Mutation firstMutation = rowMutations.getMutations().get(0);
+    if (firstMutation instanceof Append || firstMutation instanceof Increment) {
+      return mutateRowRMW(rowMutations);
+    }
+
+    return toCompletableFuture(clientWrapper.mutateRowAsync(hbaseAdapter.adapt(rowMutations)))
+        .thenApply((v) -> emptyReturn);
+  }
+
+  private CompletableFuture<Result> mutateRowRMW(RowMutations rowMutations) {
+    ReadModifyWriteRow rmw =
+        ReadModifyWriteRow.create(
+            tableName.getNameAsString(), ByteString.copyFrom(rowMutations.getRow()));
+
+    for (Mutation mutation : rowMutations.getMutations()) {
+      if (mutation instanceof Append) {
+        Adapters.APPEND_ADAPTER.adapt((Append) mutation, rmw);
+      } else if (mutation instanceof Increment) {
+        Adapters.INCREMENT_ADAPTER.adapt((Increment) mutation, rmw);
+      } else {
+        CompletableFuture<Result> f = new CompletableFuture<>();
+        f.completeExceptionally(
+            new UnsupportedOperationException(
+                "Bigtable can't mix Increment/Append with " + mutation.getClass()));
+        return f;
+      }
+    }
+
+    return toCompletableFuture(clientWrapper.readModifyWriteRowAsync(rmw));
   }
 
   /** {@inheritDoc} */
