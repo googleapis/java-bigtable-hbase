@@ -55,6 +55,24 @@ public class HBaseToCloudBigtableReplicationConfiguration {
   public static final int DEFAULT_THREAD_COUNT = 10;
 
   /**
+   * Flag that determines if cells that exceed value of FILTER_LARGE_CELLS_THRESHOLD_IN_BYTES_KEY
+   * should be logged and dropped.
+   */
+  public static final String FILTER_LARGE_CELLS_KEY =
+      "google.bigtable.replication.filter_large_cells_flag";
+
+  public static final Boolean DEFAULT_FILTER_LARGE_CELLS = false;
+
+  /**
+   * Determines the size in bytes of the cells that should be logged and dropped when replicating to
+   * Bigtable. Default: Max cell size accepted by Bigtable.
+   */
+  public static final String FILTER_LARGE_CELLS_THRESHOLD_IN_BYTES_KEY =
+      "google.bigtable.replication.large_cells_threshold_bytes";
+
+  public static final Integer DEFAULT_FILTER_LARGE_CELLS_THRESHOLD_IN_BYTES = 100 * 1024 * 1024;
+
+  /**
    * Determines the size of request to CBT. This parameter controls the number of concurrent RPCs to
    * Cloud Bigtable.
    *

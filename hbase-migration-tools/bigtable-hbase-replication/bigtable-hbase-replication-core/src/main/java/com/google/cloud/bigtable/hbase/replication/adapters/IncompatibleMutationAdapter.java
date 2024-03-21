@@ -16,6 +16,11 @@
 
 package com.google.cloud.bigtable.hbase.replication.adapters;
 
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_FILTER_LARGE_CELLS;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_FILTER_LARGE_CELLS_THRESHOLD_IN_BYTES;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.FILTER_LARGE_CELLS_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.FILTER_LARGE_CELLS_THRESHOLD_IN_BYTES_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_CELL_SIZE_EXCEEDED_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_METRIC_KEY;
@@ -76,6 +81,12 @@ public abstract class IncompatibleMutationAdapter {
     metricsExporter.incCounters(PUTS_IN_FUTURE_METRIC_KEY, 1);
   }
 
+  private void incrementDroppedIncompatibleMutationsCellSizeExceeded() {
+    incrementIncompatibleMutations();
+    incrementDroppedIncompatibleMutations();
+    metricsExporter.incCounters(DROPPED_INCOMPATIBLE_MUTATION_CELL_SIZE_EXCEEDED_KEY, 1);
+  }
+
   /**
    * Creates an IncompatibleMutationAdapter with HBase configuration, MetricSource, and CBT
    * connection.
@@ -100,6 +111,7 @@ public abstract class IncompatibleMutationAdapter {
     metricsExporter.incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
     metricsExporter.incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
     metricsExporter.incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
+    metricsExporter.incCounters(DROPPED_INCOMPATIBLE_MUTATION_CELL_SIZE_EXCEEDED_KEY, 0);
   }
 
   private boolean isValidDelete(Cell delete) {
@@ -142,6 +154,27 @@ public abstract class IncompatibleMutationAdapter {
 
       // All puts are valid.
       if (cell.getTypeByte() == KeyValue.Type.Put.getCode()) {
+        // check max cell size
+        if (conf.getBoolean(FILTER_LARGE_CELLS_KEY, DEFAULT_FILTER_LARGE_CELLS)
+            && cell.getValueLength()
+                > conf.getInt(
+                    FILTER_LARGE_CELLS_THRESHOLD_IN_BYTES_KEY,
+                    DEFAULT_FILTER_LARGE_CELLS_THRESHOLD_IN_BYTES)) {
+          // Drop the cell as it exceeds the size to be filtered
+          incrementDroppedIncompatibleMutationsCellSizeExceeded();
+
+          LOG.warn(
+              "Dropping mutation, cell value length, "
+                  + cell.getValueLength()
+                  + ", exceeds filter length, "
+                  + conf.getInt(
+                      FILTER_LARGE_CELLS_THRESHOLD_IN_BYTES_KEY,
+                      DEFAULT_FILTER_LARGE_CELLS_THRESHOLD_IN_BYTES)
+                  + ", cell: "
+                  + cell);
+          continue;
+        }
+
         // flag if put is issued for future timestamp
         // do not log as we might fill up disk space due condition being true from clock skew
         if (cell.getTimestamp() > walEntry.getWalWriteTime()) {
