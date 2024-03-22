@@ -168,7 +168,8 @@ public class CloudBigtableReplicationTaskTest {
 
     assertEquals(
         expectedRowMutations,
-        CloudBigtableReplicationTask.buildRowMutations(ROW_KEY, Arrays.asList(put1, put2, put3)));
+        CloudBigtableReplicationTask.buildRowMutations(ROW_KEY, Arrays.asList(put1, put2, put3))
+            .get(0));
   }
 
   @Test
@@ -187,7 +188,8 @@ public class CloudBigtableReplicationTaskTest {
     assertEquals(
         expectedRowMutations,
         CloudBigtableReplicationTask.buildRowMutations(
-            ROW_KEY, Arrays.asList(delete1, delete3, delete2)));
+                ROW_KEY, Arrays.asList(delete1, delete3, delete2))
+            .get(0));
   }
 
   @Test
@@ -230,6 +232,6 @@ public class CloudBigtableReplicationTaskTest {
 
     assertEquals(
         expectedRowMutations,
-        CloudBigtableReplicationTask.buildRowMutations(ROW_KEY, cellsToReplicate));
+        CloudBigtableReplicationTask.buildRowMutations(ROW_KEY, cellsToReplicate).get(0));
   }
 }

@@ -16,18 +16,28 @@
 
 package com.google.cloud.bigtable.hbase.replication;
 
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_FILTER_LARGE_ROWS;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_FILTER_LARGE_ROWS_THRESHOLD_IN_BYTES;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_MAX_CELLS_PER_MUTATION;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.FILTER_LARGE_ROWS_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.FILTER_LARGE_ROWS_THRESHOLD_IN_BYTES_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.MAX_CELLS_PER_MUTATION_KEY;
+
 import com.google.bigtable.repackaged.com.google.api.client.util.Preconditions;
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.bigtable.repackaged.com.google.common.base.Objects;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.KeyValueUtil;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Delete;
@@ -51,6 +61,10 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
     void addMutation(Cell mutation) throws IOException;
 
     void buildAndUpdateRowMutations(RowMutations rowMutations) throws IOException;
+
+    long getMutationSize();
+
+    int getMutationNumCells();
   }
 
   @VisibleForTesting
@@ -59,8 +73,11 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
     private final Put put;
     boolean closed = false;
 
+    private long byteSize;
+
     PutMutationBuilder(byte[] rowKey) {
       put = new Put(rowKey);
+      byteSize = 0;
     }
 
     @Override
@@ -72,6 +89,7 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
     @Override
     public void addMutation(Cell cell) throws IOException {
       Preconditions.checkState(!closed, "Can't add mutations to a closed builder");
+      byteSize += KeyValueUtil.length(cell);
       put.add(cell);
     }
 
@@ -79,6 +97,16 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
     public void buildAndUpdateRowMutations(RowMutations rowMutations) throws IOException {
       rowMutations.add(put);
       closed = true;
+    }
+
+    @Override
+    public long getMutationSize() {
+      return byteSize;
+    }
+
+    @Override
+    public int getMutationNumCells() {
+      return put.size();
     }
   }
 
@@ -89,6 +117,8 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
 
     boolean closed = false;
     private int numDeletes = 0;
+
+    private long byteSize;
 
     public DeleteMutationBuilder(byte[] rowKey) {
       delete = new Delete(rowKey);
@@ -104,6 +134,7 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
     public void addMutation(Cell cell) throws IOException {
       Preconditions.checkState(!closed, "Can't add mutations to a closed builder");
       numDeletes++;
+      byteSize += KeyValueUtil.length(cell);
       delete.addDeleteMarker(cell);
     }
 
@@ -119,6 +150,16 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
       rowMutations.add(delete);
       // Close the builder.
       closed = true;
+    }
+
+    @Override
+    public long getMutationSize() {
+      return byteSize;
+    }
+
+    @Override
+    public int getMutationNumCells() {
+      return delete.size();
     }
   }
 
@@ -157,6 +198,7 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
   @Override
   public Boolean call() {
     boolean succeeded = true;
+    Configuration conf = connection.getConfiguration();
 
     try {
       Table table = connection.getTable(TableName.valueOf(tableName));
@@ -181,19 +223,38 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
       List<RowMutations> rowMutationsList = new ArrayList<>(cellsToReplicateByRow.size());
       for (Map.Entry<ByteRange, List<Cell>> cellsByRow : cellsToReplicateByRow.entrySet()) {
         // Create a rowMutations and add it to the list to be flushed to CBT.
-        RowMutations rowMutations =
-            buildRowMutations(cellsByRow.getKey().deepCopyToNewArray(), cellsByRow.getValue());
-        rowMutationsList.add(rowMutations);
+
+        // TODO - added for debugging REMOVE
+        /**
+         * Iterator<Cell> cellIt = cellsByRow.getValue().iterator(); while (cellIt.hasNext()) { Put
+         * put = new Put(cellsByRow.getKey().deepCopyToNewArray());
+         *
+         * <p>for (int i = 0; i < (100_000-1) && cellIt.hasNext(); i++) { put.add(cellIt.next()); }
+         *
+         * <p>table.put(put); }
+         */
+        List<RowMutations> rowMutations =
+            buildRowMutations(
+                cellsByRow.getKey().deepCopyToNewArray(), cellsByRow.getValue(), conf);
+        rowMutationsList.addAll(rowMutations);
       }
 
-      Object[] results = new Object[rowMutationsList.size()];
-      table.batch(rowMutationsList, results);
+      // process set of rowMutations in sequence
+      for (RowMutations rowMutations : rowMutationsList) {
+        Object[] results = new Object[1];
+        table.batch(Arrays.asList(rowMutations), results);
 
-      // Make sure that there were no errors returned via results.
-      for (Object result : results) {
-        if (result != null && result instanceof Throwable) {
-          LOG.error("Encountered error while replicating wal entry.", (Throwable) result);
-          succeeded = false;
+        // Make sure that there were no errors returned via results.
+        for (Object result : results) {
+          if (result != null && result instanceof Throwable) {
+            LOG.error("Encountered error while replicating wal entry.", (Throwable) result);
+            succeeded = false;
+            break;
+          }
+        }
+
+        // do not attempt subsequent batch
+        if (!succeeded) {
           break;
         }
       }
@@ -205,21 +266,80 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
   }
 
   @VisibleForTesting
-  static RowMutations buildRowMutations(byte[] rowKey, List<Cell> cellList) throws IOException {
+  static List<RowMutations> buildRowMutations(byte[] rowKey, List<Cell> cellList)
+      throws IOException {
+    return buildRowMutations(rowKey, cellList, new Configuration());
+  }
+
+  @VisibleForTesting
+  static List<RowMutations> buildRowMutations(
+      byte[] rowKey, List<Cell> cellList, Configuration conf) throws IOException {
+    int maxByteSize =
+        conf.getInt(
+            FILTER_LARGE_ROWS_THRESHOLD_IN_BYTES_KEY, DEFAULT_FILTER_LARGE_ROWS_THRESHOLD_IN_BYTES);
+
+    List<RowMutations> rowMutationsList = new ArrayList<>();
+
+    int cellCount = 0;
     RowMutations rowMutationBuffer = new RowMutations(rowKey);
-    // TODO Make sure that there are < 100K cells per row Mutation
     MutationBuilder mutationBuilder = MutationBuilderFactory.getMutationBuilder(cellList.get(0));
     for (Cell cell : cellList) {
+
+      // ensure that there are < 100K cells per row Mutation
+      if (mutationBuilder.getMutationNumCells()
+              % conf.getInt(MAX_CELLS_PER_MUTATION_KEY, DEFAULT_MAX_CELLS_PER_MUTATION)
+          == 0) {
+        // Split the row into multiple mutations if mutations exceeds threshold limit
+        if (cellCount > 0) {
+          LOG.info(
+              "Rolling mutation due to cell count, "
+                  + cellCount
+                  + " exceeds max cell count, "
+                  + 100_000
+                  + ", cell: "
+                  + cell);
+        }
+
+        cellCount = 0;
+        rowMutationBuffer = new RowMutations(rowKey);
+        mutationBuilder = MutationBuilderFactory.getMutationBuilder(cell);
+
+        rowMutationsList.add(rowMutationBuffer);
+      }
+      // check row size - alternative to skipping adding cell to mutation due to size constraint
+      //  split cells across batch requests - must be in independent sets
+      else if (conf.getBoolean(FILTER_LARGE_ROWS_KEY, DEFAULT_FILTER_LARGE_ROWS)
+          && mutationBuilder.getMutationSize() + KeyValueUtil.length(cell) > maxByteSize) {
+
+        LOG.warn(
+            "Rolling mutation due to cell being appended with length, "
+                + KeyValueUtil.length(cell)
+                + ", with existing mutation length, "
+                + mutationBuilder.getMutationSize()
+                + " exceeds max bytes, "
+                + maxByteSize
+                + ", cell: "
+                + cell);
+
+        cellCount = 0;
+        rowMutationBuffer = new RowMutations(rowKey);
+        mutationBuilder = MutationBuilderFactory.getMutationBuilder(cell);
+
+        rowMutationsList.add(rowMutationBuffer);
+      }
+
       if (!mutationBuilder.canAcceptMutation(cell)) {
         mutationBuilder.buildAndUpdateRowMutations(rowMutationBuffer);
         mutationBuilder = MutationBuilderFactory.getMutationBuilder(cell);
       }
+
+      cellCount++;
       mutationBuilder.addMutation(cell);
     }
 
     // finalize the last mutation which is yet to be closed.
     mutationBuilder.buildAndUpdateRowMutations(rowMutationBuffer);
-    return rowMutationBuffer;
+    return rowMutationsList;
   }
 
   @Override

@@ -55,6 +55,33 @@ public class HBaseToCloudBigtableReplicationConfiguration {
   public static final int DEFAULT_THREAD_COUNT = 10;
 
   /**
+   * Flag that determines if row mutations that exceed value of
+   * FILTER_LARGE_CELLS_THRESHOLD_IN_BYTES_KEY should be logged and dropped.
+   */
+  public static final String FILTER_LARGE_ROWS_KEY =
+      "google.bigtable.replication.filter_large_rows_flag";
+
+  public static final Boolean DEFAULT_FILTER_LARGE_ROWS = false;
+
+  /**
+   * Determines the size in bytes of the row mutations that should be logged and dropped when
+   * replicating to Bigtable. Default: Approximate row size accepted for batch mutation request.
+   */
+  public static final String FILTER_LARGE_ROWS_THRESHOLD_IN_BYTES_KEY =
+      "google.bigtable.replication.large_rows_threshold_bytes";
+
+  public static final Integer DEFAULT_FILTER_LARGE_ROWS_THRESHOLD_IN_BYTES = 190 * 1024 * 1024;
+
+  /**
+   * Determines the size in bytes of the row mutations that should be logged and dropped when
+   * replicating to Bigtable. Default: Approximate row size accepted for batch mutation request.
+   */
+  public static final String MAX_CELLS_PER_MUTATION_KEY =
+      "google.bigtable.replication.max_cells_per_mutation";
+
+  public static final Integer DEFAULT_MAX_CELLS_PER_MUTATION = 100_000 - 1;
+
+  /**
    * Flag that determines if cells that exceed value of FILTER_LARGE_CELLS_THRESHOLD_IN_BYTES_KEY
    * should be logged and dropped.
    */
