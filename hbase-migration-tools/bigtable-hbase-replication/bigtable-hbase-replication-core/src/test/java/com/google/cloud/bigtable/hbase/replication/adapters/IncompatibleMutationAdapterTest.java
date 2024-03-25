@@ -16,10 +16,10 @@
 
 package com.google.cloud.bigtable.hbase.replication.adapters;
 
-import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_FILTER_LARGE_CELLS;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_ENABLED_FILTER_LARGE_CELLS;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.FILTER_LARGE_CELLS_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.FILTER_LARGE_CELLS_THRESHOLD_IN_BYTES_KEY;
-import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_CELL_SIZE_EXCEEDED_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_CELL_SIZE_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_METRIC_KEY;
@@ -337,8 +337,8 @@ public class IncompatibleMutationAdapterTest {
         new BigtableWALEntry(System.currentTimeMillis(), walEntryCells, tableName);
 
     Assert.assertEquals(
-        conf.getBoolean(FILTER_LARGE_CELLS_KEY, DEFAULT_FILTER_LARGE_CELLS),
-        DEFAULT_FILTER_LARGE_CELLS);
+        conf.getBoolean(FILTER_LARGE_CELLS_KEY, DEFAULT_ENABLED_FILTER_LARGE_CELLS),
+        DEFAULT_ENABLED_FILTER_LARGE_CELLS);
     Assert.assertEquals(
         Arrays.asList(put, incompatibleLargePut),
         incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
@@ -375,7 +375,8 @@ public class IncompatibleMutationAdapterTest {
     BigtableWALEntry walEntry =
         new BigtableWALEntry(System.currentTimeMillis(), walEntryCells, tableName);
 
-    Assert.assertEquals(conf.getBoolean(FILTER_LARGE_CELLS_KEY, DEFAULT_FILTER_LARGE_CELLS), true);
+    Assert.assertEquals(
+        conf.getBoolean(FILTER_LARGE_CELLS_KEY, DEFAULT_ENABLED_FILTER_LARGE_CELLS), true);
     Assert.assertEquals(
         Arrays.asList(put, putSmallerSize, putEqualSize),
         incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
@@ -384,13 +385,13 @@ public class IncompatibleMutationAdapterTest {
     verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
     verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
-    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_CELL_SIZE_EXCEEDED_KEY, 0);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_CELL_SIZE_METRIC_KEY, 0);
     verify(metricsExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
 
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verify(metricsExporter, times(1))
-        .incCounters(DROPPED_INCOMPATIBLE_MUTATION_CELL_SIZE_EXCEEDED_KEY, 1);
+        .incCounters(DROPPED_INCOMPATIBLE_MUTATION_CELL_SIZE_METRIC_KEY, 1);
     verifyNoMoreInteractions(metricsExporter);
   }
 
@@ -426,7 +427,8 @@ public class IncompatibleMutationAdapterTest {
     BigtableWALEntry walEntry =
         new BigtableWALEntry(System.currentTimeMillis(), walEntryCells, tableName);
 
-    Assert.assertEquals(conf.getBoolean(FILTER_LARGE_CELLS_KEY, DEFAULT_FILTER_LARGE_CELLS), true);
+    Assert.assertEquals(
+        conf.getBoolean(FILTER_LARGE_CELLS_KEY, DEFAULT_ENABLED_FILTER_LARGE_CELLS), true);
     Assert.assertEquals(
         Arrays.asList(put, putSmallerSize, putEqualSize),
         incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
@@ -435,12 +437,12 @@ public class IncompatibleMutationAdapterTest {
     verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
     verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
     verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
-    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_CELL_SIZE_EXCEEDED_KEY, 0);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_CELL_SIZE_METRIC_KEY, 0);
     verify(metricsExporter).incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
     verify(metricsExporter, times(1)).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verify(metricsExporter, times(1)).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
     verify(metricsExporter, times(1))
-        .incCounters(DROPPED_INCOMPATIBLE_MUTATION_CELL_SIZE_EXCEEDED_KEY, 1);
+        .incCounters(DROPPED_INCOMPATIBLE_MUTATION_CELL_SIZE_METRIC_KEY, 1);
     verifyNoMoreInteractions(metricsExporter);
   }
 }

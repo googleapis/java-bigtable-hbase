@@ -16,6 +16,10 @@
 
 package com.google.cloud.bigtable.hbase.replication;
 
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.FILTER_LARGE_ROWS_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.FILTER_LARGE_ROWS_THRESHOLD_IN_BYTES_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.FILTER_MAX_CELLS_PER_MUTATION_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.FILTER_MAX_CELLS_PER_MUTATION_THRESHOLD_KEY;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.CF1;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.CF2;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.COL_QUALIFIER;
@@ -37,11 +41,14 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Connection;
@@ -73,6 +80,8 @@ public class CloudBigtableReplicationTaskTest {
   @Mock private Connection mockConnection;
 
   @Mock private Table mockTable;
+
+  @Mock MetricsExporter metricsExporter;
 
   @Captor private ArgumentCaptor<List<RowMutations>> captor;
 
@@ -231,5 +240,74 @@ public class CloudBigtableReplicationTaskTest {
     assertEquals(
         expectedRowMutations,
         CloudBigtableReplicationTask.buildRowMutations(ROW_KEY, cellsToReplicate));
+  }
+
+  @Test
+  public void testFilterLargeRowMutationExceedsThreshold() throws IOException {
+    Configuration conf = new Configuration();
+    conf.set(FILTER_LARGE_ROWS_KEY, "true");
+    conf.setInt(FILTER_LARGE_ROWS_THRESHOLD_IN_BYTES_KEY, 10_000);
+
+    Cell put1 = getPutCellCustomSize(10, ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP);
+    Cell put2 = getPutCellCustomSize(10, ROW_KEY, CF1, COL_QUALIFIER_2, TIMESTAMP);
+    Cell put3 = getPutCellCustomSize(10, ROW_KEY, CF2, COL_QUALIFIER, TIMESTAMP);
+    RowMutations rowMutationsSmallerSize =
+        CloudBigtableReplicationTask.buildRowMutations(ROW_KEY, Arrays.asList(put1, put2, put3));
+
+    put1 = getPutCellCustomSize(10000, ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP);
+    put2 = getPutCellCustomSize(10000, ROW_KEY, CF1, COL_QUALIFIER_2, TIMESTAMP);
+    put3 = getPutCellCustomSize(10000, ROW_KEY, CF2, COL_QUALIFIER, TIMESTAMP);
+    RowMutations rowMutationsLargerSize =
+        CloudBigtableReplicationTask.buildRowMutations(ROW_KEY, Arrays.asList(put1, put2, put3));
+
+    boolean logAndSkipIncompatibleRowMutationsDoesNotExceed =
+        CloudBigtableReplicationTask.verifyRowMutationThresholds(
+            rowMutationsSmallerSize, conf, metricsExporter);
+    boolean logAndSkipIncompatibleRowMutationsExceeds =
+        CloudBigtableReplicationTask.verifyRowMutationThresholds(
+            rowMutationsLargerSize, conf, metricsExporter);
+    Assert.assertEquals(false, logAndSkipIncompatibleRowMutationsDoesNotExceed);
+    Assert.assertEquals(true, logAndSkipIncompatibleRowMutationsExceeds);
+  }
+
+  @Test
+  public void testFilterMaxCellsPerMutationExceedsThreshold() throws IOException {
+    Configuration conf = new Configuration();
+    conf.set(FILTER_MAX_CELLS_PER_MUTATION_KEY, "true");
+    conf.setInt(FILTER_MAX_CELLS_PER_MUTATION_THRESHOLD_KEY, 2);
+
+    Cell put1 = getPutCellCustomSize(10, ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP);
+    RowMutations rowMutationsCellsLessThanMax =
+        CloudBigtableReplicationTask.buildRowMutations(ROW_KEY, Arrays.asList(put1));
+
+    put1 = getPutCellCustomSize(10000, ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP);
+    Cell put2 = getPutCellCustomSize(10000, ROW_KEY, CF1, COL_QUALIFIER_2, TIMESTAMP);
+    RowMutations rowMutationsCellsEqualToMax =
+        CloudBigtableReplicationTask.buildRowMutations(ROW_KEY, Arrays.asList(put1, put2));
+
+    put1 = getPutCellCustomSize(10000, ROW_KEY, CF1, COL_QUALIFIER, TIMESTAMP);
+    put2 = getPutCellCustomSize(10000, ROW_KEY, CF1, COL_QUALIFIER_2, TIMESTAMP);
+    Cell put3 = getPutCellCustomSize(10, ROW_KEY, CF2, COL_QUALIFIER, TIMESTAMP);
+    RowMutations rowMutationsCellsGreaterThanMax =
+        CloudBigtableReplicationTask.buildRowMutations(ROW_KEY, Arrays.asList(put1, put2, put3));
+
+    boolean logAndSkipIncompatibleRowMutationsDoesNotExceed =
+        CloudBigtableReplicationTask.verifyRowMutationThresholds(
+            rowMutationsCellsLessThanMax, conf, metricsExporter);
+    boolean logAndSkipIncompatibleRowMutationsDoesNotExceedEqual =
+        CloudBigtableReplicationTask.verifyRowMutationThresholds(
+            rowMutationsCellsEqualToMax, conf, metricsExporter);
+    boolean logAndSkipIncompatibleRowMutationsExceeds =
+        CloudBigtableReplicationTask.verifyRowMutationThresholds(
+            rowMutationsCellsGreaterThanMax, conf, metricsExporter);
+    Assert.assertEquals(false, logAndSkipIncompatibleRowMutationsDoesNotExceed);
+    Assert.assertEquals(false, logAndSkipIncompatibleRowMutationsDoesNotExceedEqual);
+    Assert.assertEquals(true, logAndSkipIncompatibleRowMutationsExceeds);
+  }
+
+  private Cell getPutCellCustomSize(int numBytes, byte[] rowkey, byte[] cf, byte[] qf, long ts) {
+    byte[] b = new byte[numBytes];
+    new Random().nextBytes(b);
+    return new KeyValue(rowkey, cf, qf, ts, KeyValue.Type.Put, b);
   }
 }

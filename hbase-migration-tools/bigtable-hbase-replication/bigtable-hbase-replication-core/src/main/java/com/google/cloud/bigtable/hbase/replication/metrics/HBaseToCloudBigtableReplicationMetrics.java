@@ -35,7 +35,11 @@ public class HBaseToCloudBigtableReplicationMetrics {
   public static final String INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY =
       "bigtableIncompatibleTimestampOverflowMutation";
 
-  public static final String DROPPED_INCOMPATIBLE_MUTATION_CELL_SIZE_EXCEEDED_KEY =
+  public static final String DROPPED_INCOMPATIBLE_MUTATION_ROW_SIZE_METRIC_KEY =
+      "bigtableIncompatibleMutationsRowSizeExceeded";
+  public static final String DROPPED_INCOMPATIBLE_MUTATION_MAX_CELLS_METRIC_KEY =
+      "bigtableIncompatibleMutationsMaxCellsPerMutationExceeded";
+  public static final String DROPPED_INCOMPATIBLE_MUTATION_CELL_SIZE_METRIC_KEY =
       "bigtableIncompatibleMutationsCellSizeExceeded";
 
   public static final String PUTS_IN_FUTURE_METRIC_KEY = "bigtablePutsInFutureMutations";

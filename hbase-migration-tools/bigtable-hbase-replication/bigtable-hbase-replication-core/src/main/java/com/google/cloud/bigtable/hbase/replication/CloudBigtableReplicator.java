@@ -414,7 +414,8 @@ public class CloudBigtableReplicator {
       String tableName, Map<ByteRange, List<Cell>> batchToReplicate) {
     try {
       CloudBigtableReplicationTask replicationTask =
-          new CloudBigtableReplicationTask(tableName, sharedResources.connection, batchToReplicate);
+          new CloudBigtableReplicationTask(
+              tableName, sharedResources.connection, batchToReplicate, metricsExporter);
       return sharedResources.executorService.submit(replicationTask);
     } catch (Exception ex) {
       if (ex instanceof InterruptedException) {
