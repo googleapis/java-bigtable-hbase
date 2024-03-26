@@ -345,8 +345,6 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
                 + maxCellsOrMutations
                 + ", mutation row key: "
                 + Bytes.toStringBinary(rowMutations.getRow()));
-
-        // Set "hbase.ipc.max.request.size" on server to override this limit (not recommended)
       }
     }
     return logAndSkipIncompatibleRowMutations;
