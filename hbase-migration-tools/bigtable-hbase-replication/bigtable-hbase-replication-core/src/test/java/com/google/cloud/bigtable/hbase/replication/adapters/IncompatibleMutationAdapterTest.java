@@ -375,8 +375,7 @@ public class IncompatibleMutationAdapterTest {
     BigtableWALEntry walEntry =
         new BigtableWALEntry(System.currentTimeMillis(), walEntryCells, tableName);
 
-    Assert.assertEquals(
-        conf.getBoolean(FILTER_LARGE_CELLS_KEY, DEFAULT_FILTER_LARGE_CELLS), true);
+    Assert.assertEquals(conf.getBoolean(FILTER_LARGE_CELLS_KEY, DEFAULT_FILTER_LARGE_CELLS), true);
     Assert.assertEquals(
         Arrays.asList(put, putSmallerSize, putEqualSize),
         incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
@@ -427,8 +426,7 @@ public class IncompatibleMutationAdapterTest {
     BigtableWALEntry walEntry =
         new BigtableWALEntry(System.currentTimeMillis(), walEntryCells, tableName);
 
-    Assert.assertEquals(
-        conf.getBoolean(FILTER_LARGE_CELLS_KEY, DEFAULT_FILTER_LARGE_CELLS), true);
+    Assert.assertEquals(conf.getBoolean(FILTER_LARGE_CELLS_KEY, DEFAULT_FILTER_LARGE_CELLS), true);
     Assert.assertEquals(
         Arrays.asList(put, putSmallerSize, putEqualSize),
         incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));

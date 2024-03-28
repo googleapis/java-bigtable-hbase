@@ -17,8 +17,8 @@
 package com.google.cloud.bigtable.hbase.replication;
 
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_FILTER_LARGE_ROWS;
-import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_FILTER_MAX_CELLS_PER_MUTATION;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_FILTER_LARGE_ROWS_THRESHOLD_IN_BYTES;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_FILTER_MAX_CELLS_PER_MUTATION;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_FILTER_MAX_CELLS_PER_MUTATION_THRESHOLD;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.FILTER_LARGE_ROWS_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.FILTER_LARGE_ROWS_THRESHOLD_IN_BYTES_KEY;
@@ -309,8 +309,7 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
           conf.getInt(
               FILTER_MAX_CELLS_PER_MUTATION_THRESHOLD_KEY,
               DEFAULT_FILTER_MAX_CELLS_PER_MUTATION_THRESHOLD);
-      if (conf.getBoolean(
-              FILTER_MAX_CELLS_PER_MUTATION_KEY, DEFAULT_FILTER_MAX_CELLS_PER_MUTATION)
+      if (conf.getBoolean(FILTER_MAX_CELLS_PER_MUTATION_KEY, DEFAULT_FILTER_MAX_CELLS_PER_MUTATION)
           && (rowMutations.getMutations().size() > maxCellsOrMutations
               || maxCellCountOfMutations > maxCellsOrMutations)) {
 
