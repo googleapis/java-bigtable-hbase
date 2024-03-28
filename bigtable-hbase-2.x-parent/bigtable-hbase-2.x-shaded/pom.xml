@@ -318,7 +318,12 @@ limitations under the License.
                   <pattern>io.perfmark</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.io.perfmark</shadedPattern>
                 </relocation>
-
+                
+                <!-- opentelemetry -->
+                <relocation>
+                  <pattern>io.opentelemetry</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.io.opentelemetry</shadedPattern>
+                </relocation>
 
                 <!-- Opencensus related shading -->
                 <relocation>
