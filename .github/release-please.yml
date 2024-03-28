@@ -64,7 +64,7 @@ branches:
       - >-
         bigtable-client-core-parent/bigtable-hbase/src/main/java/com/google/cloud/bigtable/hbase/BigtableHBaseVersion.java
     handleGHRelease: true
-    branch: 2.13.x
+    branch: 2.12.x
   - releaseType: java-backport
     bumpMinorPreMajor: true
     extraFiles:
