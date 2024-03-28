@@ -323,17 +323,6 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
         // exceeding limit, log and skip
         logAndSkipIncompatibleRowMutations = true;
         incrementDroppedIncompatibleMutationsMaxCellsExceeded(metricsExporter);
-        System.out.println(
-            "Dropping mutation, row mutation size with total mutations, "
-                + rowMutations.getMutations().size()
-                + ", or max cells per mutation, "
-                + maxCellCountOfMutations
-                + ", exceeds filter size ("
-                + FILTER_MAX_CELLS_PER_MUTATION_KEY
-                + "), "
-                + maxCellsOrMutations
-                + ", mutation row key: "
-                + Bytes.toStringBinary(rowMutations.getRow()));
         LOG.warn(
             "Dropping mutation, row mutation size with total mutations, "
                 + rowMutations.getMutations().size()

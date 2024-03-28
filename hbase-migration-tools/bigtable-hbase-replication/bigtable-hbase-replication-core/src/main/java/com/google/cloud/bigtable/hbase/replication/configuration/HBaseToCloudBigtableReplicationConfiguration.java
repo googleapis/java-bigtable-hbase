@@ -74,7 +74,7 @@ public class HBaseToCloudBigtableReplicationConfiguration {
   /**
    * Determines the size in bytes of the row mutations that should be logged and dropped when
    * replicating to Bigtable based on value of FILTER_MAX_CELLS_PER_MUTATION_THRESHOLD_KEY. Default:
-   * Approximate row size accepted for batch mutation request.
+   * Approximate max cells for batch mutation request.
    */
   public static final String FILTER_MAX_CELLS_PER_MUTATION_KEY =
       "google.bigtable.replication.filter_max_cells_per_mutation_mode";
