@@ -59,9 +59,9 @@ public class HBaseToCloudBigtableReplicationConfiguration {
    * should be logged and dropped.
    */
   public static final String FILTER_LARGE_ROWS_KEY =
-      "google.bigtable.replication.filter_large_rows_mode";
+      "google.bigtable.replication.filter_large_rows";
 
-  public static final Boolean DEFAULT_ENABLED_FILTER_LARGE_ROWS = false;
+  public static final Boolean DEFAULT_FILTER_LARGE_ROWS = false;
   /**
    * Determines the size in bytes of the row mutations that should be logged and dropped when
    * replicating to Bigtable. Default: Approximate row size accepted for batch mutation request.
@@ -77,9 +77,9 @@ public class HBaseToCloudBigtableReplicationConfiguration {
    * Approximate max cells for batch mutation request.
    */
   public static final String FILTER_MAX_CELLS_PER_MUTATION_KEY =
-      "google.bigtable.replication.filter_max_cells_per_mutation_mode";
+      "google.bigtable.replication.filter_max_cells_per_mutation";
 
-  public static final Boolean DEFAULT_ENABLED_FILTER_MAX_CELLS_PER_MUTATION = false;
+  public static final Boolean DEFAULT_FILTER_MAX_CELLS_PER_MUTATION = false;
   public static final String FILTER_MAX_CELLS_PER_MUTATION_THRESHOLD_KEY =
       "google.bigtable.replication.max_cells_per_mutation";
   public static final Integer DEFAULT_FILTER_MAX_CELLS_PER_MUTATION_THRESHOLD = 100_000 - 1;
@@ -89,9 +89,9 @@ public class HBaseToCloudBigtableReplicationConfiguration {
    * logged and dropped.
    */
   public static final String FILTER_LARGE_CELLS_KEY =
-      "google.bigtable.replication.filter_large_cells_mode";
+      "google.bigtable.replication.filter_large_cells";
 
-  public static final Boolean DEFAULT_ENABLED_FILTER_LARGE_CELLS = false;
+  public static final Boolean DEFAULT_FILTER_LARGE_CELLS = false;
   public static final String FILTER_LARGE_CELLS_THRESHOLD_IN_BYTES_KEY =
       "google.bigtable.replication.large_cells_threshold_bytes";
   public static final Integer DEFAULT_FILTER_LARGE_CELLS_THRESHOLD_IN_BYTES = 100 * 1024 * 1024;

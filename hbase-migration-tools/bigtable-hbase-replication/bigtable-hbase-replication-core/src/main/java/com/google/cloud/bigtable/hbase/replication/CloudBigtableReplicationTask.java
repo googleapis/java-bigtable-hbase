@@ -16,8 +16,8 @@
 
 package com.google.cloud.bigtable.hbase.replication;
 
-import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_ENABLED_FILTER_LARGE_ROWS;
-import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_ENABLED_FILTER_MAX_CELLS_PER_MUTATION;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_FILTER_LARGE_ROWS;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_FILTER_MAX_CELLS_PER_MUTATION;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_FILTER_LARGE_ROWS_THRESHOLD_IN_BYTES;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_FILTER_MAX_CELLS_PER_MUTATION_THRESHOLD;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.FILTER_LARGE_ROWS_KEY;
@@ -212,15 +212,9 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
         RowMutations rowMutations =
             buildRowMutations(cellsByRow.getKey().deepCopyToNewArray(), cellsByRow.getValue());
 
-        boolean logAndSkipIncompatibleRowMutations = false;
-        if (conf.getBoolean(FILTER_LARGE_ROWS_KEY, DEFAULT_ENABLED_FILTER_LARGE_ROWS)
-            || conf.getBoolean(
-                FILTER_MAX_CELLS_PER_MUTATION_KEY, DEFAULT_ENABLED_FILTER_MAX_CELLS_PER_MUTATION)) {
-
-          // verify if row mutations within size and count thresholds
-          logAndSkipIncompatibleRowMutations =
-              verifyRowMutationThresholds(rowMutations, conf, this.metricsExporter);
-        }
+        // verify if row mutations within size and count thresholds
+        boolean logAndSkipIncompatibleRowMutations =
+            verifyRowMutationThresholds(rowMutations, conf, this.metricsExporter);
 
         if (!logAndSkipIncompatibleRowMutations) {
           rowMutationsList.add(rowMutations);
@@ -276,9 +270,9 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
     boolean logAndSkipIncompatibleRowMutations = false;
 
     // verify if threshold check is enabled for large rows or max cells
-    if (conf.getBoolean(FILTER_LARGE_ROWS_KEY, DEFAULT_ENABLED_FILTER_LARGE_ROWS)
+    if (conf.getBoolean(FILTER_LARGE_ROWS_KEY, DEFAULT_FILTER_LARGE_ROWS)
         || conf.getBoolean(
-            FILTER_MAX_CELLS_PER_MUTATION_KEY, DEFAULT_ENABLED_FILTER_MAX_CELLS_PER_MUTATION)) {
+            FILTER_MAX_CELLS_PER_MUTATION_KEY, DEFAULT_FILTER_MAX_CELLS_PER_MUTATION)) {
 
       // iterate row mutations
       long totalByteSize = 0L;
@@ -293,7 +287,7 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
           conf.getInt(
               FILTER_LARGE_ROWS_THRESHOLD_IN_BYTES_KEY,
               DEFAULT_FILTER_LARGE_ROWS_THRESHOLD_IN_BYTES);
-      if (conf.getBoolean(FILTER_LARGE_ROWS_KEY, DEFAULT_ENABLED_FILTER_LARGE_ROWS)
+      if (conf.getBoolean(FILTER_LARGE_ROWS_KEY, DEFAULT_FILTER_LARGE_ROWS)
           && totalByteSize > maxSize) {
 
         // exceeding limit, log and skip
@@ -302,7 +296,7 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
         LOG.warn(
             "Dropping mutation, row mutations length, "
                 + totalByteSize
-                + ", exceeds filter length ("
+                + ", exceeds filter length threshold ("
                 + FILTER_LARGE_ROWS_THRESHOLD_IN_BYTES_KEY
                 + "), "
                 + maxSize
@@ -316,7 +310,7 @@ public class CloudBigtableReplicationTask implements Callable<Boolean> {
               FILTER_MAX_CELLS_PER_MUTATION_THRESHOLD_KEY,
               DEFAULT_FILTER_MAX_CELLS_PER_MUTATION_THRESHOLD);
       if (conf.getBoolean(
-              FILTER_MAX_CELLS_PER_MUTATION_KEY, DEFAULT_ENABLED_FILTER_MAX_CELLS_PER_MUTATION)
+              FILTER_MAX_CELLS_PER_MUTATION_KEY, DEFAULT_FILTER_MAX_CELLS_PER_MUTATION)
           && (rowMutations.getMutations().size() > maxCellsOrMutations
               || maxCellCountOfMutations > maxCellsOrMutations)) {
 

@@ -16,7 +16,7 @@
 
 package com.google.cloud.bigtable.hbase.replication.adapters;
 
-import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_ENABLED_FILTER_LARGE_CELLS;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_FILTER_LARGE_CELLS;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_FILTER_LARGE_CELLS_THRESHOLD_IN_BYTES;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.FILTER_LARGE_CELLS_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.FILTER_LARGE_CELLS_THRESHOLD_IN_BYTES_KEY;
@@ -159,7 +159,7 @@ public abstract class IncompatibleMutationAdapter {
       // All puts are valid.
       if (cell.getTypeByte() == KeyValue.Type.Put.getCode()) {
         // check max cell size
-        if (conf.getBoolean(FILTER_LARGE_CELLS_KEY, DEFAULT_ENABLED_FILTER_LARGE_CELLS)
+        if (conf.getBoolean(FILTER_LARGE_CELLS_KEY, DEFAULT_FILTER_LARGE_CELLS)
             && cell.getValueLength()
                 > conf.getInt(
                     FILTER_LARGE_CELLS_THRESHOLD_IN_BYTES_KEY,

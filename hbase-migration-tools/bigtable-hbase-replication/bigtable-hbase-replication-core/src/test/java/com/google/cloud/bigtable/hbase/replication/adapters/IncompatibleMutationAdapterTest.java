@@ -16,7 +16,7 @@
 
 package com.google.cloud.bigtable.hbase.replication.adapters;
 
-import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_ENABLED_FILTER_LARGE_CELLS;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.DEFAULT_FILTER_LARGE_CELLS;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.FILTER_LARGE_CELLS_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.FILTER_LARGE_CELLS_THRESHOLD_IN_BYTES_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_CELL_SIZE_METRIC_KEY;
@@ -337,8 +337,8 @@ public class IncompatibleMutationAdapterTest {
         new BigtableWALEntry(System.currentTimeMillis(), walEntryCells, tableName);
 
     Assert.assertEquals(
-        conf.getBoolean(FILTER_LARGE_CELLS_KEY, DEFAULT_ENABLED_FILTER_LARGE_CELLS),
-        DEFAULT_ENABLED_FILTER_LARGE_CELLS);
+        conf.getBoolean(FILTER_LARGE_CELLS_KEY, DEFAULT_FILTER_LARGE_CELLS),
+        DEFAULT_FILTER_LARGE_CELLS);
     Assert.assertEquals(
         Arrays.asList(put, incompatibleLargePut),
         incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
@@ -376,7 +376,7 @@ public class IncompatibleMutationAdapterTest {
         new BigtableWALEntry(System.currentTimeMillis(), walEntryCells, tableName);
 
     Assert.assertEquals(
-        conf.getBoolean(FILTER_LARGE_CELLS_KEY, DEFAULT_ENABLED_FILTER_LARGE_CELLS), true);
+        conf.getBoolean(FILTER_LARGE_CELLS_KEY, DEFAULT_FILTER_LARGE_CELLS), true);
     Assert.assertEquals(
         Arrays.asList(put, putSmallerSize, putEqualSize),
         incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
@@ -428,7 +428,7 @@ public class IncompatibleMutationAdapterTest {
         new BigtableWALEntry(System.currentTimeMillis(), walEntryCells, tableName);
 
     Assert.assertEquals(
-        conf.getBoolean(FILTER_LARGE_CELLS_KEY, DEFAULT_ENABLED_FILTER_LARGE_CELLS), true);
+        conf.getBoolean(FILTER_LARGE_CELLS_KEY, DEFAULT_FILTER_LARGE_CELLS), true);
     Assert.assertEquals(
         Arrays.asList(put, putSmallerSize, putEqualSize),
         incompatibleMutationAdapter.adaptIncompatibleMutations(walEntry));
