@@ -381,7 +381,7 @@ limitations under the License.
 
       <repositories>
         <repository>
-          <id>sonatype-snapshots</id>
+          <id>sonatypes</id>
           <url>https://oss.sonatype.org/content/repositories/snapshots</url>
           <releases>
             <enabled>false</enabled>

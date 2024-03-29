@@ -10,7 +10,7 @@
 
   <artifactId>mirroring-client</artifactId>
   <packaging>pom</packaging>
-  <version>0.7.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+  <version>0.7.2</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
 
   <build>
     <plugins>
