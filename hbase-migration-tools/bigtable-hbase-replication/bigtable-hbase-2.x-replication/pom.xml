@@ -178,7 +178,7 @@ limitations under the License.
         <dependency>
             <groupId>com.google.cloud.bigtable</groupId>
             <artifactId>bigtable-hbase-2.x-hadoop</artifactId>
-            <version>2.12.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+            <version>2.13.0</version> <!-- {x-version-update:bigtable-client-parent:current} -->
             <exclusions>
                 <!-- HBase dependencies come from hbase-server below. Skip them here.-->
                 <exclusion>
@@ -227,7 +227,7 @@ limitations under the License.
         <dependency>
             <groupId>com.google.cloud.bigtable</groupId>
             <artifactId>bigtable-internal-test-helper</artifactId>
-            <version>2.12.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+            <version>2.13.0</version> <!-- {x-version-update:bigtable-client-parent:current} -->
             <scope>test</scope>
         </dependency>
     </dependencies>
