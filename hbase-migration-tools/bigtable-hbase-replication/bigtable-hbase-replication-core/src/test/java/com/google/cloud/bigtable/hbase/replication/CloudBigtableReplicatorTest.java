@@ -179,7 +179,7 @@ public class CloudBigtableReplicatorTest {
     verify(mockExecutorService)
         .submit(
             new CloudBigtableReplicationTask(
-                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal));
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal, mockMetricExporter));
     Mockito.verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
     Mockito.verifyNoInteractions(mockConnection);
   }
@@ -235,11 +235,11 @@ public class CloudBigtableReplicatorTest {
     verify(mockExecutorService)
         .submit(
             new CloudBigtableReplicationTask(
-                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal1));
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal1, mockMetricExporter));
     verify(mockExecutorService)
         .submit(
             new CloudBigtableReplicationTask(
-                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal2));
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal2, mockMetricExporter));
     Mockito.verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
     Mockito.verifyNoInteractions(mockConnection);
   }
@@ -296,11 +296,11 @@ public class CloudBigtableReplicatorTest {
     verify(mockExecutorService)
         .submit(
             new CloudBigtableReplicationTask(
-                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal1));
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal1, mockMetricExporter));
     verify(mockExecutorService)
         .submit(
             new CloudBigtableReplicationTask(
-                TABLE_NAME_STRING_2, mockConnection, expectedBatchOfWal2));
+                TABLE_NAME_STRING_2, mockConnection, expectedBatchOfWal2, mockMetricExporter));
     Mockito.verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
     Mockito.verifyNoInteractions(mockConnection);
   }
@@ -353,11 +353,11 @@ public class CloudBigtableReplicatorTest {
     verify(mockExecutorService)
         .submit(
             new CloudBigtableReplicationTask(
-                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal1));
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal1, mockMetricExporter));
     verify(mockExecutorService)
         .submit(
             new CloudBigtableReplicationTask(
-                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal2));
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal2, mockMetricExporter));
     Mockito.verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
     Mockito.verifyNoInteractions(mockConnection);
   }
@@ -410,11 +410,11 @@ public class CloudBigtableReplicatorTest {
     verify(mockExecutorService)
         .submit(
             new CloudBigtableReplicationTask(
-                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal1));
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal1, mockMetricExporter));
     verify(mockExecutorService)
         .submit(
             new CloudBigtableReplicationTask(
-                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal2));
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal2, mockMetricExporter));
     Mockito.verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
     Mockito.verifyNoInteractions(mockConnection);
   }
@@ -461,11 +461,11 @@ public class CloudBigtableReplicatorTest {
     verify(mockExecutorService)
         .submit(
             new CloudBigtableReplicationTask(
-                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal1));
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal1, mockMetricExporter));
     verify(mockExecutorService)
         .submit(
             new CloudBigtableReplicationTask(
-                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal2));
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal2, mockMetricExporter));
     Mockito.verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
     Mockito.verifyNoInteractions(mockConnection);
   }
@@ -529,7 +529,7 @@ public class CloudBigtableReplicatorTest {
     verify(mockExecutorService)
         .submit(
             new CloudBigtableReplicationTask(
-                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal));
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal, mockMetricExporter));
     verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
     verifyNoInteractions(mockConnection);
   }
@@ -657,7 +657,7 @@ public class CloudBigtableReplicatorTest {
     verify(mockExecutorService)
         .submit(
             new CloudBigtableReplicationTask(
-                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal));
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal, mockMetricExporter));
     verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
     verifyNoInteractions(mockConnection);
   }
@@ -746,7 +746,7 @@ public class CloudBigtableReplicatorTest {
     verify(mockExecutorService)
         .submit(
             new CloudBigtableReplicationTask(
-                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal));
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal, mockMetricExporter));
     verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
     verifyNoInteractions(mockConnection);
   }
@@ -811,7 +811,7 @@ public class CloudBigtableReplicatorTest {
     verify(mockExecutorService)
         .submit(
             new CloudBigtableReplicationTask(
-                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal));
+                TABLE_NAME_STRING, mockConnection, expectedBatchOfWal, mockMetricExporter));
     verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
     verifyNoInteractions(mockConnection);
   }

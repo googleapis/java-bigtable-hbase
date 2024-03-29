@@ -20,6 +20,14 @@ import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToC
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.FILTER_LARGE_ROWS_THRESHOLD_IN_BYTES_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.FILTER_MAX_CELLS_PER_MUTATION_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.FILTER_MAX_CELLS_PER_MUTATION_THRESHOLD_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_CELL_SIZE_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_MAX_CELLS_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.DROPPED_INCOMPATIBLE_MUTATION_ROW_SIZE_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY;
+import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.PUTS_IN_FUTURE_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.CF1;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.CF2;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.COL_QUALIFIER;
@@ -88,11 +96,19 @@ public class CloudBigtableReplicationTaskTest {
   @Before
   public void setUp() throws Exception {
     when(mockConnection.getTable(TABLE_NAME)).thenReturn(mockTable);
+    metricsExporter.incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    metricsExporter.incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 0);
+    metricsExporter.incCounters(INCOMPATIBLE_MUTATION_DELETES_METRICS_KEY, 0);
+    metricsExporter.incCounters(INCOMPATIBLE_MUTATION_TIMESTAMP_OVERFLOW_METRIC_KEY, 0);
+    metricsExporter.incCounters(PUTS_IN_FUTURE_METRIC_KEY, 0);
+    metricsExporter.incCounters(DROPPED_INCOMPATIBLE_MUTATION_CELL_SIZE_METRIC_KEY, 0);
+    metricsExporter.incCounters(DROPPED_INCOMPATIBLE_MUTATION_ROW_SIZE_METRIC_KEY, 0);
+    metricsExporter.incCounters(DROPPED_INCOMPATIBLE_MUTATION_MAX_CELLS_METRIC_KEY, 0);
   }
 
   @After
   public void tearDown() throws Exception {
-    reset(mockConnection, mockTable);
+    reset(mockConnection, mockTable, metricsExporter);
   }
 
   @Test
@@ -105,7 +121,7 @@ public class CloudBigtableReplicationTaskTest {
     cellsToReplicate.put(new SimpleByteRange(ROW_KEY), Arrays.asList(cell));
     CloudBigtableReplicationTask replicationTaskUnderTest =
         new CloudBigtableReplicationTask(
-            TABLE_NAME.getNameAsString(), mockConnection, cellsToReplicate);
+            TABLE_NAME.getNameAsString(), mockConnection, cellsToReplicate, metricsExporter);
 
     assertFalse(replicationTaskUnderTest.call());
 
@@ -131,7 +147,7 @@ public class CloudBigtableReplicationTaskTest {
     cellsToReplicate.put(new SimpleByteRange(getRowKey(1)), Arrays.asList(cell2));
     CloudBigtableReplicationTask replicationTaskUnderTest =
         new CloudBigtableReplicationTask(
-            TABLE_NAME.getNameAsString(), mockConnection, cellsToReplicate);
+            TABLE_NAME.getNameAsString(), mockConnection, cellsToReplicate, metricsExporter);
 
     assertFalse(replicationTaskUnderTest.call());
 
@@ -152,7 +168,7 @@ public class CloudBigtableReplicationTaskTest {
 
     CloudBigtableReplicationTask replicationTaskUnderTest =
         new CloudBigtableReplicationTask(
-            TABLE_NAME.getNameAsString(), mockConnection, cellsToReplicate);
+            TABLE_NAME.getNameAsString(), mockConnection, cellsToReplicate, metricsExporter);
 
     assertTrue(replicationTaskUnderTest.call());
 
@@ -268,6 +284,11 @@ public class CloudBigtableReplicationTaskTest {
             rowMutationsLargerSize, conf, metricsExporter);
     Assert.assertEquals(false, logAndSkipIncompatibleRowMutationsDoesNotExceed);
     Assert.assertEquals(true, logAndSkipIncompatibleRowMutationsExceeds);
+
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_ROW_SIZE_METRIC_KEY, 1);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_MAX_CELLS_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
   }
 
   @Test
@@ -303,6 +324,11 @@ public class CloudBigtableReplicationTaskTest {
     Assert.assertEquals(false, logAndSkipIncompatibleRowMutationsDoesNotExceed);
     Assert.assertEquals(false, logAndSkipIncompatibleRowMutationsDoesNotExceedEqual);
     Assert.assertEquals(true, logAndSkipIncompatibleRowMutationsExceeds);
+
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_ROW_SIZE_METRIC_KEY, 0);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_MAX_CELLS_METRIC_KEY, 1);
+    verify(metricsExporter).incCounters(INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
+    verify(metricsExporter).incCounters(DROPPED_INCOMPATIBLE_MUTATION_METRIC_KEY, 1);
   }
 
   private Cell getPutCellCustomSize(int numBytes, byte[] rowkey, byte[] cf, byte[] qf, long ts) {
