@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.hbase;
 
 import com.google.cloud.bigtable.hbase.util.ThreadUtil;
 import java.io.IOException;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -32,7 +33,6 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
-import org.apache.hadoop.hbase.shaded.org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class RecreateConnectionDriver {
@@ -134,8 +134,12 @@ public class RecreateConnectionDriver {
       throws IOException {
     final Table table = connection.getTable(tableName);
     final byte[][] values = new byte[qualifiers.length][];
+    Random random = new Random();
+
     for (int i = 0; i < qualifiers.length; i++) {
-      values[i] = Bytes.toBytes(RandomStringUtils.randomAlphanumeric(valueSize / values.length));
+      byte[] value = new byte[valueSize / values.length];
+      random.nextBytes(value);
+      values[i] = value;
     }
     return new Runnable() {
       @Override
