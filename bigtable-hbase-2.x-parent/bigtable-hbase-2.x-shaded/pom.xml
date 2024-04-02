@@ -218,8 +218,6 @@ limitations under the License.
                   <exclude>org.apache.htrace:htrace-core4</exclude>
                   <exclude>commons-logging:commons-logging</exclude>
                   <exclude>org.apache.yetus:audience-annotations</exclude>
-                  <exclude>io.opentelemetry:*</exclude>
-                  <exclude>org.apache.yetus:audience-annotations</exclude>
                 </excludes>
               </artifactSet>
               <relocations>
@@ -266,7 +264,11 @@ limitations under the License.
                   <shadedPattern>com.google.bigtable.repackaged.io.perfmark</shadedPattern>
                 </relocation>
 
-
+                <!-- Opentelemetry - this is a bit weird, as hbase-client shares this dependency -->
+                <relocation>
+                  <pattern>io.opentelemetry</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.io.opentelemetry</shadedPattern>
+                </relocation>
                 <!-- Opencensus related shading -->
                 <relocation>
                   <pattern>io.opencensus</pattern>
