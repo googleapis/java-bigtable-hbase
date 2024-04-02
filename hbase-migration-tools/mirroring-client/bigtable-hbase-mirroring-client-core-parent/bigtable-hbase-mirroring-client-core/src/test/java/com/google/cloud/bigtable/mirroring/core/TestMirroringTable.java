@@ -145,7 +145,14 @@ public class TestMirroringTable {
                 false,
                 this.mirroringTracer,
                 this.referenceCounter,
-                1000));
+                1000) {
+              // TODO: this should only be implemented in 1x & 2x modules
+              // Alternatively the 1x & 2x versions should be collapsed into this one
+              @Override
+              public void mutateRow(RowMutations rowMutations) throws IOException {
+                mutateRowVoid(rowMutations);
+              }
+            });
   }
 
   private void waitForMirroringScanner(ResultScanner mirroringScanner)
@@ -1278,7 +1285,14 @@ public class TestMirroringTable {
                 waitForSecondaryWrites,
                 this.mirroringTracer,
                 this.referenceCounter,
-                10));
+                10) {
+              // TODO: this should only be implemented in 1x & 2x modules
+              // Alternatively the 1x & 2x versions should be collapsed into this one
+              @Override
+              public void mutateRow(RowMutations rowMutations) throws IOException {
+                mutateRowVoid(rowMutations);
+              }
+            });
     Put put1 = createPut("r1", "f1", "q1", "v1");
 
     // Both batches should be called even if first one fails.
@@ -1368,7 +1382,15 @@ public class TestMirroringTable {
                 waitForSecondaryWrites,
                 this.mirroringTracer,
                 this.referenceCounter,
-                10));
+                10) {
+              // TODO: this should only be implemented in 1x & 2x modules
+              // Alternatively the 1x & 2x versions should be collapsed into this one
+
+              @Override
+              public void mutateRow(RowMutations rowMutations) throws IOException {
+                mutateRowVoid(rowMutations);
+              }
+            });
   }
 
   private void checkBatchCalledSequentially(List<? extends Row> requests)
@@ -1501,7 +1523,15 @@ public class TestMirroringTable {
                 waitForSecondaryWrites,
                 this.mirroringTracer,
                 this.referenceCounter,
-                10));
+                10) {
+              // TODO: this should only be implemented in 1x & 2x modules
+              // Alternatively the 1x & 2x versions should be collapsed into this one
+
+              @Override
+              public void mutateRow(RowMutations rowMutations) throws IOException {
+                mutateRowVoid(rowMutations);
+              }
+            });
 
     Put put = createPut("test1", "f1", "q1", "v1");
     mockBatch(primaryTable, secondaryTable);

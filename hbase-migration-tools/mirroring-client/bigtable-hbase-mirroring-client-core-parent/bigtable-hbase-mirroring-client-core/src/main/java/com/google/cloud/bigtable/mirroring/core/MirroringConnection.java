@@ -48,6 +48,7 @@ import org.apache.hadoop.hbase.client.BufferedMutatorParams;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.RegionLocator;
+import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.security.User;
 
@@ -244,7 +245,14 @@ public class MirroringConnection implements Connection {
           this.waitForSecondaryWrites,
           this.mirroringTracer,
           this.referenceCounter,
-          this.configuration.mirroringOptions.maxLoggedBinaryValueLength);
+          this.configuration.mirroringOptions.maxLoggedBinaryValueLength) {
+        // TODO: this should only be implemented in 1x & 2x modules
+        // Alternatively the 1x & 2x versions should be collapsed into this one
+        @Override
+        public void mutateRow(RowMutations rowMutations) throws IOException {
+          mutateRowVoid(rowMutations);
+        }
+      };
     }
   }
 

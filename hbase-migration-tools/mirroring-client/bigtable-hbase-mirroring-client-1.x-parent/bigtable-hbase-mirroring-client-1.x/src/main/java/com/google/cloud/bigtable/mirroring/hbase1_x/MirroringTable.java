@@ -57,4 +57,10 @@ public class MirroringTable extends com.google.cloud.bigtable.mirroring.core.Mir
         parentReferenceCounter,
         resultScannerBufferedMismatchedResults);
   }
+
+  // HBase < 2.4 returns void
+  @Override
+  public void mutateRow(RowMutations rowMutations) throws IOException {
+    mutateRowVoid(rowMutations);
+  }
 }
