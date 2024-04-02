@@ -54,10 +54,6 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-/**
- * NOTE: these tests will be run in the context of HBase 1 in this module AND will be run in the
- * context of HBase 2 in the 1.x-2.x module
- */
 public class TestMirroringTable {
   @ClassRule public static ConnectionRule connectionRule = new ConnectionRule();
   @Rule public ExecutorServiceRule executorServiceRule = ExecutorServiceRule.cachedPoolExecutor();

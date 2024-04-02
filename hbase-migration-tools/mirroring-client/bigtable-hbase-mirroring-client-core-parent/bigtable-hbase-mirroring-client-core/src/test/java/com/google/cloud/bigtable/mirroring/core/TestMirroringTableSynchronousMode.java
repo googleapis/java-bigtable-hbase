@@ -46,7 +46,6 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Row;
-import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
 import org.junit.Before;
 import org.junit.Rule;
@@ -97,13 +96,7 @@ public class TestMirroringTableSynchronousMode {
                 true,
                 new MirroringTracer(),
                 mock(ReferenceCounter.class),
-                5) {
-              @Override
-              public void mutateRow(RowMutations rowMutations) throws IOException {
-                // mutate row has a different implementation in 1x & 2x
-                throw new UnsupportedOperationException("not implemented");
-              }
-            });
+                5));
   }
 
   @Test

@@ -28,7 +28,6 @@ import org.junit.runners.Suite;
   TestBlocking.class,
   TestBufferedMutator.class,
   TestMirroringTable.class,
-  TestMirroringTable1x.class,
   TestReadVerificationSampling.class,
 })
 public class IntegrationTests {

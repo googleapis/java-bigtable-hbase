@@ -46,7 +46,6 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Row;
-import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.junit.Before;
@@ -100,14 +99,7 @@ public class TestVerificationSampling {
                 false,
                 new MirroringTracer(),
                 mock(ReferenceCounter.class),
-                10) {
-              @Override
-              public void mutateRow(RowMutations rowMutations) throws IOException {
-                // mutate row has a different implementation in 1x & 2x and is not used in this test.
-                // this test is also shared between 1x & 2x implementations
-                throw new UnsupportedOperationException("not implemented");
-              }
-            });
+                10));
   }
 
   @Test
