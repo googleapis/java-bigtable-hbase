@@ -356,7 +356,11 @@ public class DataClientVeneerApi implements DataClientWrapper {
 
                 @Override
                 public void onError(Throwable t) {
-                  resultsFuture.setException(t);
+                  if (currentByteSize > maxSegmentByteSize) {
+                    onComplete();
+                  } else {
+                    resultsFuture.setException(t);
+                  }
                 }
 
                 @Override
