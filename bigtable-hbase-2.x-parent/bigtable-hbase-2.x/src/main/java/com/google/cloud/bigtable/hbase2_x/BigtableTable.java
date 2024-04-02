@@ -85,7 +85,7 @@ public class BigtableTable extends AbstractBigtableTable {
             .method(ElementMatchers.named("mutateRow").and(ElementMatchers.returns(Result.class)))
             .intercept(
                 MethodCall.invoke(
-                        BigtableTable.class.getDeclaredMethod(
+                        BigtableTable.class.getMethod(
                             "mutateRowResult", RowMutations.class))
                     .withAllArguments())
             .make()
