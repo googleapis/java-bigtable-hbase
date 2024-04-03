@@ -50,6 +50,7 @@ import io.grpc.internal.GrpcUtil;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -60,7 +61,14 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.coprocessor.Batch.Call;
+import org.apache.hadoop.hbase.client.coprocessor.Batch.Callback;
+import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.security.User;
+import org.apache.hadoop.hbase.shaded.com.google.protobuf.Descriptors.MethodDescriptor;
+import org.apache.hadoop.hbase.shaded.com.google.protobuf.Message;
+import org.apache.hadoop.hbase.shaded.com.google.protobuf.Service;
+import org.apache.hadoop.hbase.shaded.com.google.protobuf.ServiceException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.VersionInfo;
 import org.junit.After;
@@ -272,6 +280,48 @@ public class TestAbstractBigtableConnection {
         @Override
         public void mutateRow(RowMutations rowMutations) throws IOException {
           mutateRowVoid(rowMutations);
+        }
+
+        @Override
+        public CoprocessorRpcChannel coprocessorService(byte[] bytes) {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <T extends Service, R> Map<byte[], R> coprocessorService(Class<T> aClass,
+            byte[] bytes, byte[] bytes1, Call<T, R> call) throws ServiceException, Throwable {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <T extends Service, R> void coprocessorService(Class<T> aClass, byte[] bytes,
+            byte[] bytes1, Call<T, R> call, Callback<R> callback)
+            throws ServiceException, Throwable {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public long getWriteBufferSize() {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void setWriteBufferSize(long l) throws IOException {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <R extends Message> Map<byte[], R> batchCoprocessorService(
+            MethodDescriptor methodDescriptor, Message message, byte[] bytes, byte[] bytes1, R r)
+            throws ServiceException, Throwable {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <R extends Message> void batchCoprocessorService(MethodDescriptor methodDescriptor,
+            Message message, byte[] bytes, byte[] bytes1, R r, Callback<R> callback)
+            throws ServiceException, Throwable {
+          throw new UnsupportedOperationException();
         }
       };
     }
