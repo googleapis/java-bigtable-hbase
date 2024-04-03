@@ -524,7 +524,7 @@ public abstract class AbstractBigtableTable implements Table {
   public Result mutateRowResult(RowMutations rowMutations) throws IOException {
     LOG.trace("mutateRow(RowMutation)");
     if (rowMutations.getMutations().isEmpty()) {
-      return null;
+      return Result.EMPTY_RESULT;
     }
     Span span = TRACER.spanBuilder("BigtableTable.mutateRow").startSpan();
 

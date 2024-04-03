@@ -49,7 +49,7 @@ public class BigtableConnectionRegistry implements ConnectionRegistry {
 
   @Override
   public String getConnectionString() {
-    return "fake";
+    return "bigtable";
   }
 
   @Override

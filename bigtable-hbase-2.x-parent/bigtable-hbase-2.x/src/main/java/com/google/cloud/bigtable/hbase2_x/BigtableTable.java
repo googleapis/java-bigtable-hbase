@@ -55,7 +55,9 @@ public class BigtableTable extends AbstractBigtableTable {
   public static BigtableTable create(
       AbstractBigtableConnection bigtableConnection, HBaseRequestAdapter hbaseAdapter) {
     try {
-      return getSubclass().getDeclaredConstructor().newInstance(bigtableConnection, hbaseAdapter);
+      return getSubclass()
+          .getConstructor(AbstractBigtableConnection.class, HBaseRequestAdapter.class)
+          .newInstance(bigtableConnection, hbaseAdapter);
     } catch (NoSuchMethodException
         | InstantiationException
         | IllegalAccessException
@@ -73,6 +75,7 @@ public class BigtableTable extends AbstractBigtableTable {
     tableClass =
         new ByteBuddy()
             .subclass(BigtableTable.class)
+            .name("com.google.cloud.bigtable.hbase2_x.BigtableTableImpl")
             .method(ElementMatchers.isAbstract())
             .intercept(InvocationHandlerAdapter.of(new UnsupportedOperationsHandler()))
             .method(
@@ -123,7 +126,7 @@ public class BigtableTable extends AbstractBigtableTable {
     }
   }
 
-  private BigtableTable(
+  public BigtableTable(
       AbstractBigtableConnection bigtableConnection, HBaseRequestAdapter hbaseAdapter) {
     super(bigtableConnection, hbaseAdapter);
   }

@@ -96,9 +96,13 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   private final TableName tableName;
   private BatchExecutor batchExecutor;
 
-  private static final Boolean MUTATE_ROW_RETURNS_RESULT;
+  private static Boolean MUTATE_ROW_RETURNS_RESULT = null;
 
-  static {
+  private static boolean doesMutateRowReturnResult() {
+    if (MUTATE_ROW_RETURNS_RESULT != null) {
+      return MUTATE_ROW_RETURNS_RESULT;
+    }
+
     Type wrappedReturnType = null;
     try {
       Method mutateRow = Table.class.getDeclaredMethod("mutateRow", RowMutations.class);
@@ -106,14 +110,16 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
       wrappedReturnType = returnType.getActualTypeArguments()[0];
     } catch (NoSuchMethodException e) {
     }
-
     if (wrappedReturnType == Void.class) {
       MUTATE_ROW_RETURNS_RESULT = false;
     } else if (wrappedReturnType == Result.class) {
       MUTATE_ROW_RETURNS_RESULT = true;
     } else {
-      MUTATE_ROW_RETURNS_RESULT = null;
+      throw new IllegalStateException(
+          "Found unexpected signature for mutateRow, expected either void or Resul, got: "
+              + wrappedReturnType);
     }
+    return MUTATE_ROW_RETURNS_RESULT;
   }
 
   public BigtableAsyncTable(CommonConnection connection, HBaseRequestAdapter hbaseAdapter) {
@@ -121,6 +127,9 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     this.clientWrapper = connection.getBigtableApi().getDataClient();
     this.hbaseAdapter = hbaseAdapter;
     this.tableName = hbaseAdapter.getTableName();
+
+    // Eagerly check the mutateRow signature
+    doesMutateRowReturnResult();
   }
 
   protected synchronized BatchExecutor getBatchExecutor() {
@@ -362,7 +371,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   /** {@inheritDoc} */
   @Override
   public CompletableFuture /*<Void|Result>*/ mutateRow(RowMutations rowMutations) {
-    Object emptyReturn = MUTATE_ROW_RETURNS_RESULT ? Result.EMPTY_RESULT : null;
+    Object emptyReturn = doesMutateRowReturnResult() ? Result.EMPTY_RESULT : null;
 
     if (rowMutations.getMutations().isEmpty()) {
       return CompletableFuture.completedFuture(emptyReturn);

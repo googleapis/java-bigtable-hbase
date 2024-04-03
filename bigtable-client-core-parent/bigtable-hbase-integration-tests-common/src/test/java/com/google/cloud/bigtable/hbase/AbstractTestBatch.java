@@ -419,7 +419,7 @@ public abstract class AbstractTestBatch extends AbstractTest {
   @Test
   public void testBatchWithNullAndEmptyElements() throws IOException {
     Table table = getDefaultTable();
-    Exception actualError = null;
+    Throwable actualError = null;
     try {
       table.batch(null, new Object[1]);
     } catch (Exception ex) {
@@ -437,7 +437,7 @@ public abstract class AbstractTestBatch extends AbstractTest {
 
     try {
       table.batch(Collections.singletonList(null), new Object[0]);
-    } catch (Exception ex) {
+    } catch (Throwable ex) {
       actualError = ex;
     }
     assertNotNull(actualError);
