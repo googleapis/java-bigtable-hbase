@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.13.1-SNAPSHOT](https://github.com/googleapis/java-bigtable-hbase/compare/v2.13.0...v2.13.1-SNAPSHOT) (2024-04-03)
+
+
+### Miscellaneous Chores
+
+* Mark next release as 2.13.1-SNAPSHOT ([f4cf4dd](https://github.com/googleapis/java-bigtable-hbase/commit/f4cf4ddd068ce1b4a67000d73db4e0233344433f))
+
 ## [2.13.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.12.0...v2.13.0) (2024-03-28)
 
 
