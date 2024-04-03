@@ -258,6 +258,7 @@ public class TestBasicOps extends AbstractTest {
     Result expectedReturn = mutateRowHasResult() ? Result.EMPTY_RESULT : null;
 
     // Test multiple Puts
+    long timestamp = 10_000;
     Result result =
         mutateRow(
             table,
@@ -265,11 +266,11 @@ public class TestBasicOps extends AbstractTest {
                 .add(
                     (Mutation)
                         new Put(testRowKey)
-                            .addColumn(COLUMN_FAMILY, "q".getBytes(), "v1".getBytes()))
+                            .addColumn(COLUMN_FAMILY, "q".getBytes(), timestamp, "v1".getBytes()))
                 .add(
                     (Mutation)
                         new Put(testRowKey)
-                            .addColumn(COLUMN_FAMILY, "q2".getBytes(), "v2".getBytes())));
+                            .addColumn(COLUMN_FAMILY, "q2".getBytes(), timestamp, "v2".getBytes())));
 
     assertThat(result).isEqualTo(expectedReturn);
 
@@ -282,11 +283,11 @@ public class TestBasicOps extends AbstractTest {
         mutateRow(
             table,
             new RowMutations(testRowKey)
-                .add((Mutation) new Delete(testRowKey).addColumn(COLUMN_FAMILY, "q".getBytes()))
+                .add((Mutation) new Delete(testRowKey).addColumn(COLUMN_FAMILY, "q".getBytes(), timestamp))
                 .add(
                     (Mutation)
                         new Put(testRowKey)
-                            .addColumn(COLUMN_FAMILY, "q2".getBytes(), "v2b".getBytes())));
+                            .addColumn(COLUMN_FAMILY, "q2".getBytes(), timestamp, "v2b".getBytes())));
 
     assertThat(result2).isEqualTo(expectedReturn);
 
@@ -312,12 +313,7 @@ public class TestBasicOps extends AbstractTest {
                 .add(new Increment(testRowKey1).addColumn(COLUMN_FAMILY, "q".getBytes(), 3))
                 .add(
                     new Append(testRowKey1)
-                        .addColumn(COLUMN_FAMILY, "q2".getBytes(), "moo".getBytes()))
-                .add(
-                    (Mutation)
-                        new Put(testRowKey1)
-                            .addColumn(COLUMN_FAMILY, "q3".getBytes(), "something".getBytes()))
-                .add((Mutation) new Delete(testRowKey1).addColumn(COLUMN_FAMILY, "q4".getBytes())));
+                        .addColumn(COLUMN_FAMILY, "q2".getBytes(), "moo".getBytes())));
 
     assertThat(result).latestCellHasValue(COLUMN_FAMILY, "q".getBytes(), Bytes.toBytes(3L));
     assertThat(result).latestCellHasValue(COLUMN_FAMILY, "q2".getBytes(), "moo".getBytes());

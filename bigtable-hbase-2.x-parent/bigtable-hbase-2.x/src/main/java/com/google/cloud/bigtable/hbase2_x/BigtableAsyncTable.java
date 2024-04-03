@@ -105,7 +105,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
     Type wrappedReturnType = null;
     try {
-      Method mutateRow = Table.class.getDeclaredMethod("mutateRow", RowMutations.class);
+      Method mutateRow = AsyncTable.class.getDeclaredMethod("mutateRow", RowMutations.class);
       ParameterizedType returnType = (ParameterizedType) mutateRow.getGenericReturnType();
       wrappedReturnType = returnType.getActualTypeArguments()[0];
     } catch (NoSuchMethodException e) {
