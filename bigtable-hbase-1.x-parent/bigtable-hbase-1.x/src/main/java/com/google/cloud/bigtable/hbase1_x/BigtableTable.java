@@ -21,12 +21,9 @@ import com.google.cloud.bigtable.hbase.adapters.HBaseRequestAdapter;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.InvocationHandlerAdapter;
-import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.matcher.ElementMatchers;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
-import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.RowMutations;
 
 @InternalApi("For internal usage only")
@@ -40,9 +37,9 @@ public abstract class BigtableTable extends AbstractBigtableTable {
           .getConstructor(AbstractBigtableConnection.class, HBaseRequestAdapter.class)
           .newInstance(bigtableConnection, hbaseAdapter);
     } catch (NoSuchMethodException
-             | InstantiationException
-             | IllegalAccessException
-             | InvocationTargetException e) {
+        | InstantiationException
+        | IllegalAccessException
+        | InvocationTargetException e) {
       throw new IllegalStateException("Failed to instantiate the proper subclass for Table", e);
     }
   }

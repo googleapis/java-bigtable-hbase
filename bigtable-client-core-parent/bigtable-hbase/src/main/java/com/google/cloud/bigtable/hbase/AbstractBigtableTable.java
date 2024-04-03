@@ -640,7 +640,6 @@ public abstract class AbstractBigtableTable implements Table {
     // TODO: shutdown the executor.
   }
 
-
   /** {@inheritDoc} */
   @Override
   public String toString() {
@@ -714,7 +713,6 @@ public abstract class AbstractBigtableTable implements Table {
   public int getRpcTimeout() {
     throw new UnsupportedOperationException("getRpcTimeout");
   }
-
 
   public static class UnsupportedOperationsHandler implements InvocationHandler {
     @Override

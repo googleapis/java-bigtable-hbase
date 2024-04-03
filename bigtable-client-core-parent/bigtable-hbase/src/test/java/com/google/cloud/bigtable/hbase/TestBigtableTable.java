@@ -138,14 +138,15 @@ public class TestBigtableTable {
           }
 
           @Override
-          public <T extends Service, R> Map<byte[], R> coprocessorService(Class<T> aClass,
-              byte[] bytes, byte[] bytes1, Call<T, R> call) throws ServiceException, Throwable {
+          public <T extends Service, R> Map<byte[], R> coprocessorService(
+              Class<T> aClass, byte[] bytes, byte[] bytes1, Call<T, R> call)
+              throws ServiceException, Throwable {
             throw new UnsupportedOperationException();
           }
 
           @Override
-          public <T extends Service, R> void coprocessorService(Class<T> aClass, byte[] bytes,
-              byte[] bytes1, Call<T, R> call, Callback<R> callback)
+          public <T extends Service, R> void coprocessorService(
+              Class<T> aClass, byte[] bytes, byte[] bytes1, Call<T, R> call, Callback<R> callback)
               throws ServiceException, Throwable {
             throw new UnsupportedOperationException();
           }
@@ -168,8 +169,13 @@ public class TestBigtableTable {
           }
 
           @Override
-          public <R extends Message> void batchCoprocessorService(MethodDescriptor methodDescriptor,
-              Message message, byte[] bytes, byte[] bytes1, R r, Callback<R> callback)
+          public <R extends Message> void batchCoprocessorService(
+              MethodDescriptor methodDescriptor,
+              Message message,
+              byte[] bytes,
+              byte[] bytes1,
+              R r,
+              Callback<R> callback)
               throws ServiceException, Throwable {
             throw new UnsupportedOperationException();
           }

@@ -34,7 +34,6 @@ import net.bytebuddy.implementation.InvocationHandlerAdapter;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.matcher.ElementMatchers;
 import org.apache.hadoop.hbase.CompareOperator;
-import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -92,9 +91,7 @@ public class BigtableTable extends AbstractBigtableTable {
                         BigtableTable.class.getMethod("mutateRowResult", RowMutations.class))
                     .withAllArguments())
             .method(ElementMatchers.isAbstract())
-            .intercept(
-                InvocationHandlerAdapter.of(
-                    new UnsupportedOperationsHandler()))
+            .intercept(InvocationHandlerAdapter.of(new UnsupportedOperationsHandler()))
             .make()
             .load(BigtableTable.class.getClassLoader())
             .getLoaded();
