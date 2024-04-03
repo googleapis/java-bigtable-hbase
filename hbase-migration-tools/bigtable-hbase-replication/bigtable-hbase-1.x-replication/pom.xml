@@ -14,19 +14,17 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>bigtable-hbase-replication</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>1.11.2</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+    <version>1.12.0-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.google.cloud.bigtable</groupId>
   <artifactId>bigtable-hbase-1.x-replication</artifactId>
-  <version>1.11.2</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+  <version>1.12.0-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
 
   <packaging>jar</packaging>
   <name>bigtable-hbase-1.x-replication</name>
@@ -135,7 +133,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-replication-core</artifactId>
-      <version>1.11.2</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+      <version>1.12.0-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
       <exclusions>
         <!-- HBase dependencies come from hbase-server below. Skip them here.-->
         <exclusion>
@@ -189,7 +187,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-internal-test-helper</artifactId>
-      <version>2.13.0</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.13.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <scope>test</scope>
     </dependency>
   </dependencies>

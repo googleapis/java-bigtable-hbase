@@ -14,20 +14,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-mirroring-client-2.x-parent</artifactId>
-    <version>0.7.2</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+    <version>0.8.0-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-mirroring-client-1.x-2.x-integration-tests</artifactId>
   <packaging>jar</packaging>
-  <version>0.7.2</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+  <version>0.8.0-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
 
   <name>${project.groupId}:${project.artifactId}</name>
   <description>
@@ -48,7 +46,7 @@ limitations under the License.
           <plugin>
             <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-emulator-maven-plugin</artifactId>
-            <version>2.13.0</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+            <version>2.13.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
             <executions>
               <execution>
                 <goals>
@@ -117,7 +115,7 @@ limitations under the License.
           <plugin>
             <groupId>${project.groupId}</groupId>
             <artifactId>bigtable-emulator-maven-plugin</artifactId>
-            <version>2.13.0</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+            <version>2.13.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
             <executions>
               <execution>
                 <goals>
@@ -186,14 +184,14 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-mirroring-client-2.x</artifactId>
-      <version>0.7.2</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+      <version>0.8.0-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-2.x</artifactId>
-      <version>2.13.0</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.13.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <scope>test</scope>
     </dependency>
 
@@ -217,14 +215,14 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-mirroring-client-core</artifactId>
-      <version>0.7.2</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+      <version>0.8.0-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-mirroring-client-1.x-integration-tests</artifactId>
-      <version>0.7.2</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+      <version>0.8.0-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
