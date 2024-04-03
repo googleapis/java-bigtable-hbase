@@ -10,7 +10,7 @@
 
   <artifactId>mirroring-client</artifactId>
   <packaging>pom</packaging>
-  <version>0.8.0-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+  <version>0.9.0-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
 
   <properties>
     <shading-prefix>com.google.bigtable.hbase.mirroring.shaded</shading-prefix>
