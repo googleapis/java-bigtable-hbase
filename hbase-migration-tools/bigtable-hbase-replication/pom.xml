@@ -18,7 +18,7 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.google.cloud.bigtable</groupId>
   <artifactId>bigtable-hbase-replication</artifactId>
-  <version>1.12.0-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+  <version>1.13.0-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
 
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
