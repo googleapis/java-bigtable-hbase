@@ -126,7 +126,7 @@ public class BigtableTable extends AbstractBigtableTable {
     }
   }
 
-  public BigtableTable(
+  protected BigtableTable(
       AbstractBigtableConnection bigtableConnection, HBaseRequestAdapter hbaseAdapter) {
     super(bigtableConnection, hbaseAdapter);
   }
