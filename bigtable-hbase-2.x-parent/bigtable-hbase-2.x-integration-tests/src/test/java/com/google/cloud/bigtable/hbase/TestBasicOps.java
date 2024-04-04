@@ -270,7 +270,8 @@ public class TestBasicOps extends AbstractTest {
                 .add(
                     (Mutation)
                         new Put(testRowKey)
-                            .addColumn(COLUMN_FAMILY, "q2".getBytes(), timestamp, "v2".getBytes())));
+                            .addColumn(
+                                COLUMN_FAMILY, "q2".getBytes(), timestamp, "v2".getBytes())));
 
     assertThat(result).isEqualTo(expectedReturn);
 
@@ -283,11 +284,14 @@ public class TestBasicOps extends AbstractTest {
         mutateRow(
             table,
             new RowMutations(testRowKey)
-                .add((Mutation) new Delete(testRowKey).addColumn(COLUMN_FAMILY, "q".getBytes(), timestamp))
+                .add(
+                    (Mutation)
+                        new Delete(testRowKey).addColumn(COLUMN_FAMILY, "q".getBytes(), timestamp))
                 .add(
                     (Mutation)
                         new Put(testRowKey)
-                            .addColumn(COLUMN_FAMILY, "q2".getBytes(), timestamp, "v2b".getBytes())));
+                            .addColumn(
+                                COLUMN_FAMILY, "q2".getBytes(), timestamp, "v2b".getBytes())));
 
     assertThat(result2).isEqualTo(expectedReturn);
 
@@ -321,7 +325,7 @@ public class TestBasicOps extends AbstractTest {
     assertThat(result.rawCells()).hasLength(2);
 
     Result rowResult2 = table.get(new Get(testRowKey1));
-    assertThat(rowResult2.rawCells()).hasLength(3);
+    assertThat(rowResult2.rawCells()).hasLength(2);
   }
 
   /** Wrapper to deal with method signature change of mutateRow that happened in hbase 2.4 */

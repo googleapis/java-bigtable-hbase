@@ -15,7 +15,13 @@
  */
 package com.google.cloud.bigtable.hbase;
 
+import com.google.bigtable.v2.BigtableGrpc.BigtableImplBase;
+import com.google.bigtable.v2.PingAndWarmRequest;
+import com.google.bigtable.v2.PingAndWarmResponse;
 import com.google.cloud.bigtable.hbase1_x.BigtableConnection;
+import com.google.cloud.bigtable.test.helper.TestServerBuilder;
+import io.grpc.Server;
+import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -62,12 +68,32 @@ public class TestBigtableConnection {
 
   @Test
   public void testTable() throws IOException {
-    Configuration conf = BigtableConfiguration.configure("projectId", "instanceId", "appProfileId");
-    conf.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
-    conf.set(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, "false");
-    BigtableConnection connection = new BigtableConnection(conf);
-    Admin admin = connection.getAdmin();
-    Table table = connection.getTable(TableName.valueOf("someTable"));
-    BufferedMutator mutator = connection.getBufferedMutator(TableName.valueOf("someTable"));
+    Server server =
+        TestServerBuilder.newInstance()
+            .addService(
+                new BigtableImplBase() {
+                  @Override
+                  public void pingAndWarm(
+                      PingAndWarmRequest request,
+                      StreamObserver<PingAndWarmResponse> responseObserver) {
+                    responseObserver.onNext(PingAndWarmResponse.getDefaultInstance());
+                    responseObserver.onCompleted();
+                  }
+                })
+            .buildAndStart();
+
+    try {
+      Configuration conf =
+          BigtableConfiguration.configure("projectId", "instanceId", "appProfileId");
+      conf.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + server.getPort());
+
+      try (BigtableConnection connection = new BigtableConnection(conf);
+          Admin admin = connection.getAdmin();
+          Table table = connection.getTable(TableName.valueOf("someTable"));
+          BufferedMutator mutator =
+              connection.getBufferedMutator(TableName.valueOf("someTable"))) {}
+    } finally {
+      server.shutdownNow();
+    }
   }
 }
