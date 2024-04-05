@@ -16,10 +16,10 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule;
+import java.io.IOException;
 import java.util.List;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
@@ -137,7 +137,7 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
       actualError = e;
     }
 
-    Assert.assertFalse("Zero bytes value. Should fail.", actualError != null || !result);
+    Assert.assertTrue("Zero bytes value. Should fail.", actualError != null || !result);
     Assert.assertTrue(
         checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, value1, delete));
     Assert.assertFalse("Row should be gone", table.exists(new Get(rowKey)));
@@ -254,7 +254,7 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
     // Put then again
     Put put = new Put(rowKey1).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, value);
     Assert.assertThrows(
-        DoNotRetryIOException.class,
+        IOException.class,
         () -> checkAndPut(rowKey2, SharedTestEnvRule.COLUMN_FAMILY, qual, null, put));
   }
 
@@ -269,7 +269,7 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
       // Put then again
       Delete delete = new Delete(rowKey1).addColumns(SharedTestEnvRule.COLUMN_FAMILY, qual);
       Assert.assertThrows(
-          DoNotRetryIOException.class,
+          IOException.class,
           () -> checkAndDelete(rowKey2, SharedTestEnvRule.COLUMN_FAMILY, qual, null, delete));
     }
   }
