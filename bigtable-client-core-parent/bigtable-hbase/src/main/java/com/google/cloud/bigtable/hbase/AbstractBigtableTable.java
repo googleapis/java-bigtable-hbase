@@ -36,6 +36,7 @@ import com.google.cloud.bigtable.metrics.Timer;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.protobuf.ByteString;
 import io.opencensus.common.Scope;
 import io.opencensus.trace.AttributeValue;
 import io.opencensus.trace.Span;
@@ -43,11 +44,12 @@ import io.opencensus.trace.Status;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
 import java.io.IOException;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -75,11 +77,6 @@ import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
-import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
-import org.apache.hadoop.hbase.shaded.com.google.protobuf.Descriptors;
-import org.apache.hadoop.hbase.shaded.com.google.protobuf.Message;
-import org.apache.hadoop.hbase.shaded.com.google.protobuf.Service;
-import org.apache.hadoop.hbase.shaded.com.google.protobuf.ServiceException;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
@@ -500,9 +497,9 @@ public abstract class AbstractBigtableTable implements Table {
     }
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public void mutateRow(RowMutations rowMutations) throws IOException {
+  // Invoked via ByteBuddy
+  // Implements Result mutateRow(RowMutations) for HBase prior 2.4
+  public void mutateRowVoid(RowMutations rowMutations) throws IOException {
     LOG.trace("mutateRow(RowMutation)");
     if (rowMutations.getMutations().isEmpty()) {
       return;
@@ -516,6 +513,48 @@ public abstract class AbstractBigtableTable implements Table {
     } finally {
       span.end();
     }
+  }
+
+  // Invoked via ByteBuddy
+  // Implements Result mutateRow(RowMutations) for HBase >= 2.4
+  public Result mutateRowResult(RowMutations rowMutations) throws IOException {
+    LOG.trace("mutateRow(RowMutation)");
+    if (rowMutations.getMutations().isEmpty()) {
+      return Result.EMPTY_RESULT;
+    }
+    Span span = TRACER.spanBuilder("BigtableTable.mutateRow").startSpan();
+
+    try (Scope scope = TRACER.withSpan(span)) {
+      Mutation firstMutation = rowMutations.getMutations().get(0);
+      if (firstMutation instanceof Append || firstMutation instanceof Increment) {
+        return mutateRowRMW(rowMutations);
+      } else {
+        FutureUtil.unwrap(clientWrapper.mutateRowAsync(hbaseAdapter.adapt(rowMutations)));
+        return Result.EMPTY_RESULT;
+      }
+    } catch (Throwable t) {
+      span.setStatus(Status.UNKNOWN);
+      throw logAndCreateIOException("mutateRow", rowMutations.getRow(), t);
+    } finally {
+      span.end();
+    }
+  }
+
+  private Result mutateRowRMW(RowMutations rowMutations) throws IOException {
+    ReadModifyWriteRow rmw =
+        ReadModifyWriteRow.create(
+            tableName.getNameAsString(), ByteString.copyFrom(rowMutations.getRow()));
+    for (Mutation mutation : rowMutations.getMutations()) {
+      if (mutation instanceof Append) {
+        Adapters.APPEND_ADAPTER.adapt((Append) mutation, rmw);
+      } else if (mutation instanceof Increment) {
+        Adapters.INCREMENT_ADAPTER.adapt((Increment) mutation, rmw);
+      } else {
+        throw new UnsupportedOperationException(
+            "Bigtable can't mix Increment/Append with " + mutation.getClass());
+      }
+    }
+    return FutureUtil.unwrap(clientWrapper.readModifyWriteRowAsync(rmw));
   }
 
   /** {@inheritDoc} */
@@ -603,84 +642,6 @@ public abstract class AbstractBigtableTable implements Table {
 
   /** {@inheritDoc} */
   @Override
-  public CoprocessorRpcChannel coprocessorService(byte[] row) {
-    LOG.error("Unsupported coprocessorService(byte[]) called.");
-    throw new UnsupportedOperationException(); // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public <T extends Service, R> Map<byte[], R> coprocessorService(
-      Class<T> service, byte[] startKey, byte[] endKey, Batch.Call<T, R> callable)
-      throws ServiceException, Throwable {
-    LOG.error("Unsupported coprocessorService(Class, byte[], byte[], Batch.Call) called.");
-    throw new UnsupportedOperationException(); // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public <T extends Service, R> void coprocessorService(
-      Class<T> service,
-      byte[] startKey,
-      byte[] endKey,
-      Batch.Call<T, R> callable,
-      Batch.Callback<R> callback)
-      throws ServiceException, Throwable {
-    LOG.error(
-        "Unsupported coprocessorService("
-            + "Class, byte[], byte[], Batch.Call, Batch.Callback) called.");
-    throw new UnsupportedOperationException(); // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Deprecated
-  @Override
-  public long getWriteBufferSize() {
-    LOG.error("Unsupported getWriteBufferSize() called");
-    throw new UnsupportedOperationException(); // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Deprecated
-  @Override
-  public void setWriteBufferSize(long writeBufferSize) throws IOException {
-    LOG.error("Unsupported getWriteBufferSize() called");
-    throw new UnsupportedOperationException(); // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public <R extends Message> Map<byte[], R> batchCoprocessorService(
-      Descriptors.MethodDescriptor methodDescriptor,
-      Message message,
-      byte[] bytes,
-      byte[] bytes2,
-      R r)
-      throws ServiceException, Throwable {
-    LOG.error(
-        "Unsupported batchCoprocessorService("
-            + "MethodDescriptor, Message, byte[], byte[], R) called.");
-    throw new UnsupportedOperationException(); // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public <R extends Message> void batchCoprocessorService(
-      Descriptors.MethodDescriptor methodDescriptor,
-      Message message,
-      byte[] bytes,
-      byte[] bytes2,
-      R r,
-      Batch.Callback<R> rCallback)
-      throws ServiceException, Throwable {
-    LOG.error(
-        "Unsupported batchCoprocessorService("
-            + "MethodDescriptor, Message, byte[], byte[], R, Batch.Callback<R>) called.");
-    throw new UnsupportedOperationException(); // TODO
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public String toString() {
     return MoreObjects.toStringHelper(AbstractBigtableTable.class)
         .add("hashCode", "0x" + Integer.toHexString(hashCode()))
@@ -751,5 +712,12 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public int getRpcTimeout() {
     throw new UnsupportedOperationException("getRpcTimeout");
+  }
+
+  public static class UnsupportedOperationsHandler implements InvocationHandler {
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+      throw new UnsupportedOperationException(method.getName());
+    }
   }
 }

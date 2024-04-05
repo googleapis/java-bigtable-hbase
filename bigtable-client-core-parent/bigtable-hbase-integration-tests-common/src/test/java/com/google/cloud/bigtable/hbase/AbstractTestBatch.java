@@ -21,6 +21,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -268,7 +270,7 @@ public abstract class AbstractTestBatch extends AbstractTest {
     RowMutations rm = new RowMutations(rowKey);
     rm.add(put0);
     rm.add(put1);
-    table.mutateRow(rm);
+    invokeMutateRow(table, rm);
 
     // Check
     Result result = table.get(new Get(rowKey));
@@ -288,7 +290,7 @@ public abstract class AbstractTestBatch extends AbstractTest {
     rm = new RowMutations(rowKey);
     rm.add(delete);
     rm.add(put2);
-    table.mutateRow(rm);
+    invokeMutateRow(table, rm);
 
     // Check
     result = table.get(new Get(rowKey));
@@ -419,7 +421,7 @@ public abstract class AbstractTestBatch extends AbstractTest {
   @Test
   public void testBatchWithNullAndEmptyElements() throws IOException {
     Table table = getDefaultTable();
-    Exception actualError = null;
+    Throwable actualError = null;
     try {
       table.batch(null, new Object[1]);
     } catch (Exception ex) {
@@ -437,7 +439,7 @@ public abstract class AbstractTestBatch extends AbstractTest {
 
     try {
       table.batch(Collections.singletonList(null), new Object[0]);
-    } catch (Exception ex) {
+    } catch (Throwable ex) {
       actualError = ex;
     }
     assertNotNull(actualError);
@@ -448,7 +450,7 @@ public abstract class AbstractTestBatch extends AbstractTest {
     Table table = getDefaultTable();
     Exception actualError = null;
     try {
-      table.mutateRow(null);
+      invokeMutateRow(table, null);
     } catch (Exception ex) {
       actualError = ex;
     }
@@ -456,27 +458,19 @@ public abstract class AbstractTestBatch extends AbstractTest {
     actualError = null;
 
     try {
-      table.mutateRow(new RowMutations(new byte[0]));
+      invokeMutateRow(table, new RowMutations(new byte[0]));
     } catch (Exception ex) {
       actualError = ex;
     }
     assertNotNull(actualError);
     actualError = null;
-
-    try {
-      // Table#mutateRow ignores requests without Mutations.
-      table.mutateRow(new RowMutations(new byte[1]));
-    } catch (Exception ex) {
-      actualError = ex;
-    }
-    assertNull(actualError);
 
     try {
       byte[] rowKeyForPut = dataHelper.randomData("test-rowKey");
       RowMutations rowMutations = new RowMutations(rowKeyForPut);
       rowMutations.add(new Put(rowKeyForPut));
 
-      table.mutateRow(rowMutations);
+      invokeMutateRow(table, rowMutations);
     } catch (Exception ex) {
       actualError = ex;
     }
@@ -489,7 +483,7 @@ public abstract class AbstractTestBatch extends AbstractTest {
       rowMutations.add(new Put(rowKeyWithNullQual).addColumn(COLUMN_FAMILY, null, null));
 
       // Table#mutateRow should add a row with null qualifier.
-      table.mutateRow(rowMutations);
+      invokeMutateRow(table, rowMutations);
 
       assertTrue(table.exists(new Get(rowKeyWithNullQual)));
     } catch (Exception ex) {
@@ -503,7 +497,7 @@ public abstract class AbstractTestBatch extends AbstractTest {
       rowMutations.add(new Put(rowKeyWithEmptyQual).addColumn(COLUMN_FAMILY, new byte[0], null));
 
       // Table#mutateRow should add a row with an empty qualifier.
-      table.mutateRow(rowMutations);
+      invokeMutateRow(table, rowMutations);
 
       assertTrue(table.exists(new Get(rowKeyWithEmptyQual)));
     } catch (Exception ex) {
@@ -517,13 +511,24 @@ public abstract class AbstractTestBatch extends AbstractTest {
       rowMutations.add(new Put(rowKeyWithNullValue).addColumn(COLUMN_FAMILY, "q".getBytes(), null));
 
       // Table#mutateRow should add a row with null values.
-      table.mutateRow(rowMutations);
+      invokeMutateRow(table, rowMutations);
 
       assertTrue(table.exists(new Get(rowKeyWithNullValue)));
     } catch (Exception ex) {
       actualError = ex;
     }
     assertNull(actualError);
+  }
+
+  // workaround binary incompatible change in HBase 2.4 that changed the return type of mutateRow
+  // This is necessary because this test is shared by bigtable-hbase 1x & 2x
+  private void invokeMutateRow(Table table, RowMutations rm) {
+    try {
+      Method mutateRow = Table.class.getMethod("mutateRow", RowMutations.class);
+      mutateRow.invoke(table, rm);
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected abstract void appendAdd(

@@ -127,9 +127,17 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
     Assert.assertFalse(
         "Wrong value. Should fail.",
         checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, value2, delete));
-    Assert.assertFalse(
-        "Zero bytes value. Should fail.",
-        checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, ZERO_BYTES, delete));
+
+    // Newer versions of HBase throw an error instead of returning false
+    Exception actualError = null;
+    Boolean result = null;
+    try {
+      result = checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, ZERO_BYTES, delete);
+    } catch (Exception e) {
+      actualError = e;
+    }
+
+    Assert.assertTrue("Zero bytes value. Should fail.", actualError != null || !result);
     Assert.assertTrue(
         checkAndDelete(rowKey, SharedTestEnvRule.COLUMN_FAMILY, qual, value1, delete));
     Assert.assertFalse("Row should be gone", table.exists(new Get(rowKey)));
@@ -245,18 +253,9 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
 
     // Put then again
     Put put = new Put(rowKey1).addColumn(SharedTestEnvRule.COLUMN_FAMILY, qual, value);
-    try {
-      checkAndPut(rowKey2, SharedTestEnvRule.COLUMN_FAMILY, qual, null, put);
-      Assert.fail("IOException expected");
-    } catch (IOException e) {
-      assertGetRowException(e);
-    } finally {
-      table.close();
-    }
-  }
-
-  private static void assertGetRowException(IOException e) {
-    Assert.assertTrue(e.getMessage(), e.getMessage().contains("Action's getRow must match"));
+    Assert.assertThrows(
+        IOException.class,
+        () -> checkAndPut(rowKey2, SharedTestEnvRule.COLUMN_FAMILY, qual, null, put));
   }
 
   @Test
@@ -269,10 +268,9 @@ public abstract class AbstractTestCheckAndMutate extends AbstractTest {
 
       // Put then again
       Delete delete = new Delete(rowKey1).addColumns(SharedTestEnvRule.COLUMN_FAMILY, qual);
-      checkAndDelete(rowKey2, SharedTestEnvRule.COLUMN_FAMILY, qual, null, delete);
-      Assert.fail("IOException expected");
-    } catch (IOException e) {
-      assertGetRowException(e);
+      Assert.assertThrows(
+          IOException.class,
+          () -> checkAndDelete(rowKey2, SharedTestEnvRule.COLUMN_FAMILY, qual, null, delete));
     }
   }
 

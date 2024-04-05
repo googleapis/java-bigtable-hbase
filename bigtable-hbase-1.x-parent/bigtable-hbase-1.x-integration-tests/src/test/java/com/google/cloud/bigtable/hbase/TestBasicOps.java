@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
+import static com.google.cloud.bigtable.hbase.test_helpers.ResultSubject.assertThat;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -27,6 +28,7 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
@@ -169,6 +171,44 @@ public class TestBasicOps extends AbstractTest {
         break;
       }
     }
+  }
+
+  @Test
+  public void testMutateRow() throws IOException {
+    Table table = getDefaultTable();
+    byte[] testRowKey = dataHelper.randomData("testMutateRow1x-");
+    long timestamp = 10_000;
+
+    // Test multiple Puts
+    RowMutations req = new RowMutations(testRowKey);
+    req.add(
+        new Put(testRowKey).addColumn(COLUMN_FAMILY, "q".getBytes(), timestamp, "v1".getBytes()));
+    req.add(new Put(testRowKey).addColumn(COLUMN_FAMILY, "q2".getBytes(), "v2".getBytes()));
+    table.mutateRow(req);
+
+    Result rowResult = table.get(new Get(testRowKey));
+    assertThat(rowResult).latestCellHasValue(COLUMN_FAMILY, "q".getBytes(), "v1".getBytes());
+    assertThat(rowResult).latestCellHasValue(COLUMN_FAMILY, "q2".getBytes(), "v2".getBytes());
+
+    // Test Delete
+    RowMutations req2 = new RowMutations(testRowKey);
+    req2.add(new Delete(testRowKey).addColumn(COLUMN_FAMILY, "q".getBytes(), timestamp));
+    req2.add(new Put(testRowKey).addColumn(COLUMN_FAMILY, "q2".getBytes(), "v2b".getBytes()));
+    table.mutateRow(req2);
+
+    Result rowResult2 = table.get(new Get(testRowKey));
+    assertThat(rowResult2).doesNotHaveCell(COLUMN_FAMILY, "q".getBytes());
+    assertThat(rowResult2).latestCellHasValue(COLUMN_FAMILY, "q2".getBytes(), "v2b".getBytes());
+  }
+
+  @Test
+  public void testMutateRow1xEmpty() throws IOException {
+    Table table = getDefaultTable();
+    byte[] testRowKey = dataHelper.randomData("testMutateRow1xEmpty-");
+
+    // Test multiple Puts
+    RowMutations req = new RowMutations(testRowKey);
+    table.mutateRow(req);
   }
 
   void testPutGetDeleteExists(int size, boolean removeMetadataSize, boolean doGet)
