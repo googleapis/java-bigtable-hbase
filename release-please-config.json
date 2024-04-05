@@ -1,0 +1,13 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "last-release-sha": "203b375caa3aa247c23d6405218002b27363fe82",
+  "release-type": "java-yoshi",
+  "bump-minor-pre-major": true,
+  "extra-files": [
+    "bigtable-client-core-parent/bigtable-client-core/src/main/java/com/google/cloud/bigtable/config/BigtableVersionInfo.java",
+    "bigtable-client-core-parent/bigtable-hbase/src/main/java/com/google/cloud/bigtable/hbase/BigtableHBaseVersion.java"
+  ],
+  "packages": {
+    ".": {}
+  }
+}
