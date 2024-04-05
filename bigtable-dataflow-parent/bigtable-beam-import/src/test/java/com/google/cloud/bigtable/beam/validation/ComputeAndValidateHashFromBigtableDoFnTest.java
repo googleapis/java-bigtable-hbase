@@ -86,6 +86,8 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
 
   // Clients that will be connected to the emulator
   private BigtableTableAdminClient tableAdminClient;
+
+  private Connection connection;
   private Table table;
   // Fake a TableHashWrapper.
   private FakeTableHashWrapper fakeTableHashWrapper;
@@ -113,7 +115,7 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
                 "localhost:" + bigtableEmulator.getPort())
             .build();
 
-    Connection connection = BigtableConfiguration.connect(config.toHBaseConfig());
+    connection = BigtableConfiguration.connect(config.toHBaseConfig());
     table = connection.getTable(TableName.valueOf(FAKE_TABLE));
     fakeTableHashWrapper = new FakeTableHashWrapper();
     // Scan all the cells for the column, HBase scan fetches 1 cell/column by default
@@ -142,9 +144,12 @@ public class ComputeAndValidateHashFromBigtableDoFnTest {
   }
 
   @After
-  public void tearDown() {
+  public void tearDown() throws IOException {
+    doFn.cleanupConnection();
     // TODO should we delete the table for each test?
     tableAdminClient.deleteTable(FAKE_TABLE);
+    tableAdminClient.close();
+    connection.close();
   }
 
   private byte[] getRowKey(int i) {

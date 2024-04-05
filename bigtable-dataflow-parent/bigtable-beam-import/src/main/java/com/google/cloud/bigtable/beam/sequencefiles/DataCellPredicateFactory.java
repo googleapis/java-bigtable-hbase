@@ -68,7 +68,7 @@ class DataCellPredicateFactory implements Function<Cell, Predicate<Cell>> {
 
     @Override
     public boolean apply(Cell cell) {
-      return CellComparator.compareQualifiers(deleteMarker, cell) == 0;
+      return CellComparator.getInstance().compareQualifiers(deleteMarker, cell) == 0;
     }
   }
 
@@ -81,7 +81,7 @@ class DataCellPredicateFactory implements Function<Cell, Predicate<Cell>> {
 
     @Override
     public boolean apply(Cell cell) {
-      return CellComparator.compareTimestamps(deleteMarker, cell) == 0;
+      return CellComparator.getInstance().compareTimestamps(deleteMarker, cell) == 0;
     }
   }
 
@@ -96,7 +96,7 @@ class DataCellPredicateFactory implements Function<Cell, Predicate<Cell>> {
     public boolean apply(Cell cell) {
       // Returns true if deleteMarker.ts >= cell.ts. i.e. the cell should be deleted.
       // CellComparator orders timestamps high to low so '<= 0' is need here.
-      return CellComparator.compareTimestamps(deleteMarker, cell) <= 0;
+      return CellComparator.getInstance().compareTimestamps(deleteMarker, cell) <= 0;
     }
   }
 }

@@ -22,11 +22,8 @@ import com.google.cloud.bigtable.beam.sequencefiles.HBaseResultToMutationFn;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob;
 import com.google.cloud.bigtable.beam.sequencefiles.Utils;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.MoreObjects;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO;
@@ -36,7 +33,6 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.Wait;
-import org.apache.beam.sdk.util.ReleaseInfo;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.commons.logging.Log;
@@ -71,8 +67,6 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 @InternalExtensionOnly
 public class ImportJobFromHbaseSnapshot {
   private static final Log LOG = LogFactory.getLog(ImportJobFromHbaseSnapshot.class);
-  private static final String CONTAINER_IMAGE_PATH_PREFIX =
-      "gcr.io/cloud-bigtable-ecosystem/unified-harness:";
 
   public interface ImportOptions extends ImportJob.ImportOptions {
     @Description("The HBase root dir where HBase snapshot files resides.")
@@ -113,21 +107,6 @@ public class ImportJobFromHbaseSnapshot {
 
   @VisibleForTesting
   static Pipeline buildPipeline(ImportOptions opts) throws Exception {
-
-    if (opts.getEnableSnappy()) {
-      DataflowPipelineOptions dataFlowOpts = opts.as(DataflowPipelineOptions.class);
-      dataFlowOpts.setSdkContainerImage(
-          CONTAINER_IMAGE_PATH_PREFIX + ReleaseInfo.getReleaseInfo().getVersion());
-
-      List<String> expOpts =
-          MoreObjects.firstNonNull(dataFlowOpts.getExperiments(), new ArrayList());
-      if (!expOpts.contains("use_runner_v2")) {
-        expOpts = new ArrayList<>(expOpts);
-        expOpts.add("use_runner_v2");
-      }
-      dataFlowOpts.setExperiments(expOpts);
-    }
-
     Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));
     HBaseSnapshotInputConfigBuilder configurationBuilder =
         new HBaseSnapshotInputConfigBuilder()

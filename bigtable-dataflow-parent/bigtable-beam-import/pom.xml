@@ -26,6 +26,7 @@ limitations under the License.
 
   <properties>
     <mainClass>com.google.cloud.bigtable.beam.Main</mainClass>
+    <hadoop.version>3.3.5</hadoop.version>
   </properties>
 
   <dependencyManagement>
@@ -69,7 +70,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigdataoss</groupId>
       <artifactId>gcs-connector</artifactId>
-      <version>hadoop2-2.2.16</version>
+      <version>hadoop3-2.2.21</version>
       <classifier>shaded</classifier>
       <exclusions>
         <!-- shaded variant doesn't have deps -->
@@ -95,13 +96,30 @@ limitations under the License.
     </dependency>
 
     <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-client-api</artifactId>
+      <version>${hadoop.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-client-runtime</artifactId>
+      <version>${hadoop.version}</version>
+    </dependency>
+
+
+    <dependency>
       <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-server</artifactId>
-      <version>${hbase1.version}</version>
+      <artifactId>hbase-shaded-mapreduce</artifactId>
+      <version>${hbase2.version}</version>
       <exclusions>
         <exclusion>
           <groupId>log4j</groupId>
           <artifactId>log4j</artifactId>
+        </exclusion>
+        <exclusion>
+          <!-- Dont need access to hdfs & it conflicts with beam deps -->
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-hdfs-client</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -123,7 +141,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-testing-util</artifactId>
-      <version>${hbase1.version}</version>
+      <version>${hbase2.version}</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -320,32 +338,6 @@ limitations under the License.
           <!-- disable integration tests by default, opt-in via profile -->
           <skip>true</skip>
         </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>com.google.cloud.bigtable.test</groupId>
-        <artifactId>bigtable-build-helper</artifactId>
-        <version>2.14.0-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
-        <executions>
-          <!-- We are using beam's bom, so no need to check if the beam deps are mirrored -->
-          <execution>
-            <id>verify-mirror-deps-hbase</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>verify-mirror-deps</goal>
-            </goals>
-            <configuration>
-              <targetDependencies>
-                <targetDependency>org.apache.hbase:hbase-shaded-server:${hbase1.version}</targetDependency>
-              </targetDependencies>
-              <ignoredDependencies>
-                <dependency>log4j:log4j</dependency>
-                <!-- Use Beam's version of slf4j-api -->
-                <dependency>org.slf4j:slf4j-api</dependency>
-              </ignoredDependencies>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>
