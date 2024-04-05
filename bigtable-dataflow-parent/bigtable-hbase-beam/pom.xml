@@ -16,7 +16,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-dataflow-parent</artifactId>
-    <version>2.12.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.12.1</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-beam</artifactId>
@@ -83,7 +83,7 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-1.x-shaded</artifactId>
-      <version>2.12.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.12.1</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <exclusions>
         <!-- Let the beam pipeline choose the appropriate slf4j impl.
               Since this is the beam universe, we don't have be a drop in replacement
@@ -306,7 +306,7 @@ limitations under the License.
       <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>
         <artifactId>bigtable-build-helper</artifactId>
-        <version>2.12.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+        <version>2.12.1</version> <!-- {x-version-update:bigtable-client-parent:current} -->
         <executions>
           <execution>
             <id>verify-mirror-deps</id>

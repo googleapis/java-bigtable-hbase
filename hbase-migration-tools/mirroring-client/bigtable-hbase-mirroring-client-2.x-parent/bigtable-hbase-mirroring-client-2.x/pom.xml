@@ -20,12 +20,12 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-mirroring-client-2.x-parent</artifactId>
-    <version>0.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+    <version>0.7.1</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-mirroring-client-2.x</artifactId>
   <packaging>jar</packaging>
-  <version>0.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+  <version>0.7.1</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
 
   <name>${project.groupId}:${project.artifactId}</name>
   <description>
@@ -37,7 +37,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-mirroring-client-core</artifactId>
-      <version>0.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+      <version>0.7.1</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
       <scope>compile</scope>
 
       <exclusions>
@@ -99,7 +99,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-mirroring-client-core</artifactId>
-      <version>0.7.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+      <version>0.7.1</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
       <type>test-jar</type>
       <scope>test</scope>
       <exclusions>
