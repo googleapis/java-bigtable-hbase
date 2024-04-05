@@ -35,6 +35,14 @@ limitations under the License.
         <artifactId>error_prone_annotations</artifactId>
         <version>2.14.0</version>
       </dependency>
+
+      <!-- fix conflict between hbase slf & beam -->
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>1.7.33</version>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
 
@@ -57,16 +65,16 @@ limitations under the License.
     <!-- Bigtable Group: ordering doesn't matter since everything is shaded -->
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>bigtable-hbase-1.x-shaded</artifactId>
+      <artifactId>bigtable-hbase-2.x-shaded</artifactId>
       <version>2.14.0-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <exclusions>
         <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
         pom.xml files when invoking the build from a parent project. So we have to manually exclude
         the dependencies. Note that this works in conjunction with the manually promoted dependencies
-        in bigtable-hbase-1.x-shaded/pom.xml -->
+        in bigtable-hbase-2.x-shaded/pom.xml -->
         <exclusion>
           <groupId>${project.groupId}</groupId>
-          <artifactId>bigtable-hbase-1.x</artifactId>
+          <artifactId>bigtable-hbase-2.x</artifactId>
         </exclusion>
         <exclusion>
           <groupId>com.google.cloud</groupId>
@@ -242,6 +250,8 @@ limitations under the License.
               <ignoredDependencies>
                 <!-- beam's dependency tree has an older version closer higher in the tree -->
                 <dependency>com.google.errorprone:error_prone_annotations</dependency>
+                <!-- upperbound of beam & hbase client -->
+                <dependency>org.slf4j:slf4j-api</dependency>
               </ignoredDependencies>
             </configuration>
           </execution>

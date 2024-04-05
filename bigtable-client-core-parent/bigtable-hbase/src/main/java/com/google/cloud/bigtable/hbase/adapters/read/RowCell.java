@@ -17,9 +17,11 @@ package com.google.cloud.bigtable.hbase.adapters.read;
 
 import com.google.api.core.InternalApi;
 import com.google.common.collect.ImmutableList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.CellComparator;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.Type;
@@ -247,13 +249,18 @@ public class RowCell implements Cell {
     if (!(other instanceof Cell)) {
       return false;
     }
-    return CellComparator.equals(this, (Cell) other);
+    return CellUtil.equals(this, (Cell) other);
   }
 
   /** In line with {@link #equals(Object)}, only uses the key portion, not the value. */
   @Override
   public int hashCode() {
-    return CellComparator.hashCodeIgnoreMvcc(this);
+    return Objects.hash(
+        Arrays.hashCode(rowArray),
+        Arrays.hashCode(familyArray),
+        Arrays.hashCode(qualifierArray),
+        timestamp,
+        getTypeByte());
   }
 
   // ---------------------------------------------------------------------------

@@ -87,9 +87,13 @@ public class HBaseSchemaTransformerTest {
     schemaTransformer = JsonBasedSchemaTransformer.newSchemaTransformerFromJsonFile(schemaFilePath);
 
     // Validate
-    Map<String, String> expectedTableMapping = new HashMap<>();
-    expectedTableMapping.put("old-table", "new-table");
-    expectedTableMapping.put("old-table-2", "random-table-2");
+    Map<String, String> expectedTableMapping =
+        new HashMap<String, String>() {
+          {
+            put("old-table", "new-table");
+            put("old-table-2", "random-table-2");
+          }
+        };
     assertEquals(expectedTableMapping, schemaTransformer.tableNameMappings);
   }
 
