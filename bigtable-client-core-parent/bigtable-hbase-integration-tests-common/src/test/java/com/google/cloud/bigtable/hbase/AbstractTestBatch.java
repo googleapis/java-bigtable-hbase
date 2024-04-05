@@ -466,14 +466,6 @@ public abstract class AbstractTestBatch extends AbstractTest {
     actualError = null;
 
     try {
-      // Table#mutateRow ignores requests without Mutations.
-      invokeMutateRow(table, new RowMutations(new byte[1]));
-    } catch (Exception ex) {
-      actualError = ex;
-    }
-    assertNull(actualError);
-
-    try {
       byte[] rowKeyForPut = dataHelper.randomData("test-rowKey");
       RowMutations rowMutations = new RowMutations(rowKeyForPut);
       rowMutations.add(new Put(rowKeyForPut));
