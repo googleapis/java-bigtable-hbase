@@ -1,10 +1,5 @@
 releaseType: java-yoshi
-bumpMinorPreMajor: true
-extraFiles:
-  - >-
-    bigtable-client-core-parent/bigtable-client-core/src/main/java/com/google/cloud/bigtable/config/BigtableVersionInfo.java
-  - >-
-    bigtable-client-core-parent/bigtable-hbase/src/main/java/com/google/cloud/bigtable/hbase/BigtableHBaseVersion.java
+manifest: true
 handleGHRelease: true
 branches:
   - branch: bigtable-1.x
