@@ -17,13 +17,10 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
-import com.google.cloud.bigtable.data.v2.models.Filters;
-import com.google.cloud.bigtable.hbase.filter.BigtableFilter;
 import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
 import java.io.IOException;
 import java.util.Arrays;
 import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
