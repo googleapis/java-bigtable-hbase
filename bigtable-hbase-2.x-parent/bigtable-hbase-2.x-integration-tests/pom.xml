@@ -80,7 +80,7 @@ limitations under the License.
       </dependencies>
     </profile>
 
-    <!-- NOTE: this profile is controlled via `int-test-1x-deps.mode` property -->
+    <!-- NOTE: this profile is controlled via `int-test-2x-deps.mode` property -->
     <profile>
       <id>cbt-shaded-hbase-unshaded-deps</id>
 
@@ -112,7 +112,7 @@ limitations under the License.
       </dependencies>
     </profile>
 
-    <!-- NOTE: this profile is controlled via `int-test-1x-deps.mode` property -->
+    <!-- NOTE: this profile is controlled via `int-test-2x-deps.mode` property -->
     <profile>
       <id>cbt-shaded-hbase-minimal-unshaded-deps</id>
 
