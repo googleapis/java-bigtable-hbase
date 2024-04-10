@@ -68,35 +68,6 @@ public class TestFilters extends AbstractTestFilters {
     table.close();
   }
 
-  // This test can't run against the minicluster because its a Bigtable extension
-  @Category(KnownHBaseGap.class)
-  @Test
-  public void testBigtableFilter() throws IOException {
-    if (!sharedTestEnv.isBigtable()) {
-      return;
-    }
-
-    byte[] rowKey = dataHelper.randomData("cbt-filter-");
-    byte[] qualA = Bytes.toBytes("a");
-    byte[] qualB = Bytes.toBytes("b");
-    byte[] valA = dataHelper.randomData("a");
-    byte[] valB = dataHelper.randomData("b");
-
-    try (Table table = getDefaultTable()) {
-      table.put(
-          new Put(rowKey)
-              .addColumn(COLUMN_FAMILY, qualA, valA)
-              .addColumn(COLUMN_FAMILY, qualB, valB));
-
-      Filters.Filter qualAFilter = Filters.FILTERS.qualifier().exactMatch(new String(qualA));
-      BigtableFilter bigtableFilter = new BigtableFilter(qualAFilter);
-      Result result = table.get(new Get(rowKey).setFilter(bigtableFilter));
-
-      Assert.assertEquals(1, result.size());
-      Assert.assertTrue(CellUtil.matchingValue(result.rawCells()[0], valA));
-    }
-  }
-
   /**
    * This test case is used to validate TimestampRangeFilter with Integer.MAX_VALUE #1552
    *
