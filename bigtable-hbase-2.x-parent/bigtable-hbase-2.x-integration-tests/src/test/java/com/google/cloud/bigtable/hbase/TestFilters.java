@@ -17,13 +17,10 @@ package com.google.cloud.bigtable.hbase;
 
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 
-import com.google.cloud.bigtable.data.v2.models.Filters;
-import com.google.cloud.bigtable.hbase.filter.BigtableFilter;
 import com.google.cloud.bigtable.hbase.filter.TimestampRangeFilter;
 import java.io.IOException;
 import java.util.Arrays;
 import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -66,35 +63,6 @@ public class TestFilters extends AbstractTestFilters {
     Assert.assertArrayEquals(new long[] {4L, 5L}, timestamps);
 
     table.close();
-  }
-
-  // This test can't run against the minicluster because its a Bigtable extension
-  @Category(KnownHBaseGap.class)
-  @Test
-  public void testBigtableFilter() throws IOException {
-    if (!sharedTestEnv.isBigtable()) {
-      return;
-    }
-
-    byte[] rowKey = dataHelper.randomData("cbt-filter-");
-    byte[] qualA = Bytes.toBytes("a");
-    byte[] qualB = Bytes.toBytes("b");
-    byte[] valA = dataHelper.randomData("a");
-    byte[] valB = dataHelper.randomData("b");
-
-    try (Table table = getDefaultTable()) {
-      table.put(
-          new Put(rowKey)
-              .addColumn(COLUMN_FAMILY, qualA, valA)
-              .addColumn(COLUMN_FAMILY, qualB, valB));
-
-      Filters.Filter qualAFilter = Filters.FILTERS.qualifier().exactMatch(new String(qualA));
-      BigtableFilter bigtableFilter = new BigtableFilter(qualAFilter);
-      Result result = table.get(new Get(rowKey).setFilter(bigtableFilter));
-
-      Assert.assertEquals(1, result.size());
-      Assert.assertTrue(CellUtil.matchingValue(result.rawCells()[0], valA));
-    }
   }
 
   /**

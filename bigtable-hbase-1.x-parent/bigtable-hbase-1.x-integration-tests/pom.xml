@@ -62,7 +62,7 @@ limitations under the License.
         <dependency>
           <groupId>org.apache.hbase</groupId>
           <artifactId>hbase-shaded-client</artifactId>
-          <version>${hbase1.version}</version>
+          <version>${hbase.version}</version>
           <exclusions>
             <exclusion>
               <groupId>log4j</groupId>
@@ -105,7 +105,7 @@ limitations under the License.
         <dependency>
           <groupId>org.apache.hbase</groupId>
           <artifactId>hbase-client</artifactId>
-          <version>${hbase1.version}</version>
+          <version>${hbase.version}</version>
           <exclusions>
             <exclusion>
               <groupId>log4j</groupId>
