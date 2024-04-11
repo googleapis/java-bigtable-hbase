@@ -91,6 +91,21 @@ limitations under the License.
       <artifactId>truth</artifactId>
       <version>${truth.version}</version>
       <scope>test</scope>
+      <exclusions>
+        <!-- exclusion to avoid conflict with hbase-mapreduce -->
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.google.errorprone</groupId>
+          <artifactId>error_prone_annotations</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.checkerframework</groupId>
+          <artifactId>checker-qual</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
