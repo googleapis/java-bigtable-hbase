@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright 2015 Google LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.google.cloud.bigtable</groupId>
+    <artifactId>bigtable-hbase-2.x-parent</artifactId>
+    <version>2.14.0-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+  </parent>
+
+  <artifactId>bigtable-hbase-2.x-mapreduce</artifactId>
+  <packaging>jar</packaging>
+  <name>${project.groupId}:${project.artifactId}</name>
+  <description>
+    This project contains tweaks to the hbase 2.* map reduce jobs that work for
+    bigtable.
+    Specifically, HBase's Import M/R job has ZooKeeper referrence which needed
+    to be removed
+    in order to work with Bigtable.
+  </description>
+
+  <!-- NOTE: this artifact is designed to be used alongside hbase-server via
+  the bin/hbase script. Its primary intention is to produce a single jar that can
+  be added to hbase's classpath to kick off mapreduce jobs targeted at bigtable.
+  A secondary goal is for some java orchestration program to kick off the jobs.
+
+  Thus the dependencies here must be exactly:
+  - bigtable-hbase-1.x-hadoop
+  - any hbase provided jars
+
+  In the primary usecase we will shade bigtable-hbase-1.x-hadoop allowing the
+  enduser to drop a single jar in the hbase classpath. In the secondary case,
+  the enduser can explcitly add their own version hbase-server.
+  -->
+
+  <dependencies>
+    <!-- Primary Group -->
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-mapreduce</artifactId>
+      <version>${hbase2.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>bigtable-hbase-2.x-hadoop</artifactId>
+      <version>2.14.0-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <exclusions>
+        <!-- we need hbase-server instead of hbase-client -->
+        <exclusion>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-client</artifactId>
+        </exclusion>
+
+        <!-- Workaround MNG-5899 & MSHADE-206. Maven >= 3.3.0 doesn't use the dependency reduced
+        pom.xml files when invoking the build from a parent project. So we have to manually exclude
+        the dependencies. Note that this works in conjunction with the manually promoted dependencies
+        in bigtable-hbase-1.x-shaded/pom.xml -->
+        <exclusion>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>bigtable-hbase-2.x-shaded</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <!-- Test Group -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.truth</groupId>
+      <artifactId>truth</artifactId>
+      <version>${truth.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <!-- exclusion to avoid conflict with hbase-mapreduce -->
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.google.errorprone</groupId>
+          <artifactId>error_prone_annotations</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.checkerframework</groupId>
+          <artifactId>checker-qual</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>${mockito.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-bigtable-emulator-core</artifactId>
+      <version>${google-cloud-bigtable-emulator.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-testing-util</artifactId>
+      <version>${hbase2.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <!-- Exclude conflict with hbase-server -->
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud.bigtable</groupId>
+      <artifactId>bigtable-internal-test-helper</artifactId>
+      <version>2.14.0-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>../../third_party/third_party_hbase_server/src/main/mapreduce/</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>com.google.cloud.bigtable.mapreduce.Driver</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+
+
+      <plugin>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>2.14.0-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+        <executions>
+          <execution>
+            <id>verify-mirror-deps-hbase</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-mirror-deps</goal>
+            </goals>
+            <configuration>
+              <targetDependencies>
+                <targetDependency>org.apache.hbase:hbase-mapreduce</targetDependency>
+              </targetDependencies>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
