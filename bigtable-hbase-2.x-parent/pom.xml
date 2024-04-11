@@ -34,7 +34,6 @@ limitations under the License.
   <modules>
     <module>bigtable-hbase-2.x</module>
     <module>bigtable-hbase-2.x-integration-tests</module>
-    <module>bigtable-hbase-2.x-mapreduce</module>
   </modules>
 
   <build>
