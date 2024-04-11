@@ -25,6 +25,7 @@ import com.google.cloud.bigtable.admin.v2.models.CreateBackupRequest;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.RestoreTableRequest;
 import com.google.cloud.bigtable.admin.v2.models.Table;
+import com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.util.ModifyTableBuilder;
@@ -35,9 +36,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.protobuf.ByteString;
 import io.grpc.Status;
 import java.io.IOException;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -55,6 +60,10 @@ import net.bytebuddy.implementation.InvocationHandlerAdapter;
 import net.bytebuddy.matcher.ElementMatchers;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.RegionMetrics;
+import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.Size;
+import org.apache.hadoop.hbase.Size.Unit;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotDisabledException;
 import org.apache.hadoop.hbase.TableNotEnabledException;
@@ -556,6 +565,36 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
   }
 
   @Override
+  public CompletableFuture<List<RegionMetrics>> getRegionMetrics(
+      ServerName ignored, TableName tableName) {
+    // TODO: implement caching
+    CompletableFuture<List<KeyOffset>> keyOffsetsFuture =
+        toCompletableFuture(
+            asyncConnection
+                .getBigtableApi()
+                .getDataClient()
+                .sampleRowKeysAsync(tableName.getNameAsString()));
+
+    return keyOffsetsFuture.thenApply(
+        keyOffsets -> {
+          long now = System.currentTimeMillis();
+          List<RegionMetrics> metrics = new ArrayList<>();
+          ByteString lastKey = ByteString.EMPTY;
+          long lastOffset = 0;
+          for (KeyOffset keyOffset : keyOffsets) {
+            byte[] regionName =
+                RegionInfo.createRegionName(
+                    tableName, lastKey.toByteArray(), Bytes.toBytes(now), false);
+            metrics.add(
+                BasicRegionMetrics.create(regionName, keyOffset.getOffsetBytes() - lastOffset));
+            lastKey = keyOffset.getKey();
+            lastOffset = keyOffset.getOffsetBytes();
+          }
+          return metrics;
+        });
+  }
+
+  @Override
   public CompletableFuture<Void> snapshot(SnapshotDescription snapshot) {
     Objects.requireNonNull(snapshot);
     return snapshot(snapshot.getName(), snapshot.getTableName());
@@ -599,6 +638,69 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
       throw new IOException(e);
     } catch (Exception e) {
       throw new IOException(e);
+    }
+  }
+
+  private static Class<? extends RegionMetrics> regionMetricsClass = null;
+
+  private static synchronized Class<? extends RegionMetrics> getRegionMetricsSubclass()
+      throws NoSuchMethodException {
+    if (regionMetricsClass == null) {
+      regionMetricsClass =
+          new ByteBuddy()
+              .subclass(BasicRegionMetrics.class)
+              .name(BasicRegionMetrics.class.getName() + "Impl")
+              .method(ElementMatchers.isAbstract())
+              .intercept(InvocationHandlerAdapter.of(new UnsupportedOperationsHandler()))
+              .make()
+              .load(BigtableAsyncAdmin.class.getClassLoader())
+              .getLoaded();
+    }
+    return regionMetricsClass;
+  }
+
+  public abstract static class BasicRegionMetrics implements RegionMetrics {
+    private final byte[] regionName;
+    private final long size;
+
+    static RegionMetrics create(byte[] regionName, long size) {
+      try {
+        return getRegionMetricsSubclass()
+            .getConstructor(byte[].class, long.class)
+            .newInstance(regionName, size);
+      } catch (NoSuchMethodException
+          | InstantiationException
+          | IllegalAccessException
+          | InvocationTargetException e) {
+        throw new IllegalStateException("Failed to instantiate RegionMetrics subclass", e);
+      }
+    }
+
+    public BasicRegionMetrics(byte[] regionName, long size) {
+      this.regionName = regionName;
+      this.size = size;
+    }
+
+    @Override
+    public byte[] getRegionName() {
+      return regionName;
+    }
+
+    @Override
+    public int getStoreFileCount() {
+      return 1;
+    }
+
+    @Override
+    public Size getStoreFileSize() {
+      return new Size(size, Unit.BYTE);
+    }
+  }
+  /** Handler for unsupported operations for generating Admin class at runtime. */
+  public static class UnsupportedOperationsHandler implements InvocationHandler {
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+      throw new UnsupportedOperationException(method.getName());
     }
   }
 }
