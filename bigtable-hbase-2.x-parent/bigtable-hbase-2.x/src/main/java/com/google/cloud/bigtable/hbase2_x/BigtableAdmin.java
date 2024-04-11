@@ -39,6 +39,8 @@ import org.apache.hadoop.hbase.ClusterMetrics.Option;
 import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.RegionMetrics;
+import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.AbstractBigtableAdmin;
 import org.apache.hadoop.hbase.client.AbstractBigtableConnection;
@@ -54,7 +56,6 @@ import org.apache.hadoop.hbase.util.Bytes;
  */
 @InternalApi("For internal usage only")
 public abstract class BigtableAdmin extends AbstractBigtableAdmin {
-
   private final BigtableAsyncAdmin asyncAdmin;
 
   public BigtableAdmin(AbstractBigtableConnection connection) throws IOException {
@@ -293,6 +294,12 @@ public abstract class BigtableAdmin extends AbstractBigtableAdmin {
         new String[0],
         false,
         -1);
+  }
+
+  @Override
+  public List<RegionMetrics> getRegionMetrics(ServerName serverName, TableName tableName)
+      throws IOException {
+    return FutureUtil.unwrap(asyncAdmin.getRegionMetrics(serverName, tableName));
   }
 
   private static Class<? extends BigtableAdmin> adminClass = null;
