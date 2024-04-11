@@ -22,8 +22,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.classification.InterfaceAudience;
-import org.apache.hadoop.hbase.classification.InterfaceStability;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
@@ -49,8 +47,6 @@ import org.apache.hadoop.util.GenericOptionsParser;
  * @author sduskis
  * @version $Id: $Id
  */
-@InterfaceAudience.Public
-@InterfaceStability.Stable
 public class Export {
   private static final Log LOG = LogFactory.getLog(Export.class);
   static final String NAME = "export";
