@@ -71,7 +71,7 @@ public class TestValidationEndToEndIT {
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
     HB_TEST_UTIL.startMiniCluster(1);
-    //HB_TEST_UTIL.setJobWithoutMRCluster();
+    // HB_TEST_UTIL.setJobWithoutMRCluster();
 
     Configuration conf = BigtableConfiguration.configure(BT_TEST_PROJECT, BT_TEST_INSTANCE);
     conf.set(
