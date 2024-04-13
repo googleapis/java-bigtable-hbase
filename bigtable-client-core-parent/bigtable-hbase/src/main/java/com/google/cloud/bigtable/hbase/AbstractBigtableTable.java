@@ -293,25 +293,22 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public ResultScanner getScanner(final Scan scan) throws IOException {
     LOG.trace("getScanner(Scan)");
-    Span span = TRACER.spanBuilder("BigtableTable.scan").startSpan();
+    Span span = TRACER.spanBuilder("BigtableTable.readRows").startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-
       final ResultScanner scanner = clientWrapper.readRows(hbaseAdapter.adapt(scan));
       if (hasWhileMatchFilter(scan.getFilter())) {
-        return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner, span);
+        return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner);
       }
-      // TODO: need to end the span when stream ends
       return scanner;
     } catch (Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
       span.setStatus(Status.UNKNOWN);
-      // Close the span only when throw an exception and not on finally because if no exception
-      // the span will be ended by the adapter.
-      span.end();
       throw new IOException(
           makeGenericExceptionMessage(
               "getScanner", settings.getProjectId(), tableName.getQualifierAsString()),
           throwable);
+    } finally {
+      span.end();
     }
   }
 

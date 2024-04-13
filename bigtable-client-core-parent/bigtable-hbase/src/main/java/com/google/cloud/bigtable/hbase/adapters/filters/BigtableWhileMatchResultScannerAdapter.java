@@ -40,7 +40,18 @@ public class BigtableWhileMatchResultScannerAdapter {
   private static final String WHILE_MATCH_FILTER_OUT_LABEL_SUFFIX = "-out";
 
   /**
-   * adapt.
+   * Adapts the given scanner to filter out cells with labels.
+   *
+   * @param bigtableResultScanner a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner}
+   *     object.
+   * @return a {@link org.apache.hadoop.hbase.client.ResultScanner} object.
+   */
+  public ResultScanner adapt(final ResultScanner bigtableResultScanner) {
+    return adapt(bigtableResultScanner, null);
+  }
+
+  /**
+   * Adapts the given scanner to filter out cells with labels and closes the span scanning is over.
    *
    * @param bigtableResultScanner a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner}
    *     object.
@@ -55,7 +66,9 @@ public class BigtableWhileMatchResultScannerAdapter {
         Result row = bigtableResultScanner.next();
         if (row == null) {
           // Null signals EOF.
-          span.end();
+          if (span != null) {
+            span.end();
+          }
           return null;
         }
 
@@ -69,13 +82,17 @@ public class BigtableWhileMatchResultScannerAdapter {
 
       @Override
       public void close() {
-        try {
+        if (span == null) {
           bigtableResultScanner.close();
-        } catch (RuntimeException ex) {
-          span.setStatus(Status.UNKNOWN.withDescription(ex.getCause().getMessage()));
-          throw ex;
-        } finally {
-          span.end();
+        } else {
+          try {
+            bigtableResultScanner.close();
+          } catch (RuntimeException ex) {
+            span.setStatus(Status.UNKNOWN.withDescription(ex.getCause().getMessage()));
+            throw ex;
+          } finally {
+            span.end();
+          }
         }
       }
 
