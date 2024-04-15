@@ -91,4 +91,10 @@ public interface DataClientWrapper extends AutoCloseable {
 
   @Override
   void close() throws IOException;
+
+  /**
+   * Perform a scan over {@link Result}s, in key order, using a paginator. maxSegmentByteSize is
+   * used for testing purposes only.
+   */
+  ResultScanner readRows(Query.QueryPaginator paginator, long maxSegmentByteSize);
 }

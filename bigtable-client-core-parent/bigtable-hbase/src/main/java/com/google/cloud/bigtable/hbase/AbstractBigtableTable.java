@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.Filters;
+import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
@@ -91,6 +92,14 @@ public abstract class AbstractBigtableTable implements Table {
   protected static final Logger LOG = new Logger(AbstractBigtableTable.class);
 
   private static final Tracer TRACER = Tracing.getTracer();
+
+  private static final int MIN_BYTE_BUFFER_SIZE = 100 * 1024 * 1024;
+  private static final double DEFAULT_BYTE_LIMIT_PERCENTAGE = .1;
+  private static final long DEFAULT_MAX_SEGMENT_SIZE =
+      (long)
+          Math.max(
+              MIN_BYTE_BUFFER_SIZE,
+              (Runtime.getRuntime().totalMemory() * DEFAULT_BYTE_LIMIT_PERCENTAGE));
 
   private static class TableMetrics {
     Timer putTimer = BigtableClientMetrics.timer(MetricLevel.Info, "table.put.latency");
@@ -295,8 +304,14 @@ public abstract class AbstractBigtableTable implements Table {
     LOG.trace("getScanner(Scan)");
     Span span = TRACER.spanBuilder("BigtableTable.scan").startSpan();
     try (Scope scope = TRACER.withSpan(span)) {
-
-      final ResultScanner scanner = clientWrapper.readRows(hbaseAdapter.adapt(scan));
+      ResultScanner scanner;
+      if (scan.getCaching() == -1) {
+        scanner = clientWrapper.readRows(hbaseAdapter.adapt(scan));
+      } else {
+        Query.QueryPaginator paginator =
+            hbaseAdapter.adapt(scan).createPaginator(scan.getCaching());
+        scanner = clientWrapper.readRows(paginator, DEFAULT_MAX_SEGMENT_SIZE);
+      }
       if (hasWhileMatchFilter(scan.getFilter())) {
         return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner, span);
       }

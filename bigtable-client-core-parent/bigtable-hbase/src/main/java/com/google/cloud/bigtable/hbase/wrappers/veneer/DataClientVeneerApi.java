@@ -21,6 +21,7 @@ import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.grpc.GrpcCallContext;
 import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStream;
 import com.google.api.gax.rpc.StateCheckingResponseObserver;
 import com.google.api.gax.rpc.StreamController;
@@ -43,12 +44,18 @@ import com.google.cloud.bigtable.metrics.Meter;
 import com.google.cloud.bigtable.metrics.Timer;
 import com.google.cloud.bigtable.metrics.Timer.Context;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import io.grpc.CallOptions;
 import io.grpc.Deadline;
 import io.grpc.stub.StreamObserver;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
@@ -132,6 +139,12 @@ public class DataClientVeneerApi implements DataClientWrapper {
           }
         },
         MoreExecutors.directExecutor());
+  }
+
+  @Override
+  public ResultScanner readRows(Query.QueryPaginator paginator, long maxSegmentByteSize) {
+    return new PaginatedRowResultScanner(
+        paginator, delegate, maxSegmentByteSize, this.createScanCallContext());
   }
 
   @Override
@@ -228,6 +241,151 @@ public class DataClientVeneerApi implements DataClientWrapper {
     }
   }
 
+  /**
+   * wraps {@link ServerStream} onto HBase {@link ResultScanner}. {@link PaginatedRowResultScanner}
+   * gets a paginator and a {@link Query.QueryPaginator} used to get a {@link ServerStream}<{@link
+   * Result}> using said paginator to iterate over pages of rows. The {@link Query.QueryPaginator}
+   * pageSize property indicates the size of each page in every API call. A cache of a maximum size
+   * of 1.1*pageSize and a minimum of 0.1*pageSize is held at all times. In order to avoid OOM
+   * exceptions, there is a limit for the total byte size held in cache.
+   */
+  static class PaginatedRowResultScanner extends AbstractClientScanner {
+    // Percentage of max number of rows allowed in the buffer
+    private static final double WATERMARK_PERCENTAGE = .1;
+    private static final RowResultAdapter RESULT_ADAPTER = new RowResultAdapter();
+
+    private final Meter scannerResultMeter =
+        BigtableClientMetrics.meter(BigtableClientMetrics.MetricLevel.Info, "scanner.results");
+    private final Timer scannerResultTimer =
+        BigtableClientMetrics.timer(
+            BigtableClientMetrics.MetricLevel.Debug, "scanner.results.latency");
+
+    private ByteString lastSeenRowKey = ByteString.EMPTY;
+    private Boolean hasMore = true;
+    private final Queue<Result> buffer;
+    private final Query.QueryPaginator paginator;
+    private final int refillSegmentWaterMark;
+
+    private final BigtableDataClient dataClient;
+
+    private final long maxSegmentByteSize;
+
+    private long currentByteSize = 0;
+
+    private @Nullable Future<List<Result>> future;
+    private GrpcCallContext scanCallContext;
+
+    PaginatedRowResultScanner(
+        Query.QueryPaginator paginator,
+        BigtableDataClient dataClient,
+        long maxSegmentByteSize,
+        GrpcCallContext scanCallContext) {
+      this.maxSegmentByteSize = maxSegmentByteSize;
+
+      this.paginator = paginator;
+      this.dataClient = dataClient;
+      this.buffer = new ArrayDeque<>();
+      this.refillSegmentWaterMark =
+          (int) Math.max(1, paginator.getPageSize() * WATERMARK_PERCENTAGE);
+      this.scanCallContext = scanCallContext;
+      this.future = fetchNextSegment();
+    }
+
+    @Override
+    public Result next() {
+      try (Context ignored = scannerResultTimer.time()) {
+        if (this.future != null && this.future.isDone()) {
+          this.consumeReadRowsFuture();
+        }
+        if (this.buffer.size() < this.refillSegmentWaterMark && this.future == null && hasMore) {
+          future = fetchNextSegment();
+        }
+        if (this.buffer.isEmpty() && this.future != null) {
+          this.consumeReadRowsFuture();
+        }
+        Result result = this.buffer.poll();
+        if (result != null) {
+          scannerResultMeter.mark();
+          currentByteSize -= Result.getTotalSizeOfCells(result);
+        }
+        return result;
+      }
+    }
+
+    @Override
+    public void close() {
+      if (this.future != null) {
+        this.future.cancel(true);
+      }
+    }
+
+    public boolean renewLease() {
+      return true;
+    }
+
+    private Future<List<Result>> fetchNextSegment() {
+      SettableFuture<List<Result>> resultsFuture = SettableFuture.create();
+
+      dataClient
+          .readRowsCallable(RESULT_ADAPTER)
+          .call(
+              paginator.getNextQuery(),
+              new ResponseObserver<Result>() {
+                private StreamController controller;
+                List<Result> results = new ArrayList();
+
+                @Override
+                public void onStart(StreamController controller) {
+                  this.controller = controller;
+                }
+
+                @Override
+                public void onResponse(Result result) {
+                  // calculate size of the response
+                  currentByteSize += Result.getTotalSizeOfCells(result);
+                  results.add(result);
+                  if (result != null && result.rawCells() != null) {
+                    lastSeenRowKey = RESULT_ADAPTER.getKey(result);
+                  }
+
+                  if (currentByteSize > maxSegmentByteSize) {
+                    controller.cancel();
+                    return;
+                  }
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                  if (currentByteSize > maxSegmentByteSize) {
+                    onComplete();
+                  } else {
+                    resultsFuture.setException(t);
+                  }
+                }
+
+                @Override
+                public void onComplete() {
+                  resultsFuture.set(results);
+                }
+              },
+              this.scanCallContext);
+      return resultsFuture;
+    }
+
+    private void consumeReadRowsFuture() {
+      try {
+        List<Result> results = this.future.get();
+        this.buffer.addAll(results);
+        this.hasMore = this.paginator.advance(this.lastSeenRowKey);
+        this.future = null;
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      } catch (ExecutionException e) {
+        // Do nothing.
+      }
+    }
+  }
+
   /** wraps {@link ServerStream} onto HBase {@link ResultScanner}. */
   private static class RowResultScanner extends AbstractClientScanner {
 
@@ -264,7 +422,7 @@ public class DataClientVeneerApi implements DataClientWrapper {
     }
 
     public boolean renewLease() {
-      throw new UnsupportedOperationException("renewLease");
+      return true;
     }
   }
 }
