@@ -30,6 +30,7 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_CU
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_ENABLE_BULK_MUTATION_FLOW_CONTROL;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_ENABLE_CLIENT_SIDE_METRICS;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_HOST_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_MUTATE_RPC_ATTEMPT_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY;
@@ -81,6 +82,7 @@ import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.stub.BigtableBatchingCallSettings;
 import com.google.cloud.bigtable.data.v2.stub.BigtableBulkReadRowsCallSettings;
+import com.google.cloud.bigtable.data.v2.stub.metrics.NoopMetricsProvider;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableExtendedConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableHBaseVersion;
@@ -339,6 +341,10 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
         dataBuilder.stubSettings().readRowSettings(), clientTimeouts.getUnaryTimeouts());
     configureRetryableCallSettings(
         dataBuilder.stubSettings().sampleRowKeysSettings(), clientTimeouts.getUnaryTimeouts());
+
+    if (!configuration.getBoolean(BIGTABLE_ENABLE_CLIENT_SIDE_METRICS, true)) {
+      dataBuilder.setMetricsProvider(NoopMetricsProvider.INSTANCE);
+    }
 
     return dataBuilder.build();
   }

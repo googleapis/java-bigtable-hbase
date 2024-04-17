@@ -337,4 +337,8 @@ public class BigtableOptionsFactory {
   /** Override idle timeout, for testing only. */
   @VisibleForTesting
   public static final String BIGTABLE_TEST_IDLE_TIMEOUT_MS = "google.bigtable.idle.timeout.ms";
+
+  /** Sets if client side metrics should be enabled. Client side metrics is enabled by default. */
+  public static final String BIGTABLE_ENABLE_CLIENT_SIDE_METRICS =
+      "google.bigtable.enable.client.side.metrics";
 }
