@@ -23,7 +23,6 @@ import com.google.api.gax.grpc.GrpcCallContext;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStream;
-import com.google.api.gax.rpc.StateCheckingResponseObserver;
 import com.google.api.gax.rpc.StreamController;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
@@ -48,7 +47,6 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import io.grpc.CallOptions;
 import io.grpc.Deadline;
-import io.grpc.stub.StreamObserver;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -162,10 +160,8 @@ public class DataClientVeneerApi implements DataClientWrapper {
   }
 
   @Override
-  public void readRowsAsync(Query request, StreamObserver<Result> observer) {
-    delegate
-        .readRowsCallable(RESULT_ADAPTER)
-        .call(request, new StreamObserverAdapter<>(observer), createScanCallContext());
+  public void readRowsAsync(Query request, ResponseObserver<Result> observer) {
+    delegate.readRowsCallable(RESULT_ADAPTER).call(request, observer, createScanCallContext());
   }
 
   // Point reads are implemented using a streaming ReadRows RPC. So timeouts need to be managed
@@ -216,29 +212,6 @@ public class DataClientVeneerApi implements DataClientWrapper {
   @Override
   public void close() {
     delegate.close();
-  }
-
-  /** wraps {@link StreamObserver} onto GCJ {@link com.google.api.gax.rpc.ResponseObserver}. */
-  private static class StreamObserverAdapter<T> extends StateCheckingResponseObserver<T> {
-    private final StreamObserver<T> delegate;
-
-    StreamObserverAdapter(StreamObserver<T> delegate) {
-      this.delegate = delegate;
-    }
-
-    protected void onStartImpl(StreamController controller) {}
-
-    protected void onResponseImpl(T response) {
-      this.delegate.onNext(response);
-    }
-
-    protected void onErrorImpl(Throwable t) {
-      this.delegate.onError(t);
-    }
-
-    protected void onCompleteImpl() {
-      this.delegate.onCompleted();
-    }
   }
 
   /**

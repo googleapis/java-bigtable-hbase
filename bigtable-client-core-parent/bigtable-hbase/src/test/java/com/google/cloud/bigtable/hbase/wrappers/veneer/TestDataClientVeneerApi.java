@@ -53,7 +53,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import io.grpc.Status.Code;
-import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
@@ -470,11 +469,14 @@ public class TestDataClientVeneerApi {
   public void testReadRowsAsyncWithStreamOb() {
     final Exception readException = new Exception();
     Query request = Query.create(TABLE_ID).rowKey(ROW_KEY);
-    StreamObserver<Result> resultStreamOb =
-        new StreamObserver<Result>() {
+    ResponseObserver<Result> resultStreamOb =
+        new ResponseObserver<Result>() {
           @Override
-          public void onNext(Result result) {
-            assertResult(EXPECTED_RESULT, result);
+          public void onStart(StreamController controller) {}
+
+          @Override
+          public void onResponse(Result response) {
+            assertResult(EXPECTED_RESULT, response);
           }
 
           @Override
@@ -483,7 +485,7 @@ public class TestDataClientVeneerApi {
           }
 
           @Override
-          public void onCompleted() {}
+          public void onComplete() {}
         };
     when(mockDataClient.readRowsCallable(Mockito.<RowResultAdapter>any()))
         .thenReturn(mockStreamingCallable);
