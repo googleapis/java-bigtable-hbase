@@ -33,7 +33,7 @@ limitations under the License.
       <dependency>
         <groupId>com.google.errorprone</groupId>
         <artifactId>error_prone_annotations</artifactId>
-        <version>2.14.0</version>
+        <version>2.20.0</version>
       </dependency>
 
       <!-- fix conflict between hbase slf & beam -->
@@ -252,6 +252,9 @@ limitations under the License.
                 <dependency>com.google.errorprone:error_prone_annotations</dependency>
                 <!-- upperbound of beam & hbase client -->
                 <dependency>org.slf4j:slf4j-api</dependency>
+                <!-- error was [ERROR] com.google.auto.value:auto-value-annotations: expected 1.8.2, got 1.10.4 -->
+                <!-- But I couldn't find 1.8.2 in the dependency tree -->
+                <dependency>com.google.auto.value:auto-value-annotations</dependency>
               </ignoredDependencies>
             </configuration>
           </execution>

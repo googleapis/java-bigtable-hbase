@@ -216,6 +216,8 @@ limitations under the License.
                     <exclude>META-INF/MANIFEST.MF</exclude>
                     <exclude>META-INF/DEPENDENCIES</exclude>
                     <exclude>META-INF/versions/9/module-info.class</exclude>
+                    <exclude>META-INF/versions/9/io/opentelemetry/sdk/internal/CurrentJavaVersionSpecific.class</exclude>
+                    <exclude>META-INF/versions/9/io/opentelemetry/sdk/internal/Java9VersionSpecific.class</exclude>
                   </excludes>
                 </filter>
               </filters>
@@ -277,7 +279,11 @@ limitations under the License.
                 </relocation>
 
 
-                <!-- Opencensus related shading -->
+                <!-- Opentelemetry - this is a bit weird, as hbase-client shares this dependency -->
+                <relocation>
+                  <pattern>io.opentelemetry</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.io.opentelemetry</shadedPattern>
+                </relocation>
                 <relocation>
                   <pattern>io.opencensus</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.io.opencensus</shadedPattern>
@@ -361,12 +367,10 @@ limitations under the License.
               <allowedJarClassEntries>
                 <classEntry>com/google/bigtable</classEntry>
                 <classEntry>com/google/cloud/bigtable</classEntry>
-                <classEntry>io/opentelemetry</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableAdmin</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableConnection</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/CommonConnection</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/BigtableAsyncRegistry</classEntry>
-                <classEntry>META-INF/versions/9/io/opentelemetry</classEntry>
               </allowedJarClassEntries>
             </configuration>
           </execution>

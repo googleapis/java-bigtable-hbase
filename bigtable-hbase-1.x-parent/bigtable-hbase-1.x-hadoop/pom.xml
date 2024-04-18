@@ -182,12 +182,10 @@ limitations under the License.
               <allowedJarClassEntries>
                 <classEntry>com/google/bigtable</classEntry>
                 <classEntry>com/google/cloud/bigtable</classEntry>
-                <classEntry>io/opentelemetry</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableAdmin</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableConnection</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/CommonConnection</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/BigtableAsyncRegistry</classEntry>
-                <classEntry>META-INF/versions/9/io/opentelemetry</classEntry>
               </allowedJarClassEntries>
             </configuration>
           </execution>

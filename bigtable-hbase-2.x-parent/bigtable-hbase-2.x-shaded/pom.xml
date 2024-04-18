@@ -207,6 +207,8 @@ limitations under the License.
                     <exclude>META-INF/MANIFEST.MF</exclude>
                     <exclude>META-INF/DEPENDENCIES</exclude>
                     <exclude>META-INF/versions/9/module-info.class</exclude>
+                    <exclude>META-INF/versions/9/io/opentelemetry/sdk/internal/CurrentJavaVersionSpecific.class</exclude>
+                    <exclude>META-INF/versions/9/io/opentelemetry/sdk/internal/Java9VersionSpecific.class</exclude>
                   </excludes>
                 </filter>
               </filters>
@@ -353,7 +355,6 @@ limitations under the License.
               <allowedJarClassEntries>
                 <classEntry>com/google/bigtable</classEntry>
                 <classEntry>com/google/cloud/bigtable</classEntry>
-                <classEntry>io/opentelemetry</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableAdmin</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableConnection</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/BigtableAsyncConnection</classEntry>
@@ -361,7 +362,6 @@ limitations under the License.
                 <classEntry>org/apache/hadoop/hbase/client/BigtableAsyncRegistry</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/CommonConnection</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/BigtableConnectionRegistry</classEntry>
-                <classEntry>META-INF/versions/9/io/opentelemetry</classEntry>
               </allowedJarClassEntries>
             </configuration>
           </execution>
@@ -382,6 +382,10 @@ limitations under the License.
               <targetDependencies>
                 <targetDependency>org.apache.hbase:hbase-shaded-client</targetDependency>
               </targetDependencies>
+              <ignoredDependencies>
+                <dependency>io.opentelemetry:opentelemetry-api</dependency>
+                <dependency>io.opentelemetry:opentelemetry-context</dependency>
+              </ignoredDependencies>
             </configuration>
           </execution>
           <execution>
