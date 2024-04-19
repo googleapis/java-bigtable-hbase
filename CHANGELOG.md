@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.14.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.14.0...v2.14.1) (2024-04-19)
+
+
+### Bug Fixes
+
+* Add paging to hbase client ([#4166](https://github.com/googleapis/java-bigtable-hbase/issues/4166)) ([33facf5](https://github.com/googleapis/java-bigtable-hbase/commit/33facf558650e221341f37a4b186c6b0323ef427))
+
+
+### Dependencies
+
+* update versions and allow disabling client side metrics ([#4350](https://github.com/googleapis/java-bigtable-hbase/issues/4350)) ([efd75e1](https://github.com/googleapis/java-bigtable-hbase/commit/efd75e11ac2a4476cc5f45459408b4ce32bf1518))
+
 ## [2.14.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.13.0...v2.14.0) (2024-04-11)
 
 
