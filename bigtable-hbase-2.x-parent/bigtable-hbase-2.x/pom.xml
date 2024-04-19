@@ -181,6 +181,10 @@ limitations under the License.
                 <!-- make sure that we are a strict superset of hbase -->
                 <targetDependency>org.apache.hbase:hbase-shaded-client</targetDependency>
               </targetDependencies>
+              <ignoredDependencies>
+                <dependency>io.opentelemetry:opentelemetry-api</dependency>
+                <dependency>io.opentelemetry:opentelemetry-context</dependency>
+              </ignoredDependencies>
             </configuration>
           </execution>
         </executions>

@@ -170,6 +170,7 @@ limitations under the License.
                 <classEntry>org/apache/hadoop/hbase/client/BigtableConnectionRegistry</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/BigtableAsyncRegistry</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/CommonConnection</classEntry>
+                <classEntry>META-INF/versions/9/com/google/cloud/bigtable/repackaged</classEntry>
               </allowedJarClassEntries>
             </configuration>
           </execution>

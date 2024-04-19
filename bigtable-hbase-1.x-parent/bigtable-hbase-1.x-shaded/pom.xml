@@ -205,6 +205,11 @@ limitations under the License.
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer" />
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer" />
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <manifestEntries>
+                    <Multi-Release>true</Multi-Release>
+                  </manifestEntries>
+                </transformer>
               </transformers>
               <filters>
                 <filter>
@@ -277,7 +282,15 @@ limitations under the License.
                 </relocation>
 
 
-                <!-- Opencensus related shading -->
+                <!-- Opentelemetry - this is a bit weird, as hbase-client shares this dependency -->
+                <relocation>
+                  <pattern>io.opentelemetry</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.io.opentelemetry</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>META-INF/versions/9/io/opentelemetry</pattern>
+                  <shadedPattern>META-INF/versions/9/com/google/cloud/bigtable/repackaged/io/opentelemetry</shadedPattern>
+                </relocation>
                 <relocation>
                   <pattern>io.opencensus</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.io.opencensus</shadedPattern>
@@ -365,6 +378,7 @@ limitations under the License.
                 <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableConnection</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/CommonConnection</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/BigtableAsyncRegistry</classEntry>
+                <classEntry>META-INF/versions/9/com/google/cloud/bigtable/repackaged</classEntry>
               </allowedJarClassEntries>
             </configuration>
           </execution>

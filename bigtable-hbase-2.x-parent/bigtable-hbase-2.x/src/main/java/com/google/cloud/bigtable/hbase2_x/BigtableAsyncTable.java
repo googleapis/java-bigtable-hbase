@@ -19,6 +19,8 @@ import static com.google.cloud.bigtable.hbase2_x.ApiFutureUtils.toCompletableFut
 import static java.util.stream.Collectors.toList;
 
 import com.google.api.core.InternalApi;
+import com.google.api.gax.rpc.ResponseObserver;
+import com.google.api.gax.rpc.StreamController;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.data.v2.models.Query;
@@ -34,7 +36,6 @@ import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
-import io.grpc.stub.StreamObserver;
 import io.opencensus.common.Scope;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Status;
@@ -477,10 +478,13 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
     Query query = hbaseAdapter.adapt(scan);
     clientWrapper.readRowsAsync(
         query,
-        new StreamObserver<Result>() {
+        new ResponseObserver<Result>() {
           @Override
-          public void onNext(Result value) {
-            consumer.onNext(value);
+          public void onStart(StreamController controller) {}
+
+          @Override
+          public void onResponse(Result response) {
+            consumer.onNext(response);
           }
 
           @Override
@@ -489,7 +493,7 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
           }
 
           @Override
-          public void onCompleted() {
+          public void onComplete() {
             consumer.onComplete();
           }
         });

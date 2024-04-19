@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.wrappers.veneer;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.gax.rpc.ResponseObserver;
 import com.google.cloud.bigtable.data.v2.models.ConditionalRowMutation;
 import com.google.cloud.bigtable.data.v2.models.Filters.Filter;
 import com.google.cloud.bigtable.data.v2.models.KeyOffset;
@@ -27,7 +28,6 @@ import com.google.cloud.bigtable.hbase.wrappers.BulkReadWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.SharedDataClientWrapperFactory.Key;
 import com.google.protobuf.ByteString;
-import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -99,7 +99,7 @@ class SharedDataClientWrapper implements DataClientWrapper {
   }
 
   @Override
-  public void readRowsAsync(Query request, StreamObserver<Result> observer) {
+  public void readRowsAsync(Query request, ResponseObserver<Result> observer) {
     delegate.readRowsAsync(request, observer);
   }
 
