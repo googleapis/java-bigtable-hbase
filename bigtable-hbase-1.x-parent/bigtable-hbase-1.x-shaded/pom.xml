@@ -205,6 +205,11 @@ limitations under the License.
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer" />
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer" />
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <manifestEntries>
+                    <Multi-Release>true</Multi-Release>
+                  </manifestEntries>
+                </transformer>
               </transformers>
               <filters>
                 <filter>
@@ -216,8 +221,6 @@ limitations under the License.
                     <exclude>META-INF/MANIFEST.MF</exclude>
                     <exclude>META-INF/DEPENDENCIES</exclude>
                     <exclude>META-INF/versions/9/module-info.class</exclude>
-                    <exclude>META-INF/versions/9/io/opentelemetry/sdk/internal/CurrentJavaVersionSpecific.class</exclude>
-                    <exclude>META-INF/versions/9/io/opentelemetry/sdk/internal/Java9VersionSpecific.class</exclude>
                   </excludes>
                 </filter>
               </filters>
@@ -283,6 +286,10 @@ limitations under the License.
                 <relocation>
                   <pattern>io.opentelemetry</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.io.opentelemetry</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>META-INF/versions/9/io/opentelemetry</pattern>
+                  <shadedPattern>META-INF/versions/9/com/google/cloud/bigtable/repackaged/io/opentelemetry</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>io.opencensus</pattern>
@@ -371,6 +378,7 @@ limitations under the License.
                 <classEntry>org/apache/hadoop/hbase/client/AbstractBigtableConnection</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/CommonConnection</classEntry>
                 <classEntry>org/apache/hadoop/hbase/client/BigtableAsyncRegistry</classEntry>
+                <classEntry>META-INF/versions/9/com/google/cloud/bigtable/repackaged</classEntry>
               </allowedJarClassEntries>
             </configuration>
           </execution>

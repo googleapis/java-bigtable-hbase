@@ -36,6 +36,15 @@ limitations under the License.
         <version>2.20.0</version>
       </dependency>
 
+      <!-- fix the version conflict where beam is using 1.8.2 and google-cloud-shared-config
+           is using a newer version -->
+      <dependency>
+        <groupId>com.google.auto.value</groupId>
+        <artifactId>auto-value-annotations</artifactId>
+        <version>1.8.2</version>
+      </dependency>
+
+
       <!-- fix conflict between hbase slf & beam -->
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -252,9 +261,6 @@ limitations under the License.
                 <dependency>com.google.errorprone:error_prone_annotations</dependency>
                 <!-- upperbound of beam & hbase client -->
                 <dependency>org.slf4j:slf4j-api</dependency>
-                <!-- error was [ERROR] com.google.auto.value:auto-value-annotations: expected 1.8.2, got 1.10.4 -->
-                <!-- But I couldn't find 1.8.2 in the dependency tree -->
-                <dependency>com.google.auto.value:auto-value-annotations</dependency>
               </ignoredDependencies>
             </configuration>
           </execution>
