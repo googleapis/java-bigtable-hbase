@@ -18,7 +18,7 @@ limitations under the License.
   <parent>
     <artifactId>bigtable-hbase-1.x-parent</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>2.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.14.1</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -107,7 +107,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-1.x</artifactId>
-      <version>2.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.14.1</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>
 
     <!-- This isnt strictly necessary as it will be pulled in by bigtable-hbase-1.x. However, it helps to resolve
@@ -361,7 +361,7 @@ limitations under the License.
       <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>
         <artifactId>bigtable-build-helper</artifactId>
-        <version>2.14.1-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+        <version>2.14.1</version> <!-- {x-version-update:bigtable-client-parent:current} -->
 
         <executions>
           <execution>
