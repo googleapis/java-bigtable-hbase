@@ -20,12 +20,12 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>mirroring-client</artifactId>
-    <version>0.9.2</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+    <version>0.9.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-mirroring-client-1.x-parent</artifactId>
   <packaging>pom</packaging>
-  <version>0.9.2</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+  <version>0.9.3-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
 
   <name>${project.groupId}:${project.artifactId}</name>
   <description>
