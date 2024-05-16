@@ -22,6 +22,7 @@ import com.google.api.services.storage.model.Objects;
 import com.google.api.services.storage.model.StorageObject;
 import com.google.cloud.bigtable.beam.hbasesnapshots.conf.ImportConfig;
 import com.google.cloud.bigtable.beam.hbasesnapshots.conf.SnapshotConfig;
+import com.google.common.truth.Truth;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -114,8 +115,8 @@ public class SnapshotUtilsTest {
         SnapshotTestHelper.buildMapFromList(
             new String[] {"throttling.enable", "true", "throttling.threshold.ms", "200"});
     Configuration hbaseConfiguration = SnapshotUtils.getHBaseConfiguration(configurations);
-    assertThat(hbaseConfiguration.getBoolean("throttling.enable", false), is(true));
-    assertThat(hbaseConfiguration.get("throttling.threshold.ms"), is("200"));
+    Truth.assertThat(hbaseConfiguration.get("throttling.enable")).isEqualTo("true");
+    Truth.assertThat(hbaseConfiguration.get("throttling.threshold.ms")).isEqualTo("200");
   }
 
   @Test
