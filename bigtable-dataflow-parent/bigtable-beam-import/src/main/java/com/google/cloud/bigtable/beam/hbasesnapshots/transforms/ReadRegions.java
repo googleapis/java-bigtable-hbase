@@ -51,8 +51,9 @@ import org.slf4j.LoggerFactory;
 /**
  * A {@link PTransform} for reading the records from each region and creates Hbase {@link Mutation}
  * instances. Each region will be split into configured size (512 MB) and pipeline option {@link
- * com.google.cloud.bigtable.beam.hbasesnapshots.ImportJobFromHbaseSnapshot.ImportOptions#getUseDynamicSplitting() useDynamicSplitting} can be used
- * to control whether each split needs to be subdivided further or not.
+ * com.google.cloud.bigtable.beam.hbasesnapshots.ImportJobFromHbaseSnapshot.ImportOptions#getUseDynamicSplitting()
+ * useDynamicSplitting} can be used to control whether each split needs to be subdivided further or
+ * not.
  */
 @InternalApi("For internal usage only")
 public class ReadRegions
