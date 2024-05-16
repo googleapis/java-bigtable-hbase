@@ -1,3 +1,18 @@
+/*
+ * Copyright 2024 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.google.cloud.bigtable.beam.hbasesnapshots.transforms;
 
 // import com.google.cloud.bigtable.beam.hbasesnapshots.ImportSnapshots;
@@ -24,7 +39,6 @@ import org.apache.beam.sdk.transforms.splittabledofn.RestrictionTracker;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TypeDescriptor;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -37,7 +51,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A {@link PTransform} for reading the records from each region and creates Hbase {@link Mutation}
  * instances. Each region will be split into configured size (512 MB) and pipeline option {@link
- * ImportSnapshots.ImportSnapshotsOptions#getUseDynamicSplitting() useDynamicSplitting} can be used
+ * com.google.cloud.bigtable.beam.hbasesnapshots.ImportJobFromHbaseSnapshot.ImportOptions#getUseDynamicSplitting() useDynamicSplitting} can be used
  * to control whether each split needs to be subdivided further or not.
  */
 @InternalApi("For internal usage only")
@@ -196,7 +210,6 @@ public class ReadRegions
       }
     }
 
-    @VisibleForTesting
     private int getSplits(long sizeInBytes) {
       return (int) Math.ceil((double) sizeInBytes / BYTES_PER_SPLIT);
     }
