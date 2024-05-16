@@ -236,7 +236,6 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
     DropRowRangeRequest protoRequest =
         DropRowRangeRequest.newBuilder()
             .setName(instanceName.toTableNameStr(tableId))
-            .setDeleteAllDataFromTable(false)
             .setRowKeyPrefix(rowKeyPrefix)
             .build();
     delegate.dropRowRange(protoRequest);
@@ -254,7 +253,6 @@ public class BigtableTableAdminClientWrapper implements IBigtableTableAdminClien
     DropRowRangeRequest protoRequest =
         DropRowRangeRequest.newBuilder()
             .setName(instanceName.toTableNameStr(tableId))
-            .setDeleteAllDataFromTable(false)
             .setRowKeyPrefix(rowKeyPrefix)
             .build();
     return ApiFutureUtil.transformAndAdapt(
