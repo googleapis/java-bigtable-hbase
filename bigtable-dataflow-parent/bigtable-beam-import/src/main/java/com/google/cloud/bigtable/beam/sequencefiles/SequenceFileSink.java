@@ -16,18 +16,13 @@
 package com.google.cloud.bigtable.beam.sequencefiles;
 
 import com.google.common.collect.Sets;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.DynamicFileDestinations;
 import org.apache.beam.sdk.io.FileBasedSink;
-import org.apache.beam.sdk.io.FileBasedSink.WriteOperation;
-import org.apache.beam.sdk.io.FileBasedSink.Writer;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.util.MimeTypes;
@@ -155,7 +150,7 @@ class SequenceFileSink<K, V> extends FileBasedSink<KV<K, V>, Void, KV<K, V>> {
       configuration.setStrings("io.serializations", writeOperation.serializationNames);
 
       FSDataOutputStream outputStream =
-          new FSDataOutputStream(new OutputStreamWrapper(channel), new Statistics("dataflow"));
+          new FSDataOutputStream(Channels.newOutputStream(channel), new Statistics("dataflow"));
       sequenceFile =
           SequenceFile.createWriter(
               configuration,
@@ -179,53 +174,6 @@ class SequenceFileSink<K, V> extends FileBasedSink<KV<K, V>, Void, KV<K, V>> {
     public void write(KV<K, V> value) throws Exception {
       counter.incrementAndGet();
       sequenceFile.append(value.getKey(), value.getValue());
-    }
-  }
-
-  /**
-   * Adapter to allow Hadoop's {@link SequenceFile} to write to Beam's {@link WritableByteChannel}.
-   */
-  static class OutputStreamWrapper extends OutputStream {
-    private final WritableByteChannel inner;
-    private final ByteBuffer singleByteBuffer = ByteBuffer.allocate(1);
-
-    /**
-     * Constructs a new {@link OutputStreamWrapper}.
-     *
-     * @param inner An instance of Beam's {@link WritableByteChannel}.
-     */
-    OutputStreamWrapper(WritableByteChannel inner) {
-      this.inner = inner;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void write(byte[] b, int off, int len) throws IOException {
-      int written = 0;
-
-      ByteBuffer byteBuffer = ByteBuffer.wrap(b, off, len);
-
-      while (written < len) {
-        // Workaround Java 9 overridden methods with covariant return types
-        ((Buffer) byteBuffer).position(written + off);
-        written += this.inner.write(byteBuffer);
-      }
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void write(int b) throws IOException {
-      // Workaround Java 9 overridden methods with covariant return types
-      ((Buffer) singleByteBuffer).clear();
-      singleByteBuffer.put((byte) b);
-
-      int written = 0;
-
-      while (written == 0) {
-        // Workaround Java 9 overridden methods with covariant return types
-        ((Buffer) singleByteBuffer).position(0);
-        written = this.inner.write(singleByteBuffer);
-      }
     }
   }
 }
