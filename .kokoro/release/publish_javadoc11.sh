@@ -37,7 +37,24 @@ export NAME=bigtable-client-parent
 export VERSION=$(grep ${NAME}: versions.txt | cut -d: -f3)
 
 # cloud RAD generation
+#TODO(https://github.com/googleapis/java-bigtable-hbase/issues/3843) - mvn compile breaks for the project, hence using the workaround below
+# use javadoc:aggregate for the following modules
+cd bigtable-client-core-parent/
 mvn clean javadoc:aggregate -B -q -P docFX
+cd ../bigtable-dataflow-parent/
+mvn clean javadoc:aggregate -B -q -P docFX
+cd ../bigtable-hbase-2.x-parent/
+mvn clean javadoc:aggregate -B -q -P docFX
+
+# use javadoc:javadoc for the following modules for Standalone doc generation as javadoc:aggregate breaks due to compilation issues
+cd ../hbase-migration-tools/
+mvn clean javadoc:javadoc
+cd ../bigtable-hbase-1.x-parent/
+mvn clean javadoc:javadoc
+
+# go back to the project root directory
+cd ..
+
 # include CHANGELOG
 cp CHANGELOG.md target/docfx-yml/history.md
 
