@@ -493,6 +493,14 @@ limitations under the License.
       <artifactId>truth</artifactId>
       <version>${truth.version}</version>
       <scope>test</scope>
+      <exclusions>
+        <!-- truth depends on -android variant of guava, which conflicts with the guava version that
+        we use in the client -->
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 
