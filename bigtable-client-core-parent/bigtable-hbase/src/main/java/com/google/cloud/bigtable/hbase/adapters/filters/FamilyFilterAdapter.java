@@ -57,7 +57,9 @@ public class FamilyFilterAdapter extends TypedFilterAdapterBase<FamilyFilter> {
       family = Bytes.toString(comparator.getValue());
       // HBase regex matching is unanchored, while Bigtable requires a full string match
       // To align the two, surround the user regex with wildcards
-      family = ".*" + family + ".*";
+      if (!family.isEmpty()) {
+        family = ".*" + family + ".*";
+      }
     } else if (comparator instanceof BinaryComparator) {
       ByteString quotedRegularExpression =
           ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());

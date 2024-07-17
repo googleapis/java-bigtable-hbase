@@ -60,10 +60,15 @@ public class RowFilterAdapter
     } else if (comparator instanceof RegexStringComparator) {
       // HBase regex matching is unanchored, while Bigtable requires a full string match
       // To align the two, surround the user regex with wildcards
-      regexValue =
-        ByteString.copyFromUtf8("\\C*")
+      if (comparator.getValue().length > 0) {
+        regexValue =
+            ByteString.copyFromUtf8("\\C*")
                 .concat(ByteString.copyFrom(comparator.getValue()))
-            .concat(ByteString.copyFromUtf8("\\C*"));
+                .concat(ByteString.copyFromUtf8("\\C*"));
+      } else {
+        regexValue = ByteString.EMPTY;
+      }
+
     } else if (comparator instanceof BinaryComparator) {
       regexValue = ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());
     } else {

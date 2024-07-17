@@ -2341,21 +2341,17 @@ public abstract class AbstractTestFilters extends AbstractTest {
     List<Filter> anchoredRegex =
         Arrays.asList(
             new RowFilter(CompareOp.EQUAL, new RegexStringComparator("^" + key)),
-            new RowFilter(CompareOp.EQUAL, new RegexStringComparator( key + "$")),
-            new RowFilter(CompareOp.EQUAL, new RegexStringComparator( "^" + key + "$")),
-
+            new RowFilter(CompareOp.EQUAL, new RegexStringComparator(key + "$")),
+            new RowFilter(CompareOp.EQUAL, new RegexStringComparator("^" + key + "$")),
             new FamilyFilter(CompareOp.EQUAL, new RegexStringComparator("^" + family)),
             new FamilyFilter(CompareOp.EQUAL, new RegexStringComparator(family + "$")),
             new FamilyFilter(CompareOp.EQUAL, new RegexStringComparator("^" + family + "$")),
-
             new QualifierFilter(CompareOp.EQUAL, new RegexStringComparator("^" + qualifier + "$")),
             new QualifierFilter(CompareOp.EQUAL, new RegexStringComparator("^" + qualifier)),
             new QualifierFilter(CompareOp.EQUAL, new RegexStringComparator("^" + qualifier)),
-
             new ValueFilter(CompareOp.EQUAL, new RegexStringComparator("^" + value + "$")),
             new ValueFilter(CompareOp.EQUAL, new RegexStringComparator("^" + value)),
-            new ValueFilter(CompareOp.EQUAL, new RegexStringComparator(value + "$"))
-        );
+            new ValueFilter(CompareOp.EQUAL, new RegexStringComparator(value + "$")));
 
     for (Filter filter : anchoredRegex) {
       System.out.println("Testing anchored: " + filter);
@@ -2371,26 +2367,24 @@ public abstract class AbstractTestFilters extends AbstractTest {
     List<Filter> anchoredPartialRegex =
         Arrays.asList(
             new RowFilter(CompareOp.EQUAL, new RegexStringComparator("^" + keyRoot)),
-            new RowFilter(CompareOp.EQUAL, new RegexStringComparator( keyRoot + "$")),
-            new RowFilter(CompareOp.EQUAL, new RegexStringComparator( "^" + keyRoot + "$")),
-
+            new RowFilter(CompareOp.EQUAL, new RegexStringComparator(keyRoot + "$")),
+            new RowFilter(CompareOp.EQUAL, new RegexStringComparator("^" + keyRoot + "$")),
             new FamilyFilter(CompareOp.EQUAL, new RegexStringComparator("^" + familyRoot)),
             new FamilyFilter(CompareOp.EQUAL, new RegexStringComparator(familyRoot + " $")),
             new FamilyFilter(CompareOp.EQUAL, new RegexStringComparator("^" + familyRoot + " $")),
-
-            new QualifierFilter(CompareOp.EQUAL, new RegexStringComparator("^" + qualifierRoot + "$")),
+            new QualifierFilter(
+                CompareOp.EQUAL, new RegexStringComparator("^" + qualifierRoot + "$")),
             new QualifierFilter(CompareOp.EQUAL, new RegexStringComparator("^" + qualifierRoot)),
             new QualifierFilter(CompareOp.EQUAL, new RegexStringComparator("^" + qualifierRoot)),
-
             new ValueFilter(CompareOp.EQUAL, new RegexStringComparator("^" + valueRoot + "$")),
             new ValueFilter(CompareOp.EQUAL, new RegexStringComparator("^" + valueRoot)),
-            new ValueFilter(CompareOp.EQUAL, new RegexStringComparator(valueRoot + "$"))
-        );
+            new ValueFilter(CompareOp.EQUAL, new RegexStringComparator(valueRoot + "$")));
 
     for (Filter filter : anchoredPartialRegex) {
       try (ResultScanner scanner =
           table.getScanner(new Scan().withStartRow(key.getBytes()).setLimit(1).setFilter(filter))) {
-        assertWithMessage("Filter with anchored partial regex: " + filter + " yielded unpexpected results")
+        assertWithMessage(
+                "Filter with anchored partial regex: " + filter + " yielded unpexpected results")
             .that(scanner)
             .isEmpty();
       }
