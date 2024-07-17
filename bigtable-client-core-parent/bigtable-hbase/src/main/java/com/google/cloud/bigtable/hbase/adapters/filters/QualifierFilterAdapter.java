@@ -113,6 +113,9 @@ public class QualifierFilterAdapter extends TypedFilterAdapterBase<QualifierFilt
   private static Filter adaptRegexStringComparator(
       CompareOp compareOp, RegexStringComparator comparator) {
     String pattern = FilterAdapterHelper.extractRegexPattern(comparator);
+    // HBase regex matching is unanchored, while Bigtable requires a full string match
+    // To align the two, surround the user regex with wildcards
+    pattern = "\\C*" + pattern + "\\C*";
     switch (compareOp) {
       case EQUAL:
         return FILTERS.qualifier().regex(pattern);

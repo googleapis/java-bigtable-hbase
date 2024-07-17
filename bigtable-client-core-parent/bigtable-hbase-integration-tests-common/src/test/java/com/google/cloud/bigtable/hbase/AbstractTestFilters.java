@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY;
 import static com.google.cloud.bigtable.hbase.test_env.SharedTestEnvRule.COLUMN_FAMILY2;
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -32,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.UUID;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -2295,6 +2297,104 @@ public abstract class AbstractTestFilters extends AbstractTest {
             "Expected '%s', but was '%s'", toFuzzyKeyString(key), toFuzzyKeyString(actualKey)),
         key,
         actualKey);
+  }
+
+  /**
+   * Bigtable & HBase have different semantics for regexes - HBase matches are unachored and allow
+   * for the regex to match anywhere in the string. While Bigtable requires a full string match.
+   */
+  @Test
+  public void testPartialRegexMatches() throws Exception {
+    Table table = getDefaultTable();
+    String keyRoot = UUID.randomUUID().toString();
+    String key = "prefix-" + keyRoot + "-suffix";
+    String family = new String(COLUMN_FAMILY);
+    String familyRoot = family.substring(3, family.length() - 3);
+    String qualifierRoot = "my-qualifier";
+    String qualifier = "prefix-" + qualifierRoot + "-suffix";
+    String valueRoot = "my-value";
+    String value = "prefix-" + valueRoot + "-suffix";
+
+    table.put(
+        new Put(key.getBytes()).addColumn(COLUMN_FAMILY, qualifier.getBytes(), value.getBytes()));
+
+    // Partial regexes that match the root of the value with single char matchers to make sure it
+    // doesnt use a literal optimization
+    List<Filter> filters =
+        Arrays.asList(
+            new RowFilter(CompareOp.EQUAL, new RegexStringComparator("." + keyRoot + ".")),
+            new FamilyFilter(CompareOp.EQUAL, new RegexStringComparator("." + familyRoot + ".")),
+            new QualifierFilter(
+                CompareOp.EQUAL, new RegexStringComparator("." + qualifierRoot + ".")),
+            new ValueFilter(CompareOp.EQUAL, new RegexStringComparator("." + valueRoot + ".")));
+
+    for (Filter filter : filters) {
+      try (ResultScanner scanner =
+          table.getScanner(new Scan().withStartRow(key.getBytes()).setLimit(1).setFilter(filter))) {
+        assertWithMessage("Filter with partial regex: " + filter + " yielded no results")
+            .that(scanner)
+            .isNotEmpty();
+      }
+    }
+
+    // Make sure that explicitly anchored regexes still work
+    List<Filter> anchoredRegex =
+        Arrays.asList(
+            new RowFilter(CompareOp.EQUAL, new RegexStringComparator("^" + key)),
+            new RowFilter(CompareOp.EQUAL, new RegexStringComparator( key + "$")),
+            new RowFilter(CompareOp.EQUAL, new RegexStringComparator( "^" + key + "$")),
+
+            new FamilyFilter(CompareOp.EQUAL, new RegexStringComparator("^" + family)),
+            new FamilyFilter(CompareOp.EQUAL, new RegexStringComparator(family + "$")),
+            new FamilyFilter(CompareOp.EQUAL, new RegexStringComparator("^" + family + "$")),
+
+            new QualifierFilter(CompareOp.EQUAL, new RegexStringComparator("^" + qualifier + "$")),
+            new QualifierFilter(CompareOp.EQUAL, new RegexStringComparator("^" + qualifier)),
+            new QualifierFilter(CompareOp.EQUAL, new RegexStringComparator("^" + qualifier)),
+
+            new ValueFilter(CompareOp.EQUAL, new RegexStringComparator("^" + value + "$")),
+            new ValueFilter(CompareOp.EQUAL, new RegexStringComparator("^" + value)),
+            new ValueFilter(CompareOp.EQUAL, new RegexStringComparator(value + "$"))
+        );
+
+    for (Filter filter : anchoredRegex) {
+      System.out.println("Testing anchored: " + filter);
+      try (ResultScanner scanner =
+          table.getScanner(new Scan().withStartRow(key.getBytes()).setLimit(1).setFilter(filter))) {
+        assertWithMessage("Filter with full regex: " + filter + " yielded no results")
+            .that(scanner)
+            .isNotEmpty();
+      }
+    }
+
+    // Make sure that explicitly anchored partial regexes dont overmatch
+    List<Filter> anchoredPartialRegex =
+        Arrays.asList(
+            new RowFilter(CompareOp.EQUAL, new RegexStringComparator("^" + keyRoot)),
+            new RowFilter(CompareOp.EQUAL, new RegexStringComparator( keyRoot + "$")),
+            new RowFilter(CompareOp.EQUAL, new RegexStringComparator( "^" + keyRoot + "$")),
+
+            new FamilyFilter(CompareOp.EQUAL, new RegexStringComparator("^" + familyRoot)),
+            new FamilyFilter(CompareOp.EQUAL, new RegexStringComparator(familyRoot + " $")),
+            new FamilyFilter(CompareOp.EQUAL, new RegexStringComparator("^" + familyRoot + " $")),
+
+            new QualifierFilter(CompareOp.EQUAL, new RegexStringComparator("^" + qualifierRoot + "$")),
+            new QualifierFilter(CompareOp.EQUAL, new RegexStringComparator("^" + qualifierRoot)),
+            new QualifierFilter(CompareOp.EQUAL, new RegexStringComparator("^" + qualifierRoot)),
+
+            new ValueFilter(CompareOp.EQUAL, new RegexStringComparator("^" + valueRoot + "$")),
+            new ValueFilter(CompareOp.EQUAL, new RegexStringComparator("^" + valueRoot)),
+            new ValueFilter(CompareOp.EQUAL, new RegexStringComparator(valueRoot + "$"))
+        );
+
+    for (Filter filter : anchoredPartialRegex) {
+      try (ResultScanner scanner =
+          table.getScanner(new Scan().withStartRow(key.getBytes()).setLimit(1).setFilter(filter))) {
+        assertWithMessage("Filter with anchored partial regex: " + filter + " yielded unpexpected results")
+            .that(scanner)
+            .isEmpty();
+      }
+    }
   }
 
   private final String toFuzzyKeyString(byte[] bytes) {

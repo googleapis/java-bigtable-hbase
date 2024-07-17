@@ -116,7 +116,9 @@ public class ValueFilterAdapter extends TypedFilterAdapterBase<ValueFilter> {
     String pattern = FilterAdapterHelper.extractRegexPattern(comparator);
     switch (compareOp) {
       case EQUAL:
-        return FILTERS.value().regex(pattern);
+        // HBase regex matching is unanchored, while Bigtable requires a full string match
+        // To align the two, surround the user regex with wildcards
+        return FILTERS.value().regex("\\C*" + pattern + "\\C*");
         // No-ops are always filtered out.
         // See:
         // https://github.com/apache/hbase/blob/master/hbase-client/src/main/java/org/apache/hadoop/hbase/filter/ColumnValueFilter.java#L127-L138

@@ -55,6 +55,9 @@ public class FamilyFilterAdapter extends TypedFilterAdapterBase<FamilyFilter> {
       throw new IllegalStateException("Comparator cannot be null");
     } else if (comparator instanceof RegexStringComparator) {
       family = Bytes.toString(comparator.getValue());
+      // HBase regex matching is unanchored, while Bigtable requires a full string match
+      // To align the two, surround the user regex with wildcards
+      family = ".*" + family + ".*";
     } else if (comparator instanceof BinaryComparator) {
       ByteString quotedRegularExpression =
           ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());

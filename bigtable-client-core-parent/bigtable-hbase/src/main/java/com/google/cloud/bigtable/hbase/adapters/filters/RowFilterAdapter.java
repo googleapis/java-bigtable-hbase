@@ -58,7 +58,12 @@ public class RowFilterAdapter
     if (comparator == null) {
       throw new IllegalStateException("Comparator cannot be null");
     } else if (comparator instanceof RegexStringComparator) {
-      regexValue = ByteString.copyFrom(comparator.getValue());
+      // HBase regex matching is unanchored, while Bigtable requires a full string match
+      // To align the two, surround the user regex with wildcards
+      regexValue =
+        ByteString.copyFromUtf8("\\C*")
+                .concat(ByteString.copyFrom(comparator.getValue()))
+            .concat(ByteString.copyFromUtf8("\\C*"));
     } else if (comparator instanceof BinaryComparator) {
       regexValue = ReaderExpressionHelper.quoteRegularExpression(comparator.getValue());
     } else {
