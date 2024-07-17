@@ -18,6 +18,7 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
 
 import com.google.cloud.bigtable.data.v2.models.Filters;
+import com.google.common.truth.Truth;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import org.apache.hadoop.hbase.client.Scan;
@@ -28,7 +29,6 @@ import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.QualifierFilter;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -51,7 +51,7 @@ public class TestQualifierFilterAdapter {
       throws IOException {
     QualifierFilter filter = new QualifierFilter(op, comparable);
     Filters.Filter actualFilter = adapter.adapt(scanWithOnFamilyScanContext, filter);
-    Assert.assertEquals(expectedFilter.toProto(), actualFilter.toProto());
+    Truth.assertThat(actualFilter.toProto()).isEqualTo(expectedFilter.toProto());
   }
 
   @Test
@@ -112,6 +112,6 @@ public class TestQualifierFilterAdapter {
     assertAdaptedForm(
         new RegexStringComparator(pattern),
         CompareOp.EQUAL,
-        FILTERS.qualifier().regex(ByteString.copyFromUtf8(pattern)));
+        FILTERS.qualifier().regex(ByteString.copyFromUtf8("\\C*" + pattern + "\\C*")));
   }
 }

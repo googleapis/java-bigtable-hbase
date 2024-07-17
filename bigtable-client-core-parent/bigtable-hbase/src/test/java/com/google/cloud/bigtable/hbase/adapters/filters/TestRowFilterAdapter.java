@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.protobuf.ByteString;
@@ -50,8 +51,8 @@ public class TestRowFilterAdapter {
     RegexStringComparator comparator = new RegexStringComparator(regexp);
     org.apache.hadoop.hbase.filter.RowFilter filter =
         new org.apache.hadoop.hbase.filter.RowFilter(CompareFilter.CompareOp.EQUAL, comparator);
-    Assert.assertEquals(
-        FILTERS.key().regex(regexp).toProto(), adapter.adapt(context, filter).toProto());
+    assertThat(adapter.adapt(context, filter).toProto())
+        .isEqualTo(FILTERS.key().regex("\\C*" + regexp + "\\C*").toProto());
   }
 
   @Test

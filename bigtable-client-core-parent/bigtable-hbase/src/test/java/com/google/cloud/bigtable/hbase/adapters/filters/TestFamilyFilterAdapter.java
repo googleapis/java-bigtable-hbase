@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.bigtable.v2.RowFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.protobuf.ByteString;
@@ -45,13 +47,16 @@ public class TestFamilyFilterAdapter {
 
   @Test
   public void testAdapt_RegexAndEquals() throws IOException {
-    String regexp = "^.*hello world.*$";
+    String regexp = "^hello world[?!]$";
     RegexStringComparator comparator = new RegexStringComparator(regexp);
     org.apache.hadoop.hbase.filter.RowFilter filter =
         new org.apache.hadoop.hbase.filter.RowFilter(CompareFilter.CompareOp.EQUAL, comparator);
-    Assert.assertEquals(
-        RowFilter.newBuilder().setRowKeyRegexFilter(ByteString.copyFrom(regexp.getBytes())).build(),
-        adapter.adapt(context, filter).toProto());
+    assertThat(adapter.adapt(context, filter).toProto())
+        .isEqualTo(
+            RowFilter.newBuilder()
+                // user regex needs to be wrapped in wildcards to
+                .setRowKeyRegexFilter(ByteString.copyFrom(("\\C*" + regexp + "\\C*").getBytes()))
+                .build());
   }
 
   @Test
@@ -74,9 +79,11 @@ public class TestFamilyFilterAdapter {
     RegexStringComparator comparator = new RegexStringComparator(regexp);
     org.apache.hadoop.hbase.filter.RowFilter filter =
         new org.apache.hadoop.hbase.filter.RowFilter(CompareFilter.CompareOp.EQUAL, comparator);
-    Assert.assertEquals(
-        RowFilter.newBuilder().setRowKeyRegexFilter(ByteString.copyFrom(regexp.getBytes())).build(),
-        adapter.adapt(context, filter).toProto());
+    assertThat(adapter.adapt(context, filter).toProto())
+        .isEqualTo(
+            RowFilter.newBuilder()
+                .setRowKeyRegexFilter(ByteString.copyFrom(regexp.getBytes()))
+                .build());
   }
 
   @Test
