@@ -2365,16 +2365,16 @@ public abstract class AbstractTestFilters extends AbstractTest {
     // Make sure that explicitly anchored partial regexes dont overmatch
     List<Filter> anchoredPartialRegex =
         Arrays.asList(
+            new RowFilter(CompareOp.EQUAL, new RegexStringComparator("^" + keyRoot + "$")),
             new RowFilter(CompareOp.EQUAL, new RegexStringComparator("^" + keyRoot)),
             new RowFilter(CompareOp.EQUAL, new RegexStringComparator(keyRoot + "$")),
-            new RowFilter(CompareOp.EQUAL, new RegexStringComparator("^" + keyRoot + "$")),
+            new FamilyFilter(CompareOp.EQUAL, new RegexStringComparator("^" + familyRoot + " $")),
             new FamilyFilter(CompareOp.EQUAL, new RegexStringComparator("^" + familyRoot)),
             new FamilyFilter(CompareOp.EQUAL, new RegexStringComparator(familyRoot + " $")),
-            new FamilyFilter(CompareOp.EQUAL, new RegexStringComparator("^" + familyRoot + " $")),
             new QualifierFilter(
                 CompareOp.EQUAL, new RegexStringComparator("^" + qualifierRoot + "$")),
             new QualifierFilter(CompareOp.EQUAL, new RegexStringComparator("^" + qualifierRoot)),
-            new QualifierFilter(CompareOp.EQUAL, new RegexStringComparator("^" + qualifierRoot)),
+            new QualifierFilter(CompareOp.EQUAL, new RegexStringComparator(qualifierRoot + "$")),
             new ValueFilter(CompareOp.EQUAL, new RegexStringComparator("^" + valueRoot + "$")),
             new ValueFilter(CompareOp.EQUAL, new RegexStringComparator("^" + valueRoot)),
             new ValueFilter(CompareOp.EQUAL, new RegexStringComparator(valueRoot + "$")));
