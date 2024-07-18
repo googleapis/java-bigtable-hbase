@@ -2354,7 +2354,6 @@ public abstract class AbstractTestFilters extends AbstractTest {
             new ValueFilter(CompareOp.EQUAL, new RegexStringComparator(value + "$")));
 
     for (Filter filter : anchoredRegex) {
-      System.out.println("Testing anchored: " + filter);
       try (ResultScanner scanner =
           table.getScanner(new Scan().withStartRow(key.getBytes()).setLimit(1).setFilter(filter))) {
         assertWithMessage("Filter with full regex: " + filter + " yielded no results")
