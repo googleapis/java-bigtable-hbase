@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters.read;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.bigtable.data.v2.internal.RequestContext;
 import com.google.cloud.bigtable.data.v2.models.Filters;
@@ -182,12 +183,12 @@ public class TestGetAdapter {
 
     Filters.Filter actualFilter = getAdapter.buildFilter(get);
 
-    Assert.assertEquals(
-        FILTERS
-            .chain()
-            .filter(FILTERS.limit().cellsPerColumn(5))
-            .filter(FILTERS.family().regex("a"))
-            .toProto(),
-        actualFilter.toProto());
+    assertThat(actualFilter.toProto())
+        .isEqualTo(
+            FILTERS
+                .chain()
+                .filter(FILTERS.limit().cellsPerColumn(5))
+                .filter(FILTERS.family().regex(".*a.*"))
+                .toProto());
   }
 }

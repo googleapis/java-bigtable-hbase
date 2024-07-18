@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase.adapters.filters;
 
 import static com.google.cloud.bigtable.data.v2.models.Filters.FILTERS;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.cloud.bigtable.data.v2.models.Filters;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
@@ -29,7 +30,6 @@ import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -110,7 +110,9 @@ public class TestValueFilterAdapter {
   public void testRegexValueFilter() throws IOException {
     String pattern = "Foo\\d+";
     assertAdaptedForm(
-        new RegexStringComparator(pattern), CompareOp.EQUAL, FILTERS.value().regex(pattern));
+        new RegexStringComparator(pattern),
+        CompareOp.EQUAL,
+        FILTERS.value().regex("\\C*" + pattern + "\\C*"));
   }
 
   private void assertAdaptedForm(
@@ -118,6 +120,6 @@ public class TestValueFilterAdapter {
       throws IOException {
     ValueFilter filter = new ValueFilter(op, comparable);
     Filters.Filter actualFilter = adapter.adapt(emptyScanContext, filter);
-    Assert.assertEquals(expectedFilter.toProto(), actualFilter.toProto());
+    assertThat(actualFilter.toProto()).isEqualTo(expectedFilter.toProto());
   }
 }

@@ -116,6 +116,11 @@ public class ValueFilterAdapter extends TypedFilterAdapterBase<ValueFilter> {
     String pattern = FilterAdapterHelper.extractRegexPattern(comparator);
     switch (compareOp) {
       case EQUAL:
+        // HBase regex matching is unanchored, while Bigtable requires a full string match
+        // To align the two, surround the user regex with wildcards
+        if (!pattern.isEmpty()) {
+          pattern = "\\C*" + pattern + "\\C*";
+        }
         return FILTERS.value().regex(pattern);
         // No-ops are always filtered out.
         // See:
