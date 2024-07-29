@@ -215,6 +215,33 @@ limitations under the License.
             </execution>
           </executions>
         </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <executions>
+          <execution>
+            <id>enforce</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <!-- All hbase deps are provided and we have no hope of enforcing rules on them -->
+                <banDuplicateClasses>
+                  <ignoreClasses>
+                    <!-- hbase-shaded-client has an incorrect shading config that doesnt relocate
+                    classes for multiversioned jars. This most likely renders them unusable. Furthermore
+                    bigtable-hbase doesnt use the jackson functionality in hbase. So its safe to ignore
+                    the conflict with beam -->
+                    <ignoreClass>META-INF/versions/*/com/fasterxml/jackson/core/io/doubleparser/*</ignoreClass>
+                  </ignoreClasses>
+                </banDuplicateClasses>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+        </plugin>
       </plugins>
     </pluginManagement>
 
