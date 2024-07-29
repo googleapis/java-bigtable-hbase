@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.14.3](https://github.com/googleapis/java-bigtable-hbase/compare/v2.14.2...v2.14.3) (2024-07-29)
+
+
+### Bug Fixes
+
+* align the handling of regular expressions between hbase & bigtable ([#4430](https://github.com/googleapis/java-bigtable-hbase/issues/4430)) ([ae0a15d](https://github.com/googleapis/java-bigtable-hbase/commit/ae0a15d44ccf7c8b959edaac1f301927dabe09c2))
+
+
+### Performance Improvements
+
+* Set gcsUploadBufferSizeBytes to 8MB for Export Jobs to reduce RAM usage ([#4366](https://github.com/googleapis/java-bigtable-hbase/issues/4366)) ([e59d453](https://github.com/googleapis/java-bigtable-hbase/commit/e59d453006372a59fd8d2461c641fd75c007a7f5))
+
+
+### Dependencies
+
+* upgrade beam to 2.57.0 ([#4432](https://github.com/googleapis/java-bigtable-hbase/issues/4432)) ([f20b907](https://github.com/googleapis/java-bigtable-hbase/commit/f20b9072046782eacdcf1625f04a5842ef36f430))
+
 ## [2.14.2](https://github.com/googleapis/java-bigtable-hbase/compare/v2.14.1...v2.14.2) (2024-05-10)
 
 
