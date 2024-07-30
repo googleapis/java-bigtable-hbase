@@ -18,7 +18,7 @@ limitations under the License.
   <parent>
     <artifactId>bigtable-hbase-2.x-parent</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>2.14.3</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.14.4-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -105,7 +105,7 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-2.x</artifactId>
-      <version>2.14.3</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.14.4-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </dependency>
 
     <!-- Since opencensus-api is a transitive dep, we have to shade its impl as well.
@@ -349,7 +349,7 @@ limitations under the License.
       <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>
         <artifactId>bigtable-build-helper</artifactId>
-        <version>2.14.3</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+        <version>2.14.4-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
 
         <executions>
           <execution>
