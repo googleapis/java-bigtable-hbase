@@ -3,15 +3,19 @@
 This folder contains tools to support importing and exporting HBase data to
 Google Cloud Bigtable using Cloud Dataflow.
 
-## Setup 
+## Setup
 
-To use the tools in this folder, you can download them from the maven repository, or
-you can build them using Maven. 
+To use the tools in this folder, you can download them from the maven
+repository, or
+you can build them using Maven.
 
 
 [//]: # ({x-version-update-start:bigtable-client-parent:released})
+
 ### Download the jars
-Download [the import/export jars](https://search.maven.org/artifact/com.google.cloud.bigtable/bigtable-beam-import), which is an aggregation of all required jars.
+
+Download [the import/export jars](https://search.maven.org/artifact/com.google.cloud.bigtable/bigtable-beam-import),
+which is an aggregation of all required jars.
 
 ### Build the jars yourself
 
@@ -25,12 +29,13 @@ cd bigtable-dataflow-parent/bigtable-beam-import
 ```
 
 ***
+
 # Tools
 
 ## Data export pipeline
 
 You can export data into a snapshot or into sequence files. If you're migrating
-your data from HBase to Bigtable, using snapshots is the preferred method. 
+your data from HBase to Bigtable, using snapshots is the preferred method.
 
 ### Exporting snapshots from HBase
 
@@ -50,20 +55,20 @@ Perform these steps from Unix shell on an HBase edge node.
     echo "snapshot '$TABLE_NAME', '$SNAPSHOT_NAME'" | hbase shell -n
     ```
 
-1. Export the snapshot   
-    1. Install [hadoop connectors](https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/master/gcs/INSTALL.md)
+1. Export the snapshot
+    1.
+   Install [hadoop connectors](https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/master/gcs/INSTALL.md)
     1. Copy to a GCS bucket
    ```
     hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot $SNAPSHOT_NAME \
         -copy-to $BUCKET_NAME$SNAPSHOT_EXPORT_PATH/data -mappers $NUM_MAPPERS
     ```
 1. Create hashes for the table to be used during the data validation step.
-[Visit the HBase documentation for more information on each parameter](http://hbase.apache.org/book.html#_step_1_hashtable).
+   [Visit the HBase documentation for more information on each parameter](http://hbase.apache.org/book.html#_step_1_hashtable).
    ```
    hbase org.apache.hadoop.hbase.mapreduce.HashTable --batchsize=10 --numhashfiles=10 \
    $TABLE_NAME $BUCKET_NAME$SNAPSHOT_EXPORT_PATH/hashtable
    ```    
-   
 
 ### Exporting sequence files from HBase
 
@@ -74,7 +79,8 @@ Perform these steps from Unix shell on an HBase edge node.
     hadoop fs -mkdir -p ${EXPORTDIR}
     MAXVERSIONS=2147483647
     ```
-1. On an edge node, that has HBase classpath configured, run the export commands. 
+1. On an edge node, that has HBase classpath configured, run the export
+   commands.
     ```
     cd $HBASE_HOME
     bin/hbase org.apache.hadoop.hbase.mapreduce.Export \
@@ -114,19 +120,22 @@ Exporting HBase snapshots from Bigtable is not supported.
         --region=$REGION
    ```
 
-
 ## Importing to Bigtable
 
-You can import data into Bigtable from a snapshot or sequence files. Before you begin your import you must create
-the tables and column families in Bigtable via the [schema translation tool](https://github.com/googleapis/java-bigtable-hbase/tree/master/bigtable-hbase-1.x-parent/bigtable-hbase-1.x-tools)
-or using the Bigtable command line tool and running the following: 
+You can import data into Bigtable from a snapshot or sequence files. Before you
+begin your import you must create
+the tables and column families in Bigtable via
+the [schema translation tool](https://github.com/googleapis/java-bigtable-hbase/tree/master/bigtable-hbase-1.x-parent/bigtable-hbase-1.x-tools)
+or using the Bigtable command line tool and running the following:
 
     cbt createtable your-table-name
     cbt createfamily your-table-name your-column-family
 
-Once your import is completed follow the instructions for the validator below to ensure it was successful.
+Once your import is completed follow the instructions for the validator below to
+ensure it was successful.
 
-Please pay attention to the Cluster CPU usage and adjust the number of Dataflow workers accordingly.
+Please pay attention to the Cluster CPU usage and adjust the number of Dataflow
+workers accordingly.
 
 ### Snapshots (preferred method)
 
@@ -140,7 +149,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
     SNAPSHOT_GCS_PATH="$BUCKET_NAME/hbase-migration-snap"
     SNAPSHOT_NAME=your-snapshot-name
     ```
-    
+
 1. Run the import.
     ```
     java -jar bigtable-beam-import-2.3.0.jar importsnapshot \
@@ -214,7 +223,7 @@ Please pay attention to the Cluster CPU usage and adjust the number of Dataflow 
 ## Validating data
 
 Once your snapshot or sequence file is imported, you should run the validator to
-check if there are any rows with mismatched data. 
+check if there are any rows with mismatched data.
 
 1. Set the environment variables.
     ```
@@ -225,7 +234,8 @@ check if there are any rows with mismatched data.
     
     SNAPSHOT_GCS_PATH="$BUCKET_NAME/hbase-migration-snap"
     ```
-1. Run the sync job. It will put the results into `$SNAPSHOT_GCS_PATH/data-verification/output-TIMESTAMP`. 
+1. Run the sync job. It will put the results
+   into `$SNAPSHOT_GCS_PATH/data-verification/output-TIMESTAMP`.
     ```
     java -jar bigtable-beam-import-2.3.0.jar sync-table  \
         --runner=dataflow \
@@ -238,6 +248,22 @@ check if there are any rows with mismatched data.
         --tempLocation=$SNAPSHOT_GCS_PATH/sync-table/dataflow-test/temp \
         --region=$REGION
     ```
+
+## Tracking lineage
+
+CloudBigtableIO supports data lineage for Dataflow
+jobs. [Data lineage](https://cloud.google.com/dataplex/docs/about-data-lineage)
+is a
+[Dataplex](https://cloud.google.com/dataplex/docs/introduction) feature that
+lets you track how data moves through your systems. In
+order to begin
+automatically tracking lineage
+information [enable the Lineage API](https://cloud.google.com/dataplex/docs/use-lineage#enable-apis)
+in the project where the Dataflow job
+is running and the project where you view lineage in the Dataplex web interface.
+In addition, you must enable lineage during Dataflow job creation by providing
+the service option
+`--enable_lineage`.
 
 
 [//]: # ({x-version-update-end})
