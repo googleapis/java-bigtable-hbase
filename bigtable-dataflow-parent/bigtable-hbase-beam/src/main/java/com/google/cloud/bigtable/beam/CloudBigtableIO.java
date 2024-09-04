@@ -82,6 +82,7 @@ import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.beam.sdk.metrics.Lineage;
 
 /**
  * Utilities to create {@link PTransform}s for reading and writing <a
@@ -666,6 +667,8 @@ public class CloudBigtableIO {
 
     private final AtomicInteger attempt = new AtomicInteger(3);
 
+    private transient boolean reportedLineage;
+
     @VisibleForTesting
     Reader(CloudBigtableIO.AbstractSource source) {
       this.source = source;
@@ -680,6 +683,7 @@ public class CloudBigtableIO {
     public boolean start() throws IOException {
       initializeScanner();
       workStart = System.currentTimeMillis();
+      reportLineageOnce();
       return advance();
     }
 
@@ -906,6 +910,15 @@ public class CloudBigtableIO {
           Bytes.toStringBinary(rangeTracker.getStartPosition().getBytes()),
           Bytes.toStringBinary(rangeTracker.getStopPosition().getBytes()));
     }
+
+    void reportLineageOnce() {
+      if (!reportedLineage) {
+        Lineage.getSources().add(
+            String.format("bigtable:%s.%s.%s", source.getConfiguration().getProjectId(),
+                source.getConfiguration().getInstanceId(), source.getConfiguration().getTableId()));
+        reportedLineage = true;
+      }
+    }
   }
 
   ///////////////////// Write Class /////////////////////////////////
@@ -969,6 +982,7 @@ public class CloudBigtableIO {
       extends BufferedMutatorDoFn<Mutation> {
     private static final long serialVersionUID = 2L;
     private transient BufferedMutator mutator;
+    private transient boolean reportedLineage;
 
     public CloudBigtableSingleTableBufferedWriteFn(CloudBigtableTableConfiguration config) {
       super(config);
@@ -1006,6 +1020,16 @@ public class CloudBigtableIO {
         logExceptions(null, exception);
         rethrowException(exception);
       }
+      reportLineageOnce();
+    }
+
+    void reportLineageOnce() {
+      if (!reportedLineage) {
+        Lineage.getSinks()
+            .add(String.format("bigtable:%s.%s.%s", config.getProjectId(), config.getInstanceId(),
+                ((CloudBigtableTableConfiguration) getConfig()).getTableId()));
+        reportedLineage = true;
+      }
     }
   }
 
@@ -1029,6 +1053,7 @@ public class CloudBigtableIO {
 
     // Stats
     private transient Map<String, BufferedMutator> mutators;
+    private transient boolean reportedLineage;
 
     public CloudBigtableMultiTableWriteFn(CloudBigtableConfiguration config) {
       super(config);
@@ -1084,6 +1109,18 @@ public class CloudBigtableIO {
         }
       } finally {
         mutators.clear();
+        reportLineageOnce();
+      }
+    }
+
+    void reportLineageOnce() {
+      if (!reportedLineage) {
+        for (String tableName : mutators.keySet()) {
+          Lineage.getSinks()
+              .add(String.format("bigtable:%s.%s.%s", config.getProjectId(),
+                  config.getInstanceId(), tableName));
+          reportedLineage = true;
+        }
       }
     }
   }
