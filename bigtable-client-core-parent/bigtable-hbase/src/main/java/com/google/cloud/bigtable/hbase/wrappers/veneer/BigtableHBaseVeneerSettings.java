@@ -298,11 +298,13 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       int port = Integer.parseInt(emulatorEndpoint.get().substring(split + 1));
       dataBuilder = BigtableDataSettings.newBuilderForEmulator(host, port);
     } else {
-      String endpoint = BigtableDataSettings.newBuilder()
-          .setProjectId(getProjectId())
-          .setInstanceId(getInstanceId())
-          .build()
-          .getStubSettings().getEndpoint();
+      String endpoint =
+          BigtableDataSettings.newBuilder()
+              .setProjectId(getProjectId())
+              .setInstanceId(getInstanceId())
+              .build()
+              .getStubSettings()
+              .getEndpoint();
 
       dataBuilder = BigtableDataSettings.newBuilder();
       configureConnection(dataBuilder.stubSettings(), BIGTABLE_HOST_KEY, endpoint);
@@ -372,12 +374,13 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       int port = Integer.parseInt(emulatorEndpoint.substring(split + 1));
       adminBuilder = BigtableTableAdminSettings.newBuilderForEmulator(host, port);
     } else {
-      String defaultEndpoint = BigtableTableAdminSettings.newBuilder()
-          .setProjectId(getProjectId())
-          .setInstanceId(getInstanceId())
-          .build()
-          .getStubSettings()
-          .getEndpoint();
+      String defaultEndpoint =
+          BigtableTableAdminSettings.newBuilder()
+              .setProjectId(getProjectId())
+              .setInstanceId(getInstanceId())
+              .build()
+              .getStubSettings()
+              .getEndpoint();
       adminBuilder = BigtableTableAdminSettings.newBuilder();
       configureConnection(adminBuilder.stubSettings(), BIGTABLE_ADMIN_HOST_KEY, defaultEndpoint);
       configureCredentialProvider(adminBuilder.stubSettings());
@@ -426,11 +429,12 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
                       })
                   .build());
     } else {
-      String defaultEndpoint = BigtableInstanceAdminSettings.newBuilder()
-          .setProjectId(getProjectId())
-          .build()
-          .getStubSettings()
-          .getEndpoint();
+      String defaultEndpoint =
+          BigtableInstanceAdminSettings.newBuilder()
+              .setProjectId(getProjectId())
+              .build()
+              .getStubSettings()
+              .getEndpoint();
       adminBuilder = BigtableInstanceAdminSettings.newBuilder();
       configureConnection(adminBuilder.stubSettings(), BIGTABLE_ADMIN_HOST_KEY, defaultEndpoint);
       configureCredentialProvider(adminBuilder.stubSettings());
@@ -442,7 +446,8 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     return adminBuilder.build();
   }
 
-  private void configureConnection(StubSettings.Builder<?, ?> stubSettings, String endpointKey, String defaultEndpoint) {
+  private void configureConnection(
+      StubSettings.Builder<?, ?> stubSettings, String endpointKey, String defaultEndpoint) {
     String defaultHostname = defaultEndpoint.substring(0, defaultEndpoint.lastIndexOf(':'));
     String defaultPort = defaultEndpoint.substring(defaultEndpoint.lastIndexOf(':') + 1);
 

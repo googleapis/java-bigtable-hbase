@@ -125,11 +125,13 @@ public class TestBulkMutationVeneerApi {
 
   @Test
   public void testWhenBatcherIsClosed() throws IOException {
-    BatchingSettings batchingSettings = BatchingSettings.newBuilder()
+    BatchingSettings batchingSettings =
+        BatchingSettings.newBuilder()
             .setFlowControlSettings(
                 FlowControlSettings.newBuilder()
-                  .setLimitExceededBehavior(LimitExceededBehavior.Ignore).build())
-                .build();
+                    .setLimitExceededBehavior(LimitExceededBehavior.Ignore)
+                    .build())
+            .build();
 
     BatchingDescriptor mockBatchingDescriptor = mock(BatchingDescriptor.class);
 
@@ -146,11 +148,7 @@ public class TestBulkMutationVeneerApi {
     @SuppressWarnings("unchecked")
     Batcher<RowMutationEntry, Void> actualBatcher =
         new BatcherImpl(
-            mockBatchingDescriptor,
-            unaryCallable,
-            new Object(),
-            batchingSettings,
-            executor);
+            mockBatchingDescriptor, unaryCallable, new Object(), batchingSettings, executor);
     BulkMutationWrapper underTest = new BulkMutationVeneerApi(actualBatcher, 0);
     underTest.close();
     executor.shutdownNow();
