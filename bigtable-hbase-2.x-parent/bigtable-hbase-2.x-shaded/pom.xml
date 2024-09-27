@@ -395,6 +395,7 @@ limitations under the License.
               <ignoredDependencies>
                 <dependency>io.opentelemetry:opentelemetry-api</dependency>
                 <dependency>io.opentelemetry:opentelemetry-context</dependency>
+                <dependency>io.opentelemetry:opentelemetry-semconv</dependency>
               </ignoredDependencies>
             </configuration>
           </execution>
