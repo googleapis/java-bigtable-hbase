@@ -41,6 +41,7 @@ import com.google.api.gax.rpc.UnaryCallable;
 import com.google.cloud.bigtable.data.v2.models.RowMutationEntry;
 import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
 import java.io.IOException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import org.junit.Before;
 import org.junit.Rule;
@@ -124,12 +125,11 @@ public class TestBulkMutationVeneerApi {
 
   @Test
   public void testWhenBatcherIsClosed() throws IOException {
-    BatchingSettings batchingSettings = mock(BatchingSettings.class);
-    FlowControlSettings flowControlSettings =
-        FlowControlSettings.newBuilder()
-            .setLimitExceededBehavior(LimitExceededBehavior.Ignore)
-            .build();
-    when(batchingSettings.getFlowControlSettings()).thenReturn(flowControlSettings);
+    BatchingSettings batchingSettings = BatchingSettings.newBuilder()
+            .setFlowControlSettings(
+                FlowControlSettings.newBuilder()
+                  .setLimitExceededBehavior(LimitExceededBehavior.Ignore).build())
+                .build();
 
     BatchingDescriptor mockBatchingDescriptor = mock(BatchingDescriptor.class);
 
@@ -141,6 +141,8 @@ public class TestBulkMutationVeneerApi {
     when(unaryCallable.futureCall(any(), any()))
         .thenReturn(ApiFutures.immediateFuture(new Object()));
 
+    ScheduledExecutorService executor = Executors.newScheduledThreadPool(0);
+
     @SuppressWarnings("unchecked")
     Batcher<RowMutationEntry, Void> actualBatcher =
         new BatcherImpl(
@@ -148,9 +150,10 @@ public class TestBulkMutationVeneerApi {
             unaryCallable,
             new Object(),
             batchingSettings,
-            mock(ScheduledExecutorService.class));
+            executor);
     BulkMutationWrapper underTest = new BulkMutationVeneerApi(actualBatcher, 0);
     underTest.close();
+    executor.shutdownNow();
 
     Exception actualEx = null;
     try {
