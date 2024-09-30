@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.14.4](https://github.com/googleapis/java-bigtable-hbase/compare/v2.14.3...v2.14.4) (2024-09-30)
+
+
+### Dependencies
+
+* upgrade beam to 2.58.0 ([#4436](https://github.com/googleapis/java-bigtable-hbase/issues/4436)) ([a5064db](https://github.com/googleapis/java-bigtable-hbase/commit/a5064db603073f7b47de6ac698c8abfe13cc7fa4))
+* upgrade java-bigtable to 2.44.1 ([#4445](https://github.com/googleapis/java-bigtable-hbase/issues/4445)) ([ae7b9d8](https://github.com/googleapis/java-bigtable-hbase/commit/ae7b9d86ab720656b3084ccb52a1cd6916320bd7))
+
 ## [2.14.3](https://github.com/googleapis/java-bigtable-hbase/compare/v2.14.2...v2.14.3) (2024-07-29)
 
 
