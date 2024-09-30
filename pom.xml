@@ -32,7 +32,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud</groupId>
     <artifactId>google-cloud-shared-config</artifactId>
-    <version>1.7.7</version>
+    <version>1.11.1</version>
   </parent>
 
   <licenses>
@@ -55,7 +55,7 @@ limitations under the License.
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- core dependency versions -->
-    <bigtable.version>2.39.2</bigtable.version>
+    <bigtable.version>2.44.1</bigtable.version>
     <google-cloud-bigtable-emulator.version>0.175.0</google-cloud-bigtable-emulator.version>
     <bigtable-metrics-api.version>1.29.2</bigtable-metrics-api.version>
     <!-- Optional dep for bigtable-metrics-api used for tests -->
