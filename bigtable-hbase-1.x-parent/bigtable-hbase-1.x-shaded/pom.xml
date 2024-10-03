@@ -164,6 +164,22 @@ limitations under the License.
   </dependencies>
 
   <build>
+    <pluginManagement>
+      <plugins>
+        <!-- TODO: remove this next release -->
+        <!-- Temporarily disable requireUpperBoundDeps
+            rule to downgrade bad grpc release:
+             https://github.com/grpc/grpc-java/releases/tag/v1.68.0-->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <configuration>
+            <rulesToSkip>requireUpperBoundDeps</rulesToSkip>
+            <failIfNoRules>false</failIfNoRules>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
     <plugins>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>

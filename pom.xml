@@ -55,7 +55,7 @@ limitations under the License.
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- core dependency versions -->
-    <bigtable.version>2.44.1</bigtable.version>
+    <bigtable.version>2.45.0</bigtable.version>
     <google-cloud-bigtable-emulator.version>0.175.0</google-cloud-bigtable-emulator.version>
     <bigtable-metrics-api.version>1.29.2</bigtable-metrics-api.version>
     <!-- Optional dep for bigtable-metrics-api used for tests -->
