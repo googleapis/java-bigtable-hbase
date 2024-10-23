@@ -240,6 +240,12 @@ public class TestBigtableHBaseVeneerSettings {
     assertEquals(
         Optional.of(Duration.ofMillis(perRowTimeoutMs)),
         settings.getClientTimeouts().getScanTimeouts().getResponseTimeout());
+    assertEquals(
+        Optional.of(Duration.ofMillis(rpcTimeoutMs)),
+        settings.getClientTimeouts().getSampleRowKeysTimeouts().getOperationTimeout());
+    assertEquals(
+        Optional.of(Duration.ofMillis(rpcAttemptTimeoutMs)),
+        settings.getClientTimeouts().getSampleRowKeysTimeouts().getAttemptTimeout());
 
     RetrySettings readRowRetrySettings =
         dataSettings.getStubSettings().readRowSettings().getRetrySettings();
@@ -262,6 +268,13 @@ public class TestBigtableHBaseVeneerSettings {
     assertEquals(perRowTimeoutMs, readRowsRetrySettings.getMaxRpcTimeout().toMillis());
     assertEquals(maxAttempt, readRowsRetrySettings.getMaxAttempts());
     assertEquals(readRowStreamTimeout, readRowsRetrySettings.getTotalTimeout().toMillis());
+
+    RetrySettings sampleRowKeysRetrySettings =
+        dataSettings.getStubSettings().sampleRowKeysSettings().getRetrySettings();
+    assertEquals(initialElapsedMs, sampleRowKeysRetrySettings.getInitialRetryDelay().toMillis());
+    assertEquals(rpcTimeoutMs, sampleRowKeysRetrySettings.getTotalTimeout().toMillis());
+    assertEquals(rpcAttemptTimeoutMs, sampleRowKeysRetrySettings.getInitialRpcTimeout().toMillis());
+    assertEquals(rpcAttemptTimeoutMs, sampleRowKeysRetrySettings.getMaxRpcTimeout().toMillis());
   }
 
   @Test
