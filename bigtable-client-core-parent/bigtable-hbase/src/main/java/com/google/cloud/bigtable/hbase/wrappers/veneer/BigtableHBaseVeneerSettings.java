@@ -136,6 +136,10 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
           /* bulkMutateTimeouts = */ new OperationTimeouts(
               Optional.absent(),
               Optional.of(Duration.ofMinutes(1)),
+              Optional.of(Duration.ofMinutes(10))),
+          /* sampleRowKeysTimeouts = */ new OperationTimeouts(
+              Optional.absent(),
+              Optional.of(Duration.ofMinutes(5)),
               Optional.of(Duration.ofMinutes(10))));
   private static final int MAX_CONSECUTIVE_SCAN_ATTEMPTS = 10;
 
@@ -348,7 +352,8 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     configureRetryableCallSettings(
         dataBuilder.stubSettings().readRowSettings(), clientTimeouts.getUnaryTimeouts());
     configureRetryableCallSettings(
-        dataBuilder.stubSettings().sampleRowKeysSettings(), clientTimeouts.getUnaryTimeouts());
+        dataBuilder.stubSettings().sampleRowKeysSettings(),
+        clientTimeouts.getSampleRowKeysTimeouts());
 
     if (!configuration.getBoolean(BIGTABLE_ENABLE_CLIENT_SIDE_METRICS, true)) {
       dataBuilder.setMetricsProvider(NoopMetricsProvider.INSTANCE);
@@ -866,7 +871,16 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
             extractDuration(BIGTABLE_RPC_TIMEOUT_MS_KEY, MAX_ELAPSED_BACKOFF_MILLIS_KEY)
                 .or(DEFAULT_TIMEOUTS.unaryTimeouts.operationTimeout));
 
-    return new ClientOperationTimeouts(unaryTimeouts, scanTimeouts, bulkMutateTimeouts);
+    OperationTimeouts sampleRowKeysTimeouts =
+        new OperationTimeouts(
+            DEFAULT_TIMEOUTS.sampleRowKeysTimeouts.responseTimeout,
+            extractDuration(BIGTABLE_RPC_ATTEMPT_TIMEOUT_MS_KEY)
+                .or(DEFAULT_TIMEOUTS.sampleRowKeysTimeouts.attemptTimeout),
+            extractDuration(BIGTABLE_RPC_TIMEOUT_MS_KEY, MAX_ELAPSED_BACKOFF_MILLIS_KEY)
+                .or(DEFAULT_TIMEOUTS.sampleRowKeysTimeouts.operationTimeout));
+
+    return new ClientOperationTimeouts(
+        unaryTimeouts, scanTimeouts, bulkMutateTimeouts, sampleRowKeysTimeouts);
   }
 
   private Optional<Duration> extractDuration(String... keys) {
@@ -911,19 +925,25 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
     static final ClientOperationTimeouts EMPTY =
         new ClientOperationTimeouts(
-            OperationTimeouts.EMPTY, OperationTimeouts.EMPTY, OperationTimeouts.EMPTY);
+            OperationTimeouts.EMPTY,
+            OperationTimeouts.EMPTY,
+            OperationTimeouts.EMPTY,
+            OperationTimeouts.EMPTY);
 
     private final OperationTimeouts unaryTimeouts;
     private final OperationTimeouts scanTimeouts;
     private final OperationTimeouts bulkMutateTimeouts;
+    private final OperationTimeouts sampleRowKeysTimeouts;
 
     public ClientOperationTimeouts(
         OperationTimeouts unaryTimeouts,
         OperationTimeouts scanTimeouts,
-        OperationTimeouts bulkMutateTimeouts) {
+        OperationTimeouts bulkMutateTimeouts,
+        OperationTimeouts sampleRowKeysTimeouts) {
       this.unaryTimeouts = unaryTimeouts;
       this.scanTimeouts = scanTimeouts;
       this.bulkMutateTimeouts = bulkMutateTimeouts;
+      this.sampleRowKeysTimeouts = sampleRowKeysTimeouts;
     }
 
     public OperationTimeouts getUnaryTimeouts() {
@@ -936,6 +956,10 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
     public OperationTimeouts getBulkMutateTimeouts() {
       return bulkMutateTimeouts;
+    }
+
+    public OperationTimeouts getSampleRowKeysTimeouts() {
+      return sampleRowKeysTimeouts;
     }
   }
 
