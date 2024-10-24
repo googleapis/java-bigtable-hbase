@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.14.6](https://github.com/googleapis/java-bigtable-hbase/compare/v2.14.5...v2.14.6) (2024-10-23)
+
+
+### Bug Fixes
+
+* Bring SampleRowKeys default timeout closer in line to the Veneer… ([#4451](https://github.com/googleapis/java-bigtable-hbase/issues/4451)) ([94ab74d](https://github.com/googleapis/java-bigtable-hbase/commit/94ab74d333f4b74b368fa019d97ce9c9b938e148))
+
 ## [2.14.5](https://github.com/googleapis/java-bigtable-hbase/compare/v2.14.4...v2.14.5) (2024-10-03)
 
 
