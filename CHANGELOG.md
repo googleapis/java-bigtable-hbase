@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.14.7](https://github.com/googleapis/java-bigtable-hbase/compare/v2.14.6...v2.14.7) (2024-11-20)
+
+
+### Dependencies
+
+* update google-cloud-bigtable dependencies ([#4288](https://github.com/googleapis/java-bigtable-hbase/issues/4288)) ([46e63f0](https://github.com/googleapis/java-bigtable-hbase/commit/46e63f0482ab341aac27b759ae4867d1e0b01426))
+
 ## [2.14.6](https://github.com/googleapis/java-bigtable-hbase/compare/v2.14.5...v2.14.6) (2024-10-23)
 
 
