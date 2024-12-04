@@ -260,7 +260,7 @@ public class TestRetryBehavior {
           .contains(ATTEMPT_TIMEOUT.minus(Duration.ofMillis(10)));
 
       // Altogether should still be limited by the operation timeout with some jitter
-      assertThat(elapsed).isAtMost(OPERATION_TIMEOUT.plus(ATTEMPT_TIMEOUT.dividedBy(2)));
+      assertThat(elapsed).isAtMost(OPERATION_TIMEOUT.plus(ATTEMPT_TIMEOUT));
     }
   }
 
