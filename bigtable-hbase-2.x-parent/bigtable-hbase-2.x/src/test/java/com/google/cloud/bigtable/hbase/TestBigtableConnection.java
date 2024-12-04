@@ -206,6 +206,7 @@ public class TestBigtableConnection {
     public void pingAndWarm(
         PingAndWarmRequest request, StreamObserver<PingAndWarmResponse> responseObserver) {
       responseObserver.onNext(PingAndWarmResponse.getDefaultInstance());
+      responseObserver.onCompleted();
     }
 
     @Override
