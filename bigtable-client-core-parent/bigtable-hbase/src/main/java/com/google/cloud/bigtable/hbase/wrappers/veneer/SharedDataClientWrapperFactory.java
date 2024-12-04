@@ -15,17 +15,12 @@
  */
 package com.google.cloud.bigtable.hbase.wrappers.veneer;
 
-import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.CredentialsProvider;
-import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.api.gax.core.FixedExecutorProvider;
+import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.rpc.ClientContext;
-import com.google.api.gax.rpc.FixedHeaderProvider;
-import com.google.api.gax.rpc.FixedTransportChannelProvider;
-import com.google.api.gax.rpc.FixedWatchdogProvider;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
+import com.google.cloud.bigtable.data.v2.BigtableDataClientFactory;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
-import com.google.cloud.bigtable.data.v2.BigtableDataSettings.Builder;
 import com.google.cloud.bigtable.data.v2.stub.EnhancedBigtableStubSettings;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import com.google.cloud.bigtable.metrics.BigtableClientMetrics;
@@ -41,7 +36,7 @@ import java.util.Map;
  * <p>This class is meant to support channel pool caching feature.
  */
 class SharedDataClientWrapperFactory {
-  private final Map<Key, ClientContext> cachedContexts = new HashMap<>();
+  private final Map<Key, BigtableDataClientFactory> cachedContexts = new HashMap<>();
   private final Map<Key, Integer> refCounts = new HashMap<>();
 
   private final Map<Key, Integer> channelPoolSizes = new HashMap<>();
@@ -52,13 +47,14 @@ class SharedDataClientWrapperFactory {
     Key key = Key.createFromSettings(settings.getDataSettings());
 
     // Get or create ClientContext that will contained the shared resources
-    ClientContext sharedCtx = cachedContexts.get(key);
+    BigtableDataClientFactory sharedCtx = cachedContexts.get(key);
+
     if (sharedCtx == null) {
-      EnhancedBigtableStubSettings stubSettings = settings.getDataSettings().getStubSettings();
-      sharedCtx = ClientContext.create(stubSettings);
+      sharedCtx = BigtableDataClientFactory.create(settings.getDataSettings());
       cachedContexts.put(key, sharedCtx);
       refCounts.put(key, 0);
-      int channelPoolSize = BigtableVeneerApi.getChannelPoolSize(stubSettings);
+      int channelPoolSize =
+          BigtableVeneerApi.getChannelPoolSize(settings.getDataSettings().getStubSettings());
       for (int i = 0; i < channelPoolSize; i++) {
         BigtableClientMetrics.counter(MetricLevel.Info, "grpc.channel.active").inc();
       }
@@ -68,25 +64,17 @@ class SharedDataClientWrapperFactory {
     refCounts.put(key, refCounts.get(key) + 1);
 
     try {
-      // Patch settings to use shared resources
-      Builder builder = settings.getDataSettings().toBuilder();
-      builder
-          .stubSettings()
-          .setRefreshingChannel(false)
-          .setTransportChannelProvider(
-              FixedTransportChannelProvider.create(sharedCtx.getTransportChannel()))
-          .setCredentialsProvider(FixedCredentialsProvider.create(sharedCtx.getCredentials()))
-          .setExecutorProvider(FixedExecutorProvider.create(sharedCtx.getExecutor()))
-          .setStreamWatchdogProvider(FixedWatchdogProvider.create(sharedCtx.getStreamWatchdog()))
-          .setHeaderProvider(FixedHeaderProvider.create(sharedCtx.getHeaders()))
-          .setClock(sharedCtx.getClock());
-
-      BigtableDataSettings data = builder.build();
+      final BigtableDataClient client;
+      if (settings.getAppProfileId() == null) {
+        client = sharedCtx.createForInstance(settings.getProjectId(), settings.getInstanceId());
+      } else {
+        client =
+            sharedCtx.createForInstance(
+                settings.getProjectId(), settings.getInstanceId(), settings.getAppProfileId());
+      }
       // Create a reference counted client wrapper
       return new SharedDataClientWrapper(
-          this,
-          key,
-          new DataClientVeneerApi(BigtableDataClient.create(data), settings.getClientTimeouts()));
+          this, key, new DataClientVeneerApi(client, settings.getClientTimeouts()));
     } catch (IOException | RuntimeException e) {
       release(key);
       throw e;
@@ -101,13 +89,15 @@ class SharedDataClientWrapperFactory {
     }
 
     refCounts.remove(key);
-    ClientContext clientContext = cachedContexts.remove(key);
+    BigtableDataClientFactory clientContext = cachedContexts.remove(key);
     for (int i = 0; i < channelPoolSizes.get(key); i++) {
       BigtableClientMetrics.counter(MetricLevel.Info, "grpc.channel.active").dec();
     }
     channelPoolSizes.remove(key);
-    for (BackgroundResource resource : clientContext.getBackgroundResources()) {
-      resource.shutdown();
+    try {
+      clientContext.close();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -119,23 +109,24 @@ class SharedDataClientWrapperFactory {
    * compatible with a ClientContext required by {@link BigtableDataSettings}.
    */
   static final class Key {
+    private static final NoCredentialsProvider NO_CREDENTIALS_PROVIDER_INSTANCE =
+        NoCredentialsProvider.create();
     private final String endpoint;
-    private final Map<String, String> headers;
     private final CredentialsProvider credentialsProvider;
 
     static Key createFromSettings(BigtableDataSettings settings) {
       EnhancedBigtableStubSettings stubSettings = settings.getStubSettings();
+      CredentialsProvider effectiveCredProvider = stubSettings.getCredentialsProvider();
+      // NoCredentialsProvider doesnt implement equals, but all instances are equivalent
+      if (effectiveCredProvider instanceof NoCredentialsProvider) {
+        effectiveCredProvider = NO_CREDENTIALS_PROVIDER_INSTANCE;
+      }
 
-      return new Key(
-          stubSettings.getEndpoint(),
-          stubSettings.getHeaderProvider().getHeaders(),
-          stubSettings.getCredentialsProvider());
+      return new Key(stubSettings.getEndpoint(), effectiveCredProvider);
     }
 
-    private Key(
-        String endpoint, Map<String, String> headers, CredentialsProvider credentialsProvider) {
+    private Key(String endpoint, CredentialsProvider credentialsProvider) {
       this.endpoint = endpoint;
-      this.headers = headers;
       this.credentialsProvider = credentialsProvider;
     }
 
@@ -149,13 +140,12 @@ class SharedDataClientWrapperFactory {
       }
       Key key = (Key) o;
       return Objects.equal(endpoint, key.endpoint)
-          && Objects.equal(headers, key.headers)
           && Objects.equal(credentialsProvider, key.credentialsProvider);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(endpoint, headers, credentialsProvider);
+      return Objects.hashCode(endpoint, credentialsProvider);
     }
   }
 }

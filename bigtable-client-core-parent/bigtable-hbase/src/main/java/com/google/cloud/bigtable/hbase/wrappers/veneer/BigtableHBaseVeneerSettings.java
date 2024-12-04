@@ -64,6 +64,7 @@ import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.FlowControlSettings;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
+import com.google.api.gax.grpc.ChannelPoolSettings;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.ServerStreamingCallSettings;
@@ -301,6 +302,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       String host = emulatorEndpoint.get().substring(0, split);
       int port = Integer.parseInt(emulatorEndpoint.get().substring(split + 1));
       dataBuilder = BigtableDataSettings.newBuilderForEmulator(host, port);
+      configureConnection(dataBuilder.stubSettings(), BIGTABLE_HOST_KEY, emulatorEndpoint.get());
     } else {
       String endpoint =
           BigtableDataSettings.newBuilder()
@@ -500,7 +502,8 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     if (endpointKey.equals(BIGTABLE_HOST_KEY)) {
       String channelCount = configuration.get(BIGTABLE_DATA_CHANNEL_COUNT_KEY);
       if (!Strings.isNullOrEmpty(channelCount)) {
-        channelProvider.setPoolSize(Integer.parseInt(channelCount));
+        channelProvider.setChannelPoolSettings(
+            ChannelPoolSettings.staticallySized(Integer.parseInt(channelCount)));
       }
     }
 
@@ -511,14 +514,11 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
           channelProvider.getChannelConfigurator();
 
       channelProvider.setChannelConfigurator(
-          new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
-            @Override
-            public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-              if (prevConfigurator != null) {
-                channelBuilder = prevConfigurator.apply(channelBuilder);
-              }
-              return channelBuilder.executor(null);
+          channelBuilder -> {
+            if (prevConfigurator != null) {
+              channelBuilder = prevConfigurator.apply(channelBuilder);
             }
+            return channelBuilder.executor(null);
           });
     }
 
