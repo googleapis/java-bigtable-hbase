@@ -276,8 +276,10 @@ public abstract class AbstractBigtableTable implements Table {
 
   private RetriesExhaustedWithDetailsException createRetriesExhaustedWithDetailsException(
       Throwable e, Row action) {
-    return new RetriesExhaustedWithDetailsException(
-        Arrays.asList(e), Arrays.asList(action), Arrays.asList(settings.getDataHost()));
+    return (RetriesExhaustedWithDetailsException)
+        new RetriesExhaustedWithDetailsException(
+                Arrays.asList(e), Arrays.asList(action), Arrays.asList(settings.getDataHost()))
+            .initCause(e);
   }
 
   /** {@inheritDoc} */
