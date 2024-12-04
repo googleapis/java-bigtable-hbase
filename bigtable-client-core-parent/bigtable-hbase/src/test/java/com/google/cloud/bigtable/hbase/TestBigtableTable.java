@@ -21,6 +21,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doAnswer;
@@ -41,6 +42,8 @@ import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -55,6 +58,7 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.coprocessor.Batch.Call;
@@ -415,5 +419,28 @@ public class TestBigtableTable {
     assertThat(abstractTableToStr, containsString("instance=" + TEST_INSTANCE));
     assertThat(abstractTableToStr, containsString("table=" + TEST_TABLE));
     assertThat(abstractTableToStr, containsString("host=" + "localhost"));
+  }
+
+  @Test
+  public void testExceptions() {
+    Exception exception =
+        new StatusRuntimeException(Status.DEADLINE_EXCEEDED.withCause(new Throwable("test cause")));
+    when(mockBigtableDataClient.readRowAsync(
+            isA(String.class), isA(ByteString.class), isA(Filters.Filter.class)))
+        .thenThrow(exception);
+
+    RetriesExhaustedWithDetailsException exhaustedWithDetailsException =
+        assertThrows(
+            RetriesExhaustedWithDetailsException.class,
+            () ->
+                table.get(
+                    new Get(Bytes.toBytes("rowKey1"))
+                        .addColumn(Bytes.toBytes("family"), Bytes.toBytes("qualifier"))));
+
+    assertThat(
+        exhaustedWithDetailsException.getCause().getMessage(), containsString("DEADLINE_EXCEEDED"));
+    assertThat(
+        exhaustedWithDetailsException.getCause().getCause().getMessage(),
+        containsString("test cause"));
   }
 }
