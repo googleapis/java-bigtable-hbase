@@ -16,7 +16,7 @@
 package com.google.cloud.bigtable.hbase1_x;
 
 import static com.google.common.truth.Truth.assertAbout;
-import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.auth.Credentials;
@@ -61,7 +61,6 @@ import org.apache.hadoop.hbase.shaded.org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -179,7 +178,7 @@ public class TestMetrics {
   }
 
   @Test
-  public void rowMutations() throws IOException {
+  public void rowMutations() throws IOException, InterruptedException {
     Table table = connection.getTable(TABLE_NAME);
 
     RowMutations row = new RowMutations(rowKey);
@@ -190,14 +189,13 @@ public class TestMetrics {
     long methodInvocationLatency = stopwatch.elapsed(TimeUnit.MILLISECONDS);
 
     fakeDataService.popLastRequest();
-    long latency =
-        fakeMetricRegistry
-            .results
-            .get("google-cloud-bigtable.grpc.method.MutateRow.rpc.latency")
-            .get();
-    assertThat(latency)
-        .isIn(
-            Range.closed(fakeDataService.getMutateRowServerSideLatency(), methodInvocationLatency));
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .eventuallyHasMetricThat(
+            "google-cloud-bigtable.grpc.method.MutateRow.rpc.latency",
+            s ->
+                s.isIn(
+                    Range.closed(
+                        fakeDataService.getMutateRowServerSideLatency(), methodInvocationLatency)));
   }
 
   @Test
@@ -209,7 +207,7 @@ public class TestMetrics {
       append.add(columnFamily, qualifier, value);
 
       Stopwatch stopwatch = Stopwatch.createStarted();
-      Assert.assertThrows(Exception.class, () -> table.append(append));
+      assertThrows(Exception.class, () -> table.append(append));
       methodInvocationLatency = stopwatch.elapsed(TimeUnit.MILLISECONDS);
     }
 
@@ -232,12 +230,15 @@ public class TestMetrics {
   @Test
   public void testScanMetrics() throws IOException, InterruptedException {
     Scan scan = new Scan().withStartRow(rowKey).withStopRow(rowKey, true);
-    Stopwatch stopwatch = Stopwatch.createStarted();
-    try (Table table = connection.getTable(TABLE_NAME);
-        ResultScanner s = table.getScanner(scan)) {
-      s.next();
+
+    final long methodInvocationLatency;
+    try (Table table = connection.getTable(TABLE_NAME)) {
+      Stopwatch stopwatch = Stopwatch.createStarted();
+      try (ResultScanner s = table.getScanner(scan)) {
+        s.next();
+      }
+      methodInvocationLatency = stopwatch.elapsed(TimeUnit.MILLISECONDS);
     }
-    long methodInvocationLatency = stopwatch.elapsed(TimeUnit.MILLISECONDS);
 
     fakeDataService.popLastRequest();
 
@@ -252,12 +253,15 @@ public class TestMetrics {
   @Test
   public void testFirstResponseLatency() throws IOException, InterruptedException {
     Scan scan = new Scan().withStartRow(rowKey).withStopRow(rowKey, true);
-    Stopwatch stopwatch = Stopwatch.createStarted();
-    try (Table table = connection.getTable(TABLE_NAME);
-        ResultScanner s = table.getScanner(scan)) {
-      s.next();
+    final long methodInvocationLatency;
+
+    try (Table table = connection.getTable(TABLE_NAME)) {
+      Stopwatch stopwatch = Stopwatch.createStarted();
+      try (ResultScanner s = table.getScanner(scan)) {
+        s.next();
+        methodInvocationLatency = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+      }
     }
-    long methodInvocationLatency = stopwatch.elapsed(TimeUnit.MILLISECONDS);
 
     fakeDataService.popLastRequest();
 
@@ -271,13 +275,10 @@ public class TestMetrics {
   public void testActiveSessionsAndChannels() throws IOException {
     // There should already be 1 active session and 1 channel from connection (connecting to
     // emulator will set pool size to 1)
-    long currentActiveSessions =
-        fakeMetricRegistry.results.get("google-cloud-bigtable.session.active").get();
-    long currentActiveChannels =
-        fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.channel.active").get();
-
-    assertThat(currentActiveSessions).isEqualTo(1);
-    assertThat(currentActiveChannels).isEqualTo(1);
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .hasMetric("google-cloud-bigtable.session.active", 1);
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .hasMetric("google-cloud-bigtable.grpc.channel.active", 1);
 
     // Create a new session
     int connectionCount = 10;
@@ -317,29 +318,27 @@ public class TestMetrics {
     Credentials credentials = NoCredentialsProvider.create().getCredentials();
     configuration = BigtableConfiguration.withCredentials(configuration, credentials);
 
-    BigtableConnection sharedConnection1 = new BigtableConnection(configuration);
-    BigtableConnection sharedConnection2 = new BigtableConnection(configuration);
-
-    // sharedConnection1 and 2 should share channels, plus the 1 that's created in setup
-    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
-        .hasMetric("google-cloud-bigtable.grpc.channel.active", connectionCount + 1);
-
-    // closing one shared bigtable connection shouldn't decrement shared channels count
-    sharedConnection1.close();
-    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
-        .hasMetric("google-cloud-bigtable.grpc.channel.active", connectionCount + 1);
-
+    try (BigtableConnection sharedConnection1 = new BigtableConnection(configuration)) {
+      try (BigtableConnection sharedConnection2 = new BigtableConnection(configuration)) {
+        // sharedConnection 1 and 2 should share channels, plus the 1 that's created in setup
+        MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+            .hasMetric("google-cloud-bigtable.grpc.channel.active", connectionCount + 1);
+      }
+      // closing one shared bigtable connection shouldn't decrement shared channels count
+      MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+          .hasMetric("google-cloud-bigtable.grpc.channel.active", connectionCount + 1);
+    }
     // Active channels should be 1 after both shared bigtable connections are closed
-    sharedConnection2.close();
     MetricsRegistrySubject.assertThat(fakeMetricRegistry)
         .hasMetric("google-cloud-bigtable.grpc.channel.active", 1);
   }
 
   @Test
   public void testBulkMutationMetrics() throws IOException, InterruptedException {
+    final int entries = 20;
+
     try (Table table = connection.getTable(TABLE_NAME)) {
       List<Row> rows = new ArrayList<>();
-      int entries = 20;
       for (int i = 0; i < entries; i++) {
         rows.add(
             new Put(Bytes.toBytes(RandomStringUtils.random(8)))
@@ -347,11 +346,10 @@ public class TestMetrics {
       }
       Object[] resultsOrErrors = new Object[rows.size()];
       table.batch(rows, resultsOrErrors);
-
-      MetricsRegistrySubject.assertThat(fakeMetricRegistry)
-          .eventuallyHasMetricThat(
-              "google-cloud-bigtable.bulk-mutator.mutations.added", s -> s.isEqualTo(entries));
     }
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .eventuallyHasMetricThat(
+            "google-cloud-bigtable.bulk-mutator.mutations.added", s -> s.isEqualTo(entries));
   }
 
   private static class FakeDataService extends BigtableGrpc.BigtableImplBase {

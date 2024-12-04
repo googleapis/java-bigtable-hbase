@@ -16,6 +16,8 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.bigtable.v2.BigtableGrpc;
+import com.google.bigtable.v2.PingAndWarmRequest;
+import com.google.bigtable.v2.PingAndWarmResponse;
 import com.google.bigtable.v2.SampleRowKeysRequest;
 import com.google.bigtable.v2.SampleRowKeysResponse;
 import com.google.cloud.bigtable.hbase2_x.BigtableConnection;
@@ -73,19 +75,27 @@ public class TestBigtableConnection {
 
   @Test
   public void testTable() throws IOException {
+    Server server = createFakeServer();
+
     Configuration conf = BigtableConfiguration.configure("projectId", "instanceId", "appProfileId");
+    conf.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + server.getPort());
     conf.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
     conf.set(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, "false");
     try (BigtableConnection connection = new BigtableConnection(conf)) {
       Admin admin = connection.getAdmin();
       Table table = connection.getTable(TableName.valueOf("someTable"));
       BufferedMutator mutator = connection.getBufferedMutator(TableName.valueOf("someTable"));
+    } finally {
+      server.shutdown();
     }
   }
 
   @Test
   public void testHbckErrorDeferred() throws IOException {
+    Server server = createFakeServer();
+
     Configuration conf = BigtableConfiguration.configure("projectId", "instanceId", "appProfileId");
+    conf.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + server.getPort());
     conf.setInt(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, 1);
     conf.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
     conf.set(BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY, "false");
@@ -116,25 +126,23 @@ public class TestBigtableConnection {
       Assert.assertNotEquals(hbck1.hashCode(), hbck2.hashCode());
 
       Assert.assertEquals("UnsupportedHbck", hbck1.toString());
+    } finally {
+      server.shutdown();
     }
   }
 
   @Test
   public void testGetRegionLocation() throws IOException {
-    FakeDataService fakeDataService = new FakeDataService();
-    int dataPort;
-    try (ServerSocket s = new ServerSocket(0)) {
-      dataPort = s.getLocalPort();
-    }
-    Server server = ServerBuilder.forPort(dataPort).addService(fakeDataService).build();
-    server.start();
+    Server server = createFakeServer();
 
     Configuration configuration = new Configuration(false);
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, "project_id");
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, "instance_id");
     configuration.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
     configuration.set(BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, "1");
-    configuration.set(BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + dataPort);
+    configuration.set(
+        BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + server.getPort());
+
     try (BigtableConnection connection = new BigtableConnection(configuration)) {
       RegionLocator regionLocator = connection.getRegionLocator(TableName.valueOf("table_id"));
 
@@ -162,7 +170,28 @@ public class TestBigtableConnection {
       regionLocation = regionLocator.getRegionLocation("zzz".getBytes());
       Assert.assertEquals("z", Bytes.toString(regionLocation.getRegion().getStartKey()));
       Assert.assertEquals("", Bytes.toString(regionLocation.getRegion().getEndKey()));
+    } finally {
+      server.shutdown();
     }
+  }
+
+  static Server createFakeServer() throws IOException {
+    Server server = null;
+    for (int i = 10; i >= 0; i--) {
+      int port;
+      try (ServerSocket ss = new ServerSocket(0)) {
+        port = ss.getLocalPort();
+      }
+      try {
+        return ServerBuilder.forPort(port).addService(new FakeDataService()).build().start();
+      } catch (IOException e) {
+        if (i == 0) {
+          throw e;
+        }
+      }
+    }
+
+    throw new IllegalStateException("This should never happen");
   }
 
   private static class FakeDataService extends BigtableGrpc.BigtableImplBase {
@@ -171,6 +200,12 @@ public class TestBigtableConnection {
     @SuppressWarnings("unchecked")
     <T> T popLastRequest() throws InterruptedException {
       return (T) requests.poll(1, TimeUnit.SECONDS);
+    }
+
+    @Override
+    public void pingAndWarm(
+        PingAndWarmRequest request, StreamObserver<PingAndWarmResponse> responseObserver) {
+      responseObserver.onNext(PingAndWarmResponse.getDefaultInstance());
     }
 
     @Override
