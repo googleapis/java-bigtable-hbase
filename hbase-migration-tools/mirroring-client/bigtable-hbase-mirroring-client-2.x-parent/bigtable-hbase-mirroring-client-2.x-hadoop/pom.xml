@@ -20,12 +20,12 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-mirroring-client-2.x-parent</artifactId>
-    <version>0.9.8</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+    <version>0.9.9-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-mirroring-client-2.x-hadoop</artifactId>
   <packaging>jar</packaging>
-  <version>0.9.8</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+  <version>0.9.9-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
 
   <name>${project.groupId}:${project.artifactId}</name>
   <description>
@@ -54,7 +54,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-mirroring-client-2.x-shaded</artifactId>
-      <version>0.9.8</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+      <version>0.9.9-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
       <scope>compile</scope>
       <exclusions>
         <!-- hbase-shaded-client will be replaced with hbase-client -->
@@ -162,7 +162,7 @@ limitations under the License.
       <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>
         <artifactId>bigtable-build-helper</artifactId>
-        <version>2.14.8</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+        <version>2.14.9-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
 
         <executions>
           <execution>
