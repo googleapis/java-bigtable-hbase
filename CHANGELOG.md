@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.14.8](https://github.com/googleapis/java-bigtable-hbase/compare/v2.14.7...v2.14.8) (2024-12-05)
+
+
+### Dependencies
+
+* upgrade java-bigtable to 2.49.0 and fix tests ([#4462](https://github.com/googleapis/java-bigtable-hbase/issues/4462)) ([5cda5b1](https://github.com/googleapis/java-bigtable-hbase/commit/5cda5b1f0288b8984d913c86bb00476502313217))
+
 ## [2.14.7](https://github.com/googleapis/java-bigtable-hbase/compare/v2.14.6...v2.14.7) (2024-11-20)
 
 
