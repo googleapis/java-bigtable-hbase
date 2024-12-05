@@ -48,7 +48,7 @@ public class TestProperties {
   }
 
   public String getProjectId() {
-    return projectId;
+    return "google.com:cloud-bigtable-dev";
   }
 
   public String getInstanceId() {
