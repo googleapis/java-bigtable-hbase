@@ -83,6 +83,7 @@ public class BulkMutationVeneerApi implements BulkMutationWrapper {
     } catch (InterruptedException | ExecutionException e) {
       throw new IOException("Could not close the bulk mutation Batcher", e);
     } catch (TimeoutException e) {
+      bulkMutateBatcher.cancelOutstanding();
       throw new IOException("Cloud not close the bulk mutation Batcher, timed out in close()", e);
     }
   }

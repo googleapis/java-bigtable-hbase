@@ -16,7 +16,9 @@
 package com.google.cloud.bigtable.mapreduce.validation;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
+import java.io.PrintStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -51,8 +53,9 @@ import org.apache.hadoop.util.ToolRunner;
  * hashes, cell-level comparison is performed.
  */
 public class BigtableSyncTableJob extends SyncTable {
-
   private static final Log LOG = LogFactory.getLog(BigtableSyncTableJob.class);
+  @VisibleForTesting PrintStream SOUT = System.out;
+  @VisibleForTesting PrintStream SERR = System.err;
 
   public static final String SOURCE_BT_PROJECTID_CONF_KEY = "sync.table.source.bt.projectid";
   public static final String SOURCE_BT_INSTANCE_CONF_KEY = "sync.table.source.bt.instance";
@@ -352,66 +355,66 @@ public class BigtableSyncTableJob extends SyncTable {
     return true;
   }
 
-  public static void printUsage(final String errorMsg, String[] args) {
+  public void printUsage(final String errorMsg, String[] args) {
     if (errorMsg != null && errorMsg.length() > 0) {
-      System.err.println("ERROR: " + errorMsg);
+      SERR.println("ERROR: " + errorMsg);
     }
 
     if (args != null) {
-      System.err.print("Input provided: ");
+      SERR.print("Input provided: ");
       for (int i = 0; i < args.length; i++) {
         if (i != 0) {
-          System.err.print(" ");
+          SERR.print(" ");
         }
-        System.err.print(args[i]);
+        SERR.print(args[i]);
       }
-      System.err.println();
+      SERR.println();
     }
 
-    System.err.println("Usage: SyncTable [options] <sourcehashdir> <sourcetable> <targettable>");
-    System.err.println();
-    System.err.println("Options:");
+    SERR.println("Usage: SyncTable [options] <sourcehashdir> <sourcetable> <targettable>");
+    SERR.println();
+    SERR.println("Options:");
 
-    System.err.println(" Source Configuration:");
-    System.err.println("    sourcezkcluster   ZK cluster key of the source table");
-    System.err.println("                      (defaults to cluster in classpath's config)");
-    System.err.println(" Or Source Configuration:");
-    System.err.println("    sourcebigtableproject  Bigtable project id of the source table");
-    System.err.println("                      (defaults to cluster in classpath's config)");
-    System.err.println("    sourcebigtableinstance  Bigtable instance id of the source table");
-    System.err.println("                      (defaults to cluster in classpath's config)");
-    System.err.println("    sourcebigtableappprofile  (optional) Bigtable app profile");
-    System.err.println(" Target Configuration:");
-    System.err.println("    targetzkcluster  ZK cluster key of the target table");
-    System.err.println("                      (defaults to cluster in classpath's config)");
-    System.err.println(" Or Target Configuration:");
-    System.err.println("    targetbigtableproject  Bigtable project id of the target table");
-    System.err.println("                      (defaults to cluster in classpath's config)");
-    System.err.println("    targetbigtableinstance  Bigtable instance id of the target table");
-    System.err.println("                      (defaults to cluster in classpath's config)");
-    System.err.println("    targetbigtableappprofile  (optional) Bigtable app profile");
-    System.err.println();
-    System.err.println(" dryrun           if true, output counters but no writes");
-    System.err.println("                  (defaults to true)");
-    System.err.println(" doDeletes        if false, does not perform deletes");
-    System.err.println("                  (defaults to true)");
-    System.err.println(" doPuts           if false, does not perform puts");
-    System.err.println("                  (defaults to true)");
-    System.err.println(" ignoreTimestamps if true, ignores cells timestamps while comparing ");
-    System.err.println("                  cell values. Any missing cell on target then gets");
-    System.err.println("                  added with current time as timestamp ");
-    System.err.println("                  (defaults to false)");
-    System.err.println();
-    System.err.println("Args:");
-    System.err.println(" sourcehashdir    path to HashTable output dir for source table");
-    System.err.println("                  (see org.apache.hadoop.hbase.mapreduce.HashTable)");
-    System.err.println(" sourcetable      Name of the source table to sync from");
-    System.err.println(" targettable      Name of the target table to sync to");
-    System.err.println();
-    System.err.println("Examples:");
-    System.err.println(" For SyncTable validation of tableA from a remote source cluster");
-    System.err.println(" to a local target cluster:");
-    System.err.println(
+    SERR.println(" Source Configuration:");
+    SERR.println("    sourcezkcluster   ZK cluster key of the source table");
+    SERR.println("                      (defaults to cluster in classpath's config)");
+    SERR.println(" Or Source Configuration:");
+    SERR.println("    sourcebigtableproject  Bigtable project id of the source table");
+    SERR.println("                      (defaults to cluster in classpath's config)");
+    SERR.println("    sourcebigtableinstance  Bigtable instance id of the source table");
+    SERR.println("                      (defaults to cluster in classpath's config)");
+    SERR.println("    sourcebigtableappprofile  (optional) Bigtable app profile");
+    SERR.println(" Target Configuration:");
+    SERR.println("    targetzkcluster  ZK cluster key of the target table");
+    SERR.println("                      (defaults to cluster in classpath's config)");
+    SERR.println(" Or Target Configuration:");
+    SERR.println("    targetbigtableproject  Bigtable project id of the target table");
+    SERR.println("                      (defaults to cluster in classpath's config)");
+    SERR.println("    targetbigtableinstance  Bigtable instance id of the target table");
+    SERR.println("                      (defaults to cluster in classpath's config)");
+    SERR.println("    targetbigtableappprofile  (optional) Bigtable app profile");
+    SERR.println();
+    SERR.println(" dryrun           if true, output counters but no writes");
+    SERR.println("                  (defaults to true)");
+    SERR.println(" doDeletes        if false, does not perform deletes");
+    SERR.println("                  (defaults to true)");
+    SERR.println(" doPuts           if false, does not perform puts");
+    SERR.println("                  (defaults to true)");
+    SERR.println(" ignoreTimestamps if true, ignores cells timestamps while comparing ");
+    SERR.println("                  cell values. Any missing cell on target then gets");
+    SERR.println("                  added with current time as timestamp ");
+    SERR.println("                  (defaults to false)");
+    SERR.println();
+    SERR.println("Args:");
+    SERR.println(" sourcehashdir    path to HashTable output dir for source table");
+    SERR.println("                  (see org.apache.hadoop.hbase.mapreduce.HashTable)");
+    SERR.println(" sourcetable      Name of the source table to sync from");
+    SERR.println(" targettable      Name of the target table to sync to");
+    SERR.println();
+    SERR.println("Examples:");
+    SERR.println(" For SyncTable validation of tableA from a remote source cluster");
+    SERR.println(" to a local target cluster:");
+    SERR.println(
         " $ bin/hbase "
             + "com.google.cloud.bigtable.mapreduce.validation.SyncTable --targetbigtableproject=project123"
             + " --targetbigtableinstance=instance123 --sourcezkcluster=zk1.example.com,zk2.example.com,zk3.example.com:2181:/hbase"

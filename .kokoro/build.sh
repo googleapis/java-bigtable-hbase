@@ -51,7 +51,7 @@ javadoc)
     ;;
 integration)
 # clean needed when running more than one IT profile
-    mvn --no-transfer-progress clean verify -B ${INTEGRATION_TEST_ARGS} -Penable-integration-tests -DtrimStackTrace=false -Dclirr.skip=true -fae
+    mvn --no-transfer-progress clean verify -B ${INTEGRATION_TEST_ARGS} -Penable-integration-tests -DtrimStackTrace=false -Dclirr.skip=true -DskipUnitTests=true
     RETURN_CODE=$?
     ;;
 integration-migration)
@@ -60,7 +60,7 @@ integration-migration)
   RETURN_CODE=$?
   ;;
 clirr)
-    mvn --no-transfer-progress install -B -Denforcer.skip=true clirr:check
+    mvn --no-transfer-progress install -B -Denforcer.skip=true -DskipTests clirr:check
     RETURN_CODE=$?
     ;;
 *)

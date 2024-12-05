@@ -15,6 +15,7 @@
  */
 package com.google.cloud.bigtable.hbase.wrappers;
 
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.APP_PROFILE_ID_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.INSTANCE_ID_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.PROJECT_ID_KEY;
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -38,6 +39,7 @@ public abstract class BigtableHBaseSettings {
   private final Configuration configuration;
   private final String projectId;
   private final String instanceId;
+  private final String appProfileId;
   private final int ttlSecondsForBackup;
 
   @VisibleForTesting
@@ -47,7 +49,7 @@ public abstract class BigtableHBaseSettings {
       "bulk.mutation.close.timeout.milliseconds";
 
   // Must be non-negative. Set to 0 to disable timeout.
-  private final long bulkMutationCloseTimeoutMilliseconds;
+  private final long bulkMutationCloseTimeoutMilliseconds;;
 
   public static BigtableHBaseSettings create(Configuration configuration) throws IOException {
     return BigtableHBaseVeneerSettings.create(configuration);
@@ -57,6 +59,8 @@ public abstract class BigtableHBaseSettings {
     this.configuration = new Configuration(configuration);
     this.projectId = getRequiredValue(PROJECT_ID_KEY, "Project ID");
     this.instanceId = getRequiredValue(INSTANCE_ID_KEY, "Instance ID");
+    this.appProfileId = configuration.get(APP_PROFILE_ID_KEY);
+
     this.ttlSecondsForBackup =
         configuration.getInt(
             BigtableOptionsFactory.BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY,
@@ -77,6 +81,10 @@ public abstract class BigtableHBaseSettings {
 
   public String getInstanceId() {
     return instanceId;
+  }
+
+  public String getAppProfileId() {
+    return appProfileId;
   }
 
   public int getTtlSecondsForBackup() {

@@ -15,6 +15,8 @@
  */
 package com.google.cloud.bigtable.mapreduce.validation;
 
+import java.io.OutputStream;
+import java.io.PrintStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.mapreduce.BigtableSyncTableAccessor;
 import org.junit.Assert;
@@ -23,6 +25,12 @@ import org.junit.Test;
 /** test driver function */
 // TODO - parameterize this to run against prod in future
 public class TestBigtableSyncTableJob {
+  private static final PrintStream NOOP_STREAM =
+      new PrintStream(
+          new OutputStream() {
+            @Override
+            public void write(int b) {}
+          });
 
   @Test
   public void testMissingArgs() {
@@ -36,7 +44,7 @@ public class TestBigtableSyncTableJob {
     };
 
     Configuration conf = new Configuration(false);
-    BigtableSyncTableJob bigtableSyncTable = new BigtableSyncTableJob(conf);
+    BigtableSyncTableJob bigtableSyncTable = createJob(conf);
     boolean isSuccess = bigtableSyncTable.doCommandLine(bigtableSyncTable, args);
 
     Assert.assertFalse(isSuccess);
@@ -55,7 +63,7 @@ public class TestBigtableSyncTableJob {
     };
 
     Configuration conf = new Configuration(false);
-    BigtableSyncTableJob bigtableSyncTable = new BigtableSyncTableJob(conf);
+    BigtableSyncTableJob bigtableSyncTable = createJob(conf);
     boolean isSuccess = bigtableSyncTable.doCommandLine(bigtableSyncTable, args);
 
     Assert.assertTrue(isSuccess);
@@ -79,7 +87,7 @@ public class TestBigtableSyncTableJob {
     };
 
     Configuration conf = new Configuration(false);
-    BigtableSyncTableJob bigtableSyncTable = new BigtableSyncTableJob(conf);
+    BigtableSyncTableJob bigtableSyncTable = createJob(conf);
     boolean isSuccess = bigtableSyncTable.doCommandLine(bigtableSyncTable, args);
 
     Assert.assertTrue(isSuccess);
@@ -101,7 +109,7 @@ public class TestBigtableSyncTableJob {
     };
 
     Configuration conf = new Configuration(false);
-    BigtableSyncTableJob bigtableSyncTable = new BigtableSyncTableJob(conf);
+    BigtableSyncTableJob bigtableSyncTable = createJob(conf);
     boolean isSuccess = bigtableSyncTable.doCommandLine(bigtableSyncTable, args);
 
     Assert.assertTrue(isSuccess);
@@ -118,7 +126,7 @@ public class TestBigtableSyncTableJob {
     };
 
     Configuration conf = new Configuration(false);
-    BigtableSyncTableJob bigtableSyncTable = new BigtableSyncTableJob(conf);
+    BigtableSyncTableJob bigtableSyncTable = createJob(conf);
     boolean isSuccess = bigtableSyncTable.doCommandLine(bigtableSyncTable, args);
 
     Assert.assertFalse(isSuccess);
@@ -138,7 +146,7 @@ public class TestBigtableSyncTableJob {
     };
 
     Configuration conf = new Configuration(false);
-    BigtableSyncTableJob bigtableSyncTable = new BigtableSyncTableJob(conf);
+    BigtableSyncTableJob bigtableSyncTable = createJob(conf);
     boolean isSuccess = bigtableSyncTable.doCommandLine(bigtableSyncTable, args);
 
     Assert.assertFalse(isSuccess);
@@ -156,7 +164,7 @@ public class TestBigtableSyncTableJob {
     };
 
     Configuration conf = new Configuration(false);
-    BigtableSyncTableJob bigtableSyncTable = new BigtableSyncTableJob(conf);
+    BigtableSyncTableJob bigtableSyncTable = createJob(conf);
     boolean isSuccess = bigtableSyncTable.doCommandLine(bigtableSyncTable, args);
 
     Assert.assertFalse(isSuccess);
@@ -174,7 +182,7 @@ public class TestBigtableSyncTableJob {
     };
 
     Configuration conf = new Configuration(false);
-    BigtableSyncTableJob bigtableSyncTable = new BigtableSyncTableJob(conf);
+    BigtableSyncTableJob bigtableSyncTable = createJob(conf);
     boolean isSuccess = bigtableSyncTable.doCommandLine(bigtableSyncTable, args);
 
     Assert.assertFalse(isSuccess);
@@ -194,7 +202,7 @@ public class TestBigtableSyncTableJob {
     };
 
     Configuration conf = new Configuration(false);
-    BigtableSyncTableJob bigtableSyncTable = new BigtableSyncTableJob(conf);
+    BigtableSyncTableJob bigtableSyncTable = createJob(conf);
     boolean isSuccess = bigtableSyncTable.doCommandLine(bigtableSyncTable, args);
 
     Assert.assertFalse(isSuccess);
@@ -212,7 +220,7 @@ public class TestBigtableSyncTableJob {
     };
 
     Configuration conf = new Configuration(false);
-    BigtableSyncTableJob bigtableSyncTable = new BigtableSyncTableJob(conf);
+    BigtableSyncTableJob bigtableSyncTable = createJob(conf);
     boolean isSuccess = bigtableSyncTable.doCommandLine(bigtableSyncTable, args);
 
     Assert.assertFalse(isSuccess);
@@ -231,10 +239,17 @@ public class TestBigtableSyncTableJob {
     };
 
     Configuration conf = new Configuration(false);
-    BigtableSyncTableJob bigtableSyncTable = new BigtableSyncTableJob(conf);
+    BigtableSyncTableJob bigtableSyncTable = createJob(conf);
     boolean isSuccess = bigtableSyncTable.doCommandLine(bigtableSyncTable, args);
 
     Assert.assertFalse(isSuccess);
+  }
+
+  private static BigtableSyncTableJob createJob(Configuration conf) {
+    BigtableSyncTableJob bigtableSyncTable = new BigtableSyncTableJob(conf);
+    bigtableSyncTable.SERR = NOOP_STREAM;
+    bigtableSyncTable.SOUT = NOOP_STREAM;
+    return bigtableSyncTable;
   }
 
   private String parseKeyValueArg(String keyValueArg) {

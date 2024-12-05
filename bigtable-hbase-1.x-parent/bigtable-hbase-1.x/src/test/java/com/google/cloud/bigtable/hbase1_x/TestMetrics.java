@@ -15,7 +15,8 @@
  */
 package com.google.cloud.bigtable.hbase1_x;
 
-import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertAbout;
+import static org.junit.Assert.assertThrows;
 
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.auth.Credentials;
@@ -32,6 +33,9 @@ import com.google.cloud.bigtable.metrics.Timer;
 import com.google.cloud.bigtable.test.helper.TestServerBuilder;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Range;
+import com.google.common.truth.FailureMetadata;
+import com.google.common.truth.LongSubject;
+import com.google.common.truth.Subject;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.BytesValue;
 import com.google.protobuf.StringValue;
@@ -44,17 +48,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.shaded.org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -133,50 +139,46 @@ public class TestMetrics {
    */
   @Test
   public void readRows() throws IOException, InterruptedException {
-    Table table = connection.getTable(TABLE_NAME);
-
-    Stopwatch stopwatch = Stopwatch.createStarted();
-    Result result = table.get(new Get(new byte[2]));
-    long methodInvocationLatency = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+    final long methodInvocationLatency;
+    try (Table table = connection.getTable(TABLE_NAME)) {
+      Stopwatch stopwatch = Stopwatch.createStarted();
+      table.get(new Get(new byte[2]));
+      methodInvocationLatency = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+    }
 
     fakeDataService.popLastRequest();
 
-    long tableGetLatencyMetric =
-        fakeMetricRegistry.results.get("google-cloud-bigtable.table.get.latency").get();
-    long retriesPerformedMetric =
-        fakeMetricRegistry
-            .results
-            .get("google-cloud-bigtable.grpc.method.ReadRow.retries.performed")
-            .get();
-    long clientOperationLatencyMetric =
-        fakeMetricRegistry
-            .results
-            .get("google-cloud-bigtable.grpc.method.ReadRow.operation.latency")
-            .get();
-    long rpcErrorsMetric =
-        fakeMetricRegistry
-            .results
-            .get("google-cloud-bigtable.grpc.errors." + fakeErrorStatus.getCode().name())
-            .get();
-    long rpcPerformedMetric =
-        fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.rpc.performed").get();
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .eventuallyHasMetricThat(
+            "google-cloud-bigtable.table.get.latency", s -> s.isAtMost(methodInvocationLatency));
 
-    assertThat(retriesPerformedMetric).isEqualTo(fakeErrorCount);
-    assertThat(tableGetLatencyMetric).isAtMost(methodInvocationLatency);
-    assertThat(clientOperationLatencyMetric).isAtMost(methodInvocationLatency);
-    assertThat(rpcErrorsMetric).isEqualTo(fakeErrorCount);
-    assertThat(rpcPerformedMetric).isEqualTo(fakeErrorCount + 1);
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .eventuallyHasMetricThat(
+            "google-cloud-bigtable.grpc.method.ReadRow.retries.performed",
+            s -> s.isEqualTo(fakeErrorCount));
+
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .eventuallyHasMetricThat(
+            "google-cloud-bigtable.grpc.method.ReadRow.operation.latency",
+            s -> s.isAtMost(methodInvocationLatency));
+
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .eventuallyHasMetricThat(
+            "google-cloud-bigtable.grpc.errors." + fakeErrorStatus.getCode().name(),
+            s -> s.isEqualTo(fakeErrorCount));
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .eventuallyHasMetricThat(
+            "google-cloud-bigtable.grpc.rpc.performed", s -> s.isEqualTo(fakeErrorCount + 1));
 
     // ReadRows sleeps 40 milliseconds before returning the response. Wait for response to return
     // and verify again there should have no more active rpc
     Thread.sleep(40);
-    long activeRpcMetric =
-        fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.rpc.active").get();
-    assertThat(activeRpcMetric).isEqualTo(0);
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .hasMetric("google-cloud-bigtable.grpc.rpc.active", 0);
   }
 
   @Test
-  public void rowMutations() throws IOException {
+  public void rowMutations() throws IOException, InterruptedException {
     Table table = connection.getTable(TABLE_NAME);
 
     RowMutations row = new RowMutations(rowKey);
@@ -187,129 +189,118 @@ public class TestMetrics {
     long methodInvocationLatency = stopwatch.elapsed(TimeUnit.MILLISECONDS);
 
     fakeDataService.popLastRequest();
-    long latency =
-        fakeMetricRegistry
-            .results
-            .get("google-cloud-bigtable.grpc.method.MutateRow.rpc.latency")
-            .get();
-    assertThat(latency)
-        .isIn(
-            Range.closed(fakeDataService.getMutateRowServerSideLatency(), methodInvocationLatency));
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .eventuallyHasMetricThat(
+            "google-cloud-bigtable.grpc.method.MutateRow.rpc.latency",
+            s ->
+                s.isIn(
+                    Range.closed(
+                        fakeDataService.getMutateRowServerSideLatency(), methodInvocationLatency)));
   }
 
   @Test
-  public void appendFailure() throws IOException {
-    Table table = connection.getTable(TABLE_NAME);
-    Append append = new Append(rowKey);
-    append.add(columnFamily, qualifier, value);
-    Stopwatch stopwatch = Stopwatch.createUnstarted();
-    try {
-      stopwatch.start();
-      table.append(append);
-      Assert.fail("operation should have failed");
-    } catch (Exception e) {
-      long methodInvocationLatency = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-      fakeDataService.popLastRequest();
-      long failureCount =
-          fakeMetricRegistry
-              .results
-              .get("google-cloud-bigtable.grpc.method.ReadModifyWriteRow.failure")
-              .get();
-      long operationLatency =
-          fakeMetricRegistry
-              .results
-              .get("google-cloud-bigtable.grpc.method.ReadModifyWriteRow.operation.latency")
-              .get();
+  public void appendFailure() throws IOException, InterruptedException {
+    final long methodInvocationLatency;
 
-      assertThat(failureCount).isEqualTo(1);
-      assertThat(operationLatency)
-          .isIn(
-              Range.closed(
-                  fakeDataService.getReadModifyWriteRowServerSideLatency(),
-                  methodInvocationLatency));
+    try (Table table = connection.getTable(TABLE_NAME)) {
+      Append append = new Append(rowKey);
+      append.add(columnFamily, qualifier, value);
+
+      Stopwatch stopwatch = Stopwatch.createStarted();
+      assertThrows(Exception.class, () -> table.append(append));
+      methodInvocationLatency = stopwatch.elapsed(TimeUnit.MILLISECONDS);
     }
-  }
-
-  @Test
-  public void testScanMetrics() throws IOException {
-    Scan scan = new Scan().withStartRow(rowKey).withStopRow(rowKey, true);
-    Table table = connection.getTable(TABLE_NAME);
-
-    Stopwatch stopwatch = Stopwatch.createStarted();
-    ResultScanner testScanner = table.getScanner(scan);
-    testScanner.next();
-    testScanner.close();
-    long methodInvocationLatency = stopwatch.elapsed(TimeUnit.MILLISECONDS);
 
     fakeDataService.popLastRequest();
 
-    long scannerResultsLatencyMetric =
-        fakeMetricRegistry.results.get("google-cloud-bigtable.scanner.results.latency").get();
-    long scannerResultsMetric =
-        fakeMetricRegistry.results.get("google-cloud-bigtable.scanner.results").get();
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .eventuallyHasMetricThat(
+            "google-cloud-bigtable.grpc.method.ReadModifyWriteRow.failure", s -> s.isEqualTo(1));
 
-    assertThat(scannerResultsMetric).isEqualTo(1);
-    assertThat(scannerResultsLatencyMetric).isAtMost(methodInvocationLatency);
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .eventuallyHasMetricThat(
+            "google-cloud-bigtable.grpc.method.ReadModifyWriteRow.operation.latency",
+            s ->
+                s.isIn(
+                    Range.closed(
+                        fakeDataService.getReadModifyWriteRowServerSideLatency(),
+                        methodInvocationLatency)));
   }
 
   @Test
-  public void testFirstResponseLatency() throws IOException {
+  public void testScanMetrics() throws IOException, InterruptedException {
     Scan scan = new Scan().withStartRow(rowKey).withStopRow(rowKey, true);
-    Table table = connection.getTable(TABLE_NAME);
 
-    Stopwatch stopwatch = Stopwatch.createStarted();
-    ResultScanner testScanner = table.getScanner(scan);
-    testScanner.next();
-    testScanner.close();
-    long methodInvocationLatency = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+    final long methodInvocationLatency;
+    try (Table table = connection.getTable(TABLE_NAME)) {
+      Stopwatch stopwatch = Stopwatch.createStarted();
+      try (ResultScanner s = table.getScanner(scan)) {
+        s.next();
+      }
+      methodInvocationLatency = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+    }
 
     fakeDataService.popLastRequest();
 
-    long firstResponseLatencyMetric =
-        fakeMetricRegistry
-            .results
-            .get("google-cloud-bigtable.grpc.method.ReadRows.firstResponse.latency")
-            .get();
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .eventuallyHasMetricThat("google-cloud-bigtable.scanner.results", s -> s.isEqualTo(1));
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .eventuallyHasMetricThat(
+            "google-cloud-bigtable.scanner.results.latency",
+            s -> s.isAtMost(methodInvocationLatency));
+  }
 
-    assertThat(firstResponseLatencyMetric).isAtMost(methodInvocationLatency);
+  @Test
+  public void testFirstResponseLatency() throws IOException, InterruptedException {
+    Scan scan = new Scan().withStartRow(rowKey).withStopRow(rowKey, true);
+    final long methodInvocationLatency;
+
+    try (Table table = connection.getTable(TABLE_NAME)) {
+      Stopwatch stopwatch = Stopwatch.createStarted();
+      try (ResultScanner s = table.getScanner(scan)) {
+        s.next();
+        methodInvocationLatency = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+      }
+    }
+
+    fakeDataService.popLastRequest();
+
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .eventuallyHasMetricThat(
+            "google-cloud-bigtable.grpc.method.ReadRows.firstResponse.latency",
+            s -> s.isAtMost(methodInvocationLatency));
   }
 
   @Test
   public void testActiveSessionsAndChannels() throws IOException {
     // There should already be 1 active session and 1 channel from connection (connecting to
     // emulator will set pool size to 1)
-    long currentActiveSessions =
-        fakeMetricRegistry.results.get("google-cloud-bigtable.session.active").get();
-    long currentActiveChannels =
-        fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.channel.active").get();
-
-    assertThat(currentActiveSessions).isEqualTo(1);
-    assertThat(currentActiveChannels).isEqualTo(1);
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .hasMetric("google-cloud-bigtable.session.active", 1);
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .hasMetric("google-cloud-bigtable.grpc.channel.active", 1);
 
     // Create a new session
     int connectionCount = 10;
     Configuration configuration = new Configuration(false);
+    configuration.set(
+        BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + server.getPort());
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE_ID);
     configuration.set(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, "true");
     configuration.set(
         BigtableOptionsFactory.BIGTABLE_DATA_CHANNEL_COUNT_KEY, String.valueOf(connectionCount));
 
-    BigtableConnection newConnection = new BigtableConnection(configuration);
-    currentActiveSessions =
-        fakeMetricRegistry.results.get("google-cloud-bigtable.session.active").get();
-    currentActiveChannels =
-        fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.channel.active").get();
-    assertThat(currentActiveSessions).isEqualTo(2);
-    assertThat(currentActiveChannels).isEqualTo(connectionCount + 1);
-
-    newConnection.close();
-    currentActiveSessions =
-        fakeMetricRegistry.results.get("google-cloud-bigtable.session.active").get();
-    currentActiveChannels =
-        fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.channel.active").get();
-    assertThat(currentActiveSessions).isEqualTo(1);
-    assertThat(currentActiveChannels).isEqualTo(1);
+    try (BigtableConnection ignored = new BigtableConnection(configuration)) {
+      MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+          .hasMetric("google-cloud-bigtable.session.active", 2);
+      MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+          .hasMetric("google-cloud-bigtable.grpc.channel.active", connectionCount + 1);
+    }
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .hasMetric("google-cloud-bigtable.session.active", 1);
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .hasMetric("google-cloud-bigtable.grpc.channel.active", 1);
   }
 
   @Test
@@ -317,6 +308,8 @@ public class TestMetrics {
     // Test channel pool caching
     int connectionCount = 10;
     Configuration configuration = new Configuration(false);
+    configuration.set(
+        BigtableOptionsFactory.BIGTABLE_EMULATOR_HOST_KEY, "localhost:" + server.getPort());
     configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
     configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE_ID);
     configuration.set(
@@ -325,46 +318,38 @@ public class TestMetrics {
     Credentials credentials = NoCredentialsProvider.create().getCredentials();
     configuration = BigtableConfiguration.withCredentials(configuration, credentials);
 
-    BigtableConnection sharedConnection1 = new BigtableConnection(configuration);
-    BigtableConnection sharedConnection2 = new BigtableConnection(configuration);
-
-    long currentActiveChannels =
-        fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.channel.active").get();
-    // sharedConnection1 and 2 should share channels, plus the 1 that's created in setup
-    assertThat(currentActiveChannels).isEqualTo(connectionCount + 1);
-
-    // closing one shared bigtable connection shouldn't decrement shared channels count
-    sharedConnection1.close();
-    currentActiveChannels =
-        fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.channel.active").get();
-    assertThat(currentActiveChannels).isEqualTo(connectionCount + 1);
-
+    try (BigtableConnection sharedConnection1 = new BigtableConnection(configuration)) {
+      try (BigtableConnection sharedConnection2 = new BigtableConnection(configuration)) {
+        // sharedConnection 1 and 2 should share channels, plus the 1 that's created in setup
+        MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+            .hasMetric("google-cloud-bigtable.grpc.channel.active", connectionCount + 1);
+      }
+      // closing one shared bigtable connection shouldn't decrement shared channels count
+      MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+          .hasMetric("google-cloud-bigtable.grpc.channel.active", connectionCount + 1);
+    }
     // Active channels should be 1 after both shared bigtable connections are closed
-    sharedConnection2.close();
-    currentActiveChannels =
-        fakeMetricRegistry.results.get("google-cloud-bigtable.grpc.channel.active").get();
-    assertThat(currentActiveChannels).isEqualTo(1);
-
-    Thread.sleep(100);
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .hasMetric("google-cloud-bigtable.grpc.channel.active", 1);
   }
 
   @Test
   public void testBulkMutationMetrics() throws IOException, InterruptedException {
-    Table table = connection.getTable(TABLE_NAME);
-    List<Row> rows = new ArrayList<>();
-    int entries = 20;
-    for (int i = 0; i < entries; i++) {
-      rows.add(
-          new Put(Bytes.toBytes(RandomStringUtils.random(8)))
-              .addColumn(Bytes.toBytes("cf"), Bytes.toBytes("q"), Bytes.toBytes("SomeValue")));
-    }
-    Object[] resultsOrErrors = new Object[rows.size()];
-    table.batch(rows, resultsOrErrors);
+    final int entries = 20;
 
-    long mutationAdded =
-        fakeMetricRegistry.results.get("google-cloud-bigtable.bulk-mutator.mutations.added").get();
-    assertThat(mutationAdded).isEqualTo(entries);
-    table.close();
+    try (Table table = connection.getTable(TABLE_NAME)) {
+      List<Row> rows = new ArrayList<>();
+      for (int i = 0; i < entries; i++) {
+        rows.add(
+            new Put(Bytes.toBytes(RandomStringUtils.random(8)))
+                .addColumn(Bytes.toBytes("cf"), Bytes.toBytes("q"), Bytes.toBytes("SomeValue")));
+      }
+      Object[] resultsOrErrors = new Object[rows.size()];
+      table.batch(rows, resultsOrErrors);
+    }
+    MetricsRegistrySubject.assertThat(fakeMetricRegistry)
+        .eventuallyHasMetricThat(
+            "google-cloud-bigtable.bulk-mutator.mutations.added", s -> s.isEqualTo(entries));
   }
 
   private static class FakeDataService extends BigtableGrpc.BigtableImplBase {
@@ -410,6 +395,12 @@ public class TestMetrics {
       readModifyWriteRowStopwatch.reset();
       mutateRowStopwatch.reset();
       callCount.set(1);
+    }
+
+    @Override
+    public void pingAndWarm(
+        PingAndWarmRequest request, StreamObserver<PingAndWarmResponse> responseObserver) {
+      responseObserver.onNext(PingAndWarmResponse.getDefaultInstance());
     }
 
     @Override
@@ -568,6 +559,49 @@ public class TestMetrics {
           }
         }
       };
+    }
+  }
+
+  private static class MetricsRegistrySubject extends Subject {
+    private final FakeMetricRegistry actual;
+
+    public MetricsRegistrySubject(FailureMetadata metadata, @Nullable FakeMetricRegistry actual) {
+      super(metadata, actual);
+      this.actual = actual;
+    }
+
+    private static Factory<MetricsRegistrySubject, FakeMetricRegistry> registry() {
+      return MetricsRegistrySubject::new;
+    }
+
+    static MetricsRegistrySubject assertThat(@Nullable FakeMetricRegistry actual) {
+      return assertAbout(registry()).that(actual);
+    }
+
+    void eventuallyHasMetricThat(String name, Consumer<LongSubject> cb)
+        throws InterruptedException {
+      for (int i = 10; i >= 0; i--) {
+        try {
+          LongSubject valueSubject =
+              check("results.get(%s)", name)
+                  .that(
+                      Optional.ofNullable(actual.results.get(name))
+                          .map(AtomicLong::get)
+                          .orElse(null));
+          cb.accept(valueSubject);
+        } catch (AssertionError e) {
+          if (i == 0) {
+            throw e;
+          }
+          Thread.sleep(100);
+        }
+      }
+    }
+
+    void hasMetric(String name, long value) {
+      check("results.get(%s)", name)
+          .that(Optional.ofNullable(actual.results.get(name)).map(AtomicLong::get).orElse(null))
+          .isEqualTo(value);
     }
   }
 }
