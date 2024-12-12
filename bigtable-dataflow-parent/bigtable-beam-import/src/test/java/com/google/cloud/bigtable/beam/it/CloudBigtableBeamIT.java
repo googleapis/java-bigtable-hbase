@@ -17,6 +17,8 @@ package com.google.cloud.bigtable.beam.it;
 
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_ADMIN_HOST_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_HOST_KEY;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
@@ -26,15 +28,18 @@ import com.google.cloud.bigtable.beam.test_env.TestProperties;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import org.apache.beam.repackaged.core.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.beam.runners.dataflow.DataflowPipelineJob;
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.io.Read;
 import org.apache.beam.sdk.metrics.Counter;
+import org.apache.beam.sdk.metrics.Lineage;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.testing.PAssert;
@@ -142,7 +147,10 @@ public class CloudBigtableBeamIT {
     DataflowPipelineOptions options = PipelineOptionsFactory.as(DataflowPipelineOptions.class);
     properties.applyTo(options);
     options.setAppName("testWriteToBigtable-" + System.currentTimeMillis());
+    options.setExperiments(Collections.singletonList("disable_runner_v2"));
     LOG.info(
+        String.format("Started writeToBigtable test with jobName as: %s", options.getAppName()));
+    System.out.println(
         String.format("Started writeToBigtable test with jobName as: %s", options.getAppName()));
 
     CloudBigtableTableConfiguration.Builder configBuilder =
@@ -165,16 +173,21 @@ public class CloudBigtableBeamIT {
       keys.add(RandomStringUtils.randomAlphanumeric(10));
     }
 
-    PipelineResult.State result =
-        Pipeline.create(options)
+    DataflowPipelineJob result =
+        (DataflowPipelineJob) Pipeline.create(options)
             .apply("Keys", Create.of(keys))
             .apply("Create Puts", ParDo.of(WRITE_ONE_TENTH_PERCENT))
             .apply("Write to BT", CloudBigtableIO.writeToTable(config))
             .getPipeline()
-            .run()
-            .waitUntilFinish();
+            .run();
+    LOG.info(
+        String.format("Ran writeToBigtable test with job ID as: %s", result.getJobId()));
+    System.out.println(
+        String.format("Ran writeToBigtable test with job ID as: %s", result.getJobId()));
+    PipelineResult.State state =
+        result.waitUntilFinish();
 
-    Assert.assertEquals(PipelineResult.State.DONE, result);
+    Assert.assertEquals(PipelineResult.State.DONE, state);
 
     try (ResultScanner scanner =
         connection.getTable(tableName).getScanner(new Scan().setFilter(new KeyOnlyFilter()))) {
@@ -184,6 +197,9 @@ public class CloudBigtableBeamIT {
       }
       Assert.assertEquals(TOTAL_ROW_COUNT, count);
     }
+    assertThat(Lineage.query(result.metrics(), Lineage.Type.SINK),
+        contains(String.format("bigtable:%s.%s.%s", config.getProjectId(), config.getInstanceId(),
+            config.getTableId())));
   }
 
   @Test
@@ -206,6 +222,7 @@ public class CloudBigtableBeamIT {
     DataflowPipelineOptions options = PipelineOptionsFactory.as(DataflowPipelineOptions.class);
     properties.applyTo(options);
     options.setJobName("testReadFromBigtable-" + System.currentTimeMillis());
+    options.setExperiments(Collections.singletonList("disable_runner_v2"));
     LOG.info(
         String.format("Started readFromBigtable test with jobName as: %s", options.getJobName()));
 
@@ -236,8 +253,17 @@ public class CloudBigtableBeamIT {
 
     PAssert.thatSingleton(count).isEqualTo(TOTAL_ROW_COUNT);
 
-    PipelineResult.State result = pipeLine.run().waitUntilFinish();
-    Assert.assertEquals(PipelineResult.State.DONE, result);
+    DataflowPipelineJob result = (DataflowPipelineJob) pipeLine.run();
+    LOG.info(
+        String.format("Ran writeToBigtable test with job ID: %s", result.getJobId()));
+    System.out.println(
+        String.format("Ran writeToBigtable test with job ID as: %s", result.getJobId()));
+
+    PipelineResult.State state = result.waitUntilFinish();
+    Assert.assertEquals(PipelineResult.State.DONE, state);
+    assertThat(Lineage.query(result.metrics(), Lineage.Type.SOURCE),
+        contains(String.format("bigtable:%s.%s.%s", config.getProjectId(), config.getInstanceId(),
+            config.getTableId())));
   }
 
   private static byte[] createRandomValue() {
