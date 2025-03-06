@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.15.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.14.8...v2.15.0) (2025-03-06)
+
+
+### Features
+
+* add Lineage metrics for CloudBigtableIO ([#4438](https://github.com/googleapis/java-bigtable-hbase/issues/4438)) ([0a68ad8](https://github.com/googleapis/java-bigtable-hbase/commit/0a68ad873a22a74c3982c32fd3971c6102db07c8))
+
 ## [2.14.8](https://github.com/googleapis/java-bigtable-hbase/compare/v2.14.7...v2.14.8) (2024-12-05)
 
 
