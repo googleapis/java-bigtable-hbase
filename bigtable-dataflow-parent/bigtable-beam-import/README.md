@@ -261,7 +261,7 @@ automatically tracking lineage
 information [enable the Lineage API](https://cloud.google.com/dataplex/docs/use-lineage#enable-apis)
 in the project where the Dataflow job
 is running and the project where you view lineage in the Dataplex web interface.
-In addition, you must enable lineage during Dataflow job creation by providing
+In addition, you must [enable lineage during Dataflow job creation](https://cloud.devsite.corp.google.com/dataflow/docs/guides/lineage#enable-data-lineage) by providing
 the service option
 `--enable_lineage`.
 
