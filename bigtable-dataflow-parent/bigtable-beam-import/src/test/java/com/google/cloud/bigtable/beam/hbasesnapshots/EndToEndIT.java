@@ -19,6 +19,8 @@ import com.google.api.services.storage.model.Objects;
 import com.google.api.services.storage.model.StorageObject;
 import com.google.bigtable.repackaged.com.google.gson.Gson;
 import com.google.cloud.bigtable.beam.hbasesnapshots.ImportJobFromHbaseSnapshot.ImportOptions;
+import com.google.cloud.bigtable.beam.hbasesnapshots.conf.HBaseSnapshotInputConfigBuilder;
+import com.google.cloud.bigtable.beam.hbasesnapshots.dofn.CleanupHBaseSnapshotRestoreFiles;
 import com.google.cloud.bigtable.beam.sequencefiles.HBaseResultToMutationFn;
 import com.google.cloud.bigtable.beam.test_env.EnvSetup;
 import com.google.cloud.bigtable.beam.test_env.TestProperties;
@@ -310,8 +312,7 @@ public class EndToEndIT {
     // The restore directory is stored relative to the snapshot directory and contains the job name
     String bucket = GcsPath.fromUri(hbaseSnapshotDir).getBucket();
     String restorePathPrefix =
-        CleanupHBaseSnapshotRestoreFilesFn.getListPrefix(
-            HBaseSnapshotInputConfigBuilder.RESTORE_DIR);
+        CleanupHBaseSnapshotRestoreFiles.getListPrefix(HBaseSnapshotInputConfigBuilder.RESTORE_DIR);
     List<StorageObject> allObjects = new ArrayList<>();
     String nextToken;
     do {
@@ -423,8 +424,7 @@ public class EndToEndIT {
     // The restore directory is stored relative to the snapshot directory and contains the job name
     String bucket = GcsPath.fromUri(hbaseSnapshotDir).getBucket();
     String restorePathPrefix =
-        CleanupHBaseSnapshotRestoreFilesFn.getListPrefix(
-            HBaseSnapshotInputConfigBuilder.RESTORE_DIR);
+        CleanupHBaseSnapshotRestoreFiles.getListPrefix(HBaseSnapshotInputConfigBuilder.RESTORE_DIR);
 
     List<StorageObject> allObjects = new ArrayList<>();
     String nextToken;
