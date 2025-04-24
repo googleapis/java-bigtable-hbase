@@ -23,7 +23,6 @@ import com.google.cloud.bigtable.mirroring.core.asyncwrappers.AsyncTableWrapper;
 import com.google.cloud.bigtable.mirroring.core.utils.AccumulatedExceptions;
 import com.google.cloud.bigtable.mirroring.core.utils.BatchHelpers.FailedSuccessfulSplit;
 import com.google.cloud.bigtable.mirroring.core.utils.Batcher;
-import com.google.cloud.bigtable.mirroring.core.utils.CallableThrowingIOException;
 import com.google.cloud.bigtable.mirroring.core.utils.Logger;
 import com.google.cloud.bigtable.mirroring.core.utils.OperationUtils;
 import com.google.cloud.bigtable.mirroring.core.utils.ReadSampler;
@@ -32,8 +31,6 @@ import com.google.cloud.bigtable.mirroring.core.utils.SecondaryWriteErrorConsume
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.WriteOperationInfo;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.core.utils.referencecounting.HierarchicalReferenceCounter;
 import com.google.cloud.bigtable.mirroring.core.utils.referencecounting.ReferenceCounter;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.Timestamper;
@@ -47,7 +44,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
-import io.opencensus.common.Scope;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
@@ -106,7 +102,6 @@ public class MirroringTable implements Table {
   private final HierarchicalReferenceCounter referenceCounter;
 
   private final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
-  private final MirroringTracer mirroringTracer;
   private final ReadSampler readSampler;
   private final RequestScheduler requestScheduler;
   private final Batcher batcher;
@@ -132,7 +127,6 @@ public class MirroringTable implements Table {
       Timestamper timestamper,
       boolean performWritesConcurrently,
       boolean waitForSecondaryWrites,
-      MirroringTracer mirroringTracer,
       ReferenceCounter parentReferenceCounter,
       int resultScannerBufferedMismatchedResults) {
     this.primaryTable = primaryTable;
@@ -140,15 +134,14 @@ public class MirroringTable implements Table {
     this.readSampler = readSampler;
     this.secondaryAsyncWrapper =
         new AsyncTableWrapper(
-            secondaryTable, MoreExecutors.listeningDecorator(executorService), mirroringTracer);
+            secondaryTable, MoreExecutors.listeningDecorator(executorService));
     this.referenceCounter = new HierarchicalReferenceCounter(parentReferenceCounter);
     this.secondaryWriteErrorConsumer = secondaryWriteErrorConsumer;
     Preconditions.checkArgument(
         !(performWritesConcurrently && !waitForSecondaryWrites),
         "If concurrent writes are enabled, then waiting for secondary writes should also be enabled.");
-    this.mirroringTracer = mirroringTracer;
     this.requestScheduler =
-        new RequestScheduler(flowController, this.mirroringTracer, this.referenceCounter);
+        new RequestScheduler(flowController, this.referenceCounter);
     this.timestamper = timestamper;
     this.batcher =
         new Batcher(
@@ -161,123 +154,78 @@ public class MirroringTable implements Table {
             this.timestamper,
             resultIsFaultyPredicate,
             waitForSecondaryWrites,
-            performWritesConcurrently,
-            this.mirroringTracer);
+            performWritesConcurrently);
     this.resultScannerBufferedMismatchedResults = resultScannerBufferedMismatchedResults;
   }
 
   @Override
   public boolean exists(final Get get) throws IOException {
-    try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.EXISTS)) {
-      Log.trace("[%s] exists(get=%s)", this.getName(), get);
+    Log.trace("[%s] exists(get=%s)", this.getName(), get);
 
-      boolean result =
-          this.mirroringTracer.spanFactory.wrapPrimaryOperation(
-              new CallableThrowingIOException<Boolean>() {
-                @Override
-                public Boolean call() throws IOException {
-                  return primaryTable.exists(get);
-                }
-              },
-              HBaseOperation.EXISTS);
+    boolean result = primaryTable.exists(get);
 
-      scheduleSequentialReadOperationWithVerification(
-          new RequestResourcesDescription(result),
-          this.secondaryAsyncWrapper.exists(get),
-          this.verificationContinuationFactory.exists(get, result));
-      return result;
-    }
+    scheduleSequentialReadOperationWithVerification(
+        new RequestResourcesDescription(result),
+        this.secondaryAsyncWrapper.exists(get),
+        this.verificationContinuationFactory.exists(get, result));
+    return result;
   }
 
   @Override
   public boolean[] existsAll(final List<Get> inputList) throws IOException {
     final List<Get> list = new ArrayList<>(inputList);
-    try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.EXISTS_ALL)) {
-      Log.trace("[%s] existsAll(gets=%s)", this.getName(), list);
+    Log.trace("[%s] existsAll(gets=%s)", this.getName(), list);
 
-      boolean[] result =
-          this.mirroringTracer.spanFactory.wrapPrimaryOperation(
-              new CallableThrowingIOException<boolean[]>() {
-                @Override
-                public boolean[] call() throws IOException {
-                  return primaryTable.existsAll(list);
-                }
-              },
-              HBaseOperation.EXISTS_ALL);
+    boolean[] result = primaryTable.existsAll(list);
 
-      scheduleSequentialReadOperationWithVerification(
-          new RequestResourcesDescription(result),
-          this.secondaryAsyncWrapper.existsAll(list),
-          this.verificationContinuationFactory.existsAll(list, result));
-      return result;
-    }
+    scheduleSequentialReadOperationWithVerification(
+        new RequestResourcesDescription(result),
+        this.secondaryAsyncWrapper.existsAll(list),
+        this.verificationContinuationFactory.existsAll(list, result));
+    return result;
   }
 
   @Override
   public Result get(final Get get) throws IOException {
-    try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.GET)) {
-      Log.trace("[%s] get(get=%s)", this.getName(), get);
+    Log.trace("[%s] get(get=%s)", this.getName(), get);
 
-      Result result =
-          this.mirroringTracer.spanFactory.wrapPrimaryOperation(
-              new CallableThrowingIOException<Result>() {
-                @Override
-                public Result call() throws IOException {
-                  return primaryTable.get(get);
-                }
-              },
-              HBaseOperation.GET);
+    Result result = primaryTable.get(get);
 
-      scheduleSequentialReadOperationWithVerification(
-          new RequestResourcesDescription(result),
-          this.secondaryAsyncWrapper.get(get),
-          this.verificationContinuationFactory.get(get, result));
-      return result;
-    }
+    scheduleSequentialReadOperationWithVerification(
+        new RequestResourcesDescription(result),
+        this.secondaryAsyncWrapper.get(get),
+        this.verificationContinuationFactory.get(get, result));
+    return result;
   }
 
   @Override
   public Result[] get(final List<Get> inputList) throws IOException {
     final List<Get> list = new ArrayList<>(inputList);
-    try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.GET_LIST)) {
-      Log.trace("[%s] get(gets=%s)", this.getName(), list);
+    Log.trace("[%s] get(gets=%s)", this.getName(), list);
 
-      Result[] result =
-          this.mirroringTracer.spanFactory.wrapPrimaryOperation(
-              new CallableThrowingIOException<Result[]>() {
-                @Override
-                public Result[] call() throws IOException {
-                  return primaryTable.get(list);
-                }
-              },
-              HBaseOperation.GET_LIST);
+    Result[] result = primaryTable.get(list);
 
-      scheduleSequentialReadOperationWithVerification(
-          new RequestResourcesDescription(result),
-          this.secondaryAsyncWrapper.get(list),
-          this.verificationContinuationFactory.get(list, result));
-      return result;
-    }
+    scheduleSequentialReadOperationWithVerification(
+        new RequestResourcesDescription(result),
+        this.secondaryAsyncWrapper.get(list),
+        this.verificationContinuationFactory.get(list, result));
+    return result;
   }
 
   @Override
   public ResultScanner getScanner(Scan scan) throws IOException {
-    try (Scope scope =
-        this.mirroringTracer.spanFactory.operationScope(HBaseOperation.GET_SCANNER)) {
-      Log.trace("[%s] getScanner(scan=%s)", this.getName(), scan);
-      MirroringResultScanner scanner =
-          new MirroringResultScanner(
-              scan,
-              this.primaryTable.getScanner(scan),
-              this.secondaryAsyncWrapper.getScanner(scan),
-              this.verificationContinuationFactory,
-              this.mirroringTracer,
-              this.readSampler.shouldNextReadOperationBeSampled(),
-              this.requestScheduler,
-              this.referenceCounter,
-              this.resultScannerBufferedMismatchedResults);
-      return scanner;
-    }
+    Log.trace("[%s] getScanner(scan=%s)", this.getName(), scan);
+    MirroringResultScanner scanner =
+        new MirroringResultScanner(
+            scan,
+            this.primaryTable.getScanner(scan),
+            this.secondaryAsyncWrapper.getScanner(scan),
+            this.verificationContinuationFactory,
+            this.readSampler.shouldNextReadOperationBeSampled(),
+            this.requestScheduler,
+            this.referenceCounter,
+            this.resultScannerBufferedMismatchedResults);
+    return scanner;
   }
 
   @Override
@@ -292,117 +240,86 @@ public class MirroringTable implements Table {
 
   @Override
   public void put(final Put put) throws IOException {
-    try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.PUT)) {
-      Log.trace("[%s] put(put=%s)", this.getName(), put);
-      this.batcher.batchSingleWriteOperation(put);
-    }
+    Log.trace("[%s] put(put=%s)", this.getName(), put);
+    this.batcher.batchSingleWriteOperation(put);
   }
 
   @Override
   public void put(List<Put> puts) throws IOException {
-    try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.PUT_LIST)) {
-      Log.trace("[%s] put(puts=%s)", this.getName(), puts);
-      try {
-        Object[] results = new Object[puts.size()];
-        this.batcher.batch(puts, results);
-      } catch (InterruptedException e) {
-        IOException e2 = new InterruptedIOException();
-        e2.initCause(e);
-        throw e2;
-      }
+    Log.trace("[%s] put(puts=%s)", this.getName(), puts);
+    try {
+      Object[] results = new Object[puts.size()];
+      this.batcher.batch(puts, results);
+    } catch (InterruptedException e) {
+      IOException e2 = new InterruptedIOException();
+      e2.initCause(e);
+      throw e2;
     }
   }
 
   @Override
   public void delete(final Delete delete) throws IOException {
-    try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.DELETE)) {
-      Log.trace("[%s] delete(delete=%s)", this.getName(), delete);
-      this.batcher.batchSingleWriteOperation(delete);
-    }
+    Log.trace("[%s] delete(delete=%s)", this.getName(), delete);
+    this.batcher.batchSingleWriteOperation(delete);
   }
 
   @Override
   public void delete(List<Delete> deletes) throws IOException {
-    try (Scope scope =
-        this.mirroringTracer.spanFactory.operationScope(HBaseOperation.DELETE_LIST)) {
-      Log.trace("[%s] delete(deletes=%s)", this.getName(), deletes);
-      Object[] results = new Object[deletes.size()];
-      try {
-        this.batcher.batch(deletes, results);
-      } catch (InterruptedException e) {
-        IOException e2 = new InterruptedIOException();
-        e2.initCause(e);
-        throw e2;
-      } finally {
-        final FailedSuccessfulSplit<Delete, Object> failedSuccessfulSplit =
-            new FailedSuccessfulSplit<>(deletes, results, resultIsFaultyPredicate, Object.class);
+    Log.trace("[%s] delete(deletes=%s)", this.getName(), deletes);
+    Object[] results = new Object[deletes.size()];
+    try {
+      this.batcher.batch(deletes, results);
+    } catch (InterruptedException e) {
+      IOException e2 = new InterruptedIOException();
+      e2.initCause(e);
+      throw e2;
+    } finally {
+      final FailedSuccessfulSplit<Delete, Object> failedSuccessfulSplit =
+          new FailedSuccessfulSplit<>(deletes, results, resultIsFaultyPredicate, Object.class);
 
-        // Delete should remove successful operations from input list.
-        // To conform to this requirement we are clearing the list and re-adding failed deletes.
-        deletes.clear();
-        deletes.addAll(failedSuccessfulSplit.failedOperations);
-      }
+      // Delete should remove successful operations from input list.
+      // To conform to this requirement we are clearing the list and re-adding failed deletes.
+      deletes.clear();
+      deletes.addAll(failedSuccessfulSplit.failedOperations);
     }
   }
 
   @Override
   public void mutateRow(final RowMutations rowMutations) throws IOException {
-    try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.MUTATE_ROW)) {
-      Log.trace("[%s] mutateRow(rowMutations=%s)", this.getName(), rowMutations);
-      this.batcher.batchSingleWriteOperation(rowMutations);
-    }
+    Log.trace("[%s] mutateRow(rowMutations=%s)", this.getName(), rowMutations);
+    this.batcher.batchSingleWriteOperation(rowMutations);
   }
 
   @Override
   public Result append(final Append append) throws IOException {
-    try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.APPEND)) {
-      Log.trace("[%s] append(append=%s)", this.getName(), append);
-      boolean wantsResults = append.isReturnResults();
-      append.setReturnResults(true);
+    Log.trace("[%s] append(append=%s)", this.getName(), append);
+    boolean wantsResults = append.isReturnResults();
+    append.setReturnResults(true);
 
-      Result result =
-          this.mirroringTracer.spanFactory.wrapPrimaryOperation(
-              new CallableThrowingIOException<Result>() {
-                @Override
-                public Result call() throws IOException {
-                  return primaryTable.append(append);
-                }
-              },
-              HBaseOperation.APPEND);
+    Result result = primaryTable.append(append);
 
-      Put put = OperationUtils.makePutFromResult(result);
+    Put put = OperationUtils.makePutFromResult(result);
 
-      scheduleSequentialWriteOperation(
-          new WriteOperationInfo(put), this.secondaryAsyncWrapper.put(put));
+    scheduleSequentialWriteOperation(
+        new WriteOperationInfo(put), this.secondaryAsyncWrapper.put(put));
 
-      // HBase's append() returns null when isReturnResults is false.
-      return wantsResults ? result : null;
-    }
+    // HBase's append() returns null when isReturnResults is false.
+    return wantsResults ? result : null;
   }
 
   @Override
   public Result increment(final Increment increment) throws IOException {
-    try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.INCREMENT)) {
-      Log.trace("[%s] increment(increment=%s)", this.getName(), increment);
-      boolean wantsResults = increment.isReturnResults();
-      increment.setReturnResults(true);
+    Log.trace("[%s] increment(increment=%s)", this.getName(), increment);
+    boolean wantsResults = increment.isReturnResults();
+    increment.setReturnResults(true);
 
-      Result result =
-          this.mirroringTracer.spanFactory.wrapPrimaryOperation(
-              new CallableThrowingIOException<Result>() {
-                @Override
-                public Result call() throws IOException {
-                  return primaryTable.increment(increment);
-                }
-              },
-              HBaseOperation.INCREMENT);
+    Result result = primaryTable.increment(increment);
 
-      Put put = OperationUtils.makePutFromResult(result);
+    Put put = OperationUtils.makePutFromResult(result);
 
-      scheduleSequentialWriteOperation(
-          new WriteOperationInfo(put), this.secondaryAsyncWrapper.put(put));
-      return wantsResults ? result : emptyResult();
-    }
+    scheduleSequentialWriteOperation(
+        new WriteOperationInfo(put), this.secondaryAsyncWrapper.put(put));
+    return wantsResults ? result : emptyResult();
   }
 
   @Override
@@ -435,9 +352,7 @@ public class MirroringTable implements Table {
   @Override
   public void batch(List<? extends Row> operations, Object[] results)
       throws IOException, InterruptedException {
-    try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.BATCH)) {
-      this.batcher.batch(operations, results);
-    }
+    this.batcher.batch(operations, results);
   }
 
   @Override
@@ -453,14 +368,11 @@ public class MirroringTable implements Table {
       List<? extends Row> inputOperations, Object[] results, final Callback<R> callback)
       throws IOException, InterruptedException {
     final List<? extends Row> operations = new ArrayList<>(inputOperations);
-    try (Scope scope =
-        this.mirroringTracer.spanFactory.operationScope(HBaseOperation.BATCH_CALLBACK)) {
-      Log.trace(
-          "[%s] batchCallback(operations=%s, results, callback=%s)",
-          this.getName(), operations, callback);
+    Log.trace(
+        "[%s] batchCallback(operations=%s, results, callback=%s)",
+        this.getName(), operations, callback);
 
-      this.batcher.batch(operations, results, callback);
-    }
+    this.batcher.batch(operations, results, callback);
   }
 
   @Override
@@ -482,14 +394,11 @@ public class MirroringTable implements Table {
       byte[] value,
       RowMutations rowMutations)
       throws IOException {
-    try (Scope scope =
-        this.mirroringTracer.spanFactory.operationScope(HBaseOperation.CHECK_AND_MUTATE)) {
-      Log.trace(
-          "[%s] checkAndMutate(row=%s, family=%s, qualifier=%s, compareOp=%s, value=%s, rowMutations=%s)",
-          this.getName(), row, family, qualifier, compareOp, value, rowMutations);
+    Log.trace(
+        "[%s] checkAndMutate(row=%s, family=%s, qualifier=%s, compareOp=%s, value=%s, rowMutations=%s)",
+        this.getName(), row, family, qualifier, compareOp, value, rowMutations);
 
-      return checkAndMutateWithSpan(row, family, qualifier, compareOp, value, rowMutations);
-    }
+    return checkAndMutateWithSpan(row, family, qualifier, compareOp, value, rowMutations);
   }
 
   @Override
@@ -505,15 +414,12 @@ public class MirroringTable implements Table {
   public boolean checkAndPut(
       byte[] row, byte[] family, byte[] qualifier, CompareOp compareOp, byte[] value, Put put)
       throws IOException {
-    try (Scope scope =
-        this.mirroringTracer.spanFactory.operationScope(HBaseOperation.CHECK_AND_PUT)) {
-      Log.trace(
-          "[%s] checkAndPut(row=%s, family=%s, qualifier=%s, compareOp=%s, value=%s, put=%s)",
-          this.getName(), row, family, qualifier, compareOp, value, put);
-      RowMutations mutations = new RowMutations(row);
-      mutations.add(put);
-      return this.checkAndMutateWithSpan(row, family, qualifier, compareOp, value, mutations);
-    }
+    Log.trace(
+        "[%s] checkAndPut(row=%s, family=%s, qualifier=%s, compareOp=%s, value=%s, put=%s)",
+        this.getName(), row, family, qualifier, compareOp, value, put);
+    RowMutations mutations = new RowMutations(row);
+    mutations.add(put);
+    return this.checkAndMutateWithSpan(row, family, qualifier, compareOp, value, mutations);
   }
 
   @Override
@@ -529,15 +435,12 @@ public class MirroringTable implements Table {
   public boolean checkAndDelete(
       byte[] row, byte[] family, byte[] qualifier, CompareOp compareOp, byte[] value, Delete delete)
       throws IOException {
-    try (Scope scope =
-        this.mirroringTracer.spanFactory.operationScope(HBaseOperation.CHECK_AND_DELETE)) {
-      Log.trace(
-          "[%s] checkAndDelete(row=%s, family=%s, qualifier=%s, compareOp=%s, value=%s, delete=%s)",
-          this.getName(), row, family, qualifier, compareOp, value, delete);
-      RowMutations mutations = new RowMutations(row);
-      mutations.add(delete);
-      return this.checkAndMutateWithSpan(row, family, qualifier, compareOp, value, mutations);
-    }
+    Log.trace(
+        "[%s] checkAndDelete(row=%s, family=%s, qualifier=%s, compareOp=%s, value=%s, delete=%s)",
+        this.getName(), row, family, qualifier, compareOp, value, delete);
+    RowMutations mutations = new RowMutations(row);
+    mutations.add(delete);
+    return this.checkAndMutateWithSpan(row, family, qualifier, compareOp, value, mutations);
   }
 
   private boolean checkAndMutateWithSpan(
@@ -549,16 +452,8 @@ public class MirroringTable implements Table {
       final RowMutations rowMutations)
       throws IOException {
     this.timestamper.fillTimestamp(rowMutations);
-    boolean wereMutationsApplied =
-        this.mirroringTracer.spanFactory.wrapPrimaryOperation(
-            new CallableThrowingIOException<Boolean>() {
-              @Override
-              public Boolean call() throws IOException {
-                return primaryTable.checkAndMutate(
+    boolean wereMutationsApplied = primaryTable.checkAndMutate(
                     row, family, qualifier, compareOp, value, rowMutations);
-              }
-            },
-            HBaseOperation.CHECK_AND_MUTATE);
 
     if (wereMutationsApplied) {
       scheduleSequentialWriteOperation(
@@ -578,61 +473,47 @@ public class MirroringTable implements Table {
   }
 
   private void closePrimaryAndScheduleSecondaryClose() throws IOException {
-    try (Scope scope =
-        this.mirroringTracer.spanFactory.operationScope(HBaseOperation.TABLE_CLOSE)) {
-      if (this.closed.getAndSet(true)) {
-        return;
-      }
-
-      // We are freeing the initial reference to current level reference counter.
-      this.referenceCounter.current.decrementReferenceCount();
-      // But we are scheduling asynchronous secondary operation and we should increment our parent's
-      // ref counter until this operation is finished.
-      holdReferenceUntilCompletion(this.referenceCounter.parent, this.closedFuture);
-
-      AccumulatedExceptions exceptionsList = new AccumulatedExceptions();
-      try {
-        this.mirroringTracer.spanFactory.wrapPrimaryOperation(
-            new CallableThrowingIOException<Void>() {
-              @Override
-              public Void call() throws IOException {
-                primaryTable.close();
-                return null;
-              }
-            },
-            HBaseOperation.TABLE_CLOSE);
-      } catch (IOException e) {
-        exceptionsList.add(e);
-      }
-
-      try {
-        // Close secondary wrapper (what will close secondary table) after all scheduled requests
-        // have finished.
-        this.referenceCounter
-            .current
-            .getOnLastReferenceClosed()
-            .addListener(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    try {
-                      secondaryAsyncWrapper.close();
-                      closedFuture.set(null);
-                    } catch (IOException e) {
-                      closedFuture.setException(e);
-                    }
-                  }
-                },
-                MoreExecutors.directExecutor());
-      } catch (RuntimeException e) {
-        exceptionsList.add(e);
-      }
-
-      exceptionsList.rethrowIfCaptured();
-    } finally {
-      this.mirroringTracer.spanFactory.asyncCloseSpanWhenCompleted(
-          this.referenceCounter.current.getOnLastReferenceClosed());
+    if (this.closed.getAndSet(true)) {
+      return;
     }
+
+    // We are freeing the initial reference to current level reference counter.
+    this.referenceCounter.current.decrementReferenceCount();
+    // But we are scheduling asynchronous secondary operation and we should increment our parent's
+    // ref counter until this operation is finished.
+    holdReferenceUntilCompletion(this.referenceCounter.parent, this.closedFuture);
+
+    AccumulatedExceptions exceptionsList = new AccumulatedExceptions();
+    try {
+      primaryTable.close();
+    } catch (IOException e) {
+      exceptionsList.add(e);
+    }
+
+    try {
+      // Close secondary wrapper (what will close secondary table) after all scheduled requests
+      // have finished.
+      this.referenceCounter
+          .current
+          .getOnLastReferenceClosed()
+          .addListener(
+              new Runnable() {
+                @Override
+                public void run() {
+                  try {
+                    secondaryAsyncWrapper.close();
+                    closedFuture.set(null);
+                  } catch (IOException e) {
+                    closedFuture.setException(e);
+                  }
+                }
+              },
+              MoreExecutors.directExecutor());
+    } catch (RuntimeException e) {
+      exceptionsList.add(e);
+    }
+
+    exceptionsList.rethrowIfCaptured();
   }
 
   private <T> void scheduleSequentialReadOperationWithVerification(
@@ -645,7 +526,7 @@ public class MirroringTable implements Table {
     this.requestScheduler.scheduleRequestWithCallback(
         resourcesDescription,
         secondaryOperationSupplier,
-        this.mirroringTracer.spanFactory.wrapReadVerificationCallback(verificationCallback));
+        verificationCallback);
   }
 
   private <T> void scheduleSequentialWriteOperation(
@@ -675,8 +556,7 @@ public class MirroringTable implements Table {
     this.requestScheduler.scheduleRequestWithCallback(
         writeOperationInfo.requestResourcesDescription,
         secondaryOperationSupplier,
-        this.mirroringTracer.spanFactory.wrapWriteOperationCallback(
-            writeOperationInfo.hBaseOperation, this.mirroringTracer, writeErrorCallback),
+        writeErrorCallback,
         flowControlReservationErrorConsumer);
   }
 
@@ -785,27 +665,24 @@ public class MirroringTable implements Table {
   /**
    * Helper class that holds common parameters to {@link
    * RequestScheduling#scheduleRequestWithCallback(RequestResourcesDescription, Supplier,
-   * FutureCallback, FlowController, MirroringTracer, Function)} for single instance of {@link
+   * FutureCallback, FlowController, Function)} for single instance of {@link
    * com.google.cloud.bigtable.mirroring.core.MirroringTable}.
    *
    * <p>It also takes care of reference counting all scheduled operations.
    */
   public static class RequestScheduler {
     final FlowController flowController;
-    final MirroringTracer mirroringTracer;
     final ReferenceCounter referenceCounter;
 
     public RequestScheduler(
         FlowController flowController,
-        MirroringTracer mirroringTracer,
         ReferenceCounter referenceCounter) {
       this.flowController = flowController;
-      this.mirroringTracer = mirroringTracer;
       this.referenceCounter = referenceCounter;
     }
 
     public RequestScheduler withReferenceCounter(ReferenceCounter referenceCounter) {
-      return new RequestScheduler(this.flowController, this.mirroringTracer, referenceCounter);
+      return new RequestScheduler(this.flowController, referenceCounter);
     }
 
     public <T> ListenableFuture<Void> scheduleRequestWithCallback(
@@ -836,7 +713,6 @@ public class MirroringTable implements Table {
               secondaryResultFutureSupplier,
               verificationCallback,
               this.flowController,
-              this.mirroringTracer,
               flowControlReservationErrorConsumer);
       holdReferenceUntilCompletion(this.referenceCounter, future);
       return future;

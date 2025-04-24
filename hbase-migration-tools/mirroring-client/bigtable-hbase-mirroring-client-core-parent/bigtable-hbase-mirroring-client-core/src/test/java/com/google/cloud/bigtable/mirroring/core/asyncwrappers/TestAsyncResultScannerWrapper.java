@@ -19,7 +19,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.junit.Test;
@@ -34,8 +33,7 @@ public class TestAsyncResultScannerWrapper {
     AsyncResultScannerWrapper asyncResultScannerWrapper =
         new AsyncResultScannerWrapper(
             resultScanner,
-            MoreExecutors.listeningDecorator(MoreExecutors.newDirectExecutorService()),
-            new MirroringTracer());
+            MoreExecutors.listeningDecorator(MoreExecutors.newDirectExecutorService()));
     asyncResultScannerWrapper.close();
     asyncResultScannerWrapper.close();
     verify(resultScanner, times(1)).close();

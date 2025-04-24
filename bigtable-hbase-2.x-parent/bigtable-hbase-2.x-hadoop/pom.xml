@@ -54,14 +54,6 @@ limitations under the License.
           <groupId>com.google.cloud</groupId>
           <artifactId>google-cloud-bigtable</artifactId>
         </exclusion>
-        <exclusion>
-          <groupId>io.opencensus</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>io.grpc</groupId>
-          <artifactId>grpc-census</artifactId>
-        </exclusion>
       </exclusions>
     </dependency>
 

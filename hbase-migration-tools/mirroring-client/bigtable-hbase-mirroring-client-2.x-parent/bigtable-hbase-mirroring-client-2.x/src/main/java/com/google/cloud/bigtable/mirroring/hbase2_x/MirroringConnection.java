@@ -87,7 +87,6 @@ public class MirroringConnection
             timestamper,
             performWritesConcurrently,
             waitForSecondaryWrites,
-            mirroringTracer,
             referenceCounter,
             MirroringConnection.super
                 .configuration

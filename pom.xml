@@ -55,7 +55,7 @@ limitations under the License.
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- core dependency versions -->
-    <bigtable.version>2.57.3</bigtable.version>
+    <bigtable.version>2.57.4-SNAPSHOT</bigtable.version>
     <google-cloud-bigtable-emulator.version>0.185.0</google-cloud-bigtable-emulator.version>
     <bigtable-metrics-api.version>1.29.2</bigtable-metrics-api.version>
     <!-- Optional dep for bigtable-metrics-api used for tests -->
@@ -83,7 +83,6 @@ limitations under the License.
     <beam.version>2.63.0</beam.version>
     <!-- referred from bigtable-beam-import and bigtable-emulator -->
     <guava.version>31.1-jre</guava.version>
-    <opencensus.version>0.31.1</opencensus.version>
 
     <!-- Enable the ability to skip unit tests and only run integration tests,
          while still respecting global skipTests override. -->

@@ -17,14 +17,9 @@ package com.google.cloud.bigtable.mirroring.core.asyncwrappers;
 
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.core.MirroringResultScanner;
-import com.google.cloud.bigtable.mirroring.core.utils.CallableThrowingIOException;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import io.opencensus.common.Scope;
-import io.opencensus.trace.Span;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -42,7 +37,6 @@ import org.apache.hadoop.hbase.client.Scan;
  */
 @InternalApi("For internal usage only")
 public class AsyncResultScannerWrapper {
-  private final MirroringTracer mirroringTracer;
   /**
    * We use this queue to ensure that asynchronous next()s are called in the same order and with the
    * same parameters as next()s on primary result scanner.
@@ -61,10 +55,8 @@ public class AsyncResultScannerWrapper {
 
   public AsyncResultScannerWrapper(
       ResultScanner scanner,
-      ListeningExecutorService executorService,
-      MirroringTracer mirroringTracer) {
+      ListeningExecutorService executorService) {
     this.scanner = scanner;
-    this.mirroringTracer = mirroringTracer;
     this.executorService = executorService;
     this.nextContextQueue = new ConcurrentLinkedQueue<>();
     this.nextResultQueue = new ConcurrentLinkedQueue<>();
@@ -88,12 +80,8 @@ public class AsyncResultScannerWrapper {
             synchronized (AsyncResultScannerWrapper.this) {
               final ScannerRequestContext requestContext =
                   AsyncResultScannerWrapper.this.nextContextQueue.remove();
-              try (Scope scope =
-                  AsyncResultScannerWrapper.this.mirroringTracer.spanFactory.spanAsScope(
-                      requestContext.span)) {
-                AsyncResultScannerWrapper.this.nextResultQueue.add(performNext(requestContext));
-                return null;
-              }
+              AsyncResultScannerWrapper.this.nextResultQueue.add(performNext(requestContext));
+              return null;
             }
           }
         });
@@ -114,29 +102,13 @@ public class AsyncResultScannerWrapper {
 
   private AsyncScannerVerificationPayload performNextSingle(ScannerRequestContext requestContext)
       throws IOException {
-    Result result =
-        this.mirroringTracer.spanFactory.wrapSecondaryOperation(
-            new CallableThrowingIOException<Result>() {
-              @Override
-              public Result call() throws IOException {
-                return AsyncResultScannerWrapper.this.scanner.next();
-              }
-            },
-            HBaseOperation.NEXT);
+    Result result = AsyncResultScannerWrapper.this.scanner.next();
     return new AsyncScannerVerificationPayload(requestContext, result);
   }
 
   private AsyncScannerVerificationPayload performNextMultiple(
       final ScannerRequestContext requestContext) throws IOException {
-    Result[] result =
-        this.mirroringTracer.spanFactory.wrapSecondaryOperation(
-            new CallableThrowingIOException<Result[]>() {
-              @Override
-              public Result[] call() throws IOException {
-                return AsyncResultScannerWrapper.this.scanner.next(requestContext.numRequests);
-              }
-            },
-            HBaseOperation.NEXT_MULTIPLE);
+    Result[] result = AsyncResultScannerWrapper.this.scanner.next(requestContext.numRequests);
     return new AsyncScannerVerificationPayload(requestContext, result);
   }
 
@@ -172,8 +144,6 @@ public class AsyncResultScannerWrapper {
     public final Result[] result;
     /** Number of Results requested in current next call. */
     public final int numRequests;
-    /** Tracing Span will be used as a parent span of current request. */
-    public final Span span;
     /**
      * Marks whether this next was issued using {@link ResultScanner#next()} (true) or {@link
      * ResultScanner#next(int)} (false). Used to forward the same method call to underlying
@@ -182,20 +152,19 @@ public class AsyncResultScannerWrapper {
     public final boolean singleNext;
 
     private ScannerRequestContext(
-        Scan scan, Result[] result, int numRequests, boolean singleNext, Span span) {
+        Scan scan, Result[] result, int numRequests, boolean singleNext) {
       this.scan = scan;
       this.result = result;
       this.numRequests = numRequests;
-      this.span = span;
       this.singleNext = singleNext;
     }
 
-    public ScannerRequestContext(Scan scan, Result[] result, int numRequests, Span span) {
-      this(scan, result, numRequests, false, span);
+    public ScannerRequestContext(Scan scan, Result[] result, int numRequests) {
+      this(scan, result, numRequests, false);
     }
 
-    public ScannerRequestContext(Scan scan, Result result, Span span) {
-      this(scan, new Result[] {result}, 1, true, span);
+    public ScannerRequestContext(Scan scan, Result result) {
+      this(scan, new Result[] {result}, 1, true);
     }
   }
 

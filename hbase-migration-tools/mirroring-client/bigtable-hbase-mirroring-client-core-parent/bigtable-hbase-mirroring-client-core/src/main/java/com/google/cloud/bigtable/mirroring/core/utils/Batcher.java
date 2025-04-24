@@ -28,7 +28,6 @@ import com.google.cloud.bigtable.mirroring.core.utils.BatchHelpers.ReadWriteSpli
 import com.google.cloud.bigtable.mirroring.core.utils.OperationUtils.RewrittenIncrementAndAppendIndicesInfo;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.Timestamper;
 import com.google.cloud.bigtable.mirroring.core.verification.VerificationContinuationFactory;
 import com.google.common.base.Function;
@@ -82,7 +81,6 @@ public class Batcher {
   private final Predicate<Object> resultIsFaultyPredicate;
   private final boolean waitForSecondaryWrites;
   private final boolean performWritesConcurrently;
-  private final MirroringTracer mirroringTracer;
   private final Timestamper timestamper;
 
   public Batcher(
@@ -95,8 +93,7 @@ public class Batcher {
       Timestamper timestamper,
       Predicate<Object> resultIsFaultyPredicate,
       boolean waitForSecondaryWrites,
-      boolean performWritesConcurrently,
-      MirroringTracer mirroringTracer) {
+      boolean performWritesConcurrently) {
     this.primaryTable = primaryTable;
     this.secondaryAsyncWrapper = secondaryAsyncWrapper;
     this.requestScheduler = requestScheduler;
@@ -106,7 +103,6 @@ public class Batcher {
     this.resultIsFaultyPredicate = resultIsFaultyPredicate;
     this.waitForSecondaryWrites = waitForSecondaryWrites;
     this.performWritesConcurrently = performWritesConcurrently;
-    this.mirroringTracer = mirroringTracer;
     this.timestamper = timestamper;
   }
 
@@ -215,7 +211,7 @@ public class Batcher {
       CallableThrowingIOAndInterruptedException<Void> primaryOperation)
       throws IOException, InterruptedException {
     try {
-      this.mirroringTracer.spanFactory.wrapPrimaryOperation(primaryOperation, HBaseOperation.BATCH);
+      primaryOperation.call();
     } finally {
       scheduleSecondaryWriteBatchOperations(operations, results);
     }
@@ -243,7 +239,7 @@ public class Batcher {
       throws IOException, InterruptedException {
     BatchData primaryBatchData = new BatchData(operations, results);
     try {
-      this.mirroringTracer.spanFactory.wrapPrimaryOperation(primaryOperation, HBaseOperation.BATCH);
+      primaryOperation.call();
     } catch (RetriesExhaustedWithDetailsException e) {
       primaryBatchData.setException(e);
     } catch (InterruptedException e) {
@@ -303,8 +299,7 @@ public class Batcher {
             resultsSecondary,
             verificationContinuationFactory.getMismatchDetector(),
             this.secondaryWriteErrorConsumer,
-            resultIsFaultyPredicate,
-            this.mirroringTracer);
+            resultIsFaultyPredicate);
 
     FutureCallback<Void> verificationCallback =
         new FutureCallback<Void>() {

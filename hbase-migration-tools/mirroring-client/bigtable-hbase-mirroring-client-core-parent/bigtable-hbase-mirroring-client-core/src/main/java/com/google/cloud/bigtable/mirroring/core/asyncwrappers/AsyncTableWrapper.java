@@ -19,8 +19,6 @@ import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.core.utils.CallableThrowingIOAndInterruptedException;
 import com.google.cloud.bigtable.mirroring.core.utils.CallableThrowingIOException;
 import com.google.cloud.bigtable.mirroring.core.utils.Logger;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -55,14 +53,12 @@ public class AsyncTableWrapper {
   private static final Logger Log = new Logger(AsyncTableWrapper.class);
   private final Table table;
   private final ListeningExecutorService executorService;
-  private final MirroringTracer mirroringTracer;
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
   public AsyncTableWrapper(
-      Table table, ListeningExecutorService executorService, MirroringTracer mirroringTracer) {
+      Table table, ListeningExecutorService executorService) {
     this.table = table;
     this.executorService = executorService;
-    this.mirroringTracer = mirroringTracer;
   }
 
   public Supplier<ListenableFuture<Result>> get(final Get gets) {
@@ -73,8 +69,7 @@ public class AsyncTableWrapper {
             Log.trace("get(Get)");
             return table.get(gets);
           }
-        },
-        HBaseOperation.GET);
+        });
   }
 
   public Supplier<ListenableFuture<Result[]>> get(final List<Get> gets) {
@@ -85,8 +80,7 @@ public class AsyncTableWrapper {
             Log.trace("get(List<Get>)");
             return table.get(gets);
           }
-        },
-        HBaseOperation.GET_LIST);
+        });
   }
 
   public Supplier<ListenableFuture<Boolean>> exists(final Get get) {
@@ -97,8 +91,7 @@ public class AsyncTableWrapper {
             Log.trace("exists(Get)");
             return table.exists(get);
           }
-        },
-        HBaseOperation.EXISTS);
+        });
   }
 
   public Supplier<ListenableFuture<boolean[]>> existsAll(final List<Get> gets) {
@@ -109,8 +102,7 @@ public class AsyncTableWrapper {
             Log.trace("existsAll(List<Get>)");
             return table.existsAll(gets);
           }
-        },
-        HBaseOperation.EXISTS_ALL);
+        });
   }
 
   public void close() throws IOException {
@@ -119,18 +111,10 @@ public class AsyncTableWrapper {
     }
 
     try {
-      this.mirroringTracer.spanFactory.wrapSecondaryOperation(
-          new CallableThrowingIOException<Void>() {
-            @Override
-            public Void call() throws IOException {
-              synchronized (table) {
-                Log.trace("performing close()");
-                table.close();
-              }
-              return null;
-            }
-          },
-          HBaseOperation.TABLE_CLOSE);
+      synchronized (table) {
+        Log.trace("performing close()");
+        table.close();
+      }
     } finally {
       Log.trace("asyncClose() completed");
     }
@@ -139,17 +123,13 @@ public class AsyncTableWrapper {
   public AsyncResultScannerWrapper getScanner(Scan scan) throws IOException {
     Log.trace("getScanner(Scan)");
     return new AsyncResultScannerWrapper(
-        this.table.getScanner(scan), this.executorService, this.mirroringTracer);
+        this.table.getScanner(scan), this.executorService);
   }
 
   public <T> Supplier<ListenableFuture<T>> createSubmitTaskSupplier(
-      final CallableThrowingIOAndInterruptedException<T> task, final HBaseOperation operationName) {
+      final CallableThrowingIOAndInterruptedException<T> task) {
 
     final Callable<T> secondaryOperationCallable =
-        new Callable<T>() {
-          @Override
-          public T call() throws Exception {
-            return AsyncTableWrapper.this.mirroringTracer.spanFactory.wrapSecondaryOperation(
                 new CallableThrowingIOAndInterruptedException<T>() {
                   @Override
                   public T call() throws IOException, InterruptedException {
@@ -157,17 +137,12 @@ public class AsyncTableWrapper {
                       return task.call();
                     }
                   }
-                },
-                operationName);
-          }
-        };
+                };
 
     return new Supplier<ListenableFuture<T>>() {
       @Override
       public ListenableFuture<T> get() {
-        return submitTask(
-            AsyncTableWrapper.this.mirroringTracer.spanFactory.wrapWithCurrentSpan(
-                secondaryOperationCallable));
+        return submitTask(secondaryOperationCallable);
       }
     };
   }
@@ -185,8 +160,7 @@ public class AsyncTableWrapper {
             table.put(put);
             return null;
           }
-        },
-        HBaseOperation.PUT);
+        });
   }
 
   public Supplier<ListenableFuture<Void>> append(final Append append) {
@@ -198,8 +172,7 @@ public class AsyncTableWrapper {
             table.append(append);
             return null;
           }
-        },
-        HBaseOperation.APPEND);
+        });
   }
 
   public Supplier<ListenableFuture<Void>> increment(final Increment increment) {
@@ -211,8 +184,7 @@ public class AsyncTableWrapper {
             table.increment(increment);
             return null;
           }
-        },
-        HBaseOperation.INCREMENT);
+        });
   }
 
   public Supplier<ListenableFuture<Void>> mutateRow(final RowMutations rowMutations) {
@@ -224,8 +196,7 @@ public class AsyncTableWrapper {
             table.mutateRow(rowMutations);
             return null;
           }
-        },
-        HBaseOperation.MUTATE_ROW);
+        });
   }
 
   public Supplier<ListenableFuture<Void>> delete(final Delete delete) {
@@ -237,8 +208,7 @@ public class AsyncTableWrapper {
             table.delete(delete);
             return null;
           }
-        },
-        HBaseOperation.DELETE);
+        });
   }
 
   public Supplier<ListenableFuture<Void>> batch(
@@ -251,7 +221,6 @@ public class AsyncTableWrapper {
             table.batch(operations, results);
             return null;
           }
-        },
-        HBaseOperation.BATCH);
+        });
   }
 }

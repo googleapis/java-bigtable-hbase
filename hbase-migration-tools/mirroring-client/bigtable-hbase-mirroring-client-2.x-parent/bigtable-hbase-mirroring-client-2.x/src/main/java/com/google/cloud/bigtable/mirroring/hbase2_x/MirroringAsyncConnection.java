@@ -22,7 +22,6 @@ import com.google.cloud.bigtable.mirroring.core.utils.SecondaryWriteErrorConsume
 import com.google.cloud.bigtable.mirroring.core.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.core.utils.faillog.FailedMutationLogger;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.FlowController;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.core.utils.referencecounting.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.Timestamper;
 import com.google.cloud.bigtable.mirroring.core.verification.MismatchDetector;
@@ -63,8 +62,7 @@ public class MirroringAsyncConnection implements AsyncConnection {
   private final MismatchDetector mismatchDetector;
   private final ListenableReferenceCounter referenceCounter;
   private final FlowController flowController;
-  private final SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
-  private final MirroringTracer mirroringTracer;
+  private final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final ReadSampler readSampler;
   private final ExecutorService executorService;
@@ -90,8 +88,6 @@ public class MirroringAsyncConnection implements AsyncConnection {
       throws Throwable {
     this.configuration = new MirroringAsyncConfiguration(conf);
 
-    this.mirroringTracer = new MirroringTracer();
-
     this.primaryConnection =
         ConnectionFactory.createAsyncConnection(this.configuration.primaryConfiguration, user)
             .get();
@@ -113,7 +109,6 @@ public class MirroringAsyncConnection implements AsyncConnection {
             .mismatchDetectorFactoryClass
             .newInstance()
             .create(
-                this.mirroringTracer,
                 this.configuration.mirroringOptions.maxLoggedBinaryValueLength);
 
     FailedMutationLogger failedMutationLogger =
@@ -138,8 +133,7 @@ public class MirroringAsyncConnection implements AsyncConnection {
             .newInstance()
             .create(failedMutationLogger);
 
-    this.secondaryWriteErrorConsumer =
-        new SecondaryWriteErrorConsumerWithMetrics(this.mirroringTracer, writeErrorConsumer);
+    this.secondaryWriteErrorConsumer = writeErrorConsumer;
 
     this.readSampler = new ReadSampler(this.configuration.mirroringOptions.readSamplingRate);
     this.executorService = Executors.newCachedThreadPool();
@@ -292,7 +286,6 @@ public class MirroringAsyncConnection implements AsyncConnection {
           mismatchDetector,
           flowController,
           secondaryWriteErrorConsumer,
-          mirroringTracer,
           readSampler,
           timestamper,
           referenceCounter,

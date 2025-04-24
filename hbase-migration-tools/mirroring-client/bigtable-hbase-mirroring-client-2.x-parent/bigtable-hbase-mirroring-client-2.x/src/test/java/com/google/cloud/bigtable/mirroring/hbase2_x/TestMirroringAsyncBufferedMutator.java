@@ -24,6 +24,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.bigtable.mirroring.core.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.core.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.RequestResourcesDescription;
@@ -54,7 +55,8 @@ public class TestMirroringAsyncBufferedMutator {
   @Mock AsyncBufferedMutator primaryMutator;
   @Mock AsyncBufferedMutator secondaryMutator;
   @Mock FlowController flowController;
-  @Mock SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
+  @Mock
+  SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
   Timestamper timestamper = new NoopTimestamper();
 
   CompletableFuture<Void> primaryFuture;

@@ -16,29 +16,24 @@
 package com.google.cloud.bigtable.mirroring.core.utils;
 
 import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import java.util.List;
 import org.apache.hadoop.hbase.client.Row;
 
 public class SecondaryWriteErrorConsumerWithMetrics implements SecondaryWriteErrorConsumer {
-  private final MirroringTracer mirroringTracer;
   private final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
 
   public SecondaryWriteErrorConsumerWithMetrics(
-      MirroringTracer mirroringTracer, SecondaryWriteErrorConsumer secondaryWriteErrorConsumer) {
-    this.mirroringTracer = mirroringTracer;
+      SecondaryWriteErrorConsumer secondaryWriteErrorConsumer) {
     this.secondaryWriteErrorConsumer = secondaryWriteErrorConsumer;
   }
 
   @Override
   public void consume(HBaseOperation operation, List<? extends Row> operations, Throwable cause) {
-    this.mirroringTracer.metricsRecorder.recordSecondaryWriteErrors(operation, operations.size());
     this.secondaryWriteErrorConsumer.consume(operation, operations, cause);
   }
 
   @Override
   public void consume(HBaseOperation operation, Row row, Throwable cause) {
-    this.mirroringTracer.metricsRecorder.recordSecondaryWriteErrors(operation, 1);
     this.secondaryWriteErrorConsumer.consume(operation, row, cause);
   }
 }

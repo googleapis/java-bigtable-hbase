@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.hbase.mirroring.utils;
 
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.core.verification.MismatchDetector;
 import com.google.common.util.concurrent.SettableFuture;
 import java.util.concurrent.ExecutionException;
@@ -32,8 +31,8 @@ public class BlockingMismatchDetector extends TestMismatchDetector {
     unblock.set(null);
   }
 
-  public BlockingMismatchDetector(MirroringTracer tracer, Integer i) {
-    super(tracer, i);
+  public BlockingMismatchDetector(Integer i) {
+    super(i);
   }
 
   @Override
@@ -49,9 +48,8 @@ public class BlockingMismatchDetector extends TestMismatchDetector {
   public static class Factory implements MismatchDetector.Factory {
 
     @Override
-    public MismatchDetector create(
-        MirroringTracer mirroringTracer, Integer maxLoggedBinaryValueLength) {
-      return new BlockingMismatchDetector(mirroringTracer, maxLoggedBinaryValueLength);
+    public MismatchDetector create(Integer maxLoggedBinaryValueLength) {
+      return new BlockingMismatchDetector(maxLoggedBinaryValueLength);
     }
   }
 }

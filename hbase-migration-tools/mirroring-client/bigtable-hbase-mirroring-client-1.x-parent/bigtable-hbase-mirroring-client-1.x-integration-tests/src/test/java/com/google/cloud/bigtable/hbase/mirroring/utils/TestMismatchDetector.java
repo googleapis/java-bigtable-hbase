@@ -17,7 +17,6 @@ package com.google.cloud.bigtable.hbase.mirroring.utils;
 
 import com.google.cloud.bigtable.mirroring.core.utils.Comparators;
 import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.core.verification.MismatchDetector;
 import java.util.Arrays;
 import java.util.List;
@@ -28,10 +27,8 @@ import org.apache.hadoop.hbase.client.Scan;
 public class TestMismatchDetector implements MismatchDetector {
   private final TestMismatchDetectorCounter mismatchCounter =
       TestMismatchDetectorCounter.getInstance();
-  private final MirroringTracer tracer;
 
-  public TestMismatchDetector(MirroringTracer tracer, Integer ignored) {
-    this.tracer = tracer;
+  public TestMismatchDetector(Integer ignored) {
   }
 
   public void onFailure(HBaseOperation operation, Throwable throwable) {
@@ -43,7 +40,6 @@ public class TestMismatchDetector implements MismatchDetector {
     System.out.printf(
         "onMismatch: %s: %s", operation, String.format("%s != %s", primary, secondary));
     mismatchCounter.reportMismatch(operation, primary, secondary);
-    tracer.metricsRecorder.recordReadMismatches(operation, 1);
   }
 
   public void onLengthMismatch(HBaseOperation operation, int primaryLength, int secondaryLength) {
@@ -51,7 +47,6 @@ public class TestMismatchDetector implements MismatchDetector {
         "onMismatch: %s: %s",
         operation, String.format("length: %s != %s", primaryLength, secondaryLength));
     mismatchCounter.reportLengthMismatch(operation, primaryLength, secondaryLength);
-    tracer.metricsRecorder.recordReadMismatches(operation, 1);
   }
 
   public void onVerificationStarted() {
@@ -206,9 +201,8 @@ public class TestMismatchDetector implements MismatchDetector {
   public static class Factory implements MismatchDetector.Factory {
 
     @Override
-    public MismatchDetector create(
-        MirroringTracer mirroringTracer, Integer maxLoggedBinaryValueLength) {
-      return new TestMismatchDetector(mirroringTracer, maxLoggedBinaryValueLength);
+    public MismatchDetector create(Integer maxLoggedBinaryValueLength) {
+      return new TestMismatchDetector(maxLoggedBinaryValueLength);
     }
   }
 

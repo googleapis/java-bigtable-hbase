@@ -122,9 +122,6 @@ Log files location can be controlled by setting `google.bigtable.mirroring.write
 
 The user can implement custom handling of failed mutations by overriding default `google.bigtable.mirroring.write-error-consumer.factory-impl` and `google.bigtable.mirroring.write-error-log.appender.factory-impl` keys to user-defined classes on classpath.
 
-## OpenCensus
-The Mirroring Client exposes OpenCensus metrics and traces. Metrics are prefixed with `cloud.google.com/java/mirroring`.
-
 ## Buffered mutator
 Mirroring Client's Buffered Mutator works in two modes: sequential and concurrent.
 In the sequential mode, the Mirroring Buffered Mutator passes mutations to the underlying Primary Buffered Mutator and stores mutations in an internal buffer. When the size of the buffer exceeds `google.bigtable.mirroring.buffered-mutator.bytes-to-flush` the Primary Buffered Mutator is flushed. After the flush, mutations that did not fail are passed to Secondary Buffered Mutator, which is flushed immediately afterwards. The flushes happen asynchronously and do not block user code.
@@ -152,7 +149,7 @@ Place read a warning in `Caveats - Timestamps` section to decide which mode fits
 - `google.bigtable.mirroring.secondary-client.async.connection.impl` - a name of Connection class that should be used to connect asynchronously to secondary database. It is used as hbase.client.async.connection.impl when creating connection to secondary database. Set to `default` to use default HBase connection class. Required when using HBase 2.x.
 - `google.bigtable.mirroring.primary-client.prefix` - By default all parameters from the Configuration object passed to ConnectionFactory#createConnection are passed to Connection instances. If this key is set, then only parameters that start with the given prefix are passed to the primary connection. Use it if primary and secondary connections' configurations share a key that should have a different value passed to each of the connections, e.g. zookeeper url.  Prefixes should not contain a dot at the end. default: empty.
 - `google.bigtable.mirroring.secondary-client.prefix` - If this key is set, then only parameters that start with given prefix are passed to secondary Connection. default: empty.
-- `google.bigtable.mirroring.mismatch-detector.factory-impl` - Path to class implementing MismatchDetector.Factory. default: DefaultMismatchDetector.Factory, logs detected mismatches to stdout and reports them as OpenCensus metrics.
+- `google.bigtable.mirroring.mismatch-detector.factory-impl` - Path to class implementing MismatchDetector.Factory. default: DefaultMismatchDetector.Factory, logs detected mismatches to stdout.
 - `google.bigtable.mirroring.flow-controller-strategy.factory-impl` - Path to class to be used as FlowControllerStrategy.Factory. default: RequestCountingFlowControlStrategy.Factory. Used to throttle primary database requests in case of slower secondary.
 - `google.bigtable.mirroring.flow-controller-strategy.max-outstanding-requests` - Maximal number of outstanding secondary database requests before throttling requests to primary database. default: 500.
 - `google.bigtable.mirroring.flow-controller-strategy.max-used-bytes` - Maximal number of bytes used by internal buffers for asynchronous operations before throttling requests to primary database. default: 256MB.

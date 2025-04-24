@@ -35,7 +35,6 @@ import com.google.cloud.bigtable.mirroring.core.MirroringOperationException;
 import com.google.cloud.bigtable.mirroring.core.MirroringOperationException.DatabaseIdentifier;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.core.utils.referencecounting.ReferenceCounter;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.NoopTimestamper;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.Timestamper;
@@ -405,7 +404,6 @@ public class TestConcurrentMirroringBufferedMutator {
         makeConfigurationWithFlushThreshold(flushThreshold),
         executorServiceRule.executorService,
         mock(ReferenceCounter.class),
-        timestamper,
-        new MirroringTracer());
+        timestamper);
   }
 }

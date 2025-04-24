@@ -38,12 +38,6 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
-import io.opencensus.common.Scope;
-import io.opencensus.trace.AttributeValue;
-import io.opencensus.trace.Span;
-import io.opencensus.trace.Status;
-import io.opencensus.trace.Tracer;
-import io.opencensus.trace.Tracing;
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -90,9 +84,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 public abstract class AbstractBigtableTable implements Table {
   /** Constant <code>LOG</code> */
   protected static final Logger LOG = new Logger(AbstractBigtableTable.class);
-
-  private static final Tracer TRACER = Tracing.getTracer();
-
   private static final int MIN_BYTE_BUFFER_SIZE = 100 * 1024 * 1024;
   private static final double DEFAULT_BYTE_LIMIT_PERCENTAGE = .1;
   private static final long DEFAULT_MAX_SEGMENT_SIZE =
@@ -104,13 +95,6 @@ public abstract class AbstractBigtableTable implements Table {
   private static class TableMetrics {
     Timer putTimer = BigtableClientMetrics.timer(MetricLevel.Info, "table.put.latency");
     Timer getTimer = BigtableClientMetrics.timer(MetricLevel.Info, "table.get.latency");
-  }
-
-  private static void addBatchSizeAnnotation(Collection<?> c) {
-    TRACER
-        .getCurrentSpan()
-        .addAnnotation(
-            "batchSize", ImmutableMap.of("size", AttributeValue.longAttributeValue(c.size())));
   }
 
   protected final TableName tableName;
@@ -152,8 +136,7 @@ public abstract class AbstractBigtableTable implements Table {
   /** {@inheritDoc} */
   @Override
   public HTableDescriptor getTableDescriptor() throws IOException {
-    try (Scope scope = TRACER.spanBuilder("BigtableTable.getTableDescriptor").startScopedSpan();
-        Admin admin = this.bigtableConnection.getAdmin()) {
+    try (Admin admin = this.bigtableConnection.getAdmin()) {
       return admin.getTableDescriptor(tableName);
     }
   }
@@ -161,8 +144,7 @@ public abstract class AbstractBigtableTable implements Table {
   /** {@inheritDoc} */
   @Override
   public boolean exists(Get get) throws IOException {
-    try (Scope scope = TRACER.spanBuilder("BigtableTable.exists").startScopedSpan();
-        Timer.Context ignored = metrics.getTimer.time()) {
+    try (Timer.Context ignored = metrics.getTimer.time()) {
       LOG.trace("exists(Get)");
       Filters.Filter filter =
           Adapters.GET_ADAPTER.buildFilter(GetAdapter.setCheckExistenceOnly(get));
@@ -182,15 +164,12 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public boolean[] existsAll(List<Get> gets) throws IOException {
     LOG.trace("existsAll(Get)");
-    try (Scope scope = TRACER.spanBuilder("BigtableTable.existsAll").startScopedSpan()) {
-      addBatchSizeAnnotation(gets);
-      List<Get> existGets = new ArrayList<>(gets.size());
-      for (Get get : gets) {
-        existGets.add(GetAdapter.setCheckExistenceOnly(get));
-      }
-      try (BatchExecutor executor = createBatchExecutor()) {
-        return executor.exists(existGets);
-      }
+    List<Get> existGets = new ArrayList<>(gets.size());
+    for (Get get : gets) {
+      existGets.add(GetAdapter.setCheckExistenceOnly(get));
+    }
+    try (BatchExecutor executor = createBatchExecutor()) {
+      return executor.exists(existGets);
     }
   }
 
@@ -199,11 +178,8 @@ public abstract class AbstractBigtableTable implements Table {
   public void batch(List<? extends Row> actions, Object[] results)
       throws IOException, InterruptedException {
     LOG.trace("batch(List<>, Object[])");
-    try (Scope scope = TRACER.spanBuilder("BigtableTable.batch").startScopedSpan()) {
-      addBatchSizeAnnotation(actions);
-      try (BatchExecutor executor = createBatchExecutor()) {
-        executor.batch(actions, results);
-      }
+    try (BatchExecutor executor = createBatchExecutor()) {
+      executor.batch(actions, results);
     }
   }
 
@@ -212,12 +188,8 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public Object[] batch(List<? extends Row> actions) throws IOException, InterruptedException {
     LOG.trace("batch(List<>)");
-    try (Scope scope = TRACER.spanBuilder("BigtableTable.batch").startScopedSpan()) {
-      addBatchSizeAnnotation(actions);
-
-      try (BatchExecutor executor = createBatchExecutor()) {
-        return executor.batch(actions);
-      }
+    try (BatchExecutor executor = createBatchExecutor()) {
+      return executor.batch(actions);
     }
   }
 
@@ -227,11 +199,8 @@ public abstract class AbstractBigtableTable implements Table {
       List<? extends Row> actions, Object[] results, Batch.Callback<R> callback)
       throws IOException, InterruptedException {
     LOG.trace("batchCallback(List<>, Object[], Batch.Callback)");
-    try (Scope scope = TRACER.spanBuilder("BigtableTable.batchCallback").startScopedSpan()) {
-      addBatchSizeAnnotation(actions);
-      try (BatchExecutor executor = createBatchExecutor()) {
-        executor.batchCallback(actions, results, callback);
-      }
+    try (BatchExecutor executor = createBatchExecutor()) {
+      executor.batchCallback(actions, results, callback);
     }
   }
 
@@ -241,14 +210,11 @@ public abstract class AbstractBigtableTable implements Table {
   public <R> Object[] batchCallback(List<? extends Row> actions, Batch.Callback<R> callback)
       throws IOException, InterruptedException {
     LOG.trace("batchCallback(List<>, Batch.Callback)");
-    try (Scope scope = TRACER.spanBuilder("BigtableTable.batchCallback").startScopedSpan()) {
-      addBatchSizeAnnotation(actions);
-      Object[] results = new Object[actions.size()];
-      try (BatchExecutor executor = createBatchExecutor()) {
-        executor.batchCallback(actions, results, callback);
-      }
-      return results;
+    Object[] results = new Object[actions.size()];
+    try (BatchExecutor executor = createBatchExecutor()) {
+      executor.batchCallback(actions, results, callback);
     }
+    return results;
   }
 
   /** {@inheritDoc} */
@@ -265,11 +231,8 @@ public abstract class AbstractBigtableTable implements Table {
         throw createRetriesExhaustedWithDetailsException(e, gets.get(0));
       }
     } else {
-      try (Scope scope = TRACER.spanBuilder("BigtableTable.get").startScopedSpan()) {
-        addBatchSizeAnnotation(gets);
-        try (BatchExecutor executor = createBatchExecutor()) {
-          return executor.batch(gets);
-        }
+      try (BatchExecutor executor = createBatchExecutor()) {
+        return executor.batch(gets);
       }
     }
   }
@@ -286,8 +249,7 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public Result get(Get get) throws IOException {
     LOG.trace("get(Get)");
-    try (Scope scope = TRACER.spanBuilder("BigtableTable.get").startScopedSpan();
-        Timer.Context ignored = metrics.getTimer.time()) {
+    try (Timer.Context ignored = metrics.getTimer.time()) {
 
       Filters.Filter filter = Adapters.GET_ADAPTER.buildFilter(get);
       try {
@@ -304,8 +266,7 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public ResultScanner getScanner(final Scan scan) throws IOException {
     LOG.trace("getScanner(Scan)");
-    Span span = TRACER.spanBuilder("BigtableTable.scan").startSpan();
-    try (Scope scope = TRACER.withSpan(span)) {
+    try {
       ResultScanner scanner;
       if (scan.getCaching() == -1) {
         scanner = clientWrapper.readRows(hbaseAdapter.adapt(scan));
@@ -315,16 +276,12 @@ public abstract class AbstractBigtableTable implements Table {
         scanner = clientWrapper.readRows(paginator, DEFAULT_MAX_SEGMENT_SIZE);
       }
       if (hasWhileMatchFilter(scan.getFilter())) {
-        return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner, span);
+        return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner);
       }
       // TODO: need to end the span when stream ends
       return scanner;
     } catch (Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
-      span.setStatus(Status.UNKNOWN);
-      // Close the span only when throw an exception and not on finally because if no exception
-      // the span will be ended by the adapter.
-      span.end();
       throw new IOException(
           makeGenericExceptionMessage(
               "getScanner", settings.getProjectId(), tableName.getQualifierAsString()),
@@ -431,8 +388,7 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public void delete(List<Delete> deletes) throws IOException {
     LOG.trace("delete(List<Delete>)");
-    try (Scope scope = TRACER.spanBuilder("BigtableTable.delete").startScopedSpan();
-        BatchExecutor executor = createBatchExecutor()) {
+    try (BatchExecutor executor = createBatchExecutor()) {
       executor.batch(deletes, true);
     }
   }
@@ -489,28 +445,20 @@ public abstract class AbstractBigtableTable implements Table {
 
   private boolean checkAndMutate(final byte[] row, ConditionalRowMutation request, String type)
       throws IOException {
-    Span span = TRACER.spanBuilder("BigtableTable." + type).startSpan();
-    try (Scope scope = TRACER.withSpan(span)) {
+    try {
       Boolean wasApplied = FutureUtil.unwrap(clientWrapper.checkAndMutateRowAsync(request));
       return CheckAndMutateUtil.wasMutationApplied(request, wasApplied);
     } catch (Throwable t) {
-      span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException(type, row, t);
-    } finally {
-      span.end();
     }
   }
 
   private void mutateRow(Mutation mutation, RowMutation rowMutation, String type)
       throws IOException {
-    Span span = TRACER.spanBuilder("BigtableTable." + type).startSpan();
-    try (Scope scope = TRACER.withSpan(span)) {
+    try {
       FutureUtil.unwrap(clientWrapper.mutateRowAsync(rowMutation));
     } catch (Throwable t) {
-      span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException(type, mutation.getRow(), t);
-    } finally {
-      span.end();
     }
   }
 
@@ -521,14 +469,10 @@ public abstract class AbstractBigtableTable implements Table {
     if (rowMutations.getMutations().isEmpty()) {
       return;
     }
-    Span span = TRACER.spanBuilder("BigtableTable.mutateRow").startSpan();
-    try (Scope scope = TRACER.withSpan(span)) {
+    try {
       FutureUtil.unwrap(clientWrapper.mutateRowAsync(hbaseAdapter.adapt(rowMutations)));
     } catch (Throwable t) {
-      span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException("mutateRow", rowMutations.getRow(), t);
-    } finally {
-      span.end();
     }
   }
 
@@ -539,9 +483,8 @@ public abstract class AbstractBigtableTable implements Table {
     if (rowMutations.getMutations().isEmpty()) {
       return Result.EMPTY_RESULT;
     }
-    Span span = TRACER.spanBuilder("BigtableTable.mutateRow").startSpan();
 
-    try (Scope scope = TRACER.withSpan(span)) {
+    try {
       Mutation firstMutation = rowMutations.getMutations().get(0);
       if (firstMutation instanceof Append || firstMutation instanceof Increment) {
         return mutateRowRMW(rowMutations);
@@ -550,10 +493,7 @@ public abstract class AbstractBigtableTable implements Table {
         return Result.EMPTY_RESULT;
       }
     } catch (Throwable t) {
-      span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException("mutateRow", rowMutations.getRow(), t);
-    } finally {
-      span.end();
     }
   }
 
@@ -578,8 +518,7 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public Result append(Append append) throws IOException {
     LOG.trace("append(Append)");
-    Span span = TRACER.spanBuilder("BigtableTable.append").startSpan();
-    try (Scope scope = TRACER.withSpan(span)) {
+    try {
       Result response =
           FutureUtil.unwrap(clientWrapper.readModifyWriteRowAsync(hbaseAdapter.adapt(append)));
       // The bigtable API will always return the mutated results. In order to maintain
@@ -590,10 +529,7 @@ public abstract class AbstractBigtableTable implements Table {
         return null;
       }
     } catch (Throwable t) {
-      span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException("append", append.getRow(), t);
-    } finally {
-      span.end();
     }
   }
 
@@ -601,15 +537,11 @@ public abstract class AbstractBigtableTable implements Table {
   @Override
   public Result increment(Increment increment) throws IOException {
     LOG.trace("increment(Increment)");
-    Span span = TRACER.spanBuilder("BigtableTable.increment").startSpan();
-    try (Scope scope = TRACER.withSpan(span)) {
+    try {
       ReadModifyWriteRow request = hbaseAdapter.adapt(increment);
       return FutureUtil.unwrap(clientWrapper.readModifyWriteRowAsync(request));
     } catch (Throwable t) {
-      span.setStatus(Status.UNKNOWN);
       throw logAndCreateIOException("increment", increment.getRow(), t);
-    } finally {
-      span.end();
     }
   }
 
@@ -626,20 +558,18 @@ public abstract class AbstractBigtableTable implements Table {
   public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount)
       throws IOException {
     LOG.trace("incrementColumnValue(byte[], byte[], byte[], long)");
-    try (Scope scope = TRACER.spanBuilder("BigtableTable.incrementColumnValue").startScopedSpan()) {
-      Increment incr = new Increment(row);
-      incr.addColumn(family, qualifier, amount);
-      Result result = increment(incr);
+    Increment incr = new Increment(row);
+    incr.addColumn(family, qualifier, amount);
+    Result result = increment(incr);
 
-      Cell cell = result.getColumnLatestCell(family, qualifier);
-      if (cell == null) {
-        LOG.error("Failed to find a incremented value in result of increment");
-        throw new IOException(
-            makeGenericExceptionMessage(
-                "increment", settings.getProjectId(), tableName.getQualifierAsString(), row));
-      }
-      return Bytes.toLong(CellUtil.cloneValue(cell));
+    Cell cell = result.getColumnLatestCell(family, qualifier);
+    if (cell == null) {
+      LOG.error("Failed to find a incremented value in result of increment");
+      throw new IOException(
+          makeGenericExceptionMessage(
+              "increment", settings.getProjectId(), tableName.getQualifierAsString(), row));
     }
+    return Bytes.toLong(CellUtil.cloneValue(cell));
   }
 
   /** {@inheritDoc} */

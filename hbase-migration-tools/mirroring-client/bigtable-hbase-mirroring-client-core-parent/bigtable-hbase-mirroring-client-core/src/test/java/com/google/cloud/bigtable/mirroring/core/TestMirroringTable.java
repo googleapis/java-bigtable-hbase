@@ -44,10 +44,7 @@ import com.google.cloud.bigtable.mirroring.core.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.core.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.RequestResourcesDescription;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringMetricsRecorder;
 import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringSpanFactory;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.core.utils.referencecounting.ReferenceCounter;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.NoopTimestamper;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.Timestamper;
@@ -58,7 +55,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
-import io.opencensus.trace.Tracing;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -115,21 +111,15 @@ public class TestMirroringTable {
   @Mock FlowController flowController;
   @Mock SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
   @Mock ReferenceCounter referenceCounter;
-  @Mock MirroringMetricsRecorder mirroringMetricsRecorder;
   Timestamper timestamper = new NoopTimestamper();
 
   MismatchDetector mismatchDetector;
   MirroringTable mirroringTable;
-  MirroringTracer mirroringTracer;
 
   @Before
   public void setUp() {
     setupFlowControllerMock(flowController);
-    this.mirroringTracer =
-        new MirroringTracer(
-            new MirroringSpanFactory(Tracing.getTracer(), mirroringMetricsRecorder),
-            mirroringMetricsRecorder);
-    this.mismatchDetector = spy(new DefaultMismatchDetector(this.mirroringTracer, 100));
+    this.mismatchDetector = spy(new DefaultMismatchDetector(100));
     this.mirroringTable =
         spy(
             new MirroringTable(
@@ -143,7 +133,6 @@ public class TestMirroringTable {
                 this.timestamper,
                 false,
                 false,
-                this.mirroringTracer,
                 this.referenceCounter,
                 1000));
   }
@@ -1276,7 +1265,6 @@ public class TestMirroringTable {
                 this.timestamper,
                 performWritesConcurrently,
                 waitForSecondaryWrites,
-                this.mirroringTracer,
                 this.referenceCounter,
                 10));
     Put put1 = createPut("r1", "f1", "q1", "v1");
@@ -1366,7 +1354,6 @@ public class TestMirroringTable {
                 this.timestamper,
                 performWritesConcurrently,
                 waitForSecondaryWrites,
-                this.mirroringTracer,
                 this.referenceCounter,
                 10));
   }
@@ -1499,7 +1486,6 @@ public class TestMirroringTable {
                 this.timestamper,
                 performWritesConcurrently,
                 waitForSecondaryWrites,
-                this.mirroringTracer,
                 this.referenceCounter,
                 10));
 
@@ -1580,15 +1566,9 @@ public class TestMirroringTable {
     Scan scan = new Scan();
     ResultScanner mirroringScanner = spy(mirroringTable.getScanner(scan));
     assertThat(mirroringScanner.next()).isEqualTo(expected1);
-    verify(mirroringMetricsRecorder, never())
-        .recordReadMismatches(any(HBaseOperation.class), eq(1));
     waitForMirroringScanner(mirroringScanner);
 
     verify(verifier, times(1)).verify(any(Result[].class), any(Result[].class));
-    verify(mirroringMetricsRecorder, never())
-        .recordReadMatches(any(HBaseOperation.class), anyInt());
-    verify(mirroringMetricsRecorder, times(2))
-        .recordReadMismatches(any(HBaseOperation.class), eq(1));
   }
 
   @Test
@@ -1629,9 +1609,6 @@ public class TestMirroringTable {
     waitForMirroringScanner(mirroringScanner);
 
     verify(verifier, times(7)).verify(any(Result[].class), any(Result[].class));
-    verify(mirroringMetricsRecorder, times(1)).recordReadMatches(any(HBaseOperation.class), eq(1));
-    verify(mirroringMetricsRecorder, times(9))
-        .recordReadMismatches(any(HBaseOperation.class), eq(1));
   }
 
   @Test
@@ -1667,10 +1644,6 @@ public class TestMirroringTable {
     waitForMirroringScanner(mirroringScanner);
 
     verify(verifier, times(4)).verify(any(Result[].class), any(Result[].class));
-    verify(mirroringMetricsRecorder, never())
-        .recordReadMatches(any(HBaseOperation.class), anyInt());
-    verify(mirroringMetricsRecorder, times(8))
-        .recordReadMismatches(any(HBaseOperation.class), eq(1));
   }
 
   @Test
@@ -1711,10 +1684,6 @@ public class TestMirroringTable {
     waitForMirroringScanner(mirroringScanner);
 
     verify(verifier, times(7)).verify(any(Result[].class), any(Result[].class));
-    verify(mirroringMetricsRecorder, times(3))
-        .recordReadMatches(any(HBaseOperation.class), anyInt());
-    verify(mirroringMetricsRecorder, times(8))
-        .recordReadMismatches(any(HBaseOperation.class), eq(1));
   }
 
   @Test
@@ -1754,10 +1723,6 @@ public class TestMirroringTable {
     waitForMirroringScanner(mirroringScanner);
 
     verify(verifier, times(6)).verify(any(Result[].class), any(Result[].class));
-    verify(mirroringMetricsRecorder, times(4))
-        .recordReadMatches(any(HBaseOperation.class), anyInt());
-    verify(mirroringMetricsRecorder, times(3))
-        .recordReadMismatches(any(HBaseOperation.class), eq(1));
   }
 
   @Test
@@ -1791,8 +1756,6 @@ public class TestMirroringTable {
     waitForMirroringScanner(mirroringScanner);
 
     verify(verifier, times(4)).verify(any(Result[].class), any(Result[].class));
-    verify(mirroringMetricsRecorder, times(3)).recordReadMatches(HBaseOperation.NEXT, 1);
-    verify(mirroringMetricsRecorder, times(1)).recordReadMismatches(HBaseOperation.NEXT, 1);
   }
 
   @Test
@@ -1833,8 +1796,5 @@ public class TestMirroringTable {
     executorServiceRule.waitForExecutor();
 
     verify(verifier, times(5)).verify(any(Result[].class), any(Result[].class));
-    verify(mirroringMetricsRecorder, times(1)).recordReadMatches(HBaseOperation.NEXT, 1);
-    // 51 and 52 were not yet compared
-    verify(mirroringMetricsRecorder, times(6)).recordReadMismatches(HBaseOperation.NEXT, 1);
   }
 }

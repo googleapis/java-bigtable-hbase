@@ -18,10 +18,7 @@ package com.google.cloud.bigtable.mirroring.core.bufferedmutator;
 import com.google.cloud.bigtable.mirroring.core.MirroringConfiguration;
 import com.google.cloud.bigtable.mirroring.core.MirroringOperationException;
 import com.google.cloud.bigtable.mirroring.core.MirroringOperationException.ExceptionDetails;
-import com.google.cloud.bigtable.mirroring.core.utils.CallableThrowingIOException;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.RequestResourcesDescription;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.core.utils.referencecounting.ReferenceCounter;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.Timestamper;
 import com.google.common.collect.Iterables;
@@ -80,8 +77,7 @@ public class ConcurrentMirroringBufferedMutator
       MirroringConfiguration configuration,
       ExecutorService executorService,
       ReferenceCounter connectionReferenceCounter,
-      Timestamper timestamper,
-      MirroringTracer mirroringTracer)
+      Timestamper timestamper)
       throws IOException {
     super(
         primaryConnection,
@@ -90,8 +86,7 @@ public class ConcurrentMirroringBufferedMutator
         configuration,
         executorService,
         connectionReferenceCounter,
-        timestamper,
-        mirroringTracer);
+        timestamper);
   }
 
   @Override
@@ -111,15 +106,7 @@ public class ConcurrentMirroringBufferedMutator
       final List<? extends Mutation> mutations,
       MirroringExceptionBuilder<IOException> mirroringExceptionBuilder) {
     try {
-      this.mirroringTracer.spanFactory.wrapPrimaryOperation(
-          new CallableThrowingIOException<Void>() {
-            @Override
-            public Void call() throws IOException {
-              primaryBufferedMutator.mutate(mutations);
-              return null;
-            }
-          },
-          HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST);
+      primaryBufferedMutator.mutate(mutations);
     } catch (RetriesExhaustedWithDetailsException e) {
       // Ignore this error, it was already handled by error handler and we will rethrow it after
       // flush.
@@ -132,15 +119,7 @@ public class ConcurrentMirroringBufferedMutator
       final List<? extends Mutation> mutations,
       MirroringExceptionBuilder<IOException> mirroringExceptionBuilder) {
     try {
-      this.mirroringTracer.spanFactory.wrapSecondaryOperation(
-          new CallableThrowingIOException<Void>() {
-            @Override
-            public Void call() throws IOException {
-              secondaryBufferedMutator.mutate(mutations);
-              return null;
-            }
-          },
-          HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST);
+      secondaryBufferedMutator.mutate(mutations);
     } catch (RetriesExhaustedWithDetailsException e) {
       // Ignore this error, it was already handled by error handler and we will rethrow it after
       // flush.
@@ -200,44 +179,42 @@ public class ConcurrentMirroringBufferedMutator
 
     Futures.addCallback(
         primaryFlushFinished,
-        this.mirroringTracer.spanFactory.wrapWithCurrentSpan(
-            new FutureCallback<Void>() {
-              @Override
-              public void onSuccess(Void aVoid) {
-                flushFinished.run();
-              }
+        new FutureCallback<Void>() {
+          @Override
+          public void onSuccess(Void aVoid) {
+            flushFinished.run();
+          }
 
-              @Override
-              public void onFailure(Throwable throwable) {
-                // RetriesExhaustedWithDetailsException is ignored, it was reported to the handler
-                // and stored in failedPrimaryOperations buffer.
-                if (!(throwable instanceof RetriesExhaustedWithDetailsException)) {
-                  mirroringExceptionBuilder.setPrimaryException(throwable);
-                }
-                flushFinished.run();
-              }
-            }),
+          @Override
+          public void onFailure(Throwable throwable) {
+            // RetriesExhaustedWithDetailsException is ignored, it was reported to the handler
+            // and stored in failedPrimaryOperations buffer.
+            if (!(throwable instanceof RetriesExhaustedWithDetailsException)) {
+              mirroringExceptionBuilder.setPrimaryException(throwable);
+            }
+            flushFinished.run();
+          }
+        },
         MoreExecutors.directExecutor());
 
     Futures.addCallback(
         secondaryFlushFinished,
-        this.mirroringTracer.spanFactory.wrapWithCurrentSpan(
-            new FutureCallback<Void>() {
-              @Override
-              public void onSuccess(Void aVoid) {
-                flushFinished.run();
-              }
+        new FutureCallback<Void>() {
+          @Override
+          public void onSuccess(Void aVoid) {
+            flushFinished.run();
+          }
 
-              @Override
-              public void onFailure(Throwable throwable) {
-                // RetriesExhaustedWithDetailsException is ignored, it was reported to the handler
-                // and stored in failedSecondaryOperations buffer.
-                if (!(throwable instanceof RetriesExhaustedWithDetailsException)) {
-                  mirroringExceptionBuilder.setSecondaryException(throwable);
-                }
-                flushFinished.run();
-              }
-            }),
+          @Override
+          public void onFailure(Throwable throwable) {
+            // RetriesExhaustedWithDetailsException is ignored, it was reported to the handler
+            // and stored in failedSecondaryOperations buffer.
+            if (!(throwable instanceof RetriesExhaustedWithDetailsException)) {
+              mirroringExceptionBuilder.setSecondaryException(throwable);
+            }
+            flushFinished.run();
+          }
+        },
         MoreExecutors.directExecutor());
 
     return new FlushFutures(
@@ -251,16 +228,7 @@ public class ConcurrentMirroringBufferedMutator
   private ListenableFuture<Void> scheduleSecondaryFlush(
       final ListenableFuture<?> previousFlushCompletedFuture) {
     return this.executorService.submit(
-        this.mirroringTracer.spanFactory.wrapWithCurrentSpan(
-            new Callable<Void>() {
-              @Override
-              public Void call() throws Exception {
-                mirroringTracer.spanFactory.wrapSecondaryOperation(
-                    createFlushTask(secondaryBufferedMutator, previousFlushCompletedFuture),
-                    HBaseOperation.BUFFERED_MUTATOR_FLUSH);
-                return null;
-              }
-            }));
+        createFlushTask(secondaryBufferedMutator, previousFlushCompletedFuture));
   }
 
   private void bothFlushesFinishedCallback(List<List<? extends Mutation>> dataToFlush) {

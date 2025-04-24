@@ -39,10 +39,9 @@ import com.google.cloud.bigtable.mirroring.core.MirroringResultScanner;
 import com.google.cloud.bigtable.mirroring.core.TestHelpers;
 import com.google.cloud.bigtable.mirroring.core.utils.OperationUtils;
 import com.google.cloud.bigtable.mirroring.core.utils.ReadSampler;
-import com.google.cloud.bigtable.mirroring.core.utils.SecondaryWriteErrorConsumerWithMetrics;
+import com.google.cloud.bigtable.mirroring.core.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.core.utils.referencecounting.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.NoopTimestamper;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.Timestamper;
@@ -100,7 +99,8 @@ public class TestMirroringAsyncTable {
   @Mock AsyncTable<ScanResultConsumerBase> secondaryTable;
   @Mock MismatchDetector mismatchDetector;
   @Mock FlowController flowController;
-  @Mock SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
+  @Mock
+  SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
   @Mock ListenableReferenceCounter referenceCounter;
   @Mock AsyncTable.CheckAndMutateBuilder primaryBuilder;
   @Mock ExecutorService executorService;
@@ -119,7 +119,6 @@ public class TestMirroringAsyncTable {
                 mismatchDetector,
                 flowController,
                 secondaryWriteErrorConsumer,
-                new MirroringTracer(),
                 new ReadSampler(100),
                 timestamper,
                 referenceCounter,

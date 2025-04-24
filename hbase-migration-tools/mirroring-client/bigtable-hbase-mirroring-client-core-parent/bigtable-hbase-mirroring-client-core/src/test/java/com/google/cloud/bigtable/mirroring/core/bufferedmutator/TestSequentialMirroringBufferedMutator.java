@@ -27,7 +27,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.google.cloud.bigtable.mirroring.core.ExecutorServiceRule;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.core.utils.referencecounting.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.NoopTimestamper;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.Timestamper;
@@ -383,7 +382,6 @@ public class TestSequentialMirroringBufferedMutator {
         executorServiceRule.executorService,
         common.secondaryWriteErrorConsumerWithMetrics,
         this.referenceCounter,
-        timestamper,
-        new MirroringTracer());
+        timestamper);
   }
 }

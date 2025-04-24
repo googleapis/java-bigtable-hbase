@@ -19,7 +19,6 @@ import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.ResourceReservation;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.FutureCallback;
@@ -27,7 +26,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
-import io.opencensus.common.Scope;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -49,7 +47,6 @@ public class RequestScheduling {
    * @param operation Asynchronous operation to start after obtaining resources.
    * @param callback Callback to be called after {@code operation} completes.
    * @param flowController Flow controller that should reserve the resources.
-   * @param mirroringTracer Tracer used for tracing flow control and callback operations.
    * @param flowControlReservationErrorConsumer Handler that should be called if obtaining the
    *     reservation from the flow controller fails.
    * @return Future that will be set when the operation and callback scheduled by this operation
@@ -61,7 +58,6 @@ public class RequestScheduling {
       final Supplier<ListenableFuture<T>> operation,
       final FutureCallback<T> callback,
       final FlowController flowController,
-      final MirroringTracer mirroringTracer,
       final Function<Throwable, Void> flowControlReservationErrorConsumer) {
     final SettableFuture<Void> callbackCompletedFuture = SettableFuture.create();
 
@@ -70,7 +66,7 @@ public class RequestScheduling {
 
     final ResourceReservation reservation =
         waitForReservation(
-            reservationRequest, flowControlReservationErrorConsumer, mirroringTracer);
+            reservationRequest, flowControlReservationErrorConsumer);
 
     if (reservation == null) {
       callbackCompletedFuture.set(null);
@@ -81,7 +77,7 @@ public class RequestScheduling {
     // callback is finished.
     FutureCallback<? super T> wrappedCallback =
         wrapCallbackWithReleasingReservationAndCompletingFuture(
-            callback, reservation, callbackCompletedFuture, mirroringTracer);
+            callback, reservation, callbackCompletedFuture);
 
     // Start the asynchronous operation.
     ListenableFuture<T> operationsResult = operation.get();
@@ -95,32 +91,30 @@ public class RequestScheduling {
       FutureCallback<? super T> wrapCallbackWithReleasingReservationAndCompletingFuture(
           final FutureCallback<T> callback,
           final ResourceReservation reservation,
-          final SettableFuture<Void> verificationCompletedFuture,
-          MirroringTracer mirroringTracer) {
-    return mirroringTracer.spanFactory.wrapWithCurrentSpan(
-        new FutureCallback<T>() {
-          @Override
-          public void onSuccess(T t) {
-            try {
-              Log.trace("starting verification %s", t);
-              callback.onSuccess(t);
-              Log.trace("verification done %s", t);
-            } finally {
-              reservation.release();
-              verificationCompletedFuture.set(null);
-            }
-          }
+          final SettableFuture<Void> verificationCompletedFuture) {
+    return new FutureCallback<T>() {
+      @Override
+      public void onSuccess(T t) {
+        try {
+          Log.trace("starting verification %s", t);
+          callback.onSuccess(t);
+          Log.trace("verification done %s", t);
+        } finally {
+          reservation.release();
+          verificationCompletedFuture.set(null);
+        }
+      }
 
-          @Override
-          public void onFailure(Throwable throwable) {
-            try {
-              callback.onFailure(throwable);
-            } finally {
-              reservation.release();
-              verificationCompletedFuture.set(null);
-            }
-          }
-        });
+      @Override
+      public void onFailure(Throwable throwable) {
+        try {
+          callback.onFailure(throwable);
+        } finally {
+          reservation.release();
+          verificationCompletedFuture.set(null);
+        }
+      }
+    };
   }
 
   /**
@@ -131,12 +125,9 @@ public class RequestScheduling {
    */
   private static ResourceReservation waitForReservation(
       ListenableFuture<ResourceReservation> reservationRequest,
-      Function<Throwable, Void> flowControlReservationErrorConsumer,
-      MirroringTracer mirroringTracer) {
+      Function<Throwable, Void> flowControlReservationErrorConsumer) {
     try {
-      try (Scope scope = mirroringTracer.spanFactory.flowControlScope()) {
-        return reservationRequest.get();
-      }
+      return reservationRequest.get();
     } catch (InterruptedException | ExecutionException e) {
       if (e instanceof InterruptedException) {
         flowControlReservationErrorConsumer.apply(e);

@@ -19,7 +19,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
 import org.apache.hadoop.hbase.client.Table;
@@ -34,7 +33,7 @@ public class TestAsyncTableWrapper {
   public void testMultipleCloseCallsCloseOnTableOnlyOnce() throws IOException {
     Table table = mock(Table.class);
     AsyncTableWrapper asyncTableWrapper =
-        new AsyncTableWrapper(table, mock(ListeningExecutorService.class), new MirroringTracer());
+        new AsyncTableWrapper(table, mock(ListeningExecutorService.class));
     asyncTableWrapper.close();
     asyncTableWrapper.close();
     verify(table, times(1)).close();

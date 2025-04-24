@@ -222,8 +222,6 @@ limitations under the License.
       </exclusions>
     </dependency>
 
-    <!-- This gets pulled in by bigtable-hbase-1.x.
-    Add ths to resolve conflict with the guava version that opencensus-exporter-trace-zipkin pulls in -->
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-bigtable</artifactId>
@@ -281,32 +279,6 @@ limitations under the License.
       <groupId>commons-lang</groupId>
       <artifactId>commons-lang</artifactId>
       <version>${commons-lang.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>io.opencensus</groupId>
-      <artifactId>opencensus-impl</artifactId>
-      <version>${opencensus.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.opencensus</groupId>
-      <artifactId>opencensus-exporter-trace-zipkin</artifactId>
-      <version>${opencensus.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.opencensus</groupId>
-      <artifactId>opencensus-exporter-stats-prometheus</artifactId>
-      <version>${opencensus.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.prometheus</groupId>
-      <artifactId>simpleclient_httpserver</artifactId>
-      <!-- Should match prometheus version used by opencensus-exporter-stats-prometheus -->
-      <version>0.6.0</version>
       <scope>test</scope>
     </dependency>
 

@@ -32,7 +32,6 @@ import com.google.cloud.bigtable.mirroring.core.asyncwrappers.AsyncResultScanner
 import com.google.cloud.bigtable.mirroring.core.asyncwrappers.AsyncResultScannerWrapper.ScannerRequestContext;
 import com.google.cloud.bigtable.mirroring.core.asyncwrappers.AsyncTableWrapper;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.FlowController;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.core.utils.referencecounting.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.core.utils.referencecounting.ReferenceCounter;
 import com.google.cloud.bigtable.mirroring.core.verification.MismatchDetector;
@@ -41,8 +40,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import io.opencensus.trace.Span;
-import io.opencensus.trace.Tracing;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -90,10 +87,9 @@ public class TestMirroringResultScanner {
             primaryScannerMock,
             secondaryScannerWrapperMock,
             continuationFactoryMock,
-            new MirroringTracer(),
             true,
             new RequestScheduler(
-                flowController, new MirroringTracer(), mock(ListenableReferenceCounter.class)),
+                flowController, mock(ListenableReferenceCounter.class)),
             mock(ReferenceCounter.class),
             10);
     doThrow(new RuntimeException("first")).when(primaryScannerMock).close();
@@ -126,10 +122,9 @@ public class TestMirroringResultScanner {
             primaryScannerMock,
             secondaryScannerWrapperMock,
             continuationFactoryMock,
-            new MirroringTracer(),
             true,
             new RequestScheduler(
-                flowController, new MirroringTracer(), mock(ListenableReferenceCounter.class)),
+                flowController, mock(ListenableReferenceCounter.class)),
             mock(ReferenceCounter.class),
             10);
 
@@ -158,10 +153,9 @@ public class TestMirroringResultScanner {
             primaryScannerMock,
             secondaryScannerWrapperMock,
             continuationFactoryMock,
-            new MirroringTracer(),
             true,
             new RequestScheduler(
-                flowController, new MirroringTracer(), mock(ListenableReferenceCounter.class)),
+                flowController, mock(ListenableReferenceCounter.class)),
             mock(ReferenceCounter.class),
             10);
 
@@ -207,10 +201,9 @@ public class TestMirroringResultScanner {
             primaryScannerMock,
             secondaryScannerWrapperMock,
             continuationFactoryMock,
-            new MirroringTracer(),
             true,
             new RequestScheduler(
-                flowController, new MirroringTracer(), mock(ListenableReferenceCounter.class)),
+                flowController, mock(ListenableReferenceCounter.class)),
             mock(ReferenceCounter.class),
             10);
 
@@ -246,20 +239,18 @@ public class TestMirroringResultScanner {
 
     final AsyncResultScannerWrapper asyncResultScannerWrapper =
         new AsyncResultScannerWrapper(
-            resultScanner, listeningExecutorService, new MirroringTracer());
+            resultScanner, listeningExecutorService);
 
     final List<ScannerRequestContext> calls = new ArrayList<>();
 
-    Span span = Tracing.getTracer().spanBuilder("test").startSpan();
-
     List<ScannerRequestContext> contexts =
         Arrays.asList(
-            new ScannerRequestContext(null, null, 1, span),
-            new ScannerRequestContext(null, null, 2, span),
-            new ScannerRequestContext(null, null, 3, span),
-            new ScannerRequestContext(null, null, 4, span),
-            new ScannerRequestContext(null, null, 5, span),
-            new ScannerRequestContext(null, null, 6, span));
+            new ScannerRequestContext(null, null, 1),
+            new ScannerRequestContext(null, null, 2),
+            new ScannerRequestContext(null, null, 3),
+            new ScannerRequestContext(null, null, 4),
+            new ScannerRequestContext(null, null, 5),
+            new ScannerRequestContext(null, null, 6));
 
     for (ScannerRequestContext ctx : contexts) {
       asyncResultScannerWrapper.next(ctx).get();

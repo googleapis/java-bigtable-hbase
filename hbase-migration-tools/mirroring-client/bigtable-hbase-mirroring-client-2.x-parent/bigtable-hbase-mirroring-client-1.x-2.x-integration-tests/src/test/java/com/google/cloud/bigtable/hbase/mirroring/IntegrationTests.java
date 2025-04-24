@@ -16,8 +16,6 @@
 package com.google.cloud.bigtable.hbase.mirroring;
 
 import com.google.cloud.bigtable.hbase.mirroring.utils.ConnectionRule;
-import com.google.cloud.bigtable.hbase.mirroring.utils.PrometheusStatsCollectionRule;
-import com.google.cloud.bigtable.hbase.mirroring.utils.ZipkinTracingRule;
 import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
@@ -66,12 +64,6 @@ import org.junit.runners.Suite;
  * appropriate system property ({@code integrations.compat.table-creator-impl}, {@code
  * integrations.compat.failingregion.impl}), their correct values can be found in {@code pom.xml}
  * files of appropriate integration test modules.
- *
- * <p>Integration tests are integrated with Prometheus for metrics and Zipkin for tracing. Setting
- * {@code PROMETHEUS_SERVER_PORT} environment variable will start Prometheus server (configured by
- * resources/prometheus.yml). Setting {@code ZIPKIN_API_URL} environment variable ({@code
- * host:port}) will enable tracing reporting to Zipkin server (see {@link ZipkinTracingRule} for
- * details).
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
@@ -85,9 +77,4 @@ public class IntegrationTests {
   // Classes in test suites should use their own ConnectionRule, the one here serves to keep a
   // single HBase MiniCluster connection up for all tests (if one is needed).
   @ClassRule public static ConnectionRule connectionRule = new ConnectionRule();
-  @ClassRule public static ZipkinTracingRule zipkinTracingRule = new ZipkinTracingRule();
-
-  @ClassRule
-  public static PrometheusStatsCollectionRule prometheusStatsCollectionRule =
-      new PrometheusStatsCollectionRule();
 }

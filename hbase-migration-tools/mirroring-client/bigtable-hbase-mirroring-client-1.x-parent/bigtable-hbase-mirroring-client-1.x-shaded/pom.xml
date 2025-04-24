@@ -134,11 +134,6 @@ limitations under the License.
                   <shadedPattern>${shading-prefix}.com.fasterxml</shadedPattern>
                 </relocation>
                 <relocation>
-                  <pattern>io.opencensus</pattern>
-                  <shadedPattern>${shading-prefix}.io.opencensus</shadedPattern>
-                </relocation>
-                <!-- grpc is used only by opencensus dependency -->
-                <relocation>
                   <pattern>io.grpc</pattern>
                   <shadedPattern>${shading-prefix}.io.grpc</shadedPattern>
                 </relocation>
@@ -153,15 +148,6 @@ limitations under the License.
                 <relocation>
                   <pattern>com.fasterxml</pattern>
                   <shadedPattern>${shading-prefix}.com.fasterxml</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>io.opencensus</pattern>
-                  <shadedPattern>${shading-prefix}.io.opencensus</shadedPattern>
-                </relocation>
-                <!-- grpc is used only by opencensus dependency -->
-                <relocation>
-                  <pattern>io.grpc</pattern>
-                  <shadedPattern>${shading-prefix}.io.grpc</shadedPattern>
                 </relocation>
                 <!-- protobuf-java-format-shaded exposes already shaded classes -->
               </relocations>

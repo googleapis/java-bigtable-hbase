@@ -28,13 +28,12 @@ import com.google.cloud.bigtable.mirroring.core.utils.BatchHelpers.FailedSuccess
 import com.google.cloud.bigtable.mirroring.core.utils.BatchHelpers.ReadWriteSplit;
 import com.google.cloud.bigtable.mirroring.core.utils.OperationUtils;
 import com.google.cloud.bigtable.mirroring.core.utils.ReadSampler;
-import com.google.cloud.bigtable.mirroring.core.utils.SecondaryWriteErrorConsumerWithMetrics;
+import com.google.cloud.bigtable.mirroring.core.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.ResourceReservation;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.WriteOperationInfo;
 import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.core.utils.referencecounting.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.Timestamper;
 import com.google.cloud.bigtable.mirroring.core.verification.MismatchDetector;
@@ -86,8 +85,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
   private final AsyncTable<C> secondaryTable;
   private final VerificationContinuationFactory verificationContinuationFactory;
   private final FlowController flowController;
-  private final SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
-  private final MirroringTracer mirroringTracer;
+  private final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
   /**
    * HBase 2.x AsyncTables are not closeable and we do not need keep a separate reference counter
    * for it, but we can just use MirroringAsyncConnection reference counter.
@@ -105,8 +103,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
       AsyncTable<C> secondaryTable,
       MismatchDetector mismatchDetector,
       FlowController flowController,
-      SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer,
-      MirroringTracer mirroringTracer,
+      SecondaryWriteErrorConsumer secondaryWriteErrorConsumer,
       ReadSampler readSampler,
       Timestamper timestamper,
       ListenableReferenceCounter referenceCounter,
@@ -117,12 +114,11 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     this.verificationContinuationFactory = new VerificationContinuationFactory(mismatchDetector);
     this.flowController = flowController;
     this.secondaryWriteErrorConsumer = secondaryWriteErrorConsumer;
-    this.mirroringTracer = mirroringTracer;
     this.referenceCounter = referenceCounter;
     this.readSampler = readSampler;
     this.executorService = executorService;
     this.requestScheduler =
-        new RequestScheduler(this.flowController, this.mirroringTracer, this.referenceCounter);
+        new RequestScheduler(this.flowController, this.referenceCounter);
     this.resultScannerBufferedMismatchedResults = resultScannerBufferedMismatchedResults;
     this.timestamper = timestamper;
   }
@@ -512,10 +508,8 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
         this.primaryTable.getScanner(scan),
         new AsyncResultScannerWrapper(
             this.secondaryTable.getScanner(scan),
-            MoreExecutors.listeningDecorator(this.executorService),
-            mirroringTracer),
+            MoreExecutors.listeningDecorator(this.executorService)),
         this.verificationContinuationFactory,
-        this.mirroringTracer,
         this.readSampler.shouldNextReadOperationBeSampled(),
         this.requestScheduler,
         this.referenceCounter,
@@ -678,8 +672,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
           secondaryResults,
           verificationContinuationFactory.getMismatchDetector(),
           secondaryWriteErrorConsumer,
-          resultIsFaultyPredicate,
-          mirroringTracer);
+          resultIsFaultyPredicate);
     }
   }
 

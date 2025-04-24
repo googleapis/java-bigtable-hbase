@@ -97,13 +97,6 @@ limitations under the License.
       <version>2.14.2</version>
     </dependency>
 
-    <dependency>
-      <groupId>io.opencensus</groupId>
-      <artifactId>opencensus-api</artifactId>
-      <version>${opencensus.version}</version>
-      <scope>compile</scope>
-    </dependency>
-
     <!-- Test deps -->
     <dependency>
       <groupId>junit</groupId>

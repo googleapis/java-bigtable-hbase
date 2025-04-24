@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.mirroring.hbase2_x;
 
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.mirroring.core.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.core.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.RequestResourcesDescription;
@@ -44,7 +45,7 @@ public class MirroringAsyncBufferedMutator implements AsyncBufferedMutator {
   private final AsyncBufferedMutator secondary;
   private final FlowController flowController;
   private final ListenableReferenceCounter referenceCounter;
-  private final SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
+  private final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final Timestamper timestamper;
   private final MirroringAsyncConfiguration configuration;
@@ -54,7 +55,7 @@ public class MirroringAsyncBufferedMutator implements AsyncBufferedMutator {
       AsyncBufferedMutator secondary,
       MirroringAsyncConfiguration configuration,
       FlowController flowController,
-      SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer,
+      SecondaryWriteErrorConsumer secondaryWriteErrorConsumer,
       Timestamper timestamper) {
     this.primary = primary;
     this.secondary = secondary;

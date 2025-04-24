@@ -20,12 +20,10 @@ import static com.google.cloud.bigtable.mirroring.core.utils.OperationUtils.make
 import com.google.cloud.bigtable.mirroring.core.MirroringOperationException;
 import com.google.cloud.bigtable.mirroring.core.MirroringOperationException.ExceptionDetails;
 import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.core.verification.MismatchDetector;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.FutureCallback;
-import io.opencensus.common.Scope;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -50,8 +48,7 @@ public class BatchHelpers {
       final Object[] secondaryResults,
       final MismatchDetector mismatchDetector,
       final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer,
-      final Predicate<Object> resultIsFaultyPredicate,
-      final MirroringTracer mirroringTracer) {
+      final Predicate<Object> resultIsFaultyPredicate) {
     return new FutureCallback<Void>() {
       @Override
       public void onSuccess(Void t) {
@@ -70,16 +67,10 @@ public class BatchHelpers {
                 Result.class);
 
         if (successfulSecondaryReadsAndWrites.readOperations.size() > 0) {
-          try (Scope scope = mirroringTracer.spanFactory.verificationScope()) {
-            mismatchDetector.batch(
-                successfulSecondaryReadsAndWrites.readOperations,
-                successfulPrimaryReadsAndWrites.readResults,
-                successfulSecondaryReadsAndWrites.readResults);
-          }
-        }
-
-        if (successfulPrimaryReadsAndWrites.writeOperations.size() > 0) {
-          mirroringTracer.metricsRecorder.recordSecondaryWriteErrors(HBaseOperation.BATCH, 0);
+          mismatchDetector.batch(
+              successfulSecondaryReadsAndWrites.readOperations,
+              successfulPrimaryReadsAndWrites.readResults,
+              successfulSecondaryReadsAndWrites.readResults);
         }
       }
 
@@ -129,30 +120,26 @@ public class BatchHelpers {
           MatchingSuccessfulReadsResults matchingSuccessfulReads =
               secondaryReadsResults.matchingSuccessfulReadsResults;
 
-          try (Scope scope = mirroringTracer.spanFactory.verificationScope()) {
-            if (!matchingSuccessfulReads.successfulReads.isEmpty()) {
-              mismatchDetector.batch(
-                  successfulSecondaryReadsAndWrites.readOperations,
-                  matchingSuccessfulReads.primaryResults,
-                  matchingSuccessfulReads.secondaryResults);
-            }
+          if (!matchingSuccessfulReads.successfulReads.isEmpty()) {
+            mismatchDetector.batch(
+                successfulSecondaryReadsAndWrites.readOperations,
+                matchingSuccessfulReads.primaryResults,
+                matchingSuccessfulReads.secondaryResults);
+          }
 
-            if (!secondaryReadsResults.failedSecondaryReads.isEmpty()) {
-              mismatchDetector.batch(secondaryReadsResults.failedSecondaryReads, throwable);
-            }
+          if (!secondaryReadsResults.failedSecondaryReads.isEmpty()) {
+            mismatchDetector.batch(secondaryReadsResults.failedSecondaryReads, throwable);
           }
         }
       }
 
       private void consumeWriteErrors(List<? extends Row> writeOperations, Object[] writeResults) {
-        try (Scope scope = mirroringTracer.spanFactory.writeErrorScope()) {
-          for (int i = 0; i < writeOperations.size(); i++) {
-            Throwable cause =
-                writeResults[i] instanceof Throwable ? (Throwable) writeResults[i] : null;
+        for (int i = 0; i < writeOperations.size(); i++) {
+          Throwable cause =
+              writeResults[i] instanceof Throwable ? (Throwable) writeResults[i] : null;
 
-            Row operation = writeOperations.get(i);
-            secondaryWriteErrorConsumer.consume(HBaseOperation.BATCH, operation, cause);
-          }
+          Row operation = writeOperations.get(i);
+          secondaryWriteErrorConsumer.consume(HBaseOperation.BATCH, operation, cause);
         }
       }
     };

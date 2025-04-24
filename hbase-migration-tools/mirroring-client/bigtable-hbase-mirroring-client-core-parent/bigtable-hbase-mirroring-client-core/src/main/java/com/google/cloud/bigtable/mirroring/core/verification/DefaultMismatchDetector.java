@@ -20,9 +20,7 @@ import static com.google.cloud.bigtable.mirroring.core.verification.DefaultMisma
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.core.utils.Comparators;
 import com.google.cloud.bigtable.mirroring.core.utils.Logger;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringMetricsRecorder;
 import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,22 +41,15 @@ import org.apache.hadoop.hbase.util.Bytes;
 public class DefaultMismatchDetector implements MismatchDetector {
   private final int maxValueBytesLogged;
   private static final Logger Log = new Logger(DefaultMismatchDetector.class);
-  private final MirroringMetricsRecorder metricsRecorder;
-
-  public DefaultMismatchDetector(MirroringTracer mirroringTracer, Integer maxValueBytesLogged) {
-    this.metricsRecorder = mirroringTracer.metricsRecorder;
+  public DefaultMismatchDetector(Integer maxValueBytesLogged) {
     this.maxValueBytesLogged = maxValueBytesLogged;
   }
 
   public void exists(Get request, boolean primary, boolean secondary) {
-    if (primary == secondary) {
-      this.metricsRecorder.recordReadMatches(HBaseOperation.EXISTS, 1);
-      this.metricsRecorder.recordReadMismatches(HBaseOperation.EXISTS, 0);
-    } else {
+    if (primary != secondary) {
       Log.debug(
           "exists(row=%s) mismatch: (%b, %b)",
           new LazyBytesHexlifier(request.getRow(), maxValueBytesLogged), primary, secondary);
-      this.metricsRecorder.recordReadMismatches(HBaseOperation.EXISTS, 1);
     }
   }
 
@@ -72,7 +63,6 @@ public class DefaultMismatchDetector implements MismatchDetector {
   @Override
   public void existsAll(List<Get> request, boolean[] primary, boolean[] secondary) {
     if (!Arrays.equals(primary, secondary)) {
-      int mismatches = 0;
       for (int i = 0; i < primary.length; i++) {
         if (primary[i] != secondary[i]) {
           Log.debug(
@@ -80,16 +70,8 @@ public class DefaultMismatchDetector implements MismatchDetector {
               new LazyBytesHexlifier(request.get(i).getRow(), maxValueBytesLogged),
               primary[i],
               secondary[i]);
-          mismatches++;
         }
       }
-      if (mismatches != primary.length) {
-        this.metricsRecorder.recordReadMatches(
-            HBaseOperation.EXISTS_ALL, primary.length - mismatches);
-      }
-      this.metricsRecorder.recordReadMismatches(HBaseOperation.EXISTS_ALL, mismatches);
-    } else {
-      this.metricsRecorder.recordReadMismatches(HBaseOperation.EXISTS_ALL, 0);
     }
   }
 
@@ -101,16 +83,12 @@ public class DefaultMismatchDetector implements MismatchDetector {
   }
 
   public void get(Get request, Result primary, Result secondary) {
-    if (Comparators.resultsEqual(primary, secondary)) {
-      this.metricsRecorder.recordReadMatches(HBaseOperation.GET, 1);
-      this.metricsRecorder.recordReadMismatches(HBaseOperation.GET, 0);
-    } else {
+    if (!Comparators.resultsEqual(primary, secondary)) {
       Log.debug(
           "get(row=%s) mismatch: (%s, %s)",
           new LazyBytesHexlifier(request.getRow(), maxValueBytesLogged),
           new LazyBytesHexlifier(getResultValue(primary), maxValueBytesLogged),
           new LazyBytesHexlifier(getResultValue(secondary), maxValueBytesLogged));
-      this.metricsRecorder.recordReadMismatches(HBaseOperation.GET, 1);
     }
   }
 
@@ -187,10 +165,6 @@ public class DefaultMismatchDetector implements MismatchDetector {
         errors++;
       }
     }
-    if (matches > 0) {
-      this.metricsRecorder.recordReadMatches(operation, matches);
-    }
-    this.metricsRecorder.recordReadMismatches(operation, errors);
   }
 
   private byte[] getResultValue(Result result) {
@@ -300,9 +274,6 @@ public class DefaultMismatchDetector implements MismatchDetector {
         Result primaryMatchingResult, Result secondaryMatchingResult) {
       if (!Comparators.resultsEqual(primaryMatchingResult, secondaryMatchingResult)) {
         logAndRecordScanMismatch(primaryMatchingResult, secondaryMatchingResult);
-      } else {
-        metricsRecorder.recordReadMatches(HBaseOperation.NEXT, 1);
-        metricsRecorder.recordReadMismatches(HBaseOperation.NEXT, 0);
       }
     }
 
@@ -344,7 +315,6 @@ public class DefaultMismatchDetector implements MismatchDetector {
               this.scanRequest.getId(),
               databaseName,
               new LazyBytesHexlifier(scanResult.getRow(), maxValueBytesLogged)));
-      metricsRecorder.recordReadMismatches(HBaseOperation.NEXT, 1);
     }
 
     private void logAndRecordScanMismatch(Result primaryResult, Result secondaryResult) {
@@ -353,7 +323,6 @@ public class DefaultMismatchDetector implements MismatchDetector {
               "scan(id=%s) mismatch: databases contain different rows (row=%s)",
               this.scanRequest.getId(),
               new LazyBytesHexlifier(primaryResult.getRow(), maxValueBytesLogged)));
-      metricsRecorder.recordReadMismatches(HBaseOperation.NEXT, 1);
     }
   }
 
@@ -456,8 +425,8 @@ public class DefaultMismatchDetector implements MismatchDetector {
 
   public static class Factory implements MismatchDetector.Factory {
     @Override
-    public MismatchDetector create(MirroringTracer mirroringTracer, Integer maxValueBytesLogged) {
-      return new DefaultMismatchDetector(mirroringTracer, maxValueBytesLogged);
+    public MismatchDetector create(Integer maxValueBytesLogged) {
+      return new DefaultMismatchDetector(maxValueBytesLogged);
     }
   }
 }

@@ -18,8 +18,6 @@ package com.google.cloud.bigtable.hbase.adapters.filters;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.hbase.adapters.read.RowCell;
 import com.google.common.collect.ImmutableList;
-import io.opencensus.trace.Span;
-import io.opencensus.trace.Status;
 import java.io.IOException;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
@@ -44,18 +42,14 @@ public class BigtableWhileMatchResultScannerAdapter {
    *
    * @param bigtableResultScanner a {@link com.google.cloud.bigtable.grpc.scanner.ResultScanner}
    *     object.
-   * @param span A parent {@link Span} for the scan that needs to be closed when the scanning is
-   *     complete. The span has an HBase specific tag, which needs to be handled by the adapter.
    * @return a {@link org.apache.hadoop.hbase.client.ResultScanner} object.
    */
-  public ResultScanner adapt(final ResultScanner bigtableResultScanner, final Span span) {
+  public ResultScanner adapt(final ResultScanner bigtableResultScanner) {
     return new AbstractClientScanner() {
       @Override
       public Result next() throws IOException {
         Result row = bigtableResultScanner.next();
         if (row == null) {
-          // Null signals EOF.
-          span.end();
           return null;
         }
 
@@ -69,14 +63,7 @@ public class BigtableWhileMatchResultScannerAdapter {
 
       @Override
       public void close() {
-        try {
-          bigtableResultScanner.close();
-        } catch (RuntimeException ex) {
-          span.setStatus(Status.UNKNOWN.withDescription(ex.getCause().getMessage()));
-          throw ex;
-        } finally {
-          span.end();
-        }
+        bigtableResultScanner.close();
       }
 
       /**

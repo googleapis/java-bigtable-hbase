@@ -26,7 +26,6 @@ import static org.mockito.Mockito.when;
 import com.google.cloud.bigtable.hbase.adapters.ResponseAdapter;
 import com.google.cloud.bigtable.hbase.adapters.read.RowCell;
 import com.google.common.collect.ImmutableList;
-import io.opencensus.trace.Span;
 import java.io.IOException;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Result;
@@ -50,8 +49,6 @@ public class TestBigtableWhileMatchResultScannerAdapter {
 
   @Mock ResultScanner mockBigtableResultScanner;
 
-  @Mock Span mockSpan;
-
   private BigtableWhileMatchResultScannerAdapter adapter;
 
   @Before
@@ -63,11 +60,10 @@ public class TestBigtableWhileMatchResultScannerAdapter {
   public void adapt_noRow() throws IOException {
     when(mockBigtableResultScanner.next()).thenReturn(null);
 
-    ResultScanner scanner = adapter.adapt(mockBigtableResultScanner, mockSpan);
+    ResultScanner scanner = adapter.adapt(mockBigtableResultScanner);
     assertNull(scanner.next());
     verify(mockBigtableResultScanner).next();
     verifyNoInteractions(mockRowAdapter);
-    verify(mockSpan, times(1)).end();
   }
 
   @Test
@@ -84,10 +80,9 @@ public class TestBigtableWhileMatchResultScannerAdapter {
                     ImmutableList.<String>of())));
     when(mockBigtableResultScanner.next()).thenReturn(expectedResult);
 
-    ResultScanner scanner = adapter.adapt(mockBigtableResultScanner, mockSpan);
+    ResultScanner scanner = adapter.adapt(mockBigtableResultScanner);
     assertArrayEquals(expectedResult.rawCells(), scanner.next().rawCells());
     verify(mockBigtableResultScanner).next();
-    verify(mockSpan, times(0)).end();
   }
 
   @Test
@@ -111,10 +106,9 @@ public class TestBigtableWhileMatchResultScannerAdapter {
                     ImmutableList.of("a-out"))));
     when(mockBigtableResultScanner.next()).thenReturn(expectedResult);
 
-    ResultScanner scanner = adapter.adapt(mockBigtableResultScanner, mockSpan);
+    ResultScanner scanner = adapter.adapt(mockBigtableResultScanner);
     assertEquals(0, scanner.next().size());
     verify(mockBigtableResultScanner).next();
-    verify(mockSpan, times(0)).end();
   }
 
   @Test
@@ -131,9 +125,8 @@ public class TestBigtableWhileMatchResultScannerAdapter {
                     ImmutableList.of("a-out"))));
     when(mockBigtableResultScanner.next()).thenReturn(expectedResult);
 
-    ResultScanner scanner = adapter.adapt(mockBigtableResultScanner, mockSpan);
+    ResultScanner scanner = adapter.adapt(mockBigtableResultScanner);
     assertNull(scanner.next());
-    verify(mockSpan, times(1)).end();
     verify(mockBigtableResultScanner).next();
   }
 }

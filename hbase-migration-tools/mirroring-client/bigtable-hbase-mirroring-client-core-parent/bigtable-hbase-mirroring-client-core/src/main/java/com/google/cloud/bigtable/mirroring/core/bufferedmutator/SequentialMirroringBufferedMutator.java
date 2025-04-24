@@ -19,13 +19,11 @@ import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.mirroring.core.MirroringConfiguration;
 import com.google.cloud.bigtable.mirroring.core.bufferedmutator.SequentialMirroringBufferedMutator.Entry;
 import com.google.cloud.bigtable.mirroring.core.utils.AccumulatedExceptions;
-import com.google.cloud.bigtable.mirroring.core.utils.CallableThrowingIOException;
 import com.google.cloud.bigtable.mirroring.core.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.FlowController;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.RequestResourcesDescription;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.ResourceReservation;
 import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.core.utils.referencecounting.ReferenceCounter;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.Timestamper;
 import com.google.common.collect.MapMaker;
@@ -34,7 +32,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
-import io.opencensus.common.Scope;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -139,8 +136,7 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
       ExecutorService executorService,
       SecondaryWriteErrorConsumer secondaryWriteErrorConsumer,
       ReferenceCounter connectionReferenceCounter,
-      Timestamper timestamper,
-      MirroringTracer mirroringTracer)
+      Timestamper timestamper)
       throws IOException {
     super(
         primaryConnection,
@@ -149,8 +145,7 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
         configuration,
         executorService,
         connectionReferenceCounter,
-        timestamper,
-        mirroringTracer);
+        timestamper);
     this.secondaryWriteErrorConsumer = secondaryWriteErrorConsumer;
     this.flowController = flowController;
   }
@@ -159,15 +154,7 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
   protected void mutateScoped(final List<? extends Mutation> list) throws IOException {
     AccumulatedExceptions primaryExceptions = new AccumulatedExceptions();
     try {
-      this.mirroringTracer.spanFactory.wrapPrimaryOperation(
-          new CallableThrowingIOException<Void>() {
-            @Override
-            public Void call() throws IOException {
-              primaryBufferedMutator.mutate(list);
-              return null;
-            }
-          },
-          HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST);
+      primaryBufferedMutator.mutate(list);
     } catch (IOException e) {
       primaryExceptions.add(e);
     } catch (RuntimeException e) {
@@ -207,9 +194,7 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
           flowController.asyncRequestResource(resourcesDescription);
 
       ResourceReservation reservation;
-      try (Scope scope = this.mirroringTracer.spanFactory.flowControlScope()) {
-        reservation = reservationFuture.get();
-      }
+      reservation = reservationFuture.get();
       storeResourcesAndFlushIfNeeded(new Entry(mutations, reservation), resourcesDescription);
     } catch (InterruptedException | ExecutionException | RuntimeException e) {
       // We won't write those mutations to secondary database, they should be reported to
@@ -245,47 +230,46 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
 
     Futures.addCallback(
         primaryFlushFinished,
-        this.mirroringTracer.spanFactory.wrapWithCurrentSpan(
-            new FutureCallback<Void>() {
-              @Override
-              public void onSuccess(Void aVoid) {
-                primaryFlushErrorsReported.set(null);
-                performSecondaryFlush(
-                    dataToFlush,
-                    secondaryFlushFinished,
-                    previousFlushFutures.secondaryFlushFinished);
-              }
+        new FutureCallback<Void>() {
+          @Override
+          public void onSuccess(Void aVoid) {
+            primaryFlushErrorsReported.set(null);
+            performSecondaryFlush(
+                dataToFlush,
+                secondaryFlushFinished,
+                previousFlushFutures.secondaryFlushFinished);
+          }
 
-              @Override
-              public void onFailure(Throwable throwable) {
-                if (throwable instanceof RetriesExhaustedWithDetailsException) {
-                  // If user-defined listener has thrown an exception
-                  // (RetriesExhaustedWithDetailsException is the only exception that can be
-                  // thrown), we know that some of the writes failed. Our handler has already
-                  // handled those errors. We should also rethrow this exception when user
-                  // calls mutate/flush the next time.
-                  exceptionsToBeReportedToTheUser.addRetriesExhaustedException(
-                      (RetriesExhaustedWithDetailsException) throwable);
-                  primaryFlushErrorsReported.set(null);
+          @Override
+          public void onFailure(Throwable throwable) {
+            if (throwable instanceof RetriesExhaustedWithDetailsException) {
+              // If user-defined listener has thrown an exception
+              // (RetriesExhaustedWithDetailsException is the only exception that can be
+              // thrown), we know that some of the writes failed. Our handler has already
+              // handled those errors. We should also rethrow this exception when user
+              // calls mutate/flush the next time.
+              exceptionsToBeReportedToTheUser.addRetriesExhaustedException(
+                  (RetriesExhaustedWithDetailsException) throwable);
+              primaryFlushErrorsReported.set(null);
 
-                  performSecondaryFlush(
-                      dataToFlush,
-                      secondaryFlushFinished,
-                      previousFlushFutures.secondaryFlushFinished);
-                } else {
-                  // In other cases, we do not know what caused the error and we have no idea
-                  // what was really written to the primary DB. We will behave as if nothing was
-                  // written and throw the exception to the user. Writing mutations to the faillog
-                  // would cause confusion as the user would think that those writes were successful
-                  // on primary, but they were not.
-                  exceptionsToBeReportedToTheUser.addThrowable(throwable);
-                  primaryFlushErrorsReported.set(null);
+              performSecondaryFlush(
+                  dataToFlush,
+                  secondaryFlushFinished,
+                  previousFlushFutures.secondaryFlushFinished);
+            } else {
+              // In other cases, we do not know what caused the error and we have no idea
+              // what was really written to the primary DB. We will behave as if nothing was
+              // written and throw the exception to the user. Writing mutations to the faillog
+              // would cause confusion as the user would think that those writes were successful
+              // on primary, but they were not.
+              exceptionsToBeReportedToTheUser.addThrowable(throwable);
+              primaryFlushErrorsReported.set(null);
 
-                  releaseReservations(dataToFlush);
-                  secondaryFlushFinished.setException(throwable);
-                }
-              }
-            }),
+              releaseReservations(dataToFlush);
+              secondaryFlushFinished.setException(throwable);
+            }
+          }
+        },
         MoreExecutors.directExecutor());
     return new FlushFutures(
         primaryFlushFinished,
@@ -315,25 +299,8 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
       }
 
       if (!successfulOperations.isEmpty()) {
-        this.mirroringTracer.spanFactory.wrapSecondaryOperation(
-            new CallableThrowingIOException<Void>() {
-              @Override
-              public Void call() throws IOException {
-                secondaryBufferedMutator.mutate(successfulOperations);
-                return null;
-              }
-            },
-            HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST);
-
-        this.mirroringTracer.spanFactory.wrapSecondaryOperation(
-            new CallableThrowingIOException<Void>() {
-              @Override
-              public Void call() throws IOException {
-                secondaryBufferedMutator.flush();
-                return null;
-              }
-            },
-            HBaseOperation.BUFFERED_MUTATOR_FLUSH);
+        secondaryBufferedMutator.mutate(successfulOperations);
+        secondaryBufferedMutator.flush();
       }
       // We have to release reservations before we complete `completionFuture`.
       releaseReservations(dataToFlush);
@@ -388,19 +355,15 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
   }
 
   private void reportWriteErrors(RetriesExhaustedWithDetailsException e) {
-    try (Scope scope = this.mirroringTracer.spanFactory.writeErrorScope()) {
-      for (int i = 0; i < e.getNumExceptions(); i++) {
-        this.secondaryWriteErrorConsumer.consume(
-            HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST, e.getRow(i), e.getCause(i));
-      }
+    for (int i = 0; i < e.getNumExceptions(); i++) {
+      this.secondaryWriteErrorConsumer.consume(
+          HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST, e.getRow(i), e.getCause(i));
     }
   }
 
   private void reportWriteErrors(List<? extends Mutation> mutations, Throwable cause) {
-    try (Scope scope = this.mirroringTracer.spanFactory.writeErrorScope()) {
-      this.secondaryWriteErrorConsumer.consume(
-          HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST, mutations, cause);
-    }
+    this.secondaryWriteErrorConsumer.consume(
+        HBaseOperation.BUFFERED_MUTATOR_MUTATE_LIST, mutations, cause);
   }
 
   /**

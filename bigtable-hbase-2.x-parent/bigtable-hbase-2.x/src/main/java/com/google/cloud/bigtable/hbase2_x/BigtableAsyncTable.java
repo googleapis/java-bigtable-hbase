@@ -36,11 +36,6 @@ import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
-import io.opencensus.common.Scope;
-import io.opencensus.trace.Span;
-import io.opencensus.trace.Status;
-import io.opencensus.trace.Tracer;
-import io.opencensus.trace.Tracing;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -84,7 +79,6 @@ import org.apache.hadoop.hbase.io.TimeRange;
 public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
 
   private static final Logger LOG = new Logger(AbstractBigtableTable.class);
-  private static final Tracer TRACER = Tracing.getTracer();
 
   private static <T, R> List<R> map(List<T> list, Function<T, R> f) {
     return list.stream().map(f).collect(toList());
@@ -265,7 +259,6 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   /** {@inheritDoc} */
   @Override
   public CompletableFuture<Void> delete(Delete delete) {
-    // figure out how to time this with Opencensus
     return toCompletableFuture(clientWrapper.mutateRowAsync(hbaseAdapter.adapt(delete)));
   }
 
@@ -411,7 +404,6 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   /** {@inheritDoc} */
   @Override
   public CompletableFuture<Void> put(Put put) {
-    // figure out how to time this with Opencensus
     return toCompletableFuture(clientWrapper.mutateRowAsync(hbaseAdapter.adapt(put)));
   }
 
@@ -434,19 +426,14 @@ public class BigtableAsyncTable implements AsyncTable<ScanResultConsumer> {
   @Override
   public ResultScanner getScanner(Scan scan) {
     LOG.trace("getScanner(Scan)");
-    final Span span = TRACER.spanBuilder("BigtableTable.scan").startSpan();
-    try (Scope scope = TRACER.withSpan(span)) {
+    try {
       ResultScanner scanner = clientWrapper.readRows(hbaseAdapter.adapt(scan));
       if (AbstractBigtableTable.hasWhileMatchFilter(scan.getFilter())) {
-        return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner, span);
+        return Adapters.BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER.adapt(scanner);
       }
       return scanner;
     } catch (final Throwable throwable) {
       LOG.error("Encountered exception when executing getScanner.", throwable);
-      span.setStatus(Status.UNKNOWN);
-      // Close the span only when throw an exception and not on finally because if no exception
-      // the span will be ended by the adapter.
-      span.end();
       return new ResultScanner() {
         @Override
         public boolean renewLease() {

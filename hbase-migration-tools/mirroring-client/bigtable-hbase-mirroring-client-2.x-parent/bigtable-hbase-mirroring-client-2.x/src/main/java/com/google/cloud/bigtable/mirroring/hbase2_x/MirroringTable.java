@@ -18,7 +18,6 @@ package com.google.cloud.bigtable.mirroring.hbase2_x;
 import com.google.cloud.bigtable.mirroring.core.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.core.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.FlowController;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.core.utils.referencecounting.ReferenceCounter;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.Timestamper;
 import com.google.cloud.bigtable.mirroring.core.verification.MismatchDetector;
@@ -46,7 +45,6 @@ public class MirroringTable extends com.google.cloud.bigtable.mirroring.core.Mir
       Timestamper timestamper,
       boolean performWritesConcurrently,
       boolean waitForSecondaryWrites,
-      MirroringTracer mirroringTracer,
       ReferenceCounter referenceCounter,
       int resultScannerBufferedMismatchedResults) {
     super(
@@ -60,7 +58,6 @@ public class MirroringTable extends com.google.cloud.bigtable.mirroring.core.Mir
         timestamper,
         performWritesConcurrently,
         waitForSecondaryWrites,
-        mirroringTracer,
         referenceCounter,
         resultScannerBufferedMismatchedResults);
   }

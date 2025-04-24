@@ -32,7 +32,6 @@ import static org.mockito.Mockito.verify;
 import com.google.cloud.bigtable.mirroring.core.utils.ReadSampler;
 import com.google.cloud.bigtable.mirroring.core.utils.SecondaryWriteErrorConsumerWithMetrics;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.FlowController;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.core.utils.referencecounting.ReferenceCounter;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.NoopTimestamper;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.Timestamper;
@@ -97,7 +96,6 @@ public class TestVerificationSampling {
                 timestamper,
                 false,
                 false,
-                new MirroringTracer(),
                 mock(ReferenceCounter.class),
                 10));
   }

@@ -15,7 +15,6 @@
  */
 package com.google.cloud.bigtable.mirroring.core.verification;
 
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import java.util.List;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
@@ -58,7 +57,7 @@ public interface MismatchDetector {
   void batch(List<Get> request, Throwable throwable);
 
   interface Factory {
-    MismatchDetector create(MirroringTracer mirroringTracer, Integer maxLoggedBinaryValueLength)
+    MismatchDetector create(Integer maxLoggedBinaryValueLength)
         throws Throwable;
   }
 

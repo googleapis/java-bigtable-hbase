@@ -22,7 +22,6 @@ import com.google.cloud.bigtable.mirroring.core.ExecutorServiceRule;
 import com.google.cloud.bigtable.mirroring.core.MirroringConfiguration;
 import com.google.cloud.bigtable.mirroring.core.TestConnection;
 import com.google.cloud.bigtable.mirroring.core.utils.MirroringConfigurationHelper;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.core.utils.referencecounting.ReferenceCounter;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.NoopTimestamper;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.Timestamper;
@@ -66,8 +65,7 @@ public class TestMirroringBufferedMutator {
                 executorServiceRule.executorService,
                 mutatorRule.secondaryWriteErrorConsumerWithMetrics,
                 mock(ReferenceCounter.class),
-                timestamper,
-                new MirroringTracer()))
+                timestamper))
         .isInstanceOf(SequentialMirroringBufferedMutator.class);
 
     assertThat(
@@ -81,8 +79,7 @@ public class TestMirroringBufferedMutator {
                 executorServiceRule.executorService,
                 mutatorRule.secondaryWriteErrorConsumerWithMetrics,
                 mock(ReferenceCounter.class),
-                timestamper,
-                new MirroringTracer()))
+                timestamper))
         .isInstanceOf(ConcurrentMirroringBufferedMutator.class);
   }
 }

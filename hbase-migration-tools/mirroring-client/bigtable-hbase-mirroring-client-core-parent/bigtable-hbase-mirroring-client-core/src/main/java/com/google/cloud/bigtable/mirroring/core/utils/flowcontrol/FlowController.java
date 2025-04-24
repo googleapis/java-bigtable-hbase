@@ -16,7 +16,6 @@
 package com.google.cloud.bigtable.mirroring.core.utils.flowcontrol;
 
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -33,7 +32,7 @@ import java.util.concurrent.Future;
  * com.google.cloud.bigtable.mirroring.core.bufferedmutator.MirroringBufferedMutator}, most of the
  * times called from a helper method {@link
  * com.google.cloud.bigtable.mirroring.core.utils.RequestScheduling#scheduleRequestWithCallback(
- * RequestResourcesDescription, Supplier, FutureCallback, FlowController, MirroringTracer,
+ * RequestResourcesDescription, Supplier, FutureCallback, FlowController,
  * Function)}. FlowController and {@link FlowControlStrategy} do not allocate any actual resources,
  * they are used for accounting the amount of resources used by other classes, thus we say that they
  * "reserve" resources rather than allocate them.

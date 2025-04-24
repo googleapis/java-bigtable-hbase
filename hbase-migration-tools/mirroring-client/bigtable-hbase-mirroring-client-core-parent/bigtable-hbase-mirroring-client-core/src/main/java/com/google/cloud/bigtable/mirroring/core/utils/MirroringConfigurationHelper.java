@@ -104,8 +104,7 @@ public class MirroringConfigurationHelper {
    * Path to {@link com.google.cloud.bigtable.mirroring.core.verification.MismatchDetector.Factory}
    * of MismatchDetector.
    *
-   * <p>default: {@link DefaultMismatchDetector.Factory}, logs detected mismatches to stdout and
-   * reports them as OpenCensus metrics.
+   * <p>default: {@link DefaultMismatchDetector.Factory}, logs detected mismatches to stdout
    */
   public static final String MIRRORING_MISMATCH_DETECTOR_FACTORY_CLASS =
       "google.bigtable.mirroring.mismatch-detector.factory-impl";

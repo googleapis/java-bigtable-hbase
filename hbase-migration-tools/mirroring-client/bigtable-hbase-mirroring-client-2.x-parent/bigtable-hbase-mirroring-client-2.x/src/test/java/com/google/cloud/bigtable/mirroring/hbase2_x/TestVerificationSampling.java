@@ -28,9 +28,8 @@ import static org.mockito.Mockito.verify;
 
 import com.google.cloud.bigtable.mirroring.core.ExecutorServiceRule;
 import com.google.cloud.bigtable.mirroring.core.utils.ReadSampler;
-import com.google.cloud.bigtable.mirroring.core.utils.SecondaryWriteErrorConsumerWithMetrics;
+import com.google.cloud.bigtable.mirroring.core.utils.SecondaryWriteErrorConsumer;
 import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.FlowController;
-import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.core.utils.referencecounting.ListenableReferenceCounter;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.NoopTimestamper;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.Timestamper;
@@ -72,7 +71,8 @@ public class TestVerificationSampling {
   @Mock AsyncTable<ScanResultConsumerBase> secondaryTable;
   @Mock MismatchDetector mismatchDetector;
   @Mock FlowController flowController;
-  @Mock SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
+  @Mock
+  SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
   @Mock ReadSampler readSampler;
   @Mock ListenableReferenceCounter referenceCounter;
   Timestamper timestamper = new NoopTimestamper();
@@ -93,7 +93,6 @@ public class TestVerificationSampling {
                 mismatchDetector,
                 flowController,
                 secondaryWriteErrorConsumer,
-                new MirroringTracer(),
                 readSampler,
                 timestamper,
                 referenceCounter,
