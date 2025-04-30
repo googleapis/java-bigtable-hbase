@@ -16,6 +16,7 @@
 package com.google.cloud.bigtable.hbase;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.common.annotations.VisibleForTesting;
 
@@ -341,4 +342,8 @@ public class BigtableOptionsFactory {
   /** Sets if client side metrics should be enabled. Client side metrics is enabled by default. */
   public static final String BIGTABLE_ENABLE_CLIENT_SIDE_METRICS =
       "google.bigtable.enable.client.side.metrics";
+
+  /** Override jwt audience in test environment. * */
+  @InternalApi
+  public static final String BIGTABLE_JWT_AUDIENCE_KEY = "google.bigtable.jwt.audience";
 }

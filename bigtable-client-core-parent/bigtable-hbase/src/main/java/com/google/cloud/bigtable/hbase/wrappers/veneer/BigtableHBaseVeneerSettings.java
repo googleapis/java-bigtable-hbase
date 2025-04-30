@@ -32,6 +32,7 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_EM
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_ENABLE_BULK_MUTATION_FLOW_CONTROL;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_ENABLE_CLIENT_SIDE_METRICS;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_HOST_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_JWT_AUDIENCE_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_MUTATE_RPC_ATTEMPT_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY;
@@ -62,6 +63,7 @@ import com.google.api.core.ApiFunction;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.FlowControlSettings;
+import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.grpc.ChannelPoolSettings;
@@ -79,6 +81,7 @@ import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.admin.v2.stub.BigtableInstanceAdminStubSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings.Builder;
+import com.google.cloud.bigtable.data.v2.internal.JwtCredentialsWithAudience;
 import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.stub.BigtableBatchingCallSettings;
@@ -102,6 +105,8 @@ import io.grpc.ManagedChannelBuilder;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
@@ -460,6 +465,8 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
     Optional<String> hostOverride = Optional.fromNullable(configuration.get(endpointKey));
     Optional<String> portOverride = Optional.fromNullable(configuration.get(BIGTABLE_PORT_KEY));
+    Optional<String> jwtAudienceOverride =
+        Optional.fromNullable(configuration.get(BIGTABLE_JWT_AUDIENCE_KEY));
     Optional<String> endpointOverride = Optional.absent();
 
     if (hostOverride.isPresent() || portOverride.isPresent()) {
@@ -476,6 +483,10 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     if (endpointOverride.isPresent()) {
       stubSettings.setEndpoint(endpointOverride.get());
       LOG.debug("%s is configured at %s", endpointKey, endpointOverride);
+    }
+
+    if (jwtAudienceOverride.isPresent()) {
+      patchCredentials(stubSettings, jwtAudienceOverride.get());
     }
 
     final InstantiatingGrpcChannelProvider.Builder channelProvider =
@@ -523,6 +534,38 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     }
 
     stubSettings.setTransportChannelProvider(channelProvider.build());
+  }
+
+  private void patchCredentials(StubSettings.Builder stubSettings, String audience) {
+    URI audienceUri = null;
+    try {
+      audienceUri = new URI(audience);
+    } catch (URISyntaxException e) {
+      throw new IllegalStateException("invalid JWT audience override", e);
+    }
+
+    CredentialsProvider credentialsProvider = stubSettings.getCredentialsProvider();
+    if (credentialsProvider == null) {
+      return;
+    }
+
+    Credentials credentials = null;
+    try {
+      credentials = credentialsProvider.getCredentials();
+    } catch (IOException e) {
+    }
+
+    if (credentials == null) {
+      return;
+    }
+
+    if (!(credentials instanceof ServiceAccountJwtAccessCredentials)) {
+      return;
+    }
+
+    ServiceAccountJwtAccessCredentials jwtCreds = (ServiceAccountJwtAccessCredentials) credentials;
+    JwtCredentialsWithAudience patchedCreds = new JwtCredentialsWithAudience(jwtCreds, audienceUri);
+    stubSettings.setCredentialsProvider(FixedCredentialsProvider.create(patchedCreds));
   }
 
   private void configureHeaderProvider(StubSettings.Builder<?, ?> stubSettings) {
