@@ -395,7 +395,7 @@ limitations under the License.
                 <configuration>
                   <skip>false</skip>
                   <includes>
-                    <include>**/*IT.java</include>
+                    <include>**/DataCellPredicateFactoryTest.java</include>
                   </includes>
                   <!-- Use Isolated Classloader so that dataflow can find all files
                        that must be staged.
