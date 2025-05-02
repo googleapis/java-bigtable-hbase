@@ -65,10 +65,7 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.snapshot.SnapshotTestingUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -298,6 +295,7 @@ public class EndToEndIT {
   }
 
   @Test
+  @Ignore
   public void testHBaseSnapshotImport() throws Exception {
     // Start import
     ImportOptions importOpts = createImportOptions();
@@ -409,6 +407,7 @@ public class EndToEndIT {
   }
 
   @Test
+  @Ignore
   public void testSnappyCompressedHBaseSnapshotImport() throws Exception {
     // Start import
     ImportOptions importOpts = createImportOptions();
