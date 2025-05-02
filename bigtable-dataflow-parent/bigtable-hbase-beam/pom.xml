@@ -161,7 +161,7 @@ limitations under the License.
                   -->
                   <forkCount>1</forkCount>
                   <includes>
-                    <include>**/CloudBigtableIOIntegrationTest.java</include>
+                    <include>**/DataCellPredicateFactoryTest.java</include>
                   </includes>
                   <reportNameSuffix>bigtable-server</reportNameSuffix>
                   <systemPropertyVariables>
