@@ -86,6 +86,7 @@ import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.stub.BigtableBatchingCallSettings;
 import com.google.cloud.bigtable.data.v2.stub.BigtableBulkReadRowsCallSettings;
+import com.google.cloud.bigtable.data.v2.stub.EnhancedBigtableStubSettings;
 import com.google.cloud.bigtable.data.v2.stub.metrics.NoopMetricsProvider;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableExtendedConfiguration;
@@ -485,8 +486,10 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       LOG.debug("%s is configured at %s", endpointKey, endpointOverride);
     }
 
-    if (jwtAudienceOverride.isPresent()) {
-      patchCredentials(stubSettings, jwtAudienceOverride.get());
+    if (jwtAudienceOverride.isPresent()
+        && stubSettings instanceof EnhancedBigtableStubSettings.Builder) {
+      ((EnhancedBigtableStubSettings.Builder) stubSettings)
+          .setJwtAudience(jwtAudienceOverride.get());
     }
 
     final InstantiatingGrpcChannelProvider.Builder channelProvider =

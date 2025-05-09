@@ -179,9 +179,7 @@ public class EndToEndIT {
     }
 
     // Upload to GCS in parallel
-    filesToUpload
-        .entrySet()
-        .parallelStream()
+    filesToUpload.entrySet().parallelStream()
         .forEach(
             e -> {
               GcsPath path = GcsPath.fromUri(destPath + e.getKey());

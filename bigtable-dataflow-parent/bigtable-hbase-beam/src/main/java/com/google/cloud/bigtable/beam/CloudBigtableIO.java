@@ -762,8 +762,7 @@ public class CloudBigtableIO {
         // start key to be inclusive and end key to be exclusive.
         byte[] newStartKey = Arrays.copyOf(rowKey, rowKey.length + 1);
         scan =
-            scanConfiguration
-                .toBuilder()
+            scanConfiguration.toBuilder()
                 .withKeys(newStartKey, scanConfiguration.getStopRow())
                 .build()
                 .getScanValueProvider()

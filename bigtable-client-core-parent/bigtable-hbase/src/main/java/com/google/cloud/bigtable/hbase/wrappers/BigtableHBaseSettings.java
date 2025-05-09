@@ -49,7 +49,8 @@ public abstract class BigtableHBaseSettings {
       "bulk.mutation.close.timeout.milliseconds";
 
   // Must be non-negative. Set to 0 to disable timeout.
-  private final long bulkMutationCloseTimeoutMilliseconds;;
+  private final long bulkMutationCloseTimeoutMilliseconds;
+  ;
 
   public static BigtableHBaseSettings create(Configuration configuration) throws IOException {
     return BigtableHBaseVeneerSettings.create(configuration);
