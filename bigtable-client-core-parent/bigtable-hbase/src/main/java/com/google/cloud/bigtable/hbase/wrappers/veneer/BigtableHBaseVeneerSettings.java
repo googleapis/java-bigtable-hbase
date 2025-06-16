@@ -32,6 +32,7 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_EM
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_ENABLE_BULK_MUTATION_FLOW_CONTROL;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_ENABLE_CLIENT_SIDE_METRICS;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_HOST_KEY;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_JWT_AUDIENCE_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_MUTATE_RPC_ATTEMPT_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_MUTATE_RPC_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY;
@@ -83,6 +84,7 @@ import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.stub.BigtableBatchingCallSettings;
 import com.google.cloud.bigtable.data.v2.stub.BigtableBulkReadRowsCallSettings;
+import com.google.cloud.bigtable.data.v2.stub.EnhancedBigtableStubSettings;
 import com.google.cloud.bigtable.data.v2.stub.metrics.NoopMetricsProvider;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableExtendedConfiguration;
@@ -461,6 +463,8 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     Optional<String> hostOverride = Optional.fromNullable(configuration.get(endpointKey));
     Optional<String> portOverride = Optional.fromNullable(configuration.get(BIGTABLE_PORT_KEY));
     Optional<String> endpointOverride = Optional.absent();
+    Optional<String> jwtAudienceOverride =
+        Optional.fromNullable(configuration.get(BIGTABLE_JWT_AUDIENCE_KEY));
 
     if (hostOverride.isPresent() || portOverride.isPresent()) {
       endpointOverride =
@@ -476,6 +480,12 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     if (endpointOverride.isPresent()) {
       stubSettings.setEndpoint(endpointOverride.get());
       LOG.debug("%s is configured at %s", endpointKey, endpointOverride);
+    }
+
+    if (jwtAudienceOverride.isPresent()
+        && stubSettings instanceof EnhancedBigtableStubSettings.Builder) {
+      ((EnhancedBigtableStubSettings.Builder) stubSettings)
+          .setJwtAudience(jwtAudienceOverride.get());
     }
 
     final InstantiatingGrpcChannelProvider.Builder channelProvider =
