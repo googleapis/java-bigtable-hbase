@@ -109,8 +109,7 @@ public class CloudBigtableScanConfigurationTest {
   public void testRegularAndRuntimeParametersAreEqualWithRequest() {
     ReadRowsRequest request = ReadRowsRequest.newBuilder().setRowsLimit(10).build();
     CloudBigtableScanConfiguration withRegularParameters =
-        config
-            .toBuilder()
+        config.toBuilder()
             .withRequest(request)
             .withKeys(START_ROW, STOP_ROW)
             .withConfiguration("somekey", "somevalue")
@@ -130,8 +129,7 @@ public class CloudBigtableScanConfigurationTest {
     ReadRowsRequest updatedRequest = withRegularParameters.getRequest();
     withRegularParameters = withRegularParameters.toBuilder().withRequest(updatedRequest).build();
     withRuntimeParameters =
-        withRuntimeParameters
-            .toBuilder()
+        withRuntimeParameters.toBuilder()
             .withRequest(StaticValueProvider.of(updatedRequest))
             .build();
     Assert.assertEquals(withRegularParameters, withRuntimeParameters);

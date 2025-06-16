@@ -395,7 +395,8 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
         FutureUtil.unwrap(
             this.bigtableApi.getDataClient().sampleRowKeysAsync(tableName.getNameAsString()));
 
-    return getSampledRowKeysAdapter(tableName, serverName).adaptResponse(sampleRowKeyResponse)
+    return getSampledRowKeysAdapter(tableName, serverName)
+        .adaptResponse(sampleRowKeyResponse)
         .stream()
         .map(HRegionLocation::getRegionInfo)
         .collect(Collectors.toCollection(CopyOnWriteArrayList::new));

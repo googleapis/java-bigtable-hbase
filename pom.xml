@@ -32,7 +32,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud</groupId>
     <artifactId>google-cloud-shared-config</artifactId>
-    <version>1.15.0</version>
+    <version>1.15.4</version>
   </parent>
 
   <licenses>
