@@ -67,6 +67,7 @@ public class HBaseToCloudBigtableReplicationConfiguration {
    * Bigtable at the expense of more RPCs.
    */
   public static final String BATCH_SIZE_KEY = "google.bigtable.replication.batch_size_bytes";
+
   // TODO: Tune this parameter. Usually, this should be smaller than the HBase replication source
   // batch capacity by counts and bytes. These capacity are set by `replication.source.nb.capacity`
   // and `replication.source.size.capacity` config keys.

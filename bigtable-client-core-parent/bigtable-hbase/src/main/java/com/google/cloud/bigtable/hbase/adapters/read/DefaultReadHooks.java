@@ -28,6 +28,7 @@ import com.google.common.base.Functions;
 @InternalApi("For internal usage only")
 public class DefaultReadHooks implements ReadHooks {
   private Function<Query, Query> preSendHook = Functions.identity();
+
   /** {@inheritDoc} */
   @Override
   public void composePreSendHook(Function<Query, Query> newHook) {

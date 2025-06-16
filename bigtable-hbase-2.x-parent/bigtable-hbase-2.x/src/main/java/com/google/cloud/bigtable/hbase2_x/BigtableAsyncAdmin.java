@@ -696,6 +696,7 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
       return new Size(size, Unit.BYTE);
     }
   }
+
   /** Handler for unsupported operations for generating Admin class at runtime. */
   public static class UnsupportedOperationsHandler implements InvocationHandler {
     @Override

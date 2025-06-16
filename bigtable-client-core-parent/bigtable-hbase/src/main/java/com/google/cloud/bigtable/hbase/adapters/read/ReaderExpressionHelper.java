@@ -31,14 +31,19 @@ import org.apache.hadoop.hbase.util.Bytes;
 public class ReaderExpressionHelper {
   /** Constant <code>ANY_BYTE="\\C"</code> */
   public static final String ANY_BYTE = "\\C";
+
   /** Constant <code>ANY_BYTES="\\C+"</code> */
   public static final String ANY_BYTES = "\\C+";
+
   /** Constant <code>ALL_BYTES="\\C*"</code> */
   public static final String ALL_BYTES = "\\C*";
+
   /** Constant <code>ANY_BYTE_BYTES=Bytes.toBytes(ANY_BYTE)</code> */
   public static final byte[] ANY_BYTE_BYTES = Bytes.toBytes(ANY_BYTE);
+
   /** Constant <code>ANY_BYTE_BYTES=Bytes.toBytes(ANY_BYTE)</code> */
   public static final byte[] ALL_BYTE_BYTES = Bytes.toBytes(ALL_BYTES);
+
   /** Constant <code>ALL_QUALIFIERS_BYTES=Bytes.toBytes(ALL_QUALIFIERS)</code> */
   public static final byte[] ALL_QUALIFIERS_BYTES = ALL_BYTE_BYTES;
 

@@ -73,6 +73,7 @@ class CleanupHBaseSnapshotRestoreFilesFn extends DoFn<KV<String, String>, Boolea
 
     return GcsPath.fromUri(hbaseSnapshotDir).getBucket();
   }
+
   // getListPrefix convert absolute restorePath in a Hadoop filesystem
   // to a match prefix in a GCS bucket
   public static String getListPrefix(String restorePath) {

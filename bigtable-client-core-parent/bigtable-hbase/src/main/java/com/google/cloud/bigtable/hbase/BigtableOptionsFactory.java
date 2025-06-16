@@ -28,8 +28,10 @@ import com.google.common.annotations.VisibleForTesting;
 public class BigtableOptionsFactory {
   /** Constant <code>BIGTABLE_PORT_KEY="google.bigtable.endpoint.port"</code> */
   public static final String BIGTABLE_PORT_KEY = "google.bigtable.endpoint.port";
+
   /** Constant <code>BIGTABLE_ADMIN_HOST_KEY="google.bigtable.admin.endpoint.host"</code> */
   public static final String BIGTABLE_ADMIN_HOST_KEY = "google.bigtable.admin.endpoint.host";
+
   /** Constant <code>BIGTABLE_HOST_KEY="google.bigtable.endpoint.host"</code> */
   public static final String BIGTABLE_HOST_KEY = "google.bigtable.endpoint.host";
 
@@ -41,8 +43,10 @@ public class BigtableOptionsFactory {
 
   /** Constant <code>PROJECT_ID_KEY="google.bigtable.project.id"</code> */
   public static final String PROJECT_ID_KEY = "google.bigtable.project.id";
+
   /** Constant <code>INSTANCE_ID_KEY="google.bigtable.instance.id"</code> */
   public static final String INSTANCE_ID_KEY = "google.bigtable.instance.id";
+
   /** Constant <code>APP_PROFILE_ID_KEY="google.bigtable.app_profile.id"</code> */
   public static final String APP_PROFILE_ID_KEY = "google.bigtable.app_profile.id";
 
@@ -51,6 +55,7 @@ public class BigtableOptionsFactory {
    */
   public static final String BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY =
       "google.bigtable.snapshot.cluster.id";
+
   /**
    * Constant <code>
    * BIGTABLE_SNAPSHOT_DEFAULT_TTL_SECS_KEY="google.bigtable.snapshot.default.ttl.secs"</code> Will
@@ -73,12 +78,14 @@ public class BigtableOptionsFactory {
    */
   public static final String BIGTABLE_USE_SERVICE_ACCOUNTS_KEY =
       "google.bigtable.auth.service.account.enable";
+
   /** Constant <code>BIGTABLE_USE_SERVICE_ACCOUNTS_DEFAULT=true</code> */
   public static final boolean BIGTABLE_USE_SERVICE_ACCOUNTS_DEFAULT = true;
 
   /** Key to allow unit tests to proceed with an invalid credential configuration. */
   public static final String BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY =
       "google.bigtable.auth.null.credential.enable";
+
   /** Constant <code>BIGTABLE_NULL_CREDENTIAL_ENABLE_DEFAULT=false</code> */
   public static final boolean BIGTABLE_NULL_CREDENTIAL_ENABLE_DEFAULT = false;
 

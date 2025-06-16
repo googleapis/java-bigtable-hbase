@@ -22,6 +22,7 @@ import java.util.Arrays;
 @InternalApi
 public class RowKeyUtil {
   private static final byte[] EMPTY_KEY = new byte[0];
+
   /**
    * When scanning for a prefix the scan should stop immediately after the the last row that has the
    * specified prefix. This method calculates the closest next rowKey immediately following the

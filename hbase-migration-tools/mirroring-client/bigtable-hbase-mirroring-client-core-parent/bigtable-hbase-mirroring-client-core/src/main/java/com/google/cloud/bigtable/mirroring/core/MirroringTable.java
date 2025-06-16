@@ -102,6 +102,7 @@ public class MirroringTable implements Table {
   protected final Table primaryTable;
   private final AsyncTableWrapper secondaryAsyncWrapper;
   private final VerificationContinuationFactory verificationContinuationFactory;
+
   /** Counter for MirroringConnection and MirroringTable. */
   private final HierarchicalReferenceCounter referenceCounter;
 
@@ -114,6 +115,7 @@ public class MirroringTable implements Table {
   private final SettableFuture<Void> closedFuture = SettableFuture.create();
   private final int resultScannerBufferedMismatchedResults;
   private final Timestamper timestamper;
+
   /**
    * @param executorService ExecutorService is used to perform operations on secondaryTable and
    *     verification tasks.

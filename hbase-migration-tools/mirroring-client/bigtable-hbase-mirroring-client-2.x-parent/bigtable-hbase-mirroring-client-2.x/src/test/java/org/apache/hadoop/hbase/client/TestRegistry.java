@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.apache.hadoop.hbase.client;
+
 /**
  * It's necessary for unit testing of {@link
  * com.google.cloud.bigtable.mirroring.hbase2_x.MirroringAsyncConnection} as {@link

@@ -61,6 +61,7 @@ public class MirroringOperationException extends Exception {
 
   /** Identifies which database failed. */
   public final DatabaseIdentifier databaseIdentifier;
+
   /**
    * Operation that failed. Might be null if no specific operation was related to this exception.
    *

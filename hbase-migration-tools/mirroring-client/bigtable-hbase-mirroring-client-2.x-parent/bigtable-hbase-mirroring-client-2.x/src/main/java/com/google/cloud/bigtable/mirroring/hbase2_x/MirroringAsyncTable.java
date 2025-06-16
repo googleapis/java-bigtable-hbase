@@ -88,6 +88,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
   private final FlowController flowController;
   private final SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
   private final MirroringTracer mirroringTracer;
+
   /**
    * HBase 2.x AsyncTables are not closeable and we do not need keep a separate reference counter
    * for it, but we can just use MirroringAsyncConnection reference counter.

@@ -124,6 +124,7 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
    */
   private final ConcurrentRowSetWithWeakKeys failedPrimaryOperations =
       new ConcurrentRowSetWithWeakKeys();
+
   /** Stores exceptions thrown by asynchronous operations that were not yet thrown to the user. */
   private final UserExceptionsBuffer exceptionsToBeReportedToTheUser = new UserExceptionsBuffer();
 
@@ -452,9 +453,11 @@ public class SequentialMirroringBufferedMutator extends MirroringBufferedMutator
    */
   private static class UserExceptionsBuffer {
     private final Object retriesExhaustedWithDetailsExceptionListLock = new Object();
+
     /** Thread-safe. */
     private final ConcurrentLinkedQueue<Throwable> otherExceptionsList =
         new ConcurrentLinkedQueue<>();
+
     /** Locked by {@link #retriesExhaustedWithDetailsExceptionListLock} */
     private List<RetriesExhaustedWithDetailsException> retriesExhaustedWithDetailsExceptionList =
         new ArrayList<>();

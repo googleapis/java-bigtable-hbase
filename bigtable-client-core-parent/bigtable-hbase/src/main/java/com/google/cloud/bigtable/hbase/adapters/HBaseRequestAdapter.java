@@ -219,6 +219,7 @@ public class HBaseRequestAdapter {
   public void adapt(Put put, MutationApi<?> mutationApi) {
     mutationAdapters.putAdapter.adapt(put, mutationApi);
   }
+
   /**
    * adaptEntry.
    *

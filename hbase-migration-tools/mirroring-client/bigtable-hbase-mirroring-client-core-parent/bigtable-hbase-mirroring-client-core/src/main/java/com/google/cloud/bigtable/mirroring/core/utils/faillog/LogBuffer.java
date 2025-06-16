@@ -38,6 +38,7 @@ public class LogBuffer implements Closeable {
    * <p>The limit will be disobeyed when the user inserts a log entry larger than this number.
    */
   private final int maxSize;
+
   /**
    * When `true` and the buffer clogs, attempts to append more data, will yield dropping it instead
    * of blocking.
@@ -45,16 +46,20 @@ public class LogBuffer implements Closeable {
   private final boolean dropOnOverflow;
 
   private final Lock lock = new ReentrantLock();
+
   /** Condition used by threads blocked on draining the buffer. */
   private final Condition notEmpty = lock.newCondition();
+
   /** Condition used by threads blocked on appending to the buffer. */
   private final Condition notFull = lock.newCondition();
 
   private boolean shutdown = false;
 
   private ArrayDeque<byte[]> buffers = new ArrayDeque<>();
+
   /** Amount of data accumulated in `buffers`. */
   private int usedSize = 0;
+
   /**
    * If the buffer was closed due to an exception, this field holds the exception which caused it
    */

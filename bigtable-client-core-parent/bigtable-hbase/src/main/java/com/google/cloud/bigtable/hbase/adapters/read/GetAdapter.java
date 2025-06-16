@@ -44,6 +44,7 @@ public class GetAdapter implements ReadOperationAdapter<Get> {
   }
 
   protected final ScanAdapter scanAdapter;
+
   /**
    * Constructor for GetAdapter.
    *

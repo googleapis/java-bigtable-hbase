@@ -30,6 +30,7 @@ public class HBaseCellUtils {
       byte[] row, byte[] columnFamily, byte[] qualifier, long timestamp) {
     return new KeyValue(row, columnFamily, qualifier, timestamp, Type.Delete);
   }
+
   // Delete Marker added as result of Delete(row).addColumns(family, qualifier) or
   // Delete(row).addColumns(family, qualifier, timestamp).
   public static Cell deleteMarkerForCellsWithLowerOrEqualTimestamp(

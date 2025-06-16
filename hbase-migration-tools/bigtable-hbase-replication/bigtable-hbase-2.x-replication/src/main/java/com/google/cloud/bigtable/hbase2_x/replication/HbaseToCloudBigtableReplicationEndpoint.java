@@ -15,6 +15,7 @@
  */
 
 package com.google.cloud.bigtable.hbase2_x.replication;
+
 // TODO reverse the package names for 1.x and 2.x to com.google.cloud.bigtable.replication.hbase1_x
 
 import static org.apache.hadoop.hbase.replication.BaseReplicationEndpoint.REPLICATION_WALENTRYFILTER_CONFIG_KEY;
@@ -177,6 +178,7 @@ public class HbaseToCloudBigtableReplicationEndpoint extends AbstractService
     cloudBigtableReplicator.stop();
     notifyStopped();
   }
+
   // It is a no op for HBaseReplicationEndpoint. Keeping as same.
   @Override
   public void peerConfigUpdated(ReplicationPeerConfig replicationPeerConfig) {}

@@ -54,6 +54,7 @@ public class HierarchicalReferenceCounter implements ReferenceCounter {
 
   /** Counter of asynchronous requests from current hierarchy level. */
   public final ListenableReferenceCounter current;
+
   /** Counter of asynchronous requests from hierarchy above the current level. */
   public final ReferenceCounter parent;
 

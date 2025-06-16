@@ -84,6 +84,7 @@ public class CloudBigtableReplicator {
     private static SharedResources INSTANCE;
 
     private final ExecutorService executorService;
+
     /**
      * Bigtable connection owned by this class and shared by all the instances of {@link
      * CloudBigtableReplicator} class. DO NOT CLOSE THIS CONNECTION from any instance. The state of

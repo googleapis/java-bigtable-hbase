@@ -58,6 +58,7 @@ public class MirroringResultScanner extends AbstractClientScanner {
   private final ResultScanner primaryResultScanner;
   private final AsyncResultScannerWrapper secondaryResultScannerWrapper;
   private final VerificationContinuationFactory verificationContinuationFactory;
+
   /**
    *
    *

@@ -35,6 +35,7 @@ public class BigtableHBaseVersion {
 
   // {x-version-update-start:bigtable-client-parent:current}
   public static final String VERSION = "2.15.3-SNAPSHOT";
+
   // {x-version-update-end}
 
   /**

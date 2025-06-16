@@ -136,11 +136,11 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
               Optional.of(Duration.ofMinutes(5)),
               Optional.of(Duration.ofMinutes(10)),
               Optional.absent()),
-          /* bulkMutateTimeouts = */ new OperationTimeouts(
+          /* bulkMutateTimeouts= */ new OperationTimeouts(
               Optional.absent(),
               Optional.of(Duration.ofMinutes(1)),
               Optional.of(Duration.ofMinutes(10))),
-          /* sampleRowKeysTimeouts = */ new OperationTimeouts(
+          /* sampleRowKeysTimeouts= */ new OperationTimeouts(
               Optional.absent(),
               Optional.of(Duration.ofMinutes(5)),
               Optional.of(Duration.ofMinutes(10))));

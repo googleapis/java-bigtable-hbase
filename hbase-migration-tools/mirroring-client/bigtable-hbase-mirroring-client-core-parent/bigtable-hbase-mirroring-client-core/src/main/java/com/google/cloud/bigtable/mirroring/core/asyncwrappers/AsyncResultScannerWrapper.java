@@ -43,6 +43,7 @@ import org.apache.hadoop.hbase.client.Scan;
 @InternalApi("For internal usage only")
 public class AsyncResultScannerWrapper {
   private final MirroringTracer mirroringTracer;
+
   /**
    * We use this queue to ensure that asynchronous next()s are called in the same order and with the
    * same parameters as next()s on primary result scanner.
@@ -168,12 +169,16 @@ public class AsyncResultScannerWrapper {
 
     /** Scan object that created this result scanner. */
     public final Scan scan;
+
     /** Results of corresponding scan operation on primary ResultScanner. */
     public final Result[] result;
+
     /** Number of Results requested in current next call. */
     public final int numRequests;
+
     /** Tracing Span will be used as a parent span of current request. */
     public final Span span;
+
     /**
      * Marks whether this next was issued using {@link ResultScanner#next()} (true) or {@link
      * ResultScanner#next(int)} (false). Used to forward the same method call to underlying

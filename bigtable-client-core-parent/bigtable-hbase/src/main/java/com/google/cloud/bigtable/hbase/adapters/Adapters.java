@@ -36,22 +36,30 @@ import org.apache.hadoop.hbase.client.Increment;
 public final class Adapters {
   /** Constant <code>ROW_ADAPTER</code> */
   public static final RowAdapter ROW_ADAPTER = new RowAdapter();
+
   /** Constant <code>APPEND_ADAPTER</code> */
   public static final AppendAdapter APPEND_ADAPTER = new AppendAdapter();
+
   /** Constant <code>INCREMENT_ADAPTER</code> */
   public static final IncrementAdapter INCREMENT_ADAPTER = new IncrementAdapter();
+
   /** Constant <code>DELETE_ADAPTER</code> */
   public static final DeleteAdapter DELETE_ADAPTER = new DeleteAdapter();
+
   /** Constant <code>FILTER_ADAPTER</code> */
   public static final FilterAdapter FILTER_ADAPTER = FilterAdapter.buildAdapter();
+
   /** Constant <code>ROW_RANGE_ADAPTER</code> */
   public static final RowRangeAdapter ROW_RANGE_ADAPTER = new RowRangeAdapter();
+
   /** Constant <code>SCAN_ADAPTER</code> */
   public static final ScanAdapter SCAN_ADAPTER = new ScanAdapter(FILTER_ADAPTER, ROW_RANGE_ADAPTER);
+
   /** Constant <code>BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER</code> */
   public static final BigtableWhileMatchResultScannerAdapter
       BIGTABLE_WHILE_MATCH_RESULT_RESULT_SCAN_ADAPTER =
           new BigtableWhileMatchResultScannerAdapter();
+
   /** Constant <code>GET_ADAPTER</code> */
   public static final GetAdapter GET_ADAPTER = new GetAdapter(SCAN_ADAPTER);
 

@@ -561,6 +561,7 @@ public class CloudBigtableIO {
   protected static class SourceWithKeys extends AbstractSource {
 
     private static final long serialVersionUID = 1L;
+
     /**
      * An estimate of the size of the source, in bytes.
      *

@@ -40,6 +40,7 @@ public class FilterSupportStatus {
    */
   public static final FilterSupportStatus NOT_SUPPORTED_WRONG_TYPE =
       newNotSupported("Wrong filter type passed to adapter.");
+
   /**
    * Static helper to construct not support adaptations due to no adapter being available for the
    * given Filter type.

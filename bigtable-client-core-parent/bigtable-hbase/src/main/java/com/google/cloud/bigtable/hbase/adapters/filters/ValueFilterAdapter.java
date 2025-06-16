@@ -52,6 +52,7 @@ public class ValueFilterAdapter extends TypedFilterAdapterBase<ValueFilter> {
     throw new IllegalStateException(
         String.format("Cannot adapt filter with comparator%s", filter.getComparator()));
   }
+
   /** {@inheritDoc} */
   @Override
   public FilterSupportStatus isFilterSupported(FilterAdapterContext context, ValueFilter filter) {

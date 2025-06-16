@@ -115,8 +115,10 @@ public abstract class MirroringBufferedMutator<BufferEntryType> implements Buffe
 
   /** Configuration that was used to configure this instance. */
   protected final MirroringConfiguration configuration;
+
   /** Parameters that were used to create this instance. */
   private final BufferedMutatorParams bufferedMutatorParams;
+
   /**
    * Size that mutations kept in {@link FlushSerializer#mutationEntries} should reach to invoke a
    * asynchronous flush() on the primary database.

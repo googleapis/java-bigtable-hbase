@@ -57,6 +57,7 @@ public class MirroringConnection implements Connection {
   protected final FlowController flowController;
   protected final ExecutorService executorService;
   protected final MismatchDetector mismatchDetector;
+
   /**
    * Counter of all asynchronous operations that are using the secondary connection. Incremented
    * when scheduling operations by underlying {@link MirroringTable} and {@link

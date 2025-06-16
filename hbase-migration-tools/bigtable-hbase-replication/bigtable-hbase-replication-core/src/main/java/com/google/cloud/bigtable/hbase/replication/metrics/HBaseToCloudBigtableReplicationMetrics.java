@@ -46,12 +46,14 @@ public class HBaseToCloudBigtableReplicationMetrics {
 
   public static final String ONE_WAY_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY =
       "oneWayReplEligibleMutations";
+
   /** WAL entries/mutations exported if bidirectional replication is enabled. */
   public static final String BIDIRECTIONAL_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY =
       "bidirectionalReplEligibleWALEntries";
 
   public static final String BIDIRECTIONAL_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY =
       "bidirectionalReplEligibleMutations";
+
   /**
    * WAL entries/mutations not eligible for replication if bidirectional replication is enabled,
    * i.e. they come from a Bigtable-Hbase replicator.

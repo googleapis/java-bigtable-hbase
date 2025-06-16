@@ -68,14 +68,19 @@ import org.apache.hadoop.util.ToolRunner;
 public class Import extends Configured implements Tool {
   private static final Log LOG = LogFactory.getLog(Import.class);
   static final String NAME = "import";
+
   /** Constant <code>CF_RENAME_PROP="HBASE_IMPORTER_RENAME_CFS"</code> */
   public static final String CF_RENAME_PROP = "HBASE_IMPORTER_RENAME_CFS";
+
   /** Constant <code>BULK_OUTPUT_CONF_KEY="import.bulk.output"</code> */
   public static final String BULK_OUTPUT_CONF_KEY = "import.bulk.output";
+
   /** Constant <code>FILTER_CLASS_CONF_KEY="import.filter.class"</code> */
   public static final String FILTER_CLASS_CONF_KEY = "import.filter.class";
+
   /** Constant <code>FILTER_ARGS_CONF_KEY="import.filter.args"</code> */
   public static final String FILTER_ARGS_CONF_KEY = "import.filter.args";
+
   /** Constant <code>TABLE_NAME="import.table.name"</code> */
   public static final String TABLE_NAME = "import.table.name";
 
