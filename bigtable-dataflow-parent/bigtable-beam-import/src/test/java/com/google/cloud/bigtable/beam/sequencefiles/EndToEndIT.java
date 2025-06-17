@@ -72,7 +72,7 @@ public class EndToEndIT {
 
   private Connection connection;
 
-  private GcsUtil gcsUtil;;
+  private GcsUtil gcsUtil;
 
   @Before
   public void setup() throws Exception {

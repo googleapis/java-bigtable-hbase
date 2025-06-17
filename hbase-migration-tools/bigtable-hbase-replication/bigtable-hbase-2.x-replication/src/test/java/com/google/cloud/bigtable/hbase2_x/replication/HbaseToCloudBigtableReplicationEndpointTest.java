@@ -103,7 +103,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
             }
           });
     }
-  };
+  }
 
   private static final Logger LOG =
       LoggerFactory.getLogger(HbaseToCloudBigtableReplicationEndpointTest.class);
