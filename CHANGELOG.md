@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.15.3](https://github.com/googleapis/java-bigtable-hbase/compare/v2.15.2...v2.15.3) (2025-06-20)
+
+
+### Bug Fixes
+
+* patch jwt audience for test ([#4491](https://github.com/googleapis/java-bigtable-hbase/issues/4491)) ([fe2eff7](https://github.com/googleapis/java-bigtable-hbase/commit/fe2eff73a90496b27d78ed726cce5d5b639479a9))
+
+
+### Dependencies
+
+* update shared config ([#4492](https://github.com/googleapis/java-bigtable-hbase/issues/4492)) ([888b74d](https://github.com/googleapis/java-bigtable-hbase/commit/888b74d2b4728ecd753c9a451210802c887fd0f1))
+
 ## [2.15.2](https://github.com/googleapis/java-bigtable-hbase/compare/v2.15.1...v2.15.2) (2025-04-01)
 
 
