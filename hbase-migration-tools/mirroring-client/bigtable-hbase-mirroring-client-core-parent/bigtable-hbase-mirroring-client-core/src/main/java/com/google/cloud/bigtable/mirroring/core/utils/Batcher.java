@@ -20,7 +20,7 @@ import static com.google.cloud.bigtable.mirroring.core.utils.BatchHelpers.reconc
 import static com.google.cloud.bigtable.mirroring.core.utils.BatchHelpers.reconcileBatchResultsSequential;
 
 import com.google.cloud.bigtable.mirroring.core.MirroringOperationException;
-import com.google.cloud.bigtable.mirroring.core.MirroringTable.RequestScheduler;
+import com.google.cloud.bigtable.mirroring.core.RequestScheduler;
 import com.google.cloud.bigtable.mirroring.core.asyncwrappers.AsyncTableWrapper;
 import com.google.cloud.bigtable.mirroring.core.utils.BatchHelpers.BatchData;
 import com.google.cloud.bigtable.mirroring.core.utils.BatchHelpers.FailedSuccessfulSplit;

@@ -18,7 +18,7 @@ package com.google.cloud.bigtable.mirroring.core;
 import static com.google.cloud.bigtable.mirroring.core.utils.referencecounting.ReferenceCounterUtils.holdReferenceUntilCompletion;
 
 import com.google.api.core.InternalApi;
-import com.google.cloud.bigtable.mirroring.core.MirroringTable.RequestScheduler;
+import com.google.cloud.bigtable.mirroring.core.RequestScheduler;
 import com.google.cloud.bigtable.mirroring.core.asyncwrappers.AsyncResultScannerWrapper;
 import com.google.cloud.bigtable.mirroring.core.asyncwrappers.AsyncResultScannerWrapper.ScannerRequestContext;
 import com.google.cloud.bigtable.mirroring.core.utils.AccumulatedExceptions;

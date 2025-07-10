@@ -126,6 +126,18 @@ limitations under the License.
                   <pattern>io.opencensus</pattern>
                   <shadedPattern>${shading-prefix}.io.opencensus</shadedPattern>
                 </relocation>
+                <relocation>
+                  <pattern>io.opentelemetry</pattern>
+                  <shadedPattern>com.google.cloud.bigtable.mirroring.repackaged.io.opentelemetry</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>META-INF/versions/9/io/opentelemetry</pattern>
+                  <shadedPattern>META-INF/versions/9/com/google/cloud/bigtable/mirroring/repackaged/io/opentelemetry</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>javax.activation</pattern>
+                  <shadedPattern>com.google.cloud.bigtable.mirroring.repackaged.javax.activation</shadedPattern>
+                </relocation>
                 <!-- grpc is used only by opencensus dependency -->
                 <relocation>
                   <pattern>io.grpc</pattern>
@@ -198,6 +210,13 @@ limitations under the License.
               <targetDependencies>
                 <targetDependency>org.apache.hbase:hbase-shaded-client</targetDependency>
               </targetDependencies>
+              <!-- opentelemetry dependency is added to veneer since 2.38.0. We shade veneer so ignoring
+                   opentelemetry when comparing with hbase-shaded-client is fine-->
+              <ignoredDependencies>
+                <dependency>io.opentelemetry:opentelemetry-api</dependency>
+                <dependency>io.opentelemetry:opentelemetry-context</dependency>
+                <dependency>io.opentelemetry:opentelemetry-semconv</dependency>
+              </ignoredDependencies>
             </configuration>
           </execution>
         </executions>
