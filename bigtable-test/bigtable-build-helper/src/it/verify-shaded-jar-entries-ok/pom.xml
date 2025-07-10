@@ -58,6 +58,12 @@ limitations under the License.
                   </shadedPattern>
                 </relocation>
                 <relocation>
+                  <pattern>javax.activation</pattern>
+                  <shadedPattern>
+                    com.google.bigtable.repackaged.javax.activation
+                  </shadedPattern>
+                </relocation>
+                <relocation>
                   <pattern>org.checkerframework</pattern>
                   <shadedPattern>
                     com.google.bigtable.repackaged.org.checkerframework

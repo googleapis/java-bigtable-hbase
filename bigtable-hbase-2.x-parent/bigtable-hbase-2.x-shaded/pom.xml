@@ -292,6 +292,10 @@ limitations under the License.
                   <shadedPattern>com.google.bigtable.repackaged.io.opentelemetry</shadedPattern>
                 </relocation>
                 <relocation>
+                  <pattern>javax.activation</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.javax.activation</shadedPattern>
+                </relocation>
+                <relocation>
                   <pattern>META-INF/versions/9/io/opentelemetry</pattern>
                   <shadedPattern>META-INF/versions/9/com/google/cloud/bigtable/repackaged/io/opentelemetry</shadedPattern>
                 </relocation>
