@@ -17,7 +17,7 @@
     <shading-prefix-path>com/google/bigtable/hbase/mirroring/shaded</shading-prefix-path>
 
     <!-- TODO: upgrade mirroring clients to latest hbase -->
-    <hbase2.version>2.3.6</hbase2.version>
+    <hbase2.version>2.4.18</hbase2.version>
   </properties>
 
   <modules>
