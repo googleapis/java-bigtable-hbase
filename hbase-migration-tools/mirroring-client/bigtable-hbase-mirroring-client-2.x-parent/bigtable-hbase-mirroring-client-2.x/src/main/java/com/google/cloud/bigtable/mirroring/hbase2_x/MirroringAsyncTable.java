@@ -20,7 +20,7 @@ import static com.google.cloud.bigtable.mirroring.core.utils.OperationUtils.make
 import static com.google.cloud.bigtable.mirroring.hbase2_x.utils.AsyncRequestScheduling.reserveFlowControlResourcesThenScheduleSecondary;
 
 import com.google.cloud.bigtable.mirroring.core.MirroringResultScanner;
-import com.google.cloud.bigtable.mirroring.core.MirroringTable.RequestScheduler;
+import com.google.cloud.bigtable.mirroring.core.RequestScheduler;
 import com.google.cloud.bigtable.mirroring.core.WriteOperationFutureCallback;
 import com.google.cloud.bigtable.mirroring.core.asyncwrappers.AsyncResultScannerWrapper;
 import com.google.cloud.bigtable.mirroring.core.utils.BatchHelpers;
@@ -63,6 +63,8 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.AsyncTable;
 import org.apache.hadoop.hbase.client.AsyncTableRegionLocator;
+import org.apache.hadoop.hbase.client.CheckAndMutate;
+import org.apache.hadoop.hbase.client.CheckAndMutateResult;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
@@ -202,9 +204,9 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
   }
 
   @Override
-  public CompletableFuture<Void> mutateRow(RowMutations rowMutations) {
+  public CompletableFuture<Result> mutateRow(RowMutations rowMutations) {
     this.timestamper.fillTimestamp(rowMutations);
-    CompletableFuture<Void> primaryFuture = this.primaryTable.mutateRow(rowMutations);
+    CompletableFuture<Result> primaryFuture = this.primaryTable.mutateRow(rowMutations);
     return writeWithFlowControl(
             new WriteOperationInfo(rowMutations),
             primaryFuture,
@@ -535,6 +537,16 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
   }
 
   @Override
+  public CompletableFuture<CheckAndMutateResult> checkAndMutate(CheckAndMutate checkAndMutate) {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
+  public List<CompletableFuture<CheckAndMutateResult>> checkAndMutate(List<CheckAndMutate> list) {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
   public void scan(Scan scan, C consumer) {
     this.primaryTable.scan(scan, consumer);
   }
@@ -561,7 +573,7 @@ public class MirroringAsyncTable<C extends ScanResultConsumerBase> implements As
     private OperationStages<CompletableFuture<Boolean>> checkAndMutate(
         WriteOperationInfo writeOperationInfo,
         CompletableFuture<Boolean> primary,
-        Supplier<CompletableFuture<Void>> secondary) {
+        Supplier<CompletableFuture<?>> secondary) {
       OperationStages<CompletableFuture<Boolean>> returnedValue =
           new OperationStages<>(new CompletableFuture<>());
       primary
