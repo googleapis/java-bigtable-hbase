@@ -695,6 +695,9 @@ public abstract class BigtableAsyncAdmin implements AsyncAdmin {
     public Size getStoreFileSize() {
       return new Size(size, Unit.BYTE);
     }
+
+    @Override
+    public Size getMemStoreSize() { return new Size(size, Unit.BYTE); }
   }
   /** Handler for unsupported operations for generating Admin class at runtime. */
   public static class UnsupportedOperationsHandler implements InvocationHandler {
