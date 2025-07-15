@@ -615,7 +615,7 @@ public class MirroringTable {
         this.mirroringTracer.spanFactory.wrapReadVerificationCallback(verificationCallback));
   }
 
-  protected  <T> void scheduleSequentialWriteOperation(
+  protected <T> void scheduleSequentialWriteOperation(
       final WriteOperationInfo writeOperationInfo,
       final Supplier<ListenableFuture<T>> secondaryOperationSupplier) {
     WriteOperationFutureCallback<T> writeErrorCallback =

@@ -22,23 +22,19 @@ import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.TableBuilder;
 import org.apache.hadoop.hbase.security.User;
 
-public class TestConnection extends com.google.cloud.bigtable.mirroring.core.TestConnection implements
-    Connection {
+public class TestConnection extends com.google.cloud.bigtable.mirroring.core.TestConnection
+    implements Connection {
 
-  public TestConnection(Configuration conf, boolean managed,
-      ExecutorService pool, User user) {
+  public TestConnection(Configuration conf, boolean managed, ExecutorService pool, User user) {
     super(conf, managed, pool, user);
   }
 
-  public TestConnection(Configuration conf,
-      ExecutorService pool, User user) {
+  public TestConnection(Configuration conf, ExecutorService pool, User user) {
     super(conf, false, pool, user);
   }
 
   @Override
-  public void clearRegionLocationCache() {
-
-  }
+  public void clearRegionLocationCache() {}
 
   @Override
   public TableBuilder getTableBuilder(TableName tableName, ExecutorService executorService) {

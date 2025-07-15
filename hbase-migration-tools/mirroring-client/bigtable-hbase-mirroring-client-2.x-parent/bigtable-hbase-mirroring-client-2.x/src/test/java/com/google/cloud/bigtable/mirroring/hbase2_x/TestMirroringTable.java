@@ -57,17 +57,12 @@ public class TestMirroringTable {
   public final ExecutorServiceRule executorServiceRule =
       ExecutorServiceRule.singleThreadedExecutor();
 
-  @Mock
-  Table primaryTable;
+  @Mock Table primaryTable;
   @Mock Table secondaryTable;
-  @Mock
-  FlowController flowController;
-  @Mock
-  MirroringMetricsRecorder mirroringMetricsRecorder;
-  @Mock
-  SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
-  @Mock
-  ReferenceCounter referenceCounter;
+  @Mock FlowController flowController;
+  @Mock MirroringMetricsRecorder mirroringMetricsRecorder;
+  @Mock SecondaryWriteErrorConsumerWithMetrics secondaryWriteErrorConsumer;
+  @Mock ReferenceCounter referenceCounter;
 
   Timestamper timestamper = new NoopTimestamper();
   MismatchDetector mismatchDetector;
@@ -104,8 +99,7 @@ public class TestMirroringTable {
   public void testMutateRow() throws IOException, InterruptedException {
     RowMutations mutations = new RowMutations("r1".getBytes());
     mutations.add(new Put("r1".getBytes()));
-    when(primaryTable.mutateRow(any(RowMutations.class)))
-        .thenReturn(Result.EMPTY_RESULT);
+    when(primaryTable.mutateRow(any(RowMutations.class))).thenReturn(Result.EMPTY_RESULT);
     mirroringTable.mutateRow(mutations);
     executorServiceRule.waitForExecutor();
     verify(primaryTable, times(1)).mutateRow(mutations);

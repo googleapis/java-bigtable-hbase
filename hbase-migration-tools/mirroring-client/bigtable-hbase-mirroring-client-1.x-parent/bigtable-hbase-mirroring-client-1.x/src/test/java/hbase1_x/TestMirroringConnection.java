@@ -67,8 +67,7 @@ public class TestMirroringConnection {
 
   @Test
   public void testConnectionFactoryCreatesMirroringConnection() throws IOException {
-    assertThat(connection).isInstanceOf(
-        MirroringConnection.class);
+    assertThat(connection).isInstanceOf(MirroringConnection.class);
     assertThat(((MirroringConnection) connection).getPrimaryConnection())
         .isInstanceOf(TestConnection.class);
     assertThat(((MirroringConnection) connection).getSecondaryConnection())
