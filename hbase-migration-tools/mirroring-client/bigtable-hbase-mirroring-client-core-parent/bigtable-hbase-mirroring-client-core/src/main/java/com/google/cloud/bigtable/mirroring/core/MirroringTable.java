@@ -89,9 +89,9 @@ import org.apache.hadoop.hbase.util.Bytes;
  * asynchronously. Read operations are mirrored to verify that content of both databases matches.
  */
 @InternalApi("For internal usage only")
-public class MirroringTable implements Table {
+public class MirroringTable {
 
-  private static final Logger Log = new Logger(MirroringTable.class);
+  protected static final Logger Log = new Logger(MirroringTable.class);
   private static final Predicate<Object> resultIsFaultyPredicate =
       new Predicate<Object>() {
         @Override
@@ -100,16 +100,16 @@ public class MirroringTable implements Table {
         }
       };
   protected final Table primaryTable;
-  private final AsyncTableWrapper secondaryAsyncWrapper;
+  protected final AsyncTableWrapper secondaryAsyncWrapper;
   private final VerificationContinuationFactory verificationContinuationFactory;
   /** Counter for MirroringConnection and MirroringTable. */
   private final HierarchicalReferenceCounter referenceCounter;
 
   private final SecondaryWriteErrorConsumer secondaryWriteErrorConsumer;
-  private final MirroringTracer mirroringTracer;
+  protected final MirroringTracer mirroringTracer;
   private final ReadSampler readSampler;
   private final RequestScheduler requestScheduler;
-  private final Batcher batcher;
+  protected final Batcher batcher;
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final SettableFuture<Void> closedFuture = SettableFuture.create();
   private final int resultScannerBufferedMismatchedResults;
@@ -166,7 +166,6 @@ public class MirroringTable implements Table {
     this.resultScannerBufferedMismatchedResults = resultScannerBufferedMismatchedResults;
   }
 
-  @Override
   public boolean exists(final Get get) throws IOException {
     try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.EXISTS)) {
       Log.trace("[%s] exists(get=%s)", this.getName(), get);
@@ -189,7 +188,6 @@ public class MirroringTable implements Table {
     }
   }
 
-  @Override
   public boolean[] existsAll(final List<Get> inputList) throws IOException {
     final List<Get> list = new ArrayList<>(inputList);
     try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.EXISTS_ALL)) {
@@ -213,7 +211,6 @@ public class MirroringTable implements Table {
     }
   }
 
-  @Override
   public Result get(final Get get) throws IOException {
     try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.GET)) {
       Log.trace("[%s] get(get=%s)", this.getName(), get);
@@ -236,7 +233,6 @@ public class MirroringTable implements Table {
     }
   }
 
-  @Override
   public Result[] get(final List<Get> inputList) throws IOException {
     final List<Get> list = new ArrayList<>(inputList);
     try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.GET_LIST)) {
@@ -260,7 +256,6 @@ public class MirroringTable implements Table {
     }
   }
 
-  @Override
   public ResultScanner getScanner(Scan scan) throws IOException {
     try (Scope scope =
         this.mirroringTracer.spanFactory.operationScope(HBaseOperation.GET_SCANNER)) {
@@ -280,17 +275,14 @@ public class MirroringTable implements Table {
     }
   }
 
-  @Override
   public ResultScanner getScanner(byte[] family) throws IOException {
     return getScanner(new Scan().addFamily(family));
   }
 
-  @Override
   public ResultScanner getScanner(byte[] family, byte[] qualifier) throws IOException {
     return getScanner(new Scan().addColumn(family, qualifier));
   }
 
-  @Override
   public void put(final Put put) throws IOException {
     try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.PUT)) {
       Log.trace("[%s] put(put=%s)", this.getName(), put);
@@ -298,7 +290,6 @@ public class MirroringTable implements Table {
     }
   }
 
-  @Override
   public void put(List<Put> puts) throws IOException {
     try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.PUT_LIST)) {
       Log.trace("[%s] put(puts=%s)", this.getName(), puts);
@@ -313,7 +304,6 @@ public class MirroringTable implements Table {
     }
   }
 
-  @Override
   public void delete(final Delete delete) throws IOException {
     try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.DELETE)) {
       Log.trace("[%s] delete(delete=%s)", this.getName(), delete);
@@ -321,7 +311,6 @@ public class MirroringTable implements Table {
     }
   }
 
-  @Override
   public void delete(List<Delete> deletes) throws IOException {
     try (Scope scope =
         this.mirroringTracer.spanFactory.operationScope(HBaseOperation.DELETE_LIST)) {
@@ -345,15 +334,6 @@ public class MirroringTable implements Table {
     }
   }
 
-  @Override
-  public void mutateRow(final RowMutations rowMutations) throws IOException {
-    try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.MUTATE_ROW)) {
-      Log.trace("[%s] mutateRow(rowMutations=%s)", this.getName(), rowMutations);
-      this.batcher.batchSingleWriteOperation(rowMutations);
-    }
-  }
-
-  @Override
   public Result append(final Append append) throws IOException {
     try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.APPEND)) {
       Log.trace("[%s] append(append=%s)", this.getName(), append);
@@ -380,7 +360,6 @@ public class MirroringTable implements Table {
     }
   }
 
-  @Override
   public Result increment(final Increment increment) throws IOException {
     try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.INCREMENT)) {
       Log.trace("[%s] increment(increment=%s)", this.getName(), increment);
@@ -405,7 +384,6 @@ public class MirroringTable implements Table {
     }
   }
 
-  @Override
   public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount)
       throws IOException {
     Log.trace(
@@ -417,7 +395,6 @@ public class MirroringTable implements Table {
     return Bytes.toLong(CellUtil.cloneValue(cell));
   }
 
-  @Override
   public long incrementColumnValue(
       byte[] row, byte[] family, byte[] qualifier, long amount, Durability durability)
       throws IOException {
@@ -432,7 +409,6 @@ public class MirroringTable implements Table {
     return Bytes.toLong(CellUtil.cloneValue(cell));
   }
 
-  @Override
   public void batch(List<? extends Row> operations, Object[] results)
       throws IOException, InterruptedException {
     try (Scope scope = this.mirroringTracer.spanFactory.operationScope(HBaseOperation.BATCH)) {
@@ -440,7 +416,6 @@ public class MirroringTable implements Table {
     }
   }
 
-  @Override
   public Object[] batch(List<? extends Row> operations) throws IOException, InterruptedException {
     Log.trace("[%s] batch(operations=%s)", this.getName(), operations);
     Object[] results = new Object[operations.size()];
@@ -448,7 +423,6 @@ public class MirroringTable implements Table {
     return results;
   }
 
-  @Override
   public <R> void batchCallback(
       List<? extends Row> inputOperations, Object[] results, final Callback<R> callback)
       throws IOException, InterruptedException {
@@ -463,7 +437,6 @@ public class MirroringTable implements Table {
     }
   }
 
-  @Override
   public <R> Object[] batchCallback(List<? extends Row> operations, Callback<R> callback)
       throws IOException, InterruptedException {
     Log.trace(
@@ -473,7 +446,6 @@ public class MirroringTable implements Table {
     return results;
   }
 
-  @Override
   public boolean checkAndMutate(
       byte[] row,
       byte[] family,
@@ -492,7 +464,6 @@ public class MirroringTable implements Table {
     }
   }
 
-  @Override
   public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put)
       throws IOException {
     Log.trace(
@@ -501,7 +472,6 @@ public class MirroringTable implements Table {
     return this.checkAndPut(row, family, qualifier, CompareOp.EQUAL, value, put);
   }
 
-  @Override
   public boolean checkAndPut(
       byte[] row, byte[] family, byte[] qualifier, CompareOp compareOp, byte[] value, Put put)
       throws IOException {
@@ -516,7 +486,6 @@ public class MirroringTable implements Table {
     }
   }
 
-  @Override
   public boolean checkAndDelete(
       byte[] row, byte[] family, byte[] qualifier, byte[] value, Delete delete) throws IOException {
     Log.trace(
@@ -525,7 +494,6 @@ public class MirroringTable implements Table {
     return this.checkAndDelete(row, family, qualifier, CompareOp.EQUAL, value, delete);
   }
 
-  @Override
   public boolean checkAndDelete(
       byte[] row, byte[] family, byte[] qualifier, CompareOp compareOp, byte[] value, Delete delete)
       throws IOException {
@@ -572,7 +540,6 @@ public class MirroringTable implements Table {
    * after finishing all secondary requests that are yet in-flight ({@link
    * AsyncTableWrapper#close()}).
    */
-  @Override
   public void close() throws IOException {
     this.closePrimaryAndScheduleSecondaryClose();
   }
@@ -648,7 +615,7 @@ public class MirroringTable implements Table {
         this.mirroringTracer.spanFactory.wrapReadVerificationCallback(verificationCallback));
   }
 
-  private <T> void scheduleSequentialWriteOperation(
+  protected  <T> void scheduleSequentialWriteOperation(
       final WriteOperationInfo writeOperationInfo,
       final Supplier<ListenableFuture<T>> secondaryOperationSupplier) {
     WriteOperationFutureCallback<T> writeErrorCallback =
@@ -680,57 +647,47 @@ public class MirroringTable implements Table {
         flowControlReservationErrorConsumer);
   }
 
-  @Override
   public TableName getName() {
     return this.primaryTable.getName();
   }
 
-  @Override
   public Configuration getConfiguration() {
     return this.primaryTable.getConfiguration();
   }
 
-  @Override
   public HTableDescriptor getTableDescriptor() throws IOException {
     return this.primaryTable.getTableDescriptor();
   }
 
-  @Override
   public CoprocessorRpcChannel coprocessorService(byte[] bytes) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public <T extends Service, R> Map<byte[], R> coprocessorService(
       Class<T> aClass, byte[] bytes, byte[] bytes1, Call<T, R> call) throws Throwable {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public <T extends Service, R> void coprocessorService(
       Class<T> aClass, byte[] bytes, byte[] bytes1, Call<T, R> call, Callback<R> callback)
       throws Throwable {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public long getWriteBufferSize() {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void setWriteBufferSize(long l) throws IOException {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public <R extends Message> Map<byte[], R> batchCoprocessorService(
       MethodDescriptor methodDescriptor, Message message, byte[] bytes, byte[] bytes1, R r)
       throws Throwable {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public <R extends Message> void batchCoprocessorService(
       MethodDescriptor methodDescriptor,
       Message message,
@@ -742,42 +699,34 @@ public class MirroringTable implements Table {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void setOperationTimeout(int i) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public int getOperationTimeout() {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public int getRpcTimeout() {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void setRpcTimeout(int i) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public int getReadRpcTimeout() {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void setReadRpcTimeout(int i) {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public int getWriteRpcTimeout() {
     throw new UnsupportedOperationException();
   }
 
-  @Override
   public void setWriteRpcTimeout(int i) {
     throw new UnsupportedOperationException();
   }
