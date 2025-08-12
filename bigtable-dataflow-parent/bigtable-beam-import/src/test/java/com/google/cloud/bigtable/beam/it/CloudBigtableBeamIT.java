@@ -53,7 +53,6 @@ import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.SimpleFunction;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
-import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -344,10 +343,9 @@ public class CloudBigtableBeamIT {
     assertThat(
         Lineage.query(result.metrics(), Lineage.Type.SINK),
         hasItem(
-            Lineage.getFqName(
-                "bigtable",
-                ImmutableList.of(
-                    config.getProjectId(), config.getInstanceId(), config.getTableId()))));
+            String.format(
+                "bigtable:%s.%s.%s",
+                config.getProjectId(), config.getInstanceId(), config.getTableId())));
   }
 
   @Test
@@ -442,10 +440,9 @@ public class CloudBigtableBeamIT {
     assertThat(
         Lineage.query(result.metrics(), Lineage.Type.SOURCE),
         hasItem(
-            Lineage.getFqName(
-                "bigtable",
-                ImmutableList.of(
-                    config.getProjectId(), config.getInstanceId(), config.getTableId()))));
+            String.format(
+                "bigtable:%s.%s.%s",
+                config.getProjectId(), config.getInstanceId(), config.getTableId())));
   }
 
   private static byte[] createRandomValue() {
