@@ -343,11 +343,8 @@ public class CloudBigtableBeamIT {
     Assert.assertEquals(PipelineResult.State.DONE, state);
     assertThat(
         Lineage.query(result.metrics(), Lineage.Type.SINK),
-        hasItem(
-            Lineage.getFqName(
-                "bigtable",
-                ImmutableList.of(
-                    config.getProjectId(), config.getInstanceId(), config.getTableId()))));
+        hasItem(String.format("bigtable:%s.%s.%s",
+                config.getProjectId(), config.getInstanceId(), config.getTableId())));
   }
 
   @Test
@@ -441,11 +438,8 @@ public class CloudBigtableBeamIT {
     Assert.assertEquals(PipelineResult.State.DONE, state);
     assertThat(
         Lineage.query(result.metrics(), Lineage.Type.SOURCE),
-        hasItem(
-            Lineage.getFqName(
-                "bigtable",
-                ImmutableList.of(
-                    config.getProjectId(), config.getInstanceId(), config.getTableId()))));
+        hasItem(String.format("bigtable:%s.%s.%s",
+                        config.getProjectId(), config.getInstanceId(), config.getTableId())));
   }
 
   private static byte[] createRandomValue() {
