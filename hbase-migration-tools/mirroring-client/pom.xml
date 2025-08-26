@@ -9,6 +9,7 @@
   </parent>
 
   <artifactId>mirroring-client</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
   <version>0.10.3</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
 

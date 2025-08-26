@@ -23,6 +23,7 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>bigtable-beam-import</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
 
   <properties>
     <mainClass>com.google.cloud.bigtable.beam.Main</mainClass>
