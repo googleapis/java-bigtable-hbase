@@ -21,6 +21,7 @@ limitations under the License.
     <version>2.15.3</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
+  <name>${project.groupId}:${project.artifactId}</name>
 
   <artifactId>bigtable-hbase-2.x-hadoop</artifactId>
   <description>

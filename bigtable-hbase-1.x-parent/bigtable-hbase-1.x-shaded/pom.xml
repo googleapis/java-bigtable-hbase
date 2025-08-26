@@ -23,6 +23,7 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>bigtable-hbase-1.x-shaded</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
   <description>
     Please use bigtable-hbase-1.x or bigtable-hbase-1.x-hadoop. Bigtable
     connector compatible with HBase 1.x. It exposes the minimal set of
@@ -47,37 +48,6 @@ limitations under the License.
         <version>${bigtable.version}</version>
         <type>pom</type>
         <scope>import</scope>
-      </dependency>
-
-      <!-- Conscrypt can't be shaded, and since we are trying to make this connector a single jar drop in, mark it as provided.
-      End users can always add it themselves
-      -->
-      <dependency>
-        <groupId>org.conscrypt</groupId>
-        <artifactId>conscrypt-openjdk-uber</artifactId>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.conscrypt</groupId>
-        <artifactId>conscrypt-openjdk</artifactId>
-        <scope>provided</scope>
-      </dependency>
-
-      <!-- Annotation jars that should not be relocated, but are also not required during runtime -->
-      <dependency>
-        <groupId>javax.annotation</groupId>
-        <artifactId>javax.annotation-api</artifactId>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.checkerframework</groupId>
-        <artifactId>checker-qual</artifactId>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>com.google.code.findbugs</groupId>
-        <artifactId>jsr305</artifactId>
-        <scope>provided</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -254,6 +224,13 @@ limitations under the License.
                   <exclude>org.slf4j:slf4j-log4j12</exclude>
                   <!-- Exclude reload4j -->
                   <exclude>ch.qos.reload4j:reload4j</exclude>
+                  <!-- Excluded because they can't be shaded -->
+                  <exclude>org.conscrypt:conscrypt-openjdk-uber</exclude>
+                  <exclude>org.conscrypt:conscrypt-openjdk</exclude>
+                  <!-- Excluded because they are not needed at runtime -->
+                  <exclude>javax.annotation:javax.annotation-api</exclude>
+                  <exclude>org.checkerframework:checker-qual</exclude>
+                  <exclude>com.google.code.findbugs:jsr305</exclude>
                 </excludes>
               </artifactSet>
               <relocations>

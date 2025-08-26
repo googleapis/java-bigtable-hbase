@@ -9,6 +9,7 @@
   </parent>
 
   <artifactId>protobuf-java-format-shaded</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
   <version>0.10.3</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
 
   <description>
