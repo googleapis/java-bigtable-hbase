@@ -76,7 +76,7 @@ limitations under the License.
       <dependency>
         <groupId>org.checkerframework</groupId>
         <artifactId>checker-qual</artifactId>
-        <version>3.35.0</version>
+        <version>3.49.0</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
