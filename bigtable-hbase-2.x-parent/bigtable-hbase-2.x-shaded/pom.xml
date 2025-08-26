@@ -23,6 +23,7 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>bigtable-hbase-2.x-shaded</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
   <description>
     Please use bigtable-hbase-2.x or bigtable-hbase-2.x-hadoop. Bigtable
     connector compatible with HBase 2.x. It exposes the minimal set of

@@ -23,6 +23,7 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
   <description>
     Bigtable connector compatible with HBase 1.x. It most of its dependencies
     (hbase &amp; grpc). Its mainly intended to be used by dataflow 1.x to avoid
