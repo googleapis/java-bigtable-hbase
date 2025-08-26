@@ -49,6 +49,37 @@ limitations under the License.
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+
+      <!-- Conscrypt can't be shaded, and since we are trying to make this connector a single jar drop in, mark it as provided.
+      End users can always add it themselves
+      -->
+      <dependency>
+        <groupId>org.conscrypt</groupId>
+        <artifactId>conscrypt-openjdk-uber</artifactId>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.conscrypt</groupId>
+        <artifactId>conscrypt-openjdk</artifactId>
+        <scope>provided</scope>
+      </dependency>
+
+      <!-- Annotation jars that should not be relocated, but are also not required during runtime -->
+      <dependency>
+        <groupId>javax.annotation</groupId>
+        <artifactId>javax.annotation-api</artifactId>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.checkerframework</groupId>
+        <artifactId>checker-qual</artifactId>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>jsr305</artifactId>
+        <scope>provided</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -211,13 +242,6 @@ limitations under the License.
                   <exclude>org.apache.htrace:htrace-core4</exclude>
                   <exclude>commons-logging:commons-logging</exclude>
                   <exclude>org.apache.yetus:audience-annotations</exclude>
-                  <!-- Excluded because they can't be shaded -->
-                  <exclude>org.conscrypt:conscrypt-openjdk-uber</exclude>
-                  <exclude>org.conscrypt:conscrypt-openjdk</exclude>
-                  <!-- Excluded because they are not needed at runtime -->
-                  <exclude>javax.annotation:javax.annotation-api</exclude>
-                  <exclude>org.checkerframework:checker-qual</exclude>
-                  <exclude>com.google.code.findbugs:jsr305</exclude>
                 </excludes>
               </artifactSet>
               <relocations>
