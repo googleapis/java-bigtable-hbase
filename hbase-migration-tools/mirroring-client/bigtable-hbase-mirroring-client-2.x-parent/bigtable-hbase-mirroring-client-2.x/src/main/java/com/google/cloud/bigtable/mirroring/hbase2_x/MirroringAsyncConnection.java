@@ -371,6 +371,16 @@ public class MirroringAsyncConnection implements AsyncConnection {
     }
 
     @Override
+    public AsyncTableBuilder<C> setRetryPauseForServerOverloaded(long pause, TimeUnit unit) {
+      setTimeParameter(
+          pause,
+          unit,
+          this.primaryTableBuilder::setRetryPauseForServerOverloaded,
+          this.secondaryTableBuilder::setRetryPauseForServerOverloaded);
+      return this;
+    }
+
+    @Override
     public AsyncTableBuilder<C> setMaxAttempts(int maxAttempts) {
       setIntegerParameter(
           maxAttempts,
