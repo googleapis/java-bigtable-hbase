@@ -19,13 +19,13 @@ limitations under the License.
   <parent>
     <artifactId>bigtable-hbase-replication</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>1.14.3</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+    <version>1.14.4-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.google.cloud.bigtable</groupId>
   <artifactId>bigtable-hbase-replication-core</artifactId>
-  <version>1.14.3</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
+  <version>1.14.4-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-replication:current} -->
   <packaging>jar</packaging>
   <name>bigtable-hbase-replication-core</name>
   <description>Library to enable one way replication from HBase to Cloud
@@ -43,7 +43,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-1.x-hadoop</artifactId>
-      <version>2.15.3</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.15.4-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <exclusions>
         <exclusion>
           <groupId>org.apache.hbase</groupId>

@@ -1,6 +1,6 @@
 # Format:
 # module:released-version:current-version
 
-bigtable-client-parent:2.15.3:2.15.3
-bigtable-hbase-replication:1.14.3:1.14.3
-bigtable-hbase-mirroring:0.10.3:0.10.3
+bigtable-client-parent:2.15.3:2.15.4-SNAPSHOT
+bigtable-hbase-replication:1.14.3:1.14.4-SNAPSHOT
+bigtable-hbase-mirroring:0.10.3:0.10.4-SNAPSHOT
