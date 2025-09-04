@@ -26,6 +26,7 @@ import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.FlowController
 import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringSpanConstants.HBaseOperation;
 import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
 import com.google.cloud.bigtable.mirroring.core.utils.referencecounting.ListenableReferenceCounter;
+import com.google.cloud.bigtable.mirroring.core.utils.referencecounting.ReferenceCounter;
 import com.google.cloud.bigtable.mirroring.core.utils.timestamper.Timestamper;
 import com.google.cloud.bigtable.mirroring.core.verification.MismatchDetector;
 import com.google.common.annotations.VisibleForTesting;
@@ -59,7 +60,7 @@ public class MirroringConnection implements Connection {
   protected final MismatchDetector mismatchDetector;
   /**
    * Counter of all asynchronous operations that are using the secondary connection. Incremented
-   * when scheduling operations by underlying {@link MirroringTable} and {@link
+   * when scheduling operations by underlying MirroringTable and {@link
    * MirroringResultScanner}.
    */
   protected final ListenableReferenceCounter referenceCounter;
@@ -231,7 +232,7 @@ public class MirroringConnection implements Connection {
               },
               HBaseOperation.GET_TABLE);
       Table secondaryTable = this.secondaryConnection.getTable(tableName);
-      return new MirroringTable(
+      return getMirroringTable(
           primaryTable,
           secondaryTable,
           executorService,
@@ -247,6 +248,20 @@ public class MirroringConnection implements Connection {
           this.configuration.mirroringOptions.maxLoggedBinaryValueLength);
     }
   }
+
+  protected Table getMirroringTable(Table primaryTable,
+      Table secondaryTable,
+      ExecutorService executorService,
+      MismatchDetector mismatchDetector,
+      FlowController flowController,
+      SecondaryWriteErrorConsumer secondaryWriteErrorConsumer,
+      ReadSampler readSampler,
+      Timestamper timestamper,
+      boolean performWritesConcurrently,
+      boolean waitForSecondaryWrites,
+      MirroringTracer mirroringTracer,
+      ReferenceCounter parentReferenceCounter,
+      int resultScannerBufferedMismatchedResults) { return null; }
 
   @Override
   public BufferedMutator getBufferedMutator(TableName tableName) throws IOException {

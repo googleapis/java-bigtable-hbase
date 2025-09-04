@@ -15,6 +15,13 @@
  */
 package com.google.cloud.bigtable.mirroring.hbase2_x;
 
+import com.google.cloud.bigtable.mirroring.core.utils.ReadSampler;
+import com.google.cloud.bigtable.mirroring.core.utils.SecondaryWriteErrorConsumer;
+import com.google.cloud.bigtable.mirroring.core.utils.flowcontrol.FlowController;
+import com.google.cloud.bigtable.mirroring.core.utils.mirroringmetrics.MirroringTracer;
+import com.google.cloud.bigtable.mirroring.core.utils.referencecounting.ReferenceCounter;
+import com.google.cloud.bigtable.mirroring.core.utils.timestamper.Timestamper;
+import com.google.cloud.bigtable.mirroring.core.verification.MismatchDetector;
 import java.util.concurrent.ExecutorService;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -28,6 +35,29 @@ public class MirroringConnection
   public MirroringConnection(Configuration conf, boolean managed, ExecutorService pool, User user)
       throws Throwable {
     super(conf, managed, pool, user);
+  }
+
+  @Override
+  protected Table getMirroringTable(Table primaryTable, Table secondaryTable,
+      ExecutorService executorService, MismatchDetector mismatchDetector,
+      FlowController flowController, SecondaryWriteErrorConsumer secondaryWriteErrorConsumer,
+      ReadSampler readSampler, Timestamper timestamper, boolean performWritesConcurrently,
+      boolean waitForSecondaryWrites, MirroringTracer mirroringTracer,
+      ReferenceCounter parentReferenceCounter, int resultScannerBufferedMismatchedResults) {
+    return new MirroringTable(
+        primaryTable,
+        secondaryTable,
+        executorService,
+        this.mismatchDetector,
+        this.flowController,
+        this.secondaryWriteErrorConsumer,
+        this.readSampler,
+        this.timestamper,
+        this.performWritesConcurrently,
+        this.waitForSecondaryWrites,
+        this.mirroringTracer,
+        this.referenceCounter,
+        this.configuration.mirroringOptions.maxLoggedBinaryValueLength);
   }
 
   public MirroringConnection(Configuration conf, ExecutorService pool, User user) throws Throwable {
