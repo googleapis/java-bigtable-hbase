@@ -257,7 +257,7 @@ public class TestBatchExecutor {
     }
     assertTrue("first result is a result", results[0] instanceof Result);
     assertTrue(matchesRow(expected).matches(results[0]));
-    Assert.assertEquals(exception, results[1]);
+    Assert.assertNull(results[1]); // failed entries null out the result
   }
 
   @Test
