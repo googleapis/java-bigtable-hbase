@@ -45,7 +45,7 @@ public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter
   private static Exception FUZZY_KEY_DATA_FIELD_EXCEPTION;
 
   private final Optional<String> compatProblem;
-  private final boolean  maskWillBePreprocessed;
+  private final boolean maskWillBePreprocessed;
 
   static {
     try {
@@ -60,11 +60,14 @@ public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter
     byte[] testValue = "aa".getBytes();
     byte[] testMask = new byte[] {0, 1}; // literal, wildcard
 
-    FuzzyRowFilter testFilter = new FuzzyRowFilter(ImmutableList.of(
-        Pair.newPair("aa".getBytes(), testMask.clone())));
+    FuzzyRowFilter testFilter =
+        new FuzzyRowFilter(ImmutableList.of(Pair.newPair("aa".getBytes(), testMask.clone())));
     List<Pair<byte[], byte[]>> pairs = extractFuzzyRowFilterPairs(testFilter);
     if (pairs.size() != 1) {
-      compatProblem = Optional.of("Failed to probe FuzzyRowFilter implementation, expected 1 encoded pair, but got: " + pairs);
+      compatProblem =
+          Optional.of(
+              "Failed to probe FuzzyRowFilter implementation, expected 1 encoded pair, but got: "
+                  + pairs);
       maskWillBePreprocessed = false;
       return;
     }
@@ -115,7 +118,8 @@ public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter
   static List<Pair<byte[], byte[]>> extractFuzzyRowFilterPairs(FuzzyRowFilter filter) {
     // TODO: Change FuzzyRowFilter to expose fuzzyKeysData.
     if (FUZZY_KEY_DATA_FIELD_EXCEPTION != null) {
-      throw new IllegalStateException("Could not read the contents of the FuzzyRowFilter", FUZZY_KEY_DATA_FIELD_EXCEPTION);
+      throw new IllegalStateException(
+          "Could not read the contents of the FuzzyRowFilter", FUZZY_KEY_DATA_FIELD_EXCEPTION);
     }
     try {
       return (List<Pair<byte[], byte[]>>) FUZZY_KEY_DATA_FIELD.get(filter);
