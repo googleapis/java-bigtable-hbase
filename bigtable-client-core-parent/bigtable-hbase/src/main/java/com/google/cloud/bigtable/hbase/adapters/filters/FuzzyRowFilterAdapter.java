@@ -101,6 +101,8 @@ public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter
     ByteString.Output output = ByteString.newOutput(key.length * 2);
     QuoteMetaOutputStream quotingStream = new QuoteMetaOutputStream(output);
     for (int i = 0; i < mask.length; i++) {
+      // Handle literals: under normal circumstances (when preprocessing is available), -1 means
+      // literal. When UnsafeAvailChecker.unaligned() is false, then mask for a literal will be 0.
       if (mask[i] == -1 || (!maskWillBePreprocessed && mask[i] == 0)) {
         quotingStream.write(key[i]);
       } else {
