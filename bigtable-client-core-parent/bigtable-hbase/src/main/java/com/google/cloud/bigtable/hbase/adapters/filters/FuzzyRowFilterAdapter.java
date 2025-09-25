@@ -23,10 +23,13 @@ import com.google.cloud.bigtable.data.v2.models.Filters.InterleaveFilter;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper;
 import com.google.cloud.bigtable.hbase.adapters.read.ReaderExpressionHelper.QuoteMetaOutputStream;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
 import org.apache.hadoop.hbase.util.Pair;
 
@@ -41,6 +44,9 @@ public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter
   private static Field FUZZY_KEY_DATA_FIELD;
   private static Exception FUZZY_KEY_DATA_FIELD_EXCEPTION;
 
+  private final Optional<String> compatProblem;
+  private final boolean maskWillBePreprocessed;
+
   static {
     try {
       FUZZY_KEY_DATA_FIELD = FuzzyRowFilter.class.getDeclaredField("fuzzyKeysData");
@@ -50,9 +56,33 @@ public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter
     }
   }
 
+  public FuzzyRowFilterAdapter() {
+    byte[] testValue = "aa".getBytes();
+    byte[] testMask = new byte[] {0, 1}; // literal, wildcard
+
+    FuzzyRowFilter testFilter =
+        new FuzzyRowFilter(ImmutableList.of(Pair.newPair("aa".getBytes(), testMask.clone())));
+    List<Pair<byte[], byte[]>> pairs = extractFuzzyRowFilterPairs(testFilter);
+    if (pairs.size() != 1) {
+      compatProblem =
+          Optional.of(
+              "Failed to probe FuzzyRowFilter implementation, expected 1 encoded pair, but got: "
+                  + pairs);
+      maskWillBePreprocessed = false;
+      return;
+    }
+    Pair<byte[], byte[]> pair = pairs.get(0);
+    maskWillBePreprocessed = !Arrays.equals(testMask, pair.getSecond());
+    compatProblem = Optional.empty();
+  }
+
   /** {@inheritDoc} */
   @Override
   public Filter adapt(FilterAdapterContext context, FuzzyRowFilter filter) throws IOException {
+    if (compatProblem.isPresent()) {
+      throw new IllegalStateException(compatProblem.get());
+    }
+
     List<Pair<byte[], byte[]>> pairs = extractFuzzyRowFilterPairs(filter);
     if (pairs.isEmpty()) {
       return FILTERS.pass();
@@ -67,11 +97,13 @@ public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter
     return interleave;
   }
 
-  private static Filter createSingleRowFilter(byte[] key, byte[] mask) throws IOException {
+  private Filter createSingleRowFilter(byte[] key, byte[] mask) throws IOException {
     ByteString.Output output = ByteString.newOutput(key.length * 2);
     QuoteMetaOutputStream quotingStream = new QuoteMetaOutputStream(output);
     for (int i = 0; i < mask.length; i++) {
-      if (mask[i] == -1) {
+      // Handle literals: under normal circumstances (when preprocessing is available), -1 means
+      // literal. When UnsafeAvailChecker.unaligned() is false, then mask for a literal will be 0.
+      if (mask[i] == -1 || (!maskWillBePreprocessed && mask[i] == 0)) {
         quotingStream.write(key[i]);
       } else {
         // Write unquoted to match any byte at this position:
@@ -85,16 +117,16 @@ public class FuzzyRowFilterAdapter extends TypedFilterAdapterBase<FuzzyRowFilter
   }
 
   @SuppressWarnings("unchecked")
-  static List<Pair<byte[], byte[]>> extractFuzzyRowFilterPairs(FuzzyRowFilter filter)
-      throws IOException {
+  static List<Pair<byte[], byte[]>> extractFuzzyRowFilterPairs(FuzzyRowFilter filter) {
     // TODO: Change FuzzyRowFilter to expose fuzzyKeysData.
     if (FUZZY_KEY_DATA_FIELD_EXCEPTION != null) {
-      throw new IOException("Could not read the contents of the FuzzyRowFilter");
+      throw new IllegalStateException(
+          "Could not read the contents of the FuzzyRowFilter", FUZZY_KEY_DATA_FIELD_EXCEPTION);
     }
     try {
       return (List<Pair<byte[], byte[]>>) FUZZY_KEY_DATA_FIELD.get(filter);
     } catch (IllegalArgumentException | IllegalAccessException e) {
-      throw new IOException("Could not read the contents of the FuzzyRowFilter", e);
+      throw new IllegalStateException("Could not read the contents of the FuzzyRowFilter", e);
     }
   }
 
