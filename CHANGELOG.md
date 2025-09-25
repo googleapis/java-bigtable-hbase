@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.15.5](https://github.com/googleapis/java-bigtable-hbase/compare/v2.15.4...v2.15.5) (2025-09-25)
+
+
+### Bug Fixes
+
+* fuzzy filter adapter when UNSAFE_UNALIGNED is unset ([#4508](https://github.com/googleapis/java-bigtable-hbase/issues/4508)) ([25b34d3](https://github.com/googleapis/java-bigtable-hbase/commit/25b34d3a7b4bab032e967ff2978734f778cdc861))
+* table.batch should not return errors in the results array ([#4507](https://github.com/googleapis/java-bigtable-hbase/issues/4507)) ([774cf0e](https://github.com/googleapis/java-bigtable-hbase/commit/774cf0eac36f62de4e240d4b4de96ec5b17e952e))
+
+
+### Dependencies
+
+* upgrade java-bigtable to 2.67.0 ([#4510](https://github.com/googleapis/java-bigtable-hbase/issues/4510)) ([f19c33d](https://github.com/googleapis/java-bigtable-hbase/commit/f19c33d44b8ec2c91c378309f69ed33cebb8e3db))
+
 ## [2.15.4](https://github.com/googleapis/java-bigtable-hbase/compare/v2.15.3...v2.15.4) (2025-08-28)
 
 
