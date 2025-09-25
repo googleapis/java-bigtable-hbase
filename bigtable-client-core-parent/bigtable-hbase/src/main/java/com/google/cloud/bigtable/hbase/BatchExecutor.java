@@ -118,7 +118,7 @@ public class BatchExecutor implements AutoCloseable {
 
     @Override
     public final void onFailure(Throwable throwable) {
-      resultsArray[index] = throwable;
+      resultsArray[index] = null;
       resultFuture.setException(throwable);
     }
   }
