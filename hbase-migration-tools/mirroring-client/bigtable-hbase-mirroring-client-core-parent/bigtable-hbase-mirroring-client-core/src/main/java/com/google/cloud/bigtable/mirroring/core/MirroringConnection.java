@@ -51,7 +51,7 @@ import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.security.User;
 
-public class MirroringConnection implements Connection {
+public abstract class MirroringConnection implements Connection {
   private static final com.google.cloud.bigtable.mirroring.core.utils.Logger Log =
       new com.google.cloud.bigtable.mirroring.core.utils.Logger(MirroringConnection.class);
   protected final FlowController flowController;
@@ -231,20 +231,7 @@ public class MirroringConnection implements Connection {
               },
               HBaseOperation.GET_TABLE);
       Table secondaryTable = this.secondaryConnection.getTable(tableName);
-      return new MirroringTable(
-          primaryTable,
-          secondaryTable,
-          executorService,
-          this.mismatchDetector,
-          this.flowController,
-          this.secondaryWriteErrorConsumer,
-          this.readSampler,
-          this.timestamper,
-          this.performWritesConcurrently,
-          this.waitForSecondaryWrites,
-          this.mirroringTracer,
-          this.referenceCounter,
-          this.configuration.mirroringOptions.maxLoggedBinaryValueLength);
+      return getMirroringTable(primaryTable, secondaryTable);
     }
   }
 
@@ -416,4 +403,6 @@ public class MirroringConnection implements Connection {
       // This error is not reported to the user.
     }
   }
+
+  protected abstract Table getMirroringTable(Table primaryTable, Table secondaryTable);
 }

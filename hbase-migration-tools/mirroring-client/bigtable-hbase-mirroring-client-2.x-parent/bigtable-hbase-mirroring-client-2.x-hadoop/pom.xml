@@ -42,6 +42,10 @@ limitations under the License.
           <groupId>log4j</groupId>
           <artifactId>log4j</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>ch.qos.reload4j</groupId>
+          <artifactId>reload4j</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -202,6 +206,7 @@ limitations under the License.
                 <ignoredDependency>commons-logging:commons-logging</ignoredDependency>
 
                 <ignoredDependency>log4j:log4j</ignoredDependency>
+                <ignoredDependency>ch.qos.reload4j:reload4j</ignoredDependency>
               </ignoredDependencies>
             </configuration>
           </execution>
