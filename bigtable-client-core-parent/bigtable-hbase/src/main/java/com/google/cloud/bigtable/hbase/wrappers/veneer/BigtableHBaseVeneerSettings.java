@@ -73,7 +73,6 @@ import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.StubSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.auth.Credentials;
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountJwtAccessCredentials;
 import com.google.cloud.bigtable.admin.v2.BigtableInstanceAdminSettings;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
@@ -136,11 +135,11 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
               Optional.of(Duration.ofMinutes(5)),
               Optional.of(Duration.ofMinutes(10)),
               Optional.absent()),
-          /* bulkMutateTimeouts = */ new OperationTimeouts(
+          /* bulkMutateTimeouts= */ new OperationTimeouts(
               Optional.absent(),
               Optional.of(Duration.ofMinutes(1)),
               Optional.of(Duration.ofMinutes(10))),
-          /* sampleRowKeysTimeouts = */ new OperationTimeouts(
+          /* sampleRowKeysTimeouts= */ new OperationTimeouts(
               Optional.absent(),
               Optional.of(Duration.ofMinutes(5)),
               Optional.of(Duration.ofMinutes(10))));
@@ -572,7 +571,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       String jsonValue = configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY);
       stubSettings.setCredentialsProvider(
           FixedCredentialsProvider.create(
-              GoogleCredentials.fromStream(
+              ServiceAccountJwtAccessCredentials.fromStream(
                   new ByteArrayInputStream(jsonValue.getBytes(StandardCharsets.UTF_8)))));
 
     } else if (!Strings.isNullOrEmpty(
@@ -581,7 +580,7 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
           configuration.get(BIGTABLE_SERVICE_ACCOUNT_JSON_KEYFILE_LOCATION_KEY);
       stubSettings.setCredentialsProvider(
           FixedCredentialsProvider.create(
-              GoogleCredentials.fromStream(new FileInputStream(keyFileLocation))));
+              ServiceAccountJwtAccessCredentials.fromStream(new FileInputStream(keyFileLocation))));
 
     } else if (!Strings.isNullOrEmpty(configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY))) {
       String serviceAccount = configuration.get(BIGTABLE_SERVICE_ACCOUNT_EMAIL_KEY);
