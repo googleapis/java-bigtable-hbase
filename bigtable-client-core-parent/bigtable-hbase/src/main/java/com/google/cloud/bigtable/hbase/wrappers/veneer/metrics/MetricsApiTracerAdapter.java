@@ -157,6 +157,7 @@ public class MetricsApiTracerAdapter extends BigtableTracer {
     rpcMetrics.markRetry();
     activeRpcCounter.dec();
 
+    // For batching, retries can be invoked despite the rpc status being OK because an entry failed.
     Status status = (error == null) ? Status.OK : Status.fromThrowable(error);
 
     BigtableClientMetrics.meter(MetricLevel.Info, "grpc.errors." + status.getCode()).mark();
