@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.15.6](https://github.com/googleapis/java-bigtable-hbase/compare/v2.15.5...v2.15.6) (2025-12-01)
+
+
+### Bug Fixes
+
+* prevent npe in metrics during a batching retry ([#4516](https://github.com/googleapis/java-bigtable-hbase/issues/4516)) ([4f0c724](https://github.com/googleapis/java-bigtable-hbase/commit/4f0c7245f5256e71ca83b85419a41c23cbfbd3e1))
+
 ## [2.15.5](https://github.com/googleapis/java-bigtable-hbase/compare/v2.15.4...v2.15.5) (2025-09-25)
 
 
