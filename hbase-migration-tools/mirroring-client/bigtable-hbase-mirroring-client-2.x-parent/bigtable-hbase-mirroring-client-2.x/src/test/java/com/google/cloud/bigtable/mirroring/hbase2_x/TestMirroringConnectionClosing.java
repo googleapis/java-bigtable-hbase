@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.mirroring.core;
+package com.google.cloud.bigtable.mirroring.hbase2_x;
 
 import static com.google.cloud.bigtable.mirroring.core.utils.MirroringConfigurationHelper.MIRRORING_PRIMARY_CONFIG_PREFIX_KEY;
 import static com.google.cloud.bigtable.mirroring.core.utils.MirroringConfigurationHelper.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY;
@@ -25,6 +25,9 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.google.cloud.bigtable.mirroring.core.ExecutorServiceRule;
+import com.google.cloud.bigtable.mirroring.core.MirroringResultScanner;
+import com.google.cloud.bigtable.mirroring.core.TestHelpers;
 import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;

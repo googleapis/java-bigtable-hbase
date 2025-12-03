@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.security.User;
 
 public class MirroringConnection
@@ -40,5 +41,23 @@ public class MirroringConnection
   public MirroringConnection(MirroringConfiguration mirroringConfiguration, ExecutorService pool)
       throws IOException {
     super(mirroringConfiguration, pool);
+  }
+
+  @Override
+  protected Table getMirroringTable(Table primaryTable, Table secondaryTable) {
+    return new MirroringTable(
+        primaryTable,
+        secondaryTable,
+        executorService,
+        this.mismatchDetector,
+        this.flowController,
+        this.secondaryWriteErrorConsumer,
+        this.readSampler,
+        this.timestamper,
+        this.performWritesConcurrently,
+        this.waitForSecondaryWrites,
+        this.mirroringTracer,
+        this.referenceCounter,
+        this.configuration.mirroringOptions.maxLoggedBinaryValueLength);
   }
 }
