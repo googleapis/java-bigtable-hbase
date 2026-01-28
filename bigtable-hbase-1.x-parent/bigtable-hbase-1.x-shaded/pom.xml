@@ -278,7 +278,6 @@ limitations under the License.
                     <exclude>com.google.bigtable.repackaged.**</exclude>
                   </excludes>
                 </relocation>
-
                 <relocation>
                   <pattern>com.fasterxml</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.com.faster.xml</shadedPattern>
@@ -375,6 +374,10 @@ limitations under the License.
                 <relocation>
                   <pattern>net.bytebuddy</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.net.bytebuddy</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.jspecify.annotations</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.jspecify.annotations</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>
