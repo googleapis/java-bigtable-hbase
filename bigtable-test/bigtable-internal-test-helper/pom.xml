@@ -3,7 +3,7 @@
     <parent>
         <artifactId>bigtable-test</artifactId>
         <groupId>com.google.cloud.bigtable</groupId>
-        <version>2.15.7</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+        <version>2.15.8-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
