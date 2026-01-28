@@ -365,6 +365,10 @@ limitations under the License.
                   <pattern>net.bytebuddy</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.net.bytebuddy</shadedPattern>
                 </relocation>
+                <relocation>
+                  <pattern>org.jspecify.annotations</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.org.jspecify.annotations</shadedPattern>
+                </relocation>
               </relocations>
             </configuration>
           </execution>
