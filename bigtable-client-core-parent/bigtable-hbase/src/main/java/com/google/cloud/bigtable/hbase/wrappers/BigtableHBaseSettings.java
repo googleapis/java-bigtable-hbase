@@ -27,6 +27,7 @@ import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettin
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 
@@ -100,6 +101,8 @@ public abstract class BigtableHBaseSettings {
   public abstract int getBulkMaxRowCount();
 
   public abstract long getBatchingMaxRequestSize();
+
+  public abstract Duration getAutoFlushInterval();
 
   // This is equivalent to allow server-side timestamp.
   public abstract boolean isRetriesWithoutTimestampAllowed();

@@ -112,6 +112,11 @@ public class BigtableConnection extends AbstractBigtableConnection {
       }
 
       @Override
+      public TableBuilder setRequestAttribute(String s, byte[] bytes) {
+        throw new UnsupportedOperationException("not implemented");
+      }
+
+      @Override
       public Table build() {
         try {
           return getTable(tableName, pool);
