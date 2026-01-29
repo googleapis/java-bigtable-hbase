@@ -37,6 +37,16 @@ limitations under the License.
     <module>bigtable-hbase-2.x-mapreduce</module>
   </modules>
 
+  <dependencyManagement>
+    <dependencies>
+      <!-- Override json-smart to a newer version until we upgrade hbase-client to 2.6.x which removes this dependency -->
+      <dependency>
+        <groupId>net.minidev</groupId>
+        <artifactId>json-smart</artifactId>
+        <version>2.6.0</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <build>
     <pluginManagement>
       <plugins>
