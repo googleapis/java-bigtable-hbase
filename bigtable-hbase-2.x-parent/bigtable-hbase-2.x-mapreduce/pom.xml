@@ -188,6 +188,12 @@ limitations under the License.
               <targetDependencies>
                 <targetDependency>org.apache.hbase:hbase-mapreduce</targetDependency>
               </targetDependencies>
+              <ignoredDependencies>
+                <!-- TODO: version mismatches after upgrading hbase client to 2.6.4 -->
+                <ignoredDependency>javax.activation:activation</ignoredDependency>
+                <ignoredDependency>javax.xml.bind:jaxb-api</ignoredDependency>
+                <ignoredDependency>javax.xml.stream:stax-api</ignoredDependency>
+              </ignoredDependencies>
             </configuration>
           </execution>
         </executions>
