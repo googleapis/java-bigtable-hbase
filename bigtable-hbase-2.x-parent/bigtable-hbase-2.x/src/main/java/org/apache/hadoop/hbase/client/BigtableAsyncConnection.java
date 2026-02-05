@@ -37,6 +37,7 @@ import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -73,6 +74,11 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
   }
 
   public BigtableAsyncConnection(Configuration conf) throws IOException {
+    this(conf, null, null, null);
+  }
+
+  public BigtableAsyncConnection(
+      Configuration conf, final User ignoredUser, Map<String, byte[]> ignored) throws IOException {
     this(conf, null, null, null);
   }
 
