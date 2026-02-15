@@ -90,12 +90,28 @@ public class TemplateUtils {
             .withConfiguration(
                 CloudBigtableIO.Reader.RETRY_IDLE_TIMEOUT,
                 String.valueOf(options.getRetryIdleTimeout()))
+            .withConfiguration(
+                BigtableOptionsFactory.BIGTABLE_READ_RPC_TIMEOUT_MS_KEY,
+                String.valueOf(options.getBigtableReadRpcTimeoutMs()))
+            .withConfiguration(
+                BigtableOptionsFactory.BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY,
+                String.valueOf(options.getBigtableReadRpcAttemptTimeoutMs()))
             .withScan(
                 new ScanValueProvider(
                     options.getBigtableStartRow(),
                     options.getBigtableStopRow(),
                     options.getBigtableMaxVersions(),
                     options.getBigtableFilter()));
+    if (options.getBigtableReadRpcTimeoutMs() != null) {
+      configBuilder.withConfiguration(
+          BigtableOptionsFactory.BIGTABLE_READ_RPC_TIMEOUT_MS_KEY,
+          String.valueOf(options.getBigtableReadRpcTimeoutMs()));
+    }
+    if (options.getBigtableReadRpcAttemptTimeoutMs() != null) {
+      configBuilder.withConfiguration(
+          BigtableOptionsFactory.BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY,
+          String.valueOf(options.getBigtableReadRpcAttemptTimeoutMs()));
+    }
     return configBuilder.build();
   }
 }

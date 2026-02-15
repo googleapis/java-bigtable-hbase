@@ -33,6 +33,7 @@ import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
+import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.BulkReadWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
@@ -59,10 +60,13 @@ import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
+import org.threeten.bp.Duration;
 
 /** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
 public class DataClientVeneerApi implements DataClientWrapper {
+
+  private final Logger LOG = new Logger(DataClientVeneerApi.class);
 
   private static final RowResultAdapter RESULT_ADAPTER = new RowResultAdapter();
 
@@ -203,7 +207,9 @@ public class DataClientVeneerApi implements DataClientWrapper {
                       callSettings.getOperationTimeout().get().toMillis(), TimeUnit.MILLISECONDS)));
     }
     if (callSettings.getAttemptTimeout().isPresent()) {
-      ctx = ctx.withTimeout(callSettings.getAttemptTimeout().get());
+      Duration attemptTimeout = callSettings.getAttemptTimeout().get();
+      LOG.info("effective attempt timeout for scan is %s", attemptTimeout);
+      ctx = ctx.withTimeout(attemptTimeout);
     }
 
     return ctx;

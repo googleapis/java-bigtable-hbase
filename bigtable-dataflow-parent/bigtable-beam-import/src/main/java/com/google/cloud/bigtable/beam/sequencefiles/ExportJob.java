@@ -179,6 +179,18 @@ public class ExportJob {
 
     @SuppressWarnings("unused")
     void setRetryIdleTimeout(boolean retryIdleTimeout);
+
+    @Description("Read RPC timeout in milliseconds.")
+    ValueProvider<Integer> getBigtableReadRpcTimeoutMs();
+
+    @SuppressWarnings("unused")
+    void setBigtableReadRpcTimeoutMs(ValueProvider<Integer> readRpcTimeoutMs);
+
+    @Description("Read RPC attempt timeout in milliseconds.")
+    ValueProvider<Integer> getBigtableReadRpcAttemptTimeoutMs();
+
+    @SuppressWarnings("unused")
+    void setBigtableReadRpcAttemptTimeoutMs(ValueProvider<Integer> readRpcAttemptTimeoutMs);
   }
 
   public static void main(String[] args) {
