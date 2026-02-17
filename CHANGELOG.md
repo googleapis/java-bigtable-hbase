@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.16.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.15.7...v2.16.0) (2026-02-17)
+
+
+### Features
+
+* add read attempt and operation timeout to ExportJob settings ([#4533](https://github.com/googleapis/java-bigtable-hbase/issues/4533)) ([4fd63af](https://github.com/googleapis/java-bigtable-hbase/commit/4fd63af41c28bfc08b3e7376a536ec2b7c4e5e00))
+
 ## [2.15.7](https://github.com/googleapis/java-bigtable-hbase/compare/v2.15.6...v2.15.7) (2026-01-28)
 
 

@@ -5,12 +5,12 @@
   <parent>
     <artifactId>bigtable-hbase-mirroring-client-core-parent</artifactId>
     <groupId>com.google.cloud.bigtable</groupId>
-    <version>0.10.8-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+    <version>0.11.0</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
   </parent>
 
   <artifactId>protobuf-java-format-shaded</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
-  <version>0.10.8-SNAPSHOT</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
+  <version>0.11.0</version> <!-- {x-version-update:bigtable-hbase-mirroring:current} -->
 
   <description>
     This is a wrapper around `com.googlecode.protobuf-java-format:protobuf-java-format` that rewrites the bytecode to use `org.apache.hadoop.hbase.shaded.com.google.protobuf` instead of plain
@@ -75,7 +75,7 @@
       <plugin>
         <groupId>com.google.cloud.bigtable.test</groupId>
         <artifactId>bigtable-build-helper</artifactId>
-        <version>2.15.8-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+        <version>2.16.0</version> <!-- {x-version-update:bigtable-client-parent:current} -->
         <executions>
           <execution>
             <id>verify-shaded-jar-entries</id>
