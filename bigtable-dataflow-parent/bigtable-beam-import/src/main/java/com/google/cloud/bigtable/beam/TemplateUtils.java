@@ -96,6 +96,29 @@ public class TemplateUtils {
                     options.getBigtableStopRow(),
                     options.getBigtableMaxVersions(),
                     options.getBigtableFilter()));
+    if (options.getBigtableReadRpcTimeoutMs() != null) {
+      ValueProvider.NestedValueProvider.of(
+          options.getBigtableReadRpcTimeoutMs(),
+          (Integer timeout) -> {
+            if (timeout != null) {
+              configBuilder.withConfiguration(
+                  BigtableOptionsFactory.BIGTABLE_READ_RPC_TIMEOUT_MS_KEY, String.valueOf(timeout));
+            }
+            return null;
+          });
+    }
+    if (options.getBigtableReadRpcAttemptTimeoutMs() != null) {
+      ValueProvider.NestedValueProvider.of(
+          options.getBigtableReadRpcAttemptTimeoutMs(),
+          (Integer timeout) -> {
+            if (timeout != null) {
+              configBuilder.withConfiguration(
+                  BigtableOptionsFactory.BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY,
+                  String.valueOf(timeout));
+            }
+            return null;
+          });
+    }
     return configBuilder.build();
   }
 }
