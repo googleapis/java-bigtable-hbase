@@ -181,12 +181,14 @@ public class ExportJob {
     void setRetryIdleTimeout(boolean retryIdleTimeout);
 
     @Description("Read RPC timeout in milliseconds.")
+    @Default.Integer(43200000) // 12 hours
     ValueProvider<Integer> getBigtableReadRpcTimeoutMs();
 
     @SuppressWarnings("unused")
     void setBigtableReadRpcTimeoutMs(ValueProvider<Integer> readRpcTimeoutMs);
 
     @Description("Read RPC attempt timeout in milliseconds.")
+    @Default.Integer(600000) // 10 minutes
     ValueProvider<Integer> getBigtableReadRpcAttemptTimeoutMs();
 
     @SuppressWarnings("unused")
