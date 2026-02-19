@@ -99,12 +99,12 @@ public class TemplateUtils {
     if (options.getBigtableReadRpcTimeoutMs() != null) {
       configBuilder.withConfiguration(
           BigtableOptionsFactory.BIGTABLE_READ_RPC_TIMEOUT_MS_KEY,
-          String.valueOf(options.getBigtableReadRpcTimeoutMs()));
+          options.getBigtableReadRpcTimeoutMs());
     }
     if (options.getBigtableReadRpcAttemptTimeoutMs() != null) {
       configBuilder.withConfiguration(
           BigtableOptionsFactory.BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY,
-          String.valueOf(options.getBigtableReadRpcAttemptTimeoutMs()));
+          options.getBigtableReadRpcAttemptTimeoutMs());
     }
     return configBuilder.build();
   }
