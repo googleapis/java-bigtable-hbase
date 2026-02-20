@@ -17,7 +17,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- do not upgrade this, we are target all of maven 3 -->
-        <target-maven.version>3.0</target-maven.version>
+        <target-maven.version>3.9.12</target-maven.version>
         <!-- This can be updated freely -->
         <maven-plugin-tools.version>3.10.2</maven-plugin-tools.version>
     </properties>
