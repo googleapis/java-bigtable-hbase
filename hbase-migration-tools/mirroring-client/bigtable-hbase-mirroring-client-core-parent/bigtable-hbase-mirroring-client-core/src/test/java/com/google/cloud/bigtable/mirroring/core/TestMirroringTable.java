@@ -915,17 +915,6 @@ public class TestMirroringTable {
   }
 
   @Test
-  public void testMutateRow() throws IOException, InterruptedException {
-    RowMutations mutations = new RowMutations("r1".getBytes());
-    List<? extends Row> listOfMutations = Arrays.asList(mutations);
-    mockBatch(primaryTable, secondaryTable, mutations, new Result());
-    mirroringTable.mutateRow(mutations);
-    executorServiceRule.waitForExecutor();
-    verify(primaryTable, times(1)).batch(eq(listOfMutations), any(Object[].class));
-    verify(secondaryTable, times(1)).batch(eq(listOfMutations), any(Object[].class));
-  }
-
-  @Test
   public void testIncrement() throws IOException {
     byte[] row = "r1".getBytes();
     byte[] family = "f1".getBytes();

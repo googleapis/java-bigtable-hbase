@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Google LLC
+ * Copyright 2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.mirroring.core;
+package com.google.cloud.bigtable.mirroring.hbase2_x;
 
 import static com.google.cloud.bigtable.mirroring.core.utils.MirroringConfigurationHelper.MIRRORING_PRIMARY_CONFIG_PREFIX_KEY;
 import static com.google.cloud.bigtable.mirroring.core.utils.MirroringConfigurationHelper.MIRRORING_PRIMARY_CONNECTION_CLASS_KEY;
@@ -89,10 +89,5 @@ public class TestMirroringConnection {
         .abort(expectedString, expectedThrowable);
     verify(TestConnection.connectionMocks.get(1), times(1))
         .abort(expectedString, expectedThrowable);
-  }
-
-  @Test
-  public void testConstructorTakingMirroringConfiguration() throws IOException {
-    new MirroringConnection(new MirroringConfiguration(createConfiguration()), null);
   }
 }

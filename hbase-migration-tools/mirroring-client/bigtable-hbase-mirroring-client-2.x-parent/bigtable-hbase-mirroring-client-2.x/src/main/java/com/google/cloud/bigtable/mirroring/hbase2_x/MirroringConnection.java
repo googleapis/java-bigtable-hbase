@@ -30,6 +30,24 @@ public class MirroringConnection
     super(conf, managed, pool, user);
   }
 
+  @Override
+  protected Table getMirroringTable(Table primaryTable, Table secondaryTable) {
+    return new MirroringTable(
+        primaryTable,
+        secondaryTable,
+        executorService,
+        this.mismatchDetector,
+        this.flowController,
+        this.secondaryWriteErrorConsumer,
+        this.readSampler,
+        this.timestamper,
+        this.performWritesConcurrently,
+        this.waitForSecondaryWrites,
+        this.mirroringTracer,
+        this.referenceCounter,
+        this.configuration.mirroringOptions.maxLoggedBinaryValueLength);
+  }
+
   public MirroringConnection(Configuration conf, ExecutorService pool, User user) throws Throwable {
     this(conf, false, pool, user);
   }
