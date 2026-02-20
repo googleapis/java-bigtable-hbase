@@ -242,6 +242,15 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
   }
 
   @Override
+  public java.time.Duration getAutoFlushInterval() {
+    return dataSettings
+        .getStubSettings()
+        .bulkMutateRowsSettings()
+        .getBatchingSettings()
+        .getDelayThresholdDuration();
+  }
+
+  @Override
   public boolean isRetriesWithoutTimestampAllowed() {
     return allowRetriesWithoutTimestamp;
   }

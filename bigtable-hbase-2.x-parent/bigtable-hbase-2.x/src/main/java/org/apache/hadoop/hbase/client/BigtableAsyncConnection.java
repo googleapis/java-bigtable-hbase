@@ -37,6 +37,7 @@ import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -73,6 +74,11 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
   }
 
   public BigtableAsyncConnection(Configuration conf) throws IOException {
+    this(conf, null, null, null);
+  }
+
+  public BigtableAsyncConnection(
+      Configuration conf, final User ignoredUser, Map<String, byte[]> ignored) throws IOException {
     this(conf, null, null, null);
   }
 
@@ -202,6 +208,11 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
       }
 
       @Override
+      public AsyncBufferedMutatorBuilder setMaxMutations(int i) {
+        return this;
+      }
+
+      @Override
       public AsyncBufferedMutatorBuilder setStartLogErrorsCnt(int arg0) {
         return this;
       }
@@ -260,6 +271,12 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
       }
 
       @Override
+      public AsyncTableBuilder<AdvancedScanResultConsumer> setRequestAttribute(
+          String s, byte[] bytes) {
+        return this;
+      }
+
+      @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setScanTimeout(
           long arg0, TimeUnit arg1) {
         return this;
@@ -301,6 +318,11 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
       @Override
       public AsyncTableBuilder<AdvancedScanResultConsumer> setRetryPauseForServerOverloaded(
           long l, TimeUnit timeUnit) {
+        return this;
+      }
+
+      @Override
+      public AsyncTableBuilder<AdvancedScanResultConsumer> setMaxRetries(int maxRetries) {
         return this;
       }
 
@@ -372,6 +394,11 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
       }
 
       @Override
+      public AsyncTableBuilder<ScanResultConsumer> setRequestAttribute(String s, byte[] bytes) {
+        return this;
+      }
+
+      @Override
       public AsyncTableBuilder<ScanResultConsumer> setWriteRpcTimeout(long arg0, TimeUnit arg1) {
         return this;
       }
@@ -379,6 +406,11 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
       @Override
       public AsyncTableBuilder<ScanResultConsumer> setRetryPauseForServerOverloaded(
           long l, TimeUnit timeUnit) {
+        return this;
+      }
+
+      @Override
+      public AsyncTableBuilder<ScanResultConsumer> setMaxRetries(int maxRetries) {
         return this;
       }
     };

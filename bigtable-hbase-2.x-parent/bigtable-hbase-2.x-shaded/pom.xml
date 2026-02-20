@@ -247,6 +247,7 @@ limitations under the License.
                   <exclude>org.apache.htrace:htrace-core4</exclude>
                   <exclude>commons-logging:commons-logging</exclude>
                   <exclude>org.apache.yetus:audience-annotations</exclude>
+                  <exclude>jakarta.activation:jakarta.activation-api</exclude>
                 </excludes>
               </artifactSet>
               <relocations>
