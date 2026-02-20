@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.16.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.16.0...v2.16.1) (2026-02-19)
+
+
+### Bug Fixes
+
+* fix ExportJob timeout options ([#4537](https://github.com/googleapis/java-bigtable-hbase/issues/4537)) ([1f26a28](https://github.com/googleapis/java-bigtable-hbase/commit/1f26a2811293fb641d3c5926561fef5bebe92a26))
+
 ## [2.16.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.15.7...v2.16.0) (2026-02-17)
 
 
