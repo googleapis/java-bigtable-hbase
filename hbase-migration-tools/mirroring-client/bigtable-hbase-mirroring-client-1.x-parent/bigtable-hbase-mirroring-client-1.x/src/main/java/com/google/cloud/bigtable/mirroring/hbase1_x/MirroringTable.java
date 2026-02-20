@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.mirroring.core;
+package com.google.cloud.bigtable.mirroring.hbase1_x;
 
 import static com.google.cloud.bigtable.mirroring.core.utils.OperationUtils.emptyResult;
 import static com.google.cloud.bigtable.mirroring.core.utils.referencecounting.ReferenceCounterUtils.holdReferenceUntilCompletion;
 
 import com.google.api.core.InternalApi;
+import com.google.cloud.bigtable.mirroring.core.MirroringResultScanner;
+import com.google.cloud.bigtable.mirroring.core.RequestScheduler;
+import com.google.cloud.bigtable.mirroring.core.WriteOperationFutureCallback;
 import com.google.cloud.bigtable.mirroring.core.asyncwrappers.AsyncTableWrapper;
 import com.google.cloud.bigtable.mirroring.core.utils.AccumulatedExceptions;
 import com.google.cloud.bigtable.mirroring.core.utils.BatchHelpers.FailedSuccessfulSplit;
@@ -780,66 +783,5 @@ public class MirroringTable implements Table {
   @Override
   public void setWriteRpcTimeout(int i) {
     throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Helper class that holds common parameters to {@link
-   * RequestScheduling#scheduleRequestWithCallback(RequestResourcesDescription, Supplier,
-   * FutureCallback, FlowController, MirroringTracer, Function)} for single instance of {@link
-   * com.google.cloud.bigtable.mirroring.core.MirroringTable}.
-   *
-   * <p>It also takes care of reference counting all scheduled operations.
-   */
-  public static class RequestScheduler {
-    final FlowController flowController;
-    final MirroringTracer mirroringTracer;
-    final ReferenceCounter referenceCounter;
-
-    public RequestScheduler(
-        FlowController flowController,
-        MirroringTracer mirroringTracer,
-        ReferenceCounter referenceCounter) {
-      this.flowController = flowController;
-      this.mirroringTracer = mirroringTracer;
-      this.referenceCounter = referenceCounter;
-    }
-
-    public RequestScheduler withReferenceCounter(ReferenceCounter referenceCounter) {
-      return new RequestScheduler(this.flowController, this.mirroringTracer, referenceCounter);
-    }
-
-    public <T> ListenableFuture<Void> scheduleRequestWithCallback(
-        final RequestResourcesDescription requestResourcesDescription,
-        final Supplier<ListenableFuture<T>> secondaryResultFutureSupplier,
-        final FutureCallback<T> verificationCallback) {
-      return this.scheduleRequestWithCallback(
-          requestResourcesDescription,
-          secondaryResultFutureSupplier,
-          verificationCallback,
-          // noop flowControlReservationErrorConsumer
-          new Function<Throwable, Void>() {
-            @Override
-            public Void apply(Throwable t) {
-              return null;
-            }
-          });
-    }
-
-    public <T> ListenableFuture<Void> scheduleRequestWithCallback(
-        final RequestResourcesDescription requestResourcesDescription,
-        final Supplier<ListenableFuture<T>> secondaryResultFutureSupplier,
-        final FutureCallback<T> verificationCallback,
-        final Function<Throwable, Void> flowControlReservationErrorConsumer) {
-      ListenableFuture<Void> future =
-          RequestScheduling.scheduleRequestWithCallback(
-              requestResourcesDescription,
-              secondaryResultFutureSupplier,
-              verificationCallback,
-              this.flowController,
-              this.mirroringTracer,
-              flowControlReservationErrorConsumer);
-      holdReferenceUntilCompletion(this.referenceCounter, future);
-      return future;
-    }
   }
 }
