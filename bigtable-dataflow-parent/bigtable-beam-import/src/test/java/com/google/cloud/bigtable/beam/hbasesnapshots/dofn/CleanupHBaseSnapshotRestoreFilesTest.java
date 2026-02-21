@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.beam.hbasesnapshots;
+package com.google.cloud.bigtable.beam.hbasesnapshots.dofn;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
+import com.google.cloud.bigtable.beam.hbasesnapshots.conf.HBaseSnapshotInputConfigBuilder;
 import java.util.UUID;
 import org.junit.Test;
 
-public class CleanupHBaseSnapshotRestoreFilesFnTest {
+public class CleanupHBaseSnapshotRestoreFilesTest {
   private static final String TEST_BUCKET_NAME = "test-bucket";
   private static final String TEST_SNAPSHOT_PATH = "gs://" + TEST_BUCKET_NAME + "/hbase-export";
   private static final String TEST_RESTORE_PATH =
@@ -32,24 +33,24 @@ public class CleanupHBaseSnapshotRestoreFilesFnTest {
   public void testGetWorkingBucketName() {
     assertEquals(
         TEST_BUCKET_NAME,
-        CleanupHBaseSnapshotRestoreFilesFn.getWorkingBucketName(TEST_SNAPSHOT_PATH));
+        CleanupHBaseSnapshotRestoreFiles.getWorkingBucketName(TEST_SNAPSHOT_PATH));
 
     assertThrows(
         IllegalArgumentException.class,
         () -> {
-          CleanupHBaseSnapshotRestoreFilesFn.getWorkingBucketName(TEST_BUCKET_NAME);
+          CleanupHBaseSnapshotRestoreFiles.getWorkingBucketName(TEST_BUCKET_NAME);
         });
   }
 
   @Test
   public void testGetListPrefix() {
     assertEquals(
-        TEST_RESTORE_PREFIX, CleanupHBaseSnapshotRestoreFilesFn.getListPrefix(TEST_RESTORE_PATH));
+        TEST_RESTORE_PREFIX, CleanupHBaseSnapshotRestoreFiles.getListPrefix(TEST_RESTORE_PATH));
 
     assertThrows(
         IllegalArgumentException.class,
         () -> {
-          CleanupHBaseSnapshotRestoreFilesFn.getWorkingBucketName(TEST_RESTORE_PREFIX);
+          CleanupHBaseSnapshotRestoreFiles.getWorkingBucketName(TEST_RESTORE_PREFIX);
         });
   }
 }
