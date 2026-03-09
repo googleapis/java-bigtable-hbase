@@ -227,6 +227,11 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
       }
 
       @Override
+      public AsyncBufferedMutatorBuilder setMaxMutations(int i) {
+        return this;
+      }
+
+      @Override
       public AsyncBufferedMutator build() {
         return new BigtableAsyncBufferedMutator(bigtableApi, settings, createAdapter(tableName));
       }

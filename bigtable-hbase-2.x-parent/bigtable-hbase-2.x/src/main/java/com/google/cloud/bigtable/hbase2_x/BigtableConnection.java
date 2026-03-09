@@ -58,7 +58,7 @@ public class BigtableConnection extends AbstractBigtableConnection {
 
   public BigtableConnection(Configuration conf, ExecutorService pool, User user)
       throws IOException {
-    super(conf);
+    super(conf, false, pool, user);
   }
 
   /**

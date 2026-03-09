@@ -26,6 +26,7 @@ import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -125,6 +126,14 @@ public class BigtableBufferedMutatorHelper {
 
   public long getWriteBufferSize() {
     return this.settings.getBatchingMaxRequestSize();
+  }
+
+  public int getMaxRowKeyCount() {
+    return this.settings.getBulkMaxRowCount();
+  }
+
+  public Duration getAutoFlushInterval() {
+    return this.settings.getAutoFlushInterval();
   }
 
   public List<ApiFuture<?>> mutate(List<? extends Mutation> mutations) {

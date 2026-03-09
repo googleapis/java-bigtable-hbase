@@ -66,7 +66,7 @@ limitations under the License.
 
     <!-- hbase dependency versions -->
     <hbase1.version>1.7.2</hbase1.version>
-    <hbase2.version>2.5.7-hadoop3</hbase2.version>
+    <hbase2.version>2.5.13-hadoop3</hbase2.version>
     <hbase2-testing-util-mockito.version>2.28.2</hbase2-testing-util-mockito.version>
 
     <!-- bytebuddy dependency version for resolving hbase backward incompatible changes -->
