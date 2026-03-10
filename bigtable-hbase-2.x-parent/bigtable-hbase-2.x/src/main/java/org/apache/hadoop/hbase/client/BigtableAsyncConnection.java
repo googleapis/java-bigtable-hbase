@@ -82,6 +82,17 @@ public class BigtableAsyncConnection implements AsyncConnection, CommonConnectio
     this(conf, null, null, null);
   }
 
+  // This constructor is used in HBase 2 version >= 2.6
+  public BigtableAsyncConnection(
+      Configuration conf,
+      Object ignoredRegistry,
+      String ignoredClusterId,
+      final User ignoredUser,
+      Map<String, byte[]> ignoredAttributes)
+      throws IOException {
+    this(conf, ignoredRegistry, ignoredClusterId, ignoredUser);
+  }
+
   // This constructor is used in HBase 2 version < 2.3
   public BigtableAsyncConnection(
       Configuration conf, Object ignoredAsyncRegistry, String ignoredClusterId, User ignoredUser)
