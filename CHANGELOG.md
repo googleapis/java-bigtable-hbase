@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.16.2](https://github.com/googleapis/java-bigtable-hbase/compare/v2.16.1...v2.16.2) (2026-03-10)
+
+
+### Dependencies
+
+* update hbase-client version ([#4526](https://github.com/googleapis/java-bigtable-hbase/issues/4526)) ([ed3a802](https://github.com/googleapis/java-bigtable-hbase/commit/ed3a802966f7d21aa6a8ca3ec7203186f62dabe3))
+
 ## [2.16.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.16.0...v2.16.1) (2026-02-19)
 
 
