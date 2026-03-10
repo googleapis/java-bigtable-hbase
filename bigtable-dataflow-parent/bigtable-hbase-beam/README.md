@@ -75,6 +75,5 @@ p
 
 p.run();
 
-// Once this is done, you can get the result file via "gsutil cp <resultLocation>-00000-of-00001"
+// Once this is done, you can get the result file via "gcloud storage cp <resultLocation>-00000-of-00001"
 ```
-
