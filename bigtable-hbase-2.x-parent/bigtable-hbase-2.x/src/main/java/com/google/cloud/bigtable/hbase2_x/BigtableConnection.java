@@ -22,6 +22,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import org.apache.hadoop.conf.Configuration;
@@ -58,7 +59,13 @@ public class BigtableConnection extends AbstractBigtableConnection {
 
   public BigtableConnection(Configuration conf, ExecutorService pool, User user)
       throws IOException {
-    super(conf);
+    super(conf, false, pool, user);
+  }
+
+  public BigtableConnection(
+      Configuration conf, ExecutorService pool, User user, Map<String, byte[]> connectionAttributes)
+      throws IOException {
+    super(conf, false, pool, user);
   }
 
   /**
@@ -109,6 +116,11 @@ public class BigtableConnection extends AbstractBigtableConnection {
       @Override
       public TableBuilder setOperationTimeout(int arg0) {
         return this;
+      }
+
+      @Override
+      public TableBuilder setRequestAttribute(String s, byte[] bytes) {
+        throw new UnsupportedOperationException("not implemented");
       }
 
       @Override

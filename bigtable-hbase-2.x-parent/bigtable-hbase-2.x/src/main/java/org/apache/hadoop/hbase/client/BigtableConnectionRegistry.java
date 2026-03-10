@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.RegionLocations;
 import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.security.User;
 
 /** Implementation for `hbase.client.registry.impl` for HBase >= 2.3 */
 @InternalApi
@@ -29,6 +30,10 @@ public class BigtableConnectionRegistry implements ConnectionRegistry {
   }
 
   public BigtableConnectionRegistry(Configuration ignored) {
+    // noop
+  }
+
+  public BigtableConnectionRegistry(Configuration ignored, User user) {
     // noop
   }
 

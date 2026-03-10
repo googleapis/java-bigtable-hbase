@@ -26,6 +26,7 @@ import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.beam.test_env.EnvSetup;
 import com.google.cloud.bigtable.beam.test_env.TestProperties;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -112,6 +113,8 @@ public class CloudBigtableBeamIT {
     properties
         .getAdminEndpoint()
         .ifPresent(endpoint -> config.set(BIGTABLE_ADMIN_HOST_KEY, endpoint));
+    // Disable CSM to reduce noise in the test output
+    config.set(BigtableOptionsFactory.BIGTABLE_ENABLE_CLIENT_SIDE_METRICS, "false");
 
     connection = BigtableConfiguration.connect(config);
 

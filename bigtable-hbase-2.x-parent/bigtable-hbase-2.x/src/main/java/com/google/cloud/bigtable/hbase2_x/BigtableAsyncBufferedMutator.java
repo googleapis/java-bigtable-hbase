@@ -24,7 +24,9 @@ import com.google.cloud.bigtable.hbase.wrappers.BigtableApi;
 import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -86,6 +88,24 @@ public class BigtableAsyncBufferedMutator implements AsyncBufferedMutator {
   @Override
   public long getWriteBufferSize() {
     return helper.getWriteBufferSize();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int getMaxMutations() {
+    return helper.getMaxRowKeyCount();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public long getPeriodicalFlushTimeout(TimeUnit unit) {
+    return unit.convert(helper.getAutoFlushInterval().toNanos(), TimeUnit.NANOSECONDS);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, byte[]> getRequestAttributes() {
+    throw new UnsupportedOperationException("not implemented");
   }
 
   /** {@inheritDoc} */

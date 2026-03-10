@@ -26,6 +26,7 @@ import com.google.cloud.bigtable.beam.validation.HadoopHashTableSource.RangeHash
 import com.google.cloud.bigtable.beam.validation.SyncTableJob;
 import com.google.cloud.bigtable.beam.validation.SyncTableJob.SyncTableOptions;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 import java.io.BufferedReader;
@@ -54,6 +55,7 @@ import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.beam.sdk.metrics.MetricQueryResults;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -122,9 +124,13 @@ public class EndToEndIT {
 
     uploadFixture(gcsUtil, SNAPSHOT_FIXTURE_NAME, fixtureDir);
 
+    // Disable CSM to reduce noise in the test output
+    Configuration config =
+        BigtableConfiguration.configure(properties.getProjectId(), properties.getInstanceId());
+    config.set(BigtableOptionsFactory.BIGTABLE_ENABLE_CLIENT_SIDE_METRICS, "false");
+
     // Bigtable config
-    connection =
-        BigtableConfiguration.connect(properties.getProjectId(), properties.getInstanceId());
+    connection = BigtableConfiguration.connect(config);
     // TODO: use timebased names to allow for gc
     tableId = "test_" + UUID.randomUUID();
 
