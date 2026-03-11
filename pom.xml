@@ -19,7 +19,7 @@ limitations under the License.
 
   <groupId>com.google.cloud.bigtable</groupId>
   <artifactId>bigtable-client-parent</artifactId>
-  <version>2.16.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+  <version>2.16.2-session-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   <packaging>pom</packaging>
   <name>${project.groupId}:${project.artifactId}</name>
   <url>https://cloud.google.com/bigtable/</url>
@@ -42,6 +42,30 @@ limitations under the License.
     </license>
   </licenses>
 
+  <distributionManagement>
+    <snapshotRepository>
+      <id>artifact-registry</id>
+      <url>artifactregistry://us-maven.pkg.dev/cloud-bigtable-ecosystem/session</url>
+    </snapshotRepository>
+    <repository>
+      <id>artifact-registry</id>
+      <url>artifactregistry://us-maven.pkg.dev/cloud-bigtable-ecosystem/session</url>
+    </repository>
+  </distributionManagement>
+
+  <repositories>
+    <repository>
+      <id>artifact-registry</id>
+      <url>artifactregistry://us-maven.pkg.dev/cloud-bigtable-ecosystem/session</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
   <modules>
     <module>bigtable-client-core-parent</module>
     <module>bigtable-hbase-1.x-parent</module>
@@ -55,7 +79,7 @@ limitations under the License.
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- core dependency versions -->
-    <bigtable.version>2.71.0</bigtable.version>
+    <bigtable.version>2.74.1-session-SNAPSHOT</bigtable.version>
     <google-cloud-bigtable-emulator.version>0.203.0</google-cloud-bigtable-emulator.version>
     <bigtable-metrics-api.version>1.29.2</bigtable-metrics-api.version>
     <!-- Optional dep for bigtable-metrics-api used for tests -->
@@ -284,6 +308,20 @@ limitations under the License.
                 </bannedDependencies>
               </rules>
             </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.3.1</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
           </execution>
         </executions>
       </plugin>

@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-hbase-1.x-parent</artifactId>
-    <version>2.16.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.16.2-session-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
 
   <artifactId>bigtable-hbase-1.x-integration-tests</artifactId>
@@ -79,7 +79,7 @@ limitations under the License.
         <dependency>
           <groupId>com.google.cloud.bigtable</groupId>
           <artifactId>bigtable-hbase-1.x</artifactId>
-          <version>2.16.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+          <version>2.16.2-session-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
           <exclusions>
             <exclusion>
               <groupId>org.apache.hbase</groupId>
@@ -117,7 +117,7 @@ limitations under the License.
         <dependency>
           <groupId>com.google.cloud.bigtable</groupId>
           <artifactId>bigtable-hbase-1.x-shaded</artifactId>
-          <version>2.16.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+          <version>2.16.2-session-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
           <exclusions>
             <exclusion>
               <groupId>org.apache.hbase</groupId>
@@ -146,8 +146,7 @@ limitations under the License.
        missing deps until the integration tests pass.
 
        The HBase & Hadoop have large set of transitive deps, so we explicitly exclude all of them
-       add them manually. All hbase deps are pinned to hbase < 2.0. Everything else is using the latest available version.
-     -->
+       add them manually. All hbase deps are pinned to hbase < 2.0. Everything else is using the latest available version. -->
 
       <dependencies>
         <dependency>
@@ -285,7 +284,7 @@ limitations under the License.
         <dependency>
           <groupId>com.google.cloud.bigtable</groupId>
           <artifactId>bigtable-hbase-1.x-shaded</artifactId>
-          <version>2.16.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+          <version>2.16.2-session-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
           <exclusions>
             <exclusion>
               <groupId>org.apache.hbase</groupId>
@@ -375,7 +374,7 @@ limitations under the License.
           <plugin>
             <groupId>com.google.cloud.bigtable</groupId>
             <artifactId>hbase-minicluster-maven-plugin</artifactId>
-            <version>2.16.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+            <version>2.16.2-session-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
 
             <executions>
               <execution>
@@ -466,7 +465,7 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-integration-tests-common</artifactId>
-      <version>2.16.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.16.2-session-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <type>test-jar</type>
       <scope>test</scope>
       <exclusions>
@@ -587,7 +586,7 @@ limitations under the License.
       <plugin>
         <groupId>com.google.cloud.bigtable</groupId>
         <artifactId>hbase-minicluster-maven-plugin</artifactId>
-        <version>2.16.2-SNAPSHOT</version>  <!-- {x-version-update:bigtable-client-parent:current} -->
+        <version>2.16.2-session-SNAPSHOT</version>  <!-- {x-version-update:bigtable-client-parent:current} -->
 
         <dependencies>
           <dependency>
