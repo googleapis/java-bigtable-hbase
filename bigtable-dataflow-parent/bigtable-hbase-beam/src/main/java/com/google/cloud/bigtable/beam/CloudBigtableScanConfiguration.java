@@ -116,6 +116,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   /** Builds a {@link CloudBigtableScanConfiguration}. */
   public static class Builder extends CloudBigtableTableConfiguration.Builder {
     private transient ValueProvider<Scan> scan;
+    private ValueProvider<Integer> maxSplitCount;
 
     public Builder() {}
 
@@ -137,6 +138,27 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
      */
     public Builder withScan(ValueProvider<Scan> scan) {
       this.scan = scan;
+      return this;
+    }
+
+    /**
+     * Specifies the maximum number of splits to use when reading from Cloud Bigtable.
+     *
+     * @param maxSplitCount The maximum number of splits.
+     * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
+     */
+    public Builder withMaxSplitCount(int maxSplitCount) {
+      return withMaxSplitCount(StaticValueProvider.of(maxSplitCount));
+    }
+
+    /**
+     * Specifies the maximum number of splits to use when reading from Cloud Bigtable.
+     *
+     * @param maxSplitCount The maximum number of splits.
+     * @return The {@link CloudBigtableScanConfiguration.Builder} for chaining convenience.
+     */
+    public Builder withMaxSplitCount(ValueProvider<Integer> maxSplitCount) {
+      this.maxSplitCount = maxSplitCount;
       return this;
     }
 
@@ -298,11 +320,12 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
                         .build()));
       }
       return new CloudBigtableScanConfiguration(
-          projectId, instanceId, tableId, scan, additionalConfiguration);
+          projectId, instanceId, tableId, scan, maxSplitCount, additionalConfiguration);
     }
   }
 
   private final ValueProvider<Scan> scanValueProvider;
+  private final ValueProvider<Integer> maxSplitCount;
 
   /**
    * Provides an updated request by setting the table name in the existing request if the table name
@@ -371,10 +394,12 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       ValueProvider<String> instanceId,
       ValueProvider<String> tableId,
       ValueProvider<Scan> scanValueProvider,
+      ValueProvider<Integer> maxSplitCount,
       Map<String, ValueProvider<String>> additionalConfiguration) {
     super(projectId, instanceId, tableId, additionalConfiguration);
     this.scanValueProvider =
         new ScanWithTableNameValueProvider(projectId, instanceId, tableId, scanValueProvider);
+    this.maxSplitCount = maxSplitCount;
   }
 
   /**
@@ -436,6 +461,10 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
         && Objects.equals(getRequest(), ((CloudBigtableScanConfiguration) obj).getRequest());
   }
 
+  public ValueProvider<Integer> getMaxSplitCount() {
+    return maxSplitCount;
+  }
+
   @Override
   public Builder toBuilder() {
     Builder builder = new Builder();
@@ -446,6 +475,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
   public void copyConfig(Builder builder) {
     super.copyConfig(builder);
     builder.withRequest(getRequest());
+    builder.withMaxSplitCount(maxSplitCount);
   }
 
   /**
@@ -480,6 +510,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
     private ValueProvider<String> instanceId;
     private ValueProvider<String> tableId;
     private transient ValueProvider<Scan> scan;
+    private ValueProvider<Integer> maxSplitCount;
     private ImmutableMap<String, ValueProvider<String>> additionalConfiguration;
 
     public SerializationProxy(CloudBigtableScanConfiguration configuration) {
@@ -487,6 +518,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
       this.instanceId = configuration.getInstanceIdValueProvider();
       this.tableId = configuration.getTableIdValueProvider();
       this.scan = configuration.getScanValueProvider();
+      this.maxSplitCount = configuration.getMaxSplitCount();
       Map<String, ValueProvider<String>> map = new HashMap<>();
       map.putAll(configuration.getConfiguration());
       map.remove(BigtableOptionsFactory.PROJECT_ID_KEY);
@@ -528,7 +560,7 @@ public class CloudBigtableScanConfiguration extends CloudBigtableTableConfigurat
 
     Object readResolve() {
       return new CloudBigtableScanConfiguration(
-          projectId, instanceId, tableId, scan, additionalConfiguration);
+          projectId, instanceId, tableId, scan, maxSplitCount, additionalConfiguration);
     }
   }
 }

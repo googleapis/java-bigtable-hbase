@@ -165,10 +165,13 @@ public class CloudBigtableIO {
     // TODO: Move the splitting logic to bigtable-hbase, and separate concerns between beam needs
     // and Cloud Bigtable logic.
     protected List<SourceWithKeys> getSplits(long desiredBundleSizeBytes) throws Exception {
+      long maxSplitCount = SIZED_BASED_MAX_SPLIT_COUNT;
+      ValueProvider<Integer> maxSplitCountProvider = getConfiguration().getMaxSplitCount();
+      if (maxSplitCountProvider != null && maxSplitCountProvider.isAccessible()) {
+        maxSplitCount = maxSplitCountProvider.get();
+      }
       desiredBundleSizeBytes =
-          Math.max(
-              calculateEstimatedSizeBytes(null) / SIZED_BASED_MAX_SPLIT_COUNT,
-              desiredBundleSizeBytes);
+          Math.max(calculateEstimatedSizeBytes(null) / maxSplitCount, desiredBundleSizeBytes);
       CloudBigtableScanConfiguration conf = getConfiguration();
       byte[] scanStartKey = conf.getStartRow();
       byte[] scanEndKey = conf.getStopRow();

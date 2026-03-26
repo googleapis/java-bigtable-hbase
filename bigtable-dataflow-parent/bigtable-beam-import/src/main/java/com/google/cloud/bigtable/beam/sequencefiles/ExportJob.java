@@ -153,6 +153,13 @@ public class ExportJob {
     @SuppressWarnings("unused")
     void setBigtableFilter(ValueProvider<String> filter);
 
+    @Description(
+        "The maximum number of splits to use when reading from Cloud Bigtable. Defaults to 4000.")
+    ValueProvider<Integer> getMaxSplitCount();
+
+    @SuppressWarnings("unused")
+    void setMaxSplitCount(ValueProvider<Integer> maxSplitCount);
+
     @Description("The destination directory")
     ValueProvider<String> getDestinationPath();
 
