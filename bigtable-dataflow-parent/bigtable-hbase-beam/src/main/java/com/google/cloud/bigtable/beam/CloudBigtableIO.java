@@ -145,7 +145,7 @@ public class CloudBigtableIO {
   abstract static class AbstractSource extends BoundedSource<Result> {
 
     protected static final Logger SOURCE_LOG = LoggerFactory.getLogger(AbstractSource.class);
-    protected static final long SIZED_BASED_MAX_SPLIT_COUNT = 4_000;
+    protected final long SIZED_BASED_MAX_SPLIT_COUNT = 4_000;
     static final long COUNT_MAX_SPLIT_COUNT = 15_360;
 
     /** Configuration for a Cloud Bigtable connection, a table, and an optional scan. */
@@ -165,13 +165,14 @@ public class CloudBigtableIO {
     // TODO: Move the splitting logic to bigtable-hbase, and separate concerns between beam needs
     // and Cloud Bigtable logic.
     protected List<SourceWithKeys> getSplits(long desiredBundleSizeBytes) throws Exception {
-      long maxSplitCount = SIZED_BASED_MAX_SPLIT_COUNT;
-      ValueProvider<Integer> maxSplitCountProvider = getConfiguration().getMaxSplitCount();
-      if (maxSplitCountProvider != null && maxSplitCountProvider.isAccessible()) {
-        maxSplitCount = maxSplitCountProvider.get();
+      long sizedBasedMaxSplits = SIZED_BASED_MAX_SPLIT_COUNT;
+      ValueProvider<Integer> sizedBasedMaxSplitsProvider =
+          getConfiguration().getSizedBasedMaxSplits();
+      if (sizedBasedMaxSplitsProvider != null && sizedBasedMaxSplitsProvider.isAccessible()) {
+        sizedBasedMaxSplits = sizedBasedMaxSplitsProvider.get();
       }
       desiredBundleSizeBytes =
-          Math.max(calculateEstimatedSizeBytes(null) / maxSplitCount, desiredBundleSizeBytes);
+          Math.max(calculateEstimatedSizeBytes(null) / sizedBasedMaxSplits, desiredBundleSizeBytes);
       CloudBigtableScanConfiguration conf = getConfiguration();
       byte[] scanStartKey = conf.getStartRow();
       byte[] scanEndKey = conf.getStopRow();
@@ -223,14 +224,18 @@ public class CloudBigtableIO {
     }
 
     private List<SourceWithKeys> reduceSplits(List<SourceWithKeys> splits) {
-      if (splits.size() < COUNT_MAX_SPLIT_COUNT) {
+      long maxSplits = COUNT_MAX_SPLIT_COUNT;
+      ValueProvider<Integer> maxSplitsProvider = getConfiguration().getMaxSplits();
+      if (maxSplitsProvider != null && maxSplitsProvider.isAccessible()) {
+        maxSplits = maxSplitsProvider.get();
+      }
+      if (splits.size() < maxSplits) {
         return splits;
       }
       List<SourceWithKeys> reducedSplits = new ArrayList<>();
       SourceWithKeys start = null;
       SourceWithKeys lastSeen = null;
-      int numberToCombine =
-          (int) ((splits.size() + COUNT_MAX_SPLIT_COUNT - 1) / COUNT_MAX_SPLIT_COUNT);
+      int numberToCombine = (int) ((splits.size() + maxSplits - 1) / maxSplits);
       int counter = 0;
       long size = 0;
       for (SourceWithKeys source : splits) {

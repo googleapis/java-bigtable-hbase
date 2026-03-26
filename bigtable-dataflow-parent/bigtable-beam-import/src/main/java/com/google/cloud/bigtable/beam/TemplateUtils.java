@@ -106,8 +106,11 @@ public class TemplateUtils {
           BigtableOptionsFactory.BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY,
           options.getBigtableReadRpcAttemptTimeoutMs());
     }
-    if (options.getMaxSplitCount() != null) {
-      configBuilder.withMaxSplitCount(options.getMaxSplitCount());
+    if (options.getSizedBasedMaxSplits() != null) {
+      configBuilder.withSizedBasedMaxSplits(options.getSizedBasedMaxSplits());
+    }
+    if (options.getMaxSplits() != null) {
+      configBuilder.withMaxSplits(options.getMaxSplits());
     }
     return configBuilder.build();
   }
