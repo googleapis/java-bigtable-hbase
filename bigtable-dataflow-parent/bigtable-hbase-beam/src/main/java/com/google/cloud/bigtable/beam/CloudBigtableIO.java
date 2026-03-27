@@ -174,8 +174,9 @@ public class CloudBigtableIO {
       desiredBundleSizeBytes =
           Math.max(calculateEstimatedSizeBytes(null) / sizedBasedMaxSplits, desiredBundleSizeBytes);
       SOURCE_LOG.info(
-          "Size based max split count is set to {0}, calculated desiredBundleSize is {1}",
-          sizedBasedMaxSplitsProvider, desiredBundleSizeBytes);
+          "Size based max split count is set to {}, calculated desiredBundleSize is {}",
+          sizedBasedMaxSplitsProvider,
+          desiredBundleSizeBytes);
       CloudBigtableScanConfiguration conf = getConfiguration();
       byte[] scanStartKey = conf.getStartRow();
       byte[] scanEndKey = conf.getStopRow();
@@ -267,7 +268,7 @@ public class CloudBigtableIO {
                 size));
       }
       SOURCE_LOG.info(
-          "Max splits is set to {0}, generated {1} actual splits", maxSplits, reducedSplits.size());
+          "Max splits is set to {}, generated {} actual splits", maxSplits, reducedSplits.size());
       return reducedSplits;
     }
 
