@@ -37,7 +37,8 @@ public class TemplateUtilsTest {
     Mockito.when(options.getBigtableInstanceId()).thenReturn(StaticValueProvider.of("my-instance"));
     Mockito.when(options.getBigtableTableId()).thenReturn(StaticValueProvider.of("my-table"));
     Mockito.when(options.getBigtableMaxAttempts()).thenReturn(StaticValueProvider.of(15));
-    Mockito.when(options.getBigtableAppProfileId()).thenReturn(StaticValueProvider.of("my-app-profile"));
+    Mockito.when(options.getBigtableAppProfileId())
+        .thenReturn(StaticValueProvider.of("my-app-profile"));
 
     CloudBigtableScanConfiguration config = TemplateUtils.buildExportConfig(options);
     Configuration hbaseConfig = config.toHBaseConfig();
@@ -50,7 +51,8 @@ public class TemplateUtilsTest {
     Mockito.when(options.getBigtableProject()).thenReturn(StaticValueProvider.of("my-project"));
     Mockito.when(options.getBigtableInstanceId()).thenReturn(StaticValueProvider.of("my-instance"));
     Mockito.when(options.getBigtableTableId()).thenReturn(StaticValueProvider.of("my-table"));
-    Mockito.when(options.getBigtableAppProfileId()).thenReturn(StaticValueProvider.of((String) null));
+    Mockito.when(options.getBigtableAppProfileId())
+        .thenReturn(StaticValueProvider.of((String) null));
     Mockito.when(options.getBigtableMaxAttempts()).thenReturn(null);
 
     CloudBigtableScanConfiguration config = TemplateUtils.buildExportConfig(options);
