@@ -146,8 +146,8 @@ public class CloudBigtableIO {
 
     protected static final Logger SOURCE_LOG = LoggerFactory.getLogger(AbstractSource.class);
     // TODO: remove these caps
-    protected static final long SIZED_BASED_MAX_SPLIT_COUNT = 1_000_000;
-    static final long COUNT_MAX_SPLIT_COUNT = 1_000_000;
+    protected static final long SIZED_BASED_MAX_SPLIT_COUNT = 100_000_000;
+    static final long COUNT_MAX_SPLIT_COUNT = 100_000_000;
 
     /** Configuration for a Cloud Bigtable connection, a table, and an optional scan. */
     private final CloudBigtableScanConfiguration configuration;
