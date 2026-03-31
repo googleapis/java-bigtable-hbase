@@ -146,7 +146,6 @@ public class CloudBigtableIO {
   abstract static class AbstractSource extends BoundedSource<Result> {
 
     protected static final Logger SOURCE_LOG = LoggerFactory.getLogger(AbstractSource.class);
-    protected static final long SIZED_BASED_MAX_SPLIT_COUNT = 1_000_000;
     static long COUNT_MAX_SPLIT_COUNT = 5_000_000;
 
     /** Configuration for a Cloud Bigtable connection, a table, and an optional scan. */
@@ -198,13 +197,16 @@ public class CloudBigtableIO {
                   ? endKey
                   : scanEndKey;
 
+          // Merging tablets that are smaller than desired bundle size
           if (tabletSize >= desiredBundleSizeBytes) {
-            // Flush accumulated if any
+            // If the current tablet size is already > bundle size, add previously accumulated tablets
+            // if the currentStartKey is not null.
             if (currentStartKey != null) {
               splits.add(createSourceWithKeys(currentStartKey, splitStart, accumulatedSize));
               currentStartKey = null;
               accumulatedSize = 0;
             }
+            // and also add the current tablet to the splits
             splits.add(createSourceWithKeys(splitStart, splitStop, tabletSize));
           } else {
             if (currentStartKey == null) {
@@ -217,27 +219,20 @@ public class CloudBigtableIO {
               accumulatedSize = 0;
             }
           }
-        } else {
-          if (currentStartKey != null) {
-            splits.add(createSourceWithKeys(currentStartKey, scanEndKey, accumulatedSize));
-            currentStartKey = null;
-            accumulatedSize = 0;
-          }
         }
+
         lastOffset = offset;
         startKey = endKey;
       }
 
+      // Create one last region if the last region doesn't reach the end or there are no regions.
       byte[] endKey = HConstants.EMPTY_END_ROW;
       if (!Bytes.equals(startKey, endKey) && scanEndKey.length == 0) {
         if (currentStartKey != null) {
           splits.add(createSourceWithKeys(currentStartKey, endKey, accumulatedSize));
-          currentStartKey = null;
         } else {
           splits.add(createSourceWithKeys(startKey, endKey, 0));
         }
-      } else if (currentStartKey != null) {
-        splits.add(createSourceWithKeys(currentStartKey, scanEndKey, accumulatedSize));
       }
 
       List<SourceWithKeys> result = reduceSplits(splits);
