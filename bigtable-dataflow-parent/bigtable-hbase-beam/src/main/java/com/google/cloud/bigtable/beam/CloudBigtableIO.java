@@ -242,6 +242,8 @@ public class CloudBigtableIO {
 
       List<SourceWithKeys> result = reduceSplits(splits);
 
+      // Randomize the list, since the default behavior would lead to multiple workers hitting the
+      // same tablet.
       Collections.shuffle(result);
       return result;
     }
