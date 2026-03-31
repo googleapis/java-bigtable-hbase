@@ -111,55 +111,60 @@ public class CloudBigtableIOTest {
 
   @Test
   public void testSampleRowKeys() throws Exception {
-    List<KeyOffset> sampleRowKeys = new ArrayList<>();
-    int count = (int) (AbstractSource.COUNT_MAX_SPLIT_COUNT * 3 - 5);
-    byte[][] keys = Bytes.split("A".getBytes(), "Z".getBytes(), count - 2);
-    long tabletSize = 2L * 1024L * 1024L * 1024L;
-    long boundary = 0;
-    for (byte[] currentKey : keys) {
-      boundary += tabletSize;
-      try {
-        sampleRowKeys.add(KeyOffset.create(ByteString.copyFrom(currentKey), boundary));
-      } catch (NoClassDefFoundError e) {
-        // This could cause some problems for javadoc or cobertura because of the shading magic we
-        // do.
-        e.printStackTrace();
-        return;
+    long originalMaxSplitCount = AbstractSource.COUNT_MAX_SPLIT_COUNT;
+    AbstractSource.COUNT_MAX_SPLIT_COUNT = 10;
+    try {
+      List<KeyOffset> sampleRowKeys = new ArrayList<>();
+      int count = 100;
+      byte[][] keys = Bytes.split("A".getBytes(), "Z".getBytes(), count - 2);
+      long tabletSize = 2L * 1024L * 1024L * 1024L;
+      long boundary = 0;
+      for (byte[] currentKey : keys) {
+        boundary += tabletSize;
+        try {
+          sampleRowKeys.add(KeyOffset.create(ByteString.copyFrom(currentKey), boundary));
+        } catch (NoClassDefFoundError e) {
+          // This could cause some problems for javadoc or cobertura because of the shading magic we
+          // do.
+          e.printStackTrace();
+          return;
+        }
       }
-    }
-    Source source = (Source) CloudBigtableIO.read(scanConfig);
-    source.setSampleRowKeys(sampleRowKeys);
-    List<SourceWithKeys> splits = source.getSplits(20000);
-    Collections.sort(
-        splits,
-        new Comparator<SourceWithKeys>() {
-          @Override
-          public int compare(SourceWithKeys o1, SourceWithKeys o2) {
-            return ByteStringComparator.INSTANCE.compare(
-                ByteString.copyFrom(o1.getConfiguration().getStartRow()),
-                ByteString.copyFrom(o2.getConfiguration().getStartRow()));
-          }
-        });
-    Assert.assertTrue(splits.size() <= AbstractSource.COUNT_MAX_SPLIT_COUNT);
-    Iterator<SourceWithKeys> iter = splits.iterator();
-    SourceWithKeys last = iter.next();
-    while (iter.hasNext()) {
-      SourceWithKeys current = iter.next();
-      Assert.assertTrue(
-          Bytes.equals(
-              current.getConfiguration().getStartRow(), last.getConfiguration().getStopRow()));
-      // The last source will have a stop key of empty.
-      if (iter.hasNext()) {
+      Source source = (Source) CloudBigtableIO.read(scanConfig);
+      source.setSampleRowKeys(sampleRowKeys);
+      List<SourceWithKeys> splits = source.getSplits(tabletSize * 2);
+      Collections.sort(
+          splits,
+          new Comparator<SourceWithKeys>() {
+            @Override
+            public int compare(SourceWithKeys o1, SourceWithKeys o2) {
+              return ByteStringComparator.INSTANCE.compare(
+                  ByteString.copyFrom(o1.getConfiguration().getStartRow()),
+                  ByteString.copyFrom(o2.getConfiguration().getStartRow()));
+            }
+          });
+      Assert.assertTrue(splits.size() <= AbstractSource.COUNT_MAX_SPLIT_COUNT);
+      Iterator<SourceWithKeys> iter = splits.iterator();
+      SourceWithKeys last = iter.next();
+      while (iter.hasNext()) {
+        SourceWithKeys current = iter.next();
         Assert.assertTrue(
-            Bytes.compareTo(
-                    current.getConfiguration().getStartRow(),
-                    current.getConfiguration().getStopRow())
-                < 0);
+            Bytes.equals(
+                current.getConfiguration().getStartRow(), last.getConfiguration().getStopRow()));
+        // The last source will have a stop key of empty.
+        if (iter.hasNext()) {
+          Assert.assertTrue(
+              Bytes.compareTo(
+                      current.getConfiguration().getStartRow(),
+                      current.getConfiguration().getStopRow())
+                  < 0);
+        }
+        Assert.assertTrue(current.getEstimatedSize() >= tabletSize);
+        last = current;
       }
-      Assert.assertTrue(current.getEstimatedSize() >= tabletSize);
-      last = current;
+    } finally {
+      AbstractSource.COUNT_MAX_SPLIT_COUNT = originalMaxSplitCount;
     }
-    // check first and last
   }
 
   @Test

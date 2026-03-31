@@ -26,6 +26,7 @@ import com.google.bigtable.repackaged.com.google.common.annotations.VisibleForTe
 import com.google.bigtable.repackaged.com.google.common.base.Preconditions;
 import com.google.bigtable.repackaged.com.google.common.collect.ImmutableMap;
 import com.google.cloud.bigtable.batch.common.CloudBigtableServiceImpl;
+import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration.ScanType;
 import com.google.cloud.bigtable.hbase.BigtableFixedProtoScan;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import java.io.IOException;
@@ -146,7 +147,7 @@ public class CloudBigtableIO {
 
     protected static final Logger SOURCE_LOG = LoggerFactory.getLogger(AbstractSource.class);
     protected static final long SIZED_BASED_MAX_SPLIT_COUNT = 1_000_000;
-    static final long COUNT_MAX_SPLIT_COUNT = 1_000_000;
+    static long COUNT_MAX_SPLIT_COUNT = 5_000_000;
 
     /** Configuration for a Cloud Bigtable connection, a table, and an optional scan. */
     private final CloudBigtableScanConfiguration configuration;
@@ -165,16 +166,16 @@ public class CloudBigtableIO {
     // TODO: Move the splitting logic to bigtable-hbase, and separate concerns between beam needs
     // and Cloud Bigtable logic.
     protected List<SourceWithKeys> getSplits(long desiredBundleSizeBytes) throws Exception {
-      desiredBundleSizeBytes =
-          Math.max(
-              calculateEstimatedSizeBytes(null) / SIZED_BASED_MAX_SPLIT_COUNT,
-              desiredBundleSizeBytes);
       CloudBigtableScanConfiguration conf = getConfiguration();
       byte[] scanStartKey = conf.getStartRow();
       byte[] scanEndKey = conf.getStopRow();
       List<SourceWithKeys> splits = new ArrayList<>();
       byte[] startKey = HConstants.EMPTY_START_ROW;
       long lastOffset = 0;
+
+      byte[] currentStartKey = null;
+      long accumulatedSize = 0;
+
       for (KeyOffset response : getSampleRowKeys()) {
         byte[] endKey = response.getKey().toByteArray();
         // Avoid empty regions.
@@ -183,38 +184,64 @@ public class CloudBigtableIO {
         }
 
         long offset = response.getOffsetBytes();
-        // Get all the start/end key ranges that match the user supplied Scan.  See
+        long tabletSize = offset - lastOffset;
+
+        // Get all the start/end key ranges that match the user supplied Scan. See
         // https://github.com/apache/hbase/blob/master/hbase-server/src/main/java/org/apache/hadoop/hbase/mapreduce/TableInputFormatBase.java#L298
         // for original logic.
         if (isWithinRange(scanStartKey, scanEndKey, startKey, endKey)) {
-          byte[] splitStart = null;
-          byte[] splitStop = null;
-          if (scanStartKey.length == 0 || Bytes.compareTo(startKey, scanStartKey) >= 0) {
-            splitStart = startKey;
-          } else {
-            splitStart = scanStartKey;
-          }
+          byte[] splitStart = (scanStartKey.length == 0 || Bytes.compareTo(startKey, scanStartKey) >= 0)
+              ? startKey
+              : scanStartKey;
+          byte[] splitStop = ((scanEndKey.length == 0 || Bytes.compareTo(endKey, scanEndKey) <= 0)
+              && endKey.length > 0)
+                  ? endKey
+                  : scanEndKey;
 
-          if ((scanEndKey.length == 0 || Bytes.compareTo(endKey, scanEndKey) <= 0)
-              && endKey.length > 0) {
-            splitStop = endKey;
+          if (tabletSize >= desiredBundleSizeBytes) {
+            // Flush accumulated if any
+            if (currentStartKey != null) {
+              splits.add(createSourceWithKeys(currentStartKey, splitStart, accumulatedSize));
+              currentStartKey = null;
+              accumulatedSize = 0;
+            }
+            splits.add(createSourceWithKeys(splitStart, splitStop, tabletSize));
           } else {
-            splitStop = scanEndKey;
+            if (currentStartKey == null) {
+              currentStartKey = splitStart;
+            }
+            accumulatedSize += tabletSize;
+            if (accumulatedSize >= desiredBundleSizeBytes) {
+              splits.add(createSourceWithKeys(currentStartKey, splitStop, accumulatedSize));
+              currentStartKey = null;
+              accumulatedSize = 0;
+            }
           }
-          splits.addAll(split(offset - lastOffset, desiredBundleSizeBytes, splitStart, splitStop));
+        } else {
+          if (currentStartKey != null) {
+            splits.add(createSourceWithKeys(currentStartKey, scanEndKey, accumulatedSize));
+            currentStartKey = null;
+            accumulatedSize = 0;
+          }
         }
         lastOffset = offset;
         startKey = endKey;
       }
-      // Create one last region if the last region doesn't reach the end or there are no regions.
+
       byte[] endKey = HConstants.EMPTY_END_ROW;
       if (!Bytes.equals(startKey, endKey) && scanEndKey.length == 0) {
-        splits.add(createSourceWithKeys(startKey, endKey, 0));
+        if (currentStartKey != null) {
+          splits.add(createSourceWithKeys(currentStartKey, endKey, accumulatedSize));
+          currentStartKey = null;
+        } else {
+          splits.add(createSourceWithKeys(startKey, endKey, 0));
+        }
+      } else if (currentStartKey != null) {
+        splits.add(createSourceWithKeys(currentStartKey, scanEndKey, accumulatedSize));
       }
+
       List<SourceWithKeys> result = reduceSplits(splits);
 
-      // Randomize the list, since the default behavior would lead to multiple workers hitting the
-      // same tablet.
       Collections.shuffle(result);
       return result;
     }
