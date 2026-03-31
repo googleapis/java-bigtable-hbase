@@ -146,7 +146,7 @@ public class CloudBigtableIO {
   abstract static class AbstractSource extends BoundedSource<Result> {
 
     protected static final Logger SOURCE_LOG = LoggerFactory.getLogger(AbstractSource.class);
-    static long COUNT_MAX_SPLIT_COUNT = 5_000_000;
+    private static final long COUNT_MAX_SPLIT_COUNT = 5_000_000;
 
     /** Configuration for a Cloud Bigtable connection, a table, and an optional scan. */
     private final CloudBigtableScanConfiguration configuration;
@@ -189,17 +189,20 @@ public class CloudBigtableIO {
         // https://github.com/apache/hbase/blob/master/hbase-server/src/main/java/org/apache/hadoop/hbase/mapreduce/TableInputFormatBase.java#L298
         // for original logic.
         if (isWithinRange(scanStartKey, scanEndKey, startKey, endKey)) {
-          byte[] splitStart = (scanStartKey.length == 0 || Bytes.compareTo(startKey, scanStartKey) >= 0)
-              ? startKey
-              : scanStartKey;
-          byte[] splitStop = ((scanEndKey.length == 0 || Bytes.compareTo(endKey, scanEndKey) <= 0)
-              && endKey.length > 0)
+          byte[] splitStart =
+              (scanStartKey.length == 0 || Bytes.compareTo(startKey, scanStartKey) >= 0)
+                  ? startKey
+                  : scanStartKey;
+          byte[] splitStop =
+              ((scanEndKey.length == 0 || Bytes.compareTo(endKey, scanEndKey) <= 0)
+                      && endKey.length > 0)
                   ? endKey
                   : scanEndKey;
 
           // Merging tablets that are smaller than desired bundle size
           if (tabletSize >= desiredBundleSizeBytes) {
-            // If the current tablet size is already > bundle size, add previously accumulated tablets
+            // If the current tablet size is already > bundle size, add previously accumulated
+            // tablets
             // if the currentStartKey is not null.
             if (currentStartKey != null) {
               splits.add(createSourceWithKeys(currentStartKey, splitStart, accumulatedSize));
@@ -220,7 +223,6 @@ public class CloudBigtableIO {
             }
           }
         }
-
         lastOffset = offset;
         startKey = endKey;
       }
@@ -230,9 +232,12 @@ public class CloudBigtableIO {
       if (!Bytes.equals(startKey, endKey) && scanEndKey.length == 0) {
         if (currentStartKey != null) {
           splits.add(createSourceWithKeys(currentStartKey, endKey, accumulatedSize));
+          currentStartKey = null;
         } else {
           splits.add(createSourceWithKeys(startKey, endKey, 0));
         }
+      } else if (currentStartKey != null) {
+        splits.add(createSourceWithKeys(currentStartKey, scanEndKey, accumulatedSize));
       }
 
       List<SourceWithKeys> result = reduceSplits(splits);
