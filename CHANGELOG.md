@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.17.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.16.2...v2.17.0) (2026-04-10)
+
+
+### Dependencies
+
+* upgrade java-bigtable to 2.76.0 to to enable DirectAccess by default ([#4559](https://github.com/googleapis/java-bigtable-hbase/issues/4559)) ([3c33948](https://github.com/googleapis/java-bigtable-hbase/commit/3c339482b25f8b5003c86620e4e3874f88d1ec3d))
+
+
+### Miscellaneous Chores
+
+* release 2.17.0 ([#4561](https://github.com/googleapis/java-bigtable-hbase/issues/4561)) ([a265f7f](https://github.com/googleapis/java-bigtable-hbase/commit/a265f7f51363f82f85807cafaffe55ef68a4a3ab))
+
 ## [2.16.2](https://github.com/googleapis/java-bigtable-hbase/compare/v2.16.1...v2.16.2) (2026-04-03)
 
 
