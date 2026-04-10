@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.18.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.17.0...v2.18.0) (2026-04-10)
+
+
+### Dependencies
+
+* upgrade to to java-bigtable 2.77 for session support ([#4563](https://github.com/googleapis/java-bigtable-hbase/issues/4563)) ([315c5d6](https://github.com/googleapis/java-bigtable-hbase/commit/315c5d6a026b443d5c40cda4f7c55c4f08cac91b))
+
 ## [2.17.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.16.2...v2.17.0) (2026-04-10)
 
 
