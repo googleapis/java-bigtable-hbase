@@ -24,6 +24,7 @@ import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.K
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.hbase.wrappers.veneer.BigtableHBaseVeneerSettings;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 
 /** For internal use only - public for technical reasons. */
@@ -52,6 +53,15 @@ public class CloudBigtableServiceImpl implements CloudBigtableService {
                         .setPreemptiveRefreshEnabled(false)
                         .build())
                 .build());
+
+    builder
+        .stubSettings()
+        .sampleRowKeysSettings()
+        .retrySettings()
+        .setInitialRpcTimeoutDuration(Duration.ofMinutes(20))
+        .setMaxRpcTimeoutDuration(Duration.ofMinutes(20))
+        .setTotalTimeoutDuration(Duration.ofMinutes(20));
+
     try (BigtableDataClient client = BigtableDataClient.create(builder.build())) {
       return client.sampleRowKeys(config.getTableId());
     }
