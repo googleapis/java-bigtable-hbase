@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.18.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.18.0...v2.18.1) (2026-04-13)
+
+
+### Bug Fixes
+
+* fixing splitting logic ([#4554](https://github.com/googleapis/java-bigtable-hbase/issues/4554)) ([3cbf0be](https://github.com/googleapis/java-bigtable-hbase/commit/3cbf0be147140417904bb0e1be01ab8c303b9039))
+* increase sample row key default timeout for beam ([#4567](https://github.com/googleapis/java-bigtable-hbase/issues/4567)) ([8e6f943](https://github.com/googleapis/java-bigtable-hbase/commit/8e6f94371dd13ceb76677db8e286e4a271130372))
+
 ## [2.18.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.17.0...v2.18.0) (2026-04-10)
 
 
