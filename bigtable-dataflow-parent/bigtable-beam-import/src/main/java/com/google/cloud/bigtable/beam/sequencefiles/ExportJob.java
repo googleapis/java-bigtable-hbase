@@ -191,6 +191,12 @@ public class ExportJob {
 
     @SuppressWarnings("unused")
     void setBigtableReadRpcAttemptTimeoutMs(ValueProvider<String> readRpcAttemptTimeoutMs);
+
+    @Description("The maximum number of retry attempts for the Bigtable client.")
+    ValueProvider<String> getBigtableMaxAttempts();
+
+    @SuppressWarnings("unused")
+    void setBigtableMaxAttempts(ValueProvider<String> maxAttempts);
   }
 
   public static void main(String[] args) {
