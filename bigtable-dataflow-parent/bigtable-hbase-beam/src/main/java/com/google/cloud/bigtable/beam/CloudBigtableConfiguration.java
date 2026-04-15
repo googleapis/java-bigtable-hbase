@@ -230,7 +230,6 @@ public class CloudBigtableConfiguration implements Serializable {
 
     /**
      * Sets below setting for batch BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL = true
-     * BigtableOptionsFactory.BIGTABLE_HOST_KEY = batch-bigtable.googleapis.com
      * BigtableOptionsFactory.INITIAL_ELAPSED_BACKOFF_MILLIS_KEY = 5ms
      * BigtableOptionsFactory.MAX_ELAPSED_BACKOFF_MILLIS_KEY = 5ms
      */
