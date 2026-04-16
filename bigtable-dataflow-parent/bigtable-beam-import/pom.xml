@@ -18,7 +18,7 @@ limitations under the License.
   <parent>
     <groupId>com.google.cloud.bigtable</groupId>
     <artifactId>bigtable-dataflow-parent</artifactId>
-    <version>2.15.6</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+    <version>2.17.0</version> <!-- {x-version-update:bigtable-client-parent:current} -->
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -110,7 +110,7 @@ limitations under the License.
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bigtable-hbase-beam</artifactId>
-      <version>2.15.6</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.17.0</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <exclusions>
         <exclusion>
           <groupId>org.apache.hbase</groupId>
@@ -133,7 +133,7 @@ limitations under the License.
 
     <dependency>
       <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-shaded-mapreduce</artifactId>
+      <artifactId>hbase-mapreduce</artifactId>
       <version>${hbase2.version}</version>
       <exclusions>
         <exclusion>
@@ -187,7 +187,7 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-internal-test-helper</artifactId>
-      <version>2.15.6</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+      <version>2.17.0</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <scope>test</scope>
     </dependency>
 
@@ -252,6 +252,13 @@ limitations under the License.
 
 
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <fork>true</fork>
+        </configuration>
+      </plugin>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>
@@ -426,6 +433,8 @@ limitations under the License.
 
                 <configuration>
                   <skip>false</skip>
+                  <skipITs>false</skipITs>
+                  <skipTests>false</skipTests>
                   <includes>
                     <include>**/*IT.java</include>
                   </includes>
@@ -434,6 +443,7 @@ limitations under the License.
                   -->
                   <forkCount>1</forkCount>
                   <useSystemClassLoader>false</useSystemClassLoader>
+                  <argLine>-Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts</argLine>
 
                   <!-- Run tests in parallel -->
                   <parallel>all</parallel>
