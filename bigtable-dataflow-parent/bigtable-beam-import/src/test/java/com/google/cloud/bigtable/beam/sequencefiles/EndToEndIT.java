@@ -22,7 +22,6 @@ import com.google.cloud.bigtable.beam.sequencefiles.testing.BigtableTableUtils;
 import com.google.cloud.bigtable.beam.test_env.EnvSetup;
 import com.google.cloud.bigtable.beam.test_env.TestProperties;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.truth.Correspondence;
@@ -39,7 +38,6 @@ import org.apache.beam.sdk.extensions.gcp.util.GcsUtil;
 import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.TableName;
@@ -91,13 +89,9 @@ public class EndToEndIT {
     properties.applyTo(gcpOptions);
     gcsUtil = new GcsUtil.GcsUtilFactory().create(gcpOptions);
 
-    // Disable CSM to reduce noise in the test output
-    Configuration config =
-        BigtableConfiguration.configure(properties.getProjectId(), properties.getInstanceId());
-    config.set(BigtableOptionsFactory.BIGTABLE_ENABLE_CLIENT_SIDE_METRICS, "false");
-
     // Bigtable config
-    connection = BigtableConfiguration.connect(config);
+    connection =
+        BigtableConfiguration.connect(properties.getProjectId(), properties.getInstanceId());
     // TODO: support endpoints
   }
 

@@ -19,6 +19,8 @@ import com.google.api.services.storage.model.Objects;
 import com.google.api.services.storage.model.StorageObject;
 import com.google.bigtable.repackaged.com.google.gson.Gson;
 import com.google.cloud.bigtable.beam.hbasesnapshots.ImportJobFromHbaseSnapshot.ImportOptions;
+import com.google.cloud.bigtable.beam.hbasesnapshots.conf.HBaseSnapshotInputConfigBuilder;
+import com.google.cloud.bigtable.beam.hbasesnapshots.dofn.CleanupHBaseSnapshotRestoreFiles;
 import com.google.cloud.bigtable.beam.sequencefiles.HBaseResultToMutationFn;
 import com.google.cloud.bigtable.beam.test_env.EnvSetup;
 import com.google.cloud.bigtable.beam.test_env.TestProperties;
@@ -26,7 +28,6 @@ import com.google.cloud.bigtable.beam.validation.HadoopHashTableSource.RangeHash
 import com.google.cloud.bigtable.beam.validation.SyncTableJob;
 import com.google.cloud.bigtable.beam.validation.SyncTableJob.SyncTableOptions;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
-import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 import java.io.BufferedReader;
@@ -55,7 +56,6 @@ import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.beam.sdk.metrics.MetricQueryResults;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -78,7 +78,7 @@ import org.slf4j.LoggerFactory;
  * End to end integration test for pipeline that import HBase snapshot data into Cloud Bigtable and
  * validates the imported data with SyncTable.
  * Prepare test data with gsutil(https://cloud.google.com/storage/docs/quickstart-gsutil):
- * gcloud storage cp --recursive <PATH_TO_REPO>/bigtable-dataflow-parent/bigtable-beam-import/src/test/integration-test \
+ * gsutil -m cp -r <PATH_TO_REPO>/bigtable-dataflow-parent/bigtable-beam-import/src/test/integration-test \
  *  gs://<test_bucket>/cloud-data-dir/
  */
 public class EndToEndIT {
@@ -124,13 +124,9 @@ public class EndToEndIT {
 
     uploadFixture(gcsUtil, SNAPSHOT_FIXTURE_NAME, fixtureDir);
 
-    // Disable CSM to reduce noise in the test output
-    Configuration config =
-        BigtableConfiguration.configure(properties.getProjectId(), properties.getInstanceId());
-    config.set(BigtableOptionsFactory.BIGTABLE_ENABLE_CLIENT_SIDE_METRICS, "false");
-
     // Bigtable config
-    connection = BigtableConfiguration.connect(config);
+    connection =
+        BigtableConfiguration.connect(properties.getProjectId(), properties.getInstanceId());
     // TODO: use timebased names to allow for gc
     tableId = "test_" + UUID.randomUUID();
 
@@ -314,8 +310,7 @@ public class EndToEndIT {
     // The restore directory is stored relative to the snapshot directory and contains the job name
     String bucket = GcsPath.fromUri(hbaseSnapshotDir).getBucket();
     String restorePathPrefix =
-        CleanupHBaseSnapshotRestoreFilesFn.getListPrefix(
-            HBaseSnapshotInputConfigBuilder.RESTORE_DIR);
+        CleanupHBaseSnapshotRestoreFiles.getListPrefix(HBaseSnapshotInputConfigBuilder.RESTORE_DIR);
     List<StorageObject> allObjects = new ArrayList<>();
     String nextToken;
     do {
@@ -427,8 +422,7 @@ public class EndToEndIT {
     // The restore directory is stored relative to the snapshot directory and contains the job name
     String bucket = GcsPath.fromUri(hbaseSnapshotDir).getBucket();
     String restorePathPrefix =
-        CleanupHBaseSnapshotRestoreFilesFn.getListPrefix(
-            HBaseSnapshotInputConfigBuilder.RESTORE_DIR);
+        CleanupHBaseSnapshotRestoreFiles.getListPrefix(HBaseSnapshotInputConfigBuilder.RESTORE_DIR);
 
     List<StorageObject> allObjects = new ArrayList<>();
     String nextToken;
