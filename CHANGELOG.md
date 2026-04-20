@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.18.2](https://github.com/googleapis/java-bigtable-hbase/compare/v2.18.1...v2.18.2) (2026-04-20)
+
+
+### Bug Fixes
+
+* expose max attempt ([#4593](https://github.com/googleapis/java-bigtable-hbase/issues/4593)) ([6c37093](https://github.com/googleapis/java-bigtable-hbase/commit/6c370939695b0692be5b173536998f197a81c144))
+* remove batch endpoint ([#4592](https://github.com/googleapis/java-bigtable-hbase/issues/4592)) ([1316f4e](https://github.com/googleapis/java-bigtable-hbase/commit/1316f4e54de98a4f0fd1f6d226f59551b6a62337))
+
 ## [2.18.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.18.0...v2.18.1) (2026-04-13)
 
 
