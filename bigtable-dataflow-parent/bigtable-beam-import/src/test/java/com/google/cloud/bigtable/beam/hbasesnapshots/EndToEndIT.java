@@ -143,6 +143,25 @@ public class EndToEndIT {
     HTableDescriptor descriptor = new HTableDescriptor(tableName);
     descriptor.addFamily(new HColumnDescriptor(CF));
     connection.getAdmin().createTable(descriptor, SnapshotTestingUtils.getSplitKeys());
+
+    LOG.info("Waiting for table {} to be ready", tableId);
+    boolean ready = false;
+    for (int i = 0; i < 60; i++) {
+      try {
+        if (connection.getAdmin().isTableAvailable(tableName)) {
+          ready = true;
+          break;
+        }
+      } catch (Exception e) {
+        LOG.info("Exception while checking table availability: " + e.getMessage());
+      }
+      LOG.info("Table " + tableId + " not ready yet, sleeping...");
+      Thread.sleep(5000);
+    }
+    if (!ready) {
+      throw new RuntimeException("Table " + tableId + " did not become ready in time");
+    }
+
   }
 
   @After
@@ -303,7 +322,15 @@ public class EndToEndIT {
     ImportOptions importOpts = createImportOptions();
 
     // run pipeline
-    State state = ImportJobFromHbaseSnapshot.buildPipeline(importOpts).run().waitUntilFinish();
+    org.apache.beam.sdk.PipelineResult importResult = ImportJobFromHbaseSnapshot.buildPipeline(importOpts).run();
+    State state = importResult.waitUntilFinish();
+    if (state != State.DONE) {
+      System.err.println("Pipeline failed! State: " + state);
+      if (importResult instanceof org.apache.beam.runners.dataflow.DataflowPipelineJob) {
+        org.apache.beam.runners.dataflow.DataflowPipelineJob job = (org.apache.beam.runners.dataflow.DataflowPipelineJob) importResult;
+        System.err.println("Dataflow Job ID: " + job.getJobId());
+      }
+    }
     Assert.assertEquals(State.DONE, state);
 
     // check that the .restore dir used for temp files has been removed
@@ -352,7 +379,15 @@ public class EndToEndIT {
   public void testHBaseSnapshotImportWithCorruptions() throws Exception {
     // Import snapshot
     ImportOptions importOpts = createImportOptions();
-    State state = ImportJobFromHbaseSnapshot.buildPipeline(importOpts).run().waitUntilFinish();
+    org.apache.beam.sdk.PipelineResult importResult = ImportJobFromHbaseSnapshot.buildPipeline(importOpts).run();
+    State state = importResult.waitUntilFinish();
+    if (state != State.DONE) {
+      System.err.println("Pipeline failed! State: " + state);
+      if (importResult instanceof org.apache.beam.runners.dataflow.DataflowPipelineJob) {
+        org.apache.beam.runners.dataflow.DataflowPipelineJob job = (org.apache.beam.runners.dataflow.DataflowPipelineJob) importResult;
+        System.err.println("Dataflow Job ID: " + job.getJobId());
+      }
+    }
     Assert.assertEquals(State.DONE, state);
 
     // Rows where corruptions will be added.
@@ -415,7 +450,15 @@ public class EndToEndIT {
     importOpts.setSnapshotName(TEST_SNAPPY_SNAPSHOT_NAME);
 
     // run pipeline
-    State state = ImportJobFromHbaseSnapshot.buildPipeline(importOpts).run().waitUntilFinish();
+    org.apache.beam.sdk.PipelineResult importResult = ImportJobFromHbaseSnapshot.buildPipeline(importOpts).run();
+    State state = importResult.waitUntilFinish();
+    if (state != State.DONE) {
+      System.err.println("Pipeline failed! State: " + state);
+      if (importResult instanceof org.apache.beam.runners.dataflow.DataflowPipelineJob) {
+        org.apache.beam.runners.dataflow.DataflowPipelineJob job = (org.apache.beam.runners.dataflow.DataflowPipelineJob) importResult;
+        System.err.println("Dataflow Job ID: " + job.getJobId());
+      }
+    }
     Assert.assertEquals(State.DONE, state);
 
     // check that the .restore dir used for temp files has been removed
@@ -456,4 +499,6 @@ public class EndToEndIT {
     Assert.assertEquals(counters.get("ranges_matched"), (Long) 100L);
     Assert.assertEquals(counters.get("ranges_not_matched"), (Long) 0L);
   }
+
+
 }

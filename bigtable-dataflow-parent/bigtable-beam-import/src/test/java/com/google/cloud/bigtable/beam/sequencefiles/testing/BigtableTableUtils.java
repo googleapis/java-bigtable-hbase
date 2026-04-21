@@ -66,6 +66,28 @@ public class BigtableTableUtils implements AutoCloseable {
           new HColumnDescriptor(columnFamilyName).setMaxVersions(MAX_VERSION));
     }
     admin.createTable(tableDescriptor);
+
+    org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(BigtableTableUtils.class);
+    log.info("Waiting for table {} to be ready", tableName);
+    boolean ready = false;
+    for (int i = 0; i < 60; i++) {
+      try (org.apache.hadoop.hbase.client.Table table = connection.getTable(tableName)) {
+        table.get(new org.apache.hadoop.hbase.client.Get(org.apache.hadoop.hbase.util.Bytes.toBytes("dummy")));
+        ready = true;
+        break;
+      } catch (Exception e) {
+        log.info("Table " + tableName + " not ready yet (dummy get failed): " + e.getMessage());
+      }
+      try {
+        Thread.sleep(5000);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException(e);
+      }
+    }
+    if (!ready) {
+      throw new RuntimeException("Table " + tableName + " did not become ready in time");
+    }
   }
 
   /** Delete the table if it exists */

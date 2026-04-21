@@ -106,6 +106,7 @@ public class ImportJobFromHbaseSnapshot {
     @SuppressWarnings("unused")
     void setHbaseSnapshotSourceDir(String hbaseSnapshotSourceDir);
 
+
     @Description("Snapshot name")
     String getSnapshotName();
 
