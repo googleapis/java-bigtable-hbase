@@ -19,7 +19,7 @@
         <!-- do not upgrade this, we are target all of maven 3 -->
         <target-maven.version>3.0</target-maven.version>
         <!-- This can be updated freely -->
-        <maven-plugin-tools.version>3.10.2</maven-plugin-tools.version>
+        <maven-plugin-tools.version>3.15.2</maven-plugin-tools.version>
     </properties>
 
     <dependencies>
