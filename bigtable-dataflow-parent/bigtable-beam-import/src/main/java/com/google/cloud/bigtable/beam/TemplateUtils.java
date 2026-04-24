@@ -109,8 +109,7 @@ public class TemplateUtils {
     if (options.getBigtableMaxAttempts() != null) {
       configBuilder.withConfiguration(
           BigtableOptionsFactory.MAX_SCAN_TIMEOUT_RETRIES,
-          ValueProvider.NestedValueProvider.of(
-              options.getBigtableMaxAttempts(), value -> String.valueOf(value)));
+          options.getBigtableMaxAttempts());
     }
     return configBuilder.build();
   }

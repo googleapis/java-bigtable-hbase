@@ -499,6 +499,18 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     final InstantiatingGrpcChannelProvider.Builder channelProvider =
         ((InstantiatingGrpcChannelProvider) stubSettings.getTransportChannelProvider()).toBuilder();
 
+    // Override gRPC max inbound message size to 500 MB for large rows
+    ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator
+        = channelProvider.getChannelConfigurator();
+    channelProvider.setChannelConfigurator(
+        managedChannelBuilder -> {
+          if (channelConfigurator != null) {
+            managedChannelBuilder = channelConfigurator.apply(managedChannelBuilder);
+          }
+          return managedChannelBuilder.maxInboundMessageSize(600 * 1024 * 1024);
+        }
+    );
+
     if (configuration.getBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, false)) {
       // Make sure to avoid clobbering the old Configurator
       @SuppressWarnings("rawtypes")

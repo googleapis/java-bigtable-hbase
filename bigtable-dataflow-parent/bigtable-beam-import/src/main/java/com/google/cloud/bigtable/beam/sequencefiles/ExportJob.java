@@ -154,10 +154,10 @@ public class ExportJob {
     void setBigtableFilter(ValueProvider<String> filter);
 
     @Description("The maximum number of retry attempts for the Bigtable client.")
-    ValueProvider<Integer> getBigtableMaxAttempts();
+    ValueProvider<String> getBigtableMaxAttempts();
 
     @SuppressWarnings("unused")
-    void setBigtableMaxAttempts(ValueProvider<Integer> maxAttempts);
+    void setBigtableMaxAttempts(ValueProvider<String> maxAttempts);
 
     @Description("The destination directory")
     ValueProvider<String> getDestinationPath();
