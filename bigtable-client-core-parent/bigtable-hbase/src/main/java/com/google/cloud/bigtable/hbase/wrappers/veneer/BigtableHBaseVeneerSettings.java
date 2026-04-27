@@ -121,8 +121,6 @@ import org.threeten.bp.Duration;
 @InternalApi("For internal usage only")
 public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
 
-  private static final String BIGTABLE_BATCH_DATA_HOST_DEFAULT = "batch-bigtable.googleapis.com";
-
   private static final ClientOperationTimeouts DEFAULT_TIMEOUTS =
       new ClientOperationTimeouts(
           /* unaryTimeouts= */ new OperationTimeouts(
@@ -477,12 +475,6 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     if (hostOverride.isPresent() || portOverride.isPresent()) {
       endpointOverride =
           Optional.of(hostOverride.or(defaultHostname) + ":" + portOverride.or(defaultPort));
-    } else if (endpointKey.equals(BIGTABLE_HOST_KEY)
-        // only apply batch endpoint when the default endpoint hasnt changed (ie. when
-        // BIGTABLE_EMULATOR_HOST is set)
-        && defaultEndpoint.equals("bigtable.googleapis.com:443")
-        && configuration.getBoolean(BIGTABLE_USE_BATCH, false)) {
-      endpointOverride = Optional.of(BIGTABLE_BATCH_DATA_HOST_DEFAULT + ":443");
     }
 
     if (endpointOverride.isPresent()) {

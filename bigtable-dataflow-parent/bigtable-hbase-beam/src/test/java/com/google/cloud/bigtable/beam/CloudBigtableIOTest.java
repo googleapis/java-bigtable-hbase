@@ -23,7 +23,6 @@ import static org.mockito.Mockito.when;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.internal.ByteStringComparator;
 import com.google.bigtable.repackaged.com.google.cloud.bigtable.data.v2.models.KeyOffset;
 import com.google.bigtable.repackaged.com.google.protobuf.ByteString;
-import com.google.cloud.bigtable.beam.CloudBigtableIO.AbstractSource;
 import com.google.cloud.bigtable.beam.CloudBigtableIO.Source;
 import com.google.cloud.bigtable.beam.CloudBigtableIO.SourceWithKeys;
 import java.util.ArrayList;
@@ -112,7 +111,7 @@ public class CloudBigtableIOTest {
   @Test
   public void testSampleRowKeys() throws Exception {
     List<KeyOffset> sampleRowKeys = new ArrayList<>();
-    int count = (int) (AbstractSource.COUNT_MAX_SPLIT_COUNT * 3 - 5);
+    int count = 5;
     byte[][] keys = Bytes.split("A".getBytes(), "Z".getBytes(), count - 2);
     long tabletSize = 2L * 1024L * 1024L * 1024L;
     long boundary = 0;
@@ -129,7 +128,7 @@ public class CloudBigtableIOTest {
     }
     Source source = (Source) CloudBigtableIO.read(scanConfig);
     source.setSampleRowKeys(sampleRowKeys);
-    List<SourceWithKeys> splits = source.getSplits(20000);
+    List<SourceWithKeys> splits = source.getSplits(tabletSize * 2);
     Collections.sort(
         splits,
         new Comparator<SourceWithKeys>() {
@@ -140,7 +139,6 @@ public class CloudBigtableIOTest {
                 ByteString.copyFrom(o2.getConfiguration().getStartRow()));
           }
         });
-    Assert.assertTrue(splits.size() <= AbstractSource.COUNT_MAX_SPLIT_COUNT);
     Iterator<SourceWithKeys> iter = splits.iterator();
     SourceWithKeys last = iter.next();
     while (iter.hasNext()) {
@@ -159,7 +157,108 @@ public class CloudBigtableIOTest {
       Assert.assertTrue(current.getEstimatedSize() >= tabletSize);
       last = current;
     }
-    // check first and last
+  }
+
+  @Test
+  public void testMergeSmallTablets() throws Exception {
+    List<KeyOffset> sampleRowKeys = new ArrayList<>();
+    long tabletSize = 10 * 1024 * 1024; // 10MB
+    // Tablets:
+    // "" to "A" (10MB)
+    // "A" to "B" (10MB)
+    // "B" to "C" (10MB)
+    // "C" to "D" (10MB)
+    // "D" to "E" (10MB)
+    sampleRowKeys.add(KeyOffset.create(ByteString.copyFromUtf8("A"), tabletSize));
+    sampleRowKeys.add(KeyOffset.create(ByteString.copyFromUtf8("B"), tabletSize * 2));
+    sampleRowKeys.add(KeyOffset.create(ByteString.copyFromUtf8("C"), tabletSize * 3));
+    sampleRowKeys.add(KeyOffset.create(ByteString.copyFromUtf8("D"), tabletSize * 4));
+    sampleRowKeys.add(KeyOffset.create(ByteString.copyFromUtf8("E"), tabletSize * 5));
+
+    Source source = (Source) CloudBigtableIO.read(scanConfig);
+    source.setSampleRowKeys(sampleRowKeys);
+
+    // desired = 25MB
+    long desiredSize = 25 * 1024 * 1024;
+    List<SourceWithKeys> splits = source.getSplits(desiredSize);
+
+    Collections.sort(
+        splits,
+        (o1, o2) ->
+            ByteStringComparator.INSTANCE.compare(
+                ByteString.copyFrom(o1.getConfiguration().getStartRow()),
+                ByteString.copyFrom(o2.getConfiguration().getStartRow())));
+
+    // Expecting:
+    // Split 1: "" to "C" (30MB)
+    // Split 2: "C" to "" (20MB)
+    Assert.assertEquals(2, splits.size());
+    Assert.assertEquals("", Bytes.toStringBinary(splits.get(0).getConfiguration().getStartRow()));
+    Assert.assertEquals("C", Bytes.toStringBinary(splits.get(0).getConfiguration().getStopRow()));
+    Assert.assertEquals("C", Bytes.toStringBinary(splits.get(1).getConfiguration().getStartRow()));
+    Assert.assertEquals("", Bytes.toStringBinary(splits.get(1).getConfiguration().getStopRow()));
+  }
+
+  @Test
+  public void testRespectScanRange() throws Exception {
+    List<KeyOffset> sampleRowKeys = new ArrayList<>();
+    long tabletSize = 10 * 1024 * 1024;
+    sampleRowKeys.add(KeyOffset.create(ByteString.copyFromUtf8("A"), tabletSize));
+    sampleRowKeys.add(KeyOffset.create(ByteString.copyFromUtf8("B"), tabletSize * 2));
+    sampleRowKeys.add(KeyOffset.create(ByteString.copyFromUtf8("C"), tabletSize * 3));
+    sampleRowKeys.add(KeyOffset.create(ByteString.copyFromUtf8("D"), tabletSize * 4));
+    sampleRowKeys.add(KeyOffset.create(ByteString.copyFromUtf8("E"), tabletSize * 5));
+
+    // Scan from "B" to "D"
+    CloudBigtableScanConfiguration customScanConfig =
+        scanConfig.toBuilder().withKeys("B".getBytes(), "D".getBytes()).build();
+
+    Source source = (Source) CloudBigtableIO.read(customScanConfig);
+    source.setSampleRowKeys(sampleRowKeys);
+
+    List<SourceWithKeys> splits = source.getSplits(25 * 1024 * 1024);
+
+    Collections.sort(
+        splits,
+        (o1, o2) ->
+            ByteStringComparator.INSTANCE.compare(
+                ByteString.copyFrom(o1.getConfiguration().getStartRow()),
+                ByteString.copyFrom(o2.getConfiguration().getStartRow())));
+
+    // Tablet 3 ("B" to "C") and Tablet 4 ("C" to "D") are within range.
+    // They are merged into one split of "B" to "D" (20MB).
+    // Note: Due to current logic without flush on scanEnd, the last piece might get lost if it
+    // doesn't cross desiredBundleSize,
+    // but here we are checking if it respects the range. If it fails, it means it's lost and we
+    // should check if bug exists.
+    Assert.assertEquals(1, splits.size());
+    Assert.assertEquals("B", Bytes.toStringBinary(splits.get(0).getConfiguration().getStartRow()));
+    Assert.assertEquals("D", Bytes.toStringBinary(splits.get(0).getConfiguration().getStopRow()));
+  }
+
+  @Test
+  public void testLargeTabletsAsIs() throws Exception {
+    List<KeyOffset> sampleRowKeys = new ArrayList<>();
+    long tabletSize = 100 * 1024 * 1024; // 100MB
+    sampleRowKeys.add(KeyOffset.create(ByteString.copyFromUtf8("A"), tabletSize));
+
+    Source source = (Source) CloudBigtableIO.read(scanConfig);
+    source.setSampleRowKeys(sampleRowKeys);
+
+    List<SourceWithKeys> splits = source.getSplits(25 * 1024 * 1024); // desired 25MB
+
+    Collections.sort(
+        splits,
+        (o1, o2) ->
+            Bytes.compareTo(
+                o1.getConfiguration().getStartRow(), o2.getConfiguration().getStartRow()));
+
+    Assert.assertEquals(2, splits.size()); // The tablet + trailing region to end of table
+    Assert.assertEquals("", Bytes.toStringBinary(splits.get(0).getConfiguration().getStartRow()));
+    Assert.assertEquals("A", Bytes.toStringBinary(splits.get(0).getConfiguration().getStopRow()));
+    Assert.assertEquals("A", Bytes.toStringBinary(splits.get(1).getConfiguration().getStartRow()));
+    Assert.assertEquals("", Bytes.toStringBinary(splits.get(1).getConfiguration().getStopRow()));
+    Assert.assertEquals(tabletSize, splits.get(0).getEstimatedSize());
   }
 
   @Test

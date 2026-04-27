@@ -101,6 +101,20 @@ public class TemplateUtils {
                     options.getBigtableStopRow(),
                     options.getBigtableMaxVersions(),
                     options.getBigtableFilter()));
+    if (options.getBigtableReadRpcTimeoutMs() != null) {
+      configBuilder.withConfiguration(
+          BigtableOptionsFactory.BIGTABLE_READ_RPC_TIMEOUT_MS_KEY,
+          options.getBigtableReadRpcTimeoutMs());
+    }
+    if (options.getBigtableReadRpcAttemptTimeoutMs() != null) {
+      configBuilder.withConfiguration(
+          BigtableOptionsFactory.BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY,
+          options.getBigtableReadRpcAttemptTimeoutMs());
+    }
+    if (options.getBigtableMaxAttempts() != null) {
+      configBuilder.withConfiguration(
+          BigtableOptionsFactory.MAX_SCAN_TIMEOUT_RETRIES, options.getBigtableMaxAttempts());
+    }
     return configBuilder.build();
   }
 }
