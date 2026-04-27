@@ -137,9 +137,13 @@ public class HBaseSnapshotInputConfigBuilder {
     conf.set("fs.gs.project.id", projectId);
     conf.setBoolean("google.cloud.auth.service.account.enable", true);
     // Hack/Workaround: Set the keyfile path for the submitter to access GCS during job setup.
-    // We use user.home to keep this portable across different developer environments.
-    String userHome = System.getProperty("user.home");
-    conf.set("google.cloud.auth.service.account.json.keyfile", userHome + "/.config/gcloud/application_default_credentials.json");
+    // Check for a system property first, falling back to the default CloudTop location.
+    String keyfile = System.getProperty("hadoop.gcs.keyfile");
+    if (keyfile == null) {
+      String userHome = System.getProperty("user.home");
+      keyfile = userHome + "/.config/gcloud/application_default_credentials.json";
+    }
+    conf.set("google.cloud.auth.service.account.json.keyfile", keyfile);
 
     // Setup MapReduce config for TableSnapshotInputFormat
     conf.setClass(

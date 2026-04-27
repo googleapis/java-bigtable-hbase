@@ -131,9 +131,14 @@ limitations under the License.
     </dependency>
 
 
+    <!-- Note on Protobuf conflict: We have a custom ByteStringer class in 
+         src/test/java/org/apache/hadoop/hbase/util/ to resolve conflicts 
+         between hbase-mapreduce (which expects Protobuf 2.x/3.x) and 
+         Beam 2.72.0 (which forces Protobuf 4.x).
+    -->
     <dependency>
       <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-mapreduce</artifactId>
+      <artifactId>hbase-shaded-mapreduce</artifactId>
       <version>${hbase2.version}</version>
       <exclusions>
         <exclusion>
@@ -325,6 +330,7 @@ limitations under the License.
 	      <filter>
 		  <artifact>*:*</artifact>
 		  <excludes>
+          <exclude>META-INF/services/java.net.spi.InetAddressResolverProvider</exclude>
 		      <exclude>META-INF/*.SF</exclude>
 		      <exclude>META-INF/*.DSA</exclude>
 		      <exclude>META-INF/*.RSA</exclude>
@@ -443,7 +449,7 @@ limitations under the License.
                   -->
                   <forkCount>1</forkCount>
                   <useSystemClassLoader>false</useSystemClassLoader>
-                  <argLine>-Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts</argLine>
+                  <argLine>-Xmx16g -Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts</argLine>
 
                   <!-- Run tests in parallel -->
                   <parallel>all</parallel>
