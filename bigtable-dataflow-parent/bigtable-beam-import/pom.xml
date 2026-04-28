@@ -145,6 +145,10 @@ limitations under the License.
           <groupId>org.apache.hadoop</groupId>
           <artifactId>hadoop-hdfs-client</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-shaded-client</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -321,6 +325,7 @@ limitations under the License.
 	      <filter>
 		  <artifact>*:*</artifact>
 		  <excludes>
+		      <exclude>META-INF/services/java.net.spi.InetAddressResolverProvider</exclude>
 		      <exclude>META-INF/*.SF</exclude>
 		      <exclude>META-INF/*.DSA</exclude>
 		      <exclude>META-INF/*.RSA</exclude>
