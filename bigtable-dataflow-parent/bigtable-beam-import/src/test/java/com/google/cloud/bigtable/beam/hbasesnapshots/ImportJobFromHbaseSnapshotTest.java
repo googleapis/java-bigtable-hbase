@@ -140,9 +140,9 @@ public class ImportJobFromHbaseSnapshotTest {
     expectedException.expect(NullPointerException.class);
     expectedException.expectMessage(ImportJobFromHbaseSnapshot.MISSING_SNAPSHOT_SOURCEPATH);
 
-    // ImportConfig importConfig =
-    //     ImportJobFromHbaseSnapshot.buildImportConfigFromConfigFile(
-    //         options.getImportConfigFilePath());
+    ImportConfig importConfig =
+        ImportJobFromHbaseSnapshot.buildImportConfigFromConfigFile(
+            options.getImportConfigFilePath());
   }
 
   @Test
@@ -166,11 +166,11 @@ public class ImportJobFromHbaseSnapshotTest {
     ImportJobFromHbaseSnapshot.ImportOptions options =
         SnapshotTestHelper.getPipelineOptions(
             new String[] {"--importConfigFilePath=" + file.getAbsolutePath()});
-    // ImportConfig importConfig =
-    //     ImportJobFromHbaseSnapshot.buildImportConfigFromConfigFile(
-    //         options.getImportConfigFilePath());
-    // assertThat(importConfig.getSourcepath(), is(importSnapshotpath));
-    // assertThat(importConfig.getRestorepath().startsWith(restoreSnapshotpath), is(true));
-    // assertThat(importConfig.getSnapshots().get(0).getbigtableTableName(), is("demo1"));
+    ImportConfig importConfig =
+        ImportJobFromHbaseSnapshot.buildImportConfigFromConfigFile(
+            options.getImportConfigFilePath());
+    assertThat(importConfig.getSourcepath(), is(importSnapshotpath));
+    assertThat(importConfig.getRestorepath().startsWith(restoreSnapshotpath), is(true));
+    assertThat(importConfig.getSnapshots().get(0).getbigtableTableName(), is("demo1"));
   }
 }
