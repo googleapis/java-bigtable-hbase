@@ -57,9 +57,10 @@ public class HBaseSnapshotRestoreTool {
 
   @VisibleForTesting
   static final String MISSING_SNAPSHOT_NAMES =
-      "Snapshots must be specified. Allowed values are '*' (indicating all snapshots under source path) or "
-          + "'prefix*' (snapshots matching certain prefix) or 'snapshotname1:tablename1,snapshotname2:tablename2' "
-          + "(comma seperated list of snapshots)";
+      "Snapshots must be specified. Allowed values are '*' (indicating all snapshots under source"
+          + " path) or 'prefix*' (snapshots matching certain prefix) or"
+          + " 'snapshotname1:tablename1,snapshotname2:tablename2' (comma seperated list of"
+          + " snapshots)";
 
   public static void main(String[] args) throws Exception {
     GcsOptions options = PipelineOptionsFactory.create().as(GcsOptions.class);
@@ -96,8 +97,7 @@ public class HBaseSnapshotRestoreTool {
   }
 
   @VisibleForTesting
-  static ImportConfig buildImportConfigFromArgs(GcsOptions gcsOptions)
-      throws IOException {
+  static ImportConfig buildImportConfigFromArgs(GcsOptions gcsOptions) throws IOException {
     Preconditions.checkArgument(
         System.getProperty("hbaseSnapshotSourceDir") != null, MISSING_SNAPSHOT_SOURCEPATH);
     Preconditions.checkArgument(System.getProperty("snapshots") != null, MISSING_SNAPSHOT_NAMES);

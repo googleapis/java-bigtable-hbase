@@ -20,7 +20,6 @@ package com.google.cloud.bigtable.beam.hbasesnapshots.transforms;
 import com.google.api.core.InternalApi;
 import com.google.cloud.bigtable.beam.hbasesnapshots.conf.RegionConfig;
 import com.google.cloud.bigtable.beam.hbasesnapshots.conf.SnapshotConfig;
-import com.google.common.primitives.UnsignedBytes;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -136,18 +135,23 @@ public class ReadRegions
 
     PCollection<RegionConfig> maybeShardedRegions = regionConfig;
     if (numShards != null) {
-      maybeShardedRegions = regionConfig.apply(
-          "Select regions for shard",
-          Filter.by(rc -> {
-            // encodedName is an MD5 hash of the region info and therefor should be well distributed
-            byte[] regionName = rc.getRegionInfo().getEncodedNameAsBytes();
-            long remainder = new BigInteger(regionName).mod(BigInteger.valueOf(numShards)).longValue();
-            boolean shouldTake = remainder == shardIndex;
-            ReadRegionFn.LOG.info("Region {} was {} due to sharding",
-                rc.getRegionInfo().getRegionNameAsString(),
-                shouldTake ? "taken" : "skipped");
-            return shouldTake;
-          }));
+      maybeShardedRegions =
+          regionConfig.apply(
+              "Select regions for shard",
+              Filter.by(
+                  rc -> {
+                    // encodedName is an MD5 hash of the region info and therefor should be well
+                    // distributed
+                    byte[] regionName = rc.getRegionInfo().getEncodedNameAsBytes();
+                    long remainder =
+                        new BigInteger(regionName).mod(BigInteger.valueOf(numShards)).longValue();
+                    boolean shouldTake = remainder == shardIndex;
+                    ReadRegionFn.LOG.info(
+                        "Region {} was {} due to sharding",
+                        rc.getRegionInfo().getRegionNameAsString(),
+                        shouldTake ? "taken" : "skipped");
+                    return shouldTake;
+                  }));
     }
 
     return maybeShardedRegions
@@ -263,7 +267,8 @@ public class ReadRegions
       try {
         int numSplits = getSplits(regionConfig.getRegionSize());
         LOG.info(
-            "Splitting Initial Restriction for SnapshotName: {} - regionname:{} - regionsize(GB):{} - Splits: {}",
+            "Splitting Initial Restriction for SnapshotName: {} - regionname:{} - regionsize(GB):{}"
+                + " - Splits: {}",
             regionConfig.getSnapshotConfig().getSnapshotName(),
             regionConfig.getRegionInfo().getEncodedName(),
             (double) regionConfig.getRegionSize() / BYTES_PER_GB,
@@ -430,12 +435,11 @@ public class ReadRegions
     }
   }
 
-
   /**
    * A workalike for {@link org.apache.hadoop.hbase.client.ClientSideRegionScanner}.
    *
-   * <p>It serves the same purpose, but skips block and mobFile cache initialization.
-   * Those caches dont appear to useful for the import job and leak threads on shutdown
+   * <p>It serves the same purpose, but skips block and mobFile cache initialization. Those caches
+   * dont appear to useful for the import job and leak threads on shutdown
    */
   static class HBaseRegionScanner implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(HBaseRegionScanner.class);

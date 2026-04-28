@@ -16,8 +16,6 @@
 package com.google.cloud.bigtable.beam.hbasesnapshots;
 
 import com.google.api.core.InternalExtensionOnly;
-import com.google.api.services.dataflow.model.DebugOptions;
-import org.apache.beam.sdk.options.PipelineOptions;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.beam.TemplateUtils;
@@ -30,7 +28,6 @@ import com.google.cloud.bigtable.beam.hbasesnapshots.dofn.RestoreSnapshot;
 import com.google.cloud.bigtable.beam.hbasesnapshots.transforms.ListRegions;
 import com.google.cloud.bigtable.beam.hbasesnapshots.transforms.ReadRegions;
 import com.google.cloud.bigtable.beam.sequencefiles.HBaseResultToMutationFn;
-import org.apache.beam.runners.dataflow.options.DataflowPipelineDebugOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob;
 import com.google.cloud.bigtable.beam.sequencefiles.Utils;
 import com.google.common.annotations.VisibleForTesting;
@@ -41,6 +38,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import org.apache.beam.runners.dataflow.options.DataflowPipelineDebugOptions;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions;
@@ -95,9 +93,10 @@ public class ImportJobFromHbaseSnapshot {
 
   @VisibleForTesting
   static final String MISSING_SNAPSHOT_NAMES =
-      "Snapshots must be specified. Allowed values are '*' (indicating all snapshots under source path) or "
-          + "'prefix*' (snapshots matching certain prefix) or 'snapshotname1:tablename1,snapshotname2:tablename2' "
-          + "(comma seperated list of snapshots)";
+      "Snapshots must be specified. Allowed values are '*' (indicating all snapshots under source"
+          + " path) or 'prefix*' (snapshots matching certain prefix) or"
+          + " 'snapshotname1:tablename1,snapshotname2:tablename2' (comma seperated list of"
+          + " snapshots)";
 
   public interface ImportOptions extends ImportJob.ImportOptions {
     @Description("The HBase root dir where HBase snapshot files resides.")
@@ -125,7 +124,8 @@ public class ImportJobFromHbaseSnapshot {
     void setImportConfigFilePath(String value);
 
     @Description(
-        "Snapshots to be imported. Can be '*', 'prefix*' or 'snap1,snap2' or 'snap1:table1,snap2:table2'.")
+        "Snapshots to be imported. Can be '*', 'prefix*' or 'snap1,snap2' or"
+            + " 'snap1:table1,snap2:table2'.")
     String getSnapshots();
 
     void setSnapshots(String value);
@@ -143,54 +143,63 @@ public class ImportJobFromHbaseSnapshot {
     void setMaxMutationsPerRequestThreshold(int value);
 
     @Description(
-        "Specifies whether to filter large rows that exceed FilterLargeRowsThresholdBytes should be logged and dropped.")
+        "Specifies whether to filter large rows that exceed FilterLargeRowsThresholdBytes should be"
+            + " logged and dropped.")
     @Default.Boolean(false)
     boolean getFilterLargeRows();
 
     void setFilterLargeRows(boolean value);
 
     @Description(
-        "Specifies the size in bytes of a row that should be logged and dropped before loading to Bigtable.")
+        "Specifies the size in bytes of a row that should be logged and dropped before loading to"
+            + " Bigtable.")
     @Default.Long(256 * 1024 * 1024)
     long getFilterLargeRowsThresholdBytes();
 
     void setFilterLargeRowsThresholdBytes(long value);
 
     @Description(
-        "Specifies whether to filter large cells that exceed FilterLargeCellsThresholdBytes should be logged and dropped.")
+        "Specifies whether to filter large cells that exceed FilterLargeCellsThresholdBytes should"
+            + " be logged and dropped.")
     @Default.Boolean(true)
     boolean getFilterLargeCells();
 
     void setFilterLargeCells(boolean value);
 
     @Description(
-        "Specifies the size in bytes of a cell that should be logged and dropped before loading to Bigtable.")
+        "Specifies the size in bytes of a cell that should be logged and dropped before loading to"
+            + " Bigtable.")
     @Default.Integer(100 * 1024 * 1024)
     int getFilterLargeCellsThresholdBytes();
 
     void setFilterLargeCellsThresholdBytes(int value);
 
     @Description(
-        "Specifies whether to filter large row keys that exceed FilterLargeRowKeysThresholdBytes should be logged and dropped.")
+        "Specifies whether to filter large row keys that exceed FilterLargeRowKeysThresholdBytes"
+            + " should be logged and dropped.")
     @Default.Boolean(false)
     boolean getFilterLargeRowKeys();
 
     void setFilterLargeRowKeys(boolean value);
 
     @Description(
-        "Specifies the size in bytes of a row key that should be logged and dropped before loading to Bigtable.")
+        "Specifies the size in bytes of a row key that should be logged and dropped before loading"
+            + " to Bigtable.")
     @Default.Integer(4 * 1024)
     int getFilterLargeRowKeysThresholdBytes();
 
     void setFilterLargeRowKeysThresholdBytes(int value);
 
-    @Description("Specifies the number of shards to use when loading the snapshot. "
-        + "If set, shardIndex must also be set.")
+    @Description(
+        "Specifies the number of shards to use when loading the snapshot. "
+            + "If set, shardIndex must also be set.")
     Integer getNumShards();
+
     void setNumShards(Integer value);
 
     @Description("Specifies the shard index from [0, numShards) that this load represents.")
     Integer getShardIndex();
+
     void setShardIndex(Integer value);
 
     @Description("Specifies the path to the restored Snapshot files.")
@@ -253,8 +262,7 @@ public class ImportJobFromHbaseSnapshot {
   }
 
   @VisibleForTesting
-  static ImportConfig buildImportConfigFromConfigFile(String configFilePath)
-      throws Exception {
+  static ImportConfig buildImportConfigFromConfigFile(String configFilePath) throws Exception {
     Gson gson = new GsonBuilder().create();
     ImportConfig importConfig =
         gson.fromJson(SnapshotUtils.readFileContents(configFilePath), ImportConfig.class);
@@ -322,7 +330,7 @@ public class ImportJobFromHbaseSnapshot {
           restoredSnapshots.apply("Restore Snapshots", ParDo.of(new RestoreSnapshot()));
     }
     if (options.getPerformOnlyRestoreStep()) {
-        return pipeline;
+      return pipeline;
     }
     // Read records from hbase region files and write to Bigtable
     //    PCollection<RegionConfig> hbaseRecords = restoredSnapshots

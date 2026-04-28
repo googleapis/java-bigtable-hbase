@@ -48,7 +48,8 @@ public class TemplateUtils {
             .withTableId(opts.getBigtableTableId())
             .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, customUserAgent)
             .withConfiguration(BigtableOptionsFactory.MAX_INFLIGHT_RPCS_KEY, "100")
-            .withConfiguration(BigtableHBaseSettings.BULK_MUTATION_CLOSE_TIMEOUT_MILLISECONDS,
+            .withConfiguration(
+                BigtableHBaseSettings.BULK_MUTATION_CLOSE_TIMEOUT_MILLISECONDS,
                 Long.toString(TimeUnit.MINUTES.toMillis(30)));
     if (opts.getBigtableAppProfileId() != null) {
       builder.withAppProfileId(opts.getBigtableAppProfileId());
