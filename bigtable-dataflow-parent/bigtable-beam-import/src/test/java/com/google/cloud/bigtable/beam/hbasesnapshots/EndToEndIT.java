@@ -316,7 +316,8 @@ public class EndToEndIT {
     // The restore directory is stored relative to the snapshot directory and contains the job name
     String bucket = GcsPath.fromUri(hbaseSnapshotDir).getBucket();
     String restorePathPrefix =
-        CleanupHBaseSnapshotRestoreFiles.getListPrefix(HBaseSnapshotInputConfigBuilder.RESTORE_DIR);
+        CleanupHBaseSnapshotRestoreFiles.getListPrefix(
+            HBaseSnapshotInputConfigBuilder.RESTORE_DIR + importOpts.getJobName());
     List<StorageObject> allObjects = new ArrayList<>();
     String nextToken;
     do {
@@ -428,7 +429,8 @@ public class EndToEndIT {
     // The restore directory is stored relative to the snapshot directory and contains the job name
     String bucket = GcsPath.fromUri(hbaseSnapshotDir).getBucket();
     String restorePathPrefix =
-        CleanupHBaseSnapshotRestoreFiles.getListPrefix(HBaseSnapshotInputConfigBuilder.RESTORE_DIR);
+        CleanupHBaseSnapshotRestoreFiles.getListPrefix(
+            HBaseSnapshotInputConfigBuilder.RESTORE_DIR + importOpts.getJobName());
 
     List<StorageObject> allObjects = new ArrayList<>();
     String nextToken;
