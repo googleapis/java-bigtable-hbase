@@ -20,6 +20,8 @@ import com.google.cloud.bigtable.beam.sequencefiles.ExportJob.ExportOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob.ImportOptions;
 import com.google.cloud.bigtable.beam.validation.SyncTableJob.SyncTableOptions;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
+import java.util.concurrent.TimeUnit;
 import org.apache.beam.sdk.options.ValueProvider;
 
 /**
@@ -44,7 +46,10 @@ public class TemplateUtils {
             .withProjectId(opts.getBigtableProject())
             .withInstanceId(opts.getBigtableInstanceId())
             .withTableId(opts.getBigtableTableId())
-            .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, customUserAgent);
+            .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, customUserAgent)
+            .withConfiguration(BigtableOptionsFactory.MAX_INFLIGHT_RPCS_KEY, "100")
+            .withConfiguration(BigtableHBaseSettings.BULK_MUTATION_CLOSE_TIMEOUT_MILLISECONDS,
+                Long.toString(TimeUnit.MINUTES.toMillis(30)));
     if (opts.getBigtableAppProfileId() != null) {
       builder.withAppProfileId(opts.getBigtableAppProfileId());
     }
