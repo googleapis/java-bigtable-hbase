@@ -57,6 +57,13 @@ public class SnapshotUtilsTest {
   @Mock GcsUtil gcsUtilMock;
   @Mock Objects gcsObjects;
 
+  @org.junit.Before
+  public void setup() throws Exception {
+    java.lang.reflect.Field field = SnapshotUtils.class.getDeclaredField("hbaseConfiguration");
+    field.setAccessible(true);
+    field.set(null, null);
+  }
+
   @Test
   public void testRemoveSuffixSlashIfExists() {
     String path = "gs://bucket/prefix";
@@ -71,8 +78,8 @@ public class SnapshotUtilsTest {
     DateTimeFormatter formatter =
         DateTimeFormatter.ofPattern("yyyyMMddHHmm").withZone(ZoneId.of("UTC"));
     long currentTime = Long.parseLong(formatter.format(Instant.now()));
-    long returnTime =
-        Long.parseLong(SnapshotUtils.appendCurrentTimestamp(path).replace(path + "/", ""));
+    String returnVal = SnapshotUtils.appendCurrentTimestamp(path).replace(path + "/", "");
+    long returnTime = Long.parseLong(returnVal.split("-")[0]);
     assertThat((returnTime - currentTime), lessThan(2L));
   }
 
