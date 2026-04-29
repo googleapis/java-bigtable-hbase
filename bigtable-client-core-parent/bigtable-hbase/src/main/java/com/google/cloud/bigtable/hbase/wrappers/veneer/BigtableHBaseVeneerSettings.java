@@ -491,6 +491,20 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     final InstantiatingGrpcChannelProvider.Builder channelProvider =
         ((InstantiatingGrpcChannelProvider) stubSettings.getTransportChannelProvider()).toBuilder();
 
+    // Raise the gRPC inbound message size to 500MB. This is ok because maxInboundMessageSize
+    // doesn't pre-allocate the memory. It's only used to validate the message size from the
+    // gRPC header. When processing the data, the memory is always dynamically allocated.
+    // Bigtable server also enforces a 256MB limit.
+    ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
+        channelProvider.getChannelConfigurator();
+    channelProvider.setChannelConfigurator(
+        cb -> {
+          if (channelConfigurator != null) {
+            cb = channelConfigurator.apply(cb);
+          }
+          return cb.maxInboundMessageSize(1024 * 1024 * 500);
+        });
+
     if (configuration.getBoolean(BIGTABLE_USE_PLAINTEXT_NEGOTIATION, false)) {
       // Make sure to avoid clobbering the old Configurator
       @SuppressWarnings("rawtypes")
