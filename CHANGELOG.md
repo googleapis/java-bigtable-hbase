@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.18.3](https://github.com/googleapis/java-bigtable-hbase/compare/v2.18.2...v2.18.3) (2026-04-30)
+
+
+### Bug Fixes
+
+* do not split near empty ranges ([#4604](https://github.com/googleapis/java-bigtable-hbase/issues/4604)) ([c37ca95](https://github.com/googleapis/java-bigtable-hbase/commit/c37ca951f4cd1164b47c2e66f04ac6423651f592))
+
 ## [2.18.2](https://github.com/googleapis/java-bigtable-hbase/compare/v2.18.1...v2.18.2) (2026-04-29)
 
 
