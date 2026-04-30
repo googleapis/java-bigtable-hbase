@@ -39,6 +39,33 @@ limitations under the License.
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+
+      <!-- Version alignment -->
+      <!-- Mark all annotations as provided. They don't affect the runtime of the pipeline so
+      there is no need to try to version align them -->
+      <dependency>
+        <groupId>org.checkerframework</groupId>
+        <artifactId>checker-qual</artifactId>
+        <version>3.31.0</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.google.errorprone</groupId>
+        <artifactId>error_prone_annotations</artifactId>
+        <version>2.18.0</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>animal-sniffer-annotations</artifactId>
+        <version>1.22</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.annotation</groupId>
+        <artifactId>jakarta.annotation-api</artifactId>
+        <scope>provided</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -118,6 +145,10 @@ limitations under the License.
           <groupId>org.apache.hadoop</groupId>
           <artifactId>hadoop-hdfs-client</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-shaded-client</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -134,7 +165,11 @@ limitations under the License.
       <artifactId>beam-runners-direct-java</artifactId>
       <scope>test</scope>
     </dependency>
-
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-bigtable-emulator-core</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-testing-util</artifactId>
@@ -148,11 +183,6 @@ limitations under the License.
       </exclusions>
     </dependency>
 
-    <dependency>
-      <groupId>com.google.cloud</groupId>
-      <artifactId>google-cloud-bigtable-emulator-core</artifactId>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-internal-test-helper</artifactId>
@@ -186,7 +216,7 @@ limitations under the License.
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
+      <artifactId>mockito-inline</artifactId>
       <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
@@ -221,6 +251,14 @@ limitations under the License.
 
 
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <fork>true</fork>
+        </configuration>
+      </plugin>
+
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>
@@ -287,6 +325,7 @@ limitations under the License.
 	      <filter>
 		  <artifact>*:*</artifact>
 		  <excludes>
+		      <exclude>META-INF/services/java.net.spi.InetAddressResolverProvider</exclude>
 		      <exclude>META-INF/*.SF</exclude>
 		      <exclude>META-INF/*.DSA</exclude>
 		      <exclude>META-INF/*.RSA</exclude>
