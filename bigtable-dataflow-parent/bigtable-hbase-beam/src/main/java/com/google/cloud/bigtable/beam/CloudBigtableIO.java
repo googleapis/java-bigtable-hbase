@@ -836,7 +836,7 @@ public class CloudBigtableIO {
       ByteKey splitKey;
       try {
         splitKey = rangeTracker.getRange().interpolateKey(fraction);
-      } catch (IllegalArgumentException e) {
+      } catch (IllegalArgumentException | IllegalStateException e) {
         READER_LOG.info(
             "{}: Failed to interpolate key for fraction {}.", rangeTracker.getRange(), fraction);
         return null;
