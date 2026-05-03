@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.beam.hbasesnapshots;
+package com.google.cloud.bigtable.beam.hbasesnapshots.dofn;
 
+import com.google.api.core.InternalApi;
 import com.google.api.services.storage.model.Objects;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -32,8 +33,26 @@ import org.apache.commons.logging.LogFactory;
  * A {@link DoFn} that could be used for cleaning up temp files generated during HBase snapshot
  * scans in Google Cloud Storage(GCS) bucket via GCS connector.
  */
-class CleanupHBaseSnapshotRestoreFilesFn extends DoFn<KV<String, String>, Boolean> {
-  private static final Log LOG = LogFactory.getLog(CleanupHBaseSnapshotRestoreFilesFn.class);
+@InternalApi("For internal usage only")
+public class CleanupHBaseSnapshotRestoreFiles extends DoFn<KV<String, String>, Boolean> {
+  private static final Log LOG = LogFactory.getLog(CleanupHBaseSnapshotRestoreFiles.class);
+
+  public static String getWorkingBucketName(String hbaseSnapshotDir) {
+    Preconditions.checkArgument(
+        hbaseSnapshotDir.startsWith(GcsPath.SCHEME),
+        "snapshot folder must be hosted in a GCS bucket ");
+
+    return GcsPath.fromUri(hbaseSnapshotDir).getBucket();
+  }
+
+  // getListPrefix convert absolute restorePath in a Hadoop filesystem
+  // to a match prefix in a GCS bucket
+  public static String getListPrefix(String restorePath) {
+    Preconditions.checkArgument(
+        restorePath.startsWith("/"),
+        "restore folder must be an absolute path in current filesystem");
+    return restorePath.substring(1);
+  }
 
   @ProcessElement
   public void processElement(ProcessContext context) throws IOException {
@@ -64,21 +83,5 @@ class CleanupHBaseSnapshotRestoreFilesFn extends DoFn<KV<String, String>, Boolea
     } while (pageToken != null);
     gcsUtil.remove(results);
     context.output(true);
-  }
-
-  public static String getWorkingBucketName(String hbaseSnapshotDir) {
-    Preconditions.checkArgument(
-        hbaseSnapshotDir.startsWith(GcsPath.SCHEME),
-        "snapshot folder must be hosted in a GCS bucket ");
-
-    return GcsPath.fromUri(hbaseSnapshotDir).getBucket();
-  }
-  // getListPrefix convert absolute restorePath in a Hadoop filesystem
-  // to a match prefix in a GCS bucket
-  public static String getListPrefix(String restorePath) {
-    Preconditions.checkArgument(
-        restorePath.startsWith("/"),
-        "restore folder must be an absolute path in current filesystem");
-    return restorePath.substring(1);
   }
 }
