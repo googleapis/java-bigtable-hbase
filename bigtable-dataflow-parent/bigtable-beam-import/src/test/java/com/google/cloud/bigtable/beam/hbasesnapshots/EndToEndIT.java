@@ -160,6 +160,7 @@ public class EndToEndIT {
     }
 
     connection.getAdmin().deleteTable(TableName.valueOf(tableId));
+    connection.getAdmin().close();
     connection.close();
   }
 
@@ -369,47 +370,48 @@ public class EndToEndIT {
     // Introduce corruptions to the data in Bigtable. Delete data from Bigtable to simulate Bigtable
     // missing data. Add data to Bigtable to simulate extra data in Bigtable. It is easier to update
     // Bigtable than change the snapshots.
-    Table table = connection.getTable(TableName.valueOf(tableId));
-    Cell cellInMiddle = table.get(new Get(mismatchRowInMiddle)).rawCells()[0];
-    List<Put> puts =
-        Arrays.asList(
-            // Add a row at the start
-            new Put(mismatchRowAtStart)
-                .addColumn(CF.getBytes(), "random_col".getBytes(), 1L, "value000".getBytes())
-                .addColumn(CF.getBytes(), "random_col".getBytes(), 2L, "value001".getBytes()),
-            // change a cell in middle
-            new Put(cellInMiddle.getRowArray())
-                .addColumn(
-                    cellInMiddle.getFamilyArray(),
-                    cellInMiddle.getQualifierArray(),
-                    cellInMiddle.getTimestamp(),
-                    "corrupted_val".getBytes()),
-            // add a new row in the end
-            new Put(mismatchRowAtTheEnd)
-                .addColumn(CF.getBytes(), "random_col".getBytes(), 100L, "value999".getBytes()));
+    try (Table table = connection.getTable(TableName.valueOf(tableId))) {
+      Cell cellInMiddle = table.get(new Get(mismatchRowInMiddle)).rawCells()[0];
+      List<Put> puts =
+          Arrays.asList(
+              // Add a row at the start
+              new Put(mismatchRowAtStart)
+                  .addColumn(CF.getBytes(), "random_col".getBytes(), 1L, "value000".getBytes())
+                  .addColumn(CF.getBytes(), "random_col".getBytes(), 2L, "value001".getBytes()),
+              // change a cell in middle
+              new Put(cellInMiddle.getRowArray())
+                  .addColumn(
+                      cellInMiddle.getFamilyArray(),
+                      cellInMiddle.getQualifierArray(),
+                      cellInMiddle.getTimestamp(),
+                      "corrupted_val".getBytes()),
+              // add a new row in the end
+              new Put(mismatchRowAtTheEnd)
+                  .addColumn(CF.getBytes(), "random_col".getBytes(), 100L, "value999".getBytes()));
 
-    table.put(puts);
-    // Delete a random row in the middle. We should see 4 ranges mismatch as table is split on
-    // 1,2...9. All the updates are happening on a different split.
-    table.delete(new Delete(mismatchRowDeleted));
+      table.put(puts);
+      // Delete a random row in the middle. We should see 4 ranges mismatch as table is split on
+      // 1,2...9. All the updates are happening on a different split.
+      table.delete(new Delete(mismatchRowDeleted));
 
-    // Run SyncTable job and expect 4 mismatches.
-    SyncTableOptions syncOpts = createSyncTableOptions();
-    PipelineResult result = SyncTableJob.buildPipeline(syncOpts).run();
-    state = result.waitUntilFinish();
-    Assert.assertEquals(State.DONE, state);
+      // Run SyncTable job and expect 4 mismatches.
+      SyncTableOptions syncOpts = createSyncTableOptions();
+      PipelineResult result = SyncTableJob.buildPipeline(syncOpts).run();
+      state = result.waitUntilFinish();
+      Assert.assertEquals(State.DONE, state);
 
-    List<RangeHash> syncTableOutputMismatches = readMismatchesFromOutputFiles();
-    Assert.assertEquals(4, syncTableOutputMismatches.size());
-    validateRowInRangeHashes(
-        Arrays.asList(
-            mismatchRowAtStart, mismatchRowAtTheEnd, mismatchRowDeleted, mismatchRowInMiddle),
-        syncTableOutputMismatches);
+      List<RangeHash> syncTableOutputMismatches = readMismatchesFromOutputFiles();
+      Assert.assertEquals(4, syncTableOutputMismatches.size());
+      validateRowInRangeHashes(
+          Arrays.asList(
+              mismatchRowAtStart, mismatchRowAtTheEnd, mismatchRowDeleted, mismatchRowInMiddle),
+          syncTableOutputMismatches);
 
-    // Assert that the output collection is the right one.
-    Map<String, Long> counters = getCountMap(result);
-    Assert.assertEquals(counters.get("ranges_matched"), (Long) 96L);
-    Assert.assertEquals(counters.get("ranges_not_matched"), (Long) 4L);
+      // Assert that the output collection is the right one.
+      Map<String, Long> counters = getCountMap(result);
+      Assert.assertEquals(counters.get("ranges_matched"), (Long) 96L);
+      Assert.assertEquals(counters.get("ranges_not_matched"), (Long) 4L);
+    }
   }
 
   @Test
