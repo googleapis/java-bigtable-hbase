@@ -61,6 +61,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -146,7 +147,9 @@ public class EndToEndIT {
     TableName tableName = TableName.valueOf(tableId);
     HTableDescriptor descriptor = new HTableDescriptor(tableName);
     descriptor.addFamily(new HColumnDescriptor(CF));
-    connection.getAdmin().createTable(descriptor, SnapshotTestingUtils.getSplitKeys());
+    try (Admin admin = connection.getAdmin()) {
+      admin.createTable(descriptor, SnapshotTestingUtils.getSplitKeys());
+    }
   }
 
   @After
@@ -159,8 +162,9 @@ public class EndToEndIT {
       this.gcsUtil.remove(paths.stream().map(GcsPath::toString).collect(Collectors.toList()));
     }
 
-    connection.getAdmin().deleteTable(TableName.valueOf(tableId));
-    connection.getAdmin().close();
+    try (Admin admin = connection.getAdmin()) {
+      admin.deleteTable(TableName.valueOf(tableId));
+    }
     connection.close();
   }
 
@@ -317,21 +321,23 @@ public class EndToEndIT {
     String restorePathPrefix =
         CleanupHBaseSnapshotRestoreFilesFn.getListPrefix(
             HBaseSnapshotInputConfigBuilder.RESTORE_DIR);
-    List<StorageObject> allObjects = new ArrayList<>();
-    String nextToken;
+
+    String specificPrefix = restorePathPrefix + importOpts.getJobName();
+
+    List<StorageObject> myObjects = new ArrayList<>();
+    String nextToken = null;
     do {
-      Objects objects = gcsUtil.listObjects(bucket, restorePathPrefix, null);
+      Objects objects = gcsUtil.listObjects(bucket, specificPrefix, nextToken);
       List<StorageObject> items = objects.getItems();
       if (items != null) {
-        allObjects.addAll(items);
+        myObjects.addAll(items);
+      }
+      if (!myObjects.isEmpty()) {
+        break;
       }
       nextToken = objects.getNextPageToken();
     } while (nextToken != null);
-
-    List<StorageObject> myObjects =
-        allObjects.stream()
-            .filter(o -> o.getName().contains(importOpts.getJobName()))
-            .collect(Collectors.toList());
+    
     Assert.assertTrue("Restore directory wasn't deleted", myObjects.isEmpty());
 
     // Verify the import using the sync job
