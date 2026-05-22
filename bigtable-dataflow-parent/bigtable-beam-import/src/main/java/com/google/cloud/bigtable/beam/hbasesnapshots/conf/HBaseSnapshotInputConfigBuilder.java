@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.cloud.bigtable.beam.hbasesnapshots;
+package com.google.cloud.bigtable.beam.hbasesnapshots.conf;
 
 import com.google.common.base.Preconditions;
 import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
@@ -37,7 +37,7 @@ import org.apache.hadoop.mapreduce.Job;
  * hosted in Google Cloud Storage(GCS) bucket via GCS connector. It uses {@link
  * TableSnapshotInputFormat} for reading HBase snapshots.
  */
-class HBaseSnapshotInputConfigBuilder {
+public class HBaseSnapshotInputConfigBuilder {
 
   private static final Log LOG = LogFactory.getLog(HBaseSnapshotInputConfigBuilder.class);
   // Batch size used for HBase snapshot scans
