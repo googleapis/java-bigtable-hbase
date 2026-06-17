@@ -15,21 +15,38 @@
  */
 package com.google.cloud.bigtable.beam.hbasesnapshots;
 
-import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
+import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration;
 import com.google.cloud.bigtable.beam.TemplateUtils;
+import com.google.cloud.bigtable.beam.hbasesnapshots.conf.HBaseSnapshotInputConfigBuilder;
+import com.google.cloud.bigtable.beam.hbasesnapshots.conf.ImportConfig;
+import com.google.cloud.bigtable.beam.hbasesnapshots.conf.SnapshotConfig;
+import com.google.cloud.bigtable.beam.hbasesnapshots.dofn.CleanupHBaseSnapshotRestoreFilesFn;
+import com.google.cloud.bigtable.beam.hbasesnapshots.dofn.CleanupRestoredSnapshotsFn;
+import com.google.cloud.bigtable.beam.hbasesnapshots.dofn.RestoreSnapshotFn;
+import com.google.cloud.bigtable.beam.hbasesnapshots.transforms.ListRegions;
+import com.google.cloud.bigtable.beam.hbasesnapshots.transforms.ReadRegions;
 import com.google.cloud.bigtable.beam.sequencefiles.HBaseResultToMutationFn;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob;
 import com.google.cloud.bigtable.beam.sequencefiles.Utils;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import org.apache.beam.runners.dataflow.options.DataflowPipelineDebugOptions;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
+import org.apache.beam.sdk.extensions.gcp.options.GcsOptions;
+import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.Wait;
@@ -37,6 +54,7 @@ import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 
@@ -63,10 +81,31 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
  * Note that in the case of job failures, the temp files generated in the .restore-$JOB_NAME
  * directory under the snapshot export bucket will not get deleted. Hence one need to either launch
  * a replacement job with the same jobName to re-run the job or manually delete this directory.
+ * Additionally, it is highly recommended to set a GCS Lifecycle TTL (e.g., 7 days) on the bucket
+ * used for the restore path to automatically clean up any orphaned files.
+ *
+ * <p><b>Running Parallel Sharded Jobs:</b> To import a snapshot in parallel shards (using {@code
+ * --numShards} and {@code --shardIndex}), you must first run a single restore step to copy the
+ * files to the restore path (e.g., using this job with {@code --performOnlyRestoreStep=true} or
+ * using {@link HBaseSnapshotRestoreTool}). Once the restore is complete, launch the parallel
+ * sharded import jobs concurrently, making sure to set {@code --skipRestoreStep=true} and {@code
+ * --deleteRestoredSnapshots=false} on all shards. This prevents concurrent shards from deleting the
+ * restore path while other shards are still reading.
  */
 @InternalExtensionOnly
 public class ImportJobFromHbaseSnapshot {
   private static final Log LOG = LogFactory.getLog(ImportJobFromHbaseSnapshot.class);
+
+  @VisibleForTesting
+  static final String MISSING_SNAPSHOT_SOURCEPATH =
+      "Source Path containing hbase snapshots must be specified.";
+
+  @VisibleForTesting
+  static final String MISSING_SNAPSHOT_NAMES =
+      "Snapshots must be specified. Allowed values are '*' (indicating all snapshots under source"
+          + " path) or 'prefix*' (snapshots matching certain prefix) or"
+          + " 'snapshotname1:tablename1,snapshotname2:tablename2' (comma seperated list of"
+          + " snapshots)";
 
   public interface ImportOptions extends ImportJob.ImportOptions {
     @Description("The HBase root dir where HBase snapshot files resides.")
@@ -87,24 +126,298 @@ public class ImportJobFromHbaseSnapshot {
 
     @SuppressWarnings("unused")
     void setEnableSnappy(Boolean enableSnappy);
+
+    @Description("Path to config file containing snapshot source path/snapshot names.")
+    String getImportConfigFilePath();
+
+    void setImportConfigFilePath(String value);
+
+    @Description(
+        "Snapshots to be imported. Can be '*', 'prefix*' or 'snap1,snap2' or"
+            + " 'snap1:table1,snap2:table2'.")
+    String getSnapshots();
+
+    void setSnapshots(String value);
+
+    @Description("Specifies whether to use dynamic splitting while reading hbase region.")
+    @Default.Boolean(true)
+    boolean getUseDynamicSplitting();
+
+    void setUseDynamicSplitting(boolean value);
+
+    @Description("Specifies the threshold for number of cells per mutation written.")
+    @Default.Integer(100_000 - 1)
+    int getMaxMutationsPerRequestThreshold();
+
+    void setMaxMutationsPerRequestThreshold(int value);
+
+    @Description(
+        "Specifies whether to filter large rows that exceed FilterLargeRowsThresholdBytes should be"
+            + " logged and dropped.")
+    @Default.Boolean(false)
+    boolean getFilterLargeRows();
+
+    void setFilterLargeRows(boolean value);
+
+    @Description(
+        "Specifies the size in bytes of a row that should be logged and dropped before loading to"
+            + " Bigtable.")
+    @Default.Long(256 * 1024 * 1024)
+    long getFilterLargeRowsThresholdBytes();
+
+    void setFilterLargeRowsThresholdBytes(long value);
+
+    @Description(
+        "Specifies whether to filter large cells that exceed FilterLargeCellsThresholdBytes should"
+            + " be logged and dropped.")
+    @Default.Boolean(true)
+    boolean getFilterLargeCells();
+
+    void setFilterLargeCells(boolean value);
+
+    @Description(
+        "Specifies the size in bytes of a cell that should be logged and dropped before loading to"
+            + " Bigtable.")
+    @Default.Integer(100 * 1024 * 1024)
+    int getFilterLargeCellsThresholdBytes();
+
+    void setFilterLargeCellsThresholdBytes(int value);
+
+    @Description(
+        "Specifies whether to filter large row keys that exceed FilterLargeRowKeysThresholdBytes"
+            + " should be logged and dropped.")
+    @Default.Boolean(false)
+    boolean getFilterLargeRowKeys();
+
+    void setFilterLargeRowKeys(boolean value);
+
+    @Description(
+        "Drops wide rows exceeding MaxMutationsPerRequestThreshold to prevent atomicity loss from"
+            + " splitting (losing data), otherwise splits them to preserve data.")
+    @Default.Boolean(false)
+    boolean getFilterWideRows();
+
+    void setFilterWideRows(boolean value);
+
+    @Description(
+        "Specifies the size in bytes of a row key that should be logged and dropped before loading"
+            + " to Bigtable.")
+    @Default.Integer(4 * 1024)
+    int getFilterLargeRowKeysThresholdBytes();
+
+    void setFilterLargeRowKeysThresholdBytes(int value);
+
+    @Description(
+        "Specifies the number of shards to use when loading the snapshot. "
+            + "If set, shardIndex must also be set.")
+    Integer getNumShards();
+
+    void setNumShards(Integer value);
+
+    @Description("Specifies the shard index from [0, numShards) that this load represents.")
+    Integer getShardIndex();
+
+    void setShardIndex(Integer value);
+
+    @Description("Specifies the path to the restored Snapshot files.")
+    String getRestorePath();
+
+    void setRestorePath(String value);
+
+    @Description(
+        "Specifies whether the snapshots restored should be deleted. Note: Cleanup is best-effort"
+            + " and will not fail the job if deletion fails after retries. When running parallel"
+            + " sharded jobs concurrently, this must be set to false to prevent a shard from"
+            + " deleting the files while other shards are still reading.")
+    @Default.Boolean(false)
+    Boolean getDeleteRestoredSnapshots();
+
+    void setDeleteRestoredSnapshots(Boolean value);
+
+    @Description(
+        "Specifies whether the restore step should be skipped. When running parallel sharded jobs"
+            + " concurrently, this must be set to true (after running a single separate restore"
+            + " step beforehand) to prevent concurrent restore steps from deleting and corrupting"
+            + " active files.")
+    @Default.Boolean(false)
+    Boolean getSkipRestoreStep();
+
+    void setSkipRestoreStep(Boolean value);
+
+    @Description("Specifies whether to perform only restore step.")
+    @Default.Boolean(false)
+    Boolean getPerformOnlyRestoreStep();
+
+    void setPerformOnlyRestoreStep(Boolean value);
   }
 
   public static void main(String[] args) throws Exception {
     PipelineOptionsFactory.register(ImportOptions.class);
 
-    ImportOptions opts =
+    ImportOptions options =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(ImportOptions.class);
 
+    // To determine the Google Cloud Storage file scheme (gs://)
+    FileSystems.setDefaultPipelineOptions(options);
+
     LOG.info("Building Pipeline");
-    Pipeline pipeline = buildPipeline(opts);
+    Pipeline pipeline = null;
+    ImportConfig importConfig = null;
+    // Maintain Backward compatibility until deprecation
+    if (options.getSnapshotName() != null && !options.getSnapshotName().isEmpty()) {
+      pipeline = buildPipeline(options);
+    } else {
+      importConfig =
+          options.getImportConfigFilePath() != null
+              ? buildImportConfigFromConfigFile(options.getImportConfigFilePath())
+              : buildImportConfigFromPipelineOptions(options, options.as(GcsOptions.class));
+
+      LOG.info(
+          String.format(
+              "SourcePath:%s, RestorePath:%s",
+              importConfig.getSourcepath(), importConfig.getRestorepath()));
+      pipeline = buildPipelineWithMultipleSnapshots(options, importConfig);
+    }
+
     LOG.info("Running Pipeline");
     PipelineResult result = pipeline.run();
-
-    if (opts.getWait()) {
+    if (options.getWait()) {
       Utils.waitForPipelineToFinish(result);
     }
   }
 
+  @VisibleForTesting
+  static ImportConfig buildImportConfigFromConfigFile(String configFilePath) throws Exception {
+    Gson gson = new GsonBuilder().create();
+    ImportConfig importConfig =
+        gson.fromJson(SnapshotUtils.readFileContents(configFilePath), ImportConfig.class);
+    importConfig.validate();
+    SnapshotUtils.setRestorePath(importConfig.getRestorepath(), importConfig);
+    return importConfig;
+  }
+
+  @VisibleForTesting
+  static ImportConfig buildImportConfigFromPipelineOptions(
+      ImportOptions options, GcsOptions gcsOptions) throws IOException {
+    String sourceDir = options.getHbaseSnapshotSourceDir();
+    String snapshotsProperty = options.getSnapshots();
+    Map<String, String> snapshots = null;
+    if (snapshotsProperty != null) {
+      snapshots =
+          (sourceDir != null && SnapshotUtils.isRegex(snapshotsProperty))
+              ? SnapshotUtils.getSnapshotsFromSnapshotPath(
+                  sourceDir, gcsOptions.getGcsUtil(), snapshotsProperty)
+              : SnapshotUtils.getSnapshotsFromString(snapshotsProperty);
+    }
+
+    ImportConfig importConfig = new ImportConfig();
+    importConfig.setSourcepath(sourceDir);
+    if (snapshots != null) {
+      importConfig.setSnapshotsFromMap(snapshots);
+    }
+    importConfig.validate();
+    SnapshotUtils.setRestorePath(options.getRestorePath(), importConfig);
+    return importConfig;
+  }
+
+  /**
+   * Builds the pipeline that supports loading multiple snapshots to BigTable.
+   *
+   * @param options - Pipeline options
+   * @param importConfig - Configuration representing snapshot source path, list of snapshots etc
+   * @return
+   * @throws Exception
+   */
+  static Pipeline buildPipelineWithMultipleSnapshots(
+      ImportOptions options, ImportConfig importConfig) throws Exception {
+    Map<String, String> configurations =
+        SnapshotUtils.getConfiguration(
+            options.getRunner().getSimpleName(),
+            options.getProject(),
+            importConfig.getSourcepath(),
+            importConfig.getHbaseConfiguration());
+
+    List<SnapshotConfig> snapshotConfigs =
+        SnapshotUtils.buildSnapshotConfigs(
+            importConfig.getSnapshots(),
+            configurations,
+            options.getProject(),
+            importConfig.getSourcepath(),
+            importConfig.getRestorepath());
+    DataflowPipelineDebugOptions debugOptions = options.as(DataflowPipelineDebugOptions.class);
+    // Disable GC thrashing detection to prevent Dataflow from prematurely killing
+    // workers during memory-intensive HBase snapshot scans.
+    debugOptions.setGCThrashingPercentagePerPeriod(100.00);
+
+    Pipeline pipeline = Pipeline.create(debugOptions);
+
+    PCollection<SnapshotConfig> restoredSnapshots =
+        pipeline.apply("Read Snapshot Configs", Create.of(snapshotConfigs));
+    if (!options.getSkipRestoreStep()) {
+      restoredSnapshots =
+          restoredSnapshots.apply("Restore Snapshots", ParDo.of(new RestoreSnapshotFn()));
+    }
+    if (options.getPerformOnlyRestoreStep()) {
+      return pipeline;
+    }
+    // Read records from hbase region files and write to Bigtable
+    PCollection<KV<String, Iterable<Mutation>>> hbaseRecords =
+        restoredSnapshots
+            .apply("List Regions", new ListRegions())
+            .apply(
+                "Read Regions",
+                new ReadRegions(
+                    options.getUseDynamicSplitting(),
+                    options.getMaxMutationsPerRequestThreshold(),
+                    options.getFilterLargeRows(),
+                    options.getFilterLargeRowsThresholdBytes(),
+                    options.getFilterLargeCells(),
+                    options.getFilterLargeCellsThresholdBytes(),
+                    options.getFilterLargeRowKeys(),
+                    options.getFilterLargeRowKeysThresholdBytes(),
+                    options.getFilterWideRows(),
+                    options.getNumShards(),
+                    options.getShardIndex()));
+
+    options.setBigtableTableId(ValueProvider.StaticValueProvider.of("NA"));
+    CloudBigtableTableConfiguration bigtableConfiguration =
+        TemplateUtils.buildImportConfig(options, "HBaseSnapshotImportJob");
+    if (importConfig.getBigtableConfiguration() != null) {
+      CloudBigtableTableConfiguration.Builder builder = bigtableConfiguration.toBuilder();
+      for (Map.Entry<String, String> entry : importConfig.getBigtableConfiguration().entrySet()) {
+        builder = builder.withConfiguration(entry.getKey(), entry.getValue());
+      }
+      bigtableConfiguration = builder.build();
+    }
+
+    hbaseRecords.apply(
+        "Write to BigTable", CloudBigtableIO.writeToMultipleTables(bigtableConfiguration));
+
+    // Clean up all the temporary restored snapshot HLinks after reading all the data
+    if (options.getDeleteRestoredSnapshots()) {
+      restoredSnapshots
+          .apply(Wait.on(hbaseRecords))
+          .apply(
+              "Clean restored files",
+              ParDo.of(
+                  new CleanupRestoredSnapshotsFn(
+                      importConfig.getBackoffInitialIntervalInMillis(),
+                      importConfig.getBackoffMaxIntervalInMillis(),
+                      importConfig.getBackoffMaxretries())));
+    }
+
+    return pipeline;
+  }
+
+  /**
+   * Builds the pipeline that supports loading single snapshot to BigTable. Maintained for backward
+   * compatiablity and will be deprecated merging the functionality to
+   * buildPipelineWithMultipleSnapshots method.
+   *
+   * @param opts - Pipeline options
+   * @return
+   * @throws Exception
+   */
   @VisibleForTesting
   static Pipeline buildPipeline(ImportOptions opts) throws Exception {
     Pipeline pipeline = Pipeline.create(Utils.tweakOptions(opts));

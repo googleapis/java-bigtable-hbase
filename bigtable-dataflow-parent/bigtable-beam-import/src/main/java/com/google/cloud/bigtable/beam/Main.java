@@ -17,6 +17,7 @@ package com.google.cloud.bigtable.beam;
 
 import com.google.bigtable.repackaged.com.google.api.core.InternalApi;
 import com.google.bigtable.repackaged.com.google.api.core.InternalExtensionOnly;
+import com.google.cloud.bigtable.beam.hbasesnapshots.HBaseSnapshotRestoreTool;
 import com.google.cloud.bigtable.beam.hbasesnapshots.ImportJobFromHbaseSnapshot;
 import com.google.cloud.bigtable.beam.sequencefiles.CreateTableHelper;
 import com.google.cloud.bigtable.beam.sequencefiles.ExportJob;
@@ -50,6 +51,9 @@ public final class Main {
         break;
       case "importsnapshot":
         ImportJobFromHbaseSnapshot.main(subArgs);
+        break;
+      case "restoresnapshot":
+        HBaseSnapshotRestoreTool.main(subArgs);
         break;
       case "create-table":
         CreateTableHelper.main(subArgs);
