@@ -20,6 +20,8 @@ import com.google.cloud.bigtable.beam.sequencefiles.ExportJob.ExportOptions;
 import com.google.cloud.bigtable.beam.sequencefiles.ImportJob.ImportOptions;
 import com.google.cloud.bigtable.beam.validation.SyncTableJob.SyncTableOptions;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
+import com.google.cloud.bigtable.hbase.wrappers.BigtableHBaseSettings;
+import java.util.concurrent.TimeUnit;
 import org.apache.beam.sdk.options.ValueProvider;
 
 /**
@@ -44,7 +46,16 @@ public class TemplateUtils {
             .withProjectId(opts.getBigtableProject())
             .withInstanceId(opts.getBigtableInstanceId())
             .withTableId(opts.getBigtableTableId())
-            .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, customUserAgent);
+            .withConfiguration(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, customUserAgent)
+            .withConfiguration(
+                BigtableOptionsFactory.MAX_INFLIGHT_RPCS_KEY,
+                ValueProvider.NestedValueProvider.of(opts.getMaxInflightRpcs(), String::valueOf))
+            .withConfiguration(
+                BigtableHBaseSettings.BULK_MUTATION_CLOSE_TIMEOUT_MILLISECONDS,
+                ValueProvider.NestedValueProvider.of(
+                    opts.getBulkMutationCloseTimeoutMinutes(),
+                    (Integer minutes) ->
+                        String.valueOf(TimeUnit.MINUTES.toMillis(minutes == null ? 30 : minutes))));
     if (opts.getBigtableAppProfileId() != null) {
       builder.withAppProfileId(opts.getBigtableAppProfileId());
     }

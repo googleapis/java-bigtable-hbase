@@ -126,6 +126,18 @@ public class ImportJob {
     @SuppressWarnings("unused")
     void setMutationThrottleLatencyMs(ValueProvider<Integer> throttleMs);
 
+    @Description("Maximum number of inflight RPCs.")
+    @Default.Integer(100)
+    ValueProvider<Integer> getMaxInflightRpcs();
+
+    void setMaxInflightRpcs(ValueProvider<Integer> value);
+
+    @Description("Bulk mutation close timeout in minutes.")
+    @Default.Integer(30)
+    ValueProvider<Integer> getBulkMutationCloseTimeoutMinutes();
+
+    void setBulkMutationCloseTimeoutMinutes(ValueProvider<Integer> value);
+
     // When creating a template, this flag must be set to false.
     @Description("Wait for pipeline to finish.")
     @Default.Boolean(true)

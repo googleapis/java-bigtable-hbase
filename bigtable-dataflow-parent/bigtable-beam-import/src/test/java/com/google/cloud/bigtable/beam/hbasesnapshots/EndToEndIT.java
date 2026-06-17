@@ -19,6 +19,8 @@ import com.google.api.services.storage.model.Objects;
 import com.google.api.services.storage.model.StorageObject;
 import com.google.bigtable.repackaged.com.google.gson.Gson;
 import com.google.cloud.bigtable.beam.hbasesnapshots.ImportJobFromHbaseSnapshot.ImportOptions;
+import com.google.cloud.bigtable.beam.hbasesnapshots.conf.HBaseSnapshotInputConfigBuilder;
+import com.google.cloud.bigtable.beam.hbasesnapshots.dofn.CleanupHBaseSnapshotRestoreFilesFn;
 import com.google.cloud.bigtable.beam.sequencefiles.HBaseResultToMutationFn;
 import com.google.cloud.bigtable.beam.test_env.EnvSetup;
 import com.google.cloud.bigtable.beam.test_env.TestProperties;
@@ -50,6 +52,7 @@ import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.PipelineResult.State;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
+import org.apache.beam.sdk.extensions.gcp.options.GcsOptions;
 import org.apache.beam.sdk.extensions.gcp.util.GcsUtil;
 import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.beam.sdk.metrics.MetricQueryResults;
@@ -84,6 +87,7 @@ import org.slf4j.LoggerFactory;
 public class EndToEndIT {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseResultToMutationFn.class);
+  // The snapshot fixture used in these tests is approximately 78 KB zipped.
   private static final String SNAPSHOT_FIXTURE_NAME = "EndToEndIT-snapshot.zip";
   private static final String TEST_SNAPSHOT_NAME = "test-snapshot";
   private static final String TEST_SNAPPY_SNAPSHOT_NAME = "test-snappy-snapshot";
@@ -315,7 +319,7 @@ public class EndToEndIT {
     String bucket = GcsPath.fromUri(hbaseSnapshotDir).getBucket();
     String restorePathPrefix =
         CleanupHBaseSnapshotRestoreFilesFn.getListPrefix(
-            HBaseSnapshotInputConfigBuilder.RESTORE_DIR);
+            HBaseSnapshotInputConfigBuilder.RESTORE_DIR + importOpts.getJobName());
     List<StorageObject> allObjects = new ArrayList<>();
     String nextToken;
     do {
@@ -428,7 +432,7 @@ public class EndToEndIT {
     String bucket = GcsPath.fromUri(hbaseSnapshotDir).getBucket();
     String restorePathPrefix =
         CleanupHBaseSnapshotRestoreFilesFn.getListPrefix(
-            HBaseSnapshotInputConfigBuilder.RESTORE_DIR);
+            HBaseSnapshotInputConfigBuilder.RESTORE_DIR + importOpts.getJobName());
 
     List<StorageObject> allObjects = new ArrayList<>();
     String nextToken;
@@ -461,5 +465,64 @@ public class EndToEndIT {
     Map<String, Long> counters = getCountMap(result);
     Assert.assertEquals(counters.get("ranges_matched"), (Long) 100L);
     Assert.assertEquals(counters.get("ranges_not_matched"), (Long) 0L);
+  }
+
+  @Test
+  public void testHBaseSnapshotImportWithSharding() throws Exception {
+    int numShards = 4;
+    String sharedRestorePath = workDir + "shared-restore/";
+
+    for (int i = 0; i < numShards; i++) {
+      ImportOptions importOpts = createImportOptions();
+      importOpts.setSnapshotName(null);
+      importOpts.setSnapshots(TEST_SNAPSHOT_NAME + ":" + tableId);
+      importOpts.setNumShards(numShards);
+      importOpts.setShardIndex(i);
+      importOpts.setRestorePath(sharedRestorePath);
+      importOpts.setDeleteRestoredSnapshots(false);
+      if (i > 0) {
+        // Skip restore step for subsequent shards as they can share the restored files from the
+        // first shard.
+        importOpts.setSkipRestoreStep(true);
+      }
+
+      com.google.cloud.bigtable.beam.hbasesnapshots.conf.ImportConfig importConfig =
+          ImportJobFromHbaseSnapshot.buildImportConfigFromPipelineOptions(
+              importOpts, importOpts.as(GcsOptions.class));
+
+      PipelineResult pipelineResult =
+          ImportJobFromHbaseSnapshot.buildPipelineWithMultipleSnapshots(importOpts, importConfig)
+              .run();
+      State state = pipelineResult.waitUntilFinish();
+      if (state != State.DONE) {
+        System.err.println("Pipeline failed for shard " + i + "! State: " + state);
+        if (pipelineResult instanceof org.apache.beam.runners.dataflow.DataflowPipelineJob) {
+          System.err.println(
+              "Dataflow Job ID: "
+                  + ((org.apache.beam.runners.dataflow.DataflowPipelineJob) pipelineResult)
+                      .getJobId());
+        } else {
+          System.err.println("Pipeline Result: " + pipelineResult);
+        }
+      }
+      Assert.assertEquals(State.DONE, state);
+    }
+
+    SyncTableOptions syncOpts = createSyncTableOptions();
+
+    PipelineResult result = SyncTableJob.buildPipeline(syncOpts).run();
+    State state = result.waitUntilFinish();
+    Assert.assertEquals(State.DONE, state);
+
+    Assert.assertEquals(0, readMismatchesFromOutputFiles().size());
+
+    Map<String, Long> counters = getCountMap(result);
+    Assert.assertEquals(counters.get("ranges_matched"), (Long) 100L);
+    Assert.assertEquals(counters.get("ranges_not_matched"), (Long) 0L);
+
+    final List<GcsPath> paths = gcsUtil.expand(GcsPath.fromUri(sharedRestorePath + "*"));
+    if (!paths.isEmpty()) {
+      gcsUtil.remove(paths.stream().map(GcsPath::toString).collect(Collectors.toList()));
+    }
   }
 }
