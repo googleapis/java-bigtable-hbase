@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.19.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.18.3...v2.19.0) (2026-06-17)
+
+
+### Features
+
+* **import:** support multiple hbase snapshot imports, add sharding, stabilization, and resilience updates ([#4600](https://github.com/googleapis/java-bigtable-hbase/issues/4600)) ([fcdd130](https://github.com/googleapis/java-bigtable-hbase/commit/fcdd130b59515185a140836d16ffa3410196b7b4))
+
 ## [2.18.3](https://github.com/googleapis/java-bigtable-hbase/compare/v2.18.2...v2.18.3) (2026-04-30)
 
 
