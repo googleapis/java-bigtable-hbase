@@ -45,7 +45,7 @@ limitations under the License.
     -->
 
     <!-- This controls the hadoop version in the `cbt-shaded-hbase-minimal-unshaded` mode -->
-    <minimal-dep-hadoop.version>3.3.6</minimal-dep-hadoop.version>
+    <minimal-dep-hadoop.version>3.4.0</minimal-dep-hadoop.version>
   </properties>
 
   <profiles>
