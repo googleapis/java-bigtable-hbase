@@ -334,7 +334,6 @@ limitations under the License.
 		      <exclude>META-INF/*.RSA</exclude>
           <exclude>META-INF/**/pom.properties</exclude>
           <exclude>META-INF/**/pom.xml</exclude>
-          <exclude>META-INF/MANIFEST.MF</exclude>
           <exclude>META-INF/LICENSE</exclude>
           <exclude>META-INF/NOTICE.txt</exclude>
           <exclude>META-INF/NOTICE</exclude>

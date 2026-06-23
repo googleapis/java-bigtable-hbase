@@ -58,12 +58,32 @@ END_SHARD=$2
 
 # Configurations
 JAR_PATH="target/bigtable-beam-import-2.18.2-SNAPSHOT-shaded.jar"
-RESTORE_DIR="${SNAPSHOT_SOURCE_DIR}/restore-${SNAPSHOT_NAME}"
+RESTORE_DIR="gs://${BUCKET}/restore-${SNAPSHOT_NAME}"
+# If running the launcher on a newer, unsupported JDK version (e.g. JDK 25+),
+# you can set JVM_OPTS to "-Dnet.bytebuddy.experimental=true" to bypass
+# ByteBuddy class generation crashes during pipeline construction.
+JVM_OPTS=""
+
+# Construct optional network arguments
+NETWORK_ARGS=()
+if [ -n "${NETWORK}" ]; then
+    NETWORK_ARGS+=("--network=${NETWORK}")
+fi
+if [ -n "${SUBNETWORK}" ]; then
+    NETWORK_ARGS+=("--subnetwork=${SUBNETWORK}")
+fi
+
+# Construct optional service account arguments
+SERVICE_ACCOUNT_ARGS=()
+if [ -n "${SERVICE_ACCOUNT}" ]; then
+    SERVICE_ACCOUNT_ARGS+=("--serviceAccount=${SERVICE_ACCOUNT}")
+fi
+
 
 # --- RESTORE ONLY MODE ---
 if [ "$1" == "--restore-only" ]; then
     echo "🚀 Performing snapshot restore (blocking)..."
-    java -jar ${JAR_PATH} importsnapshot \
+    java ${JVM_OPTS} -jar ${JAR_PATH} importsnapshot \
       --runner=DataflowRunner \
       --project=${PROJECT_ID} \
       --bigtableInstanceId=${INSTANCE_ID} \
@@ -76,8 +96,7 @@ if [ "$1" == "--restore-only" ]; then
       --performOnlyRestoreStep=true \
       --restorePath=${RESTORE_DIR} \
       --jobName="restore-job" \
-      --network=${NETWORK} \
-      --subnetwork=${SUBNETWORK}
+      "${NETWORK_ARGS[@]}"
     echo "✅ Restore completed."
     echo "⚠️ IMPORTANT: Please manually cleanup the restore path once validation succeeds:"
     echo "   gsutil rm -r ${RESTORE_DIR}"
@@ -90,7 +109,7 @@ if [ "$1" == "--all" ]; then
     
     # Step 1: Perform ONLY the restore step
     echo "Step 1/2: Performing snapshot restore (blocking)..."
-    java -jar ${JAR_PATH} importsnapshot \
+    java ${JVM_OPTS} -jar ${JAR_PATH} importsnapshot \
       --runner=DataflowRunner \
       --project=${PROJECT_ID} \
       --bigtableInstanceId=${INSTANCE_ID} \
@@ -103,8 +122,7 @@ if [ "$1" == "--all" ]; then
       --performOnlyRestoreStep=true \
       --restorePath=${RESTORE_DIR} \
       --jobName="restore-job" \
-      --network=${NETWORK} \
-      --subnetwork=${SUBNETWORK}
+      "${NETWORK_ARGS[@]}"
       
     echo "Restore completed. Proceeding to data import."
 
@@ -140,7 +158,7 @@ for i in $(seq $START_SHARD $END_SHARD); do
   SKIP_RESTORE="true"
   
   JOB="job-${i}"
-  java -jar ${JAR_PATH} importsnapshot \
+  java ${JVM_OPTS} -jar ${JAR_PATH} importsnapshot \
     --runner=DataflowRunner \
     --project=${PROJECT_ID} \
     --bigtableInstanceId=${INSTANCE_ID} \
@@ -153,7 +171,7 @@ for i in $(seq $START_SHARD $END_SHARD); do
     --diskSizeGb=500 \
     --maxNumWorkers=10 \
     --region=${REGION} \
-    --serviceAccount=${SERVICE_ACCOUNT} \
+    "${SERVICE_ACCOUNT_ARGS[@]}" \
     --usePublicIps=false \
     --enableSnappy=true \
     --skipRestoreStep=${SKIP_RESTORE} \
@@ -162,8 +180,7 @@ for i in $(seq $START_SHARD $END_SHARD); do
     --numShards=${NUM_SHARDS} \
     --shardIndex=$i \
     --jobName="${JOB}" \
-    --network=${NETWORK} \
-    --subnetwork=${SUBNETWORK} \
+    "${NETWORK_ARGS[@]}" \
     --maxInflightRpcs=${MAX_INFLIGHT_RPCS} \
     --bulkMutationCloseTimeoutMinutes=${BULK_MUTATION_CLOSE_TIMEOUT_MINUTES}
 
