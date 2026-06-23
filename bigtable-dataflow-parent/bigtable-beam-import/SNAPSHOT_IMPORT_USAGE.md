@@ -62,4 +62,4 @@ Example for manual parallel execution:
 
 ### JDK Compatibility
 
-If you are running on a newer JDK (like Java 21 or 26) and hit ByteBuddy errors, you can add `-Dnet.bytebuddy.experimental=true` to the `java` command lines in the script.
+If you are running on a newer, unsupported JDK version (e.g. JDK 25+) and hit ByteBuddy errors, you can simply set the `JVM_OPTS` variable to `"-Dnet.bytebuddy.experimental=true"` in the Configurations section of the `run-snapshot-import.sh` script.
