@@ -183,8 +183,8 @@ if [ "$1" == "--all" ]; then
       
     echo "Restore completed. Proceeding to data import."
 
-    # Step 2: Launch parallel groups of 4
-    echo "Step 2/2: Launching parallel groups of 4 shards..."
+    # Step 2: Launch 4 parallel runner streams
+    echo "Step 2/2: Launching 4 parallel runner streams..."
     MAX_CONCURRENCY=4
     SHARDS_PER_RUNNER=$(( (NUM_SHARDS + MAX_CONCURRENCY - 1) / MAX_CONCURRENCY ))
     
