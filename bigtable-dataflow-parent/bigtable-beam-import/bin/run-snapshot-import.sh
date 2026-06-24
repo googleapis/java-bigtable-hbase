@@ -86,31 +86,20 @@ BULK_MUTATION_CLOSE_TIMEOUT_MINUTES="${BULK_MUTATION_CLOSE_TIMEOUT_MINUTES:-30}"
 # Configurations
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 
-# Detect the shaded JAR dynamically in the target directory
+# Detect the newest shaded JAR dynamically in the target directory
 JAR_PATH=""
-for jar in "${SCRIPT_DIR}/../target"/bigtable-beam-import-*-shaded.jar; do
+for jar in "${SCRIPT_DIR}"/../target/bigtable-beam-import-*-shaded.jar; do
     if [ -f "$jar" ]; then
-        JAR_PATH="$jar"
-        break
+        if [ -z "${JAR_PATH}" ] || [ "$jar" -nt "${JAR_PATH}" ]; then
+            JAR_PATH="$jar"
+        fi
     fi
 done
 
-# If the JAR doesn't exist, build it first
 if [ -z "${JAR_PATH}" ]; then
-    echo "📦 Shaded JAR not found. Building the project first using Maven..."
-    (cd "${SCRIPT_DIR}/.." && mvn clean package -DskipTests)
-    
-    # Re-detect the JAR after building
-    for jar in "${SCRIPT_DIR}/../target"/bigtable-beam-import-*-shaded.jar; do
-        if [ -f "$jar" ]; then
-            JAR_PATH="$jar"
-            break
-        fi
-    done
-fi
-
-if [ -z "${JAR_PATH}" ]; then
-    echo "❌ Error: Failed to find or build the shaded JAR in ${SCRIPT_DIR}/../target/"
+    echo "❌ Error: Shaded JAR not found in ${SCRIPT_DIR}/../target/"
+    echo "   Please compile and package the project first by running:"
+    echo "   mvn clean package -DskipTests"
     exit 1
 fi
 RESTORE_DIR="gs://${BUCKET}/restore-${SNAPSHOT_NAME}"
