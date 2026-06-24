@@ -177,14 +177,16 @@ if [ "$1" == "--all" ]; then
 
     # Step 2: Launch parallel groups of 4
     echo "Step 2/2: Launching parallel groups of 4 shards..."
-    SHARDS_PER_GROUP=4
+    MAX_CONCURRENCY=4
+    SHARDS_PER_RUNNER=$(( (NUM_SHARDS + MAX_CONCURRENCY - 1) / MAX_CONCURRENCY ))
     
-    for (( start=0; start<$NUM_SHARDS; start+=$SHARDS_PER_GROUP )); do
-        end=$((start + SHARDS_PER_GROUP - 1))
+    for (( runner=0; runner<MAX_CONCURRENCY; runner++ )); do
+        start=$(( runner * SHARDS_PER_RUNNER ))
+        end=$(( start + SHARDS_PER_RUNNER - 1 ))
+        [ $start -ge $NUM_SHARDS ] && break
         [ $end -ge $NUM_SHARDS ] && end=$((NUM_SHARDS - 1))
         
-        echo "Launching group: shards $start to $end in background"
-        # Call ourselves with the range!
+        echo "Launching runner $runner: shards $start to $end in background"
         $0 $start $end &
     done
     
