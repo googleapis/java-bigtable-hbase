@@ -21,6 +21,12 @@ The script relies on the following environment variables. You should set them be
 | `BULK_MUTATION_CLOSE_TIMEOUT_MINUTES` | *Optional* | Timeout in minutes for closing bulk mutations. | `30` (Default) |
 | `NETWORK` | *Optional* | VPC Network name for Dataflow workers. | `your-network` |
 | `SUBNETWORK` | *Optional* | VPC Subnetwork name for Dataflow workers. | `regions/us-central1/subnetworks/your-subnetwork` |
+| `JOB_NAME_PREFIX` | *Optional* | Safe, unique prefix for all Dataflow jobs to prevent name collisions. | `import-<sanitized_table_name>` (Default) |
+| `WORKER_MACHINE_TYPE` | *Optional* | Compute Engine machine type for Dataflow workers. | `n1-highmem-4` (Default) |
+| `DISK_SIZE_GB` | *Optional* | Worker disk size in Gigabytes. | `500` (Default) |
+| `MAX_NUM_WORKERS` | *Optional* | Maximum number of active Dataflow workers per job. | `10` (Default) |
+| `USE_PUBLIC_IPS` | *Optional* | Whether Dataflow workers should have public IPs. | `false` (Default) |
+| `ENABLE_SNAPPY` | *Optional* | Whether to enable Snappy compression for transit files. | `true` (Default) |
 
 ## Understanding Sharding
 

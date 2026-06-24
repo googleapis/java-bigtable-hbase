@@ -58,6 +58,14 @@ if [ "$1" != "--all" ] && [ "$1" != "--restore-only" ]; then
         echo "   Or: $0 --restore-only [additional_args...]"
         exit 1
     fi
+    if ! [[ "$1" =~ ^[0-9]+$ ]] || ! [[ "$2" =~ ^[0-9]+$ ]]; then
+        echo "❌ Error: Shard indices must be non-negative integers."
+        exit 1
+    fi
+    if [ "$1" -gt "$2" ]; then
+        echo "❌ Error: start_shard ($1) cannot be greater than end_shard ($2)."
+        exit 1
+    fi
     START_SHARD=$1
     END_SHARD=$2
     EXTRA_ARGS=("${@:3}")
@@ -74,9 +82,15 @@ for var in "${REQUIRED_VARS[@]}"; do
     fi
 done
 
-if [ "$1" != "--restore-only" ] && [ -z "${NUM_SHARDS}" ]; then
-    echo "❌ Error: Environment variable NUM_SHARDS is not set."
-    exit 1
+if [ "$1" != "--restore-only" ]; then
+    if [ -z "${NUM_SHARDS}" ]; then
+        echo "❌ Error: Environment variable NUM_SHARDS is not set."
+        exit 1
+    fi
+    if ! [[ "${NUM_SHARDS}" =~ ^[0-9]+$ ]] || [ "${NUM_SHARDS}" -le 0 ]; then
+        echo "❌ Error: NUM_SHARDS must be a positive integer."
+        exit 1
+    fi
 fi
 
 # Strip leading gs:// and trailing slashes from BUCKET for robust GCS path construction
@@ -86,6 +100,17 @@ BUCKET="${BUCKET%/}"
 # Set default values for optional tuning parameters
 MAX_INFLIGHT_RPCS="${MAX_INFLIGHT_RPCS:-100}"
 BULK_MUTATION_CLOSE_TIMEOUT_MINUTES="${BULK_MUTATION_CLOSE_TIMEOUT_MINUTES:-30}"
+
+# Configurable Dataflow execution parameters
+WORKER_MACHINE_TYPE="${WORKER_MACHINE_TYPE:-n1-highmem-4}"
+DISK_SIZE_GB="${DISK_SIZE_GB:-500}"
+MAX_NUM_WORKERS="${MAX_NUM_WORKERS:-10}"
+USE_PUBLIC_IPS="${USE_PUBLIC_IPS:-false}"
+ENABLE_SNAPPY="${ENABLE_SNAPPY:-true}"
+
+# Generate a safe, unique job name prefix to prevent collisions
+SAFE_TABLE_NAME=$(echo "${TABLE_NAME}" | tr '[:upper:]' '[:lower:]' | tr '_' '-' | tr -cd '[:alnum:]-')
+JOB_NAME_PREFIX="${JOB_NAME_PREFIX:-import-${SAFE_TABLE_NAME}}"
 
 # Configurations
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
@@ -143,7 +168,7 @@ if [ "$1" == "--restore-only" ]; then
       --region="${REGION}" \
       --performOnlyRestoreStep=true \
       --restorePath="${RESTORE_DIR}" \
-      --jobName="restore-job" \
+      --jobName="${JOB_NAME_PREFIX}-restore" \
       "${SERVICE_ACCOUNT_ARGS[@]}" \
       "${NETWORK_ARGS[@]}" \
       "${EXTRA_ARGS[@]}"
@@ -171,7 +196,7 @@ if [ "$1" == "--all" ]; then
       --region="${REGION}" \
       --performOnlyRestoreStep=true \
       --restorePath="${RESTORE_DIR}" \
-      --jobName="restore-job" \
+      --jobName="${JOB_NAME_PREFIX}-restore" \
       "${SERVICE_ACCOUNT_ARGS[@]}" \
       "${NETWORK_ARGS[@]}" \
       "${EXTRA_ARGS[@]}"
@@ -192,7 +217,7 @@ if [ "$1" == "--all" ]; then
         
         echo "Launching runner $runner: shards $start to $end in background"
         # Call ourselves with the range and propagate any extra arguments!
-        "${BASH_SOURCE[0]}" $start $end "${EXTRA_ARGS[@]}" &
+        bash "${BASH_SOURCE[0]}" "$start" "$end" "${EXTRA_ARGS[@]}" &
         pids+=($!)
     done
     
@@ -225,7 +250,7 @@ for (( i=START_SHARD; i<=END_SHARD; i++ )); do
   # The --all mode runs performOnlyRestoreStep=true automatically in Step 1.
   SKIP_RESTORE="true"
   
-  JOB="job-${i}"
+  JOB="${JOB_NAME_PREFIX}-${i}"
   java ${JVM_OPTS} -jar "${JAR_PATH}" importsnapshot \
     --runner=DataflowRunner \
     --project="${PROJECT_ID}" \
@@ -235,13 +260,13 @@ for (( i=START_SHARD; i<=END_SHARD; i++ )); do
     --snapshots="${SNAPSHOT_NAME}:${TABLE_NAME}" \
     --stagingLocation="gs://${BUCKET}/dataflow/staging" \
     --tempLocation="gs://${BUCKET}/dataflow/temp" \
-    --workerMachineType=n1-highmem-4 \
-    --diskSizeGb=500 \
-    --maxNumWorkers=10 \
+    --workerMachineType="${WORKER_MACHINE_TYPE}" \
+    --diskSizeGb="${DISK_SIZE_GB}" \
+    --maxNumWorkers="${MAX_NUM_WORKERS}" \
     --region="${REGION}" \
     "${SERVICE_ACCOUNT_ARGS[@]}" \
-    --usePublicIps=false \
-    --enableSnappy=true \
+    --usePublicIps="${USE_PUBLIC_IPS}" \
+    --enableSnappy="${ENABLE_SNAPPY}" \
     --skipRestoreStep="${SKIP_RESTORE}" \
     --deleteRestoredSnapshots=false \
     --restorePath="${RESTORE_DIR}" \
