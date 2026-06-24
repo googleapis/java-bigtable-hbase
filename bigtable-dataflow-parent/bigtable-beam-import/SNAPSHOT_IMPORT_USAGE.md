@@ -6,21 +6,21 @@ This document describes the environment variables used by the `bin/run-snapshot-
 
 The script relies on the following environment variables. You should set them before executing the script.
 
-| Variable | Description | Example / Suggested Value |
-| :--- | :--- | :--- |
-| `PROJECT_ID` | The Google Cloud Project ID where the Bigtable instance and Dataflow jobs reside. | `your-project-id` |
-| `INSTANCE_ID` | The Bigtable Instance ID to import data into. | `your-instance-id` |
-| `BUCKET` | The GCS bucket name used for Dataflow staging, temp files, and default snapshot source path. | `your-gcs-bucket` |
-| `REGION` | The GCP region to run the Dataflow jobs in. | `us-central1` |
-| `TABLE_NAME` | The target Bigtable table name. | `your-table-name` |
-| `SNAPSHOT_NAME` | The name of the HBase snapshot to import. | `your-snapshot-name` |
-| `SNAPSHOT_SOURCE_DIR` | The GCS path where the HBase snapshot export is located. | `gs://your-gcs-bucket/snapshots` |
-| `SERVICE_ACCOUNT` | The service account email to run the Dataflow jobs. | `your-service-account@developer.gserviceaccount.com` |
-| `NUM_SHARDS` | The number of shards to split the import into for parallel processing. | `20` |
-| `MAX_INFLIGHT_RPCS` | Maximum number of inflight RPCs for Bigtable client. | `100` |
-| `BULK_MUTATION_CLOSE_TIMEOUT_MINUTES` | Timeout in minutes for closing bulk mutations. | `30` |
-| `NETWORK` | VPC Network name for Dataflow workers. | `your-network` |
-| `SUBNETWORK` | VPC Subnetwork name for Dataflow workers. | `regions/us-central1/subnetworks/your-subnetwork` |
+| Variable | Status | Description | Default / Example |
+| :--- | :--- | :--- | :--- |
+| `PROJECT_ID` | **Required** | The Google Cloud Project ID where the Bigtable instance and Dataflow jobs reside. | `your-project-id` |
+| `INSTANCE_ID` | **Required** | The Bigtable Instance ID to import data into. | `your-instance-id` |
+| `BUCKET` | **Required** | The GCS bucket name used for Dataflow staging, temp files, and default snapshot source path. | `your-gcs-bucket` |
+| `REGION` | **Required** | The GCP region to run the Dataflow jobs in. | `us-central1` |
+| `TABLE_NAME` | **Required** | The target Bigtable table name. | `your-table-name` |
+| `SNAPSHOT_NAME` | **Required** | The name of the HBase snapshot to import. | `your-snapshot-name` |
+| `SNAPSHOT_SOURCE_DIR` | **Required** | The GCS path where the HBase snapshot export is located. | `gs://your-gcs-bucket/snapshots` |
+| `NUM_SHARDS` | **Required** (except `--restore-only`) | The number of shards to split the import into for parallel processing. | `20` |
+| `SERVICE_ACCOUNT` | *Optional* | The service account email to run the Dataflow jobs. | `your-service-account@developer.gserviceaccount.com` |
+| `MAX_INFLIGHT_RPCS` | *Optional* | Maximum number of inflight RPCs for Bigtable client. | `100` (Default) |
+| `BULK_MUTATION_CLOSE_TIMEOUT_MINUTES` | *Optional* | Timeout in minutes for closing bulk mutations. | `30` (Default) |
+| `NETWORK` | *Optional* | VPC Network name for Dataflow workers. | `your-network` |
+| `SUBNETWORK` | *Optional* | VPC Subnetwork name for Dataflow workers. | `regions/us-central1/subnetworks/your-subnetwork` |
 
 ## Understanding Sharding
 
