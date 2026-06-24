@@ -59,6 +59,24 @@ fi
 START_SHARD=$1
 END_SHARD=$2
 
+# Validate required environment variables
+REQUIRED_VARS=(PROJECT_ID INSTANCE_ID BUCKET REGION TABLE_NAME SNAPSHOT_NAME SNAPSHOT_SOURCE_DIR)
+for var in "${REQUIRED_VARS[@]}"; do
+    if [ -z "${!var}" ]; then
+        echo "❌ Error: Environment variable $var is not set."
+        exit 1
+    fi
+done
+
+if [ "$1" != "--restore-only" ] && [ -z "${NUM_SHARDS}" ]; then
+    echo "❌ Error: Environment variable NUM_SHARDS is not set."
+    exit 1
+fi
+
+# Set default values for optional tuning parameters
+MAX_INFLIGHT_RPCS="${MAX_INFLIGHT_RPCS:-100}"
+BULK_MUTATION_CLOSE_TIMEOUT_MINUTES="${BULK_MUTATION_CLOSE_TIMEOUT_MINUTES:-30}"
+
 # Configurations
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 
