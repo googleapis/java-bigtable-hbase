@@ -48,7 +48,7 @@ Example: `bin/run-snapshot-import.sh 0 5`
 ```bash
 bin/run-snapshot-import.sh --all
 ```
-This mode will first run the restore step, and then launch background processes for all shards in parallel groups of 4 by default.
+This mode will first run the blocking restore step, and then partition the total shards evenly and launch exactly 4 parallel runner streams in the background to process them. This ensures that no more than 4 Dataflow jobs are ever running concurrently, protecting your Bigtable instance from write-throttling and staying safely within GCP resource quotas.
 
 ## Advanced Usage
 
