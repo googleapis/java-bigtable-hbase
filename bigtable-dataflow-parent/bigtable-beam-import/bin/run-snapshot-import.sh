@@ -4,7 +4,7 @@
 # HBase Snapshot Import Helper Script
 # ==============================================================================
 # This script runs a range of Dataflow snapshot import jobs sequentially or in parallel.
-# Must be executed from the 'bigtable-dataflow-parent/bigtable-beam-import' directory.
+# Can be run from any directory, e.g., 'bin/run-snapshot-import.sh'.
 #
 # For detailed usage and advanced options, see: SNAPSHOT_IMPORT_USAGE.md
 # ==============================================================================
@@ -27,6 +27,8 @@
 # export SERVICE_ACCOUNT="your-service-account"
 
 # --- Sharding & Tuning ---
+# A 'shard' is a partition of HBase regions. Sharding allows splitting the import into
+# multiple independent Dataflow jobs running in parallel to speed up the migration.
 # export NUM_SHARDS="20"
 # export MAX_INFLIGHT_RPCS="100"
 # export BULK_MUTATION_CLOSE_TIMEOUT_MINUTES="30"
@@ -38,13 +40,14 @@
 # ------------------------------------------------------------------------------
 # Usage
 # ------------------------------------------------------------------------------
-# Usage: ./run-snapshot-import.sh <start_shard> <end_shard>
-#   Or:  ./run-snapshot-import.sh --all
+# Usage: bin/run-snapshot-import.sh <start_shard> <end_shard>
+#        (Both start and end shard indices are inclusive)
+#   Or:  bin/run-snapshot-import.sh --all
 #        (Runs all shards in parallel groups of 4 by default)
 #
 # Examples:
-#   ./run-snapshot-import.sh 0 3
-#   ./run-snapshot-import.sh --all
+#   bin/run-snapshot-import.sh 0 3
+#   bin/run-snapshot-import.sh --all
 
 if [ "$#" -ne 2 ] && [ "$1" != "--all" ] && [ "$1" != "--restore-only" ]; then
     echo "Usage: $0 <start_shard> <end_shard>"
@@ -57,12 +60,40 @@ START_SHARD=$1
 END_SHARD=$2
 
 # Configurations
-JAR_PATH="target/bigtable-beam-import-2.18.2-SNAPSHOT-shaded.jar"
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+
+# Detect the shaded JAR dynamically in the target directory
+JAR_PATH=""
+for jar in "${SCRIPT_DIR}/../target"/bigtable-beam-import-*-shaded.jar; do
+    if [ -f "$jar" ]; then
+        JAR_PATH="$jar"
+        break
+    fi
+done
+
+# If the JAR doesn't exist, build it first
+if [ -z "${JAR_PATH}" ]; then
+    echo "📦 Shaded JAR not found. Building the project first using Maven..."
+    (cd "${SCRIPT_DIR}/.." && mvn clean package -DskipTests)
+    
+    # Re-detect the JAR after building
+    for jar in "${SCRIPT_DIR}/../target"/bigtable-beam-import-*-shaded.jar; do
+        if [ -f "$jar" ]; then
+            JAR_PATH="$jar"
+            break
+        fi
+    done
+fi
+
+if [ -z "${JAR_PATH}" ]; then
+    echo "❌ Error: Failed to find or build the shaded JAR in ${SCRIPT_DIR}/../target/"
+    exit 1
+fi
 RESTORE_DIR="gs://${BUCKET}/restore-${SNAPSHOT_NAME}"
 # If running the launcher on a newer, unsupported JDK version (e.g. JDK 25+),
 # you can set JVM_OPTS to "-Dnet.bytebuddy.experimental=true" to bypass
 # ByteBuddy class generation crashes during pipeline construction.
-JVM_OPTS=""
+JVM_OPTS="${JVM_OPTS:-}"
 
 # Construct optional network arguments
 NETWORK_ARGS=()
