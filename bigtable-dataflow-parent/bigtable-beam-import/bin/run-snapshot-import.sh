@@ -127,19 +127,20 @@ fi
 # --- RESTORE ONLY MODE ---
 if [ "$1" == "--restore-only" ]; then
     echo "🚀 Performing snapshot restore (blocking)..."
-    java ${JVM_OPTS} -jar ${JAR_PATH} importsnapshot \
+    java ${JVM_OPTS} -jar "${JAR_PATH}" importsnapshot \
       --runner=DataflowRunner \
-      --project=${PROJECT_ID} \
-      --bigtableInstanceId=${INSTANCE_ID} \
-      --bigtableTableId=${TABLE_NAME} \
-      --hbaseSnapshotSourceDir=${SNAPSHOT_SOURCE_DIR} \
-      --snapshots=${SNAPSHOT_NAME}:${TABLE_NAME} \
-      --stagingLocation=gs://${BUCKET}/dataflow/staging \
-      --tempLocation=gs://${BUCKET}/dataflow/temp \
-      --region=${REGION} \
+      --project="${PROJECT_ID}" \
+      --bigtableInstanceId="${INSTANCE_ID}" \
+      --bigtableTableId="${TABLE_NAME}" \
+      --hbaseSnapshotSourceDir="${SNAPSHOT_SOURCE_DIR}" \
+      --snapshots="${SNAPSHOT_NAME}:${TABLE_NAME}" \
+      --stagingLocation="gs://${BUCKET}/dataflow/staging" \
+      --tempLocation="gs://${BUCKET}/dataflow/temp" \
+      --region="${REGION}" \
       --performOnlyRestoreStep=true \
-      --restorePath=${RESTORE_DIR} \
+      --restorePath="${RESTORE_DIR}" \
       --jobName="restore-job" \
+      "${SERVICE_ACCOUNT_ARGS[@]}" \
       "${NETWORK_ARGS[@]}" \
       "${EXTRA_ARGS[@]}"
     echo "✅ Restore completed."
@@ -154,19 +155,20 @@ if [ "$1" == "--all" ]; then
     
     # Step 1: Perform ONLY the restore step
     echo "Step 1/2: Performing snapshot restore (blocking)..."
-    java ${JVM_OPTS} -jar ${JAR_PATH} importsnapshot \
+    java ${JVM_OPTS} -jar "${JAR_PATH}" importsnapshot \
       --runner=DataflowRunner \
-      --project=${PROJECT_ID} \
-      --bigtableInstanceId=${INSTANCE_ID} \
-      --bigtableTableId=${TABLE_NAME} \
-      --hbaseSnapshotSourceDir=${SNAPSHOT_SOURCE_DIR} \
-      --snapshots=${SNAPSHOT_NAME}:${TABLE_NAME} \
-      --stagingLocation=gs://${BUCKET}/dataflow/staging \
-      --tempLocation=gs://${BUCKET}/dataflow/temp \
-      --region=${REGION} \
+      --project="${PROJECT_ID}" \
+      --bigtableInstanceId="${INSTANCE_ID}" \
+      --bigtableTableId="${TABLE_NAME}" \
+      --hbaseSnapshotSourceDir="${SNAPSHOT_SOURCE_DIR}" \
+      --snapshots="${SNAPSHOT_NAME}:${TABLE_NAME}" \
+      --stagingLocation="gs://${BUCKET}/dataflow/staging" \
+      --tempLocation="gs://${BUCKET}/dataflow/temp" \
+      --region="${REGION}" \
       --performOnlyRestoreStep=true \
-      --restorePath=${RESTORE_DIR} \
+      --restorePath="${RESTORE_DIR}" \
       --jobName="restore-job" \
+      "${SERVICE_ACCOUNT_ARGS[@]}" \
       "${NETWORK_ARGS[@]}" \
       "${EXTRA_ARGS[@]}"
       
