@@ -222,31 +222,31 @@ for (( i=START_SHARD; i<=END_SHARD; i++ )); do
   SKIP_RESTORE="true"
   
   JOB="job-${i}"
-  java ${JVM_OPTS} -jar ${JAR_PATH} importsnapshot \
+  java ${JVM_OPTS} -jar "${JAR_PATH}" importsnapshot \
     --runner=DataflowRunner \
-    --project=${PROJECT_ID} \
-    --bigtableInstanceId=${INSTANCE_ID} \
-    --bigtableTableId=${TABLE_NAME} \
-    --hbaseSnapshotSourceDir=${SNAPSHOT_SOURCE_DIR} \
-    --snapshots=${SNAPSHOT_NAME}:${TABLE_NAME} \
-    --stagingLocation=gs://${BUCKET}/dataflow/staging \
-    --tempLocation=gs://${BUCKET}/dataflow/temp \
+    --project="${PROJECT_ID}" \
+    --bigtableInstanceId="${INSTANCE_ID}" \
+    --bigtableTableId="${TABLE_NAME}" \
+    --hbaseSnapshotSourceDir="${SNAPSHOT_SOURCE_DIR}" \
+    --snapshots="${SNAPSHOT_NAME}:${TABLE_NAME}" \
+    --stagingLocation="gs://${BUCKET}/dataflow/staging" \
+    --tempLocation="gs://${BUCKET}/dataflow/temp" \
     --workerMachineType=n1-highmem-4 \
     --diskSizeGb=500 \
     --maxNumWorkers=10 \
-    --region=${REGION} \
+    --region="${REGION}" \
     "${SERVICE_ACCOUNT_ARGS[@]}" \
     --usePublicIps=false \
     --enableSnappy=true \
-    --skipRestoreStep=${SKIP_RESTORE} \
+    --skipRestoreStep="${SKIP_RESTORE}" \
     --deleteRestoredSnapshots=false \
-    --restorePath=${RESTORE_DIR} \
-    --numShards=${NUM_SHARDS} \
-    --shardIndex=$i \
+    --restorePath="${RESTORE_DIR}" \
+    --numShards="${NUM_SHARDS}" \
+    --shardIndex="${i}" \
     --jobName="${JOB}" \
     "${NETWORK_ARGS[@]}" \
-    --maxInflightRpcs=${MAX_INFLIGHT_RPCS} \
-    --bulkMutationCloseTimeoutMinutes=${BULK_MUTATION_CLOSE_TIMEOUT_MINUTES} \
+    --maxInflightRpcs="${MAX_INFLIGHT_RPCS}" \
+    --bulkMutationCloseTimeoutMinutes="${BULK_MUTATION_CLOSE_TIMEOUT_MINUTES}" \
     "${EXTRA_ARGS[@]}"
 
   # Sequential within this script instance
