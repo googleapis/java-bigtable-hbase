@@ -49,15 +49,21 @@
 #   bin/run-snapshot-import.sh 0 3
 #   bin/run-snapshot-import.sh --all
 
-if [ "$#" -ne 2 ] && [ "$1" != "--all" ] && [ "$1" != "--restore-only" ]; then
-    echo "Usage: $0 <start_shard> <end_shard>"
-    echo "   Or: $0 --all"
-    echo "   Or: $0 --restore-only"
-    exit 1
+# Validate and parse arguments
+if [ "$1" != "--all" ] && [ "$1" != "--restore-only" ]; then
+    if [ -z "$1" ] || [ -z "$2" ]; then
+        echo "Usage: $0 <start_shard> <end_shard> [additional_args...]"
+        echo "        (Both start and end shard indices are inclusive)"
+        echo "   Or: $0 --all [additional_args...]"
+        echo "   Or: $0 --restore-only [additional_args...]"
+        exit 1
+    fi
+    START_SHARD=$1
+    END_SHARD=$2
+    EXTRA_ARGS=("${@:3}")
+else
+    EXTRA_ARGS=("${@:2}")
 fi
-
-START_SHARD=$1
-END_SHARD=$2
 
 # Validate required environment variables
 REQUIRED_VARS=(PROJECT_ID INSTANCE_ID BUCKET REGION TABLE_NAME SNAPSHOT_NAME SNAPSHOT_SOURCE_DIR)
@@ -145,7 +151,8 @@ if [ "$1" == "--restore-only" ]; then
       --performOnlyRestoreStep=true \
       --restorePath=${RESTORE_DIR} \
       --jobName="restore-job" \
-      "${NETWORK_ARGS[@]}"
+      "${NETWORK_ARGS[@]}" \
+      "${EXTRA_ARGS[@]}"
     echo "✅ Restore completed."
     echo "⚠️ IMPORTANT: Please manually cleanup the restore path once validation succeeds:"
     echo "   gsutil rm -r ${RESTORE_DIR}"
@@ -171,7 +178,8 @@ if [ "$1" == "--all" ]; then
       --performOnlyRestoreStep=true \
       --restorePath=${RESTORE_DIR} \
       --jobName="restore-job" \
-      "${NETWORK_ARGS[@]}"
+      "${NETWORK_ARGS[@]}" \
+      "${EXTRA_ARGS[@]}"
       
     echo "Restore completed. Proceeding to data import."
 
@@ -187,7 +195,8 @@ if [ "$1" == "--all" ]; then
         [ $end -ge $NUM_SHARDS ] && end=$((NUM_SHARDS - 1))
         
         echo "Launching runner $runner: shards $start to $end in background"
-        $0 $start $end &
+        # Call ourselves with the range and propagate any extra arguments!
+        $0 $start $end "${EXTRA_ARGS[@]}" &
     done
     
     echo "All groups launched. Waiting for all background jobs to finish..."
@@ -233,7 +242,8 @@ for (( i=START_SHARD; i<=END_SHARD; i++ )); do
     --jobName="${JOB}" \
     "${NETWORK_ARGS[@]}" \
     --maxInflightRpcs=${MAX_INFLIGHT_RPCS} \
-    --bulkMutationCloseTimeoutMinutes=${BULK_MUTATION_CLOSE_TIMEOUT_MINUTES}
+    --bulkMutationCloseTimeoutMinutes=${BULK_MUTATION_CLOSE_TIMEOUT_MINUTES} \
+    "${EXTRA_ARGS[@]}"
 
   # Sequential within this script instance
 done
