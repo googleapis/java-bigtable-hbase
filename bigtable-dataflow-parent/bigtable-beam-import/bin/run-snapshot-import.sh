@@ -200,7 +200,7 @@ fi
 # ----------------------------------------
 
 # Standard Range Mode
-for i in $(seq $START_SHARD $END_SHARD); do
+for (( i=START_SHARD; i<=END_SHARD; i++ )); do
   echo "Submitting Dataflow job for shardIndex: $i"
 
   # As per the sharding contract, ALL parallel sharded jobs MUST skip the restore step
