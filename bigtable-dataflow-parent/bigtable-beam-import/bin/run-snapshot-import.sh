@@ -145,7 +145,7 @@ if [ "$1" == "--restore-only" ]; then
       "${EXTRA_ARGS[@]}"
     echo "✅ Restore completed."
     echo "⚠️ IMPORTANT: Please manually cleanup the restore path once validation succeeds:"
-    echo "   gsutil rm -r ${RESTORE_DIR}"
+    echo "   gsutil rm -r \"${RESTORE_DIR}\""
     exit 0
 fi
 
@@ -179,6 +179,7 @@ if [ "$1" == "--all" ]; then
     MAX_CONCURRENCY=4
     SHARDS_PER_RUNNER=$(( (NUM_SHARDS + MAX_CONCURRENCY - 1) / MAX_CONCURRENCY ))
     
+    pids=()
     for (( runner=0; runner<MAX_CONCURRENCY; runner++ )); do
         start=$(( runner * SHARDS_PER_RUNNER ))
         end=$(( start + SHARDS_PER_RUNNER - 1 ))
@@ -187,14 +188,26 @@ if [ "$1" == "--all" ]; then
         
         echo "Launching runner $runner: shards $start to $end in background"
         # Call ourselves with the range and propagate any extra arguments!
-        $0 $start $end "${EXTRA_ARGS[@]}" &
+        "${BASH_SOURCE[0]}" $start $end "${EXTRA_ARGS[@]}" &
+        pids+=($!)
     done
     
     echo "All groups launched. Waiting for all background jobs to finish..."
-    wait
+    failed=0
+    for pid in "${pids[@]}"; do
+        if ! wait "$pid"; then
+            failed=1
+        fi
+    done
+
+    if [ $failed -ne 0 ]; then
+        echo "❌ Error: One or more background import jobs failed."
+        exit 1
+    fi
+    
     echo "🎉 All import jobs completed!"
     echo "⚠️ IMPORTANT: Please manually cleanup the restore path once validation succeeds:"
-    echo "   gsutil rm -r ${RESTORE_DIR}"
+    echo "   gsutil rm -r \"${RESTORE_DIR}\""
     exit 0
 fi
 # ----------------------------------------
