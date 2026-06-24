@@ -79,6 +79,10 @@ if [ "$1" != "--restore-only" ] && [ -z "${NUM_SHARDS}" ]; then
     exit 1
 fi
 
+# Strip leading gs:// and trailing slashes from BUCKET for robust GCS path construction
+BUCKET="${BUCKET#gs://}"
+BUCKET="${BUCKET%/}"
+
 # Set default values for optional tuning parameters
 MAX_INFLIGHT_RPCS="${MAX_INFLIGHT_RPCS:-100}"
 BULK_MUTATION_CLOSE_TIMEOUT_MINUTES="${BULK_MUTATION_CLOSE_TIMEOUT_MINUTES:-30}"
