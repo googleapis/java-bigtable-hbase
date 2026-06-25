@@ -91,6 +91,12 @@ if [ "$1" != "--restore-only" ]; then
         echo "❌ Error: NUM_SHARDS must be a positive integer."
         exit 1
     fi
+    if [ "$1" != "--all" ]; then
+        if [ "${START_SHARD}" -ge "${NUM_SHARDS}" ] || [ "${END_SHARD}" -ge "${NUM_SHARDS}" ]; then
+            echo "❌ Error: Shard indices (${START_SHARD}, ${END_SHARD}) must be less than NUM_SHARDS (${NUM_SHARDS})."
+            exit 1
+        fi
+    fi
 fi
 
 # Strip leading gs:// and trailing slashes from BUCKET for robust GCS path construction
@@ -156,7 +162,7 @@ fi
 # --- RESTORE ONLY MODE ---
 if [ "$1" == "--restore-only" ]; then
     echo "🚀 Performing snapshot restore (blocking)..."
-    java ${JVM_OPTS} -jar "${JAR_PATH}" importsnapshot \
+    if ! java ${JVM_OPTS} -jar "${JAR_PATH}" importsnapshot \
       --runner=DataflowRunner \
       --project="${PROJECT_ID}" \
       --bigtableInstanceId="${INSTANCE_ID}" \
@@ -171,7 +177,10 @@ if [ "$1" == "--restore-only" ]; then
       --jobName="${JOB_NAME_PREFIX}-restore" \
       "${SERVICE_ACCOUNT_ARGS[@]}" \
       "${NETWORK_ARGS[@]}" \
-      "${EXTRA_ARGS[@]}"
+      "${EXTRA_ARGS[@]}"; then
+        echo "❌ Error: Snapshot restore failed."
+        exit 1
+    fi
     echo "✅ Restore completed."
     echo "⚠️ IMPORTANT: Please manually cleanup the restore path once validation succeeds:"
     echo "   gsutil rm -r \"${RESTORE_DIR}\""
@@ -184,7 +193,7 @@ if [ "$1" == "--all" ]; then
     
     # Step 1: Perform ONLY the restore step
     echo "Step 1/2: Performing snapshot restore (blocking)..."
-    java ${JVM_OPTS} -jar "${JAR_PATH}" importsnapshot \
+    if ! java ${JVM_OPTS} -jar "${JAR_PATH}" importsnapshot \
       --runner=DataflowRunner \
       --project="${PROJECT_ID}" \
       --bigtableInstanceId="${INSTANCE_ID}" \
@@ -199,7 +208,10 @@ if [ "$1" == "--all" ]; then
       --jobName="${JOB_NAME_PREFIX}-restore" \
       "${SERVICE_ACCOUNT_ARGS[@]}" \
       "${NETWORK_ARGS[@]}" \
-      "${EXTRA_ARGS[@]}"
+      "${EXTRA_ARGS[@]}"; then
+        echo "❌ Error: Snapshot restore failed. Aborting import."
+        exit 1
+    fi
       
     echo "Restore completed. Proceeding to data import."
 
@@ -251,7 +263,7 @@ for (( i=START_SHARD; i<=END_SHARD; i++ )); do
   SKIP_RESTORE="true"
   
   JOB="${JOB_NAME_PREFIX}-${i}"
-  java ${JVM_OPTS} -jar "${JAR_PATH}" importsnapshot \
+  if ! java ${JVM_OPTS} -jar "${JAR_PATH}" importsnapshot \
     --runner=DataflowRunner \
     --project="${PROJECT_ID}" \
     --bigtableInstanceId="${INSTANCE_ID}" \
@@ -276,7 +288,10 @@ for (( i=START_SHARD; i<=END_SHARD; i++ )); do
     "${NETWORK_ARGS[@]}" \
     --maxInflightRpcs="${MAX_INFLIGHT_RPCS}" \
     --bulkMutationCloseTimeoutMinutes="${BULK_MUTATION_CLOSE_TIMEOUT_MINUTES}" \
-    "${EXTRA_ARGS[@]}"
+    "${EXTRA_ARGS[@]}"; then
+      echo "❌ Error: Dataflow job submission failed for shardIndex: ${i}"
+      exit 1
+  fi
 
   # Sequential within this script instance
 done

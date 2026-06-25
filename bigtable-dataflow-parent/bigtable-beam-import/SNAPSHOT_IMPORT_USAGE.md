@@ -10,7 +10,7 @@ The script relies on the following environment variables. You should set them be
 | :--- | :--- | :--- | :--- |
 | `PROJECT_ID` | **Required** | The Google Cloud Project ID where the Bigtable instance and Dataflow jobs reside. | `your-project-id` |
 | `INSTANCE_ID` | **Required** | The Bigtable Instance ID to import data into. | `your-instance-id` |
-| `BUCKET` | **Required** | The GCS bucket name used for Dataflow staging, temp files, and default snapshot source path. | `your-gcs-bucket` |
+| `BUCKET` | **Required** | The GCS bucket name. The script automatically strips any leading gs:// or trailing slashes for robust path construction. | `your-gcs-bucket` |
 | `REGION` | **Required** | The GCP region to run the Dataflow jobs in. | `us-central1` |
 | `TABLE_NAME` | **Required** | The target Bigtable table name. | `your-table-name` |
 | `SNAPSHOT_NAME` | **Required** | The name of the HBase snapshot to import. | `your-snapshot-name` |
@@ -44,6 +44,7 @@ Runs a range of shard indices sequentially within the script execution.
 
 > [!NOTE]
 > Both `<start_shard>` and `<end_shard>` are **inclusive**. E.g., running `bin/run-snapshot-import.sh 0 5` will submit and execute Dataflow jobs for shards `0, 1, 2, 3, 4, and 5` sequentially.
+> Shard indices must be non-negative integers strictly less than `NUM_SHARDS` (i.e. in the range `[0, NUM_SHARDS)`). The script validates this range and will fail fast if violated.
 
 ```bash
 bin/run-snapshot-import.sh <start_shard> <end_shard>
