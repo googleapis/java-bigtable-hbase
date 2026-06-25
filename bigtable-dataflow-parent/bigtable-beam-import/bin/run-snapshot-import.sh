@@ -73,13 +73,14 @@ else
     EXTRA_ARGS=("${@:2}")
 fi
 
-# Validate required environment variables
+# Validate and export required environment variables
 REQUIRED_VARS=(PROJECT_ID INSTANCE_ID BUCKET REGION TABLE_NAME SNAPSHOT_NAME SNAPSHOT_SOURCE_DIR)
 for var in "${REQUIRED_VARS[@]}"; do
     if [ -z "${!var}" ]; then
         echo "❌ Error: Environment variable $var is not set."
         exit 1
     fi
+    export "${var}"
 done
 
 if [ "$1" != "--restore-only" ]; then
@@ -91,6 +92,7 @@ if [ "$1" != "--restore-only" ]; then
         echo "❌ Error: NUM_SHARDS must be a positive integer."
         exit 1
     fi
+    export NUM_SHARDS
     if [ "$1" != "--all" ]; then
         if [ "${START_SHARD}" -ge "${NUM_SHARDS}" ] || [ "${END_SHARD}" -ge "${NUM_SHARDS}" ]; then
             echo "❌ Error: Shard indices (${START_SHARD}, ${END_SHARD}) must be less than NUM_SHARDS (${NUM_SHARDS})."
@@ -221,6 +223,7 @@ if [ "$1" == "--all" ]; then
     SHARDS_PER_RUNNER=$(( (NUM_SHARDS + MAX_CONCURRENCY - 1) / MAX_CONCURRENCY ))
     
     pids=()
+    trap 'echo "⚠️ Interrupted. Terminating background runners..."; [ ${#pids[@]} -gt 0 ] && kill "${pids[@]}" 2>/dev/null; exit 1' INT TERM
     for (( runner=0; runner<MAX_CONCURRENCY; runner++ )); do
         start=$(( runner * SHARDS_PER_RUNNER ))
         end=$(( start + SHARDS_PER_RUNNER - 1 ))
@@ -229,7 +232,7 @@ if [ "$1" == "--all" ]; then
         
         echo "Launching runner $runner: shards $start to $end in background"
         # Call ourselves with the range and propagate any extra arguments!
-        bash "${BASH_SOURCE[0]}" "$start" "$end" "${EXTRA_ARGS[@]}" &
+        bash "${SCRIPT_DIR}/$(basename "${BASH_SOURCE[0]}")" "$start" "$end" "${EXTRA_ARGS[@]}" &
         pids+=($!)
     done
     
