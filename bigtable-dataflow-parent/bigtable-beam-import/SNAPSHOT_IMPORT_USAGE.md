@@ -79,6 +79,8 @@ bin/run-snapshot-import.sh 12 15 &
 bin/run-snapshot-import.sh 16 19 &
 ```
 
+> [!NOTE]
+> Unlike `--all` or `--restore-only`, the script does **not** print a cleanup reminder at the end of a manual range invocation. This omission is intentional to prevent premature deletion: you must manually delete the restore directory (`gsutil rm -r $RESTORE_DIR`) only after **all** parallel Dataflow jobs have successfully finished and data validation passes.
 ## Troubleshooting
 
 ### JDK Compatibility
