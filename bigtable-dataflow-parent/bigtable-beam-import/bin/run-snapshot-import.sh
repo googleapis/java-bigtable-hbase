@@ -164,6 +164,7 @@ fi
 # --- RESTORE ONLY MODE ---
 if [ "$1" == "--restore-only" ]; then
     echo "🚀 Performing snapshot restore (blocking)..."
+    # shellcheck disable=SC2086
     if ! java ${JVM_OPTS} -jar "${JAR_PATH}" importsnapshot \
       --runner=DataflowRunner \
       --project="${PROJECT_ID}" \
@@ -195,6 +196,7 @@ if [ "$1" == "--all" ]; then
     
     # Step 1: Perform ONLY the restore step
     echo "Step 1/2: Performing snapshot restore (blocking)..."
+    # shellcheck disable=SC2086
     if ! java ${JVM_OPTS} -jar "${JAR_PATH}" importsnapshot \
       --runner=DataflowRunner \
       --project="${PROJECT_ID}" \
@@ -266,6 +268,7 @@ for (( i=START_SHARD; i<=END_SHARD; i++ )); do
   SKIP_RESTORE="true"
   
   JOB="${JOB_NAME_PREFIX}-${i}"
+  # shellcheck disable=SC2086
   if ! java ${JVM_OPTS} -jar "${JAR_PATH}" importsnapshot \
     --runner=DataflowRunner \
     --project="${PROJECT_ID}" \
