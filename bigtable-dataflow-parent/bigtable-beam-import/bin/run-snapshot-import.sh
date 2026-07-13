@@ -225,7 +225,7 @@ if [ "$1" == "--all" ]; then
     SHARDS_PER_RUNNER=$(( (NUM_SHARDS + MAX_CONCURRENCY - 1) / MAX_CONCURRENCY ))
     
     pids=()
-    trap 'echo "⚠️ Interrupted. Terminating background runners..."; [ ${#pids[@]} -gt 0 ] && kill "${pids[@]}" 2>/dev/null; exit 1' INT TERM
+    trap 'echo "⚠️ Interrupted. Stopping local launcher script..."; echo "⚠️ NOTE: Already-submitted Dataflow jobs are NOT cancelled! You must stop them manually (e.g., via Cloud Console or gcloud dataflow jobs cancel)."; [ ${#pids[@]} -gt 0 ] && kill "${pids[@]}" 2>/dev/null; exit 1' INT TERM
     for (( runner=0; runner<MAX_CONCURRENCY; runner++ )); do
         start=$(( runner * SHARDS_PER_RUNNER ))
         end=$(( start + SHARDS_PER_RUNNER - 1 ))
