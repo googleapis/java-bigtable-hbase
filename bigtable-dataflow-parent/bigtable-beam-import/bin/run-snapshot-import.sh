@@ -43,7 +43,7 @@
 # Usage: bin/run-snapshot-import.sh <start_shard> <end_shard>
 #        (Both start and end shard indices are inclusive)
 #   Or:  bin/run-snapshot-import.sh --all
-#        (Runs all shards in parallel groups of 4 by default)
+#        (Runs all shards evenly distributed across 4 parallel runner streams)
 #
 # Examples:
 #   bin/run-snapshot-import.sh 0 3
