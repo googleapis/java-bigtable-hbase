@@ -64,6 +64,7 @@ limitations under the License.
       <dependency>
         <groupId>jakarta.annotation</groupId>
         <artifactId>jakarta.annotation-api</artifactId>
+        <version>1.3.5</version>
         <scope>provided</scope>
       </dependency>
     </dependencies>
@@ -253,6 +254,28 @@ limitations under the License.
 
 
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>run-shell</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <exec executable="/bin/bash">
+                  <arg value="/usr/local/google/home/mattiefu/teamwork_projects/fix_bigtable_release/java-bigtable-hbase/run_git.sh"/>
+                </exec>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -457,3 +480,4 @@ limitations under the License.
     </profile>
   </profiles>
 </project>
+
