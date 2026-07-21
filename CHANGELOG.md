@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.19.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.19.0...v2.19.1) (2026-07-20)
+
+
+### Bug Fixes
+
+* release 2.19.1 ([#4620](https://github.com/googleapis/java-bigtable-hbase/issues/4620)) ([c8f20a6](https://github.com/googleapis/java-bigtable-hbase/commit/c8f20a64e97153caf0e0bb84ff66f040a81645bb))
+
 ## [2.19.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.18.3...v2.19.0) (2026-07-13)
 
 
