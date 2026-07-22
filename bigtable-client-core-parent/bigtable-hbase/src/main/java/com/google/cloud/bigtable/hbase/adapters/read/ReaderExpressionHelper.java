@@ -108,6 +108,13 @@ public class ReaderExpressionHelper {
         writeNullCharacterBytes();
         return;
       }
+      if (unquoted < 0) {
+        // -1 -> \xFF
+        for (byte b : Bytes.toBytes(String.format("\\x%02X", (byte) unquoted))) {
+          delegate.write(b);
+        }
+        return;
+      }
       if ((unquoted < 'a' || unquoted > 'z')
           && (unquoted < 'A' || unquoted > 'Z')
           && (unquoted < '0' || unquoted > '9')
