@@ -209,6 +209,8 @@ limitations under the License.
                 <targetDependency>org.apache.hbase:hbase-client</targetDependency>
               </targetDependencies>
               <ignoredDependencies>
+                <!-- veneer requires slf4j-api 2.x while hbase ships 1.7.x -->
+                <dependency>org.slf4j:slf4j-api</dependency>
                 <dependency>log4j:log4j</dependency>
                 <!-- for some reason hbase-client exposes testing deps as a compile dep, just ignore them -->
                 <dependency>junit:junit</dependency>

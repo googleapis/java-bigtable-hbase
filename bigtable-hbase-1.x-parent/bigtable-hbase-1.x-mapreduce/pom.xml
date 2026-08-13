@@ -201,6 +201,8 @@ limitations under the License.
               <ignoredDependencies>
 
                 <!-- hbase-common pulls in test deps via hbase-annotations, exclude them from mirror check -->
+                <!-- veneer requires slf4j-api 2.x while hbase ships 1.7.x -->
+                <dependency>org.slf4j:slf4j-api</dependency>
                 <dependency>junit:junit</dependency>
                 <dependency>org.hamcrest:hamcrest-core</dependency>
               </ignoredDependencies>
