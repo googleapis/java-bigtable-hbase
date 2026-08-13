@@ -46,6 +46,7 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_SE
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_SERVICE_ACCOUNT_JSON_VALUE_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_SERVICE_ACCOUNT_P12_KEYFILE_LOCATION_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_TEST_IDLE_TIMEOUT_MS;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_UNIVERSE_DOMAIN_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_BATCH;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_PLAINTEXT_NEGOTIATION;
@@ -471,6 +472,16 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     Optional<String> endpointOverride = Optional.absent();
     Optional<String> jwtAudienceOverride =
         Optional.fromNullable(configuration.get(BIGTABLE_JWT_AUDIENCE_KEY));
+    Optional<String> universeDomain =
+        Optional.fromNullable(configuration.get(BIGTABLE_UNIVERSE_DOMAIN_KEY));
+
+    // Apply the universe domain to both the data client and the admin client. When set, the veneer
+    // resolves the endpoint from the universe domain unless an explicit host/port override is
+    // provided.
+    if (universeDomain.isPresent() && !Strings.isNullOrEmpty(universeDomain.get())) {
+      stubSettings.setUniverseDomain(universeDomain.get());
+      LOG.debug("%s is configured at %s", BIGTABLE_UNIVERSE_DOMAIN_KEY, universeDomain.get());
+    }
 
     if (hostOverride.isPresent() || portOverride.isPresent()) {
       endpointOverride =

@@ -32,6 +32,7 @@ import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_RE
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_RPC_ATTEMPT_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_RPC_TIMEOUT_MS_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_TRACING_COOKIE;
+import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_UNIVERSE_DOMAIN_KEY;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_CACHED_DATA_CHANNEL_POOL;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_PLAINTEXT_NEGOTIATION;
 import static com.google.cloud.bigtable.hbase.BigtableOptionsFactory.BIGTABLE_USE_SERVICE_ACCOUNTS_KEY;
@@ -184,6 +185,25 @@ public class TestBigtableHBaseVeneerSettings {
     assertTrue(headers.get("cookie").equals(fakeTracingCookie));
     assertEquals(
         credentials, adminSettings.getStubSettings().getCredentialsProvider().getCredentials());
+  }
+
+  @Test
+  public void testUniverseDomainIsAppliedToDataAndAdminClients() throws IOException {
+    String universeDomain = "test.universe.domain";
+    // A universe domain resolves the endpoint on its own, so exercise it without a host override.
+    configuration = new Configuration(false);
+    configuration.set(BigtableOptionsFactory.PROJECT_ID_KEY, TEST_PROJECT_ID);
+    configuration.set(BigtableOptionsFactory.INSTANCE_ID_KEY, TEST_INSTANCE_ID);
+    configuration.set(BIGTABLE_UNIVERSE_DOMAIN_KEY, universeDomain);
+
+    BigtableHBaseVeneerSettings settings =
+        (BigtableHBaseVeneerSettings) BigtableHBaseSettings.create(configuration);
+
+    assertEquals(universeDomain, settings.getDataSettings().getStubSettings().getUniverseDomain());
+    assertEquals(
+        universeDomain, settings.getTableAdminSettings().getStubSettings().getUniverseDomain());
+    assertEquals(
+        universeDomain, settings.getInstanceAdminSettings().getStubSettings().getUniverseDomain());
   }
 
   @Test

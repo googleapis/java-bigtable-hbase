@@ -47,6 +47,13 @@ public class BigtableOptionsFactory {
   public static final String APP_PROFILE_ID_KEY = "google.bigtable.app_profile.id";
 
   /**
+   * Key to set the universe domain that the client will connect to. When set, it is applied to both
+   * the data client and the admin client. Constant <code>
+   * BIGTABLE_UNIVERSE_DOMAIN_KEY="google.bigtable.universe.domain"</code>
+   */
+  public static final String BIGTABLE_UNIVERSE_DOMAIN_KEY = "google.bigtable.universe.domain";
+
+  /**
    * Constant <code>BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY="google.bigtable.snapshot.cluster.id"</code>
    */
   public static final String BIGTABLE_SNAPSHOT_CLUSTER_ID_KEY =
