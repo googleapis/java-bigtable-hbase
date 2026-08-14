@@ -61,7 +61,11 @@ public class MetricsApiTracerAdapter extends BigtableTracer {
     this.rpcMetrics = rpcMetrics;
     operationTimer = rpcMetrics.timeOperation();
     lastRetryStatus = RetryStatus.PERMANENT_FAILURE;
-    if (methodName.equals("ReadRows") && operationType == OperationType.ServerStreaming) {
+    // Track first-response latency for ReadRows. Historically ReadRows was always a
+    // ServerStreaming operation, but since google-cloud-bigtable 2.81.0 bounded
+    // single-row reads (e.g. an HBase point-scan) are traced as OperationType.Unary,
+    // so key off the method name alone rather than the operation type.
+    if (methodName.equals("ReadRows")) {
       this.firstResponseTimer = firstResponseLatencyTimer.time();
     }
     firstResponseRecorded = new AtomicBoolean(false);

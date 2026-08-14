@@ -100,7 +100,12 @@ public class TestBigtableHBaseVeneerSettings {
     String appProfileId = "appProfileId";
     String userAgent = "test-user-agent";
     String fakeTracingCookie = "fake-tracing-cookie";
-    Credentials credentials = Mockito.mock(Credentials.class);
+    // withoutAnnotations(): com.google.auth.Credentials carries jspecify TYPE_USE
+    // nullness annotations. On Java 8, byte-buddy reading them while building the
+    // mock hits a JDK bug (NPE in sun.reflect.annotation.TypeAnnotationParser), so
+    // tell Mockito not to copy annotations onto the generated mock.
+    Credentials credentials =
+        Mockito.mock(Credentials.class, Mockito.withSettings().withoutAnnotations());
 
     configuration.set(BIGTABLE_PORT_KEY, String.valueOf(TEST_PORT));
     configuration.set(APP_PROFILE_ID_KEY, appProfileId);
@@ -161,7 +166,12 @@ public class TestBigtableHBaseVeneerSettings {
     String adminHost = "testadmin.example.com";
     String userAgent = "test-user-agent";
     String fakeTracingCookie = "fake-tracing-cookie";
-    Credentials credentials = Mockito.mock(Credentials.class);
+    // withoutAnnotations(): com.google.auth.Credentials carries jspecify TYPE_USE
+    // nullness annotations. On Java 8, byte-buddy reading them while building the
+    // mock hits a JDK bug (NPE in sun.reflect.annotation.TypeAnnotationParser), so
+    // tell Mockito not to copy annotations onto the generated mock.
+    Credentials credentials =
+        Mockito.mock(Credentials.class, Mockito.withSettings().withoutAnnotations());
 
     configuration.set(BIGTABLE_ADMIN_HOST_KEY, adminHost);
     configuration.setInt(BIGTABLE_PORT_KEY, TEST_PORT);
