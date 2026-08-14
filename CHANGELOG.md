@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.20.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.19.1...v2.20.0) (2026-08-14)
+
+
+### Features
+
+* support configuring universe domain for BigtableConnection ([#4624](https://github.com/googleapis/java-bigtable-hbase/issues/4624)) ([287bcc2](https://github.com/googleapis/java-bigtable-hbase/commit/287bcc29eee69c606f2a6c70333d75576aa77190))
+
+
+### Dependencies
+
+* bump google-cloud-bigtable to 2.81.0 ([#4626](https://github.com/googleapis/java-bigtable-hbase/issues/4626)) ([5ead10a](https://github.com/googleapis/java-bigtable-hbase/commit/5ead10afbb8eb71fab3d467028d43ee45042679d))
+
 ## [2.19.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.19.0...v2.19.1) (2026-07-20)
 
 
