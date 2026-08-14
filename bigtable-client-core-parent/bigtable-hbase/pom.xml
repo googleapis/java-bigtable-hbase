@@ -73,24 +73,6 @@ limitations under the License.
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-bigtable</artifactId>
-      <exclusions>
-        <!-- jspecify is a compile-time-only nullness annotation library. Since
-             google-cloud-bigtable 2.81.0 (gax 2.83.0) the veneer API is annotated
-             with @org.jspecify.annotations.NullMarked, whose @Target references
-             ElementType.MODULE (Java 9+). When Mockito/byte-buddy mocks an
-             annotated veneer type on Java 8, the JDK parses that @Target, cannot
-             find the MODULE constant, and throws
-             ArrayStoreException: EnumConstantNotPresentExceptionProxy
-             ("Mockito cannot mock this class"). jspecify carries no runtime
-             behavior, so drop it from the classpath; with the annotation type
-             absent the JVM silently ignores @NullMarked. Excluded from every path
-             that pulls it (see the two test deps below) so it stays off the test
-             classpath. -->
-        <exclusion>
-          <groupId>org.jspecify</groupId>
-          <artifactId>jspecify</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
@@ -105,37 +87,16 @@ limitations under the License.
       <artifactId>bigtable-internal-test-helper</artifactId>
       <version>2.19.1</version> <!-- {x-version-update:bigtable-client-parent:current} -->
       <scope>test</scope>
-      <exclusions>
-        <!-- keep jspecify off the (test) classpath - see google-cloud-bigtable above -->
-        <exclusion>
-          <groupId>org.jspecify</groupId>
-          <artifactId>jspecify</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.google.api.grpc</groupId>
       <artifactId>grpc-google-common-protos</artifactId>
       <scope>test</scope>
-      <exclusions>
-        <!-- keep jspecify off the (test) classpath - see google-cloud-bigtable above -->
-        <exclusion>
-          <groupId>org.jspecify</groupId>
-          <artifactId>jspecify</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.google.api.grpc</groupId>
       <artifactId>grpc-google-cloud-bigtable-admin-v2</artifactId>
       <scope>test</scope>
-      <exclusions>
-        <!-- keep jspecify off the (test) classpath - see google-cloud-bigtable above -->
-        <exclusion>
-          <groupId>org.jspecify</groupId>
-          <artifactId>jspecify</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>commons-lang</groupId>
@@ -176,6 +137,20 @@ limitations under the License.
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <trimStackTrace>false</trimStackTrace>
+          <!-- Drop jspecify from the TEST runtime classpath only (it stays on the
+               compile classpath, so downstream modules and shaded jars are
+               unaffected). Since google-cloud-bigtable 2.81.0 (gax 2.83.0) the
+               veneer API is annotated with @org.jspecify.annotations.NullMarked,
+               whose @Target references ElementType.MODULE (Java 9+). When
+               Mockito/byte-buddy mocks an annotated veneer type (e.g. Batcher) on
+               Java 8, the JDK parses that @Target, cannot find the MODULE constant,
+               and throws ArrayStoreException: EnumConstantNotPresentExceptionProxy
+               ("Mockito cannot mock this class"). jspecify carries no runtime
+               behavior, so removing it from the test classpath makes the JVM
+               silently ignore @NullMarked and the mocks succeed. -->
+          <classpathDependencyExcludes>
+            <classpathDependencyExclude>org.jspecify:jspecify</classpathDependencyExclude>
+          </classpathDependencyExcludes>
           <systemProperties>
             <property>
               <name>java.util.logging.config.file</name>
@@ -202,14 +177,6 @@ limitations under the License.
                 <!-- make sure that we are a strict superset of veneer -->
                 <targetDependency>com.google.cloud:google-cloud-bigtable</targetDependency>
               </targetDependencies>
-              <ignoredDependencies>
-                <!-- jspecify is a compile-time-only nullness annotation library that
-                     is intentionally excluded from this module (see the exclusions on
-                     google-cloud-bigtable) because its @NullMarked annotation breaks
-                     Mockito on Java 8; it carries no runtime behavior, so it does not
-                     need to be mirrored from veneer. -->
-                <dependency>org.jspecify:jspecify</dependency>
-              </ignoredDependencies>
             </configuration>
           </execution>
           <execution>
