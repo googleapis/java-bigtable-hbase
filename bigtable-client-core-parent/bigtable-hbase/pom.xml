@@ -137,6 +137,20 @@ limitations under the License.
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <trimStackTrace>false</trimStackTrace>
+          <!-- Drop jspecify from the TEST runtime classpath only (it stays on the
+               compile classpath, so downstream modules and shaded jars are
+               unaffected). Since google-cloud-bigtable 2.81.0 (gax 2.83.0) the
+               veneer API is annotated with @org.jspecify.annotations.NullMarked,
+               whose @Target references ElementType.MODULE (Java 9+). When
+               Mockito/byte-buddy mocks an annotated veneer type (e.g. Batcher) on
+               Java 8, the JDK parses that @Target, cannot find the MODULE constant,
+               and throws ArrayStoreException: EnumConstantNotPresentExceptionProxy
+               ("Mockito cannot mock this class"). jspecify carries no runtime
+               behavior, so removing it from the test classpath makes the JVM
+               silently ignore @NullMarked and the mocks succeed. -->
+          <classpathDependencyExcludes>
+            <classpathDependencyExclude>org.jspecify:jspecify</classpathDependencyExclude>
+          </classpathDependencyExcludes>
           <systemProperties>
             <property>
               <name>java.util.logging.config.file</name>
@@ -178,6 +192,8 @@ limitations under the License.
               </targetDependencies>
               <ignoredDependencies>
                 <!-- forcefully replaced with reload4j -->
+                <!-- veneer requires slf4j-api 2.x while hbase ships 1.7.x -->
+                <dependency>org.slf4j:slf4j-api</dependency>
                 <dependency>log4j:log4j</dependency>
               </ignoredDependencies>
             </configuration>

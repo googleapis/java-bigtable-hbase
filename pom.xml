@@ -55,11 +55,16 @@ limitations under the License.
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- core dependency versions -->
-    <bigtable.version>2.77.0</bigtable.version>
-    <google-cloud-bigtable-emulator.version>0.214.0</google-cloud-bigtable-emulator.version>
+    <bigtable.version>2.81.0</bigtable.version>
+    <google-cloud-bigtable-emulator.version>0.218.0</google-cloud-bigtable-emulator.version>
     <bigtable-metrics-api.version>1.29.2</bigtable-metrics-api.version>
     <!-- Optional dep for bigtable-metrics-api used for tests -->
     <dropwizard-metrics.version>4.2.22</dropwizard-metrics.version>
+
+    <!-- shared library versions pulled in by the bigtable veneer; pinned to satisfy
+         RequireUpperBoundDeps (slf4j) and to match the google-cloud-bigtable deps-bom (conscrypt) -->
+    <slf4j.version>2.0.16</slf4j.version>
+    <conscrypt.version>2.6.0</conscrypt.version>
 
     <!--  keeping at this version to align with hbase-->
     <reload4j.version>1.2.24</reload4j.version>
@@ -92,6 +97,19 @@ limitations under the License.
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- google-cloud-bigtable 2.81.0 pulls in slf4j-api 2.0.x, while hbase brings the
+           older 1.7.x. Pin to the higher version so the inherited RequireUpperBoundDeps
+           enforcer (from google-cloud-shared-config) is satisfied. -->
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <scm>
     <connection>
@@ -173,8 +191,12 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
-          <!-- MSHADE-419: 3.3.0 Shade plugin causes pom to be created without compile dependencies -->
-          <version>3.2.4</version>
+          <!-- 3.6.0+ bundles ASM 9, which can process the Java 17 multi-release classes that
+               google-cloud-bigtable now pulls in transitively (jackson-core 2.18.x). 3.2.4's
+               older ASM fails on those with "Unsupported class file major version 61". The
+               MSHADE-419 regression (reduced pom dropping compile deps) seen in 3.3.0 no longer
+               applies; the generated dependency-reduced-pom is verified to keep compile deps. -->
+          <version>3.6.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>

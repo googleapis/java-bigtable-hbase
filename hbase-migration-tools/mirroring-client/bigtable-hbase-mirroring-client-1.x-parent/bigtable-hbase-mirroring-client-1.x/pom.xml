@@ -128,6 +128,8 @@ limitations under the License.
               </targetDependencies>
               <ignoredDependencies>
                 <!-- forcefully replaced with reload4j -->
+                <!-- veneer requires slf4j-api 2.x while hbase ships 1.7.x -->
+                <dependency>org.slf4j:slf4j-api</dependency>
                 <dependency>log4j:log4j</dependency>
               </ignoredDependencies>
             </configuration>

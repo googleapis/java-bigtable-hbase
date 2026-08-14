@@ -122,6 +122,8 @@ limitations under the License.
                 <targetDependency>org.apache.hbase:hbase-shaded-client</targetDependency>
               </targetDependencies>
               <ignoredDependencies>
+                <!-- veneer requires slf4j-api 2.x while hbase ships 1.7.x -->
+                <dependency>org.slf4j:slf4j-api</dependency>
               </ignoredDependencies>
             </configuration>
           </execution>

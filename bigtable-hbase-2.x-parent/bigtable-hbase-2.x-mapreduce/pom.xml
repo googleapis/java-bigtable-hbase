@@ -190,6 +190,8 @@ limitations under the License.
               </targetDependencies>
               <ignoredDependencies>
                 <!-- TODO: version mismatches after upgrading hbase client to 2.6.4 -->
+                <!-- veneer requires slf4j-api 2.x while hbase ships 1.7.x -->
+                <ignoredDependency>org.slf4j:slf4j-api</ignoredDependency>
                 <ignoredDependency>javax.activation:activation</ignoredDependency>
                 <ignoredDependency>javax.xml.bind:jaxb-api</ignoredDependency>
                 <ignoredDependency>javax.xml.stream:stax-api</ignoredDependency>

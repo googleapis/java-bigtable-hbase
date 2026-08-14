@@ -56,13 +56,13 @@ limitations under the License.
       <dependency>
         <groupId>org.conscrypt</groupId>
         <artifactId>conscrypt-openjdk-uber</artifactId>
-        <version>2.5.2</version>
+        <version>${conscrypt.version}</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.conscrypt</groupId>
         <artifactId>conscrypt-openjdk</artifactId>
-        <version>2.5.2</version>
+        <version>${conscrypt.version}</version>
         <scope>provided</scope>
       </dependency>
 
@@ -236,6 +236,16 @@ limitations under the License.
                     <exclude>META-INF/DEPENDENCIES</exclude>
                     <exclude>META-INF/versions/9/module-info.class</exclude>
                     <exclude>META-INF/versions/11/module-info.class</exclude>
+                    <!-- google-cloud-bigtable 2.81.0 pulls in jackson-core 2.18.x (via the
+                         opentelemetry GCP resource detector), which ships multi-release
+                         FastDoubleParser SIMD optimizations under META-INF/versions/{11,17,21,22}.
+                         The com.fasterxml relocation below rewrites the base classes to
+                         com.google.bigtable.repackaged.com.faster.xml, but the multi-release
+                         copies keep their original com/fasterxml path, so Java's MR mechanism can
+                         never match them to the relocated base class - they are dead weight and
+                         also trip verify-shaded-jar-entries as un-relocated com.fasterxml classes.
+                         Drop them; the base classes provide identical functionality. -->
+                    <exclude>META-INF/versions/*/com/fasterxml/**</exclude>
                   </excludes>
                 </filter>
               </filters>
@@ -422,6 +432,8 @@ limitations under the License.
               <!-- opentelemetry dependency is added to veneer since 2.38.0. We shade veneer so ignoring
                    opentelemetry when comparing with hbase-shaded-client is fine-->
               <ignoredDependencies>
+                <!-- veneer requires slf4j-api 2.x while hbase ships 1.7.x -->
+                <dependency>org.slf4j:slf4j-api</dependency>
                 <dependency>io.opentelemetry:opentelemetry-api</dependency>
                 <dependency>io.opentelemetry:opentelemetry-context</dependency>
                 <dependency>io.opentelemetry:opentelemetry-semconv</dependency>
