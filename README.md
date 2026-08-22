@@ -311,15 +311,6 @@ information.
 
 Apache 2.0 - See [LICENSE][license] for more information.
 
-## CI Status
-
-Java Version | Status
------------- | ------
-Java 8 | [![Kokoro CI][kokoro-badge-image-1]][kokoro-badge-link-1]
-Java 8 OSX | [![Kokoro CI][kokoro-badge-image-2]][kokoro-badge-link-2]
-Java 11 | [![Kokoro CI][kokoro-badge-image-3]][kokoro-badge-link-3]
-Integration | [![Kokoro CI][kokoro-badge-image-4]][kokoro-badge-link-4]
-
 Java is a registered trademark of Oracle and/or its affiliates.
 
 <!-- references -->
@@ -334,14 +325,9 @@ Java is a registered trademark of Oracle and/or its affiliates.
 [google-cloud-bigtable-announce]: https://groups.google.com/group/google-cloud-bigtable-announce
 [google-cloud-bigtable-emulator]: https://github.com/googleapis/google-cloud-java/tree/main/google-cloud-testing/google-cloud-bigtable-emulator
 [google-cloud-bigtable]: https://github.com/googleapis/java-bigtable
-[kokoro-badge-image-1]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java8.svg
-[kokoro-badge-link-1]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java8.html
-[kokoro-badge-image-2]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java8-osx.svg
-[kokoro-badge-link-2]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java8-osx.html
-[kokoro-badge-image-3]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java11.svg
-[kokoro-badge-link-3]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/java11.html
-[kokoro-badge-image-4]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/integration.svg
-[kokoro-badge-link-4]: http://storage.googleapis.com/cloud-devrel-public/java/badges/java-bigtable-hbase/integration.html
+[contributing]: https://github.com/googleapis/java-bigtable-hbase/blob/main/CONTRIBUTING.md
+[code-of-conduct]: https://github.com/googleapis/java-bigtable-hbase/blob/main/CODE_OF_CONDUCT.md#contributor-code-of-conduct
+[license]: https://github.com/googleapis/java-bigtable-hbase/blob/main/LICENSE
 [contributing]: https://github.com/googleapis/java-bigtable-hbase/blob/main/CONTRIBUTING.md
 [code-of-conduct]: https://github.com/googleapis/java-bigtable-hbase/blob/main/CODE_OF_CONDUCT.md#contributor-code-of-conduct
 [license]: https://github.com/googleapis/java-bigtable-hbase/blob/main/LICENSE
