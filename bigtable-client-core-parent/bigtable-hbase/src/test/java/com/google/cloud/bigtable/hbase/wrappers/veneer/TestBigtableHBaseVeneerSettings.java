@@ -55,10 +55,13 @@ import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.rpc.ServerStreamingCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.auth.Credentials;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
+import com.google.cloud.bigtable.data.v2.models.Query;
+import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableHBaseVersion;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
@@ -294,10 +297,15 @@ public class TestBigtableHBaseVeneerSettings {
     RetrySettings readRowsRetrySettings =
         dataSettings.getStubSettings().readRowsSettings().getRetrySettings();
     assertEquals(initialElapsedMs, readRowsRetrySettings.getInitialRetryDelay().toMillis());
-    assertEquals(perRowTimeoutMs, readRowsRetrySettings.getInitialRpcTimeout().toMillis());
-    assertEquals(perRowTimeoutMs, readRowsRetrySettings.getMaxRpcTimeout().toMillis());
+    assertEquals(
+        readRowStreamAttemptTimeout, readRowsRetrySettings.getInitialRpcTimeout().toMillis());
+    assertEquals(readRowStreamAttemptTimeout, readRowsRetrySettings.getMaxRpcTimeout().toMillis());
     assertEquals(maxAttempt, readRowsRetrySettings.getMaxAttempts());
     assertEquals(readRowStreamTimeout, readRowsRetrySettings.getTotalTimeout().toMillis());
+    // The per row timeout is the watchdog wait timeout, not an attempt deadline. 1001ms is below
+    // the 5 minute client default, and the key can only raise the watchdog, so it is ignored.
+    assertEquals(
+        Duration.ofMinutes(5), dataSettings.getStubSettings().readRowsSettings().getWaitTimeout());
 
     RetrySettings sampleRowKeysRetrySettings =
         dataSettings.getStubSettings().sampleRowKeysSettings().getRetrySettings();
@@ -305,6 +313,100 @@ public class TestBigtableHBaseVeneerSettings {
     assertEquals(rpcTimeoutMs, sampleRowKeysRetrySettings.getTotalTimeout().toMillis());
     assertEquals(rpcAttemptTimeoutMs, sampleRowKeysRetrySettings.getInitialRpcTimeout().toMillis());
     assertEquals(rpcAttemptTimeoutMs, sampleRowKeysRetrySettings.getMaxRpcTimeout().toMillis());
+  }
+
+  @Test
+  public void testReadRowsWaitTimeout() throws IOException {
+    BigtableDataSettings defaultSettings =
+        ((BigtableHBaseVeneerSettings) BigtableHBaseVeneerSettings.create(configuration))
+            .getDataSettings();
+
+    // READ_PARTIAL_ROW_TIMEOUT_MS is the watchdog wait timeout: what cancels a sparse scan that
+    // goes 5 minutes without a row. Its default matches the veneer default, so wiring it through
+    // does not change the out of the box behavior. See also
+    // testPartialRowTimeoutBelowTheDefaultIsIgnored.
+    assertEquals(
+        Duration.ofMinutes(5),
+        defaultSettings.getStubSettings().readRowsSettings().getWaitTimeout());
+
+    configuration.set(READ_PARTIAL_ROW_TIMEOUT_MS, "540000");
+    BigtableDataSettings dataSettings =
+        ((BigtableHBaseVeneerSettings) BigtableHBaseVeneerSettings.create(configuration))
+            .getDataSettings();
+
+    assertEquals(
+        Duration.ofMinutes(9), dataSettings.getStubSettings().readRowsSettings().getWaitTimeout());
+    // The wait timeout is independent of the idle timeout and of the attempt deadline.
+    assertEquals(
+        defaultSettings.getStubSettings().readRowsSettings().getIdleTimeout(),
+        dataSettings.getStubSettings().readRowsSettings().getIdleTimeout());
+    assertEquals(
+        defaultSettings.getStubSettings().readRowsSettings().getRetrySettings().toString(),
+        dataSettings.getStubSettings().readRowsSettings().getRetrySettings().toString());
+  }
+
+  @Test
+  public void testReadRowsAttemptTimeoutIsOnTheRetrySettings() throws IOException {
+    // The attempt deadline has to live on the retry settings rather than the ApiCallContext: gax
+    // only applies rpcTimeout when the context carries no timeout of its own. See
+    // TestReadRowsTimeoutSemantics.
+    BigtableDataSettings defaultSettings =
+        ((BigtableHBaseVeneerSettings) BigtableHBaseVeneerSettings.create(configuration))
+            .getDataSettings();
+    assertEquals(
+        Duration.ofMinutes(10),
+        defaultSettings.getStubSettings().readRowsSettings().getRetrySettings().getMaxRpcTimeout());
+
+    configuration.set(BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY, "900000");
+    BigtableHBaseVeneerSettings settings =
+        (BigtableHBaseVeneerSettings) BigtableHBaseVeneerSettings.create(configuration);
+
+    ServerStreamingCallSettings<Query, Row> readRows =
+        settings.getDataSettings().getStubSettings().readRowsSettings();
+    assertEquals(Duration.ofMinutes(15), readRows.getRetrySettings().getInitialRpcTimeout());
+    assertEquals(Duration.ofMinutes(15), readRows.getRetrySettings().getMaxRpcTimeout());
+    assertEquals(
+        Optional.of(Duration.ofMinutes(15)),
+        settings.getClientTimeouts().getScanTimeouts().getAttemptTimeout());
+  }
+
+  @Test
+  public void testReadRowsWaitTimeoutBeyondTheAttemptTimeoutNeedsBothRaised() throws IOException {
+    // A 15 minute wait timeout can never fire against the default 10 minute attempt deadline.
+    configuration.set(READ_PARTIAL_ROW_TIMEOUT_MS, "900000");
+    BigtableHBaseVeneerSettings settings =
+        (BigtableHBaseVeneerSettings) BigtableHBaseVeneerSettings.create(configuration);
+
+    ServerStreamingCallSettings<Query, Row> readRows =
+        settings.getDataSettings().getStubSettings().readRowsSettings();
+    assertEquals(Duration.ofMinutes(15), readRows.getWaitTimeout());
+    assertEquals(Duration.ofMinutes(10), readRows.getRetrySettings().getMaxRpcTimeout());
+
+    configuration.set(BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY, "900000");
+    readRows =
+        ((BigtableHBaseVeneerSettings) BigtableHBaseVeneerSettings.create(configuration))
+            .getDataSettings()
+            .getStubSettings()
+            .readRowsSettings();
+    assertEquals(Duration.ofMinutes(15), readRows.getWaitTimeout());
+    assertEquals(Duration.ofMinutes(15), readRows.getRetrySettings().getMaxRpcTimeout());
+  }
+
+  @Test
+  public void testPartialRowTimeoutBelowTheDefaultIsIgnored() throws IOException {
+    // The key is raise only. It never reached the wire before (gax discarded it because the call
+    // context carried a timeout), so honoring a short value now would newly cancel reads that
+    // used to survive. It is still parsed into the client timeouts, just not applied.
+    configuration.set(READ_PARTIAL_ROW_TIMEOUT_MS, "1000");
+    BigtableHBaseVeneerSettings settings =
+        (BigtableHBaseVeneerSettings) BigtableHBaseVeneerSettings.create(configuration);
+
+    assertEquals(
+        Optional.of(Duration.ofMillis(1000)),
+        settings.getClientTimeouts().getScanTimeouts().getResponseTimeout());
+    assertEquals(
+        Duration.ofMinutes(5),
+        settings.getDataSettings().getStubSettings().readRowsSettings().getWaitTimeout());
   }
 
   @Test

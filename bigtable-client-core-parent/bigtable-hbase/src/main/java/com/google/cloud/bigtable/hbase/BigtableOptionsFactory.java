@@ -163,7 +163,22 @@ public class BigtableOptionsFactory {
   public static final String MAX_ELAPSED_BACKOFF_MILLIS_KEY =
       "google.bigtable.grpc.retry.max.elapsed.backoff.ms";
 
-  /** Key to set the amount of time to wait when reading a partial row. */
+  /**
+   * Key to set how long a read may go without receiving a response before the stream is cancelled
+   * and retried. This is the gap between consecutive responses, reset every time the server sends
+   * something; it is not a deadline for the attempt as a whole. Raise it for scans that can
+   * legitimately go a long time without producing a row, such as a filtered scan over a large
+   * table. Defaults to 5 minutes.
+   *
+   * <p>An attempt is separately bounded by {@link #BIGTABLE_READ_RPC_ATTEMPT_TIMEOUT_MS_KEY}, 10
+   * minutes by default, so raising this beyond 10 minutes accomplishes nothing on its own — the
+   * attempt deadline would fire first. Raise that key too if you need a longer gap than that.
+   *
+   * <p>This can only raise the watchdog, never lower it: values below the 5 minute default are
+   * ignored. The key used to be handed to gax as the rpc timeout, where gax discarded it because
+   * the read path always put a timeout on the call context, so it never had any effect. Clamping it
+   * to the default keeps a previously ignored short value from suddenly cancelling reads.
+   */
   public static final String READ_PARTIAL_ROW_TIMEOUT_MS =
       "google.bigtable.grpc.read.partial.row.timeout.ms";
 
