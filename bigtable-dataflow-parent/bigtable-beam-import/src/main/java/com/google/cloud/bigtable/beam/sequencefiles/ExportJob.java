@@ -197,6 +197,19 @@ public class ExportJob {
 
     @SuppressWarnings("unused")
     void setBigtableMaxAttempts(ValueProvider<String> maxAttempts);
+
+    @Description(
+        "How long a scan may go without receiving a response, in milliseconds, before it is "
+            + "cancelled and retried. This is the gap between consecutive responses, not a "
+            + "deadline for the attempt, so raise it for a filtered scan that can traverse a lot "
+            + "of non-matching rows between results. Defaults to 300000 (5 minutes); lower "
+            + "values are ignored. A single attempt is separately capped by "
+            + "--bigtableReadRpcAttemptTimeoutMs (10 minutes by default), so raise that as well "
+            + "if you need a gap longer than that.")
+    ValueProvider<String> getBigtableReadPartialRowTimeoutMs();
+
+    @SuppressWarnings("unused")
+    void setBigtableReadPartialRowTimeoutMs(ValueProvider<String> partialRowTimeoutMs);
   }
 
   public static void main(String[] args) {

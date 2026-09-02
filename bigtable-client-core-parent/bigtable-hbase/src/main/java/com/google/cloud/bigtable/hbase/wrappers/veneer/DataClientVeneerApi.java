@@ -33,7 +33,6 @@ import com.google.cloud.bigtable.data.v2.models.ReadModifyWriteRow;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.bigtable.hbase.adapters.Adapters;
-import com.google.cloud.bigtable.hbase.util.Logger;
 import com.google.cloud.bigtable.hbase.wrappers.BulkMutationWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.BulkReadWrapper;
 import com.google.cloud.bigtable.hbase.wrappers.DataClientWrapper;
@@ -60,13 +59,10 @@ import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.client.AbstractClientScanner;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
-import org.threeten.bp.Duration;
 
 /** For internal use only - public for technical reasons. */
 @InternalApi("For internal usage only")
 public class DataClientVeneerApi implements DataClientWrapper {
-
-  private final Logger LOG = new Logger(DataClientVeneerApi.class);
 
   private static final RowResultAdapter RESULT_ADAPTER = new RowResultAdapter();
 
@@ -174,12 +170,16 @@ public class DataClientVeneerApi implements DataClientWrapper {
     GrpcCallContext ctx = GrpcCallContext.createDefault();
     OperationTimeouts callSettings = clientOperationTimeouts.getUnaryTimeouts();
 
-    if (callSettings.getAttemptTimeout().isPresent()) {
-      ctx = ctx.withTimeout(callSettings.getAttemptTimeout().get());
-    }
-    // TODO: remove this after fixing it in veneer/gax
-    // If the attempt timeout was overridden, it disables overall timeout limiting
-    // Fix it by settings the underlying grpc deadline
+    // NOTE: the attempt timeout is deliberately not set here. gax applies the retry settings'
+    // rpcTimeout as the attempt deadline, but only when the context has no timeout of its own,
+    // so setting one here would suppress it. See BigtableHBaseVeneerSettings, which puts the
+    // attempt timeout on the retry settings instead.
+
+    // Kept for backward compatibility: this context is built fresh per call, so the grpc deadline
+    // below bounds a single readRow. gax now clamps each attempt's rpcTimeout to the time left on
+    // the total timeout (ExponentialRetryAlgorithm#createNextAttempt), and readRowSettings already
+    // carries that total timeout, so this deadline is very likely redundant. Dropping it isn't
+    // provably behavior neutral though, so it stays.
     if (callSettings.getOperationTimeout().isPresent()) {
       ctx =
           ctx.withCallOptions(
@@ -191,10 +191,17 @@ public class DataClientVeneerApi implements DataClientWrapper {
     return ctx;
   }
 
-  // Support 2 bigtable-hbase features not directly available in veneer:
-  // - per attempt deadlines - vener doesn't implement deadlines for attempts. To workaround this,
-  //   the timeouts are set per call in the ApiCallContext. However this creates a separate issue of
-  //   over running the operation deadline, so gRPC deadline is also set.
+  // Kept for backward compatibility: veneer has no operation deadline for streaming RPCs, so the
+  // grpc deadline below stands in for one. Most callers build a context per call, but
+  // PaginatedRowResultScanner holds onto the one it is handed and passes it to every segment
+  // fetch, and Deadline.after() is absolute, so on that path the deadline bounds the scanner's
+  // whole lifetime rather than a single ReadRows. Removing it in favor of gax's per operation
+  // total timeout would hand each segment its own fresh budget, which is a real behavior change.
+  //
+  // The attempt deadline is deliberately *not* set here. gax applies the retry settings'
+  // rpcTimeout as the attempt deadline, but only when the context carries no timeout of its own
+  // (ServerStreamingAttemptCallable#call), so setting one here would suppress it. The attempt
+  // timeout goes on the retry settings in BigtableHBaseVeneerSettings instead.
   private GrpcCallContext createScanCallContext() {
     GrpcCallContext ctx = GrpcCallContext.createDefault();
     OperationTimeouts callSettings = clientOperationTimeouts.getScanTimeouts();
@@ -205,11 +212,6 @@ public class DataClientVeneerApi implements DataClientWrapper {
               CallOptions.DEFAULT.withDeadline(
                   Deadline.after(
                       callSettings.getOperationTimeout().get().toMillis(), TimeUnit.MILLISECONDS)));
-    }
-    if (callSettings.getAttemptTimeout().isPresent()) {
-      Duration attemptTimeout = callSettings.getAttemptTimeout().get();
-      LOG.info("effective attempt timeout for scan is %s", attemptTimeout);
-      ctx = ctx.withTimeout(attemptTimeout);
     }
 
     return ctx;

@@ -338,10 +338,8 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
     // Configure metrics
     configureMetricsBridge(dataBuilder);
 
-    // Configure RPCs - this happens in two parts:
-    // - most of the timeouts are defined here
-    // - attempt timeouts for readRows is set in DataClientVeneerApi to workaround lack of attempt
-    //   timeouts for streaming RPCs
+    // Configure RPCs. All of the timeouts are defined here; DataClientVeneerApi only sets the
+    // gRPC deadline for the overall operation.
     // Complex RPC method settings
     configureBulkMutationSettings(
         dataBuilder.stubSettings().bulkMutateRowsSettings(),
@@ -748,8 +746,9 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
       OperationTimeouts operationTimeouts) {
 
     // Configure retries
-    // NOTE: that similar but not the same as unary retry settings: per attempt timeouts don't
-    // exist, instead we use READ_PARTIAL_ROW_TIMEOUT_MS as the intra-row timeout
+    // NOTE: similar but not the same as unary retry settings: responseTimeout is the watchdog
+    // wait timeout, separate from the per attempt timeout, and the attempt deadline goes on the
+    // retry settings rather than the ApiCallContext. See below.
     if (!configuration.getBoolean(ENABLE_GRPC_RETRIES_KEY, true)) {
       // user explicitly disabled retries, treat it as a non-idempotent method
       readRowsSettings.setRetryableCodes(Collections.emptySet());
@@ -780,15 +779,31 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
               configuration.getInt(MAX_SCAN_TIMEOUT_RETRIES, MAX_CONSECUTIVE_SCAN_ATTEMPTS));
     }
 
-    // Per response timeouts (note: gax maps rpcTimeouts to response timeouts for streaming rpcs)
+    // The watchdog wait timeout: how long the stream may go without receiving a response before
+    // it is cancelled and retried. Reset by every response, so it bounds the gap between them
+    // rather than the attempt as a whole.
+    //
+    // This used to be handed to gax as the rpcTimeout, where it was silently discarded because
+    // the ApiCallContext already carried a timeout, so the key never had any effect. Honoring it
+    // outright would newly cancel reads for anyone who had set a short value, so it is only
+    // allowed to raise the watchdog, never lower it. Values below the client default are ignored.
     if (operationTimeouts.getResponseTimeout().isPresent()) {
-      readRowsSettings
-          .retrySettings()
-          .setInitialRpcTimeout(operationTimeouts.getResponseTimeout().get())
-          .setMaxRpcTimeout(operationTimeouts.getResponseTimeout().get());
+      Duration defaultWaitTimeout = readRowsSettings.getWaitTimeout();
+      Duration responseTimeout = operationTimeouts.getResponseTimeout().get();
+      if (defaultWaitTimeout == null || responseTimeout.compareTo(defaultWaitTimeout) > 0) {
+        readRowsSettings.setWaitTimeout(responseTimeout);
+      }
     }
 
-    // Attempt timeouts are set in DataClientVeneerApi
+    // Attempt timeouts. gax applies rpcTimeout as the deadline for a single attempt, but only if
+    // the ApiCallContext doesn't already carry a timeout of its own (see
+    // ServerStreamingAttemptCallable#call), so DataClientVeneerApi deliberately leaves it unset.
+    if (operationTimeouts.getAttemptTimeout().isPresent()) {
+      readRowsSettings
+          .retrySettings()
+          .setInitialRpcTimeout(operationTimeouts.getAttemptTimeout().get())
+          .setMaxRpcTimeout(operationTimeouts.getAttemptTimeout().get());
+    }
 
     // overall timeout
     if (operationTimeouts.getOperationTimeout().isPresent()) {
@@ -1004,9 +1019,9 @@ public class BigtableHBaseVeneerSettings extends BigtableHBaseSettings {
         new OperationTimeouts(
             Optional.<Duration>absent(), Optional.<Duration>absent(), Optional.<Duration>absent());
 
-    // responseTimeouts are only relevant to streaming RPCs, they limit the amount of timeout a
-    // stream will wait for the next response message. This is synonymous with attemptTimeouts in
-    // unary RPCs since they receive a single response (so its ignored).
+    // responseTimeouts are only relevant to streaming RPCs, they limit how long a stream will
+    // wait for the next response message. Unary RPCs receive a single response, so it's ignored
+    // there.
     private final Optional<Duration> responseTimeout;
     private final Optional<Duration> attemptTimeout;
     private final Optional<Duration> operationTimeout;
