@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.20.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.20.0...v2.20.1) (2026-09-02)
+
+
+### Bug Fixes
+
+* honor read.partial.row.timeout.ms as the readRows watchdog timeout ([#4629](https://github.com/googleapis/java-bigtable-hbase/issues/4629)) ([cbd7dc7](https://github.com/googleapis/java-bigtable-hbase/commit/cbd7dc778c9545bfab01bdf150ed58c8bb8c01a4))
+
 ## [2.20.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.19.1...v2.20.0) (2026-08-14)
 
 
