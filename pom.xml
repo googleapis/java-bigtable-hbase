@@ -193,9 +193,13 @@ limitations under the License.
           <artifactId>maven-shade-plugin</artifactId>
           <!-- 3.6.0+ bundles ASM 9, which can process the Java 17 multi-release classes that
                google-cloud-bigtable now pulls in transitively (jackson-core 2.18.x). 3.2.4's
-               older ASM fails on those with "Unsupported class file major version 61". The
-               MSHADE-419 regression (reduced pom dropping compile deps) seen in 3.3.0 no longer
-               applies; the generated dependency-reduced-pom is verified to keep compile deps. -->
+               older ASM fails on those with "Unsupported class file major version 61".
+               NOTE: MSHADE-419 (reduced pom dropping compile deps when shadedArtifactAttached
+               is set) is NOT fixed in 3.6.0. An earlier version of this comment claimed it was,
+               and 2.20.0/2.20.1 shipped bigtable-beam-import poms with zero compile deps as a
+               result. Modules in that configuration must set
+               <createDependencyReducedPom>false</createDependencyReducedPom> explicitly; the
+               verify-published-pom-deps goal guards against it regressing. -->
           <version>3.6.0</version>
         </plugin>
         <plugin>

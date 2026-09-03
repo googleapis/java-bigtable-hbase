@@ -320,6 +320,14 @@ limitations under the License.
         </executions>
         <configuration>
           <shadedArtifactAttached>true</shadedArtifactAttached>
+          <!-- The shaded jar is attached under a classifier, so the main artifact is the thin,
+               unshaded jar and it still needs every one of its compile dependencies declared.
+               A dependency-reduced pom would strip them and leave consumers with nothing to
+               resolve (MSHADE-419 does exactly that in shade >= 3.3.0, which shipped broken
+               poms in 2.20.0 and 2.20.1). Set explicitly rather than relying on the plugin
+               default, whose behavior here changed between 3.2.4 and 3.6.0.
+               Guarded by the verify-published-pom-deps check below. -->
+          <createDependencyReducedPom>false</createDependencyReducedPom>
           <transformers>
             <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
             <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer" />
@@ -377,6 +385,37 @@ limitations under the License.
           <!-- disable integration tests by default, opt-in via profile -->
           <skip>true</skip>
         </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>com.google.cloud.bigtable.test</groupId>
+        <artifactId>bigtable-build-helper</artifactId>
+        <version>2.20.2-SNAPSHOT</version> <!-- {x-version-update:bigtable-client-parent:current} -->
+        <executions>
+          <execution>
+            <id>verify-published-pom-deps</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>verify-published-pom-deps</goal>
+            </goals>
+            <configuration>
+              <!-- The main artifact is the thin, unshaded jar, so these have to survive into the
+                   published pom. Shade stripped every one of them in 2.20.0 and 2.20.1, which
+                   broke downstream consumers (e.g. DataflowTemplates) with a
+                   NoClassDefFoundError that no build in this repo could reproduce. -->
+              <requiredDependencies>
+                <requiredDependency>com.google.cloud.bigtable:bigtable-hbase-beam</requiredDependency>
+                <requiredDependency>org.apache.beam:beam-sdks-java-core</requiredDependency>
+                <requiredDependency>org.apache.beam:beam-sdks-java-io-hadoop-format</requiredDependency>
+                <requiredDependency>org.apache.beam:beam-runners-google-cloud-dataflow-java</requiredDependency>
+                <requiredDependency>org.apache.hadoop:hadoop-client-api</requiredDependency>
+                <requiredDependency>org.apache.hadoop:hadoop-client-runtime</requiredDependency>
+                <requiredDependency>org.apache.hbase:hbase-shaded-mapreduce</requiredDependency>
+                <requiredDependency>com.google.cloud.bigdataoss:gcs-connector</requiredDependency>
+              </requiredDependencies>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
