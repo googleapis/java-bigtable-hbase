@@ -69,6 +69,12 @@ public class VerifyPublishedPomDepsMojo extends AbstractMojo {
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     File publishedPom = project.getFile();
+    if (publishedPom == null || !publishedPom.isFile()) {
+      // Whatever pom is slated for deploy has to be readable; if it isn't, fail loudly rather
+      // than let a build that publishes an unverified pom look like it passed the check.
+      throw new MojoFailureException(
+          "There is no pom to verify, project.getFile() is " + publishedPom);
+    }
     Set<String> declared = readPropagatingDependencies(publishedPom);
 
     List<String> missing = new ArrayList<>();
@@ -115,7 +121,14 @@ public class VerifyPublishedPomDepsMojo extends AbstractMojo {
       if (scope != null && !"compile".equals(scope) && !"runtime".equals(scope)) {
         continue;
       }
-      declared.add(resolveGroupId(dependency.getGroupId()) + ":" + dependency.getArtifactId());
+      String groupId = dependency.getGroupId();
+      String artifactId = dependency.getArtifactId();
+      // A half-declared coordinate cannot satisfy a requirement anyway, so drop it and let the
+      // dependency it was meant to be get reported as missing.
+      if (groupId == null || artifactId == null) {
+        continue;
+      }
+      declared.add(resolveGroupId(groupId) + ":" + artifactId);
     }
     return declared;
   }
