@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.20.2](https://github.com/googleapis/java-bigtable-hbase/compare/v2.20.1...v2.20.2) (2026-09-03)
+
+
+### Bug Fixes
+
+* stop publishing a bigtable-beam-import pom with no dependencies ([#4632](https://github.com/googleapis/java-bigtable-hbase/issues/4632)) ([be127de](https://github.com/googleapis/java-bigtable-hbase/commit/be127de918e92fca26d7a84187f508227797813c))
+
 ## [2.20.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.20.0...v2.20.1) (2026-09-02)
 
 
