@@ -26,7 +26,7 @@ The script relies on the following environment variables. You should set them be
 | `DISK_SIZE_GB` | *Optional* | Worker disk size in Gigabytes. | `500` (Default) |
 | `MAX_NUM_WORKERS` | *Optional* | Maximum number of active Dataflow workers per job. | `10` (Default) |
 | `USE_PUBLIC_IPS` | *Optional* | Whether Dataflow workers should have public IPs. | `false` (Default) |
-| `ENABLE_SNAPPY` | *Optional* | Whether to enable Snappy compression for transit files. | `true` (Default) |
+| `ENABLE_SNAPPY` | **Deprecated** | Ignored. Snappy compressed snapshots are read natively, so no flag is needed. Setting it only prints a warning. | N/A |
 
 ## Understanding Sharding
 

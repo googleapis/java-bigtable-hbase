@@ -419,8 +419,8 @@ public class EndToEndIT {
   @Test
   public void testSnappyCompressedHBaseSnapshotImport() throws Exception {
     // Start import
+    // Snappy compressed snapshots are read natively, no flag needed.
     ImportOptions importOpts = createImportOptions();
-    importOpts.setEnableSnappy(true);
     importOpts.setSnapshotName(TEST_SNAPPY_SNAPSHOT_NAME);
 
     // run pipeline

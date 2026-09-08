@@ -114,7 +114,11 @@ WORKER_MACHINE_TYPE="${WORKER_MACHINE_TYPE:-n1-highmem-4}"
 DISK_SIZE_GB="${DISK_SIZE_GB:-500}"
 MAX_NUM_WORKERS="${MAX_NUM_WORKERS:-10}"
 USE_PUBLIC_IPS="${USE_PUBLIC_IPS:-false}"
-ENABLE_SNAPPY="${ENABLE_SNAPPY:-true}"
+
+# Deprecated: Snappy compressed snapshots are read natively, this variable is ignored.
+if [ -n "${ENABLE_SNAPPY:-}" ]; then
+    echo "⚠️  Warning: ENABLE_SNAPPY is deprecated and ignored. Snappy compressed snapshots are supported natively."
+fi
 
 # Generate a safe, unique job name prefix to prevent collisions
 SAFE_TABLE_NAME=$(echo "${TABLE_NAME}" | tr '[:upper:]' '[:lower:]' | tr '_' '-' | tr -cd '[:alnum:]-')
@@ -284,7 +288,6 @@ for (( i=START_SHARD; i<=END_SHARD; i++ )); do
     --region="${REGION}" \
     "${SERVICE_ACCOUNT_ARGS[@]}" \
     --usePublicIps="${USE_PUBLIC_IPS}" \
-    --enableSnappy="${ENABLE_SNAPPY}" \
     --skipRestoreStep="${SKIP_RESTORE}" \
     --deleteRestoredSnapshots=false \
     --restorePath="${RESTORE_DIR}" \
