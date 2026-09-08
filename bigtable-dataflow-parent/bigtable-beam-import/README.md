@@ -167,32 +167,15 @@ workers accordingly.
 
 ### Snappy compressed Snapshots
 
-1. Set the environment variables.
-    ```
-    PROJECT_ID=your-project-id
-    INSTANCE_ID=your-instance-id
-    TABLE_NAME=your-table-name
-    REGION=us-central1
+Snappy compressed snapshots are read natively, so they are imported with the
+exact same command as above, with no extra configuration.
 
-    SNAPSHOT_GCS_PATH="$BUCKET_NAME/hbase-migration-snap"
-    SNAPSHOT_NAME=your-snapshot-name
-    ```
-
-1. Run the import.
-    ```
-    java -jar bigtable-beam-import-2.3.0.jar importsnapshot \
-        --runner=DataflowRunner \
-        --project=$PROJECT_ID \
-        --bigtableInstanceId=$INSTANCE_ID \
-        --bigtableTableId=$TABLE_NAME \
-        --hbaseSnapshotSourceDir=$SNAPSHOT_GCS_PATH/data \
-        --snapshotName=$SNAPSHOT_NAME \
-        --stagingLocation=$SNAPSHOT_GCS_PATH/staging \
-        --gcpTempLocation=$SNAPSHOT_GCS_PATH/temp \
-        --maxNumWorkers=$(expr 3 \* $CLUSTER_NUM_NODES) \
-        --region=$REGION \
-        --enableSnappy=true
-    ```
+> [!WARNING]
+> The `--enableSnappy` flag is **deprecated**. Since
+> [#4338](https://github.com/googleapis/java-bigtable-hbase/pull/4338) (released
+> in 2.14.0) the import job runs on HBase 2.x / Hadoop 3, which decompresses
+> Snappy without the custom worker container the flag used to install. The flag
+> is accepted but ignored, and it will be removed in a future release.
 
 ### Sequence Files
 

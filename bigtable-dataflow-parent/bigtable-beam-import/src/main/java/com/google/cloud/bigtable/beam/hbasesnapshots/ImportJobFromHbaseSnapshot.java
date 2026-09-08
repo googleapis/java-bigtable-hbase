@@ -120,10 +120,23 @@ public class ImportJobFromHbaseSnapshot {
     @SuppressWarnings("unused")
     void setSnapshotName(String snapshotName);
 
-    @Description("Is importing Snappy compressed snapshot.")
+    /**
+     * @deprecated This option is a no-op since the job moved to HBase 2.x / Hadoop 3. Snappy
+     *     compressed snapshots are read natively, so the flag no longer needs to be set and is
+     *     ignored. It will be removed in a future release.
+     */
+    @Deprecated
+    @Description(
+        "Deprecated: this option is ignored. Snappy compressed snapshots are supported natively"
+            + " and no longer require a flag.")
     @Default.Boolean(false)
     Boolean getEnableSnappy();
 
+    /**
+     * @deprecated This option is a no-op since the job moved to HBase 2.x / Hadoop 3. See {@link
+     *     #getEnableSnappy()}.
+     */
+    @Deprecated
     @SuppressWarnings("unused")
     void setEnableSnappy(Boolean enableSnappy);
 
@@ -260,6 +273,8 @@ public class ImportJobFromHbaseSnapshot {
     // To determine the Google Cloud Storage file scheme (gs://)
     FileSystems.setDefaultPipelineOptions(options);
 
+    warnIfSnappyFlagSet(options);
+
     LOG.info("Building Pipeline");
     Pipeline pipeline = null;
     ImportConfig importConfig = null;
@@ -283,6 +298,16 @@ public class ImportJobFromHbaseSnapshot {
     PipelineResult result = pipeline.run();
     if (options.getWait()) {
       Utils.waitForPipelineToFinish(result);
+    }
+  }
+
+  @SuppressWarnings("deprecation")
+  private static void warnIfSnappyFlagSet(ImportOptions options) {
+    if (Boolean.TRUE.equals(options.getEnableSnappy())) {
+      LOG.warn(
+          "--enableSnappy is deprecated and ignored. Snappy compressed snapshots are read natively"
+              + " since the job moved to HBase 2.x / Hadoop 3; the flag will be removed in a future"
+              + " release.");
     }
   }
 
