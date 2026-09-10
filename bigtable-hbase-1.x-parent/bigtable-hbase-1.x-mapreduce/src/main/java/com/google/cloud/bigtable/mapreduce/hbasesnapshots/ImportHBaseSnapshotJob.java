@@ -18,8 +18,9 @@ package com.google.cloud.bigtable.mapreduce.hbasesnapshots;
 import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon.IMPORT_SNAPSHOT_JOBNAME_KEY;
 import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon.SNAPSHOTNAME_KEY;
 import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon.SNAPSHOT_RESTOREDIR_KEY;
-import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon.SNAPSHOT_SPLITS_PER_REGION_DEFAULT;
 import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon.SNAPSHOT_SPLITS_PER_REGION_KEY;
+import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon.SNAPSHOT_SPLIT_TARGET_SIZE_DEFAULT;
+import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon.SNAPSHOT_SPLIT_TARGET_SIZE_KEY;
 import static com.google.cloud.bigtable.mapreduce.hbasesnapshots.ImportJobCommon.TABLENAME_KEY;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
@@ -33,6 +34,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -45,6 +47,12 @@ import org.apache.hadoop.hbase.mapreduce.MutationSerialization;
 import org.apache.hadoop.hbase.mapreduce.ResultSerialization;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.hbase.mapreduce.TableOutputFormat;
+import org.apache.hadoop.hbase.mapreduce.TableSnapshotInputFormatImpl;
+import org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotRegionManifest;
+import org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotRegionManifest.FamilyFiles;
+import org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotRegionManifest.StoreFile;
+import org.apache.hadoop.hbase.snapshot.SnapshotManifest;
+import org.apache.hadoop.hbase.util.CommonFSUtils;
 import org.apache.hadoop.hbase.util.RegionSplitter.UniformSplit;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Counters;
@@ -87,7 +95,10 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
             + "=(true|false)\n"
             + "  -D"
             + BigtableOptionsFactory.BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS
-            + "=<throttling-threshold-ms>\n");
+            + "=<throttling-threshold-ms>\n"
+            + "  -D"
+            + SNAPSHOT_SPLITS_PER_REGION_KEY
+            + "=<target-number-of-bytes-per-split>\n");
 
     System.exit(1);
   }
@@ -163,11 +174,6 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
     // set default fs
     conf.set(CommonConfigurationKeysPublic.FS_DEFAULT_NAME_KEY, conf.get(HConstants.HBASE_DIR));
 
-    // set default splits per region and default if not set (not required, set for consistency)
-    conf.setInt(
-        SNAPSHOT_SPLITS_PER_REGION_KEY,
-        conf.getInt(SNAPSHOT_SPLITS_PER_REGION_KEY, SNAPSHOT_SPLITS_PER_REGION_DEFAULT));
-
     // default job name
     conf.setIfUnset(
         IMPORT_SNAPSHOT_JOBNAME_KEY,
@@ -198,6 +204,40 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
     return 0;
   }
 
+  private static int computeSplitsPerRegion(Configuration configuration) throws IOException {
+    int numSplitsPerRegion = configuration.getInt(SNAPSHOT_SPLITS_PER_REGION_KEY, 0);
+    if (numSplitsPerRegion > 0) {
+      return numSplitsPerRegion;
+    }
+
+    Path hbaseRoot = CommonFSUtils.getRootDir(configuration);
+    String snapshotName = configuration.get(SNAPSHOTNAME_KEY);
+    FileSystem fileSystem = hbaseRoot.getFileSystem(configuration);
+    long targetSplitSize =
+        configuration.getLong(SNAPSHOT_SPLIT_TARGET_SIZE_KEY, SNAPSHOT_SPLIT_TARGET_SIZE_DEFAULT);
+    SnapshotManifest manifest =
+        TableSnapshotInputFormatImpl.getSnapshotManifest(
+            configuration, snapshotName, hbaseRoot, fileSystem);
+
+    long maxRegionSize = 0;
+
+    for (SnapshotRegionManifest regionManifest : manifest.getRegionManifests()) {
+      long regionSize = 0;
+      for (FamilyFiles familyFiles : regionManifest.getFamilyFilesList()) {
+        for (StoreFile storeFile : familyFiles.getStoreFilesList()) {
+          regionSize += storeFile.getFileSize();
+        }
+      }
+      maxRegionSize = Math.max(maxRegionSize, regionSize);
+    }
+
+    numSplitsPerRegion = (int) Math.ceil(maxRegionSize / (float) targetSplitSize);
+    // Constrain the split count to be between 1 and 1 million
+    numSplitsPerRegion = Math.min(Math.max(1, numSplitsPerRegion), 1_000_000);
+
+    return numSplitsPerRegion;
+  }
+
   /**
    * Sets up the actual job.
    *
@@ -208,6 +248,8 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
   protected static Job createSubmittableJob(Configuration conf) throws IOException {
     Job job = Job.getInstance(conf, conf.get(IMPORT_SNAPSHOT_JOBNAME_KEY));
     job.setJarByClass(ImportHBaseSnapshotJob.class);
+    int splitsPerRegion = computeSplitsPerRegion(conf);
+    LOG.info(String.format("Using %d splits per region", splitsPerRegion));
     ShuffledTableMapReduceUtil.initTableSnapshotMapperJob(
         conf.get(SNAPSHOTNAME_KEY),
         new Scan().setMaxVersions(),
@@ -218,7 +260,7 @@ public class ImportHBaseSnapshotJob extends Configured implements Tool {
         true,
         new Path(conf.get(SNAPSHOT_RESTOREDIR_KEY)),
         new UniformSplit(),
-        conf.getInt(SNAPSHOT_SPLITS_PER_REGION_KEY, SNAPSHOT_SPLITS_PER_REGION_DEFAULT));
+        splitsPerRegion);
 
     job.setNumReduceTasks(0);
     job.setOutputFormatClass(TableOutputFormat.class);

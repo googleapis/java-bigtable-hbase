@@ -26,8 +26,13 @@ public class ImportJobCommon {
 
   public static final String IMPORT_SNAPSHOT_JOBNAME_KEY = "google.bigtable.import.jobname";
 
+  public static final String SNAPSHOT_SPLIT_TARGET_SIZE_KEY =
+      "google.bigtable.import.snapshot.split.size";
+
+  public static long SNAPSHOT_SPLIT_TARGET_SIZE_DEFAULT = 256 * 1024 * 1024;
+
   public static final String SNAPSHOT_SPLITS_PER_REGION_KEY =
       "google.bigtable.import.snapshot.splits.per.region";
 
-  public static final int SNAPSHOT_SPLITS_PER_REGION_DEFAULT = 2;
+  @Deprecated public static final int SNAPSHOT_SPLITS_PER_REGION_DEFAULT = 2;
 }
