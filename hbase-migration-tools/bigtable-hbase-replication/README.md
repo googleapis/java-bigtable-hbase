@@ -143,6 +143,85 @@ Please refer
 to [HBaseToCloudBigtableReplicationConfiguration](bigtable-hbase-replication-core/src/main/java/com/google/cloud/bigtable/hbase/replication/configuration/HBaseToCloudBigtableReplicationConfiguration.java)
 for other properties that can be set.
 
+### Mapping HBase table names to Cloud Bigtable table IDs
+
+By default a WAL entry for HBase table `t` is written to the Cloud Bigtable
+table `t`. Cloud Bigtable does not have namespaces and `:` is not a valid
+character in a Cloud Bigtable table ID, so HBase tables in a non-default
+namespace (for example `my_namespace:my_table`) can not be replicated without
+renaming them.
+
+The endpoint accepts mappings from HBase table names to Cloud Bigtable
+table IDs. Source HBase table names are normalized to canonical form (for
+example, `default:my_table` and `my_table` refer to the same HBase table).
+Mappings must be injective (1:1): multiple HBase tables cannot map to the same
+Cloud Bigtable table ID.
+
+Every target must be a valid Cloud Bigtable table ID (`[_a-zA-Z0-9][-_.a-zA-Z0-9]*`,
+at most 50 characters); the endpoint refuses to start if the mapping is
+malformed or contains collisions, ensuring mutations are never replicated to the
+wrong table.
+
+The mapping can be provided in one of three mutually exclusive ways:
+
+* **Inline JSON**, through `google.bigtable.replication.table_name_mapping`. This is
+  convenient when creating the peer in HBase shell:
+
+  ```
+  add_peer 'peer_id',
+    ENDPOINT_CLASSNAME => 'com.google.cloud.bigtable.hbase2_x.replication.HbaseToCloudBigtableReplicationEndpoint',
+    CONFIG => { 'google.bigtable.replication.table_name_mapping' => '{"my_namespace:my_table": "my_namespace_my_table"}' }
+  ```
+
+* **Per-table prefixed properties**, through
+  `google.bigtable.replication.table_name_mapping.<hbase_table>`. This avoids
+  JSON quote escaping in `hbase-site.xml` or shell `add_peer`:
+
+  ```xml
+  <property>
+      <name>google.bigtable.replication.table_name_mapping.my_namespace:my_table</name>
+      <value>my_namespace_my_table</value>
+  </property>
+  <property>
+      <name>google.bigtable.replication.table_name_mapping.other_namespace:events</name>
+      <value>events</value>
+  </property>
+  ```
+
+* **From a file**, through `google.bigtable.replication.table_name_mapping_file`.
+  The file contains a JSON object identical to the schema mapping file accepted
+  by the [HBase schema translator](../../bigtable-hbase-1.x-parent/bigtable-hbase-1.x-tools)
+  (`google.bigtable.schema.mapping.filepath`), so one file can be used to create
+  the tables in Cloud Bigtable and to replicate to them:
+
+  ```json
+  {
+    "my_namespace:my_table": "my_namespace_my_table",
+    "other_namespace:events": "events"
+  }
+  ```
+
+  The location is resolved through the Hadoop `FileSystem` API. Use explicit URI
+  schemes:
+  - `file:///path/to/mapping.json` for a local file present across region servers.
+  - `hdfs://nameservice1/hbase/mapping.json` for a file stored on HDFS.
+  
+  If the URI scheme is omitted (e.g. `/etc/hbase/conf/mapping.json`), the path is
+  first checked on the default filesystem (`fs.defaultFS`), and if not found, falls
+  back to the local filesystem on the region server.
+
+  ```xml
+  <property>
+      <name>google.bigtable.replication.table_name_mapping_file</name>
+      <value>hdfs://nameservice1/hbase/bigtable-table-name-mapping.json</value>
+  </property>
+  ```
+
+Note that `TABLE_CFS` in `add_peer` only *selects* the tables and column
+families that are replicated to a peer; it can not rename them. Use `TABLE_CFS`
+with the HBase table names (for example `TABLE_CFS => { 'my_namespace:my_table'
+=> [] }`) and the mapping above to choose the Cloud Bigtable table ID.
+
 ### Bidirectional Replication with Cloud Bigtable
 
 The bidirectional replication feature filters out mutations replicated to Hbase from Cloud Bigtable change streams with the [Bigtable-Hbase replicator](https://github.com/GoogleCloudPlatform/DataflowTemplates/tree/main/v2/bigtable-cdc-to-hbase) to prevent replication loops. 

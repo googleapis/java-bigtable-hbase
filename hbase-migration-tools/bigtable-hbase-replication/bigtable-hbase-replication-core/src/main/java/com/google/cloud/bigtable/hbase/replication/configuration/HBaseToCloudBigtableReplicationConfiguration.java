@@ -67,6 +67,7 @@ public class HBaseToCloudBigtableReplicationConfiguration {
    * Bigtable at the expense of more RPCs.
    */
   public static final String BATCH_SIZE_KEY = "google.bigtable.replication.batch_size_bytes";
+
   // TODO: Tune this parameter. Usually, this should be smaller than the HBase replication source
   // batch capacity by counts and bytes. These capacity are set by `replication.source.nb.capacity`
   // and `replication.source.size.capacity` config keys.
@@ -90,4 +91,51 @@ public class HBaseToCloudBigtableReplicationConfiguration {
   public static final boolean CBT_REPL_BIDIRECTIONAL_REPLICATION_MODE = false;
   public static final String CBT_REPL_HBASE_QUALIFIER = "SOURCE_HBASE";
   public static final String CBT_REPL_CBT_QUALIFIER = "SOURCE_CBT";
+
+  /**
+   * Inline JSON map of HBase table name to Cloud Bigtable table ID, for example {@code
+   * {"my_namespace:my_table": "my_namespace_my_table"}}. WAL entries for an HBase table present in
+   * the map are written to the mapped Cloud Bigtable table; tables that are not present in the map
+   * are replicated to a Cloud Bigtable table with the same name as the HBase table (the default
+   * behavior).
+   *
+   * <p>The JSON format is identical to the schema mapping file accepted by the HBase schema
+   * translator ({@code google.bigtable.schema.mapping.filepath}), so the same file can be used to
+   * create the tables in Cloud Bigtable and to replicate to them.
+   *
+   * <p>This is mainly useful for HBase tables in a non-default namespace, since {@code :} is not a
+   * valid character in a Cloud Bigtable table ID.
+   *
+   * <p>Mutually exclusive with {@link #TABLE_NAME_MAPPING_FILE_KEY} and {@link
+   * #TABLE_NAME_MAPPING_PREFIX}.
+   */
+  public static final String TABLE_NAME_MAPPING_KEY =
+      "google.bigtable.replication.table_name_mapping";
+
+  /**
+   * Location of a JSON file containing the table name mapping described in {@link
+   * #TABLE_NAME_MAPPING_KEY}. The location is resolved through the Hadoop {@code FileSystem} API,
+   * so it can be a local path ({@code file:///etc/hbase/conf/table-name-mapping.json}), an HDFS
+   * path ({@code hdfs://nameservice1/hbase/table-name-mapping.json}) or any other file system
+   * available on the region servers. The file must be readable by every region server.
+   *
+   * <p>Mutually exclusive with {@link #TABLE_NAME_MAPPING_KEY} and {@link
+   * #TABLE_NAME_MAPPING_PREFIX}.
+   */
+  public static final String TABLE_NAME_MAPPING_FILE_KEY =
+      "google.bigtable.replication.table_name_mapping_file";
+
+  /**
+   * Configuration property prefix for specifying individual per-table mappings directly in {@code
+   * hbase-site.xml} or via HBase shell {@code add_peer} CONFIG without JSON formatting: {@code
+   * google.bigtable.replication.table_name_mapping.<hbase_table>=<bigtable_table>}.
+   *
+   * <p>For example: {@code
+   * google.bigtable.replication.table_name_mapping.my_namespace:my_table=my_namespace_my_table}.
+   *
+   * <p>Mutually exclusive with {@link #TABLE_NAME_MAPPING_KEY} and {@link
+   * #TABLE_NAME_MAPPING_FILE_KEY}.
+   */
+  public static final String TABLE_NAME_MAPPING_PREFIX =
+      "google.bigtable.replication.table_name_mapping.";
 }
