@@ -16,6 +16,7 @@
 
 package com.google.cloud.bigtable.hbase1_x.replication;
 
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.TABLE_NAME_MAPPING_KEY;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.CF1;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.FILTERED_ROW_KEY;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.ROW_KEY;
@@ -36,6 +37,8 @@ import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
+import org.apache.hadoop.hbase.NamespaceExistException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Connection;
@@ -121,6 +124,11 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
   private Table cbtTable;
   private Table cbtTable2;
 
+  private static final TableName REMAPPED_SOURCE_TABLE =
+      TableName.valueOf("my_ns", "remapped_source_table");
+  private static final TableName REMAPPED_TARGET_TABLE =
+      TableName.valueOf("my_ns_remapped_target_table");
+
   @BeforeClass
   public static void setUpCluster() throws Exception {
     // Prepare HBase mini cluster configuration
@@ -131,6 +139,11 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     conf.set("google.bigtable.project.id", "test-project");
     // This config will connect Replication endpoint to the emulator and not the prod CBT.
     conf.set("google.bigtable.emulator.endpoint.host", "localhost:" + bigtableEmulator.getPort());
+    conf.set(
+        TABLE_NAME_MAPPING_KEY,
+        String.format(
+            "{\"%s\": \"%s\"}",
+            REMAPPED_SOURCE_TABLE.getNameAsString(), REMAPPED_TARGET_TABLE.getNameAsString()));
 
     hbaseTestingUtil.startMiniCluster(2);
     replicationAdmin = new ReplicationAdmin(hbaseTestingUtil.getConfiguration());
@@ -499,5 +512,66 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
         "Timestamp match for row " + TestUtils.ROW_KEY,
         hbaseCells.get(0).getTimestamp(),
         bigtableCells.get(0).getTimestamp());
+  }
+
+  private void createRemappedTables(TableName hbaseSourceTable, TableName cbtTargetTable)
+      throws IOException {
+    String namespace = hbaseSourceTable.getNamespaceAsString();
+    if (!NamespaceDescriptor.DEFAULT_NAMESPACE_NAME_STR.equals(namespace)) {
+      try {
+        hbaseConnection.getAdmin().createNamespace(NamespaceDescriptor.create(namespace).build());
+      } catch (NamespaceExistException ignored) {
+        // Namespace already exists
+      }
+    }
+
+    HTableDescriptor hbaseHtd = new HTableDescriptor(hbaseSourceTable);
+    HColumnDescriptor cf1 = new HColumnDescriptor(TestUtils.CF1);
+    cf1.setMaxVersions(100);
+    cf1.setScope(HConstants.REPLICATION_SCOPE_GLOBAL);
+    hbaseHtd.addFamily(cf1);
+    HColumnDescriptor cf2 = new HColumnDescriptor(TestUtils.CF2);
+    cf2.setMaxVersions(100);
+    cf2.setScope(HConstants.REPLICATION_SCOPE_GLOBAL);
+    hbaseHtd.addFamily(cf2);
+    hbaseTestingUtil.getHBaseAdmin().createTable(hbaseHtd);
+
+    HTableDescriptor cbtHtd = new HTableDescriptor(cbtTargetTable);
+    HColumnDescriptor cbtCf1 = new HColumnDescriptor(TestUtils.CF1);
+    cbtCf1.setMaxVersions(100);
+    cbtHtd.addFamily(cbtCf1);
+    HColumnDescriptor cbtCf2 = new HColumnDescriptor(TestUtils.CF2);
+    cbtCf2.setMaxVersions(100);
+    cbtHtd.addFamily(cbtCf2);
+    cbtConnection.getAdmin().createTable(cbtHtd);
+  }
+
+  @Test
+  public void testTableNameMapping() throws Exception {
+    createRemappedTables(REMAPPED_SOURCE_TABLE, REMAPPED_TARGET_TABLE);
+
+    try (Table srcTable = hbaseConnection.getTable(REMAPPED_SOURCE_TABLE);
+        Table dstTable = cbtConnection.getTable(REMAPPED_TARGET_TABLE)) {
+      TestReplicationEndpoint.replicatedEntries.set(0);
+
+      for (int i = 0; i < 25; i++) {
+        Put put = new Put(TestUtils.getRowKey(i));
+        put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.getValue(i));
+        put.addColumn(TestUtils.CF2, TestUtils.COL_QUALIFIER, 0, TestUtils.getValue(100 + i));
+        srcTable.put(put);
+      }
+
+      TestUtils.assertTableEventuallyEquals(
+          srcTable, dstTable, () -> TestReplicationEndpoint.replicatedEntries.get() >= 25);
+    } finally {
+      if (hbaseTestingUtil.getHBaseAdmin().tableExists(REMAPPED_SOURCE_TABLE)) {
+        hbaseTestingUtil.getHBaseAdmin().disableTable(REMAPPED_SOURCE_TABLE);
+        hbaseTestingUtil.getHBaseAdmin().deleteTable(REMAPPED_SOURCE_TABLE);
+      }
+      if (cbtConnection.getAdmin().tableExists(REMAPPED_TARGET_TABLE)) {
+        cbtConnection.getAdmin().disableTable(REMAPPED_TARGET_TABLE);
+        cbtConnection.getAdmin().deleteTable(REMAPPED_TARGET_TABLE);
+      }
+    }
   }
 }

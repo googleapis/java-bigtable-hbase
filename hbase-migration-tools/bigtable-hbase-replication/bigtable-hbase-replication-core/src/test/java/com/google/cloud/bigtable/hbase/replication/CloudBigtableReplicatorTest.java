@@ -20,6 +20,7 @@ import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToC
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.CBT_REPL_CBT_QUALIFIER_KEY;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.CBT_REPL_HBASE_QUALIFIER;
 import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.CBT_REPL_HBASE_QUALIFIER_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.TABLE_NAME_MAPPING_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.BIDIRECTIONAL_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.BIDIRECTIONAL_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.BIDIRECTIONAL_REPL_INELIGIBLE_MUTATIONS_METRIC_KEY;
@@ -41,6 +42,7 @@ import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.getVal
 import static org.apache.hadoop.hbase.KeyValue.Type.DeleteFamilyVersion;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -55,6 +57,7 @@ import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -813,6 +816,123 @@ public class CloudBigtableReplicatorTest {
             new CloudBigtableReplicationTask(
                 TABLE_NAME_STRING, mockConnection, expectedBatchOfWal));
     verifyNoMoreInteractions(mockMetricExporter, mockExecutorService);
+    verifyNoInteractions(mockConnection);
+  }
+
+  @Test
+  public void testReplicateAppliesTableNameMapping() throws IOException {
+    // Map the namespaced HBase table to a flat Cloud Bigtable table ID, leave the other one alone.
+    String namespacedTable = "my_namespace:" + TABLE_NAME_STRING;
+    String mappedTable = "my_namespace_" + TABLE_NAME_STRING;
+    Configuration mappingConf = new Configuration(false);
+    mappingConf.set(
+        TABLE_NAME_MAPPING_KEY, "{\"" + namespacedTable + "\": \"" + mappedTable + "\"}");
+
+    CloudBigtableReplicator replicator = new CloudBigtableReplicator();
+    replicator.start(sharedResources, incompatibleMutationAdapter, 2000, false, mappingConf, null);
+
+    Cell cell1 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
+    BigtableWALEntry walEntry1 =
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell1), namespacedTable);
+    Cell cell2 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(2));
+    BigtableWALEntry walEntry2 =
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell2), TABLE_NAME_STRING_2);
+
+    Map<String, List<BigtableWALEntry>> walsToReplicate = new HashMap<>();
+    walsToReplicate.put(namespacedTable, Arrays.asList(walEntry1));
+    walsToReplicate.put(TABLE_NAME_STRING_2, Arrays.asList(walEntry2));
+
+    Map<ByteRange, List<Cell>> expectedMappedBatch = new HashMap<>();
+    expectedMappedBatch.put(new SimpleByteRange(getRowKey(1)), walEntry1.getCells());
+    Map<ByteRange, List<Cell>> expectedUnmappedBatch = new HashMap<>();
+    expectedUnmappedBatch.put(new SimpleByteRange(getRowKey(2)), walEntry2.getCells());
+
+    when(mockExecutorService.submit((Callable<Object>) any()))
+        .thenReturn(CompletableFuture.completedFuture(true));
+
+    assertTrue(replicator.replicate(walsToReplicate));
+
+    // The namespaced table is written to the mapped Cloud Bigtable table...
+    verify(mockExecutorService)
+        .submit(new CloudBigtableReplicationTask(mappedTable, mockConnection, expectedMappedBatch));
+    // ...and the unmapped table keeps its HBase name.
+    verify(mockExecutorService)
+        .submit(
+            new CloudBigtableReplicationTask(
+                TABLE_NAME_STRING_2, mockConnection, expectedUnmappedBatch));
+    verifyNoMoreInteractions(mockExecutorService);
+    verifyNoInteractions(mockConnection);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testStartFailsOnInvalidTableNameMapping() {
+    Configuration mappingConf = new Configuration(false);
+    // ':' is not a valid character in a Cloud Bigtable table ID.
+    mappingConf.set(TABLE_NAME_MAPPING_KEY, "{\"ns:table\": \"ns:table\"}");
+
+    CloudBigtableReplicator replicator = new CloudBigtableReplicator();
+    replicator.start(sharedResources, incompatibleMutationAdapter, 2000, false, mappingConf, null);
+  }
+
+  @Test
+  public void testPublicStartFailsOnInvalidTableNameMappingBeforeConnecting() {
+    Configuration mappingConf = new Configuration(false);
+    mappingConf.set(TABLE_NAME_MAPPING_KEY, "{\"ns:table\": \"ns:table\"}");
+
+    CloudBigtableReplicator replicator = new CloudBigtableReplicator();
+    try {
+      replicator.start(mappingConf, mockMetricExporter);
+      fail("Expected IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      assertTrue(
+          "Expected TableNameMapper validation error before connection setup, got: "
+              + e.getMessage(),
+          e.getMessage().contains("Table name mapping"));
+    }
+  }
+
+  @Test
+  public void testReplicateFailsWhenUnmappedTableCollidesWithMappingTarget() {
+    Configuration mappingConf = new Configuration(false);
+    mappingConf.set(TABLE_NAME_MAPPING_KEY, "{\"ns:table_B\": \"table_B\"}");
+
+    CloudBigtableReplicator replicator = new CloudBigtableReplicator();
+    replicator.start(sharedResources, incompatibleMutationAdapter, 2000, false, mappingConf, null);
+
+    Cell cell1 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
+    BigtableWALEntry mappedEntry =
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell1), "ns:table_B");
+    Cell cell2 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(2));
+    BigtableWALEntry collidingUnmappedEntry =
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell2), "table_B");
+
+    Map<String, List<BigtableWALEntry>> walsToReplicate = new HashMap<>();
+    walsToReplicate.put("ns:table_B", Arrays.asList(mappedEntry));
+    walsToReplicate.put("table_B", Arrays.asList(collidingUnmappedEntry));
+
+    assertFalse(replicator.replicate(walsToReplicate));
+    verifyNoInteractions(mockExecutorService);
+    verifyNoInteractions(mockConnection);
+  }
+
+  @Test
+  public void testReplicateFailsWhenMultipleWalEntryKeysResolveToSameTarget() {
+    CloudBigtableReplicator replicator = new CloudBigtableReplicator();
+    replicator.start(sharedResources, incompatibleMutationAdapter, 2000, false, null, null);
+
+    Cell cell1 = new KeyValue(getRowKey(1), CF1, null, TIMESTAMP, getValue(1));
+    BigtableWALEntry entry1 =
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell1), TABLE_NAME_STRING);
+    Cell cell2 = new KeyValue(getRowKey(2), CF1, null, TIMESTAMP, getValue(2));
+    BigtableWALEntry entry2 =
+        new BigtableWALEntry(TIMESTAMP, Arrays.asList(cell2), "default:" + TABLE_NAME_STRING);
+
+    Map<String, List<BigtableWALEntry>> walsToReplicate = new LinkedHashMap<>();
+    walsToReplicate.put(TABLE_NAME_STRING, Arrays.asList(entry1));
+    walsToReplicate.put("default:" + TABLE_NAME_STRING, Arrays.asList(entry2));
+
+    assertFalse(replicator.replicate(walsToReplicate));
+    verifyNoInteractions(mockExecutorService);
     verifyNoInteractions(mockConnection);
   }
 }
