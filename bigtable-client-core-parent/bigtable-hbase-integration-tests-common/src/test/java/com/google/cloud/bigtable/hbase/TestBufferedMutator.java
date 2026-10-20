@@ -21,9 +21,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.BufferedMutatorParams;
@@ -61,7 +63,7 @@ public class TestBufferedMutator extends AbstractTest {
       // Bigtable pushes the change right away.  This test would be flaky.
       //      Assert.assertEquals("Expecting no results", 0, tableForRead.get(get).size());
       mutator.flush();
-      Assert.assertEquals("Expecting one result", 1, tableForRead.get(get).size());
+      assertEventuallyHasCells(tableForRead, get, 1);
     }
   }
 
@@ -71,7 +73,7 @@ public class TestBufferedMutator extends AbstractTest {
         Connection c = createNewConnection();
         Table tableForRead = c.getTable(sharedTestEnv.getDefaultTableName()); ) {
       mutator.put(getPut());
-      Assert.assertEquals("Expecting one result", 1, tableForRead.get(getGet()).size());
+      assertEventuallyHasCells(tableForRead, getGet(), 1);
     }
   }
 
@@ -190,8 +192,10 @@ public class TestBufferedMutator extends AbstractTest {
 
       Scan scan = new Scan();
       scan.setRowPrefixFilter(Bytes.toBytes(rowKeyPrefix));
-      ResultScanner resultScanner = tableForRead.getScanner(scan);
-      Result[] results = resultScanner.next(20);
+      Result[] results;
+      try (ResultScanner resultScanner = tableForRead.getScanner(scan)) {
+        results = resultScanner.next(20);
+      }
 
       assertEquals("mutations should have been applied now", mutations.size(), results.length);
       for (int i = 0; i < results.length; i++) {
@@ -203,6 +207,30 @@ public class TestBufferedMutator extends AbstractTest {
   final byte[] qualifier = dataHelper.randomData("testQualifier-");
   final byte[] rowKey = dataHelper.randomData("testrow-");
   final byte[] value = dataHelper.randomData("testValue-");
+
+  /**
+   * Reads until {@code get} returns {@code expectedCells} cells, or fails once the timeout expires.
+   *
+   * <p>These tests read back through a second {@link Connection} to prove the write reached
+   * Bigtable rather than a client side buffer. A write is durable once the mutator returns, but a
+   * read issued on a different connection is not guaranteed to observe it immediately, so asserting
+   * on the very first response makes the test flaky. Retrying only absorbs that delay: if the write
+   * never becomes visible, this still fails with the same expected/actual mismatch.
+   */
+  private static void assertEventuallyHasCells(Table table, Get get, int expectedCells)
+      throws IOException, InterruptedException {
+    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
+    int actualCells;
+    do {
+      actualCells = table.get(get).size();
+      if (actualCells == expectedCells) {
+        return;
+      }
+      Thread.sleep(250);
+    } while (System.nanoTime() < deadline);
+
+    assertEquals("Expecting " + expectedCells + " result(s)", expectedCells, actualCells);
+  }
 
   private Get getGet() {
     Get get = new Get(rowKey);

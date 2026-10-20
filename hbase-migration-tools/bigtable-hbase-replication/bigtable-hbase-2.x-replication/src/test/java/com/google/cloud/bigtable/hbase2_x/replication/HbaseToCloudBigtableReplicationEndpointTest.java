@@ -157,7 +157,11 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
   }
 
   @Before
-  public void setupTestCase() throws IOException {
+  public void setupTestCase() throws IOException, InterruptedException {
+
+    // Drain any replication still in flight from the previous test, so that it is not counted
+    // against this test's target by the reset below.
+    TestUtils.waitForReplicationToQuiesce(TestReplicationEndpoint.replicatedEntries::get);
 
     // Create and set the empty tables
     TableName table1 = TableName.valueOf(UUID.randomUUID().toString());
