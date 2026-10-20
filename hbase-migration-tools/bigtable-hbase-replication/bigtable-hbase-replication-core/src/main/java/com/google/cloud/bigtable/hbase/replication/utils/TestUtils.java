@@ -25,7 +25,9 @@ import java.util.List;
 import java.util.NavigableMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
+import java.util.function.IntSupplier;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.TableName;
@@ -64,6 +66,15 @@ public class TestUtils {
   public static final String VALUE_PREFIX = "Value-";
   public static final byte[] VALUE = "Value".getBytes();
   public static final long TIMESTAMP = 1000l;
+
+  /** How long to wait for asynchronous replication before giving up. */
+  private static final long REPLICATION_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(60);
+
+  /** How long to wait between polls while waiting on asynchronous replication. */
+  private static final long POLL_INTERVAL_MILLIS = 500;
+
+  /** Consecutive unchanged polls required before replication is considered idle. */
+  private static final int QUIESCE_STABLE_POLLS = 3;
 
   // ONLY STATIC METHODS
   private TestUtils() {}
@@ -180,52 +191,77 @@ public class TestUtils {
   /** Scans the 2 Tables and compares the data. Fails assertion in case of a mismatch. */
   public static void assertTableEquals(Table expected, Table actual) throws IOException {
 
-    ResultScanner expectedScanner = expected.getScanner(new Scan().setMaxVersions());
-    ResultScanner actualScanner = actual.getScanner(new Scan().setMaxVersions());
+    try (ResultScanner expectedScanner = expected.getScanner(new Scan().setMaxVersions());
+        ResultScanner actualScanner = actual.getScanner(new Scan().setMaxVersions())) {
 
-    Iterator<Result> expectedIterator = expectedScanner.iterator();
-    Iterator<Result> actualIterator = actualScanner.iterator();
+      Iterator<Result> expectedIterator = expectedScanner.iterator();
+      Iterator<Result> actualIterator = actualScanner.iterator();
 
-    // Both databases should return exact same results in exact same order.
-    while (expectedIterator.hasNext()) {
-      // Check size mismatch
-      if (!actualIterator.hasNext()) {
-        Assert.fail(
-            "Expected more rows. CBT missing results starting at "
-                + Bytes.toStringBinary(expectedIterator.next().getRow()));
+      // Both databases should return exact same results in exact same order.
+      while (expectedIterator.hasNext()) {
+        // Check size mismatch
+        if (!actualIterator.hasNext()) {
+          Assert.fail(
+              "Expected more rows. CBT missing results starting at "
+                  + Bytes.toStringBinary(expectedIterator.next().getRow()));
+        }
+
+        // Both the databases have next, so compare the results
+        assertEquals(expectedIterator.next(), actualIterator.next());
       }
-
-      // Both the databases have next, so compare the results
-      assertEquals(expectedIterator.next(), actualIterator.next());
-    }
-    // Verify that actual has no more data left
-    if (actualIterator.hasNext()) {
-      Assert.fail(
-          "Expected less rows, extra results in CBT starting from "
-              + actualIterator.next().toString());
+      // Verify that actual has no more data left
+      if (actualIterator.hasNext()) {
+        Assert.fail(
+            "Expected less rows, extra results in CBT starting from "
+                + actualIterator.next().toString());
+      }
     }
   }
 
   /** Waits for replication to replicate numReplicatedEntries */
   public static void waitForReplication(BooleanSupplier isReplicationCurrent)
       throws InterruptedException {
-    int sleepTimeInMillis = 500;
-    for (int i = 0; i < 5; i++) {
-
-      // First check if replication has already happened
+    long start = System.nanoTime();
+    long deadline = start + TimeUnit.MILLISECONDS.toNanos(REPLICATION_TIMEOUT_MILLIS);
+    while (true) {
       if (isReplicationCurrent.getAsBoolean()) {
-        LOG.info("Replication is caught up after " + i + " sleep attempts");
+        LOG.info("Replication caught up after " + elapsedMillis(start) + "ms");
         return;
       }
-
-      // Give time for replication to catch up
-      LOG.info("sleeping for " + sleepTimeInMillis);
-      Thread.sleep(sleepTimeInMillis);
-      // Exponential backoff
-      sleepTimeInMillis = sleepTimeInMillis * 2;
+      if (System.nanoTime() >= deadline) {
+        Assert.fail(
+            "Timed out waiting for replication to catch up after " + elapsedMillis(start) + "ms");
+      }
+      Thread.sleep(POLL_INTERVAL_MILLIS);
     }
+  }
 
-    Assert.fail("Timed out waiting for replication to catch up.");
+  private static long elapsedMillis(long startNanos) {
+    return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+  }
+
+  /**
+   * Waits until {@code replicatedEntries} stops advancing, draining entries left in flight by an
+   * earlier test.
+   *
+   * <p>The replication endpoint's entry counter is static and shared by every test in a class.
+   * Resetting it between tests is not enough on its own: replication is asynchronous, so entries
+   * belonging to the previous test keep arriving after the reset and count towards the next test's
+   * target. Call this before resetting the counter so it starts from a genuinely idle state.
+   *
+   * <p>This is best effort and does not fail on timeout; callers still verify the data itself.
+   */
+  public static void waitForReplicationToQuiesce(IntSupplier replicatedEntries)
+      throws InterruptedException {
+    long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(REPLICATION_TIMEOUT_MILLIS);
+    int previous = -1;
+    int stablePolls = 0;
+    while (stablePolls < QUIESCE_STABLE_POLLS && System.nanoTime() < deadline) {
+      int current = replicatedEntries.getAsInt();
+      stablePolls = (current == previous) ? stablePolls + 1 : 0;
+      previous = current;
+      Thread.sleep(POLL_INTERVAL_MILLIS);
+    }
   }
 
   /**
@@ -236,7 +272,22 @@ public class TestUtils {
       Table expected, Table actual, BooleanSupplier isReplicationCurrent)
       throws InterruptedException, IOException {
     waitForReplication(isReplicationCurrent);
-    TestUtils.assertTableEquals(expected, actual);
+
+    // The entry counter the predicate reads is only a coarse progress signal: it is shared across
+    // tests and counts entries for every table, so it can be satisfied before this table's own
+    // writes land. Retry the comparison so the assertion waits on the replicated data itself.
+    long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(REPLICATION_TIMEOUT_MILLIS);
+    while (true) {
+      try {
+        TestUtils.assertTableEquals(expected, actual);
+        return;
+      } catch (AssertionError e) {
+        if (System.nanoTime() >= deadline) {
+          throw e;
+        }
+      }
+      Thread.sleep(POLL_INTERVAL_MILLIS);
+    }
   }
 
   /**

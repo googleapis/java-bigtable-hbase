@@ -389,6 +389,10 @@ limitations under the License.
                   <pattern>org.jspecify.annotations</pattern>
                   <shadedPattern>com.google.bigtable.repackaged.org.jspecify.annotations</shadedPattern>
                 </relocation>
+                <relocation>
+                  <pattern>dev.cel</pattern>
+                  <shadedPattern>com.google.bigtable.repackaged.dev.cel</shadedPattern>
+                </relocation>
               </relocations>
             </configuration>
           </execution>

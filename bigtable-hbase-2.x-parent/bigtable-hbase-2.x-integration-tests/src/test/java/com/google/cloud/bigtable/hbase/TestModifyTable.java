@@ -70,7 +70,9 @@ public class TestModifyTable extends AbstractTestModifyTable {
           @Override
           public Void apply(@Nullable HTableDescriptor descriptor) {
             try (Admin admin = getConnection().getAdmin()) {
-              admin.modifyTableAsync(descriptor).get(60, TimeUnit.SECONDS);
+              // Generous: modifyTableAsync blocks a gRPC callback thread while it waits on the
+              // modifyFamilies RPC, so it can stall when the suite runs admin ops in parallel.
+              admin.modifyTableAsync(descriptor).get(5, TimeUnit.MINUTES);
             } catch (Exception e) {
               throw new RuntimeException(e);
             }
