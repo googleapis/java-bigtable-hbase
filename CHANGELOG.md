@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.20.3](https://github.com/googleapis/java-bigtable-hbase/compare/v2.20.2...v2.20.3) (2026-10-20)
+
+
+### Documentation
+
+* deprecate the enableSnappy option in bigtable-beam-import ([#4635](https://github.com/googleapis/java-bigtable-hbase/issues/4635)) ([292cfa5](https://github.com/googleapis/java-bigtable-hbase/commit/292cfa537da075d8a36798e526f761a2c020ee44))
+
 ## [2.20.2](https://github.com/googleapis/java-bigtable-hbase/compare/v2.20.1...v2.20.2) (2026-09-03)
 
 
