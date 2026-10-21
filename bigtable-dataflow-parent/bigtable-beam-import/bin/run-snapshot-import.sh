@@ -190,7 +190,7 @@ if [ "$1" == "--restore-only" ]; then
     fi
     echo "✅ Restore completed."
     echo "⚠️ IMPORTANT: Please manually cleanup the restore path once validation succeeds:"
-    echo "   gsutil rm -r \"${RESTORE_DIR}\""
+    echo "   gcloud storage rm --recursive \"${RESTORE_DIR}\""
     exit 0
 fi
 
@@ -257,7 +257,7 @@ if [ "$1" == "--all" ]; then
     
     echo "🎉 All import jobs completed!"
     echo "⚠️ IMPORTANT: Please manually cleanup the restore path once validation succeeds:"
-    echo "   gsutil rm -r \"${RESTORE_DIR}\""
+    echo "   gcloud storage rm --recursive \"${RESTORE_DIR}\""
     exit 0
 fi
 # ----------------------------------------
