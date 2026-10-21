@@ -188,7 +188,7 @@ limitations under the License.
         <dependency>
           <groupId>io.opentelemetry</groupId>
           <artifactId>opentelemetry-api</artifactId>
-          <version>1.34.1</version>
+          <version>1.62.0</version>
         </dependency>
 
         <!-- Pull in the minimal deps to get hadoop Configuration to work and update all deps to latest version -->
