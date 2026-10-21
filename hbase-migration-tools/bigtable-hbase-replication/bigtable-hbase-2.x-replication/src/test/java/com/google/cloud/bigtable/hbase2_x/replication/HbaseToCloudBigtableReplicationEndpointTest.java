@@ -16,6 +16,9 @@
 
 package com.google.cloud.bigtable.hbase2_x.replication;
 
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.TABLE_NAME_MAPPING_FILE_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.TABLE_NAME_MAPPING_KEY;
+import static com.google.cloud.bigtable.hbase.replication.configuration.HBaseToCloudBigtableReplicationConfiguration.TABLE_NAME_MAPPING_PREFIX;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.CF1;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.CF2;
 import static com.google.cloud.bigtable.hbase.replication.utils.TestUtils.FILTERED_ROW_KEY;
@@ -25,17 +28,23 @@ import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.replication.utils.TestUtils;
 import com.google.cloud.bigtable.test.helper.BigtableEmulatorRule;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
+import org.apache.hadoop.hbase.NamespaceExistException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Connection;
@@ -69,6 +78,13 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
   public static class TestReplicationEndpoint extends HbaseToCloudBigtableReplicationEndpoint {
 
     static AtomicInteger replicatedEntries = new AtomicInteger();
+    private Context endpointContext;
+
+    @Override
+    public void init(Context context) throws IOException {
+      super.init(context);
+      this.endpointContext = context;
+    }
 
     @Override
     public boolean replicate(ReplicateContext replicateContext) {
@@ -78,6 +94,7 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
     }
 
     // return a WALEntry filter which accepts all rows except FILTERED_ROW_ENTRY
+    // and routes "my_ns" namespace tables only to their corresponding remapped peer.
     @Override
     public WALEntryFilter getWALEntryfilter() {
       return new ChainWALEntryFilter(
@@ -85,6 +102,22 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
           new WALEntryFilter() {
             @Override
             public Entry filter(Entry entry) {
+              if (entry == null) {
+                return null;
+              }
+              TableName entryTable = entry.getKey().getTableName();
+              boolean isMyNs = "my_ns".equals(entryTable.getNamespaceAsString());
+              boolean isDefaultPeer =
+                  endpointContext == null || "cbt".equals(endpointContext.getPeerId());
+              if (isDefaultPeer && isMyNs) {
+                return null;
+              }
+              if (!isDefaultPeer) {
+                String expectedTable = endpointContext.getConfiguration().get("test.peer.table");
+                if (expectedTable == null || !expectedTable.equals(entryTable.getNameAsString())) {
+                  return null;
+                }
+              }
               ArrayList<Cell> cells = entry.getEdit().getCells();
               int size = cells.size();
               for (int i = size - 1; i >= 0; i--) {
@@ -497,5 +530,159 @@ public class HbaseToCloudBigtableReplicationEndpointTest {
         "Timestamp match for row " + TestUtils.ROW_KEY,
         hbaseCells.get(0).getTimestamp(),
         bigtableCells.get(0).getTimestamp());
+  }
+
+  private void createRemappedTables(TableName hbaseSourceTable, TableName cbtTargetTable)
+      throws IOException {
+    String namespace = hbaseSourceTable.getNamespaceAsString();
+    if (!NamespaceDescriptor.DEFAULT_NAMESPACE_NAME_STR.equals(namespace)) {
+      try {
+        hbaseConnection.getAdmin().createNamespace(NamespaceDescriptor.create(namespace).build());
+      } catch (NamespaceExistException ignored) {
+        // Namespace already exists
+      }
+    }
+
+    HTableDescriptor hbaseHtd = new HTableDescriptor(hbaseSourceTable);
+    HColumnDescriptor cf1 = new HColumnDescriptor(TestUtils.CF1);
+    cf1.setMaxVersions(100);
+    cf1.setScope(HConstants.REPLICATION_SCOPE_GLOBAL);
+    hbaseHtd.addFamily(cf1);
+    HColumnDescriptor cf2 = new HColumnDescriptor(CF2);
+    cf2.setMaxVersions(100);
+    cf2.setScope(HConstants.REPLICATION_SCOPE_GLOBAL);
+    hbaseHtd.addFamily(cf2);
+    hbaseTestingUtil.getHBaseAdmin().createTable(hbaseHtd);
+
+    HTableDescriptor cbtHtd = new HTableDescriptor(cbtTargetTable);
+    HColumnDescriptor cbtCf1 = new HColumnDescriptor(TestUtils.CF1);
+    cbtCf1.setMaxVersions(100);
+    cbtHtd.addFamily(cbtCf1);
+    HColumnDescriptor cbtCf2 = new HColumnDescriptor(CF2);
+    cbtCf2.setMaxVersions(100);
+    cbtHtd.addFamily(cbtCf2);
+    cbtConnection.getAdmin().createTable(cbtHtd);
+  }
+
+  private ReplicationPeerConfig createRemappedPeerConfig(TableName sourceHBaseTable) {
+    ReplicationPeerConfig peerConfig = new ReplicationPeerConfig();
+    peerConfig.setReplicationEndpointImpl(TestReplicationEndpoint.class.getTypeName());
+    peerConfig.setClusterKey(hbaseTestingUtil.getClusterKey());
+    peerConfig.getConfiguration().put("google.bigtable.instance.id", "test-instance");
+    peerConfig.getConfiguration().put("google.bigtable.project.id", "test-project");
+    peerConfig
+        .getConfiguration()
+        .put("google.bigtable.emulator.endpoint.host", "localhost:" + bigtableEmulator.getPort());
+    peerConfig.getConfiguration().put("test.peer.table", sourceHBaseTable.getNameAsString());
+    return peerConfig;
+  }
+
+  @Test
+  public void testTableNameMappingInlineJson() throws Exception {
+    TableName sourceHBaseTable = TableName.valueOf("my_ns", "inline_src_" + UUID.randomUUID());
+    TableName targetCbtTable =
+        TableName.valueOf("my_ns_inline_dst_" + UUID.randomUUID().toString().substring(0, 8));
+    createRemappedTables(sourceHBaseTable, targetCbtTable);
+
+    String peerId = "cbt_inline";
+    ReplicationPeerConfig peerConfig = createRemappedPeerConfig(sourceHBaseTable);
+    String inlineJson =
+        String.format(
+            "{\"%s\": \"%s\"}",
+            sourceHBaseTable.getNameAsString(), targetCbtTable.getNameAsString());
+    peerConfig.getConfiguration().put(TABLE_NAME_MAPPING_KEY, inlineJson);
+
+    replicationAdmin.addPeer(peerId, peerConfig);
+    try (Table srcTable = hbaseConnection.getTable(sourceHBaseTable);
+        Table dstTable = cbtConnection.getTable(targetCbtTable)) {
+      TestReplicationEndpoint.replicatedEntries.set(0);
+
+      for (int i = 0; i < 25; i++) {
+        Put put = new Put(TestUtils.getRowKey(i));
+        put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.getValue(i));
+        put.addColumn(CF2, TestUtils.COL_QUALIFIER, 0, TestUtils.getValue(100 + i));
+        srcTable.put(put);
+      }
+
+      TestUtils.assertTableEventuallyEquals(
+          srcTable, dstTable, () -> TestReplicationEndpoint.replicatedEntries.get() >= 25);
+    } finally {
+      replicationAdmin.removePeer(peerId);
+    }
+  }
+
+  @Test
+  public void testTableNameMappingFromHdfsFile() throws Exception {
+    TableName sourceHBaseTable = TableName.valueOf("my_ns", "hdfs_src_" + UUID.randomUUID());
+    TableName targetCbtTable =
+        TableName.valueOf("my_ns_hdfs_dst_" + UUID.randomUUID().toString().substring(0, 8));
+    createRemappedTables(sourceHBaseTable, targetCbtTable);
+
+    FileSystem dfs = hbaseTestingUtil.getDFSCluster().getFileSystem();
+    Path mappingPath =
+        dfs.makeQualified(new Path("/hbase/replication/mapping-" + UUID.randomUUID() + ".json"));
+    String jsonContent =
+        String.format(
+            "{\"%s\": \"%s\"}",
+            sourceHBaseTable.getNameAsString(), targetCbtTable.getNameAsString());
+    try (FSDataOutputStream out = dfs.create(mappingPath, true)) {
+      out.write(jsonContent.getBytes(StandardCharsets.UTF_8));
+    }
+
+    String peerId = "cbt_hdfs";
+    ReplicationPeerConfig peerConfig = createRemappedPeerConfig(sourceHBaseTable);
+    peerConfig.getConfiguration().put(TABLE_NAME_MAPPING_FILE_KEY, mappingPath.toString());
+
+    replicationAdmin.addPeer(peerId, peerConfig);
+    try (Table srcTable = hbaseConnection.getTable(sourceHBaseTable);
+        Table dstTable = cbtConnection.getTable(targetCbtTable)) {
+      TestReplicationEndpoint.replicatedEntries.set(0);
+
+      for (int i = 0; i < 25; i++) {
+        Put put = new Put(TestUtils.getRowKey(i));
+        put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.getValue(i));
+        put.addColumn(CF2, TestUtils.COL_QUALIFIER, 0, TestUtils.getValue(200 + i));
+        srcTable.put(put);
+      }
+
+      TestUtils.assertTableEventuallyEquals(
+          srcTable, dstTable, () -> TestReplicationEndpoint.replicatedEntries.get() >= 25);
+    } finally {
+      replicationAdmin.removePeer(peerId);
+    }
+  }
+
+  @Test
+  public void testTableNameMappingPrefixProperty() throws Exception {
+    TableName sourceHBaseTable = TableName.valueOf("my_ns", "prefix_src_" + UUID.randomUUID());
+    TableName targetCbtTable =
+        TableName.valueOf("my_ns_prefix_dst_" + UUID.randomUUID().toString().substring(0, 8));
+    createRemappedTables(sourceHBaseTable, targetCbtTable);
+
+    String peerId = "cbt_prefix";
+    ReplicationPeerConfig peerConfig = createRemappedPeerConfig(sourceHBaseTable);
+    peerConfig
+        .getConfiguration()
+        .put(
+            TABLE_NAME_MAPPING_PREFIX + sourceHBaseTable.getNameAsString(),
+            targetCbtTable.getNameAsString());
+
+    replicationAdmin.addPeer(peerId, peerConfig);
+    try (Table srcTable = hbaseConnection.getTable(sourceHBaseTable);
+        Table dstTable = cbtConnection.getTable(targetCbtTable)) {
+      TestReplicationEndpoint.replicatedEntries.set(0);
+
+      for (int i = 0; i < 25; i++) {
+        Put put = new Put(TestUtils.getRowKey(i));
+        put.addColumn(TestUtils.CF1, TestUtils.COL_QUALIFIER, 0, TestUtils.getValue(i));
+        put.addColumn(CF2, TestUtils.COL_QUALIFIER, 0, TestUtils.getValue(300 + i));
+        srcTable.put(put);
+      }
+
+      TestUtils.assertTableEventuallyEquals(
+          srcTable, dstTable, () -> TestReplicationEndpoint.replicatedEntries.get() >= 25);
+    } finally {
+      replicationAdmin.removePeer(peerId);
+    }
   }
 }

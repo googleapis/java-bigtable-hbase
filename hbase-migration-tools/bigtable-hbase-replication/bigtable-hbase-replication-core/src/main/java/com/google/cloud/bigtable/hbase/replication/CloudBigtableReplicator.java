@@ -35,19 +35,21 @@ import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBi
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.BIDIRECTIONAL_REPL_INELIGIBLE_WAL_ENTRY_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.ONE_WAY_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY;
 import static com.google.cloud.bigtable.hbase.replication.metrics.HBaseToCloudBigtableReplicationMetrics.ONE_WAY_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY;
-import static java.util.stream.Collectors.groupingBy;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
 import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapter;
 import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapterFactory;
+import com.google.cloud.bigtable.hbase.replication.configuration.TableNameMapper;
 import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -56,10 +58,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.util.ByteRange;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -84,6 +88,7 @@ public class CloudBigtableReplicator {
     private static SharedResources INSTANCE;
 
     private final ExecutorService executorService;
+
     /**
      * Bigtable connection owned by this class and shared by all the instances of {@link
      * CloudBigtableReplicator} class. DO NOT CLOSE THIS CONNECTION from any instance. The state of
@@ -108,7 +113,6 @@ public class CloudBigtableReplicator {
 
     static synchronized SharedResources getInstance(Configuration conf) {
 
-      numReferences++;
       if (INSTANCE == null) {
         /* Create a bounded cached thread pool with unbounded queue. At any point, we will only have 1
          * replicate() method active per replicationEndpoint object, so we will never have too many
@@ -125,7 +129,15 @@ public class CloudBigtableReplicator {
                     .build());
 
         // Create a connection to Cloud Bigtable.
+        // Note: HBase 2.x ReplicationPeerImpl wraps peer + cluster configuration in a
+        // CompoundConfiguration whose internal `properties` field is null, so `new
+        // Configuration(conf)`
+        // drops all compound entries. Copy via the Configuration iterator to preserve both
+        // hbase-site.xml and per-peer ReplicationPeerConfig properties.
         Configuration configurationCopy = new Configuration(conf);
+        for (Map.Entry<String, String> entry : conf) {
+          configurationCopy.set(entry.getKey(), entry.getValue());
+        }
 
         String projectId = configurationCopy.get(PROJECT_KEY);
         String instanceId = configurationCopy.get(INSTANCE_KEY);
@@ -138,12 +150,18 @@ public class CloudBigtableReplicator {
           configurationCopy.set(BigtableOptionsFactory.CUSTOM_USER_AGENT_KEY, "HBaseReplication");
         }
 
-        // If an App profile is provided, it will be picked automatically by the connection.
-        Connection connection = BigtableConfiguration.connect(configurationCopy);
-        LOG.info("Created a connection to CBT. projects/{}/instances/{}", projectId, instanceId);
+        try {
+          // If an App profile is provided, it will be picked automatically by the connection.
+          Connection connection = BigtableConfiguration.connect(configurationCopy);
+          LOG.info("Created a connection to CBT. projects/{}/instances/{}", projectId, instanceId);
 
-        INSTANCE = new SharedResources(connection, executorService);
+          INSTANCE = new SharedResources(connection, executorService);
+        } catch (RuntimeException e) {
+          executorService.shutdownNow();
+          throw e;
+        }
       }
+      numReferences++;
       return INSTANCE;
     }
 
@@ -191,6 +209,9 @@ public class CloudBigtableReplicator {
   private byte[] sourceCbtQualifier;
   private MetricsExporter metricsExporter;
 
+  /** Maps HBase table names to Cloud Bigtable table IDs. Identity unless configured. */
+  private TableNameMapper tableNameMapper = TableNameMapper.identity();
+
   /**
    * Shared resources that are not tied to an object of this class. Lifecycle of resources in this
    * object is usually tied to the lifecycle of JVM.
@@ -227,14 +248,27 @@ public class CloudBigtableReplicator {
       // If enabled, gets source qualifiers from configs.
       if (this.bidirectionalReplicationEnabled) {
         this.sourceHbaseQualifier =
-            configuration.get(CBT_REPL_HBASE_QUALIFIER_KEY, CBT_REPL_HBASE_QUALIFIER).getBytes();
+            configuration
+                .get(CBT_REPL_HBASE_QUALIFIER_KEY, CBT_REPL_HBASE_QUALIFIER)
+                .getBytes(StandardCharsets.UTF_8);
         this.sourceCbtQualifier =
-            configuration.get(CBT_REPL_CBT_QUALIFIER_KEY, CBT_REPL_CBT_QUALIFIER).getBytes();
+            configuration
+                .get(CBT_REPL_CBT_QUALIFIER_KEY, CBT_REPL_CBT_QUALIFIER)
+                .getBytes(StandardCharsets.UTF_8);
 
         LOG.info(
             "Bidirectional direction enabled. \nCbt qualifier: {}\nHbase qualifier: {}",
             Bytes.toStringBinary(sourceCbtQualifier),
             Bytes.toStringBinary(sourceHbaseQualifier));
+      }
+
+      // Load the optional HBase -> Cloud Bigtable table name mapping. A broken mapping must stop
+      // the endpoint from starting: replicating to the wrong table is worse than not replicating.
+      try {
+        this.tableNameMapper = TableNameMapper.fromConfiguration(configuration);
+      } catch (IOException e) {
+        throw new IllegalStateException(
+            "Failed to load the HBase to Cloud Bigtable table name mapping.", e);
       }
     }
 
@@ -280,21 +314,78 @@ public class CloudBigtableReplicator {
    *
    * <p>Does not throw any exceptions to the caller. In case of any errors, should return false.
    *
-   * @param walEntriesByTable Map of WALEntries keyed by table name.
+   * @param walEntriesByTable Map of WALEntries keyed by HBase table name.
    */
   public boolean replicate(Map<String, List<BigtableWALEntry>> walEntriesByTable) {
     long startTime = System.currentTimeMillis();
     boolean succeeded = true;
 
-    List<Future<Boolean>> futures = new ArrayList<>();
-
-    for (Map.Entry<String, List<BigtableWALEntry>> walEntriesForTable :
-        walEntriesByTable.entrySet()) {
-      futures.addAll(replicateTable(walEntriesForTable.getKey(), walEntriesForTable.getValue()));
+    if (walEntriesByTable == null || walEntriesByTable.isEmpty()) {
+      return true;
     }
 
-    // Check on the result  for all the batches.
     try {
+      // Coalesce WAL entries by mapped Cloud Bigtable table name. If multiple HBase source table
+      // names map to the same target Bigtable table, their WAL entries must be merged into a single
+      // list and replicated in one call to avoid concurrent out-of-order writes for the same rows.
+      Map<String, List<BigtableWALEntry>> coalescedWalEntries = new LinkedHashMap<>();
+      Map<String, String> targetToFirstCanonicalSource = new HashMap<>();
+      for (Map.Entry<String, List<BigtableWALEntry>> walEntriesForTable :
+          walEntriesByTable.entrySet()) {
+        String hbaseTableName = walEntriesForTable.getKey();
+        if (hbaseTableName == null || hbaseTableName.trim().isEmpty()) {
+          LOG.warn("Encountered null or blank HBase table name in WAL entries map. Skipping.");
+          continue;
+        }
+        List<BigtableWALEntry> entries = walEntriesForTable.getValue();
+        if (entries == null || entries.isEmpty()) {
+          continue;
+        }
+        String bigtableTableName = tableNameMapper.map(hbaseTableName);
+        if (bigtableTableName == null || bigtableTableName.trim().isEmpty()) {
+          LOG.warn(
+              "TableNameMapper mapped HBase table '{}' to null or blank. Skipping.",
+              hbaseTableName);
+          continue;
+        }
+
+        String canonicalHBaseTable;
+        try {
+          canonicalHBaseTable = TableName.valueOf(hbaseTableName.trim()).getNameAsString();
+        } catch (IllegalArgumentException e) {
+          canonicalHBaseTable = hbaseTableName.trim();
+        }
+
+        String existingSource =
+            targetToFirstCanonicalSource.putIfAbsent(bigtableTableName, canonicalHBaseTable);
+        if (existingSource != null && !existingSource.equals(canonicalHBaseTable)) {
+          throw new IllegalStateException(
+              "Multiple distinct HBase source tables ('"
+                  + existingSource
+                  + "' and '"
+                  + canonicalHBaseTable
+                  + "') map to the same Cloud Bigtable table '"
+                  + bigtableTableName
+                  + "'.");
+        }
+
+        if (!bigtableTableName.equals(hbaseTableName) && LOG.isTraceEnabled()) {
+          LOG.trace(
+              "Replicating HBase table {} to Cloud Bigtable table {}",
+              hbaseTableName,
+              bigtableTableName);
+        }
+        coalescedWalEntries
+            .computeIfAbsent(bigtableTableName, k -> new ArrayList<>())
+            .addAll(entries);
+      }
+
+      List<Future<Boolean>> futures = new ArrayList<>();
+      for (Map.Entry<String, List<BigtableWALEntry>> entry : coalescedWalEntries.entrySet()) {
+        futures.addAll(replicateTable(entry.getKey(), entry.getValue()));
+      }
+
+      // Check on the result  for all the batches.
       for (Future<Boolean> future : futures) {
         // replicate method should succeed only when all the entries are successfully replicated.
         // TODO Add to readme about setting some timeouts on CBT writes. MutateRow should not
@@ -319,7 +410,6 @@ public class CloudBigtableReplicator {
       String tableName, List<BigtableWALEntry> walEntries) {
     List<Future<Boolean>> futures = new ArrayList<>();
     List<Cell> cellsToReplicateForTable = new ArrayList<>();
-    int batchSizeInBytes = 0;
 
     for (BigtableWALEntry walEntry : walEntries) {
       // To prevent loops in bidirectional replication,
@@ -349,8 +439,9 @@ public class CloudBigtableReplicator {
     Map<ByteRange, List<Cell>> cellsToReplicateByRow =
         cellsToReplicateForTable.stream()
             .collect(
-                groupingBy(
-                    k -> new SimpleByteRange(k.getRowArray(), k.getRowOffset(), k.getRowLength())));
+                Collectors.groupingBy(
+                    k -> new SimpleByteRange(k.getRowArray(), k.getRowOffset(), k.getRowLength()),
+                    Collectors.toCollection(ArrayList::new)));
 
     // Now we have cells to replicate by rows, this list can be big and processing it on a single
     // thread is not efficient. As this thread will have to do proto translation and may need to
@@ -358,6 +449,7 @@ public class CloudBigtableReplicator {
     // threads) and send them on separate threads.
     Map<ByteRange, List<Cell>> batchToReplicate = new HashMap<>();
     int numCellsInBatch = 0;
+    int batchSizeInBytes = 0;
     for (Map.Entry<ByteRange, List<Cell>> rowCells : cellsToReplicateByRow.entrySet()) {
 
       // If bidirectional replication is enabled, tag row cells with source info
@@ -366,14 +458,38 @@ public class CloudBigtableReplicator {
         appendSourceTagToCells(rowCells);
       }
 
+      int rowCellCount = rowCells.getValue().size();
+      int rowSizeInBytes = getRowSize(rowCells);
+
+      // If adding this row would exceed the batch size threshold or the maximum cell limit,
+      // flush the current batch first.
+      if (!batchToReplicate.isEmpty()
+          && (batchSizeInBytes + rowSizeInBytes > batchSizeThresholdInBytes
+              || numCellsInBatch + rowCellCount >= 100_000)) {
+        LOG.trace(
+            "Replicating a batch of "
+                + batchToReplicate.size()
+                + " rows and "
+                + numCellsInBatch
+                + " cells with heap size "
+                + batchSizeInBytes
+                + " for table: "
+                + tableName);
+
+        futures.add(replicateBatch(tableName, batchToReplicate));
+        batchToReplicate = new HashMap<>();
+        numCellsInBatch = 0;
+        batchSizeInBytes = 0;
+      }
+
       // TODO handle the case where a single row has >100K mutations (very rare, but should not
       //  fail)
-      numCellsInBatch += rowCells.getValue().size();
-      batchSizeInBytes += getRowSize(rowCells);
+      numCellsInBatch += rowCellCount;
+      batchSizeInBytes += rowSizeInBytes;
       batchToReplicate.put(rowCells.getKey(), rowCells.getValue());
 
-      // TODO add tests for batch split on size and cell counts
-      if (batchSizeInBytes >= batchSizeThresholdInBytes || numCellsInBatch >= 100_000 - 1) {
+      // If the batch meets or exceeds the threshold, flush it immediately.
+      if (batchSizeInBytes >= batchSizeThresholdInBytes || numCellsInBatch >= 100_000) {
         LOG.trace(
             "Replicating a batch of "
                 + batchToReplicate.size()
@@ -423,13 +539,17 @@ public class CloudBigtableReplicator {
 
   /**
    * Checks if WAL entry is eligible for replication. If the following are both true, then entry is
-   * NOT eligible for replication: 1. Bidirectional replication is enabled, AND 2. Last mutation in
-   * WAL entry is a special mutation matching SOURCE_CBT qualifier
+   * NOT eligible for replication: 1. Bidirectional replication is enabled, AND 2. A mutation in the
+   * WAL entry is a special delete marker matching SOURCE_CBT qualifier and timestamp 0.
    *
    * @param walEntry from HBase replication WAL log.
-   * @return true if walEntry is from Bigtable.
+   * @return true if walEntry is eligible for replication to Bigtable.
    */
   private boolean isEligibleForReplication(BigtableWALEntry walEntry) {
+    if (walEntry == null || walEntry.getCells() == null || walEntry.getCells().isEmpty()) {
+      return false;
+    }
+
     // Always return eligible if bidirectional replication was not enabled
     int mutationCount = walEntry.getCells().size();
     if (!bidirectionalReplicationEnabled) {
@@ -438,27 +558,45 @@ public class CloudBigtableReplicator {
       return true;
     }
 
-    Cell lastCell = walEntry.getCells().get(walEntry.getCells().size() - 1);
+    Cell markerCell = null;
+    if (sourceCbtQualifier != null) {
+      for (Cell cell : walEntry.getCells()) {
+        if (cell != null
+            && cell.getTimestamp() == 0L
+            && CellUtil.isDelete(cell)
+            && CellUtil.matchingQualifier(cell, sourceCbtQualifier)) {
+          markerCell = cell;
+          break;
+        }
+      }
+    }
 
-    if (Arrays.equals(CellUtil.cloneQualifier(lastCell), sourceCbtQualifier)) {
+    if (markerCell != null) {
       // Wrap in statement so row is not needlessly converted.
       if (LOG.isTraceEnabled()) {
         LOG.trace(
             "Dropping WAL entry as it came from CBT , Row key: "
                 + Bytes.toStringBinary(
-                    lastCell.getRowArray(), lastCell.getRowOffset(), lastCell.getRowLength()));
+                    markerCell.getRowArray(),
+                    markerCell.getRowOffset(),
+                    markerCell.getRowLength()));
       }
       incrementMetric(BIDIRECTIONAL_REPL_INELIGIBLE_WAL_ENTRY_METRIC_KEY, 1);
-      // We decrement one because the last mutation would've been the special mutation from CBT.
+      // We decrement one because the special marker mutation from CBT is not a user mutation.
       incrementMetric(BIDIRECTIONAL_REPL_INELIGIBLE_MUTATIONS_METRIC_KEY, mutationCount - 1);
       return false;
     } else {
       // Wrap in statement so row is not needlessly converted.
       if (LOG.isTraceEnabled()) {
-        LOG.trace(
-            "Replicating WAL entry as it originated on HBase , Row key: "
-                + Bytes.toStringBinary(
-                    lastCell.getRowArray(), lastCell.getRowOffset(), lastCell.getRowLength()));
+        for (Cell cell : walEntry.getCells()) {
+          if (cell != null) {
+            LOG.trace(
+                "Replicating WAL entry as it originated on HBase , Row key: "
+                    + Bytes.toStringBinary(
+                        cell.getRowArray(), cell.getRowOffset(), cell.getRowLength()));
+            break;
+          }
+        }
       }
       incrementMetric(BIDIRECTIONAL_REPL_ELIGIBLE_WAL_ENTRY_METRIC_KEY, 1);
       incrementMetric(BIDIRECTIONAL_REPL_ELIGIBLE_MUTATIONS_METRIC_KEY, mutationCount);
