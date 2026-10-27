@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.21.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.20.3...v2.21.0) (2026-10-27)
+
+
+### Features
+
+* **replication:** map HBase table names to Cloud Bigtable table IDs ([#4639](https://github.com/googleapis/java-bigtable-hbase/issues/4639)) ([8c6c36e](https://github.com/googleapis/java-bigtable-hbase/commit/8c6c36ea754b9bddb8a4b43eac10e37001f6e442))
+
 ## [2.20.3](https://github.com/googleapis/java-bigtable-hbase/compare/v2.20.2...v2.20.3) (2026-10-20)
 
 
