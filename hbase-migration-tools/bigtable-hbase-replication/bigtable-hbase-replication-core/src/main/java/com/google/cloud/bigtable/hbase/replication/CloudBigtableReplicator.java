@@ -42,12 +42,14 @@ import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 import com.google.cloud.bigtable.hbase.replication.adapters.BigtableWALEntry;
 import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapter;
 import com.google.cloud.bigtable.hbase.replication.adapters.IncompatibleMutationAdapterFactory;
+import com.google.cloud.bigtable.hbase.replication.configuration.TableNameMapper;
 import com.google.cloud.bigtable.hbase.replication.metrics.MetricsExporter;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -148,7 +150,7 @@ public class CloudBigtableReplicator {
     }
 
     private static synchronized void decrementReferenceCount() {
-      if (--numReferences > 0) {
+      if (--numReferences > 0 || INSTANCE == null) {
         return;
       }
 
@@ -191,6 +193,9 @@ public class CloudBigtableReplicator {
   private byte[] sourceCbtQualifier;
   private MetricsExporter metricsExporter;
 
+  /** Maps HBase table names to Cloud Bigtable table IDs. Identity unless configured. */
+  private volatile TableNameMapper tableNameMapper = TableNameMapper.identity();
+
   /**
    * Shared resources that are not tied to an object of this class. Lifecycle of resources in this
    * object is usually tied to the lifecycle of JVM.
@@ -209,10 +214,35 @@ public class CloudBigtableReplicator {
       boolean isDryRun,
       Configuration configuration,
       MetricsExporter metricsExporter) {
+    // Load the optional HBase -> Cloud Bigtable table name mapping. A broken mapping must stop
+    // the endpoint from starting: replicating to the wrong table is worse than not replicating.
+    TableNameMapper mapper =
+        configuration != null
+            ? TableNameMapper.fromConfiguration(configuration)
+            : TableNameMapper.identity();
+    start(
+        sharedResources,
+        incompatibleMutationAdapter,
+        batchSizeThresholdInBytes,
+        isDryRun,
+        configuration,
+        metricsExporter,
+        mapper);
+  }
+
+  private void start(
+      SharedResources sharedResources,
+      IncompatibleMutationAdapter incompatibleMutationAdapter,
+      long batchSizeThresholdInBytes,
+      boolean isDryRun,
+      Configuration configuration,
+      MetricsExporter metricsExporter,
+      TableNameMapper tableNameMapper) {
     this.sharedResources = sharedResources;
     this.incompatibleMutationAdapter = incompatibleMutationAdapter;
     this.batchSizeThresholdInBytes = batchSizeThresholdInBytes;
     this.isDryRun = isDryRun;
+    this.tableNameMapper = tableNameMapper;
 
     this.metricsExporter = metricsExporter;
     if (metricsExporter == null) {
@@ -247,19 +277,29 @@ public class CloudBigtableReplicator {
   public synchronized void start(Configuration configuration, MetricsExporter metricsExporter) {
     LOG.info("Starting replication to CBT.");
 
-    SharedResources sharedResources = SharedResources.getInstance(configuration);
-    IncompatibleMutationAdapter incompatibleMutationAdapter =
-        new IncompatibleMutationAdapterFactory(
-                configuration, metricsExporter, sharedResources.connection)
-            .createIncompatibleMutationAdapter();
+    // Load and validate the table name mapping before opening the Cloud Bigtable connection or
+    // incrementing the SharedResources reference count.
+    TableNameMapper mapper = TableNameMapper.fromConfiguration(configuration);
 
-    start(
-        sharedResources,
-        incompatibleMutationAdapter,
-        configuration.getLong(BATCH_SIZE_KEY, DEFAULT_BATCH_SIZE_IN_BYTES),
-        configuration.getBoolean(ENABLE_DRY_RUN_MODE_KEY, DEFAULT_DRY_RUN_MODE),
-        configuration,
-        metricsExporter);
+    try {
+      SharedResources sharedResources = SharedResources.getInstance(configuration);
+      IncompatibleMutationAdapter incompatibleMutationAdapter =
+          new IncompatibleMutationAdapterFactory(
+                  configuration, metricsExporter, sharedResources.connection)
+              .createIncompatibleMutationAdapter();
+
+      start(
+          sharedResources,
+          incompatibleMutationAdapter,
+          configuration.getLong(BATCH_SIZE_KEY, DEFAULT_BATCH_SIZE_IN_BYTES),
+          configuration.getBoolean(ENABLE_DRY_RUN_MODE_KEY, DEFAULT_DRY_RUN_MODE),
+          configuration,
+          metricsExporter,
+          mapper);
+    } catch (RuntimeException | Error e) {
+      SharedResources.decrementReferenceCount();
+      throw e;
+    }
   }
 
   public void stop() {
@@ -288,13 +328,26 @@ public class CloudBigtableReplicator {
 
     List<Future<Boolean>> futures = new ArrayList<>();
 
-    for (Map.Entry<String, List<BigtableWALEntry>> walEntriesForTable :
-        walEntriesByTable.entrySet()) {
-      futures.addAll(replicateTable(walEntriesForTable.getKey(), walEntriesForTable.getValue()));
-    }
-
     // Check on the result  for all the batches.
     try {
+      Map<String, List<BigtableWALEntry>> entriesByBigtableTable =
+          new LinkedHashMap<>(walEntriesByTable.size());
+      for (Map.Entry<String, List<BigtableWALEntry>> walEntriesForTable :
+          walEntriesByTable.entrySet()) {
+        String target = tableNameMapper.map(walEntriesForTable.getKey());
+        if (entriesByBigtableTable.put(target, walEntriesForTable.getValue()) != null) {
+          throw new IllegalStateException(
+              "Multiple WAL entry keys resolve to Cloud Bigtable table '"
+                  + target
+                  + "' (latest key: '"
+                  + walEntriesForTable.getKey()
+                  + "').");
+        }
+      }
+      for (Map.Entry<String, List<BigtableWALEntry>> walEntriesForTable :
+          entriesByBigtableTable.entrySet()) {
+        futures.addAll(replicateTable(walEntriesForTable.getKey(), walEntriesForTable.getValue()));
+      }
       for (Future<Boolean> future : futures) {
         // replicate method should succeed only when all the entries are successfully replicated.
         // TODO Add to readme about setting some timeouts on CBT writes. MutateRow should not
@@ -319,7 +372,6 @@ public class CloudBigtableReplicator {
       String tableName, List<BigtableWALEntry> walEntries) {
     List<Future<Boolean>> futures = new ArrayList<>();
     List<Cell> cellsToReplicateForTable = new ArrayList<>();
-    int batchSizeInBytes = 0;
 
     for (BigtableWALEntry walEntry : walEntries) {
       // To prevent loops in bidirectional replication,
@@ -358,6 +410,7 @@ public class CloudBigtableReplicator {
     // threads) and send them on separate threads.
     Map<ByteRange, List<Cell>> batchToReplicate = new HashMap<>();
     int numCellsInBatch = 0;
+    long batchSizeInBytes = 0;
     for (Map.Entry<ByteRange, List<Cell>> rowCells : cellsToReplicateByRow.entrySet()) {
 
       // If bidirectional replication is enabled, tag row cells with source info
@@ -398,8 +451,8 @@ public class CloudBigtableReplicator {
     return futures;
   }
 
-  private int getRowSize(Map.Entry<ByteRange, List<Cell>> rowCells) {
-    int rowSizeInBytes = 0;
+  private long getRowSize(Map.Entry<ByteRange, List<Cell>> rowCells) {
+    long rowSizeInBytes = 0;
     for (Cell cell : rowCells.getValue()) {
       rowSizeInBytes += CellUtil.estimatedHeapSizeOf(cell);
     }

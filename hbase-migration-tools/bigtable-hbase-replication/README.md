@@ -143,6 +143,58 @@ Please refer
 to [HBaseToCloudBigtableReplicationConfiguration](bigtable-hbase-replication-core/src/main/java/com/google/cloud/bigtable/hbase/replication/configuration/HBaseToCloudBigtableReplicationConfiguration.java)
 for other properties that can be set.
 
+### Mapping HBase table names to Cloud Bigtable table IDs
+
+By default a WAL entry for HBase table `t` is written to the Cloud Bigtable
+table `t` (tables in HBase's `default` namespace, such as `default:my_table`,
+are automatically normalized to `my_table` without needing a mapping). Cloud
+Bigtable does not have namespaces and `:` is not a valid character in a Cloud
+Bigtable table ID, so HBase tables in a non-default namespace (for example
+`my_namespace:my_table`) can not be replicated without renaming them.
+
+The endpoint accepts mappings from HBase table names to Cloud Bigtable
+table IDs. Source HBase table names are normalized to canonical form (for
+example, `default:my_table` and `my_table` refer to the same HBase table).
+Mappings must be injective (1:1): multiple HBase tables cannot map to the same
+Cloud Bigtable table ID.
+
+Every target must be a valid Cloud Bigtable table ID (`[_a-zA-Z0-9][-_.a-zA-Z0-9]*`,
+at most 50 characters); the endpoint refuses to start if the mapping is
+malformed or contains collisions, ensuring mutations are never replicated to the
+wrong table. Mapping targets are also reserved at runtime: if an unmapped HBase
+table has the same canonical name as a configured mapping target (for example,
+`ns:table_B` maps to `table_B` while an unmapped `default:table_B` is also
+replicated), `replicate()` fails the batch and halts replication for that peer
+until an explicit disambiguating mapping (such as `"table_B": "table_B_default"`)
+is added.
+
+The mapping is configured through `google.bigtable.replication.table_name_mapping`
+in `hbase-site.xml` using a JSON object of
+`{"source_hbase_table": "destination_bigtable_table"}` pairs (using the same
+JSON structure as the mapping file accepted by the
+[HBase schema translator](../../bigtable-hbase-1.x-parent/bigtable-hbase-1.x-tools)):
+
+```xml
+<property>
+    <name>google.bigtable.replication.table_name_mapping</name>
+    <value>{"my_namespace:my_table": "my_namespace_my_table", "other_namespace:events": "events"}</value>
+</property>
+```
+
+Note that `TABLE_CFS` in `add_peer` only *selects* the tables and column
+families that are replicated to a peer; it can not rename them. Use `TABLE_CFS`
+with the HBase table names (for example `TABLE_CFS => { 'my_namespace:my_table'
+=> [] }`) and the mapping above to choose the Cloud Bigtable table ID.
+
+**Operational notes:**
+* The mapping is loaded when the replication endpoint starts, so changing
+  `google.bigtable.replication.table_name_mapping` requires a rolling restart of
+  the HBase region servers.
+* After a restart, any un-replicated WAL entries still queued for the peer are
+  routed using the new mapping. Pause the replication peer or wait for
+  replication to catch up before remapping a table that is actively receiving
+  writes.
+
 ### Bidirectional Replication with Cloud Bigtable
 
 The bidirectional replication feature filters out mutations replicated to Hbase from Cloud Bigtable change streams with the [Bigtable-Hbase replicator](https://github.com/GoogleCloudPlatform/DataflowTemplates/tree/main/v2/bigtable-cdc-to-hbase) to prevent replication loops. 

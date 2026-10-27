@@ -90,4 +90,21 @@ public class HBaseToCloudBigtableReplicationConfiguration {
   public static final boolean CBT_REPL_BIDIRECTIONAL_REPLICATION_MODE = false;
   public static final String CBT_REPL_HBASE_QUALIFIER = "SOURCE_HBASE";
   public static final String CBT_REPL_CBT_QUALIFIER = "SOURCE_CBT";
+
+  /**
+   * JSON map of HBase table name to Cloud Bigtable table ID, for example {@code
+   * {"my_namespace:my_table": "my_namespace_my_table"}}. WAL entries for an HBase table present in
+   * the map are written to the mapped Cloud Bigtable table; tables that are not present in the map
+   * are replicated to a Cloud Bigtable table with the same name as the HBase table (the default
+   * behavior).
+   *
+   * <p>The JSON object uses the same {@code {"source_hbase_table": "destination_bigtable_table"}}
+   * structure as the mapping file accepted by the HBase schema translator ({@code
+   * google.bigtable.schema.mapping.filepath}).
+   *
+   * <p>This is mainly useful for HBase tables in a non-default namespace, since {@code :} is not a
+   * valid character in a Cloud Bigtable table ID.
+   */
+  public static final String TABLE_NAME_MAPPING_KEY =
+      "google.bigtable.replication.table_name_mapping";
 }
