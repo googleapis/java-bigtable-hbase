@@ -80,7 +80,7 @@ import org.slf4j.LoggerFactory;
 /*
  * End to end integration test for pipeline that import HBase snapshot data into Cloud Bigtable and
  * validates the imported data with SyncTable.
- * Prepare test data with gsutil(https://cloud.google.com/storage/docs/quickstart-gsutil):
+ * Prepare test data with gcloud storage(https://docs.cloud.google.com/sdk/gcloud):
  * gcloud storage cp --recursive <PATH_TO_REPO>/bigtable-dataflow-parent/bigtable-beam-import/src/test/integration-test \
  *  gs://<test_bucket>/cloud-data-dir/
  */
