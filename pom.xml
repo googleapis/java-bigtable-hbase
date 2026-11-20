@@ -85,9 +85,17 @@ limitations under the License.
     <hamcrest.version>1.3</hamcrest.version>
     <mockito.version>4.11.0</mockito.version>
     <beam.version>2.77.0</beam.version>
-    <!-- referred from bigtable-beam-import and bigtable-emulator -->
-    <guava.version>33.4.0-jre</guava.version>
     <opencensus.version>0.31.1</opencensus.version>
+
+    <!-- Security overrides. google-cloud-bigtable ${bigtable.version} still resolves releases of
+         these libraries that have known CVEs. They are bundled into the
+         bigtable-hbase-{1,2}.x-shaded (and therefore the -hadoop) jars, so those modules manage
+         them up to the patched releases below. Remove an override once the veneer's deps-bom
+         ships the same or a newer version.
+         guava.version is also referred from bigtable-hbase-mirroring-client-core. -->
+    <guava.version>33.7.2-jre</guava.version>
+    <jackson-core.version>2.18.12</jackson-core.version>
+    <opentelemetry.version>1.67.0</opentelemetry.version>
 
     <!-- Enable the ability to skip unit tests and only run integration tests,
          while still respecting global skipTests override. -->
