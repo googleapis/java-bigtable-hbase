@@ -85,6 +85,68 @@ limitations under the License.
         <version>3.0.2</version>
         <scope>provided</scope>
       </dependency>
+
+      <!-- Security overrides: google-cloud-bigtable ${bigtable.version} resolves guava,
+           jackson-core and opentelemetry releases that have known CVEs. All three are bundled into
+           this jar, so manage them up to the patched releases (see the properties in the root
+           pom). Explicit entries take precedence over the BOMs imported above. Every
+           opentelemetry artifact used by the veneer is listed, because the SDK must not be older
+           than the API. -->
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>${guava.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>${jackson-core.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry</groupId>
+        <artifactId>opentelemetry-api</artifactId>
+        <version>${opentelemetry.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry</groupId>
+        <artifactId>opentelemetry-context</artifactId>
+        <version>${opentelemetry.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry</groupId>
+        <artifactId>opentelemetry-common</artifactId>
+        <version>${opentelemetry.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry</groupId>
+        <artifactId>opentelemetry-sdk</artifactId>
+        <version>${opentelemetry.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry</groupId>
+        <artifactId>opentelemetry-sdk-common</artifactId>
+        <version>${opentelemetry.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry</groupId>
+        <artifactId>opentelemetry-sdk-metrics</artifactId>
+        <version>${opentelemetry.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry</groupId>
+        <artifactId>opentelemetry-sdk-trace</artifactId>
+        <version>${opentelemetry.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry</groupId>
+        <artifactId>opentelemetry-sdk-logs</artifactId>
+        <version>${opentelemetry.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry</groupId>
+        <artifactId>opentelemetry-sdk-extension-autoconfigure-spi</artifactId>
+        <version>${opentelemetry.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -454,6 +516,21 @@ limitations under the License.
               <targetDependencies>
                 <targetDependency>com.google.cloud:google-cloud-bigtable</targetDependency>
               </targetDependencies>
+              <ignoredDependencies>
+                <!-- deliberately managed above the veneer's versions, see the security overrides
+                     in dependencyManagement -->
+                <dependency>com.google.guava:guava</dependency>
+                <dependency>com.fasterxml.jackson.core:jackson-core</dependency>
+                <dependency>io.opentelemetry:opentelemetry-api</dependency>
+                <dependency>io.opentelemetry:opentelemetry-context</dependency>
+                <dependency>io.opentelemetry:opentelemetry-common</dependency>
+                <dependency>io.opentelemetry:opentelemetry-sdk</dependency>
+                <dependency>io.opentelemetry:opentelemetry-sdk-common</dependency>
+                <dependency>io.opentelemetry:opentelemetry-sdk-metrics</dependency>
+                <dependency>io.opentelemetry:opentelemetry-sdk-trace</dependency>
+                <dependency>io.opentelemetry:opentelemetry-sdk-logs</dependency>
+                <dependency>io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi</dependency>
+              </ignoredDependencies>
             </configuration>
           </execution>
         </executions>

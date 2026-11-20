@@ -135,6 +135,11 @@ limitations under the License.
                   <pattern>org.checkerframework</pattern>
                   <shadedPattern>${shading-prefix}.org.checkerframework</shadedPattern>
                 </relocation>
+                <!-- guava ${guava.version} depends on jspecify instead of checker-qual -->
+                <relocation>
+                  <pattern>org.jspecify</pattern>
+                  <shadedPattern>${shading-prefix}.org.jspecify</shadedPattern>
+                </relocation>
                 <relocation>
                   <pattern>javax.annotation</pattern>
                   <shadedPattern>${shading-prefix}.javax.annotation</shadedPattern>
