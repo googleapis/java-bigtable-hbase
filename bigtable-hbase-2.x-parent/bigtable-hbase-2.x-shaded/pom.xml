@@ -95,7 +95,7 @@ limitations under the License.
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>${guava.version}</version>
+        <version>${guava-override.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
@@ -519,17 +519,17 @@ limitations under the License.
               <ignoredDependencies>
                 <!-- deliberately managed above the veneer's versions, see the security overrides
                      in dependencyManagement -->
-                <dependency>com.google.guava:guava</dependency>
-                <dependency>com.fasterxml.jackson.core:jackson-core</dependency>
-                <dependency>io.opentelemetry:opentelemetry-api</dependency>
-                <dependency>io.opentelemetry:opentelemetry-context</dependency>
-                <dependency>io.opentelemetry:opentelemetry-common</dependency>
-                <dependency>io.opentelemetry:opentelemetry-sdk</dependency>
-                <dependency>io.opentelemetry:opentelemetry-sdk-common</dependency>
-                <dependency>io.opentelemetry:opentelemetry-sdk-metrics</dependency>
-                <dependency>io.opentelemetry:opentelemetry-sdk-trace</dependency>
-                <dependency>io.opentelemetry:opentelemetry-sdk-logs</dependency>
-                <dependency>io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi</dependency>
+                <ignoredDependency>com.google.guava:guava</ignoredDependency>
+                <ignoredDependency>com.fasterxml.jackson.core:jackson-core</ignoredDependency>
+                <ignoredDependency>io.opentelemetry:opentelemetry-api</ignoredDependency>
+                <ignoredDependency>io.opentelemetry:opentelemetry-context</ignoredDependency>
+                <ignoredDependency>io.opentelemetry:opentelemetry-common</ignoredDependency>
+                <ignoredDependency>io.opentelemetry:opentelemetry-sdk</ignoredDependency>
+                <ignoredDependency>io.opentelemetry:opentelemetry-sdk-common</ignoredDependency>
+                <ignoredDependency>io.opentelemetry:opentelemetry-sdk-metrics</ignoredDependency>
+                <ignoredDependency>io.opentelemetry:opentelemetry-sdk-trace</ignoredDependency>
+                <ignoredDependency>io.opentelemetry:opentelemetry-sdk-logs</ignoredDependency>
+                <ignoredDependency>io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi</ignoredDependency>
               </ignoredDependencies>
             </configuration>
           </execution>
