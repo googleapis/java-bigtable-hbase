@@ -32,6 +32,18 @@ limitations under the License.
     Bigtable/HBase Mirroring Client conforming to HBase API 2.x. Uses hbase-shaded-client and shades all dependencies.
   </description>
 
+  <dependencyManagement>
+    <dependencies>
+      <!-- Security override: bigtable-hbase-mirroring-client-core pulls in guava ${guava.version}
+           which has known CVEs; manage it up to the patched release for shading. -->
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>${guava-override.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <!-- HBase public deps -->
     <dependency>
@@ -134,6 +146,11 @@ limitations under the License.
                 <relocation>
                   <pattern>org.checkerframework</pattern>
                   <shadedPattern>${shading-prefix}.org.checkerframework</shadedPattern>
+                </relocation>
+                <!-- guava ${guava-override.version} depends on jspecify instead of checker-qual -->
+                <relocation>
+                  <pattern>org.jspecify</pattern>
+                  <shadedPattern>${shading-prefix}.org.jspecify</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>javax.annotation</pattern>
