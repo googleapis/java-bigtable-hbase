@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.21.1](https://github.com/googleapis/java-bigtable-hbase/compare/v2.21.0...v2.21.1) (2026-11-25)
+
+
+### Dependencies
+
+* override guava, jackson-core and opentelemetry in shaded jars to fix CVEs ([#4647](https://github.com/googleapis/java-bigtable-hbase/issues/4647)) ([19f3520](https://github.com/googleapis/java-bigtable-hbase/commit/19f3520eceb1920e36518d5698b62268980234f4))
+
 ## [2.21.0](https://github.com/googleapis/java-bigtable-hbase/compare/v2.20.3...v2.21.0) (2026-10-27)
 
 
