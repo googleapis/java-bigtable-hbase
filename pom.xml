@@ -96,6 +96,7 @@ limitations under the License.
          the same or a newer version. -->
     <guava-override.version>33.7.2-jre</guava-override.version>
     <jackson-core.version>2.18.12</jackson-core.version>
+    <json.version>20260814</json.version>
     <opentelemetry.version>1.67.0</opentelemetry.version>
 
     <!-- Enable the ability to skip unit tests and only run integration tests,
@@ -108,6 +109,11 @@ limitations under the License.
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>org.json</groupId>
+        <artifactId>json</artifactId>
+        <version>${json.version}</version>
+      </dependency>
       <!-- google-cloud-bigtable 2.81.0 pulls in slf4j-api 2.0.x, while hbase brings the
            older 1.7.x. Pin to the higher version so the inherited RequireUpperBoundDeps
            enforcer (from google-cloud-shared-config) is satisfied. -->
